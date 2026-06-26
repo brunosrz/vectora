@@ -1,0 +1,63 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_e2e_readme_md",
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "frontend/e2e/README.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "e2e_readme_testes_e2e_playwright",
+      "label": "Testes E2E (Playwright)",
+      "file_type": "document",
+      "source_file": "frontend/e2e/README.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "e2e_readme_pr\u00e9_requisitos",
+      "label": "Pr\u00e9-requisitos",
+      "file_type": "document",
+      "source_file": "frontend/e2e/README.md",
+      "source_location": "L14"
+    },
+    {
+      "id": "e2e_readme_rodar",
+      "label": "Rodar",
+      "file_type": "document",
+      "source_file": "frontend/e2e/README.md",
+      "source_location": "L30"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_e2e_readme_md",
+      "target": "e2e_readme_testes_e2e_playwright",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/e2e/README.md",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_readme_testes_e2e_playwright",
+      "target": "e2e_readme_pr\u00e9_requisitos",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/e2e/README.md",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_readme_testes_e2e_playwright",
+      "target": "e2e_readme_rodar",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/e2e/README.md",
+      "source_location": "L30",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

@@ -1,0 +1,201 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_uuid_ts",
+      "label": "uuid.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/uuid.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_uuid_saferandomuuid",
+      "label": "safeRandomUUID()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/uuid.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "utils_uuid_rnd",
+      "label": "rnd()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/uuid.ts",
+      "source_location": "L46"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_uuid_ts",
+      "target": "utils_uuid_saferandomuuid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/uuid.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_uuid_ts",
+      "target": "utils_uuid_rnd",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/uuid.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_uuid_saferandomuuid",
+      "target": "utils_uuid_rnd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/uuid.ts",
+      "source_location": "L43",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "randomUUID",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "getRandomValues",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "from",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_saferandomuuid",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_rnd",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_rnd",
+      "callee": "toString",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_rnd",
+      "callee": "floor",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_uuid_rnd",
+      "callee": "random",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\uuid.ts",
+      "source_location": "L47",
+      "receiver": null
+    }
+  ]
+}

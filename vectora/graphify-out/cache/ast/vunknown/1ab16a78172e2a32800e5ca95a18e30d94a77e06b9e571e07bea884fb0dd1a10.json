@@ -1,0 +1,561 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "label": "test_context_graph_pipeline.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_graph_result_defaults",
+      "label": "test_graph_result_defaults()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_graph_result_with_error",
+      "label": "test_graph_result_with_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_graph_result_metrics",
+      "label": "test_graph_result_metrics()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_graph_out_dir",
+      "label": "test_graph_out_dir()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_run_ast_extraction_empty_list",
+      "label": "test_run_ast_extraction_empty_list()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L87"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_run_ast_extraction_unsupported_ext",
+      "label": "test_run_ast_extraction_unsupported_ext()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L94"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_run_ast_extraction_python_file",
+      "label": "test_run_ast_extraction_python_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_run_ast_extraction_nonexistent_file",
+      "label": "test_run_ast_extraction_nonexistent_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_run_ast_extraction_multiple_files",
+      "label": "test_run_ast_extraction_multiple_files()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L116"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_workspace",
+      "label": "test_build_workspace_graph_no_workspace()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L132"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "label": "test_build_workspace_graph_no_files()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "unit_test_context_graph_pipeline_rationale_1",
+      "label": "Testes do pipeline do Context Graph.  Cobre: GraphResult dataclass, _run_ast_ext",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "backend_services_context_graph_pipeline",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_graph_result_defaults",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_graph_result_with_error",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_graph_result_metrics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_graph_out_dir",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_run_ast_extraction_empty_list",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L87",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_run_ast_extraction_unsupported_ext",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_run_ast_extraction_python_file",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_run_ast_extraction_nonexistent_file",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_run_ast_extraction_multiple_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_workspace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "target": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_pipeline_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_pipeline_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_pipeline.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_defaults",
+      "callee": "GraphResult",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_defaults",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_defaults",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_defaults",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_defaults",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_with_error",
+      "callee": "GraphResult",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_with_error",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_with_error",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_with_error",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_with_error",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_metrics",
+      "callee": "GraphResult",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_metrics",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_metrics",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_metrics",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_result_metrics",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_out_dir",
+      "callee": "_graph_out_dir",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_out_dir",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_graph_out_dir",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_empty_list",
+      "callee": "_run_ast_extraction",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_empty_list",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_unsupported_ext",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_unsupported_ext",
+      "callee": "_run_ast_extraction",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_python_file",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_python_file",
+      "callee": "_run_ast_extraction",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_nonexistent_file",
+      "callee": "_run_ast_extraction",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_multiple_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_multiple_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_run_ast_extraction_multiple_files",
+      "callee": "_run_ast_extraction",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_workspace",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L135",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_workspace",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_workspace",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_workspace",
+      "callee": "build_workspace_graph",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L153",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L155",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L156",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "callee": "object",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_pipeline_test_build_workspace_graph_no_files",
+      "callee": "build_workspace_graph",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_pipeline.py",
+      "source_location": "L171",
+      "receiver": null
+    }
+  ]
+}

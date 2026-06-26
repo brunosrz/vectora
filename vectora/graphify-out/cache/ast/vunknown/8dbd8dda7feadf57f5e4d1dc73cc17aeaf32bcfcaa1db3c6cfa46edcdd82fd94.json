@@ -1,0 +1,463 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "label": "dir-node.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "files_dir_node_creatingstate",
+      "label": "CreatingState",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L27"
+    },
+    {
+      "id": "files_dir_node_dirnodeprops",
+      "label": "DirNodeProps",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L32"
+    },
+    {
+      "id": "files_dir_node_dirnode",
+      "label": "DirNode()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L53"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_workbench_use_swr_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "workbench_use_swr_useworkbenchswr",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_delayed_loading_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "hooks_use_delayed_loading_usedelayedloading",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workbench_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "stores_workbench_store_workbench_stale_ms",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "stores_workbench_store_useworkbenchstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_file_tree_skeleton_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "tabs_file_tree_skeleton_filetreeskeleton",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_files_api_fetchtree",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_files_api_apifsmove",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_utils_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_files_utils_norm",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_item_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_file_item_fileitem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_inline_create_input_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_inline_create_input_inlinecreateinput",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_dir_node_creatingstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_dir_node_dirnodeprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_dir_node_tsx",
+      "target": "files_dir_node_dirnode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/dir-node.tsx",
+      "source_location": "L53",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useWorkbenchStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useWorkbenchStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useWorkbenchStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useWorkbenchStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useWorkbenchStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useWorkbenchSWR",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "isArray",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useDelayedLoading",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "useMemo",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "workbench_files_rename_placeholder",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "workbench_files_add_context",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "workbench_files_rename",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L213",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "workbench_files_delete",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L221",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "workbench_files_creating_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L248",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_dir_node_dirnode",
+      "callee": "workbench_files_creating_folder",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\dir-node.tsx",
+      "source_location": "L249",
+      "receiver": null
+    }
+  ]
+}

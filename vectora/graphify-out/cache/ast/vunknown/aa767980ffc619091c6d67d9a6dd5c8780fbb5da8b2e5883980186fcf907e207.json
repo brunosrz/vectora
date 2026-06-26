@@ -1,0 +1,805 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "label": "vectora-client.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "api_vectora_client_chatconfig",
+      "label": "ChatConfig",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "api_vectora_client_attachmentkind",
+      "label": "AttachmentKind",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L37"
+    },
+    {
+      "id": "api_vectora_client_attachment",
+      "label": "Attachment",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L43"
+    },
+    {
+      "id": "api_vectora_client_streamchatrequest",
+      "label": "StreamChatRequest",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L50"
+    },
+    {
+      "id": "api_vectora_client_resumechatrequest",
+      "label": "ResumeChatRequest",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L58"
+    },
+    {
+      "id": "api_vectora_client_streamevent",
+      "label": "StreamEvent",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L65"
+    },
+    {
+      "id": "api_vectora_client_thread",
+      "label": "Thread",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L136"
+    },
+    {
+      "id": "api_vectora_client_historymessage",
+      "label": "HistoryMessage",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L147"
+    },
+    {
+      "id": "api_vectora_client_tryrefreshtoken",
+      "label": "tryRefreshToken()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L166"
+    },
+    {
+      "id": "api_vectora_client_redirecttologin",
+      "label": "redirectToLogin()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L184"
+    },
+    {
+      "id": "api_vectora_client_postrpc",
+      "label": "postRpc()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L282"
+    },
+    {
+      "id": "api_vectora_client_createthread",
+      "label": "createThread()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L306"
+    },
+    {
+      "id": "api_vectora_client_getthread",
+      "label": "getThread()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L311"
+    },
+    {
+      "id": "api_vectora_client_listthreads",
+      "label": "listThreads()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L314"
+    },
+    {
+      "id": "api_vectora_client_deletethread",
+      "label": "deleteThread()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L317"
+    },
+    {
+      "id": "api_vectora_client_updatethread",
+      "label": "updateThread()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L320"
+    },
+    {
+      "id": "api_vectora_client_gethistory",
+      "label": "getHistory()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L329"
+    },
+    {
+      "id": "api_vectora_client_pagedhistoryresponse",
+      "label": "PagedHistoryResponse",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L334"
+    },
+    {
+      "id": "api_vectora_client_gethistorypage",
+      "label": "getHistoryPage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L341"
+    },
+    {
+      "id": "api_vectora_client_generatetitle",
+      "label": "generateTitle()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L351"
+    },
+    {
+      "id": "api_vectora_client_threadpins",
+      "label": "ThreadPins",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L354"
+    },
+    {
+      "id": "api_vectora_client_getthreadpins",
+      "label": "getThreadPins()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L360"
+    },
+    {
+      "id": "api_vectora_client_setthreadpins",
+      "label": "setThreadPins()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L364"
+    },
+    {
+      "id": "api_vectora_client_usagewindowstats",
+      "label": "UsageWindowStats",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L374"
+    },
+    {
+      "id": "api_vectora_client_authusage",
+      "label": "AuthUsage",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L382"
+    },
+    {
+      "id": "api_vectora_client_getauthusage",
+      "label": "getAuthUsage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L387"
+    },
+    {
+      "id": "api_vectora_client_threadactivity",
+      "label": "ThreadActivity",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L400"
+    },
+    {
+      "id": "api_vectora_client_getthreadactivity",
+      "label": "getThreadActivity()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L406"
+    },
+    {
+      "id": "api_vectora_client_getstackhint",
+      "label": "getStackHint()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L421"
+    },
+    {
+      "id": "api_vectora_client_sharedthread",
+      "label": "SharedThread",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L436"
+    },
+    {
+      "id": "api_vectora_client_getsharedthread",
+      "label": "getSharedThread()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L444"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_api_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "constants_api_vectora_api_url",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_return_to_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "utils_return_to_savereturnto",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_chatconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_attachmentkind",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_attachment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_streamchatrequest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_resumechatrequest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_streamevent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_historymessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_tryrefreshtoken",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_redirecttologin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L184",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_postrpc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L282",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_createthread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L306",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_getthread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L311",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_listthreads",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L314",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_deletethread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L317",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_updatethread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L320",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_gethistory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L329",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_pagedhistoryresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L334",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_gethistorypage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L341",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_generatetitle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L351",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_threadpins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L354",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_getthreadpins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L360",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_setthreadpins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L364",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_usagewindowstats",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L374",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_authusage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L382",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_getauthusage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L387",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_threadactivity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L400",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_getthreadactivity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L406",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_getstackhint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L421",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_sharedthread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L436",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "target": "api_vectora_client_getsharedthread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L444",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_postrpc",
+      "target": "api_vectora_client_tryrefreshtoken",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L294",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_postrpc",
+      "target": "api_vectora_client_redirecttologin",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L296",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_createthread",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L307",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_getthread",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L312",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_listthreads",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L315",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_deletethread",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L318",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_updatethread",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L324",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_gethistory",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L332",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_generatetitle",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L352",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_getthreadpins",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L361",
+      "weight": 1.0
+    },
+    {
+      "source": "api_vectora_client_setthreadpins",
+      "target": "api_vectora_client_postrpc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/vectora-client.ts",
+      "source_location": "L368",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "api_vectora_client_tryrefreshtoken",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_tryrefreshtoken",
+      "callee": "stringify",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_redirecttologin",
+      "callee": "saveReturnTo",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L188",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_postrpc",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L287",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_postrpc",
+      "callee": "stringify",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L291",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_postrpc",
+      "callee": "catch",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L300",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_postrpc",
+      "callee": "text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L300",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_postrpc",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L303",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_gethistorypage",
+      "callee": "then",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L346",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_gethistorypage",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L346",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getauthusage",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L388",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getauthusage",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L393",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getthreadactivity",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L409",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getthreadactivity",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L414",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getstackhint",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L424",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getstackhint",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L429",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getsharedthread",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L447",
+      "receiver": null
+    },
+    {
+      "caller_nid": "api_vectora_client_getsharedthread",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\api\\vectora-client.ts",
+      "source_location": "L452",
+      "receiver": null
+    }
+  ]
+}

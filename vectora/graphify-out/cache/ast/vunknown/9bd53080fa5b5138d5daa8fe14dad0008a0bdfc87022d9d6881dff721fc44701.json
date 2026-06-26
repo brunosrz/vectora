@@ -1,0 +1,169 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_adapters_error_py",
+      "label": "test_adapters_error.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_adapters_error_test_rate_limit_429_classified",
+      "label": "test_rate_limit_429_classified()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "unit_test_adapters_error_test_rate_limit_quota_wording",
+      "label": "test_rate_limit_quota_wording()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "unit_test_adapters_error_test_auth_error_classified",
+      "label": "test_auth_error_classified()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "unit_test_adapters_error_test_generic_error_fallback",
+      "label": "test_generic_error_fallback()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "unit_test_adapters_error_rationale_1",
+      "label": "Classifica\u00e7\u00e3o de erros do stream em c\u00f3digos tipados (RATE_LIMIT/AUTH/...).  Gara",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_adapters_error_py",
+      "target": "backend_api_adapters",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_adapters_error_py",
+      "target": "unit_test_adapters_error_test_rate_limit_429_classified",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_adapters_error_py",
+      "target": "unit_test_adapters_error_test_rate_limit_quota_wording",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_adapters_error_py",
+      "target": "unit_test_adapters_error_test_auth_error_classified",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_adapters_error_py",
+      "target": "unit_test_adapters_error_test_generic_error_fallback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_adapters_error_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_adapters_error_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_adapters_error.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_adapters_error_test_rate_limit_429_classified",
+      "callee": "classify_stream_error",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_adapters_error_test_rate_limit_429_classified",
+      "callee": "RuntimeError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_adapters_error_test_rate_limit_quota_wording",
+      "callee": "classify_stream_error",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_adapters_error_test_rate_limit_quota_wording",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_adapters_error_test_auth_error_classified",
+      "callee": "classify_stream_error",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_adapters_error_test_auth_error_classified",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_adapters_error_test_generic_error_fallback",
+      "callee": "classify_stream_error",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_adapters_error_test_generic_error_fallback",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_adapters_error.py",
+      "source_location": "L39",
+      "receiver": null
+    }
+  ]
+}

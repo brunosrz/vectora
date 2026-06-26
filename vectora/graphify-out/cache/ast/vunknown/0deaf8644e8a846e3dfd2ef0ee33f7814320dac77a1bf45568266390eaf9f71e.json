@@ -1,0 +1,546 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "label": "context_files.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_context_files_parse_frontmatter",
+      "label": "parse_frontmatter()",
+      "file_type": "code",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "services_context_files_contextfile",
+      "label": "ContextFile",
+      "file_type": "code",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L79"
+    },
+    {
+      "id": "services_context_files_contextfile_from_path",
+      "label": ".from_path()",
+      "file_type": "code",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_context_files_collect_context_files",
+      "label": "collect_context_files()",
+      "file_type": "code",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L149"
+    },
+    {
+      "id": "services_context_files_format_context_files_for_prompt",
+      "label": "format_context_files_for_prompt()",
+      "file_type": "code",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L193"
+    },
+    {
+      "id": "services_context_files_rationale_1",
+      "label": "Coleta e parsing de arquivos de contexto do workspace.  L\u00ea e interpreta arquivos",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_context_files_rationale_50",
+      "label": "Extrai e parseia frontmatter YAML de um arquivo Markdown.      Retorna (meta_dic",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "services_context_files_rationale_80",
+      "label": "Arquivo de contexto com frontmatter parseado e corpo processado.",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "services_context_files_rationale_150",
+      "label": "Coleta todos os arquivos de contexto do workspace.      Ordem de coleta (antes d",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "services_context_files_rationale_199",
+      "label": "Formata a lista de ContextFile como texto para injetar no prompt.      Por padr\u00e3",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L199"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "target": "dataclasses",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "target": "services_context_files_parse_frontmatter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "target": "services_context_files_contextfile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_contextfile",
+      "target": "services_context_files_contextfile_from_path",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_contextfile_from_path",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_contextfile_from_path",
+      "target": "services_context_files_contextfile",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "target": "services_context_files_collect_context_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L149",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_collect_context_files",
+      "target": "services_context_files_contextfile",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L149",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "target": "services_context_files_format_context_files_for_prompt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L193",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_format_context_files_for_prompt",
+      "target": "services_context_files_contextfile",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L193",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_contextfile_from_path",
+      "target": "services_context_files_parse_frontmatter",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_collect_context_files",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_collect_context_files",
+      "target": "services_context_files_contextfile_from_path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L169",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_files_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_rationale_50",
+      "target": "services_context_files_parse_frontmatter",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_rationale_80",
+      "target": "services_context_files_contextfile",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_rationale_150",
+      "target": "services_context_files_collect_context_files",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "services_context_files_rationale_199",
+      "target": "services_context_files_format_context_files_for_prompt",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_files.py",
+      "source_location": "L199",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_context_files_parse_frontmatter",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_parse_frontmatter",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_parse_frontmatter",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_parse_frontmatter",
+      "callee": "lstrip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_parse_frontmatter",
+      "callee": "safe_load",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_parse_frontmatter",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_contextfile_from_path",
+      "callee": "cls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L134",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "is_dir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L175",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "iterdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L176",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "is_dir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_collect_context_files",
+      "callee": "sort",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L189",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_format_context_files_for_prompt",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L220",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_context_files_format_context_files_for_prompt",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_files.py",
+      "source_location": "L223",
+      "receiver": null
+    }
+  ]
+}

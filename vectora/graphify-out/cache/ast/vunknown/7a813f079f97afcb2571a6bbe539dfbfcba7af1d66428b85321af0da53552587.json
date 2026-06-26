@@ -1,0 +1,199 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "label": "sidebar-compact.test.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_sidebar_compact_test_makethread",
+      "label": "makeThread()",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L42"
+    },
+    {
+      "id": "tests_sidebar_compact_test_makeworkspace",
+      "label": "makeWorkspace()",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L51"
+    },
+    {
+      "id": "tests_sidebar_compact_test_noop",
+      "label": "noop",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L55"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "sidebar_thread_group_threadgroup",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "sidebar_workspace_group_workspacegroup",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_footer_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "sidebar_sidebar_footer_sidebarfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "threads_index_thread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "stores_workspaces_store_workspaceinfo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "tests_sidebar_compact_test_makethread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "tests_sidebar_compact_test_makeworkspace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_tests_sidebar_compact_test_tsx",
+      "target": "tests_sidebar_compact_test_noop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/__tests__/sidebar-compact.test.tsx",
+      "source_location": "L55",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_sidebar_compact_test_makethread",
+      "callee": "toISOString",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\__tests__\\sidebar-compact.test.tsx",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_sidebar_compact_test_makethread",
+      "callee": "toISOString",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\__tests__\\sidebar-compact.test.tsx",
+      "source_location": "L47",
+      "receiver": null
+    }
+  ]
+}

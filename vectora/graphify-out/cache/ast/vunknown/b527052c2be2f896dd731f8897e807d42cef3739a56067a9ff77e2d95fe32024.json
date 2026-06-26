@@ -1,0 +1,447 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "label": "plugins.py",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_plugins_user_id",
+      "label": "_user_id()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "request",
+      "label": "Request",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_plugins_list_plugins",
+      "label": "list_plugins()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L40"
+    },
+    {
+      "id": "handlers_plugins_add_plugin",
+      "label": "add_plugin()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "mcpserver",
+      "label": "McpServer",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_plugins_delete_plugin",
+      "label": "delete_plugin()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "handlers_plugins_verify_plugin",
+      "label": "verify_plugin()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "handlers_plugins_rationale_1",
+      "label": "Handler de plugins MCP \u2014 gest\u00e3o de servidores MCP por usu\u00e1rio (Bloco S).  Endpoi",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_plugins_rationale_41",
+      "label": "Lista os servidores MCP do usu\u00e1rio autenticado.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "handlers_plugins_rationale_48",
+      "label": "Adiciona ou atualiza (por nome) um servidor MCP do usu\u00e1rio.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "handlers_plugins_rationale_66",
+      "label": "Remove um servidor MCP do usu\u00e1rio.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "handlers_plugins_rationale_75",
+      "label": "Health-check: conecta ao servidor e lista suas tools.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L75"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "backend_services_plugins",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "handlers_plugins_user_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_user_id",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "handlers_plugins_list_plugins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_list_plugins",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "handlers_plugins_add_plugin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_add_plugin",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_add_plugin",
+      "target": "mcpserver",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "handlers_plugins_delete_plugin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_delete_plugin",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "target": "handlers_plugins_verify_plugin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_verify_plugin",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_list_plugins",
+      "target": "handlers_plugins_user_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_add_plugin",
+      "target": "handlers_plugins_user_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_delete_plugin",
+      "target": "handlers_plugins_user_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_verify_plugin",
+      "target": "handlers_plugins_user_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_plugins_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_rationale_41",
+      "target": "handlers_plugins_list_plugins",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_rationale_48",
+      "target": "handlers_plugins_add_plugin",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_rationale_66",
+      "target": "handlers_plugins_delete_plugin",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_plugins_rationale_75",
+      "target": "handlers_plugins_verify_plugin",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/plugins.py",
+      "source_location": "L75",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "handlers_plugins_list_plugins",
+      "callee": "list_servers",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_list_plugins",
+      "callee": "model_dump",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "add_server",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_add_plugin",
+      "callee": "model_dump",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_delete_plugin",
+      "callee": "remove_server",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_delete_plugin",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_verify_plugin",
+      "callee": "list_servers",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_verify_plugin",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_plugins_verify_plugin",
+      "callee": "health_check",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\plugins.py",
+      "source_location": "L79",
+      "receiver": null
+    }
+  ]
+}

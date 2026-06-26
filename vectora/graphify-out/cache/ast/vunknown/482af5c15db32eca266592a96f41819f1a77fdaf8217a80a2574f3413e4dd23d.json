@@ -1,0 +1,1413 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "label": "test_context_graph_dedup.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnorm",
+      "label": "TestNorm",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L11"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnorm_test_lowercases",
+      "label": ".test_lowercases()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L12"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnorm_test_collapses_nonalphanumeric",
+      "label": ".test_collapses_nonalphanumeric()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnorm_test_none_returns_empty",
+      "label": ".test_none_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnorm_test_integer_converts",
+      "label": ".test_integer_converts()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnorm_test_unicode_normalization",
+      "label": ".test_unicode_normalization()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testentropy",
+      "label": "TestEntropy",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testentropy_test_empty_label_zero",
+      "label": ".test_empty_label_zero()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L42"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testentropy_test_single_char_zero",
+      "label": ".test_single_char_zero()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testentropy_test_uniform_has_entropy",
+      "label": ".test_uniform_has_entropy()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testentropy_test_long_string_higher_entropy",
+      "label": ".test_long_string_higher_entropy()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshingles",
+      "label": "TestShingles",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshingles_test_trigrams",
+      "label": ".test_trigrams()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L67"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshingles_test_short_text_returns_self",
+      "label": ".test_short_text_returns_self()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshingles_test_empty_returns_empty_singleton",
+      "label": ".test_empty_returns_empty_singleton()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L79"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testmakeminhash",
+      "label": "TestMakeMinhash",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L85"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testmakeminhash_test_returns_minhash",
+      "label": ".test_returns_minhash()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L86"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testmakeminhash_test_similar_texts_produce_similar_hash",
+      "label": ".test_similar_texts_produce_similar_hash()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L93"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testisvariantpair",
+      "label": "TestIsVariantPair",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L105"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testisvariantpair_test_same_label_not_variant",
+      "label": ".test_same_label_not_variant()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L106"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testisvariantpair_test_short_number_suffix_variants",
+      "label": ".test_short_number_suffix_variants()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testisvariantpair_test_long_labels_not_checked",
+      "label": ".test_long_labels_not_checked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L116"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testisvariantpair_test_no_variant_suffix_not_variant",
+      "label": ".test_no_variant_suffix_not_variant()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L121"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshortlabelblocked",
+      "label": "TestShortLabelBlocked",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L127"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshortlabelblocked_test_long_labels_not_blocked",
+      "label": ".test_long_labels_not_blocked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L128"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshortlabelblocked_test_same_length_single_substitution_allowed",
+      "label": ".test_same_length_single_substitution_allowed()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L133"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testshortlabelblocked_test_different_length_short_blocked",
+      "label": ".test_different_length_short_blocked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L138"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnumerictokensdiffer",
+      "label": "TestNumericTokensDiffer",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L144"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_same_labels_no_difference",
+      "label": ".test_same_labels_no_difference()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L145"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_different_numbers_differ",
+      "label": ".test_different_numbers_differ()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_leading_zeros_normalized",
+      "label": ".test_leading_zeros_normalized()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L155"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_no_numbers_no_difference",
+      "label": ".test_no_numbers_no_difference()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L160"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked",
+      "label": "TestCrossfileFileanchoredBlocked",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_code_nodes_not_blocked",
+      "label": ".test_code_nodes_not_blocked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L167"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_document_nodes_different_files_blocked",
+      "label": ".test_document_nodes_different_files_blocked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L174"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_document_same_file_not_blocked",
+      "label": ".test_document_same_file_not_blocked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L181"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_rationale_nodes_different_files_blocked",
+      "label": ".test_rationale_nodes_different_files_blocked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L188"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testuf",
+      "label": "TestUF",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L196"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testuf_test_find_self",
+      "label": ".test_find_self()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L197"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testuf_test_union_and_find",
+      "label": ".test_union_and_find()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L203"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testuf_test_components",
+      "label": ".test_components()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L210"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "label": ".test_path_compression()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L222"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "label": "TestDeduplicateEntities",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L234"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "label": "._node()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L235"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_empty_nodes_returns_same",
+      "label": ".test_empty_nodes_returns_same()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L245"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_single_node_passthrough",
+      "label": ".test_single_node_passthrough()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L252"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_duplicate_ids_collapsed",
+      "label": ".test_exact_duplicate_ids_collapsed()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L259"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_normalized_same_file_merged",
+      "label": ".test_exact_normalized_same_file_merged()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L267"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_code_nodes_not_fuzzy_merged",
+      "label": ".test_code_nodes_not_fuzzy_merged()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L276"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_cross_repo_raises",
+      "label": ".test_cross_repo_raises()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L287"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_edges_rewired_after_merge",
+      "label": ".test_edges_rewired_after_merge()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L297"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_testdeduplicateentities_test_community_boost_does_not_crash",
+      "label": ".test_community_boost_does_not_crash()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L311"
+    },
+    {
+      "id": "unit_test_context_graph_dedup_rationale_1",
+      "label": "Testes para backend/services/context_graph/dedup.py.  Cobre: _norm, _entropy, _s",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testnorm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnorm",
+      "target": "unit_test_context_graph_dedup_testnorm_test_lowercases",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnorm",
+      "target": "unit_test_context_graph_dedup_testnorm_test_collapses_nonalphanumeric",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnorm",
+      "target": "unit_test_context_graph_dedup_testnorm_test_none_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnorm",
+      "target": "unit_test_context_graph_dedup_testnorm_test_integer_converts",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnorm",
+      "target": "unit_test_context_graph_dedup_testnorm_test_unicode_normalization",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testentropy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testentropy",
+      "target": "unit_test_context_graph_dedup_testentropy_test_empty_label_zero",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testentropy",
+      "target": "unit_test_context_graph_dedup_testentropy_test_single_char_zero",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testentropy",
+      "target": "unit_test_context_graph_dedup_testentropy_test_uniform_has_entropy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testentropy",
+      "target": "unit_test_context_graph_dedup_testentropy_test_long_string_higher_entropy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testshingles",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testshingles",
+      "target": "unit_test_context_graph_dedup_testshingles_test_trigrams",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testshingles",
+      "target": "unit_test_context_graph_dedup_testshingles_test_short_text_returns_self",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testshingles",
+      "target": "unit_test_context_graph_dedup_testshingles_test_empty_returns_empty_singleton",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testmakeminhash",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testmakeminhash",
+      "target": "unit_test_context_graph_dedup_testmakeminhash_test_returns_minhash",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testmakeminhash",
+      "target": "unit_test_context_graph_dedup_testmakeminhash_test_similar_texts_produce_similar_hash",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testisvariantpair",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testisvariantpair",
+      "target": "unit_test_context_graph_dedup_testisvariantpair_test_same_label_not_variant",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testisvariantpair",
+      "target": "unit_test_context_graph_dedup_testisvariantpair_test_short_number_suffix_variants",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testisvariantpair",
+      "target": "unit_test_context_graph_dedup_testisvariantpair_test_long_labels_not_checked",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testisvariantpair",
+      "target": "unit_test_context_graph_dedup_testisvariantpair_test_no_variant_suffix_not_variant",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testshortlabelblocked",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testshortlabelblocked",
+      "target": "unit_test_context_graph_dedup_testshortlabelblocked_test_long_labels_not_blocked",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testshortlabelblocked",
+      "target": "unit_test_context_graph_dedup_testshortlabelblocked_test_same_length_single_substitution_allowed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testshortlabelblocked",
+      "target": "unit_test_context_graph_dedup_testshortlabelblocked_test_different_length_short_blocked",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testnumerictokensdiffer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnumerictokensdiffer",
+      "target": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_same_labels_no_difference",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnumerictokensdiffer",
+      "target": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_different_numbers_differ",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnumerictokensdiffer",
+      "target": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_leading_zeros_normalized",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testnumerictokensdiffer",
+      "target": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_no_numbers_no_difference",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked",
+      "target": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_code_nodes_not_blocked",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked",
+      "target": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_document_nodes_different_files_blocked",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked",
+      "target": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_document_same_file_not_blocked",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked",
+      "target": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_rationale_nodes_different_files_blocked",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testuf",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L196",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testuf",
+      "target": "unit_test_context_graph_dedup_testuf_test_find_self",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L197",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testuf",
+      "target": "unit_test_context_graph_dedup_testuf_test_union_and_find",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L203",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testuf",
+      "target": "unit_test_context_graph_dedup_testuf_test_components",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L210",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testuf",
+      "target": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L222",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L234",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L235",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_empty_nodes_returns_same",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_single_node_passthrough",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L252",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_duplicate_ids_collapsed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L259",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_normalized_same_file_merged",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L267",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_code_nodes_not_fuzzy_merged",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L276",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_cross_repo_raises",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L287",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_edges_rewired_after_merge",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L297",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_test_community_boost_does_not_crash",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L311",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities_test_single_node_passthrough",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_duplicate_ids_collapsed",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L262",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_normalized_same_file_merged",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L270",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities_test_code_nodes_not_fuzzy_merged",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L279",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities_test_cross_repo_raises",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L292",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities_test_edges_rewired_after_merge",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L300",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_testdeduplicateentities_test_community_boost_does_not_crash",
+      "target": "unit_test_context_graph_dedup_testdeduplicateentities_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L314",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_dedup_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_dedup_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_dedup.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnorm_test_lowercases",
+      "callee": "_norm",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L15",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnorm_test_collapses_nonalphanumeric",
+      "callee": "_norm",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnorm_test_none_returns_empty",
+      "callee": "_norm",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnorm_test_integer_converts",
+      "callee": "_norm",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnorm_test_unicode_normalization",
+      "callee": "_norm",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testentropy_test_empty_label_zero",
+      "callee": "_entropy",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testentropy_test_single_char_zero",
+      "callee": "_entropy",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testentropy_test_uniform_has_entropy",
+      "callee": "_entropy",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testentropy_test_long_string_higher_entropy",
+      "callee": "_entropy",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testentropy_test_long_string_higher_entropy",
+      "callee": "_entropy",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testshingles_test_trigrams",
+      "callee": "_shingles",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testshingles_test_short_text_returns_self",
+      "callee": "_shingles",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testshingles_test_empty_returns_empty_singleton",
+      "callee": "_shingles",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testmakeminhash_test_returns_minhash",
+      "callee": "_make_minhash",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testmakeminhash_test_similar_texts_produce_similar_hash",
+      "callee": "_make_minhash",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testmakeminhash_test_similar_texts_produce_similar_hash",
+      "callee": "_make_minhash",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testisvariantpair_test_same_label_not_variant",
+      "callee": "_is_variant_pair",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testisvariantpair_test_short_number_suffix_variants",
+      "callee": "_is_variant_pair",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testisvariantpair_test_long_labels_not_checked",
+      "callee": "_is_variant_pair",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testisvariantpair_test_no_variant_suffix_not_variant",
+      "callee": "_is_variant_pair",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testshortlabelblocked_test_long_labels_not_blocked",
+      "callee": "_short_label_blocked",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testshortlabelblocked_test_same_length_single_substitution_allowed",
+      "callee": "_short_label_blocked",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testshortlabelblocked_test_different_length_short_blocked",
+      "callee": "_short_label_blocked",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_same_labels_no_difference",
+      "callee": "_numeric_tokens_differ",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_different_numbers_differ",
+      "callee": "_numeric_tokens_differ",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L153",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_leading_zeros_normalized",
+      "callee": "_numeric_tokens_differ",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L158",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testnumerictokensdiffer_test_no_numbers_no_difference",
+      "callee": "_numeric_tokens_differ",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_code_nodes_not_blocked",
+      "callee": "_crossfile_fileanchored_blocked",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_document_nodes_different_files_blocked",
+      "callee": "_crossfile_fileanchored_blocked",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_document_same_file_not_blocked",
+      "callee": "_crossfile_fileanchored_blocked",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testcrossfilefileanchoredblocked_test_rationale_nodes_different_files_blocked",
+      "callee": "_crossfile_fileanchored_blocked",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L193",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_find_self",
+      "callee": "_UF",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_find_self",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_union_and_find",
+      "callee": "_UF",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L206",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_union_and_find",
+      "callee": "union",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L207",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_union_and_find",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L208",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_union_and_find",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L208",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "_UF",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L213",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "union",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "union",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "components",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L216",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "frozenset",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "frozenset",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L219",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_components",
+      "callee": "frozenset",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L220",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "callee": "_UF",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L225",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "callee": "union",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L226",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "callee": "union",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L227",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L229",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testuf_test_path_compression",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L231",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_empty_nodes_returns_same",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L248",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_single_node_passthrough",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L256",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_duplicate_ids_collapsed",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L264",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_exact_normalized_same_file_merged",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L272",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_code_nodes_not_fuzzy_merged",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L283",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_cross_repo_raises",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L294",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_cross_repo_raises",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L295",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_edges_rewired_after_merge",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L304",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_dedup_testdeduplicateentities_test_community_boost_does_not_crash",
+      "callee": "deduplicate_entities",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_dedup.py",
+      "source_location": "L317",
+      "receiver": null
+    }
+  ]
+}

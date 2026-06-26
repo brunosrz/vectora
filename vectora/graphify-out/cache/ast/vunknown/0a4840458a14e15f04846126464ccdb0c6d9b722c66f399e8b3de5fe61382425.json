@@ -1,0 +1,271 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_usage_py",
+      "label": "usage.py",
+      "file_type": "code",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_usage_usagetracker",
+      "label": "UsageTracker",
+      "file_type": "code",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "services_usage_usagetracker_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "services_usage_usagetracker_prune_below",
+      "label": "._prune_below()",
+      "file_type": "code",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "services_usage_usagetracker_record",
+      "label": ".record()",
+      "file_type": "code",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "services_usage_usagetracker_window_stats",
+      "label": "._window_stats()",
+      "file_type": "code",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "services_usage_usagetracker_usage",
+      "label": ".usage()",
+      "file_type": "code",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "services_usage_rationale_1",
+      "label": "Rastreador de uso por usu\u00e1rio \u2014 janelas deslizantes em mem\u00f3ria (K.2.1).  Conta r",
+      "file_type": "rationale",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_usage_rationale_22",
+      "label": "Conta eventos por usu\u00e1rio em janelas deslizantes (curta, 5h, semanal).      A ja",
+      "file_type": "rationale",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "services_usage_rationale_47",
+      "label": "Remove timestamps menores que ``cutoff`` do in\u00edcio da lista.",
+      "file_type": "rationale",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "services_usage_rationale_57",
+      "label": "Registra um request do usu\u00e1rio no instante ``now`` (default: agora).",
+      "file_type": "rationale",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "services_usage_rationale_81",
+      "label": "Retorna o consumo atual nas tr\u00eas janelas mais um snapshot legado.          - ``f",
+      "file_type": "rationale",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L81"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_usage_py",
+      "target": "time",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_usage_py",
+      "target": "services_usage_usagetracker",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker",
+      "target": "services_usage_usagetracker_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker",
+      "target": "services_usage_usagetracker_prune_below",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker",
+      "target": "services_usage_usagetracker_record",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker",
+      "target": "services_usage_usagetracker_window_stats",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker",
+      "target": "services_usage_usagetracker_usage",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker_record",
+      "target": "services_usage_usagetracker_prune_below",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker_usage",
+      "target": "services_usage_usagetracker_prune_below",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_usagetracker_usage",
+      "target": "services_usage_usagetracker_window_stats",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_usage_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_rationale_22",
+      "target": "services_usage_usagetracker",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_rationale_47",
+      "target": "services_usage_usagetracker_prune_below",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_rationale_57",
+      "target": "services_usage_usagetracker_record",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "services_usage_rationale_81",
+      "target": "services_usage_usagetracker_usage",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/usage.py",
+      "source_location": "L81",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_usage_usagetracker_record",
+      "callee": "time",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\usage.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_usage_usagetracker_record",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\usage.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_usage_usagetracker_record",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\usage.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_usage_usagetracker_usage",
+      "callee": "time",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\usage.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_usage_usagetracker_usage",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\usage.py",
+      "source_location": "L88",
+      "receiver": null
+    }
+  ]
+}

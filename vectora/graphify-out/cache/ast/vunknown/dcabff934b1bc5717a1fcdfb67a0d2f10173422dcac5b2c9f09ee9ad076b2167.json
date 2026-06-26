@@ -1,0 +1,1723 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "label": "test_bloco_d.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema",
+      "label": "TestThinkingEventSchema",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_importable",
+      "label": ".test_thinking_event_importable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_reason",
+      "label": ".test_thinking_event_has_reason()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_action",
+      "label": ".test_thinking_event_has_action()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_action_defaults_to_respond",
+      "label": ".test_thinking_event_action_defaults_to_respond()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_delegate_to",
+      "label": ".test_thinking_event_has_delegate_to()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_delegate_to_defaults_none",
+      "label": ".test_thinking_event_delegate_to_defaults_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_encode_has_correct_type",
+      "label": ".test_thinking_event_encode_has_correct_type()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_in_stream_payload_union",
+      "label": ".test_thinking_event_in_stream_payload_union()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptstreamthinkingevent",
+      "label": "TestAdaptStreamThinkingEvent",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L82"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "label": ".test_no_thinking_event_when_orchestrator_responds_directly()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L90"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels",
+      "label": "TestNodeLabels",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_node_labels_module_importable",
+      "label": ".test_node_labels_module_importable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L137"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_node_label_returns_string",
+      "label": ".test_get_node_label_returns_string()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L140"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_node_label_model",
+      "label": ".test_get_node_label_model()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L147"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_node_label_search",
+      "label": ".test_get_node_label_search()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L152"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_node_label_tools",
+      "label": ".test_get_node_label_tools()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L157"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_node_label_coder",
+      "label": ".test_get_node_label_coder()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L163"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_node_label_main_agent",
+      "label": ".test_get_node_label_main_agent()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L173"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_node_label_unknown_returns_generic",
+      "label": ".test_get_node_label_unknown_returns_generic()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L180"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_node_labels_dict_exported",
+      "label": ".test_node_labels_dict_exported()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L187"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_node_label_routing_decision",
+      "label": ".test_node_label_routing_decision()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L194"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_routing_label_rag",
+      "label": ".test_get_routing_label_rag()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L205"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_get_routing_label_unknown",
+      "label": ".test_get_routing_label_unknown()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L212"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "label": ".test_node_event_with_label_in_sse()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L219"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodeeventduration",
+      "label": "TestNodeEventDuration",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L236"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "label": ".test_node_finished_has_duration_ms()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L240"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "label": ".test_node_started_has_zero_duration_ms()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L279"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodeeventduration_test_node_event_duration_schema",
+      "label": ".test_node_event_duration_schema()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L309"
+    },
+    {
+      "id": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "label": ".test_multiple_nodes_have_independent_durations()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L316"
+    },
+    {
+      "id": "unit_test_bloco_d_testdevmodefields",
+      "label": "TestDevModeFields",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L352"
+    },
+    {
+      "id": "unit_test_bloco_d_testdevmodefields_test_thinking_event_has_task_query_field",
+      "label": ".test_thinking_event_has_task_query_field()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L355"
+    },
+    {
+      "id": "unit_test_bloco_d_testdevmodefields_test_thinking_event_task_query_defaults_none",
+      "label": ".test_thinking_event_task_query_defaults_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L366"
+    },
+    {
+      "id": "unit_test_bloco_d_testdevmodefields_test_thinking_event_full_fields_in_encoded_event",
+      "label": ".test_thinking_event_full_fields_in_encoded_event()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L372"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression",
+      "label": "TestAdaptersRegression",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L399"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_token_event_from_chat_model_stream",
+      "label": ".test_token_event_from_chat_model_stream()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L402"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_orchestrator_tokens_now_emitted",
+      "label": ".test_orchestrator_tokens_now_emitted()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L420"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_tool_call_event_emitted",
+      "label": ".test_tool_call_event_emitted()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L442"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_tool_result_event_emitted",
+      "label": ".test_tool_result_event_emitted()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L458"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_node_started_event",
+      "label": ".test_node_started_event()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L473"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_node_finished_event",
+      "label": ".test_node_finished_event()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L488"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_langgraph_root_events_ignored",
+      "label": ".test_langgraph_root_events_ignored()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L502"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "label": ".test_stream_always_starts_with_thread_event()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L516"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "label": ".test_stream_always_ends_with_done_event()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L533"
+    },
+    {
+      "id": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "label": ".test_stream_emits_error_event_on_exception()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L550"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_1",
+      "label": "Testes TDD para o Bloco D \u2014 Reasoning Reveal & Thinking UX.  Todos estes testes",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_26",
+      "label": "ThinkingEvent deve existir em schemas.py com os campos corretos.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_70",
+      "label": "ThinkingEvent deve fazer parte de StreamChatEventPayload.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_83",
+      "label": "adapt_stream n\u00e3o emite ThinkingEvent legado com deepagents (E.B-6).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L83"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_135",
+      "label": "node_labels.py mapeia nome interno de n\u00f3 para label leg\u00edvel.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L135"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_195",
+      "label": "Label especial quando o agente delega ao sub-agent de busca.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L195"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_220",
+      "label": "NodeEvent com started deve emitir label sem\u00e2ntico no campo node_label.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L220"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_237",
+      "label": "adapt_stream j\u00e1 calcula duration_ms; testes garantem comportamento correto.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L237"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_353",
+      "label": "Com dev=True, o ThinkingEvent exp\u00f5e campos extras de debug.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L353"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_400",
+      "label": "Testes de n\u00e3o-regress\u00e3o: comportamentos do adapters antes do Bloco D.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L400"
+    },
+    {
+      "id": "unit_test_bloco_d_rationale_421",
+      "label": "O orchestrator deixou de usar structured output (set         _STRUCTURED_OUTPUT_",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L421"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "unit_test_bloco_d_testthinkingeventschema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_importable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_reason",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_action",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_action_defaults_to_respond",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_delegate_to",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_delegate_to_defaults_none",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_encode_has_correct_type",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testthinkingeventschema",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_in_stream_payload_union",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "unit_test_bloco_d_testadaptstreamthinkingevent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptstreamthinkingevent",
+      "target": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "unit_test_bloco_d_testnodelabels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_node_labels_module_importable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_node_label_returns_string",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_node_label_model",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_node_label_search",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_node_label_tools",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L157",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_node_label_coder",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_node_label_main_agent",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_node_label_unknown_returns_generic",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L180",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_node_labels_dict_exported",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L187",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_node_label_routing_decision",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L194",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_routing_label_rag",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L205",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_get_routing_label_unknown",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L212",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodelabels",
+      "target": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "unit_test_bloco_d_testnodeeventduration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodeeventduration",
+      "target": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodeeventduration",
+      "target": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L279",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodeeventduration",
+      "target": "unit_test_bloco_d_testnodeeventduration_test_node_event_duration_schema",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L309",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testnodeeventduration",
+      "target": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L316",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "unit_test_bloco_d_testdevmodefields",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L352",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testdevmodefields",
+      "target": "unit_test_bloco_d_testdevmodefields_test_thinking_event_has_task_query_field",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L355",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testdevmodefields",
+      "target": "unit_test_bloco_d_testdevmodefields_test_thinking_event_task_query_defaults_none",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L366",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testdevmodefields",
+      "target": "unit_test_bloco_d_testdevmodefields_test_thinking_event_full_fields_in_encoded_event",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L372",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "target": "unit_test_bloco_d_testadaptersregression",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L399",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_token_event_from_chat_model_stream",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L402",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_orchestrator_tokens_now_emitted",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L420",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_tool_call_event_emitted",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L442",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_tool_result_event_emitted",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L458",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_node_started_event",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L473",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_node_finished_event",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L488",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_langgraph_root_events_ignored",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L502",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L516",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L533",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_testadaptersregression",
+      "target": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L550",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_bloco_d_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_26",
+      "target": "unit_test_bloco_d_testthinkingeventschema",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_70",
+      "target": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_in_stream_payload_union",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_83",
+      "target": "unit_test_bloco_d_testadaptstreamthinkingevent",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_135",
+      "target": "unit_test_bloco_d_testnodelabels",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_195",
+      "target": "unit_test_bloco_d_testnodelabels_test_node_label_routing_decision",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L195",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_220",
+      "target": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L220",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_237",
+      "target": "unit_test_bloco_d_testnodeeventduration",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L237",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_353",
+      "target": "unit_test_bloco_d_testdevmodefields",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L353",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_400",
+      "target": "unit_test_bloco_d_testadaptersregression",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L400",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_bloco_d_rationale_421",
+      "target": "unit_test_bloco_d_testadaptersregression_test_orchestrator_tokens_now_emitted",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_bloco_d.py",
+      "source_location": "L421",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_reason",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_action",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_action_defaults_to_respond",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_has_delegate_to",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_delegate_to_defaults_none",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_encode_has_correct_type",
+      "callee": "encode_event",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_encode_has_correct_type",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_encode_has_correct_type",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_encode_has_correct_type",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_encode_has_correct_type",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testthinkingeventschema_test_thinking_event_in_stream_payload_union",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "callee": "AIMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "callee": "adapt_stream",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "callee": "_fake_events",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptstreamthinkingevent_test_no_thinking_event_when_orchestrator_responds_directly",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_returns_string",
+      "callee": "get_node_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_model",
+      "callee": "get_node_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L150",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_search",
+      "callee": "get_node_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L155",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_tools",
+      "callee": "get_node_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_tools",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_coder",
+      "callee": "get_node_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_coder",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_coder",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_coder",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_main_agent",
+      "callee": "get_node_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L176",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_node_label_unknown_returns_generic",
+      "callee": "get_node_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L183",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_label_routing_decision",
+      "callee": "get_routing_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L198",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_label_routing_decision",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_label_routing_decision",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_label_routing_decision",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L202",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_routing_label_rag",
+      "callee": "get_routing_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L208",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_get_routing_label_unknown",
+      "callee": "get_routing_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "callee": "NodeEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodelabels_test_node_event_with_label_in_sse",
+      "callee": "encode_event",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L263",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L263",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L263",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "adapt_stream",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L264",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "_fake_events",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L264",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L265",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L271",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_finished_has_duration_ms",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L271",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L296",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L296",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L296",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "adapt_stream",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L297",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "_fake_events",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L297",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L298",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L304",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_started_has_zero_duration_ms",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L304",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_node_event_duration_schema",
+      "callee": "NodeEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L312",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L331",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L331",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L331",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "adapt_stream",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L332",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "_fake_events",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L332",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L333",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L339",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testnodeeventduration_test_multiple_nodes_have_independent_durations",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L339",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testdevmodefields_test_thinking_event_has_task_query_field",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L358",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testdevmodefields_test_thinking_event_task_query_defaults_none",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L369",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testdevmodefields_test_thinking_event_full_fields_in_encoded_event",
+      "callee": "ThinkingEvent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L375",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testdevmodefields_test_thinking_event_full_fields_in_encoded_event",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L381",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testdevmodefields_test_thinking_event_full_fields_in_encoded_event",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L381",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testdevmodefields_test_thinking_event_full_fields_in_encoded_event",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L381",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testdevmodefields_test_thinking_event_full_fields_in_encoded_event",
+      "callee": "encode_event",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L381",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_token_event_from_chat_model_stream",
+      "callee": "FakeChunk",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L413",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_token_event_from_chat_model_stream",
+      "callee": "langgraph_event_to_payload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L416",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_orchestrator_tokens_now_emitted",
+      "callee": "FakeChunk",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L434",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_orchestrator_tokens_now_emitted",
+      "callee": "langgraph_event_to_payload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L437",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_tool_call_event_emitted",
+      "callee": "langgraph_event_to_payload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L453",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_tool_result_event_emitted",
+      "callee": "langgraph_event_to_payload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L469",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_node_started_event",
+      "callee": "langgraph_event_to_payload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L483",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_node_finished_event",
+      "callee": "langgraph_event_to_payload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L498",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_langgraph_root_events_ignored",
+      "callee": "langgraph_event_to_payload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L512",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L524",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L524",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L524",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "callee": "adapt_stream",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L525",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "callee": "_empty",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L525",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_starts_with_thread_event",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L526",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L541",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L541",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L541",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "callee": "adapt_stream",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L542",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "callee": "_empty",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L542",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_always_ends_with_done_event",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L543",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L558",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L558",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "callee": "removeprefix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L558",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "callee": "adapt_stream",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L559",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "callee": "_failing",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L559",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_bloco_d_testadaptersregression_test_stream_emits_error_event_on_exception",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_bloco_d.py",
+      "source_location": "L560",
+      "receiver": null
+    }
+  ]
+}

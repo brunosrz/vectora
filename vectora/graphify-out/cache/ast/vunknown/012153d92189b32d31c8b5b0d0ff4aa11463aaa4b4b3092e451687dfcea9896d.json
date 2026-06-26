@@ -1,0 +1,815 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "label": "message-item.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_message_item_date_fns_locales",
+      "label": "DATE_FNS_LOCALES",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L53"
+    },
+    {
+      "id": "chat_message_item_web_tools",
+      "label": "WEB_TOOLS",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L55"
+    },
+    {
+      "id": "chat_message_item_activitysources",
+      "label": "activitySources()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L58"
+    },
+    {
+      "id": "chat_message_item_getcodecolors",
+      "label": "getCodeColors()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L92"
+    },
+    {
+      "id": "chat_message_item_getcodetheme",
+      "label": "getCodeTheme()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L135"
+    },
+    {
+      "id": "chat_message_item_extracttextfromnode",
+      "label": "extractTextFromNode()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L194"
+    },
+    {
+      "id": "chat_message_item_codeblock",
+      "label": "CodeBlock",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L212"
+    },
+    {
+      "id": "chat_message_item_ragcitationlist",
+      "label": "RagCitationList()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L281"
+    },
+    {
+      "id": "chat_message_item_thinkingblockprops",
+      "label": "ThinkingBlockProps",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L324"
+    },
+    {
+      "id": "chat_message_item_thinkingblock",
+      "label": "ThinkingBlock",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L335"
+    },
+    {
+      "id": "chat_message_item_messageitemprops",
+      "label": "MessageItemProps",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L412"
+    },
+    {
+      "id": "chat_message_item_messageitem",
+      "label": "MessageItem",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L458"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tool_call_renderer_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_tool_call_renderer_toolcallrenderer",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_agent_status_line_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_agent_status_line_agentstatusline",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_textarea_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_textarea_textarea",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tooltip_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_tooltip_tooltip",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_tooltip_tooltipcontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_tooltip_tooltipprovider",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_tooltip_tooltiptrigger",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_dialog_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_dialog_dialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_dialog_dialogcontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_dialog_dialogdescription",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_dialog_dialogfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_dialog_dialogheader",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "ui_dialog_dialogtitle",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "react_markdown",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "remark_gfm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "react_syntax_highlighter",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "prism",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_animations_thinking_timer_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "animations_thinking_timer_thinkingtimer",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_animations_animated_thinking_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "animations_animated_thinking_animatedthinking",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_hitl_panel_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "features_hitl_panel_hitlpanel",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_rag_citation_popover_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "features_rag_citation_popover_ragcitation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "types_index_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "string_index_stripmarkdownenvelope",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_model_prices_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "config_model_prices_estimatecost",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "config_model_prices_formatcost",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "image",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "next_themes",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_settings_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "stores_settings_store_usesettingsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "date_fns",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "locale",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_date_fns_locales",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_web_tools",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_activitysources",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_getcodecolors",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_getcodetheme",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_extracttextfromnode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L194",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_codeblock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L212",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_ragcitationlist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L281",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_thinkingblockprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L324",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_thinkingblock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L335",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_messageitemprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L412",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_item_tsx",
+      "target": "chat_message_item_messageitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L458",
+      "weight": 1.0
+    },
+    {
+      "source": "chat_message_item_getcodetheme",
+      "target": "chat_message_item_getcodecolors",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-item.tsx",
+      "source_location": "L136",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "push",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "push",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "push",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "push",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_activitysources",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_extracttextfromnode",
+      "callee": "isArray",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_extracttextfromnode",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_item_ragcitationlist",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-item.tsx",
+      "source_location": "L282",
+      "receiver": null
+    }
+  ]
+}

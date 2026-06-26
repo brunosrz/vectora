@@ -59,6 +59,12 @@ class StatusResponse(BaseModel):
     node_count: int | None = None
     edge_count: int | None = None
     error: str | None = None
+    step: int | None = None
+    step_total: int | None = None
+    step_label: str | None = None
+    files_total: int | None = None
+    files_done: int | None = None
+    files_list: list[str] | None = None
 
 
 class QueryRequest(BaseModel):
@@ -155,6 +161,12 @@ def _read_status_file(graph_dir: Path) -> StatusResponse | None:
             node_count=data.get("node_count"),
             edge_count=data.get("edge_count"),
             error=data.get("error"),
+            step=data.get("step"),
+            step_total=data.get("step_total"),
+            step_label=data.get("step_label"),
+            files_total=data.get("files_total"),
+            files_done=data.get("files_done"),
+            files_list=data.get("files_list"),
         )
     except Exception:
         return None
@@ -165,7 +177,39 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
     if d is None:
         return
     d.mkdir(parents=True, exist_ok=True)
-    _write_status(d, "running")
+    _write_status(
+        d,
+        "running",
+        step=0,
+        step_total=9,
+        step_label="Iniciando...",
+        files_total=0,
+        files_done=0,
+    )
+
+    _state: dict[str, Any] = {"files_list": []}
+
+    def on_progress(
+        step: int,
+        step_total: int,
+        label: str,
+        files_done: int,
+        files_total: int,
+        files_list: list[str] | None = None,
+    ) -> None:
+        if files_list is not None:
+            _state["files_list"] = files_list
+        kw: dict[str, Any] = {
+            "step": step,
+            "step_total": step_total,
+            "step_label": label,
+            "files_total": files_total,
+            "files_done": files_done,
+        }
+        if _state["files_list"]:
+            kw["files_list"] = _state["files_list"]
+        _write_status(d, "running", **kw)
+
     try:
         from backend.services.context_graph.pipeline import build_workspace_graph
 
@@ -174,6 +218,7 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
             model=req.model,
             mode=req.mode,
             update=req.update,
+            on_progress=on_progress,
         )
         if result.error:
             _write_status(d, "error", error=result.error)

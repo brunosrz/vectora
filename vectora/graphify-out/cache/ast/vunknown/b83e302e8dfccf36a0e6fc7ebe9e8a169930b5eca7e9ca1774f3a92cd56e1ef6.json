@@ -1,0 +1,926 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "label": "workspace.py",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_workspace_workbench_ctx_key",
+      "label": "_workbench_ctx_key()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "tools_workspace_append_context_files_summary",
+      "label": "_append_context_files_summary()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "tools_workspace_append_graph_summary",
+      "label": "_append_graph_summary()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "tools_workspace_resolve_workspace",
+      "label": "_resolve_workspace()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L86"
+    },
+    {
+      "id": "runnableconfig",
+      "label": "RunnableConfig",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "workspace",
+      "label": "Workspace",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_workspace_workspace_describe",
+      "label": "workspace_describe()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L113"
+    },
+    {
+      "id": "injectedtoolarg",
+      "label": "InjectedToolArg",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_workspace_workspace_list",
+      "label": "workspace_list()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L171"
+    },
+    {
+      "id": "tools_workspace_bucket_summary",
+      "label": "bucket_summary()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L208"
+    },
+    {
+      "id": "tools_workspace_get_workbench_context",
+      "label": "get_workbench_context()",
+      "file_type": "code",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L265"
+    },
+    {
+      "id": "tools_workspace_rationale_1",
+      "label": "Workspace tools: describe, list, bucket summary, workbench context.  Ferramentas",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_workspace_rationale_33",
+      "label": "Anexa lista dos arquivos de contexto encontrados no workspace ao resultado.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "tools_workspace_rationale_57",
+      "label": "Injeta resumo do Context Graph no resultado de workspace_describe, se existir.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "tools_workspace_rationale_89",
+      "label": "Resolve workspace_id \u2192 Workspace, priorizando config quando id \u00e9 None.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L89"
+    },
+    {
+      "id": "tools_workspace_rationale_117",
+      "label": "Descreve o workspace ativo: base de conhecimento indexada, buckets e t\u00f3picos.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L117"
+    },
+    {
+      "id": "tools_workspace_rationale_172",
+      "label": "Lista todos os workspaces Vectora registrados.      Mostra id, nome, diret\u00f3rio e",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L172"
+    },
+    {
+      "id": "tools_workspace_rationale_213",
+      "label": "Retorna o resumo de um bucket espec\u00edfico do workspace.      Cada bucket (code, d",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L213"
+    },
+    {
+      "id": "tools_workspace_rationale_268",
+      "label": "Retorna o arquivo em foco e os arquivos abertos no editor do workbench.      L\u00ea",
+      "file_type": "rationale",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L268"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "langchain_core_runnables",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "langchain_core_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "backend_services_kv",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "backend_vtypes",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_workbench_ctx_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_append_context_files_summary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_append_graph_summary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_resolve_workspace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_resolve_workspace",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_resolve_workspace",
+      "target": "workspace",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_workspace_describe",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_workspace_describe",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_workspace_describe",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_workspace_list",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_bucket_summary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_bucket_summary",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_bucket_summary",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "target": "tools_workspace_get_workbench_context",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L265",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_get_workbench_context",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L265",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_get_workbench_context",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L265",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_workspace_describe",
+      "target": "tools_workspace_resolve_workspace",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_workspace_describe",
+      "target": "tools_workspace_append_graph_summary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_workspace_describe",
+      "target": "tools_workspace_append_context_files_summary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_bucket_summary",
+      "target": "tools_workspace_resolve_workspace",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L222",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_get_workbench_context",
+      "target": "tools_workspace_workbench_ctx_key",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L277",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_workspace_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_33",
+      "target": "tools_workspace_append_context_files_summary",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_57",
+      "target": "tools_workspace_append_graph_summary",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_89",
+      "target": "tools_workspace_resolve_workspace",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_117",
+      "target": "tools_workspace_workspace_describe",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_172",
+      "target": "tools_workspace_workspace_list",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_213",
+      "target": "tools_workspace_bucket_summary",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L213",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_workspace_rationale_268",
+      "target": "tools_workspace_get_workbench_context",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/workspace.py",
+      "source_location": "L268",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tools_workspace_append_context_files_summary",
+      "callee": "collect_context_files",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_context_files_summary",
+      "callee": "relative_to",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "__len__",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_append_graph_summary",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_resolve_workspace",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_resolve_workspace",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_resolve_workspace",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_resolve_workspace",
+      "callee": "get_or_create",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "manifest_path",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L133",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_describe",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_list",
+      "callee": "list_all",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_list",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L192",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_list",
+      "callee": "manifest_path",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L192",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_workspace_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "bucket_manifest_path",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L229",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L243",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L253",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_bucket_summary",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L254",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L275",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L276",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "get_kv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L278",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L279",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L281",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L283",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L285",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L288",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L290",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_workspace_get_workbench_context",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\workspace.py",
+      "source_location": "L291",
+      "receiver": null
+    }
+  ]
+}

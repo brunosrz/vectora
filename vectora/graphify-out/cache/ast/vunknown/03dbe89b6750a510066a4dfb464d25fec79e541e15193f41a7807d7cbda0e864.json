@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "label": "index.tsx",
+      "file_type": "code",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "integrations_index_route",
+      "label": "Route",
+      "file_type": "code",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "integrations_index_integrationspage",
+      "label": "IntegrationsPage()",
+      "file_type": "code",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L9"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "target": "react_router",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_environment_tabs_integracoes_tab_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "target": "tabs_integracoes_tab_integracoestab",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "target": "integrations_index_route",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_routes_integrations_index_tsx",
+      "target": "integrations_index_integrationspage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/routes/integrations/index.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "integrations_index_integrationspage",
+      "callee": "integrations_page_title",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\src\\routes\\integrations\\index.tsx",
+      "source_location": "L15",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integrations_index_integrationspage",
+      "callee": "integrations_page_subtitle",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\src\\routes\\integrations\\index.tsx",
+      "source_location": "L18",
+      "receiver": null
+    }
+  ]
+}

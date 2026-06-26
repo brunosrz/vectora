@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_command_js",
+      "label": "plugins_command.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_plugins_command_en_plugins_command",
+      "label": "en_plugins_command()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_plugins_command_es_plugins_command",
+      "label": "es_plugins_command()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_plugins_command_pt_plugins_command",
+      "label": "pt_plugins_command()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_command_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_command_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_command_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_command_js",
+      "target": "messages_plugins_command_en_plugins_command",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_command_js",
+      "target": "messages_plugins_command_es_plugins_command",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_command_js",
+      "target": "messages_plugins_command_pt_plugins_command",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_command.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

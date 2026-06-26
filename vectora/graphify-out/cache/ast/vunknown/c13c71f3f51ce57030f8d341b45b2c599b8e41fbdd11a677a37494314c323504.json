@@ -1,0 +1,347 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "label": "cache_sync.py",
+      "file_type": "code",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_cache_sync_parse",
+      "label": "_parse()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "services_cache_sync_on_tools_changed",
+      "label": "_on_tools_changed()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "services_cache_sync_on_policy_changed",
+      "label": "_on_policy_changed()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "services_cache_sync_on_ws_active_changed",
+      "label": "_on_ws_active_changed()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L59"
+    },
+    {
+      "id": "services_cache_sync_start_cache_sync",
+      "label": "start_cache_sync()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "services_cache_sync_stop_cache_sync",
+      "label": "stop_cache_sync()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "services_cache_sync_rationale_1",
+      "label": "Sincroniza\u00e7\u00e3o de caches entre r\u00e9plicas \u2014 Bloco G (G2).  Cada r\u00e9plica mant\u00e9m cach",
+      "file_type": "rationale",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_cache_sync_rationale_71",
+      "label": "Registra os subscribers e inicia o reader (chamado no lifespan).",
+      "file_type": "rationale",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L71"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "backend_services_kv",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "services_cache_sync_parse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "services_cache_sync_on_tools_changed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "services_cache_sync_on_policy_changed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "services_cache_sync_on_ws_active_changed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "services_cache_sync_start_cache_sync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "target": "services_cache_sync_stop_cache_sync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_sync_on_tools_changed",
+      "target": "services_cache_sync_parse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_sync_on_policy_changed",
+      "target": "services_cache_sync_parse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_sync_on_ws_active_changed",
+      "target": "services_cache_sync_parse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_sync_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_cache_sync_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_sync_rationale_71",
+      "target": "services_cache_sync_start_cache_sync",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_sync.py",
+      "source_location": "L71",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_cache_sync_parse",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_tools_changed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_tools_changed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_tools_changed",
+      "callee": "apply_remote_version",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_policy_changed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_policy_changed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_policy_changed",
+      "callee": "apply_remote_version",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_ws_active_changed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_ws_active_changed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_on_ws_active_changed",
+      "callee": "apply_remote_active",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_start_cache_sync",
+      "callee": "get_kv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_start_cache_sync",
+      "callee": "subscribe",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_start_cache_sync",
+      "callee": "subscribe",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_start_cache_sync",
+      "callee": "subscribe",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_start_cache_sync",
+      "callee": "start",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_start_cache_sync",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_stop_cache_sync",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_sync_stop_cache_sync",
+      "callee": "get_kv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_sync.py",
+      "source_location": "L81",
+      "receiver": null
+    }
+  ]
+}

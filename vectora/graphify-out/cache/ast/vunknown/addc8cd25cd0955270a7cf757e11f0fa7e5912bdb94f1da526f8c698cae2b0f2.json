@@ -1,0 +1,166 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "label": "workspace-group.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "sidebar_workspace_group_workspacegroupprops",
+      "label": "WorkspaceGroupProps",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L11"
+    },
+    {
+      "id": "sidebar_workspace_group_workspacegroup",
+      "label": "WorkspaceGroup",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L22"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "threads_index_thread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "stores_workspaces_store_workspaceinfo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_utils_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "sidebar_sidebar_utils_shortworkspacename",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_item_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "sidebar_thread_item_threaditem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "sidebar_workspace_group_workspacegroupprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_group_tsx",
+      "target": "sidebar_workspace_group_workspacegroup",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/workspace-group.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

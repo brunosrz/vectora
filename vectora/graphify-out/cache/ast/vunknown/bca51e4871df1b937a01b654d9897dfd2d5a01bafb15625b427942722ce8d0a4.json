@@ -1,0 +1,159 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_project_inlang_settings_json",
+      "label": "settings.json",
+      "file_type": "code",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "project_inlang_settings_schema",
+      "label": "$schema",
+      "file_type": "code",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "project_inlang_settings_baselocale",
+      "label": "baseLocale",
+      "file_type": "code",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "project_inlang_settings_locales",
+      "label": "locales",
+      "file_type": "code",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "project_inlang_settings_modules",
+      "label": "modules",
+      "file_type": "code",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "project_inlang_settings_plugin_inlang_messageformat",
+      "label": "plugin.inlang.messageFormat",
+      "file_type": "code",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "project_inlang_settings_plugin_inlang_messageformat_pathpattern",
+      "label": "pathPattern",
+      "file_type": "code",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L10"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_project_inlang_settings_json",
+      "target": "project_inlang_settings_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_project_inlang_settings_json",
+      "target": "project_inlang_settings_baselocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_project_inlang_settings_json",
+      "target": "project_inlang_settings_locales",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "project_inlang_settings_locales",
+      "target": "ref_en",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "project_inlang_settings_locales",
+      "target": "ref_es",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "project_inlang_settings_locales",
+      "target": "ref_pt",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_project_inlang_settings_json",
+      "target": "project_inlang_settings_modules",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "project_inlang_settings_modules",
+      "target": "ref_https_cdn_jsdelivr_net_npm_inlang_plugin_message_format_4_dist_index_js",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "project_inlang_settings_modules",
+      "target": "ref_https_cdn_jsdelivr_net_npm_inlang_plugin_m_function_matcher_2_dist_index_js",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_project_inlang_settings_json",
+      "target": "project_inlang_settings_plugin_inlang_messageformat",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "project_inlang_settings_plugin_inlang_messageformat",
+      "target": "project_inlang_settings_plugin_inlang_messageformat_pathpattern",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/project.inlang/settings.json",
+      "source_location": "L10",
+      "weight": 1.0
+    }
+  ]
+}

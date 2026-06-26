@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_native_hash_py",
+      "label": "hash.py",
+      "file_type": "code",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_hash_hash_text",
+      "label": "hash_text()",
+      "file_type": "code",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "native_hash_rationale_1",
+      "label": "Tool de hash criptogr\u00e1fico de strings.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_hash_rationale_17",
+      "label": "Calcula o hash de uma string usando o algoritmo especificado.      Args:",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L17"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_hash_py",
+      "target": "hashlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_hash_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_hash_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_hash_py",
+      "target": "native_hash_hash_text",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "native_hash_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_native_hash_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "native_hash_rationale_17",
+      "target": "native_hash_hash_text",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/hash.py",
+      "source_location": "L17",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "native_hash_hash_text",
+      "callee": "hexdigest",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\hash.py",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_hash_hash_text",
+      "callee": "new",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\hash.py",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_hash_hash_text",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\hash.py",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_hash_hash_text",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\hash.py",
+      "source_location": "L28",
+      "receiver": null
+    }
+  ]
+}

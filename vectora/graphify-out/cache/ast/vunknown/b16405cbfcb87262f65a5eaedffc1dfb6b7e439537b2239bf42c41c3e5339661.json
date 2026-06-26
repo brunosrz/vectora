@@ -1,0 +1,191 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "label": "context-graph-tab.test.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_context_graph_tab_test_mockbuild",
+      "label": "mockBuild",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L37"
+    },
+    {
+      "id": "tests_context_graph_tab_test_mockupdate",
+      "label": "mockUpdate",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L38"
+    },
+    {
+      "id": "tests_context_graph_tab_test_mockcancel",
+      "label": "mockCancel",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L39"
+    },
+    {
+      "id": "tests_context_graph_tab_test_mockqueryaffected",
+      "label": "mockQueryAffected",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L40"
+    },
+    {
+      "id": "tests_context_graph_tab_test_mockgethtmlurl",
+      "label": "mockGetHtmlUrl",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L41"
+    },
+    {
+      "id": "tests_context_graph_tab_test_mockfetchstatus",
+      "label": "mockFetchStatus",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L42"
+    },
+    {
+      "id": "tests_context_graph_tab_test_mockusecontextgraph",
+      "label": "mockUseContextGraph",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L43"
+    },
+    {
+      "id": "tests_context_graph_tab_test_setup",
+      "label": "setup()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L51"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_mockbuild",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_mockupdate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_mockcancel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_mockqueryaffected",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_mockgethtmlurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_mockfetchstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_mockusecontextgraph",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tests_context_graph_tab_test_setup",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_context_graph_tab_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_tests_context_graph_tab_test_tsx",
+      "target": "tabs_context_graph_tab_contextgraphtab",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/__tests__/context-graph-tab.test.tsx",
+      "source_location": "L78",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_context_graph_tab_test_setup",
+      "callee": "mockReturnValue",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\tabs\\__tests__\\context-graph-tab.test.tsx",
+      "source_location": "L58",
+      "receiver": null
+    }
+  ]
+}

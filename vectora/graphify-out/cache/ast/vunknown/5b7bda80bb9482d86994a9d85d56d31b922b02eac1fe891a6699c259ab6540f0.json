@@ -1,0 +1,1235 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "label": "test_services_ignore.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadvectoraignorespec",
+      "label": "TestLoadVectoraignoreSpec",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadvectoraignorespec_test_returns_none_when_no_file",
+      "label": ".test_returns_none_when_no_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_simple_pattern",
+      "label": ".test_loads_simple_pattern()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_directory_pattern",
+      "label": ".test_loads_directory_pattern()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadvectoraignorespec_test_ignores_comment_lines",
+      "label": ".test_ignores_comment_lines()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadvectoraignorespec_test_searches_up_to_parent",
+      "label": ".test_searches_up_to_parent()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "label": ".test_uses_closest_vectoraignore()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L63"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadignorespec",
+      "label": "TestLoadIgnoreSpec",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadignorespec_test_returns_none_when_neither_exists",
+      "label": ".test_returns_none_when_neither_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L83"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadignorespec_test_uses_gitignore_when_only_that_exists",
+      "label": ".test_uses_gitignore_when_only_that_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L89"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadignorespec_test_uses_vectoraignore_when_only_that_exists",
+      "label": ".test_uses_vectoraignore_when_only_that_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "label": ".test_combines_both_specs()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L107"
+    },
+    {
+      "id": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "label": ".test_gitignore_and_vectoraignore_independent_search()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L126"
+    },
+    {
+      "id": "unit_test_services_ignore_testisignoredwithcombinedspec",
+      "label": "TestIsIgnoredWithCombinedSpec",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L145"
+    },
+    {
+      "id": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_ignored_by_vectoraignore",
+      "label": ".test_file_ignored_by_vectoraignore()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L148"
+    },
+    {
+      "id": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_not_ignored",
+      "label": ".test_file_not_ignored()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L157"
+    },
+    {
+      "id": "unit_test_services_ignore_testisignoredwithcombinedspec_test_always_skip_dirs_still_apply",
+      "label": ".test_always_skip_dirs_still_apply()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "unit_test_services_ignore_testwalkfilespruning",
+      "label": "TestWalkFilesPruning",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L174"
+    },
+    {
+      "id": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_always_skip_dirs",
+      "label": ".test_never_descends_into_always_skip_dirs()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L182"
+    },
+    {
+      "id": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "label": ".test_never_descends_into_gitignored_dirs()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L210"
+    },
+    {
+      "id": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "label": ".test_skipped_count_includes_pruned_dirs_and_ignored_files()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L239"
+    },
+    {
+      "id": "unit_test_services_ignore_testwalkfilespruning_test_include_dirs_lists_kept_directories",
+      "label": ".test_include_dirs_lists_kept_directories()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L255"
+    },
+    {
+      "id": "unit_test_services_ignore_testwalkfilespruning_test_glob_pattern_filters_files_only",
+      "label": ".test_glob_pattern_filters_files_only()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L268"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_1",
+      "label": "Testes para src/services/ignore.py \u2014 foco nas fun\u00e7\u00f5es novas.  Cobre: - load_vect",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_17",
+      "label": "load_vectoraignore_spec: carrega .vectoraignore como PathSpec.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_64",
+      "label": "Quando h\u00e1 dois .vectoraignore em n\u00edveis distintos, usa o mais pr\u00f3ximo.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_81",
+      "label": "load_ignore_spec: combina .gitignore + .vectoraignore.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L81"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_127",
+      "label": "Cada arquivo \u00e9 procurado independentemente na hierarquia.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L127"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_146",
+      "label": "Garante que is_ignored funciona com spec combinado de load_ignore_spec.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L146"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_167",
+      "label": "ALWAYS_SKIP_DIRS s\u00e3o bloqueados mesmo sem spec.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L167"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_175",
+      "label": "walk_files/iter_files: poda de diret\u00f3rios DURANTE o os.walk.      Garante que no",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L175"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_183",
+      "label": "os.walk nunca visita o interior de node_modules (poda real).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L183"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_211",
+      "label": "Dirs batidos pelo .gitignore tamb\u00e9m s\u00e3o podados, n\u00e3o s\u00f3 filtrados.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L211"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_240",
+      "label": "skipped_ignored = dirs podados (1 por sub\u00e1rvore) + arquivos do spec.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L240"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_256",
+      "label": "include_dirs=True retorna dirs n\u00e3o podados (uso do list_dir).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L256"
+    },
+    {
+      "id": "unit_test_services_ignore_rationale_269",
+      "label": "O glob filtra por nome de arquivo (ex: **/*.py).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L269"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadvectoraignorespec",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec_test_returns_none_when_no_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadvectoraignorespec",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_simple_pattern",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadvectoraignorespec",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_directory_pattern",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadvectoraignorespec",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec_test_ignores_comment_lines",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadvectoraignorespec",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec_test_searches_up_to_parent",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadvectoraignorespec",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "target": "unit_test_services_ignore_testloadignorespec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadignorespec",
+      "target": "unit_test_services_ignore_testloadignorespec_test_returns_none_when_neither_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadignorespec",
+      "target": "unit_test_services_ignore_testloadignorespec_test_uses_gitignore_when_only_that_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadignorespec",
+      "target": "unit_test_services_ignore_testloadignorespec_test_uses_vectoraignore_when_only_that_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadignorespec",
+      "target": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testloadignorespec",
+      "target": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "target": "unit_test_services_ignore_testisignoredwithcombinedspec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testisignoredwithcombinedspec",
+      "target": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_ignored_by_vectoraignore",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L148",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testisignoredwithcombinedspec",
+      "target": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_not_ignored",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L157",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testisignoredwithcombinedspec",
+      "target": "unit_test_services_ignore_testisignoredwithcombinedspec_test_always_skip_dirs_still_apply",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "target": "unit_test_services_ignore_testwalkfilespruning",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testwalkfilespruning",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_always_skip_dirs",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testwalkfilespruning",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L210",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testwalkfilespruning",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testwalkfilespruning",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_include_dirs_lists_kept_directories",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_testwalkfilespruning",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_glob_pattern_filters_files_only",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_ignore_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_17",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_64",
+      "target": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_81",
+      "target": "unit_test_services_ignore_testloadignorespec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_127",
+      "target": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_146",
+      "target": "unit_test_services_ignore_testisignoredwithcombinedspec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L146",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_167",
+      "target": "unit_test_services_ignore_testisignoredwithcombinedspec_test_always_skip_dirs_still_apply",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_175",
+      "target": "unit_test_services_ignore_testwalkfilespruning",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_183",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_always_skip_dirs",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_211",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_240",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_256",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_include_dirs_lists_kept_directories",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L256",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_ignore_rationale_269",
+      "target": "unit_test_services_ignore_testwalkfilespruning_test_glob_pattern_filters_files_only",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_ignore.py",
+      "source_location": "L269",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_returns_none_when_no_file",
+      "callee": "load_vectoraignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_simple_pattern",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_simple_pattern",
+      "callee": "load_vectoraignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_simple_pattern",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_simple_pattern",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_directory_pattern",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_directory_pattern",
+      "callee": "load_vectoraignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_directory_pattern",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_loads_directory_pattern",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_ignores_comment_lines",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_ignores_comment_lines",
+      "callee": "load_vectoraignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_ignores_comment_lines",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_ignores_comment_lines",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_searches_up_to_parent",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_searches_up_to_parent",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_searches_up_to_parent",
+      "callee": "load_vectoraignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_searches_up_to_parent",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "callee": "load_vectoraignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadvectoraignorespec_test_uses_closest_vectoraignore",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_returns_none_when_neither_exists",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_gitignore_when_only_that_exists",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_gitignore_when_only_that_exists",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_gitignore_when_only_that_exists",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_gitignore_when_only_that_exists",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_vectoraignore_when_only_that_exists",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_vectoraignore_when_only_that_exists",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_vectoraignore_when_only_that_exists",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_uses_vectoraignore_when_only_that_exists",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_combines_both_specs",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L135",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testloadignorespec_test_gitignore_and_vectoraignore_independent_search",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L142",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_ignored_by_vectoraignore",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L151",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_ignored_by_vectoraignore",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L152",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_ignored_by_vectoraignore",
+      "callee": "is_ignored",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L155",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_not_ignored",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_not_ignored",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testisignoredwithcombinedspec_test_file_not_ignored",
+      "callee": "is_ignored",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testisignoredwithcombinedspec_test_always_skip_dirs_still_apply",
+      "callee": "is_ignored",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_always_skip_dirs",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_always_skip_dirs",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L188",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_always_skip_dirs",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L189",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_always_skip_dirs",
+      "callee": "iter_files",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L204",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L216",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L217",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L232",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_never_descends_into_gitignored_dirs",
+      "callee": "iter_files",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L233",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L243",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L245",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L246",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "callee": "load_ignore_spec",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L249",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_skipped_count_includes_pruned_dirs_and_ignored_files",
+      "callee": "walk_files",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L250",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_include_dirs_lists_kept_directories",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L259",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_include_dirs_lists_kept_directories",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L260",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_include_dirs_lists_kept_directories",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L261",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_include_dirs_lists_kept_directories",
+      "callee": "walk_files",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L263",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_glob_pattern_filters_files_only",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L272",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_glob_pattern_filters_files_only",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L273",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_ignore_testwalkfilespruning_test_glob_pattern_filters_files_only",
+      "callee": "walk_files",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_ignore.py",
+      "source_location": "L275",
+      "receiver": null
+    }
+  ]
+}

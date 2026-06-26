@@ -1,0 +1,200 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "label": "threads.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_threads_test_listthreads",
+      "label": "listThreads",
+      "file_type": "code",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L12"
+    },
+    {
+      "id": "tests_threads_test_deletethread",
+      "label": "deleteThread",
+      "file_type": "code",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "tests_threads_test_updatethread",
+      "label": "updateThread",
+      "file_type": "code",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L14"
+    },
+    {
+      "id": "tests_threads_test_broadcastevent",
+      "label": "broadcastEvent",
+      "file_type": "code",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "tests_threads_test_vthread",
+      "label": "vthread()",
+      "file_type": "code",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L35"
+    },
+    {
+      "id": "tests_threads_test_makewrapper",
+      "label": "makeWrapper()",
+      "file_type": "code",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L46"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "react_query",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "tests_threads_test_listthreads",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "tests_threads_test_deletethread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "tests_threads_test_updatethread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "tests_threads_test_broadcastevent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_threads_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "queries_threads_usethreadsquery",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "queries_threads_usedeletethread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "queries_threads_useupdatethread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "queries_threads_threadsquerykey",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "tests_threads_test_vthread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_queries_tests_threads_test_ts",
+      "target": "tests_threads_test_makewrapper",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/queries/__tests__/threads.test.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

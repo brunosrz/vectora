@@ -1,0 +1,121 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "label": "files-tab-inline-editor.test.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_files_tab_inline_editor_test_fetch_mock",
+      "label": "FETCH_MOCK",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "tests_files_tab_inline_editor_test_mockworkbench",
+      "label": "mockWorkbench",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L67"
+    },
+    {
+      "id": "tests_files_tab_inline_editor_test_renderfilestab",
+      "label": "renderFilesTab()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L179"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tooltip_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "target": "ui_tooltip_tooltipprovider",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "target": "tests_files_tab_inline_editor_test_fetch_mock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "target": "tests_files_tab_inline_editor_test_mockworkbench",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_tests_files_tab_inline_editor_test_tsx",
+      "target": "tests_files_tab_inline_editor_test_renderfilestab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L179",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_files_tab_inline_editor_test_renderfilestab",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_tab_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/__tests__/files-tab-inline-editor.test.tsx",
+      "source_location": "L180",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_files_tab_inline_editor_test_renderfilestab",
+      "callee": "render",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\__tests__\\files-tab-inline-editor.test.tsx",
+      "source_location": "L181",
+      "receiver": null
+    }
+  ]
+}

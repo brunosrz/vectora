@@ -520,6 +520,7 @@
   "graph_cancel_button": "Cancelar",
   "graph_affected_button": "Ver impacto",
   "graph_affected_title": "Componentes afetados",
+  "graph_files_progress": "{done}/{total} arquivos",
   "graph_credit": "Inspirado no graphify (MIT, Safi Shamsi)",
   "background_tasks_title": "Tarefas em segundo plano",
   "background_new_task": "Nova tarefa",

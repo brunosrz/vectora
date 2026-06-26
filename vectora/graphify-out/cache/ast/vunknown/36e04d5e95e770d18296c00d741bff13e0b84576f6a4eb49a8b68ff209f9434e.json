@@ -1,0 +1,649 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "label": "mcp_ingest.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_mcp_ingest_is_mcp_config_path",
+      "label": "is_mcp_config_path()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_mcp_ingest_extract_mcp_config",
+      "label": "extract_mcp_config()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_mcp_ingest_emit_server",
+      "label": "_emit_server()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L107"
+    },
+    {
+      "id": "context_graph_mcp_ingest_detect_package_from_args",
+      "label": "_detect_package_from_args()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L211"
+    },
+    {
+      "id": "context_graph_mcp_ingest_strip_version",
+      "label": "_strip_version()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L225"
+    },
+    {
+      "id": "context_graph_mcp_ingest_add_node",
+      "label": "_add_node()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L233"
+    },
+    {
+      "id": "context_graph_mcp_ingest_add_edge",
+      "label": "_add_edge()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L256"
+    },
+    {
+      "id": "context_graph_mcp_ingest_make_id",
+      "label": "_make_id()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L288"
+    },
+    {
+      "id": "context_graph_mcp_ingest_file_stem",
+      "label": "_file_stem()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L292"
+    },
+    {
+      "id": "context_graph_mcp_ingest_rationale_1",
+      "label": "mcp_ingest \u2014 extrai configura\u00e7\u00f5es de servidores MCP para o grafo de contexto.  L",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "unicodedata",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_is_mcp_config_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_is_mcp_config_path",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_extract_mcp_config",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_extract_mcp_config",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_extract_mcp_config",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_emit_server",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_emit_server",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_emit_server",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_emit_server",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_detect_package_from_args",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_detect_package_from_args",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_strip_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L225",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_add_node",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L233",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_add_node",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L233",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_add_edge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L256",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_add_edge",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L256",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_make_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L288",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "target": "context_graph_mcp_ingest_file_stem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L292",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_file_stem",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L292",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_extract_mcp_config",
+      "target": "context_graph_mcp_ingest_make_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_extract_mcp_config",
+      "target": "context_graph_mcp_ingest_add_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_extract_mcp_config",
+      "target": "context_graph_mcp_ingest_file_stem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_extract_mcp_config",
+      "target": "context_graph_mcp_ingest_emit_server",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_emit_server",
+      "target": "context_graph_mcp_ingest_make_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_emit_server",
+      "target": "context_graph_mcp_ingest_add_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_emit_server",
+      "target": "context_graph_mcp_ingest_add_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_emit_server",
+      "target": "context_graph_mcp_ingest_detect_package_from_args",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L161",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_detect_package_from_args",
+      "target": "context_graph_mcp_ingest_strip_version",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_mcp_ingest_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_mcp_ingest_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/mcp_ingest.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "context_graph_mcp_ingest_extract_mcp_config",
+      "callee": "read",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_extract_mcp_config",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_extract_mcp_config",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_extract_mcp_config",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_extract_mcp_config",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_extract_mcp_config",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_extract_mcp_config",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_emit_server",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_emit_server",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_emit_server",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_emit_server",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_emit_server",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_detect_package_from_args",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_detect_package_from_args",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L216",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_detect_package_from_args",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_detect_package_from_args",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L220",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_strip_version",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L226",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_strip_version",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L227",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_strip_version",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L229",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_add_node",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L245",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_add_node",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L246",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_add_node",
+      "callee": "sanitize_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L248",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_add_edge",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L272",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_add_edge",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L285",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_mcp_ingest_make_id",
+      "callee": "_shared_make_id",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\mcp_ingest.py",
+      "source_location": "L289",
+      "receiver": null
+    }
+  ]
+}

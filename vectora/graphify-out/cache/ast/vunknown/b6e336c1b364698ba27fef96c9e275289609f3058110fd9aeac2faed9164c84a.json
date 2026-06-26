@@ -1,0 +1,258 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_supabase_py",
+      "label": "supabase.py",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "recipes_supabase_build_dsn",
+      "label": "build_dsn()",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "recipes_supabase_configure_settings",
+      "label": "configure_settings()",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "recipes_supabase_healthcheck",
+      "label": "healthcheck()",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L118"
+    },
+    {
+      "id": "recipes_supabase_rationale_1",
+      "label": "Recipe Supabase \u2014 Postgres gerenciado + pgvector.  Supabase exp\u00f5e o Postgres via",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "recipes_supabase_rationale_61",
+      "label": "Monta o DSN asyncpg para Supabase.      Args:         project:  ID do projeto Su",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "recipes_supabase_rationale_101",
+      "label": "Aplica flags Supabase ao objeto settings.      Configura ``storage_mode = \"compl",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "recipes_supabase_rationale_119",
+      "label": "Smoke test de conectividade ao Supabase Postgres.      Testa a conex\u00e3o, verifica",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L119"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_supabase_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_supabase_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_supabase_py",
+      "target": "recipes_supabase_build_dsn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_supabase_py",
+      "target": "recipes_supabase_configure_settings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_configure_settings",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_configure_settings",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_supabase_py",
+      "target": "recipes_supabase_healthcheck",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_healthcheck",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_configure_settings",
+      "target": "recipes_supabase_build_dsn",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_supabase_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_rationale_61",
+      "target": "recipes_supabase_build_dsn",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_rationale_101",
+      "target": "recipes_supabase_configure_settings",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_supabase_rationale_119",
+      "target": "recipes_supabase_healthcheck",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/supabase.py",
+      "source_location": "L119",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "recipes_supabase_build_dsn",
+      "callee": "format",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_supabase_build_dsn",
+      "callee": "format",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_supabase_configure_settings",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_supabase_healthcheck",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_supabase_healthcheck",
+      "callee": "fetchrow",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L144",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_supabase_healthcheck",
+      "callee": "fetch",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L150",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_supabase_healthcheck",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_supabase_healthcheck",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\supabase.py",
+      "source_location": "L166",
+      "receiver": null
+    }
+  ]
+}

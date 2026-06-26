@@ -1,0 +1,161 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "label": "use-thread-messages.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_use_thread_messages_updater",
+      "label": "Updater",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L17"
+    },
+    {
+      "id": "chat_use_thread_messages_setmessages",
+      "label": "SetMessages",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L18"
+    },
+    {
+      "id": "chat_use_thread_messages_usethreadmessages",
+      "label": "useThreadMessages()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L20"
+    },
+    {
+      "id": "chat_use_thread_messages_empty_array",
+      "label": "EMPTY_ARRAY",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L46"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "types_index_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "stores_threads_store_usethreadsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "chat_use_thread_messages_updater",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "chat_use_thread_messages_setmessages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "chat_use_thread_messages_usethreadmessages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_thread_messages_ts",
+      "target": "chat_use_thread_messages_empty_array",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-thread-messages.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_use_thread_messages_usethreadmessages",
+      "callee": "useThreadsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-thread-messages.ts",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_thread_messages_usethreadmessages",
+      "callee": "useThreadsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-thread-messages.ts",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_thread_messages_usethreadmessages",
+      "callee": "useThreadsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-thread-messages.ts",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_thread_messages_usethreadmessages",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-thread-messages.ts",
+      "source_location": "L30",
+      "receiver": null
+    }
+  ]
+}

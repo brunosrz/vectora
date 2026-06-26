@@ -1,0 +1,438 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "label": "test_oauth_relay_redirect.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_relay_token_file",
+      "label": "relay_token_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L13"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testrelayredirecturi",
+      "label": "TestRelayRedirectUri",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_usa_relay_quando_token_existe",
+      "label": ".test_usa_relay_quando_token_existe()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_retorna_none_sem_token",
+      "label": ".test_retorna_none_sem_token()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_funciona_com_qualquer_provider",
+      "label": ".test_funciona_com_qualquer_provider()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testgithubcfgredirect",
+      "label": "TestGithubCfgRedirect",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_env_var_tem_prioridade_sobre_relay",
+      "label": ".test_env_var_tem_prioridade_sobre_relay()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "label": ".test_usa_relay_quando_nao_ha_env_var()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L60"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_localhost_sem_relay_sem_env_var",
+      "label": ".test_usa_localhost_sem_relay_sem_env_var()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "unit_test_oauth_relay_redirect_rationale_1",
+      "label": "TDD \u2014 OAuth redirect_uri via relay quando token dispon\u00edvel.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "target": "unit_test_oauth_relay_redirect_relay_token_file",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_relay_token_file",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_relay_token_file",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "target": "unit_test_oauth_relay_redirect_testrelayredirecturi",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testrelayredirecturi",
+      "target": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_usa_relay_quando_token_existe",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_usa_relay_quando_token_existe",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testrelayredirecturi",
+      "target": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_retorna_none_sem_token",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_retorna_none_sem_token",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testrelayredirecturi",
+      "target": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_funciona_com_qualquer_provider",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_funciona_com_qualquer_provider",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "target": "unit_test_oauth_relay_redirect_testgithubcfgredirect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testgithubcfgredirect",
+      "target": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_env_var_tem_prioridade_sobre_relay",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_env_var_tem_prioridade_sobre_relay",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testgithubcfgredirect",
+      "target": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testgithubcfgredirect",
+      "target": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_localhost_sem_relay_sem_env_var",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_localhost_sem_relay_sem_env_var",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_oauth_relay_redirect_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_oauth_relay_redirect_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_oauth_relay_redirect.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_usa_relay_quando_token_existe",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L19",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_usa_relay_quando_token_existe",
+      "callee": "_relay_callback_url",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_retorna_none_sem_token",
+      "callee": "_relay_callback_url",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_funciona_com_qualquer_provider",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_funciona_com_qualquer_provider",
+      "callee": "_relay_callback_url",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testrelayredirecturi_test_funciona_com_qualquer_provider",
+      "callee": "_relay_callback_url",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_env_var_tem_prioridade_sobre_relay",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_env_var_tem_prioridade_sobre_relay",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_env_var_tem_prioridade_sobre_relay",
+      "callee": "_github_cfg",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_relay_quando_nao_ha_env_var",
+      "callee": "_github_cfg",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_localhost_sem_relay_sem_env_var",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_localhost_sem_relay_sem_env_var",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_oauth_relay_redirect_testgithubcfgredirect_test_usa_localhost_sem_relay_sem_env_var",
+      "callee": "_github_cfg",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_oauth_relay_redirect.py",
+      "source_location": "L89",
+      "receiver": null
+    }
+  ]
+}

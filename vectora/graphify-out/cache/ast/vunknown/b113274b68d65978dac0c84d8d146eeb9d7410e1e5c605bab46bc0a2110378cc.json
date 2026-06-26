@@ -1,0 +1,243 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "label": "sidebar-folders.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "sidebar_sidebar_folders_shortname",
+      "label": "shortName()",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L26"
+    },
+    {
+      "id": "sidebar_sidebar_folders_sidebarfolders",
+      "label": "SidebarFolders()",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L32"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "stores_workspaces_store_useworkspacesstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "stores_workspaces_store_saferootsummary",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "stores_workspaces_store_workspaceinfo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_trust_dialog_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "sidebar_workspace_trust_dialog_workspacetrustdialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "sidebar_sidebar_folders_shortname",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_folders_tsx",
+      "target": "sidebar_sidebar_folders_sidebarfolders",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-folders.tsx",
+      "source_location": "L32",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "sidebar_sidebar_folders_shortname",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useWorkspacesStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useWorkspacesStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useWorkspacesStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useWorkspacesStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useWorkspacesStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "sidebar_folders",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "sidebar_sidebar_folders_sidebarfolders",
+      "callee": "sidebar_folders_empty",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\sidebar\\sidebar-folders.tsx",
+      "source_location": "L127",
+      "receiver": null
+    }
+  ]
+}

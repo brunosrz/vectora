@@ -1,0 +1,289 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "label": "use-threads.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "threads_use_threads_clientprofile",
+      "label": "ClientProfile",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L35"
+    },
+    {
+      "id": "threads_use_threads_threadmetadata",
+      "label": "ThreadMetadata",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L41"
+    },
+    {
+      "id": "threads_use_threads_thread",
+      "label": "Thread",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L50"
+    },
+    {
+      "id": "threads_use_threads_tothread",
+      "label": "toThread()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L66"
+    },
+    {
+      "id": "threads_use_threads_usethreads",
+      "label": "useThreads()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L81"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "api_vectora_client_listthreads",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "api_vectora_client_getthread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "api_vectora_client_deletethread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "api_vectora_client_updatethread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "api_vectora_client_thread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_logger_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "utils_logger_logger",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_features_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "constants_features_thread_fetch_limit",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_fetch_retry_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "utils_fetch_retry_withretry",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "threads_use_threads_clientprofile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "threads_use_threads_threadmetadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "threads_use_threads_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "threads_use_threads_tothread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_use_threads_ts",
+      "target": "threads_use_threads_usethreads",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/threads/use-threads.ts",
+      "source_location": "L81",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "threads_use_threads_usethreads",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\threads\\use-threads.ts",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "threads_use_threads_usethreads",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\threads\\use-threads.ts",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "threads_use_threads_usethreads",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\threads\\use-threads.ts",
+      "source_location": "L86",
+      "receiver": null
+    }
+  ]
+}

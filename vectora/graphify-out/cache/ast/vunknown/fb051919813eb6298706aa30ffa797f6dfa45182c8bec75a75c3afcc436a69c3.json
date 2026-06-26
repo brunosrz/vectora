@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_src_styled_jsx_d_ts",
+      "label": "styled-jsx.d.ts",
+      "file_type": "code",
+      "source_file": "frontend/src/styled-jsx.d.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_styled_jsx_d_stylehtmlattributes",
+      "label": "StyleHTMLAttributes",
+      "file_type": "code",
+      "source_file": "frontend/src/styled-jsx.d.ts",
+      "source_location": "L9"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_styled_jsx_d_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/styled-jsx.d.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_styled_jsx_d_ts",
+      "target": "src_styled_jsx_d_stylehtmlattributes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/styled-jsx.d.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

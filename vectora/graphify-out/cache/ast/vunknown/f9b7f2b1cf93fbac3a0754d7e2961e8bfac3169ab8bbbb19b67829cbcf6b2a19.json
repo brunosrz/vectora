@@ -1,0 +1,173 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "label": "resizable-dialog.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "ui_resizable_dialog_resizabledialogcontentprops",
+      "label": "ResizableDialogContentProps",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "ui_resizable_dialog_resizabledialogcontent",
+      "label": "ResizableDialogContent()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L21"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "react_dialog",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "utils_index_cn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_dialog_size_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "stores_dialog_size_store_usedialogsizestore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "ui_resizable_dialog_resizabledialogcontentprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "target": "ui_resizable_dialog_resizabledialogcontent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/resizable-dialog.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "ui_resizable_dialog_resizabledialogcontent",
+      "callee": "useDialogSizeStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\resizable-dialog.tsx",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_resizable_dialog_resizabledialogcontent",
+      "callee": "useDialogSizeStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\resizable-dialog.tsx",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_resizable_dialog_resizabledialogcontent",
+      "callee": "getSize",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\resizable-dialog.tsx",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_resizable_dialog_resizabledialogcontent",
+      "callee": "useState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\resizable-dialog.tsx",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_resizable_dialog_resizabledialogcontent",
+      "callee": "useRef",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\resizable-dialog.tsx",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_resizable_dialog_resizabledialogcontent",
+      "callee": "useRef",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\resizable-dialog.tsx",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_resizable_dialog_resizabledialogcontent",
+      "callee": "cn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\resizable-dialog.tsx",
+      "source_location": "L72",
+      "receiver": null
+    }
+  ]
+}

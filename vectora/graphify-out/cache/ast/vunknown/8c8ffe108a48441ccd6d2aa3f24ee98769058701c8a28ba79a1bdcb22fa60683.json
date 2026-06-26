@@ -1,0 +1,289 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_security_py",
+      "label": "test_services_security.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_services_security_testissafefilepath",
+      "label": "TestIsSafeFilePath",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "unit_test_services_security_testissafefilepath_test_path_within_allowed",
+      "label": ".test_path_within_allowed()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L9"
+    },
+    {
+      "id": "unit_test_services_security_testissafefilepath_test_path_outside_allowed",
+      "label": ".test_path_outside_allowed()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "unit_test_services_security_testissafefilepath_test_empty_path_is_unsafe",
+      "label": ".test_empty_path_is_unsafe()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "unit_test_services_security_testissafefilepath_test_no_allowed_dirs_uses_defaults",
+      "label": ".test_no_allowed_dirs_uses_defaults()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "unit_test_services_security_testissafefilepath_test_traversal_attempt",
+      "label": ".test_traversal_attempt()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_services_security_testissaferegexpattern",
+      "label": "TestIsSafeRegexPattern",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "unit_test_services_security_testissaferegexpattern_test_simple_pattern_safe",
+      "label": ".test_simple_pattern_safe()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "unit_test_services_security_testissaferegexpattern_test_empty_pattern_safe",
+      "label": ".test_empty_pattern_safe()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "unit_test_services_security_testissaferegexpattern_test_invalid_regex_returns_false",
+      "label": ".test_invalid_regex_returns_false()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "unit_test_services_security_testissaferegexpattern_test_basic_pattern",
+      "label": ".test_basic_pattern()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "unit_test_services_security_rationale_1",
+      "label": "Tests for src/services/security.py",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_security_py",
+      "target": "backend_services_security",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_security_py",
+      "target": "unit_test_services_security_testissafefilepath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissafefilepath",
+      "target": "unit_test_services_security_testissafefilepath_test_path_within_allowed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissafefilepath",
+      "target": "unit_test_services_security_testissafefilepath_test_path_outside_allowed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissafefilepath",
+      "target": "unit_test_services_security_testissafefilepath_test_empty_path_is_unsafe",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissafefilepath",
+      "target": "unit_test_services_security_testissafefilepath_test_no_allowed_dirs_uses_defaults",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissafefilepath",
+      "target": "unit_test_services_security_testissafefilepath_test_traversal_attempt",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_security_py",
+      "target": "unit_test_services_security_testissaferegexpattern",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissaferegexpattern",
+      "target": "unit_test_services_security_testissaferegexpattern_test_simple_pattern_safe",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissaferegexpattern",
+      "target": "unit_test_services_security_testissaferegexpattern_test_empty_pattern_safe",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissaferegexpattern",
+      "target": "unit_test_services_security_testissaferegexpattern_test_invalid_regex_returns_false",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_testissaferegexpattern",
+      "target": "unit_test_services_security_testissaferegexpattern_test_basic_pattern",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_security_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_security_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_security.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_services_security_testissafefilepath_test_path_within_allowed",
+      "callee": "is_safe_file_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L12",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissafefilepath_test_path_outside_allowed",
+      "callee": "is_safe_file_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L17",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissafefilepath_test_empty_path_is_unsafe",
+      "callee": "is_safe_file_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissafefilepath_test_no_allowed_dirs_uses_defaults",
+      "callee": "is_safe_file_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissafefilepath_test_traversal_attempt",
+      "callee": "is_safe_file_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissaferegexpattern_test_simple_pattern_safe",
+      "callee": "is_safe_regex_pattern",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissaferegexpattern_test_empty_pattern_safe",
+      "callee": "is_safe_regex_pattern",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissaferegexpattern_test_invalid_regex_returns_false",
+      "callee": "is_safe_regex_pattern",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_security_testissaferegexpattern_test_basic_pattern",
+      "callee": "is_safe_regex_pattern",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_security.py",
+      "source_location": "L45",
+      "receiver": null
+    }
+  ]
+}

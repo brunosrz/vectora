@@ -1,0 +1,427 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "label": "slack.py",
+      "file_type": "code",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_slack_token",
+      "label": "_token()",
+      "file_type": "code",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "tools_slack_slack_send",
+      "label": "slack_send()",
+      "file_type": "code",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "tools_slack_slack_list_channels",
+      "label": "slack_list_channels()",
+      "file_type": "code",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "tools_slack_slack_read",
+      "label": "slack_read()",
+      "file_type": "code",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "tools_slack_rationale_1",
+      "label": "Tools de Slack para o agente.  Requer SLACK_BOT_TOKEN no ambiente (configurado v",
+      "file_type": "rationale",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_slack_rationale_29",
+      "label": "Envia uma mensagem para um canal do Slack.      Args:         channel: Nome ou I",
+      "file_type": "rationale",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "tools_slack_rationale_59",
+      "label": "Lista canais p\u00fablicos do Slack.      Args:         limit: N\u00famero m\u00e1ximo de canai",
+      "file_type": "rationale",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L59"
+    },
+    {
+      "id": "tools_slack_rationale_92",
+      "label": "L\u00ea mensagens recentes de um canal do Slack.      Args:         channel: ID do ca",
+      "file_type": "rationale",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L92"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "target": "tools_slack_token",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "target": "tools_slack_slack_send",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "target": "tools_slack_slack_list_channels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "target": "tools_slack_slack_read",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_slack_slack_send",
+      "target": "tools_slack_token",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_slack_slack_list_channels",
+      "target": "tools_slack_token",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_slack_slack_read",
+      "target": "tools_slack_token",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_slack_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_slack_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_slack_rationale_29",
+      "target": "tools_slack_slack_send",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_slack_rationale_59",
+      "target": "tools_slack_slack_list_channels",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_slack_rationale_92",
+      "target": "tools_slack_slack_read",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/slack.py",
+      "source_location": "L92",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tools_slack_token",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L19",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_token",
+      "callee": "RuntimeError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L21",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_send",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_send",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_send",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_send",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_send",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_send",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_list_channels",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_slack_slack_read",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\slack.py",
+      "source_location": "L121",
+      "receiver": null
+    }
+  ]
+}

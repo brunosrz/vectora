@@ -1,0 +1,147 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "label": "auth-provider.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "providers_auth_provider_public_paths",
+      "label": "PUBLIC_PATHS",
+      "file_type": "code",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L19"
+    },
+    {
+      "id": "providers_auth_provider_authprovider",
+      "label": "AuthProvider()",
+      "file_type": "code",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L21"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "navigation",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "stores_auth_store_useauthstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_settings_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "stores_settings_store_loadusersettings",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "providers_auth_provider_public_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_auth_provider_tsx",
+      "target": "providers_auth_provider_authprovider",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/auth-provider.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "providers_auth_provider_authprovider",
+      "callee": "useAuthStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\auth-provider.tsx",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "providers_auth_provider_authprovider",
+      "callee": "useAuthStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\auth-provider.tsx",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "providers_auth_provider_authprovider",
+      "callee": "useRouter",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\auth-provider.tsx",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "providers_auth_provider_authprovider",
+      "callee": "usePathname",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\auth-provider.tsx",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "providers_auth_provider_authprovider",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\auth-provider.tsx",
+      "source_location": "L27",
+      "receiver": null
+    }
+  ]
+}

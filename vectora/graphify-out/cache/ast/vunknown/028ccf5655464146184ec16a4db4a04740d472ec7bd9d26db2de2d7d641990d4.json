@@ -1,0 +1,529 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "label": "utils.py",
+      "file_type": "code",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_utils_get_env_with_default",
+      "label": "_get_env_with_default()",
+      "file_type": "code",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "services_utils_build_concrete_model",
+      "label": "_build_concrete_model()",
+      "file_type": "code",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L45"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_utils_load_llm",
+      "label": "load_llm()",
+      "file_type": "code",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L122"
+    },
+    {
+      "id": "baselanguagemodel",
+      "label": "BaseLanguageModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_utils_async_lifespan",
+      "label": "async_lifespan()",
+      "file_type": "code",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L219"
+    },
+    {
+      "id": "services_utils_rationale_1",
+      "label": "Utility Functions and Multi-Provider LLM Loading.  Provides LLM factory function",
+      "file_type": "rationale",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_utils_rationale_29",
+      "label": "Get environment variable with a default value.",
+      "file_type": "rationale",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "services_utils_rationale_46",
+      "label": "Constr\u00f3i o ``BaseChatModel`` concreto do provider (SDK oficial LangChain).",
+      "file_type": "rationale",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "services_utils_rationale_123",
+      "label": "Carrega o LLM de acordo com as configura\u00e7\u00f5es de ambiente.      ``model_id`` (opc",
+      "file_type": "rationale",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "services_utils_rationale_220",
+      "label": "Async context manager for application lifecycle.      Inicia o BackgroundEmbeddi",
+      "file_type": "rationale",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L220"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "contextlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "backend_services_env",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "collections_abc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "langchain_core_language_models_base",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "services_utils_get_env_with_default",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "services_utils_build_concrete_model",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_build_concrete_model",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "services_utils_load_llm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_load_llm",
+      "target": "baselanguagemodel",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "target": "services_utils_async_lifespan",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_build_concrete_model",
+      "target": "services_utils_get_env_with_default",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_load_llm",
+      "target": "services_utils_get_env_with_default",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L161",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_load_llm",
+      "target": "services_utils_build_concrete_model",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_utils_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_rationale_29",
+      "target": "services_utils_get_env_with_default",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_rationale_46",
+      "target": "services_utils_build_concrete_model",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_rationale_123",
+      "target": "services_utils_load_llm",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "services_utils_rationale_220",
+      "target": "services_utils_async_lifespan",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/utils.py",
+      "source_location": "L220",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_utils_get_env_with_default",
+      "callee": "get_env",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "ChatGoogleGenerativeAI",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "get_env",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "ChatOpenAI",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "get_env",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "ChatAnthropic",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "get_env",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "get_env",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "ChatCohere",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "init_chat_model",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L106",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_build_concrete_model",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "partition",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L177",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L180",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L191",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L198",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_load_llm",
+      "callee": "cast",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_async_lifespan",
+      "callee": "getLogger",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L237",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_async_lifespan",
+      "callee": "get_background_worker",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L239",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_async_lifespan",
+      "callee": "start",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L240",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_async_lifespan",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L241",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_async_lifespan",
+      "callee": "stop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L246",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_utils_async_lifespan",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\utils.py",
+      "source_location": "L247",
+      "receiver": null
+    }
+  ]
+}

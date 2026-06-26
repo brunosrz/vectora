@@ -1,0 +1,122 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "label": "time-travel-panel.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "features_time_travel_panel_checkpoint",
+      "label": "Checkpoint",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "features_time_travel_panel_timetravelpanelprops",
+      "label": "TimeTravelPanelProps",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "features_time_travel_panel_timetravelpanel",
+      "label": "TimeTravelPanel()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L27"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_scroll_area_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "ui_scroll_area_scrollarea",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "date_fns",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "features_time_travel_panel_checkpoint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "features_time_travel_panel_timetravelpanelprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_time_travel_panel_tsx",
+      "target": "features_time_travel_panel_timetravelpanel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/time-travel-panel.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

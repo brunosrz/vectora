@@ -1,0 +1,211 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_vitest_setup_ts",
+      "label": "vitest.setup.ts",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_vitest_setup_memorystorage",
+      "label": "MemoryStorage",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L25"
+    },
+    {
+      "id": "frontend_vitest_setup_memorystorage_length",
+      "label": ".length()",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "frontend_vitest_setup_memorystorage_clear",
+      "label": ".clear()",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L30"
+    },
+    {
+      "id": "frontend_vitest_setup_memorystorage_getitem",
+      "label": ".getItem()",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L33"
+    },
+    {
+      "id": "frontend_vitest_setup_memorystorage_setitem",
+      "label": ".setItem()",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L36"
+    },
+    {
+      "id": "frontend_vitest_setup_memorystorage_removeitem",
+      "label": ".removeItem()",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L39"
+    },
+    {
+      "id": "frontend_vitest_setup_memorystorage_key",
+      "label": ".key()",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L42"
+    },
+    {
+      "id": "frontend_vitest_setup_localstoragepolyfill",
+      "label": "localStoragePolyfill",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L47"
+    },
+    {
+      "id": "frontend_vitest_setup_sessionstoragepolyfill",
+      "label": "sessionStoragePolyfill",
+      "file_type": "code",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L48"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_vitest_setup_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_vitest_setup_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_vitest_setup_ts",
+      "target": "frontend_vitest_setup_memorystorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_vitest_setup_memorystorage",
+      "target": "frontend_vitest_setup_memorystorage_length",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_vitest_setup_memorystorage",
+      "target": "frontend_vitest_setup_memorystorage_clear",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_vitest_setup_memorystorage",
+      "target": "frontend_vitest_setup_memorystorage_getitem",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_vitest_setup_memorystorage",
+      "target": "frontend_vitest_setup_memorystorage_setitem",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_vitest_setup_memorystorage",
+      "target": "frontend_vitest_setup_memorystorage_removeitem",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_vitest_setup_memorystorage",
+      "target": "frontend_vitest_setup_memorystorage_key",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_vitest_setup_ts",
+      "target": "frontend_vitest_setup_localstoragepolyfill",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_vitest_setup_ts",
+      "target": "frontend_vitest_setup_sessionstoragepolyfill",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/vitest.setup.ts",
+      "source_location": "L48",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "frontend_vitest_setup_memorystorage_getitem",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\vitest.setup.ts",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "frontend_vitest_setup_memorystorage_getitem",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\vitest.setup.ts",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "frontend_vitest_setup_memorystorage_removeitem",
+      "callee": "delete",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\vitest.setup.ts",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "frontend_vitest_setup_memorystorage_key",
+      "callee": "keys",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\vitest.setup.ts",
+      "source_location": "L43",
+      "receiver": null
+    }
+  ]
+}

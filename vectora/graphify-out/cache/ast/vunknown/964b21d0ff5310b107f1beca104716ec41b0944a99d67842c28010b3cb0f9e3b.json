@@ -1,0 +1,393 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_admin_py",
+      "label": "test_admin.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_admin_testadminhandlerexists",
+      "label": "TestAdminHandlerExists",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "unit_test_admin_testadminhandlerexists_test_module_exists",
+      "label": ".test_module_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_admin_testadminhandlerexists_test_router_exists",
+      "label": ".test_router_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "unit_test_admin_testadminhandlerexists_test_list_users_route_registered",
+      "label": ".test_list_users_route_registered()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_admin_testadminhandlerexists_test_system_info_route_registered",
+      "label": ".test_system_info_route_registered()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "unit_test_admin_testadminhandlerexists_test_config_route_registered",
+      "label": ".test_config_route_registered()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "unit_test_admin_testadminhandlerexists_test_tools_override_route_registered",
+      "label": ".test_tools_override_route_registered()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L45"
+    },
+    {
+      "id": "unit_test_admin_testadminrequiresadminrole",
+      "label": "TestAdminRequiresAdminRole",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "unit_test_admin_testadminrequiresadminrole_test_require_admin_decorator_exists",
+      "label": ".test_require_admin_decorator_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "unit_test_admin_testadminrequiresadminrole_test_require_admin_raises_for_member",
+      "label": ".test_require_admin_raises_for_member()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L60"
+    },
+    {
+      "id": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_root",
+      "label": ".test_require_admin_passes_for_root()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_admin",
+      "label": ".test_require_admin_passes_for_admin()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L86"
+    },
+    {
+      "id": "unit_test_admin_testadminsysteminfo",
+      "label": "TestAdminSystemInfo",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "unit_test_admin_testadminsysteminfo_test_system_info_fields_exist",
+      "label": ".test_system_info_fields_exist()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "unit_test_admin_rationale_1",
+      "label": "Tests \u2014 Root Admin Panel (P1+P2).  Verifica: - handler admin existe com os endpo",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_admin_rationale_15",
+      "label": "src/api/handlers/admin.py deve existir com os endpoints esperados.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L15"
+    },
+    {
+      "id": "unit_test_admin_rationale_53",
+      "label": "Endpoints admin devem checar permiss\u00e3o de role.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "unit_test_admin_rationale_61",
+      "label": "member n\u00e3o tem acesso a endpoints admin.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "unit_test_admin_rationale_99",
+      "label": "Estrutura do sistema info.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L99"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_admin_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_admin_py",
+      "target": "unit_test_admin_testadminhandlerexists",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminhandlerexists",
+      "target": "unit_test_admin_testadminhandlerexists_test_module_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminhandlerexists",
+      "target": "unit_test_admin_testadminhandlerexists_test_router_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminhandlerexists",
+      "target": "unit_test_admin_testadminhandlerexists_test_list_users_route_registered",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminhandlerexists",
+      "target": "unit_test_admin_testadminhandlerexists_test_system_info_route_registered",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminhandlerexists",
+      "target": "unit_test_admin_testadminhandlerexists_test_config_route_registered",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminhandlerexists",
+      "target": "unit_test_admin_testadminhandlerexists_test_tools_override_route_registered",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_admin_py",
+      "target": "unit_test_admin_testadminrequiresadminrole",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminrequiresadminrole",
+      "target": "unit_test_admin_testadminrequiresadminrole_test_require_admin_decorator_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminrequiresadminrole",
+      "target": "unit_test_admin_testadminrequiresadminrole_test_require_admin_raises_for_member",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminrequiresadminrole",
+      "target": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_root",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminrequiresadminrole",
+      "target": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_admin",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_admin_py",
+      "target": "unit_test_admin_testadminsysteminfo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_testadminsysteminfo",
+      "target": "unit_test_admin_testadminsysteminfo_test_system_info_fields_exist",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_admin_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_rationale_15",
+      "target": "unit_test_admin_testadminhandlerexists",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_rationale_53",
+      "target": "unit_test_admin_testadminrequiresadminrole",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_rationale_61",
+      "target": "unit_test_admin_testadminrequiresadminrole_test_require_admin_raises_for_member",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_admin_rationale_99",
+      "target": "unit_test_admin_testadminsysteminfo",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_admin.py",
+      "source_location": "L99",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_admin_testadminrequiresadminrole_test_require_admin_raises_for_member",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_admin_testadminrequiresadminrole_test_require_admin_raises_for_member",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_admin_testadminrequiresadminrole_test_require_admin_raises_for_member",
+      "callee": "require_admin",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_root",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_root",
+      "callee": "require_admin",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_admin",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_admin_testadminrequiresadminrole_test_require_admin_passes_for_admin",
+      "callee": "require_admin",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_admin_testadminsysteminfo_test_system_info_fields_exist",
+      "callee": "_build_system_info",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_admin.py",
+      "source_location": "L104",
+      "receiver": null
+    }
+  ]
+}

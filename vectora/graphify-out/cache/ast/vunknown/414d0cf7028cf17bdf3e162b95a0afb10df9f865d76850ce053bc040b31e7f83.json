@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_cancel_js",
+      "label": "plugins_cancel.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_plugins_cancel_en_plugins_cancel",
+      "label": "en_plugins_cancel()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_plugins_cancel_es_plugins_cancel",
+      "label": "es_plugins_cancel()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_plugins_cancel_pt_plugins_cancel",
+      "label": "pt_plugins_cancel()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_cancel_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_cancel_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_cancel_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_cancel_js",
+      "target": "messages_plugins_cancel_en_plugins_cancel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_cancel_js",
+      "target": "messages_plugins_cancel_es_plugins_cancel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_plugins_cancel_js",
+      "target": "messages_plugins_cancel_pt_plugins_cancel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/plugins_cancel.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

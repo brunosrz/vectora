@@ -1,0 +1,80 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_history_panel_tsx",
+      "label": "file-history-panel.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "files_file_history_panel_filehistorypanel",
+      "label": "FileHistoryPanel()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L7"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_history_panel_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_history_panel_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_utils_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_history_panel_tsx",
+      "target": "files_files_utils_fmtdate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_history_panel_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_history_panel_tsx",
+      "target": "files_files_api_filelogentry",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_file_history_panel_tsx",
+      "target": "files_file_history_panel_filehistorypanel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/file-history-panel.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_chat_feedback_bad_js",
+      "label": "chat_feedback_bad.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_chat_feedback_bad_en_chat_feedback_bad",
+      "label": "en_chat_feedback_bad()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_chat_feedback_bad_es_chat_feedback_bad",
+      "label": "es_chat_feedback_bad()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_chat_feedback_bad_pt_chat_feedback_bad",
+      "label": "pt_chat_feedback_bad()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_chat_feedback_bad_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_chat_feedback_bad_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_chat_feedback_bad_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_chat_feedback_bad_js",
+      "target": "messages_chat_feedback_bad_en_chat_feedback_bad",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_chat_feedback_bad_js",
+      "target": "messages_chat_feedback_bad_es_chat_feedback_bad",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_chat_feedback_bad_js",
+      "target": "messages_chat_feedback_bad_pt_chat_feedback_bad",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/chat_feedback_bad.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

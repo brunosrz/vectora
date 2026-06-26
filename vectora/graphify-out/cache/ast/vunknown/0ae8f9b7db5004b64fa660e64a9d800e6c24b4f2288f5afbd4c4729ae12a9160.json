@@ -1,0 +1,46 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_features_ts",
+      "label": "features.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/constants/features.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "constants_features_storage_keys",
+      "label": "STORAGE_KEYS",
+      "file_type": "code",
+      "source_file": "frontend/lib/constants/features.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "constants_features_feedback_key",
+      "label": "FEEDBACK_KEY",
+      "file_type": "code",
+      "source_file": "frontend/lib/constants/features.ts",
+      "source_location": "L23"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_features_ts",
+      "target": "constants_features_storage_keys",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/constants/features.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_features_ts",
+      "target": "constants_features_feedback_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/constants/features.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

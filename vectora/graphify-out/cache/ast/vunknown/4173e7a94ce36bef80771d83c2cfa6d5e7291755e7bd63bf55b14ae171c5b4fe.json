@@ -1,0 +1,389 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "label": "files-api.ts",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "files_files_api_searchhit",
+      "label": "SearchHit",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L6"
+    },
+    {
+      "id": "files_files_api_searchresult",
+      "label": "SearchResult",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L12"
+    },
+    {
+      "id": "files_files_api_filelogentry",
+      "label": "FileLogEntry",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L17"
+    },
+    {
+      "id": "files_files_api_filelogresponse",
+      "label": "FileLogResponse",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L25"
+    },
+    {
+      "id": "files_files_api_showfileatrevresponse",
+      "label": "ShowFileAtRevResponse",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L30"
+    },
+    {
+      "id": "files_files_api_fetchtree",
+      "label": "fetchTree()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L38"
+    },
+    {
+      "id": "files_files_api_fetchdiffsummary",
+      "label": "fetchDiffSummary()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L51"
+    },
+    {
+      "id": "files_files_api_apifscreate",
+      "label": "apiFsCreate()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L61"
+    },
+    {
+      "id": "files_files_api_apifsdelete",
+      "label": "apiFsDelete()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L77"
+    },
+    {
+      "id": "files_files_api_apifsmove",
+      "label": "apiFsMove()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L91"
+    },
+    {
+      "id": "files_files_api_apifssearch",
+      "label": "apiFsSearch()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L108"
+    },
+    {
+      "id": "files_files_api_apifsgitlogfile",
+      "label": "apiFsGitLogFile()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L122"
+    },
+    {
+      "id": "files_files_api_apifsgitshow",
+      "label": "apiFsGitShow()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L135"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workbench_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "stores_workbench_store_diffsummary",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "stores_workbench_store_fileentry",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_searchhit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_searchresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_filelogentry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_filelogresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_showfileatrevresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_fetchtree",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_fetchdiffsummary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_apifscreate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_apifsdelete",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_apifsmove",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_apifssearch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_apifsgitlogfile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_files_files_api_ts",
+      "target": "files_files_api_apifsgitshow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/files/files-api.ts",
+      "source_location": "L135",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "files_files_api_fetchtree",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_fetchtree",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_fetchdiffsummary",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_fetchdiffsummary",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifscreate",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifscreate",
+      "callee": "stringify",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsdelete",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsmove",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsmove",
+      "callee": "stringify",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsmove",
+      "callee": "catch",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsmove",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifssearch",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifssearch",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsgitlogfile",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsgitlogfile",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsgitshow",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_files_api_apifsgitshow",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\files\\files-api.ts",
+      "source_location": "L145",
+      "receiver": null
+    }
+  ]
+}

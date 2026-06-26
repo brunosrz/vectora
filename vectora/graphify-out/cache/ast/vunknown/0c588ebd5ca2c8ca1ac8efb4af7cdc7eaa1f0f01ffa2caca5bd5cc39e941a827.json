@@ -1,0 +1,147 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "label": "workbench-store.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_workbench_store_test_mockget",
+      "label": "mockGet",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L18"
+    },
+    {
+      "id": "tests_workbench_store_test_mockset",
+      "label": "mockSet",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "tests_workbench_store_test_s",
+      "label": "s()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "tests_workbench_store_test_flush",
+      "label": "flush()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L22"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workbench_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "stores_workbench_store_useworkbenchstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "api_vectora_client_getthreadpins",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "api_vectora_client_setthreadpins",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "tests_workbench_store_test_mockget",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "tests_workbench_store_test_mockset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "tests_workbench_store_test_s",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_workbench_store_test_ts",
+      "target": "tests_workbench_store_test_flush",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/workbench-store.test.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_workbench_store_test_s",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\__tests__\\workbench-store.test.ts",
+      "source_location": "L21",
+      "receiver": null
+    }
+  ]
+}

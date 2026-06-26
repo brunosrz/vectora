@@ -1,0 +1,716 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "label": "test_cli.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_cli_null_console",
+      "label": "_null_console()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L20"
+    },
+    {
+      "id": "console",
+      "label": "_Console",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_cli_test_parser_sem_subcomando_nao_define_command",
+      "label": "test_parser_sem_subcomando_nao_define_command()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "unit_test_cli_test_parser_remove_chat_e_server",
+      "label": "test_parser_remove_chat_e_server()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "monkeypatch",
+      "label": "MonkeyPatch",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_cli_test_parser_start_headless_e_porta",
+      "label": "test_parser_start_headless_e_porta()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "unit_test_cli_test_parser_config_keys_docker_qdrant_redis",
+      "label": "test_parser_config_keys_docker_qdrant_redis()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "unit_test_cli_test_parser_config_sem_acao_aceita_set",
+      "label": "test_parser_config_sem_acao_aceita_set()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L72"
+    },
+    {
+      "id": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "label": "test_upsert_env_key_insere_e_atualiza()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L84"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_cli_test_run_docker_status_ok",
+      "label": "test_run_docker_status_ok()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "unit_test_cli_test_run_docker_falha_sai_com_erro",
+      "label": "test_run_docker_falha_sai_com_erro()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L119"
+    },
+    {
+      "id": "unit_test_cli_test_run_qdrant_ok_persiste_env",
+      "label": "test_run_qdrant_ok_persiste_env()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L136"
+    },
+    {
+      "id": "unit_test_cli_test_run_qdrant_sem_url_sai",
+      "label": "test_run_qdrant_sem_url_sai()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L154"
+    },
+    {
+      "id": "unit_test_cli_test_run_redis_falha_conexao_sai",
+      "label": "test_run_redis_falha_conexao_sai()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L160"
+    },
+    {
+      "id": "unit_test_cli_rationale_1",
+      "label": "Tests \u2014 CLI operacional (backend/cli) e parser do main.  Cobre o parser p\u00f3s-remo",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "io",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "rich_console",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "backend_cli",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "backend_main",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_null_console",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_null_console",
+      "target": "console",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_parser_sem_subcomando_nao_define_command",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_parser_remove_chat_e_server",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_parser_remove_chat_e_server",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_parser_start_headless_e_porta",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_parser_config_keys_docker_qdrant_redis",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_parser_config_sem_acao_aceita_set",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_run_docker_status_ok",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_run_docker_falha_sai_com_erro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_run_docker_falha_sai_com_erro",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_run_qdrant_ok_persiste_env",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_run_qdrant_ok_persiste_env",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_run_qdrant_ok_persiste_env",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_run_qdrant_sem_url_sai",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L154",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_run_qdrant_sem_url_sai",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L154",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "target": "unit_test_cli_test_run_redis_falha_conexao_sai",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_run_redis_falha_conexao_sai",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_test_run_redis_falha_conexao_sai",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_null_console",
+      "target": "console",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cli_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cli_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cli.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_cli_null_console",
+      "callee": "StringIO",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L21",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_sem_subcomando_nao_define_command",
+      "callee": "_build_parser",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_sem_subcomando_nao_define_command",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_remove_chat_e_server",
+      "callee": "StringIO",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_remove_chat_e_server",
+      "callee": "_build_parser",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_remove_chat_e_server",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_remove_chat_e_server",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_remove_chat_e_server",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_remove_chat_e_server",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_start_headless_e_porta",
+      "callee": "_build_parser",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_start_headless_e_porta",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_config_keys_docker_qdrant_redis",
+      "callee": "_build_parser",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_config_keys_docker_qdrant_redis",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_config_keys_docker_qdrant_redis",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_config_keys_docker_qdrant_redis",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_config_keys_docker_qdrant_redis",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_config_sem_acao_aceita_set",
+      "callee": "_build_parser",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_parser_config_sem_acao_aceita_set",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "callee": "upsert_env_key",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "callee": "upsert_env_key",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "callee": "upsert_env_key",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_upsert_env_key_insere_e_atualiza",
+      "callee": "count",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_docker_status_ok",
+      "callee": "StackResult",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_docker_status_ok",
+      "callee": "run_docker",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_docker_status_ok",
+      "callee": "readouterr",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_docker_falha_sai_com_erro",
+      "callee": "StackResult",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L125",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_docker_falha_sai_com_erro",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_docker_falha_sai_com_erro",
+      "callee": "run_docker",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_qdrant_ok_persiste_env",
+      "callee": "classmethod",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_qdrant_ok_persiste_env",
+      "callee": "run_qdrant",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_qdrant_ok_persiste_env",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_qdrant_sem_url_sai",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L156",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_qdrant_sem_url_sai",
+      "callee": "run_qdrant",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_redis_falha_conexao_sai",
+      "callee": "classmethod",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_redis_falha_conexao_sai",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cli_test_run_redis_falha_conexao_sai",
+      "callee": "run_redis",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cli.py",
+      "source_location": "L171",
+      "receiver": null
+    }
+  ]
+}

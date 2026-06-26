@@ -1,0 +1,369 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "label": "sessions.py",
+      "file_type": "code",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_sessions_run_sessions_async",
+      "label": "_run_sessions_async()",
+      "file_type": "code",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L11"
+    },
+    {
+      "id": "cli_sessions_run_sessions",
+      "label": "run_sessions()",
+      "file_type": "code",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "cli_sessions_rationale_1",
+      "label": "``vectora sessions`` \u2014 lista todas as sess\u00f5es salvas em tabela Rich.",
+      "file_type": "rationale",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_sessions_rationale_12",
+      "label": "Implementa ``vectora sessions``.",
+      "file_type": "rationale",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L12"
+    },
+    {
+      "id": "cli_sessions_rationale_103",
+      "label": "Entry point s\u00edncrono de ``vectora sessions``.",
+      "file_type": "rationale",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L103"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "target": "contextlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "target": "sys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "target": "cli_sessions_run_sessions_async",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "target": "cli_sessions_run_sessions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "cli_sessions_run_sessions",
+      "target": "cli_sessions_run_sessions_async",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "cli_sessions_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_cli_sessions_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "cli_sessions_rationale_12",
+      "target": "cli_sessions_run_sessions_async",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "cli_sessions_rationale_103",
+      "target": "cli_sessions_run_sessions",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/cli/sessions.py",
+      "source_location": "L103",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "fetchall",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "exit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "Console",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "Table",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "add_column",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "add_column",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "add_column",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "add_column",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "relative_to",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions_async",
+      "callee": "add_row",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "cli_sessions_run_sessions",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\cli\\sessions.py",
+      "source_location": "L105",
+      "receiver": null
+    }
+  ]
+}

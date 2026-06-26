@@ -1,0 +1,254 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_vtypes_documents_py",
+      "label": "documents.py",
+      "file_type": "code",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "vtypes_documents_document",
+      "label": "Document",
+      "file_type": "code",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "vtypes_documents_document_getitem",
+      "label": ".__getitem__()",
+      "file_type": "code",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "vtypes_documents_document_get",
+      "label": ".get()",
+      "file_type": "code",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "vtypes_documents_artifactmetadata",
+      "label": "ArtifactMetadata",
+      "file_type": "code",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "vtypes_documents_artifactmetadata_getitem",
+      "label": ".__getitem__()",
+      "file_type": "code",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "vtypes_documents_artifactmetadata_get",
+      "label": ".get()",
+      "file_type": "code",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L40"
+    },
+    {
+      "id": "vtypes_documents_rationale_9",
+      "label": "Estrutura de documento recuperado do RAG (Pydantic).",
+      "file_type": "rationale",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L9"
+    },
+    {
+      "id": "vtypes_documents_rationale_27",
+      "label": "Metadado de um artifact persistido em disco (Pydantic).",
+      "file_type": "rationale",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L27"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_vtypes_documents_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_vtypes_documents_py",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_vtypes_documents_py",
+      "target": "vtypes_documents_document",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_document",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_document",
+      "target": "vtypes_documents_document_getitem",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_document_getitem",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_document",
+      "target": "vtypes_documents_document_get",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_document_get",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_document_get",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_vtypes_documents_py",
+      "target": "vtypes_documents_artifactmetadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_artifactmetadata",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_artifactmetadata",
+      "target": "vtypes_documents_artifactmetadata_getitem",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_artifactmetadata_getitem",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_artifactmetadata",
+      "target": "vtypes_documents_artifactmetadata_get",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_artifactmetadata_get",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_artifactmetadata_get",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_rationale_9",
+      "target": "vtypes_documents_document",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_documents_rationale_27",
+      "target": "vtypes_documents_artifactmetadata",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/documents.py",
+      "source_location": "L27",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

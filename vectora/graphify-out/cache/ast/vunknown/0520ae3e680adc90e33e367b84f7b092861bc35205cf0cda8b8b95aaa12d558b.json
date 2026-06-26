@@ -1,0 +1,1436 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "label": "settings.py",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_settings_settings",
+      "label": "Settings",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "basesettings",
+      "label": "BaseSettings",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_settings_settings_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L548"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_settings_settings_load_environment_hierarchy",
+      "label": "._load_environment_hierarchy()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L582"
+    },
+    {
+      "id": "backend_settings_settings_initialize_directories",
+      "label": "._initialize_directories()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L690"
+    },
+    {
+      "id": "backend_settings_settings_initialize_derived_paths",
+      "label": "._initialize_derived_paths()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L712"
+    },
+    {
+      "id": "backend_settings_settings_detect_llm_provider",
+      "label": "._detect_llm_provider()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L743"
+    },
+    {
+      "id": "backend_settings_settings_get_llm_provider",
+      "label": ".get_llm_provider()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L767"
+    },
+    {
+      "id": "backend_settings_settings_get_llm_model",
+      "label": ".get_llm_model()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L775"
+    },
+    {
+      "id": "backend_settings_settings_get_llm_api_key",
+      "label": ".get_llm_api_key()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L790"
+    },
+    {
+      "id": "backend_settings_settings_get_cohere_api_key",
+      "label": ".get_cohere_api_key()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L805"
+    },
+    {
+      "id": "backend_settings_settings_get_available_providers",
+      "label": ".get_available_providers()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L823"
+    },
+    {
+      "id": "backend_settings_settings_set_model",
+      "label": ".set_model()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L842"
+    },
+    {
+      "id": "backend_settings_settings_get",
+      "label": ".get()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L872"
+    },
+    {
+      "id": "backend_settings_settings_set",
+      "label": ".set()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L884"
+    },
+    {
+      "id": "backend_settings_get_available_models",
+      "label": "get_available_models()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L1036"
+    },
+    {
+      "id": "backend_settings_get_context_window",
+      "label": "get_context_window()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L1043"
+    },
+    {
+      "id": "backend_settings_find_provider_for_model",
+      "label": "find_provider_for_model()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L1058"
+    },
+    {
+      "id": "backend_settings_has_api_key",
+      "label": "has_api_key()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L1066"
+    },
+    {
+      "id": "backend_settings_get_settings",
+      "label": "get_settings()",
+      "file_type": "code",
+      "source_file": "backend/settings.py",
+      "source_location": "L1081"
+    },
+    {
+      "id": "backend_settings_rationale_1",
+      "label": "Single Source of Truth for Vectora Configuration.  Pydantic-based settings modul",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_settings_rationale_27",
+      "label": "Immutable application settings with validation.      Three-level configuration h",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "backend_settings_rationale_549",
+      "label": "Initialize settings with 3-level hierarchy and validation.          Hierarchy (i",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L549"
+    },
+    {
+      "id": "backend_settings_rationale_583",
+      "label": "Load environment variables with 4-level hierarchy.          Order of precedence",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L583"
+    },
+    {
+      "id": "backend_settings_rationale_691",
+      "label": "Create all required directories if they don't exist.",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L691"
+    },
+    {
+      "id": "backend_settings_rationale_713",
+      "label": "Set all derived path and connection string fields.",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L713"
+    },
+    {
+      "id": "backend_settings_rationale_744",
+      "label": "Auto-detect LLM provider from available API keys.          Precedence order (if",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L744"
+    },
+    {
+      "id": "backend_settings_rationale_768",
+      "label": "Get the active LLM provider.          Returns:             Provider name: \"googl",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L768"
+    },
+    {
+      "id": "backend_settings_rationale_776",
+      "label": "Get the model name for the active provider.          Returns:             Model",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L776"
+    },
+    {
+      "id": "backend_settings_rationale_791",
+      "label": "Get the API key for the active provider.          Returns:             API key o",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L791"
+    },
+    {
+      "id": "backend_settings_rationale_806",
+      "label": "Get the API key for Cohere embeddings and reranking.          Preced\u00eancia:",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L806"
+    },
+    {
+      "id": "backend_settings_rationale_824",
+      "label": "Get list of providers with API keys configured.          Returns:             Li",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L824"
+    },
+    {
+      "id": "backend_settings_rationale_843",
+      "label": "Update model for a specific provider.          Args:             provider: LLM p",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L843"
+    },
+    {
+      "id": "backend_settings_rationale_873",
+      "label": "Legacy method for backward compatibility with old Config class.          Args:",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L873"
+    },
+    {
+      "id": "backend_settings_rationale_885",
+      "label": "Legacy method for backward compatibility.          Args:             key: Config",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L885"
+    },
+    {
+      "id": "backend_settings_rationale_1037",
+      "label": "Retorna modelos dispon\u00edveis para um provider ou todos.",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L1037"
+    },
+    {
+      "id": "backend_settings_rationale_1044",
+      "label": "Janela de contexto (tokens) do modelo.      Olha primeiro a tabela expl\u00edcita; se",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L1044"
+    },
+    {
+      "id": "backend_settings_rationale_1059",
+      "label": "Retorna o provider que possui o modelo, ou None se n\u00e3o encontrado.",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L1059"
+    },
+    {
+      "id": "backend_settings_rationale_1067",
+      "label": "True se a env var da API key do provider est\u00e1 populada (Ollama \u2192 sempre True).",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L1067"
+    },
+    {
+      "id": "backend_settings_rationale_1082",
+      "label": "Get or create the global Settings instance.      This function provides a single",
+      "file_type": "rationale",
+      "source_file": "backend/settings.py",
+      "source_location": "L1082"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "importlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "dotenv",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "pydantic_settings",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "backend_settings_settings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "basesettings",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L548",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_init",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L548",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_load_environment_hierarchy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L582",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_initialize_directories",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L690",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_initialize_derived_paths",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L712",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_detect_llm_provider",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L743",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_get_llm_provider",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L767",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_get_llm_model",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L775",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_get_llm_api_key",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L790",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_get_cohere_api_key",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L805",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_get_available_providers",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L823",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_set_model",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L842",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_get",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L872",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_get",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L872",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_get",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L872",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings",
+      "target": "backend_settings_settings_set",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L884",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_set",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L884",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "backend_settings_get_available_models",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1036",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "backend_settings_get_context_window",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1043",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "backend_settings_find_provider_for_model",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1058",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "backend_settings_has_api_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1066",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "target": "backend_settings_get_settings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1081",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_get_settings",
+      "target": "backend_settings_settings",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1081",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_init",
+      "target": "backend_settings_settings_load_environment_hierarchy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L561",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_init",
+      "target": "backend_settings_settings_initialize_directories",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L567",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_init",
+      "target": "backend_settings_settings_initialize_derived_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L568",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_init",
+      "target": "backend_settings_settings_detect_llm_provider",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L571",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_load_environment_hierarchy",
+      "target": "backend_settings_settings_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L620",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_get_llm_model",
+      "target": "backend_settings_settings_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L788",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_settings_get_llm_api_key",
+      "target": "backend_settings_settings_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L803",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_get_available_models",
+      "target": "backend_settings_settings_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1039",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_get_context_window",
+      "target": "backend_settings_settings_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1049",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_has_api_key",
+      "target": "backend_settings_settings_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1068",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_get_settings",
+      "target": "backend_settings_settings",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1092",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_settings_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_27",
+      "target": "backend_settings_settings",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_549",
+      "target": "backend_settings_settings_init",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L549",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_583",
+      "target": "backend_settings_settings_load_environment_hierarchy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L583",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_691",
+      "target": "backend_settings_settings_initialize_directories",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L691",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_713",
+      "target": "backend_settings_settings_initialize_derived_paths",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L713",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_744",
+      "target": "backend_settings_settings_detect_llm_provider",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L744",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_768",
+      "target": "backend_settings_settings_get_llm_provider",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L768",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_776",
+      "target": "backend_settings_settings_get_llm_model",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L776",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_791",
+      "target": "backend_settings_settings_get_llm_api_key",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L791",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_806",
+      "target": "backend_settings_settings_get_cohere_api_key",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L806",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_824",
+      "target": "backend_settings_settings_get_available_providers",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L824",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_843",
+      "target": "backend_settings_settings_set_model",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L843",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_873",
+      "target": "backend_settings_settings_get",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L873",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_885",
+      "target": "backend_settings_settings_set",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L885",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_1037",
+      "target": "backend_settings_get_available_models",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1037",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_1044",
+      "target": "backend_settings_get_context_window",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1044",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_1059",
+      "target": "backend_settings_find_provider_for_model",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1059",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_1067",
+      "target": "backend_settings_has_api_key",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1067",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_settings_rationale_1082",
+      "target": "backend_settings_get_settings",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/settings.py",
+      "source_location": "L1082",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "backend_settings_settings_init",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L573",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "joinpath",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L598",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "files",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L598",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L599",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L601",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L602",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L603",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L605",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L606",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L606",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L606",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L607",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L609",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L614",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L615",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L619",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L619",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L623",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L633",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L634",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L636",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L641",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L642",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L646",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L646",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L649",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L653",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L657",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L660",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L662",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L667",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L668",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "load_dotenv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L669",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L670",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L674",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L674",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "cwd",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L675",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L679",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L680",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L680",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "load_dotenv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L682",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L683",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L686",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "load_dotenv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L687",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_load_environment_hierarchy",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L688",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_directories",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L692",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_directories",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L700",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_directories",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L701",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_directories",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L702",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_directories",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L704",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_derived_paths",
+      "callee": "cast",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L716",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_derived_paths",
+      "callee": "cast",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L717",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_initialize_derived_paths",
+      "callee": "as_posix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L731",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_detect_llm_provider",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L761",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_get_cohere_api_key",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L821",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_get_available_providers",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L831",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_get_available_providers",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L833",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_get_available_providers",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L835",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_get_available_providers",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L837",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_get_available_providers",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L839",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_set_model",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L853",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_set_model",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L866",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_get",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L882",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_set",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L891",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_set",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L892",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_settings_set",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L893",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_get_context_window",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L1053",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_settings_find_provider_for_model",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\settings.py",
+      "source_location": "L1060",
+      "receiver": null
+    }
+  ]
+}

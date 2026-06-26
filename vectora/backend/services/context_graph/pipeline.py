@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,7 @@ async def build_workspace_graph(
     model: str = "",
     mode: str = "semantic",
     update: bool = False,
+    on_progress: Callable[[int, int, str, int, int, list[str] | None], None] | None = None,
 ) -> GraphResult:
     """Constrói (ou atualiza) o grafo de contexto de um workspace.
 
@@ -90,10 +92,17 @@ async def build_workspace_graph(
         html_path=graph_html,
     )
 
+    _files_total: int = 0
+
+    def _progress(step: int, label: str, files_done: int = 0, *, files_list: list[str] | None = None) -> None:
+        if on_progress is not None:
+            on_progress(step, 9, label, files_done, _files_total, files_list)
+
     try:
         # ── Passo 1: detectar arquivos ────────────────────────────────────────
         from .detect import detect, detect_incremental, save_manifest
 
+        _progress(1, "Detectando arquivos...")
         logger.info("context_graph: detectando arquivos em %s", workspace_path)
         if update and graph_json.exists():
             corpus = await asyncio.to_thread(
@@ -115,22 +124,36 @@ async def build_workspace_graph(
             logger.info("context_graph: nenhum arquivo novo detectado")
             return result
 
+        _files_total = len(all_files)
+        short_files: list[str] = []
+        for f in all_files[:200]:
+            try:
+                short_files.append(str(Path(f).relative_to(workspace_path)).replace("\\", "/"))
+            except ValueError:
+                short_files.append(Path(f).name)
+
         logger.info(
             "context_graph: %d arquivos para extração",
-            len(all_files),
+            _files_total,
             extra={"workspace_id": workspace_id, "mode": mode},
         )
+        _progress(1, "Detectando arquivos", _files_total, files_list=short_files)
 
         # ── Passo 2: extração AST (CPU-bound → thread) ────────────────────────
+        _progress(2, "Extraindo AST...")
         ast_results: dict[str, Any] = {"nodes": [], "edges": [], "hyperedges": []}
         try:
             ast_results = await asyncio.to_thread(
-                _run_ast_extraction, all_files, workspace_path
+                _run_ast_extraction,
+                all_files,
+                workspace_path,
+                lambda done: _progress(2, "Extraindo AST...", done),
             )
         except Exception:
             logger.exception("context_graph: falha na extração AST", extra={"workspace_id": workspace_id})
 
         # ── Passo 3: extração semântica (async LLM) ───────────────────────────
+        _progress(3, "Análise semântica...", _files_total)
         semantic_results: dict[str, Any] = {"nodes": [], "edges": [], "hyperedges": [], "input_tokens": 0, "output_tokens": 0}
         if mode == "semantic":
             from .semantic import extract_semantic
@@ -156,6 +179,7 @@ async def build_workspace_graph(
                     logger.exception("context_graph: falha na extração semântica", extra={"workspace_id": workspace_id})
 
         # ── Passo 4: build (funde AST + semântico → grafo NetworkX) ──────────
+        _progress(4, "Construindo grafo...", _files_total)
         from .build import build
 
         try:
@@ -172,6 +196,7 @@ async def build_workspace_graph(
         result.edge_count = graph.number_of_edges()
 
         # ── Passo 5: cluster (comunidades Leiden/Louvain) ─────────────────────
+        _progress(5, "Agrupando comunidades...", _files_total)
         from .cluster import cluster, score_all
 
         communities: dict[int, list[str]] = {}
@@ -183,6 +208,7 @@ async def build_workspace_graph(
             logger.exception("context_graph: falha no clustering", extra={"workspace_id": workspace_id})
 
         # ── Passo 6: analyze (god nodes, conexões surpreendentes, perguntas) ──
+        _progress(6, "Analisando padrões...", _files_total)
         from .analyze import god_nodes, suggest_questions, surprising_connections
 
         community_labels: dict[int, str] = {}
@@ -199,7 +225,8 @@ async def build_workspace_graph(
         except Exception:
             logger.exception("context_graph: falha na análise", extra={"workspace_id": workspace_id})
 
-        # ── Passo 7: report + export ──────────────────────────────────────────
+        # ── Passo 7: relatório ────────────────────────────────────────────────
+        _progress(7, "Gerando relatório...", _files_total)
         from .export import to_html, to_json
         from .report import generate as generate_report
 
@@ -223,6 +250,8 @@ async def build_workspace_graph(
         except Exception:
             logger.exception("context_graph: falha ao gerar relatório", extra={"workspace_id": workspace_id})
 
+        # ── Passo 8: exportar grafo + manifesto ───────────────────────────────
+        _progress(8, "Exportando...", _files_total)
         try:
             await asyncio.to_thread(to_json, graph, communities, str(graph_json))
         except Exception:
@@ -233,7 +262,6 @@ async def build_workspace_graph(
         except Exception:
             logger.exception("context_graph: falha ao exportar graph.html", extra={"workspace_id": workspace_id})
 
-        # ── Passo 8: salvar manifesto incremental ─────────────────────────────
         try:
             await asyncio.to_thread(
                 save_manifest,
@@ -246,6 +274,7 @@ async def build_workspace_graph(
             logger.exception("context_graph: falha ao salvar manifesto", extra={"workspace_id": workspace_id})
 
         # ── Passo 9: indexar nós do grafo no LanceDB (GraphRAG) ──────────────
+        _progress(9, "Indexando...", _files_total)
         try:
             from .graph_index import index_graph_nodes, purge_graph_index
 
@@ -273,7 +302,11 @@ async def build_workspace_graph(
         return result
 
 
-def _run_ast_extraction(files: list[str], workspace_path: Path) -> dict[str, Any]:
+def _run_ast_extraction(
+    files: list[str],
+    workspace_path: Path,
+    on_file: Callable[[int], None] | None = None,
+) -> dict[str, Any]:
     """Roda extração AST síncrona (chamada via asyncio.to_thread)."""
     from .cache import load_cached, save_cached
     from .extract import _get_extractor, _safe_extract
@@ -282,7 +315,7 @@ def _run_ast_extraction(files: list[str], workspace_path: Path) -> dict[str, Any
     edges: list[dict] = []
     hyperedges: list[dict] = []
 
-    for file_str in files:
+    for i, file_str in enumerate(files):
         path = Path(file_str)
         try:
             cached = load_cached(path, workspace_path)
@@ -290,17 +323,18 @@ def _run_ast_extraction(files: list[str], workspace_path: Path) -> dict[str, Any
                 nodes.extend(cached.get("nodes", []))
                 edges.extend(cached.get("edges", []))
                 hyperedges.extend(cached.get("hyperedges", []))
-                continue
-            extractor = _get_extractor(path)
-            if extractor is None:
-                continue
-            data = _safe_extract(extractor, path)
-            if "error" not in data:
-                save_cached(path, data, workspace_path)
-            nodes.extend(data.get("nodes", []))
-            edges.extend(data.get("edges", []))
-            hyperedges.extend(data.get("hyperedges", []))
+            else:
+                extractor = _get_extractor(path)
+                if extractor is not None:
+                    data = _safe_extract(extractor, path)
+                    if "error" not in data:
+                        save_cached(path, data, workspace_path)
+                    nodes.extend(data.get("nodes", []))
+                    edges.extend(data.get("edges", []))
+                    hyperedges.extend(data.get("hyperedges", []))
         except Exception:
             logger.exception("context_graph: falha ao extrair %s", file_str)
+        if on_file is not None:
+            on_file(i + 1)
 
     return {"nodes": nodes, "edges": edges, "hyperedges": hyperedges}

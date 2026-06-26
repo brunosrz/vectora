@@ -1,0 +1,1176 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "label": "security.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_security_max_graph_file_bytes",
+      "label": "_max_graph_file_bytes()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "context_graph_security_ip_is_blocked",
+      "label": "_ip_is_blocked()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "ipv4address",
+      "label": "IPv4Address",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "ipv6address",
+      "label": "IPv6Address",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_security_validate_url",
+      "label": "validate_url()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "context_graph_security_resolve_and_validate",
+      "label": "_resolve_and_validate()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L94"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttpconnection",
+      "label": "_SSRFGuardedHTTPConnection",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L110"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttpconnection_connect",
+      "label": ".connect()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttpsconnection",
+      "label": "_SSRFGuardedHTTPSConnection",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L120"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttpsconnection_connect",
+      "label": ".connect()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L121"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttphandler",
+      "label": "_SSRFGuardedHTTPHandler",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L133"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttphandler_http_open",
+      "label": ".http_open()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttpshandler",
+      "label": "_SSRFGuardedHTTPSHandler",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L138"
+    },
+    {
+      "id": "context_graph_security_ssrfguardedhttpshandler_https_open",
+      "label": ".https_open()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L139"
+    },
+    {
+      "id": "context_graph_security_nofileredirecthandler",
+      "label": "_NoFileRedirectHandler",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L143"
+    },
+    {
+      "id": "context_graph_security_nofileredirecthandler_redirect_request",
+      "label": ".redirect_request()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L144"
+    },
+    {
+      "id": "context_graph_security_build_opener",
+      "label": "_build_opener()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L149"
+    },
+    {
+      "id": "openerdirector",
+      "label": "OpenerDirector",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_security_safe_fetch",
+      "label": "safe_fetch()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L157"
+    },
+    {
+      "id": "context_graph_security_safe_fetch_text",
+      "label": "safe_fetch_text()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L181"
+    },
+    {
+      "id": "context_graph_security_validate_graph_path",
+      "label": "validate_graph_path()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L186"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_security_check_graph_file_size_cap",
+      "label": "check_graph_file_size_cap()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L214"
+    },
+    {
+      "id": "context_graph_security_sanitize_label",
+      "label": "sanitize_label()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L232"
+    },
+    {
+      "id": "context_graph_security_sanitize_metadata_string",
+      "label": "_sanitize_metadata_string()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L245"
+    },
+    {
+      "id": "context_graph_security_sanitize_metadata_value",
+      "label": "_sanitize_metadata_value()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L253"
+    },
+    {
+      "id": "context_graph_security_sanitize_metadata",
+      "label": "sanitize_metadata()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L267"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "html",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "http_client",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "ipaddress",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "socket",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "urllib_error",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "urllib_parse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "urllib_request",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "collections_abc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_paths_py",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_max_graph_file_bytes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_ip_is_blocked",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ip_is_blocked",
+      "target": "ipv4address",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ip_is_blocked",
+      "target": "ipv6address",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_validate_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_resolve_and_validate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_ssrfguardedhttpconnection",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ssrfguardedhttpconnection",
+      "target": "context_graph_security_ssrfguardedhttpconnection_connect",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_ssrfguardedhttpsconnection",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ssrfguardedhttpsconnection",
+      "target": "context_graph_security_ssrfguardedhttpsconnection_connect",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_ssrfguardedhttphandler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ssrfguardedhttphandler",
+      "target": "context_graph_security_ssrfguardedhttphandler_http_open",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_ssrfguardedhttpshandler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ssrfguardedhttpshandler",
+      "target": "context_graph_security_ssrfguardedhttpshandler_https_open",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_nofileredirecthandler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_nofileredirecthandler",
+      "target": "context_graph_security_nofileredirecthandler_redirect_request",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_build_opener",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L149",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_build_opener",
+      "target": "openerdirector",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L149",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_safe_fetch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L157",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_safe_fetch_text",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_validate_graph_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_validate_graph_path",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_validate_graph_path",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_validate_graph_path",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_check_graph_file_size_cap",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L214",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_check_graph_file_size_cap",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L214",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_sanitize_label",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L232",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_sanitize_metadata_string",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_sanitize_metadata_value",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L253",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_security_py",
+      "target": "context_graph_security_sanitize_metadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L267",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_sanitize_metadata",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L267",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_validate_url",
+      "target": "context_graph_security_ip_is_blocked",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_resolve_and_validate",
+      "target": "context_graph_security_ip_is_blocked",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ssrfguardedhttpconnection_connect",
+      "target": "context_graph_security_resolve_and_validate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_ssrfguardedhttpsconnection_connect",
+      "target": "context_graph_security_resolve_and_validate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_nofileredirecthandler_redirect_request",
+      "target": "context_graph_security_validate_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_safe_fetch",
+      "target": "context_graph_security_validate_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_safe_fetch",
+      "target": "context_graph_security_build_opener",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_safe_fetch_text",
+      "target": "context_graph_security_safe_fetch",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_validate_graph_path",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_check_graph_file_size_cap",
+      "target": "context_graph_security_max_graph_file_bytes",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L215",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_sanitize_metadata_value",
+      "target": "context_graph_security_sanitize_metadata_string",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L257",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_sanitize_metadata_value",
+      "target": "context_graph_security_sanitize_metadata",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L259",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_sanitize_metadata",
+      "target": "context_graph_security_sanitize_metadata_string",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L272",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_security_sanitize_metadata",
+      "target": "context_graph_security_sanitize_metadata_value",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/security.py",
+      "source_location": "L275",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "context_graph_security_max_graph_file_bytes",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_max_graph_file_bytes",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_max_graph_file_bytes",
+      "callee": "upper",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_max_graph_file_bytes",
+      "callee": "endswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_max_graph_file_bytes",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_max_graph_file_bytes",
+      "callee": "endswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_max_graph_file_bytes",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ip_is_blocked",
+      "callee": "ip_address",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "urlparse",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "getaddrinfo",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "ip_address",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_url",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_resolve_and_validate",
+      "callee": "getaddrinfo",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_resolve_and_validate",
+      "callee": "ip_address",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_resolve_and_validate",
+      "callee": "OSError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_resolve_and_validate",
+      "callee": "OSError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ssrfguardedhttpconnection_connect",
+      "callee": "create_connection",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ssrfguardedhttpconnection_connect",
+      "callee": "_tunnel",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ssrfguardedhttpsconnection_connect",
+      "callee": "create_connection",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ssrfguardedhttpsconnection_connect",
+      "callee": "_tunnel",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ssrfguardedhttpsconnection_connect",
+      "callee": "wrap_socket",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ssrfguardedhttphandler_http_open",
+      "callee": "do_open",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L135",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_ssrfguardedhttpshandler_https_open",
+      "callee": "do_open",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_build_opener",
+      "callee": "build_opener",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L150",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_safe_fetch",
+      "callee": "HTTPError",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_safe_fetch",
+      "callee": "read",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_safe_fetch",
+      "callee": "OSError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_safe_fetch",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L177",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_safe_fetch",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_safe_fetch_text",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L183",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L188",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L196",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "relative_to",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L205",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L209",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_validate_graph_path",
+      "callee": "FileNotFoundError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L210",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_check_graph_file_size_cap",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L217",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_check_graph_file_size_cap",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L221",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_sanitize_label",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_sanitize_metadata_string",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L246",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_sanitize_metadata_string",
+      "callee": "escape",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_security_sanitize_metadata",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\security.py",
+      "source_location": "L271",
+      "receiver": null
+    }
+  ]
+}

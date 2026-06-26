@@ -1,0 +1,155 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "label": "error-banner.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "ui_error_banner_errorbannerprops",
+      "label": "ErrorBannerProps",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "ui_error_banner_errorbanner",
+      "label": "ErrorBanner()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L31"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "utils_index_cn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "ui_error_banner_errorbannerprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_error_banner_tsx",
+      "target": "ui_error_banner_errorbanner",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/error-banner.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "ui_error_banner_errorbanner",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\error-banner.tsx",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_error_banner_errorbanner",
+      "callee": "cn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\error-banner.tsx",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_error_banner_errorbanner",
+      "callee": "error_banner_title",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\error-banner.tsx",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_error_banner_errorbanner",
+      "callee": "cn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\error-banner.tsx",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_error_banner_errorbanner",
+      "callee": "error_banner_retrying",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\error-banner.tsx",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_error_banner_errorbanner",
+      "callee": "error_banner_retry",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\error-banner.tsx",
+      "source_location": "L70",
+      "receiver": null
+    }
+  ]
+}

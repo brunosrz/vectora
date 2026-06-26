@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_nodes_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "backend/nodes/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "nodes_init_rationale_1",
+      "label": "Nodes Package \u2014 toolset can\u00f4nico (ALL_TOOLS) e ToolNodes do agente.",
+      "file_type": "rationale",
+      "source_file": "backend/nodes/__init__.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_nodes_init_py",
+      "target": "backend_nodes_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/__init__.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_init_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_nodes_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

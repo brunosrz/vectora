@@ -7,6 +7,12 @@ export interface GraphStatus {
   node_count?: number | null;
   edge_count?: number | null;
   error?: string | null;
+  step?: number | null;
+  step_total?: number | null;
+  step_label?: string | null;
+  files_total?: number | null;
+  files_done?: number | null;
+  files_list?: string[] | null;
 }
 
 export interface GraphReport {
@@ -57,7 +63,7 @@ export function useContextGraph(workspaceId: string | null | undefined) {
 
   useEffect(() => {
     if (status.status !== "running") return;
-    const id = setInterval(fetchStatus, 3000);
+    const id = setInterval(fetchStatus, 1500);
     return () => clearInterval(id);
   }, [status.status, fetchStatus]);
 

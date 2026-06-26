@@ -1,0 +1,1083 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "label": "test_checkpoint_git_strategy.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "label": "repo_with_commit()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "repo",
+      "label": "Repo",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_empty_repo",
+      "label": "empty_repo()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L40"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "label": "TestCreateGitCheckpoint",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_creates_commit_without_moving_head",
+      "label": ".test_creates_commit_without_moving_head()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "label": ".test_does_not_touch_real_index_or_worktree()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "label": ".test_captures_untracked_and_modified_files()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L79"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_uses_fixed_checkpoint_author",
+      "label": ".test_uses_fixed_checkpoint_author()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "label": ".test_chains_checkpoints_to_previous_one()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_works_on_repo_without_commits",
+      "label": ".test_works_on_repo_without_commits()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L122"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint",
+      "label": "TestRestoreGitCheckpoint",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L137"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "label": ".test_restores_modified_file_to_snapshot_content()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L138"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restore_does_not_move_head",
+      "label": ".test_restore_does_not_move_head()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L153"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_returns_error_for_invalid_sha",
+      "label": ".test_returns_error_for_invalid_sha()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L165"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints",
+      "label": "TestListGitCheckpoints",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L175"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "label": ".test_lists_in_reverse_chronological_order()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L176"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_returns_empty_list_when_no_checkpoints_exist",
+      "label": ".test_returns_empty_list_when_no_checkpoints_exist()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L192"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_does_not_mix_threads",
+      "label": ".test_does_not_mix_threads()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L198"
+    },
+    {
+      "id": "unit_test_checkpoint_git_strategy_rationale_1",
+      "label": "Testes para a estrat\u00e9gia git de checkpoint de workspace (rewind \u2014 A.2).  Cobre `",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "git",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "backend_services_checkpoint",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "target": "repo",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "unit_test_checkpoint_git_strategy_empty_repo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_empty_repo",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_empty_repo",
+      "target": "repo",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_creates_commit_without_moving_head",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_creates_commit_without_moving_head",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_uses_fixed_checkpoint_author",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_uses_fixed_checkpoint_author",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_works_on_repo_without_commits",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_works_on_repo_without_commits",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_works_on_repo_without_commits",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restore_does_not_move_head",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restore_does_not_move_head",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restore_does_not_move_head",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint",
+      "target": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_returns_error_for_invalid_sha",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_returns_error_for_invalid_sha",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "target": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints",
+      "target": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints",
+      "target": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_returns_empty_list_when_no_checkpoints_exist",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_returns_empty_list_when_no_checkpoints_exist",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints",
+      "target": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_does_not_mix_threads",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_does_not_mix_threads",
+      "target": "repo",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_checkpoint_git_strategy_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_checkpoint_git_strategy_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_checkpoint_git_strategy.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "init",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "release",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "set_value",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "config_writer",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "release",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "set_value",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "config_writer",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_repo_with_commit",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_empty_repo",
+      "callee": "init",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_empty_repo",
+      "callee": "release",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_empty_repo",
+      "callee": "set_value",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_empty_repo",
+      "callee": "config_writer",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_empty_repo",
+      "callee": "release",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_empty_repo",
+      "callee": "set_value",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_empty_repo",
+      "callee": "config_writer",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_creates_commit_without_moving_head",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "callee": "status",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "callee": "status",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_does_not_touch_real_index_or_worktree",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "callee": "write_bytes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "callee": "write_bytes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "callee": "traverse",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "callee": "read",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_captures_untracked_and_modified_files",
+      "callee": "read",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_uses_fixed_checkpoint_author",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_uses_fixed_checkpoint_author",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "callee": "rev_parse",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_chains_checkpoints_to_previous_one",
+      "callee": "checkpoint_ref",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_works_on_repo_without_commits",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_works_on_repo_without_commits",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L125",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testcreategitcheckpoint_test_works_on_repo_without_commits",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L144",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "callee": "restore_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restores_modified_file_to_snapshot_content",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L151",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restore_does_not_move_head",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L158",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restore_does_not_move_head",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_restore_does_not_move_head",
+      "callee": "restore_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testrestoregitcheckpoint_test_returns_error_for_invalid_sha",
+      "callee": "restore_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L180",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_lists_in_reverse_chronological_order",
+      "callee": "list_git_checkpoints",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L184",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_returns_empty_list_when_no_checkpoints_exist",
+      "callee": "list_git_checkpoints",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_does_not_mix_threads",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_does_not_mix_threads",
+      "callee": "create_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_does_not_mix_threads",
+      "callee": "list_git_checkpoints",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_checkpoint_git_strategy_testlistgitcheckpoints_test_does_not_mix_threads",
+      "callee": "list_git_checkpoints",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_checkpoint_git_strategy.py",
+      "source_location": "L204",
+      "receiver": null
+    }
+  ]
+}

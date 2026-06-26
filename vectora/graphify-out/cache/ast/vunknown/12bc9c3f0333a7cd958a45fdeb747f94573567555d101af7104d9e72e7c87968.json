@@ -1,0 +1,201 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "label": "file-window.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "windows_file_window_filewindow",
+      "label": "FileWindow()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L22"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "react_rnd",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_editor_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "workbench_file_editor_fileeditor",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "stores_windows_store_usewindowsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "stores_windows_store_filewindowstate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "target": "windows_file_window_filewindow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/file-window.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "useWindowsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "useWindowsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "useWindowsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "useWindowsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "useWindowsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "useWindowsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "window_minimize",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "window_minimize",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "window_close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "windows_file_window_filewindow",
+      "callee": "window_close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\file-window.tsx",
+      "source_location": "L76",
+      "receiver": null
+    }
+  ]
+}

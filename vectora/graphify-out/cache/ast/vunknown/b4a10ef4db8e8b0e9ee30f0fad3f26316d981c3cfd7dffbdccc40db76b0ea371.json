@@ -1,0 +1,438 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "label": "plans.py",
+      "file_type": "code",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_plans_artifacts_dir",
+      "label": "_artifacts_dir()",
+      "file_type": "code",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_plans_find_and_replace_item",
+      "label": "_find_and_replace_item()",
+      "file_type": "code",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "tools_plans_update_plan_item",
+      "label": "update_plan_item()",
+      "file_type": "code",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "runnableconfig",
+      "label": "RunnableConfig",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "injectedtoolarg",
+      "label": "InjectedToolArg",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_plans_rationale_1",
+      "label": "Tool para atualizar itens de plano em artifacts markdown.  Permite ao agente mar",
+      "file_type": "rationale",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_plans_rationale_32",
+      "label": "Pasta de artifacts da sess\u00e3o. Sanitiza o session_id (sem traversal).",
+      "file_type": "rationale",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "tools_plans_rationale_38",
+      "label": "Substitui a primeira linha que contenha `item` com o marcador do status.      Re",
+      "file_type": "rationale",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "tools_plans_rationale_68",
+      "label": "Atualiza o status de um item de plano em um artifact markdown.      Marca checkb",
+      "file_type": "rationale",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L68"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "langchain_core_runnables",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "langchain_core_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "tools_plans_artifacts_dir",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_artifacts_dir",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "tools_plans_find_and_replace_item",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "target": "tools_plans_update_plan_item",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_update_plan_item",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_update_plan_item",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_update_plan_item",
+      "target": "tools_plans_artifacts_dir",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_update_plan_item",
+      "target": "tools_plans_find_and_replace_item",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_plans_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_rationale_32",
+      "target": "tools_plans_artifacts_dir",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_rationale_38",
+      "target": "tools_plans_find_and_replace_item",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_plans_rationale_68",
+      "target": "tools_plans_update_plan_item",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/plans.py",
+      "source_location": "L68",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tools_plans_artifacts_dir",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_artifacts_dir",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_artifacts_dir",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_artifacts_dir",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_find_and_replace_item",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_find_and_replace_item",
+      "callee": "search",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_find_and_replace_item",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_find_and_replace_item",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_find_and_replace_item",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_plans_update_plan_item",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\plans.py",
+      "source_location": "L105",
+      "receiver": null
+    }
+  ]
+}

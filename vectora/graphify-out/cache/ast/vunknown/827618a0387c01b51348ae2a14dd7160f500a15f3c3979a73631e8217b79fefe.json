@@ -1,0 +1,260 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_qdrant_cloud_py",
+      "label": "qdrant_cloud.py",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "recipes_qdrant_cloud_build_config",
+      "label": "build_config()",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "recipes_qdrant_cloud_configure_settings",
+      "label": "configure_settings()",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "recipes_qdrant_cloud_healthcheck",
+      "label": "healthcheck()",
+      "file_type": "code",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L89"
+    },
+    {
+      "id": "recipes_qdrant_cloud_rationale_1",
+      "label": "Recipe Qdrant Cloud \u2014 vetor gerenciado com suporte HYBRID (dense + BM25 sparse).",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "recipes_qdrant_cloud_rationale_43",
+      "label": "Monta a configura\u00e7\u00e3o para QdrantVectorStore.      Args:         url:",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "recipes_qdrant_cloud_rationale_75",
+      "label": "Aplica flags Qdrant Cloud ao objeto settings.      Define ``storage_mode = \"comp",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L75"
+    },
+    {
+      "id": "recipes_qdrant_cloud_rationale_93",
+      "label": "Smoke test de conectividade ao Qdrant Cloud.      Verifica conex\u00e3o e lista as co",
+      "file_type": "rationale",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L93"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_qdrant_cloud_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_qdrant_cloud_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_qdrant_cloud_py",
+      "target": "recipes_qdrant_cloud_build_config",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_build_config",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_qdrant_cloud_py",
+      "target": "recipes_qdrant_cloud_configure_settings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_configure_settings",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_configure_settings",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_qdrant_cloud_py",
+      "target": "recipes_qdrant_cloud_healthcheck",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_healthcheck",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_configure_settings",
+      "target": "recipes_qdrant_cloud_build_config",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_storage_recipes_qdrant_cloud_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_rationale_43",
+      "target": "recipes_qdrant_cloud_build_config",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_rationale_75",
+      "target": "recipes_qdrant_cloud_configure_settings",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "recipes_qdrant_cloud_rationale_93",
+      "target": "recipes_qdrant_cloud_healthcheck",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/recipes/qdrant_cloud.py",
+      "source_location": "L93",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "recipes_qdrant_cloud_build_config",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\qdrant_cloud.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_qdrant_cloud_build_config",
+      "callee": "format",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\qdrant_cloud.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_qdrant_cloud_configure_settings",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\qdrant_cloud.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_qdrant_cloud_healthcheck",
+      "callee": "QdrantClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\qdrant_cloud.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_qdrant_cloud_healthcheck",
+      "callee": "get_collections",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\qdrant_cloud.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_qdrant_cloud_healthcheck",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\qdrant_cloud.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "recipes_qdrant_cloud_healthcheck",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\recipes\\qdrant_cloud.py",
+      "source_location": "L132",
+      "receiver": null
+    }
+  ]
+}

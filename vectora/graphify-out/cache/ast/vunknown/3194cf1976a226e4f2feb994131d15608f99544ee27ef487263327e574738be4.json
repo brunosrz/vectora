@@ -1,0 +1,243 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "label": "index.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "administracao_index_admintab",
+      "label": "AdminTab",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L27"
+    },
+    {
+      "id": "administracao_index_adminfallback",
+      "label": "AdminFallback()",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L31"
+    },
+    {
+      "id": "administracao_index_admindialog",
+      "label": "AdminDialog()",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L39"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_dialog_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "ui_dialog_dialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "ui_dialog_dialogdescription",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "ui_dialog_dialogheader",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "ui_dialog_dialogtitle",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_resizable_dialog_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "ui_resizable_dialog_resizabledialogcontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_administracao_dialog_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "stores_administracao_dialog_store_useadministracaodialogstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_settings_group_tabs_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "settings_settings_group_tabs_settingsgrouptabs",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "administracao_index_admintab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "administracao_index_adminfallback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "target": "administracao_index_admindialog",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/administracao/index.tsx",
+      "source_location": "L39",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "administracao_index_adminfallback",
+      "callee": "admin_loading",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\administracao\\index.tsx",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "administracao_index_admindialog",
+      "callee": "useAdministracaoDialogStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\administracao\\index.tsx",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "administracao_index_admindialog",
+      "callee": "useAdministracaoDialogStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\administracao\\index.tsx",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "administracao_index_admindialog",
+      "callee": "admin_dialog_title",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\administracao\\index.tsx",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "administracao_index_admindialog",
+      "callee": "admin_dialog_desc",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\administracao\\index.tsx",
+      "source_location": "L55",
+      "receiver": null
+    }
+  ]
+}

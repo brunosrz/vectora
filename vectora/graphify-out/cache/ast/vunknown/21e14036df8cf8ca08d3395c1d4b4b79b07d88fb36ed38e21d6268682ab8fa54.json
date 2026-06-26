@@ -1,0 +1,83 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_src_shims_next_link_tsx",
+      "label": "next-link.tsx",
+      "file_type": "code",
+      "source_file": "frontend/src/shims/next-link.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "shims_next_link_nextlinkprops",
+      "label": "NextLinkProps",
+      "file_type": "code",
+      "source_file": "frontend/src/shims/next-link.tsx",
+      "source_location": "L16"
+    },
+    {
+      "id": "shims_next_link_link",
+      "label": "Link()",
+      "file_type": "code",
+      "source_file": "frontend/src/shims/next-link.tsx",
+      "source_location": "L29"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_shims_next_link_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/shims/next-link.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_shims_next_link_tsx",
+      "target": "react_router",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/shims/next-link.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_shims_next_link_tsx",
+      "target": "shims_next_link_nextlinkprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/shims/next-link.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_shims_next_link_tsx",
+      "target": "shims_next_link_link",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/shims/next-link.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "shims_next_link_link",
+      "callee": "test",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\src\\shims\\next-link.tsx",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "shims_next_link_link",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\src\\shims\\next-link.tsx",
+      "source_location": "L43",
+      "receiver": null
+    }
+  ]
+}

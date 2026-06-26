@@ -118,13 +118,14 @@ describe("ContextGraphTab", () => {
       expect(screen.getAllByText("graph_building").length).toBeGreaterThan(0);
     });
 
-    it("botão está desabilitado", () => {
+    it("botão vira cancelar e fica habilitado durante running", () => {
       setup({ status: { status: "running" } });
       render(<ContextGraphTab threadId="t1" />);
       const btn = document.querySelector(
         "[data-testid='graph-build-btn']",
       ) as HTMLButtonElement;
-      expect(btn.disabled).toBe(true);
+      expect(btn.disabled).toBe(false);
+      expect(btn.textContent).toContain("graph_cancel_button");
     });
 
     it("botão está desabilitado quando loading=true", () => {
@@ -155,6 +156,25 @@ describe("ContextGraphTab", () => {
       setup();
       render(<ContextGraphTab threadId="t1" />);
       expect(screen.queryByText("graph_cancel_button")).toBeNull();
+    });
+
+    it("exibe barra de progresso quando step está presente", () => {
+      setup({
+        status: {
+          status: "running",
+          step: 3,
+          step_total: 9,
+          step_label: "Extraindo AST...",
+          files_total: 12,
+          files_done: 4,
+          files_list: ["src/a.ts", "src/b.ts"],
+        },
+      });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByText("Extraindo AST...")).toBeTruthy();
+      expect(screen.getByText("3/9")).toBeTruthy();
+      expect(screen.getByText("graph_files_progress")).toBeTruthy();
+      expect(screen.getByText("src/a.ts")).toBeTruthy();
     });
   });
 

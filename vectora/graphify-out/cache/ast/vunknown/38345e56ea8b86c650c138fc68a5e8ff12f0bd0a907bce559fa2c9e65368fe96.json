@@ -1,0 +1,105 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "label": "attachments.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_attachments_derivekind",
+      "label": "deriveKind()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L18"
+    },
+    {
+      "id": "chat_attachments_toapiattachments",
+      "label": "toApiAttachments()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L31"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "target": "types_index_imageattachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "target": "api_vectora_client_attachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "target": "api_vectora_client_attachmentkind",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "target": "chat_attachments_derivekind",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "target": "chat_attachments_toapiattachments",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/attachments.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_attachments_derivekind",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\chat\\attachments.ts",
+      "source_location": "L19",
+      "receiver": null
+    }
+  ]
+}

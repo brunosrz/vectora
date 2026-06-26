@@ -1,0 +1,1197 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "label": "safe_roots.py",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_safe_roots_default_builtin_root",
+      "label": "_default_builtin_root()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_safe_roots_saferootregistry",
+      "label": "SafeRootRegistry",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_instance",
+      "label": ".instance()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_derive_id",
+      "label": ".derive_id()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_load",
+      "label": "._load()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_ensure_builtin",
+      "label": "._ensure_builtin()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L71"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_save",
+      "label": "._save()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L97"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_all_roots",
+      "label": ".all_roots()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "saferoot",
+      "label": "SafeRoot",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_get",
+      "label": ".get()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L117"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_add",
+      "label": ".add()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L121"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_update_label",
+      "label": ".update_label()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L140"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_remove",
+      "label": ".remove()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L151"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "label": ".is_under_safe_root()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L165"
+    },
+    {
+      "id": "services_safe_roots_saferootregistry_closest_safe_root_for",
+      "label": ".closest_safe_root_for()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L182"
+    },
+    {
+      "id": "services_safe_roots_get_safe_root_registry",
+      "label": "get_safe_root_registry()",
+      "file_type": "code",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L199"
+    },
+    {
+      "id": "services_safe_roots_rationale_1",
+      "label": "SafeRootRegistry \u2014 pastas confi\u00e1veis configur\u00e1veis pelo admin.  Limita onde usu\u00e1",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_safe_roots_rationale_29",
+      "label": "Pasta builtin garantida \u2014 espelha o root de workspaces de sess\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "services_safe_roots_rationale_34",
+      "label": "Singleton com persist\u00eancia em JSON.",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "services_safe_roots_rationale_50",
+      "label": "ID determin\u00edstico do path absoluto resolvido.",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "services_safe_roots_rationale_72",
+      "label": "Garante a entrada builtin ~/Documents/vectora.          Se j\u00e1 existir uma SafeRo",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L72"
+    },
+    {
+      "id": "services_safe_roots_rationale_110",
+      "label": "Retorna todas as ra\u00edzes confi\u00e1veis (builtin primeiro).",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L110"
+    },
+    {
+      "id": "services_safe_roots_rationale_122",
+      "label": "Adiciona uma nova raiz. Idempotente por path (ID determin\u00edstico).",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L122"
+    },
+    {
+      "id": "services_safe_roots_rationale_141",
+      "label": "Renomeia uma entrada. Builtin permite renomear; remove n\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L141"
+    },
+    {
+      "id": "services_safe_roots_rationale_152",
+      "label": "Remove raiz. Recusa se for builtin.",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L152"
+    },
+    {
+      "id": "services_safe_roots_rationale_166",
+      "label": "Devolve o SafeRoot que cont\u00e9m ``path``, ou None se nenhum.          Match inclui",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "services_safe_roots_rationale_183",
+      "label": "Retorna o SafeRoot mais pr\u00f3ximo do ``path`` solicitado.          \u00datil para o fal",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L183"
+    },
+    {
+      "id": "services_safe_roots_rationale_200",
+      "label": "Atalho para o singleton (mesmo padr\u00e3o do workspace_registry).",
+      "file_type": "rationale",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L200"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "hashlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "backend_vtypes",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "services_safe_roots_default_builtin_root",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_default_builtin_root",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "services_safe_roots_saferootregistry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_instance",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_instance",
+      "target": "services_safe_roots_saferootregistry",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_derive_id",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_ensure_builtin",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_save",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_all_roots",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_all_roots",
+      "target": "saferoot",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_get",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_get",
+      "target": "saferoot",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_add",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_add",
+      "target": "saferoot",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_update_label",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_update_label",
+      "target": "saferoot",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_remove",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "target": "saferoot",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry",
+      "target": "services_safe_roots_saferootregistry_closest_safe_root_for",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_closest_safe_root_for",
+      "target": "saferoot",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "target": "services_safe_roots_get_safe_root_registry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_get_safe_root_registry",
+      "target": "services_safe_roots_saferootregistry",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_derive_id",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_load",
+      "target": "services_safe_roots_saferootregistry_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_load",
+      "target": "saferoot",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_load",
+      "target": "services_safe_roots_saferootregistry_ensure_builtin",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_ensure_builtin",
+      "target": "services_safe_roots_default_builtin_root",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_ensure_builtin",
+      "target": "services_safe_roots_saferootregistry_derive_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_ensure_builtin",
+      "target": "services_safe_roots_saferootregistry_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_ensure_builtin",
+      "target": "services_safe_roots_saferootregistry_save",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_ensure_builtin",
+      "target": "saferoot",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L87",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_all_roots",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_get",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_add",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_add",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_add",
+      "target": "services_safe_roots_saferootregistry_derive_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_add",
+      "target": "saferoot",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_add",
+      "target": "services_safe_roots_saferootregistry_save",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_update_label",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_update_label",
+      "target": "services_safe_roots_saferootregistry_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_update_label",
+      "target": "services_safe_roots_saferootregistry_save",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L148",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_remove",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_remove",
+      "target": "services_safe_roots_saferootregistry_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L154",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_remove",
+      "target": "services_safe_roots_saferootregistry_save",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_closest_safe_root_for",
+      "target": "services_safe_roots_saferootregistry_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_closest_safe_root_for",
+      "target": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_saferootregistry_closest_safe_root_for",
+      "target": "services_safe_roots_saferootregistry_all_roots",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L195",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_get_safe_root_registry",
+      "target": "services_safe_roots_saferootregistry_instance",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_safe_roots_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_29",
+      "target": "services_safe_roots_default_builtin_root",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_34",
+      "target": "services_safe_roots_saferootregistry",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_50",
+      "target": "services_safe_roots_saferootregistry_derive_id",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_72",
+      "target": "services_safe_roots_saferootregistry_ensure_builtin",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_110",
+      "target": "services_safe_roots_saferootregistry_all_roots",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_122",
+      "target": "services_safe_roots_saferootregistry_add",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_141",
+      "target": "services_safe_roots_saferootregistry_update_label",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_152",
+      "target": "services_safe_roots_saferootregistry_remove",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_166",
+      "target": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_183",
+      "target": "services_safe_roots_saferootregistry_closest_safe_root_for",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "services_safe_roots_rationale_200",
+      "target": "services_safe_roots_get_safe_root_registry",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/safe_roots.py",
+      "source_location": "L200",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_safe_roots_default_builtin_root",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_instance",
+      "callee": "cls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_derive_id",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_derive_id",
+      "callee": "expanduser",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_derive_id",
+      "callee": "hexdigest",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_derive_id",
+      "callee": "sha256",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_derive_id",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_load",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_load",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_load",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_load",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_load",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_ensure_builtin",
+      "callee": "model_copy",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_ensure_builtin",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_ensure_builtin",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_ensure_builtin",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_save",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_save",
+      "callee": "model_dump",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_save",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_save",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_save",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_save",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_all_roots",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_all_roots",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_add",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_add",
+      "callee": "expanduser",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_add",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_add",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_add",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_update_label",
+      "callee": "model_copy",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_update_label",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "callee": "expanduser",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_safe_roots_saferootregistry_is_under_safe_root",
+      "callee": "relative_to",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\safe_roots.py",
+      "source_location": "L176",
+      "receiver": null
+    }
+  ]
+}

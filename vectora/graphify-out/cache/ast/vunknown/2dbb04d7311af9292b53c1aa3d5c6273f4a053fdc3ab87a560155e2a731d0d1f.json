@@ -1,0 +1,209 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "label": "xterm-view.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "terminal_xterm_view_readxtermtheme",
+      "label": "readXtermTheme()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L14"
+    },
+    {
+      "id": "terminal_xterm_view_xtermviewprops",
+      "label": "XtermViewProps",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L31"
+    },
+    {
+      "id": "terminal_xterm_view_xtermview",
+      "label": "XtermView()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L38"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_api_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "constants_api_vectora_api_url",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "terminal_xterm_view_readxtermtheme",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "terminal_xterm_view_xtermviewprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_terminal_xterm_view_tsx",
+      "target": "terminal_xterm_view_xtermview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/terminal/xterm-view.tsx",
+      "source_location": "L38",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "terminal_xterm_view_readxtermtheme",
+      "callee": "getComputedStyle",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_readxtermtheme",
+      "callee": "get",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_readxtermtheme",
+      "callee": "get",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L21",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_readxtermtheme",
+      "callee": "get",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "terminal_xterm_view_xtermview",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\terminal\\xterm-view.tsx",
+      "source_location": "L57",
+      "receiver": null
+    }
+  ]
+}

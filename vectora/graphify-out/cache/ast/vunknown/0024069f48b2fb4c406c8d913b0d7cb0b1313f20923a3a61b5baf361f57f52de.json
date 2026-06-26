@@ -1,0 +1,275 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "label": "use-global-shortcuts.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_shortcuthandler",
+      "label": "ShortcutHandler",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L33"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_shortcutmap",
+      "label": "ShortcutMap",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L35"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_normalizekey",
+      "label": "normalizeKey()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L48"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_handlers",
+      "label": "handlers",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L62"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_globalkeydown",
+      "label": "globalKeyDown()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L66"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_ensurelistener",
+      "label": "ensureListener()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L91"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_useglobalshortcuts",
+      "label": "useGlobalShortcuts()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L101"
+    },
+    {
+      "id": "hooks_use_global_shortcuts_getregisteredshortcuts",
+      "label": "getRegisteredShortcuts()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L134"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_shortcuthandler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_shortcutmap",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_normalizekey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_handlers",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_globalkeydown",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_ensurelistener",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_useglobalshortcuts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_global_shortcuts_ts",
+      "target": "hooks_use_global_shortcuts_getregisteredshortcuts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "hooks_use_global_shortcuts_globalkeydown",
+      "target": "hooks_use_global_shortcuts_normalizekey",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-global-shortcuts.ts",
+      "source_location": "L74",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "hooks_use_global_shortcuts_normalizekey",
+      "callee": "push",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_normalizekey",
+      "callee": "push",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_normalizekey",
+      "callee": "push",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_normalizekey",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_normalizekey",
+      "callee": "push",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_normalizekey",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_globalkeydown",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_globalkeydown",
+      "callee": "handler",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_globalkeydown",
+      "callee": "preventDefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_globalkeydown",
+      "callee": "stopPropagation",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_ensurelistener",
+      "callee": "addEventListener",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_useglobalshortcuts",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_useglobalshortcuts",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L106",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_global_shortcuts_getregisteredshortcuts",
+      "callee": "keys",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-global-shortcuts.ts",
+      "source_location": "L135",
+      "receiver": null
+    }
+  ]
+}

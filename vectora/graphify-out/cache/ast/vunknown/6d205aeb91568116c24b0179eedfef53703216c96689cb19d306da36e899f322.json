@@ -1,0 +1,846 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "label": "semantic_cleanup.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "label": "validate_semantic_fragment()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "label": "load_validated_semantic_fragment()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L110"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_semantic_cleanup_validate_semantic_id",
+      "label": "_validate_semantic_id()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L128"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "label": "sanitize_semantic_fragment()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L143"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_is_sentence_like_rationale_label",
+      "label": "_is_sentence_like_rationale_label()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L240"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_append_rationale_attr",
+      "label": "_append_rationale_attr()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L255"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_rationale_1",
+      "label": "Sanitizador de fragmentos sem\u00e2nticos do Context Graph.  Porta de graphify/semant",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_rationale_29",
+      "label": "Retorna erros de valida\u00e7\u00e3o para um fragmento sem\u00e2ntico n\u00e3o-confi\u00e1vel.      Lista",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_rationale_111",
+      "label": "Carrega e valida fragmento sem\u00e2ntico, rejeitando arquivos gigantes antes do pars",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_rationale_144",
+      "label": "Remove n\u00f3s-prosa do LLM e converte rationale_for em atributos.      Quatro passe",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L144"
+    },
+    {
+      "id": "context_graph_semantic_cleanup_rationale_241",
+      "label": "Retorna True se label parece prosa/rationale e n\u00e3o um nome de entidade.      Heu",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L241"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "context_graph_semantic_cleanup_validate_semantic_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "context_graph_semantic_cleanup_is_sentence_like_rationale_label",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "target": "context_graph_semantic_cleanup_append_rationale_attr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "target": "context_graph_semantic_cleanup_validate_semantic_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "target": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "target": "context_graph_semantic_cleanup_is_sentence_like_rationale_label",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "target": "context_graph_semantic_cleanup_append_rationale_attr",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_semantic_cleanup_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_rationale_29",
+      "target": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_rationale_111",
+      "target": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_rationale_144",
+      "target": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_semantic_cleanup_rationale_241",
+      "target": "context_graph_semantic_cleanup_is_sentence_like_rationale_label",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/semantic_cleanup.py",
+      "source_location": "L241",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_load_validated_semantic_fragment",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_id",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_id",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L133",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_id",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_id",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_id",
+      "callee": "fullmatch",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_validate_semantic_id",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "frozenset",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L152",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L154",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L155",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L156",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L175",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L183",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L189",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L193",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L196",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L198",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L205",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L211",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L212",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L217",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "discard",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_sanitize_semantic_fragment",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L232",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_is_sentence_like_rationale_label",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_is_sentence_like_rationale_label",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L249",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_is_sentence_like_rationale_label",
+      "callee": "search",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L252",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_append_rationale_attr",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L256",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_append_rationale_attr",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L257",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_semantic_cleanup_append_rationale_attr",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\semantic_cleanup.py",
+      "source_location": "L257",
+      "receiver": null
+    }
+  ]
+}

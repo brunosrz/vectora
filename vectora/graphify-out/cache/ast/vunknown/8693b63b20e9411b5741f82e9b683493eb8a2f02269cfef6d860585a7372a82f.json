@@ -1,0 +1,889 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "label": "mq.py",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_mq_streammessage",
+      "label": "StreamMessage",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "services_mq_memorymq",
+      "label": "MemoryMQ",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "services_mq_memorymq_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "services_mq_memorymq_queue",
+      "label": "._queue()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "queue",
+      "label": "Queue",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_mq_memorymq_enqueue",
+      "label": ".enqueue()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "services_mq_memorymq_consume",
+      "label": ".consume()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "handler",
+      "label": "Handler",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "event",
+      "label": "Event",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_mq_memorymq_close",
+      "label": ".close()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L79"
+    },
+    {
+      "id": "services_mq_redismq",
+      "label": "RedisMQ",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L83"
+    },
+    {
+      "id": "services_mq_redismq_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L86"
+    },
+    {
+      "id": "services_mq_redismq_enqueue",
+      "label": ".enqueue()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "services_mq_redismq_ensure_group",
+      "label": "._ensure_group()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "services_mq_redismq_consume",
+      "label": ".consume()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "services_mq_redismq_close",
+      "label": ".close()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L151"
+    },
+    {
+      "id": "services_mq_get_mq",
+      "label": "get_mq()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L163"
+    },
+    {
+      "id": "mq",
+      "label": "MQ",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_mq_reset_mq",
+      "label": "reset_mq()",
+      "file_type": "code",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L185"
+    },
+    {
+      "id": "services_mq_rationale_1",
+      "label": "Message queue distribu\u00edda \u2014 Bloco G (G3), base para a API externa.  Fila de mens",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_mq_rationale_35",
+      "label": "Mensagem entregue ao consumidor.",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "services_mq_rationale_42",
+      "label": "Backend in-process \u2014 sem persist\u00eancia nem redelivery cross-process.",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L42"
+    },
+    {
+      "id": "services_mq_rationale_65",
+      "label": "Consome at\u00e9 ``stop_event`` ser setado (ou para sempre).",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "services_mq_rationale_84",
+      "label": "Backend Redis Streams com consumer groups (at-least-once).",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L84"
+    },
+    {
+      "id": "services_mq_rationale_119",
+      "label": "Loop de consumo: XREADGROUP \u2192 handler \u2192 XACK.          Handler que lan\u00e7a exce\u00e7\u00e3o",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L119"
+    },
+    {
+      "id": "services_mq_rationale_164",
+      "label": "Singleton da message queue \u2014 Redis quando ``settings.redis_url`` setado.",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L164"
+    },
+    {
+      "id": "services_mq_rationale_186",
+      "label": "Descarta o singleton \u2014 usado em testes.",
+      "file_type": "rationale",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L186"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "uuid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "collections_abc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "dataclasses",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "services_mq_streammessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "services_mq_memorymq",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq",
+      "target": "services_mq_memorymq_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq",
+      "target": "services_mq_memorymq_queue",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_queue",
+      "target": "queue",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_queue",
+      "target": "queue",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_queue",
+      "target": "services_mq_streammessage",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq",
+      "target": "services_mq_memorymq_enqueue",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq",
+      "target": "services_mq_memorymq_consume",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_consume",
+      "target": "handler",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_consume",
+      "target": "event",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq",
+      "target": "services_mq_memorymq_close",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "services_mq_redismq",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq",
+      "target": "services_mq_redismq_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq",
+      "target": "services_mq_redismq_enqueue",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq",
+      "target": "services_mq_redismq_ensure_group",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq",
+      "target": "services_mq_redismq_consume",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq_consume",
+      "target": "handler",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq_consume",
+      "target": "event",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq",
+      "target": "services_mq_redismq_close",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "services_mq_get_mq",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_get_mq",
+      "target": "mq",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "target": "services_mq_reset_mq",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L185",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_queue",
+      "target": "queue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_enqueue",
+      "target": "services_mq_streammessage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_enqueue",
+      "target": "services_mq_memorymq_queue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_memorymq_consume",
+      "target": "services_mq_memorymq_queue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq_consume",
+      "target": "services_mq_redismq_ensure_group",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_redismq_consume",
+      "target": "services_mq_streammessage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_get_mq",
+      "target": "services_mq_redismq",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_get_mq",
+      "target": "services_mq_memorymq",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L177",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_mq_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_35",
+      "target": "services_mq_streammessage",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_42",
+      "target": "services_mq_memorymq",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_65",
+      "target": "services_mq_memorymq_consume",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_84",
+      "target": "services_mq_redismq",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_119",
+      "target": "services_mq_redismq_consume",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_164",
+      "target": "services_mq_get_mq",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "services_mq_rationale_186",
+      "target": "services_mq_reset_mq",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/mq.py",
+      "source_location": "L186",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_mq_memorymq_queue",
+      "callee": "setdefault",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_enqueue",
+      "callee": "uuid4",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_enqueue",
+      "callee": "put",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_consume",
+      "callee": "is_set",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_consume",
+      "callee": "wait_for",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_consume",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_consume",
+      "callee": "handler",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_consume",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_consume",
+      "callee": "put",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_consume",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_memorymq_close",
+      "callee": "clear",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_init",
+      "callee": "from_url",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_enqueue",
+      "callee": "xadd",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_enqueue",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_ensure_group",
+      "callee": "xgroup_create",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "is_set",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "xreadgroup",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L134",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L135",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "handler",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L144",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "xack",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L145",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_consume",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L147",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_close",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L154",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_redismq_close",
+      "callee": "aclose",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L155",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_get_mq",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_get_mq",
+      "callee": "redis_reachable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_get_mq",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L174",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_get_mq",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L176",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_mq_get_mq",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\mq.py",
+      "source_location": "L180",
+      "receiver": null
+    }
+  ]
+}

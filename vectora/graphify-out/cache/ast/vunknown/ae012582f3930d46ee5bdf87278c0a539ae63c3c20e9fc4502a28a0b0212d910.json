@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_markdown_view_tsx",
+      "label": "markdown-view.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/markdown-view.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "workbench_markdown_view_markdownview",
+      "label": "MarkdownView()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/markdown-view.tsx",
+      "source_location": "L14"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_markdown_view_tsx",
+      "target": "react_markdown",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/markdown-view.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_markdown_view_tsx",
+      "target": "remark_gfm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/markdown-view.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_markdown_view_tsx",
+      "target": "workbench_markdown_view_markdownview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/markdown-view.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

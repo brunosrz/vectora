@@ -1,0 +1,74 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_broadcast_sync_test_ts",
+      "label": "use-broadcast-sync.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-broadcast-sync.test.ts",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_broadcast_sync_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-broadcast-sync.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_broadcast_sync_test_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-broadcast-sync.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_broadcast_sync_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_broadcast_sync_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-broadcast-sync.test.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_broadcast_sync_test_ts",
+      "target": "hooks_use_broadcast_sync_broadcastevent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-broadcast-sync.test.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_broadcast_sync_test_ts",
+      "target": "hooks_use_broadcast_sync_usebroadcastsync",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-broadcast-sync.test.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_broadcast_sync_test_ts",
+      "target": "hooks_use_broadcast_sync_broadcastpayload",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-broadcast-sync.test.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

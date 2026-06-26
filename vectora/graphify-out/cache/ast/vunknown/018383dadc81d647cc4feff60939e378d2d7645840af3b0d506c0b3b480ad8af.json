@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_vtypes_metrics_py",
+      "label": "metrics.py",
+      "file_type": "code",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "vtypes_metrics_uimetrics",
+      "label": "UIMetrics",
+      "file_type": "code",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "vtypes_metrics_uimetrics_getitem",
+      "label": ".__getitem__()",
+      "file_type": "code",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "vtypes_metrics_uimetrics_get",
+      "label": ".get()",
+      "file_type": "code",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "vtypes_metrics_rationale_9",
+      "label": "M\u00e9tricas de observabilidade em tempo real (D1.5 \u2014 State-Sync Observability).",
+      "file_type": "rationale",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L9"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_vtypes_metrics_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_vtypes_metrics_py",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_vtypes_metrics_py",
+      "target": "vtypes_metrics_uimetrics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_metrics_uimetrics",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_metrics_uimetrics",
+      "target": "vtypes_metrics_uimetrics_getitem",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_metrics_uimetrics_getitem",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_metrics_uimetrics",
+      "target": "vtypes_metrics_uimetrics_get",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_metrics_uimetrics_get",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_metrics_uimetrics_get",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "vtypes_metrics_rationale_9",
+      "target": "vtypes_metrics_uimetrics",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/vtypes/metrics.py",
+      "source_location": "L9",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

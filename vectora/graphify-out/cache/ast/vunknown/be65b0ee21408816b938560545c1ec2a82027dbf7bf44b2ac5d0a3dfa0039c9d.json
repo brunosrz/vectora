@@ -1,0 +1,115 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "label": "windows-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_windows_store_filewindowstate",
+      "label": "FileWindowState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "stores_windows_store_windowsstate",
+      "label": "WindowsState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "stores_windows_store_basename",
+      "label": "basename()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L56"
+    },
+    {
+      "id": "stores_windows_store_usewindowsstore",
+      "label": "useWindowsStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L60"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "target": "middleware",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "target": "stores_windows_store_filewindowstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "target": "stores_windows_store_windowsstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "target": "stores_windows_store_basename",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "target": "stores_windows_store_usewindowsstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/windows-store.ts",
+      "source_location": "L60",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "stores_windows_store_basename",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\windows-store.ts",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_windows_store_basename",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\windows-store.ts",
+      "source_location": "L57",
+      "receiver": null
+    }
+  ]
+}

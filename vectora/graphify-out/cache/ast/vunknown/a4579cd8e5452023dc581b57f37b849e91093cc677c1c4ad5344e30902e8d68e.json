@@ -1,0 +1,299 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_testing_message_factory_py",
+      "label": "message_factory.py",
+      "file_type": "code",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "testing_message_factory_human_message",
+      "label": "human_message()",
+      "file_type": "code",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L6"
+    },
+    {
+      "id": "humanmessage",
+      "label": "HumanMessage",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "testing_message_factory_ai_message_with_tool_call",
+      "label": "ai_message_with_tool_call()",
+      "file_type": "code",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "aimessage",
+      "label": "AIMessage",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "testing_message_factory_ai_message_text",
+      "label": "ai_message_text()",
+      "file_type": "code",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "testing_message_factory_tool_message",
+      "label": "tool_message()",
+      "file_type": "code",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L59"
+    },
+    {
+      "id": "toolmessage",
+      "label": "ToolMessage",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "testing_message_factory_rationale_7",
+      "label": "Create a HumanMessage for test input.      Args:         text: The message text",
+      "file_type": "rationale",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L7"
+    },
+    {
+      "id": "testing_message_factory_rationale_23",
+      "label": "Create an AIMessage with a tool call for testing.      Args:         tool_name:",
+      "file_type": "rationale",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L23"
+    },
+    {
+      "id": "testing_message_factory_rationale_48",
+      "label": "Create a plain text AIMessage (no tool calls).      Args:         text: The resp",
+      "file_type": "rationale",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "testing_message_factory_rationale_64",
+      "label": "Create a ToolMessage from tool execution result.      Args:         tool_name: N",
+      "file_type": "rationale",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L64"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_testing_message_factory_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_testing_message_factory_py",
+      "target": "langchain_core_messages",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_testing_message_factory_py",
+      "target": "testing_message_factory_human_message",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_human_message",
+      "target": "humanmessage",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_testing_message_factory_py",
+      "target": "testing_message_factory_ai_message_with_tool_call",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_ai_message_with_tool_call",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_ai_message_with_tool_call",
+      "target": "aimessage",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_testing_message_factory_py",
+      "target": "testing_message_factory_ai_message_text",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_ai_message_text",
+      "target": "aimessage",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_testing_message_factory_py",
+      "target": "testing_message_factory_tool_message",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_tool_message",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_tool_message",
+      "target": "toolmessage",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_human_message",
+      "target": "humanmessage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_ai_message_with_tool_call",
+      "target": "aimessage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_ai_message_text",
+      "target": "aimessage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_tool_message",
+      "target": "toolmessage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_rationale_7",
+      "target": "testing_message_factory_human_message",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_rationale_23",
+      "target": "testing_message_factory_ai_message_with_tool_call",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_rationale_48",
+      "target": "testing_message_factory_ai_message_text",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "testing_message_factory_rationale_64",
+      "target": "testing_message_factory_tool_message",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/testing/message_factory.py",
+      "source_location": "L64",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "testing_message_factory_ai_message_with_tool_call",
+      "callee": "ToolCall",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\testing\\message_factory.py",
+      "source_location": "L34",
+      "receiver": null
+    }
+  ]
+}

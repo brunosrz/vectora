@@ -1,0 +1,354 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "label": "env_bootstrap.py",
+      "file_type": "code",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "mcp_env_bootstrap_read_existing_keys",
+      "label": "_read_existing_keys()",
+      "file_type": "code",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L45"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "label": "bootstrap_env_from_mcp()",
+      "file_type": "code",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "mcp_env_bootstrap_validate_required_keys",
+      "label": "validate_required_keys()",
+      "file_type": "code",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "mcp_env_bootstrap_rationale_1",
+      "label": "MCP env bootstrap \u2014 persiste keys recebidas via env vars na primeira execu\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "mcp_env_bootstrap_rationale_46",
+      "label": "L\u00ea as keys j\u00e1 presentes no .env (linhas KEY=...). Ignora coment\u00e1rios.",
+      "file_type": "rationale",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "mcp_env_bootstrap_rationale_59",
+      "label": "Detecta keys no ambiente do processo e persiste em ~/.vectora/.env.      S\u00f3 age",
+      "file_type": "rationale",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L59"
+    },
+    {
+      "id": "mcp_env_bootstrap_rationale_109",
+      "label": "Retorna lista de keys obrigat\u00f3rias ausentes tanto no env quanto no .env.      Us",
+      "file_type": "rationale",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L109"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "target": "mcp_env_bootstrap_read_existing_keys",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_env_bootstrap_read_existing_keys",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "target": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "target": "mcp_env_bootstrap_validate_required_keys",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "target": "mcp_env_bootstrap_read_existing_keys",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_env_bootstrap_validate_required_keys",
+      "target": "mcp_env_bootstrap_read_existing_keys",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_env_bootstrap_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_mcp_env_bootstrap_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_env_bootstrap_rationale_46",
+      "target": "mcp_env_bootstrap_read_existing_keys",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_env_bootstrap_rationale_59",
+      "target": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_env_bootstrap_rationale_109",
+      "target": "mcp_env_bootstrap_validate_required_keys",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/env_bootstrap.py",
+      "source_location": "L109",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "mcp_env_bootstrap_read_existing_keys",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_read_existing_keys",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_read_existing_keys",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_read_existing_keys",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_read_existing_keys",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_read_existing_keys",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_read_existing_keys",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "write",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_bootstrap_env_from_mcp",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_validate_required_keys",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "mcp_env_bootstrap_validate_required_keys",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\env_bootstrap.py",
+      "source_location": "L118",
+      "receiver": null
+    }
+  ]
+}

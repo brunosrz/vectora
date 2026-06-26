@@ -1,0 +1,179 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "label": "use-older-messages.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_use_older_messages_useoldermessagesresult",
+      "label": "UseOlderMessagesResult",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L18"
+    },
+    {
+      "id": "chat_use_older_messages_useoldermessages",
+      "label": "useOlderMessages()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L30"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "api_vectora_client_historymessage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "api_vectora_client_pagedhistoryresponse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "api_vectora_client_gethistorypage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "chat_use_older_messages_useoldermessagesresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_older_messages_ts",
+      "target": "chat_use_older_messages_useoldermessages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-older-messages.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_older_messages_useoldermessages",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-older-messages.ts",
+      "source_location": "L78",
+      "receiver": null
+    }
+  ]
+}

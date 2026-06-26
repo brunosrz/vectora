@@ -1,0 +1,115 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_native_http_request_py",
+      "label": "http_request.py",
+      "file_type": "code",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_http_request_http_request",
+      "label": "http_request()",
+      "file_type": "code",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "native_http_request_rationale_1",
+      "label": "Tool: HTTP GET/POST/PUT requests (async).",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_http_request_rationale_11",
+      "label": "Faz requisi\u00e7\u00e3o HTTP async.      Args:         method: GET, POST, PUT, DELETE",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L11"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_http_request_py",
+      "target": "httpx",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_http_request_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_http_request_py",
+      "target": "native_http_request_http_request",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "native_http_request_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_native_http_request_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "native_http_request_rationale_11",
+      "target": "native_http_request_http_request",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/http_request.py",
+      "source_location": "L11",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "native_http_request_http_request",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\http_request.py",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_http_request_http_request",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\http_request.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_http_request_http_request",
+      "callee": "request",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\http_request.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_http_request_http_request",
+      "callee": "upper",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\http_request.py",
+      "source_location": "L34",
+      "receiver": null
+    }
+  ]
+}

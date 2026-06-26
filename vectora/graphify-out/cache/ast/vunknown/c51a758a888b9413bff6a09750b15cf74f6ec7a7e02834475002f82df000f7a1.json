@@ -1,0 +1,54 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/auth/index.ts",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_user_id_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/index.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_index_ts",
+      "target": "auth_use_user_id_useuserid",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/index.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_index_ts",
+      "target": "auth_use_client_profile_useclientprofile",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

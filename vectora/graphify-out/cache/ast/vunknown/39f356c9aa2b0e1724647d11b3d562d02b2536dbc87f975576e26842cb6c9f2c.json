@@ -1,0 +1,223 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_release_note_md",
+      "label": "release_note.md",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "vectora_release_note_vectora_v0_1_0rc4",
+      "label": "Vectora v0.1.0rc4",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "vectora_release_note_what_s_new_in_rc4",
+      "label": "What's new in rc4",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L7"
+    },
+    {
+      "id": "vectora_release_note_rag_hotfix_4_bugs_resolved",
+      "label": "RAG hotfix \u2014 4 bugs resolved",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L9"
+    },
+    {
+      "id": "vectora_release_note_anti_contamination_for_rag_web_content",
+      "label": "Anti-contamination for RAG web content",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L25"
+    },
+    {
+      "id": "vectora_release_note_vectoraignore_support",
+      "label": "`.vectoraignore` support",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L38"
+    },
+    {
+      "id": "vectora_release_note_rate_limit_ui_for_the_main_llm",
+      "label": "Rate limit UI for the main LLM",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L44"
+    },
+    {
+      "id": "vectora_release_note_tui_improvements",
+      "label": "TUI improvements",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L50"
+    },
+    {
+      "id": "vectora_release_note_architecture",
+      "label": "Architecture",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L80"
+    },
+    {
+      "id": "vectora_release_note_what_s_included",
+      "label": "What's included",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L93"
+    },
+    {
+      "id": "vectora_release_note_prerequisites",
+      "label": "Prerequisites",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L121"
+    },
+    {
+      "id": "vectora_release_note_installation",
+      "label": "Installation",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L129"
+    },
+    {
+      "id": "vectora_release_note_pypi",
+      "label": "PyPI",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L139"
+    },
+    {
+      "id": "vectora_release_note_docker",
+      "label": "Docker",
+      "file_type": "document",
+      "source_file": "release_note.md",
+      "source_location": "L146"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_release_note_md",
+      "target": "vectora_release_note_vectora_v0_1_0rc4",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_vectora_v0_1_0rc4",
+      "target": "vectora_release_note_what_s_new_in_rc4",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_what_s_new_in_rc4",
+      "target": "vectora_release_note_rag_hotfix_4_bugs_resolved",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_what_s_new_in_rc4",
+      "target": "vectora_release_note_anti_contamination_for_rag_web_content",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_what_s_new_in_rc4",
+      "target": "vectora_release_note_vectoraignore_support",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_what_s_new_in_rc4",
+      "target": "vectora_release_note_rate_limit_ui_for_the_main_llm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_what_s_new_in_rc4",
+      "target": "vectora_release_note_tui_improvements",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_vectora_v0_1_0rc4",
+      "target": "vectora_release_note_architecture",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_vectora_v0_1_0rc4",
+      "target": "vectora_release_note_what_s_included",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_vectora_v0_1_0rc4",
+      "target": "vectora_release_note_prerequisites",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_vectora_v0_1_0rc4",
+      "target": "vectora_release_note_installation",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_vectora_v0_1_0rc4",
+      "target": "vectora_release_note_pypi",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_release_note_vectora_v0_1_0rc4",
+      "target": "vectora_release_note_docker",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "release_note.md",
+      "source_location": "L146",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

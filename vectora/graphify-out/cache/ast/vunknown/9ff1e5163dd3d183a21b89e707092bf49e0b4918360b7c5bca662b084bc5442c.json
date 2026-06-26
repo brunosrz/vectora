@@ -1,0 +1,2111 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "label": "runtime.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "paraglide_runtime_urlpattern",
+      "label": "URLPattern",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L4"
+    },
+    {
+      "id": "paraglide_runtime_strategy",
+      "label": "strategy",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L35"
+    },
+    {
+      "id": "paraglide_runtime_routestrategies",
+      "label": "routeStrategies",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L51"
+    },
+    {
+      "id": "paraglide_runtime_urlpatterns",
+      "label": "urlPatterns",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L57"
+    },
+    {
+      "id": "paraglide_runtime_findmatchingroutestrategy",
+      "label": "findMatchingRouteStrategy()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L84"
+    },
+    {
+      "id": "paraglide_runtime_getstrategyforurl",
+      "label": "getStrategyForUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L114"
+    },
+    {
+      "id": "paraglide_runtime_isexcludedbyroutestrategy",
+      "label": "isExcludedByRouteStrategy()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L129"
+    },
+    {
+      "id": "paraglide_runtime_overwriteserverasynclocalstorage",
+      "label": "overwriteServerAsyncLocalStorage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L167"
+    },
+    {
+      "id": "paraglide_runtime_getlocale",
+      "label": "getLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L211"
+    },
+    {
+      "id": "paraglide_runtime_getlocaleforurl",
+      "label": "getLocaleForUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L245"
+    },
+    {
+      "id": "paraglide_runtime_resolvelocalewithstrategies",
+      "label": "resolveLocaleWithStrategies()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L261"
+    },
+    {
+      "id": "paraglide_runtime_overwritegetlocale",
+      "label": "overwriteGetLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L328"
+    },
+    {
+      "id": "paraglide_runtime_rtllanguages",
+      "label": "rtlLanguages",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L332"
+    },
+    {
+      "id": "paraglide_runtime_gettextdirection",
+      "label": "getTextDirection()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L359"
+    },
+    {
+      "id": "paraglide_runtime_navigateorreload",
+      "label": "navigateOrReload()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L382"
+    },
+    {
+      "id": "paraglide_runtime_setlocale",
+      "label": "setLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L416"
+    },
+    {
+      "id": "paraglide_runtime_overwritesetlocale",
+      "label": "overwriteSetLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L529"
+    },
+    {
+      "id": "paraglide_runtime_geturlorigin",
+      "label": "getUrlOrigin()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L542"
+    },
+    {
+      "id": "paraglide_runtime_overwritegeturlorigin",
+      "label": "overwriteGetUrlOrigin()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L559"
+    },
+    {
+      "id": "paraglide_runtime_tolocale",
+      "label": "toLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L569"
+    },
+    {
+      "id": "paraglide_runtime_islocale",
+      "label": "isLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L596"
+    },
+    {
+      "id": "paraglide_runtime_assertislocale",
+      "label": "assertIsLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L606"
+    },
+    {
+      "id": "paraglide_runtime_extractlocalefromrequest",
+      "label": "extractLocaleFromRequest()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L637"
+    },
+    {
+      "id": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "label": "extractLocaleFromRequestWithStrategies()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L649"
+    },
+    {
+      "id": "paraglide_runtime_resolveeffectiverequesturl",
+      "label": "resolveEffectiveRequestUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L696"
+    },
+    {
+      "id": "paraglide_runtime_extractlocalefromrequestasync",
+      "label": "extractLocaleFromRequestAsync()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L734"
+    },
+    {
+      "id": "paraglide_runtime_resolveeffectiverequesturlfromrequestasync",
+      "label": "resolveEffectiveRequestUrlFromRequestAsync()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L762"
+    },
+    {
+      "id": "paraglide_runtime_extractlocalefromcookie",
+      "label": "extractLocaleFromCookie()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L777"
+    },
+    {
+      "id": "paraglide_runtime_extractlocalefromheader",
+      "label": "extractLocaleFromHeader()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L798"
+    },
+    {
+      "id": "paraglide_runtime_extractlocalefromnavigator",
+      "label": "extractLocaleFromNavigator()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L841"
+    },
+    {
+      "id": "paraglide_runtime_extractlocalefromurl",
+      "label": "extractLocaleFromUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L882"
+    },
+    {
+      "id": "paraglide_runtime_defaulturlpatternextractlocale",
+      "label": "defaultUrlPatternExtractLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L917"
+    },
+    {
+      "id": "paraglide_runtime_localizeurl",
+      "label": "localizeUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L967"
+    },
+    {
+      "id": "paraglide_runtime_localizeurldefaultpattern",
+      "label": "localizeUrlDefaultPattern()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1009"
+    },
+    {
+      "id": "paraglide_runtime_delocalizeurl",
+      "label": "deLocalizeUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1070"
+    },
+    {
+      "id": "paraglide_runtime_delocalizeurldefaultpattern",
+      "label": "deLocalizeUrlDefaultPattern()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1102"
+    },
+    {
+      "id": "paraglide_runtime_fillmissingurlparts",
+      "label": "fillMissingUrlParts()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1121"
+    },
+    {
+      "id": "paraglide_runtime_fillpattern",
+      "label": "fillPattern()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1169"
+    },
+    {
+      "id": "paraglide_runtime_aggregategroups",
+      "label": "aggregateGroups()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1222"
+    },
+    {
+      "id": "paraglide_runtime_shouldredirect",
+      "label": "shouldRedirect()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1306"
+    },
+    {
+      "id": "paraglide_runtime_resolvelocale",
+      "label": "resolveLocale()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1328"
+    },
+    {
+      "id": "paraglide_runtime_resolveurl",
+      "label": "resolveUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1349"
+    },
+    {
+      "id": "paraglide_runtime_normalizeurl",
+      "label": "normalizeUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1376"
+    },
+    {
+      "id": "paraglide_runtime_localizehref",
+      "label": "localizeHref()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1422"
+    },
+    {
+      "id": "paraglide_runtime_delocalizehref",
+      "label": "deLocalizeHref()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1483"
+    },
+    {
+      "id": "paraglide_runtime_trackmessagecall",
+      "label": "trackMessageCall()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1498"
+    },
+    {
+      "id": "paraglide_runtime_generatestaticlocalizedurls",
+      "label": "generateStaticLocalizedUrls()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1550"
+    },
+    {
+      "id": "paraglide_runtime_customserverstrategies",
+      "label": "customServerStrategies",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1638"
+    },
+    {
+      "id": "paraglide_runtime_customclientstrategies",
+      "label": "customClientStrategies",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1640"
+    },
+    {
+      "id": "paraglide_runtime_iscustomstrategy",
+      "label": "isCustomStrategy()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1648"
+    },
+    {
+      "id": "paraglide_runtime_definecustomserverstrategy",
+      "label": "defineCustomServerStrategy()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1661"
+    },
+    {
+      "id": "paraglide_runtime_definecustomclientstrategy",
+      "label": "defineCustomClientStrategy()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1677"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_urlpattern",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_strategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_routestrategies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_urlpatterns",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_findmatchingroutestrategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_getstrategyforurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_isexcludedbyroutestrategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_overwriteserverasynclocalstorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_getlocaleforurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_resolvelocalewithstrategies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L261",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_overwritegetlocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L328",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_rtllanguages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L332",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_gettextdirection",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L359",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_navigateorreload",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L382",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_setlocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L416",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_overwritesetlocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L529",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_geturlorigin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L542",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_overwritegeturlorigin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L559",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L569",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_islocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L596",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_assertislocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L606",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_extractlocalefromrequest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L637",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L649",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_resolveeffectiverequesturl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L696",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_extractlocalefromrequestasync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L734",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_resolveeffectiverequesturlfromrequestasync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L762",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_extractlocalefromcookie",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L777",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_extractlocalefromheader",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L798",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_extractlocalefromnavigator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L841",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_extractlocalefromurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L882",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_defaulturlpatternextractlocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L917",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_localizeurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L967",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_localizeurldefaultpattern",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1009",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_delocalizeurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1070",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_delocalizeurldefaultpattern",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1102",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_fillmissingurlparts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1121",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_fillpattern",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1169",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_aggregategroups",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1222",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_shouldredirect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1306",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_resolvelocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1328",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_resolveurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1349",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_normalizeurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1376",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_localizehref",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1422",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_delocalizehref",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1483",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_trackmessagecall",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1498",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_generatestaticlocalizedurls",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1550",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_customserverstrategies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1638",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_customclientstrategies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1640",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_iscustomstrategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1648",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_definecustomserverstrategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1661",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "target": "paraglide_runtime_definecustomclientstrategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1677",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_getstrategyforurl",
+      "target": "paraglide_runtime_findmatchingroutestrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_isexcludedbyroutestrategy",
+      "target": "paraglide_runtime_findmatchingroutestrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_getlocale",
+      "target": "paraglide_runtime_getstrategyforurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L225",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_getlocale",
+      "target": "paraglide_runtime_resolvelocalewithstrategies",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_getlocale",
+      "target": "paraglide_runtime_setlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L233",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_getlocaleforurl",
+      "target": "paraglide_runtime_getstrategyforurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L249",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_getlocaleforurl",
+      "target": "paraglide_runtime_resolvelocalewithstrategies",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L250",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocalewithstrategies",
+      "target": "paraglide_runtime_extractlocalefromcookie",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L266",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocalewithstrategies",
+      "target": "paraglide_runtime_extractlocalefromurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L275",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocalewithstrategies",
+      "target": "paraglide_runtime_extractlocalefromnavigator",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L285",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocalewithstrategies",
+      "target": "paraglide_runtime_iscustomstrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L292",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocalewithstrategies",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L295",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocalewithstrategies",
+      "target": "paraglide_runtime_assertislocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L302",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocalewithstrategies",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L306",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_setlocale",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L426",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_setlocale",
+      "target": "paraglide_runtime_getstrategyforurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L437",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_setlocale",
+      "target": "paraglide_runtime_localizeurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L473",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_setlocale",
+      "target": "paraglide_runtime_iscustomstrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L483",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_assertislocale",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L607",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequest",
+      "target": "paraglide_runtime_resolveeffectiverequesturl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L638",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequest",
+      "target": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L639",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequest",
+      "target": "paraglide_runtime_getstrategyforurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L639",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "target": "paraglide_runtime_resolveeffectiverequesturl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L650",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "target": "paraglide_runtime_extractlocalefromurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L664",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "target": "paraglide_runtime_extractlocalefromheader",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L668",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "target": "paraglide_runtime_iscustomstrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L679",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L684",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestasync",
+      "target": "paraglide_runtime_resolveeffectiverequesturlfromrequestasync",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L737",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestasync",
+      "target": "paraglide_runtime_getstrategyforurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L738",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestasync",
+      "target": "paraglide_runtime_iscustomstrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L741",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestasync",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L745",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestasync",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L748",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromrequestasync",
+      "target": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L755",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromcookie",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L783",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromheader",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L816",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromnavigator",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L850",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_extractlocalefromurl",
+      "target": "paraglide_runtime_defaulturlpatternextractlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L890",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_defaulturlpatternextractlocale",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L920",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurl",
+      "target": "paraglide_runtime_assertislocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L969",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurl",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L970",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurl",
+      "target": "paraglide_runtime_localizeurldefaultpattern",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L972",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurl",
+      "target": "paraglide_runtime_fillpattern",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L987",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurl",
+      "target": "paraglide_runtime_aggregategroups",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L987",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurl",
+      "target": "paraglide_runtime_fillmissingurlparts",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L988",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurldefaultpattern",
+      "target": "paraglide_runtime_geturlorigin",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1010",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurldefaultpattern",
+      "target": "paraglide_runtime_extractlocalefromurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1011",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizeurldefaultpattern",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1018",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizeurl",
+      "target": "paraglide_runtime_delocalizeurldefaultpattern",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1072",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizeurl",
+      "target": "paraglide_runtime_aggregategroups",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1082",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizeurl",
+      "target": "paraglide_runtime_fillpattern",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1083",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizeurl",
+      "target": "paraglide_runtime_fillmissingurlparts",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1084",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizeurldefaultpattern",
+      "target": "paraglide_runtime_geturlorigin",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1103",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizeurldefaultpattern",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1106",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_shouldredirect",
+      "target": "paraglide_runtime_resolveurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1307",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_shouldredirect",
+      "target": "paraglide_runtime_resolvelocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1308",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_shouldredirect",
+      "target": "paraglide_runtime_getstrategyforurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1309",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_shouldredirect",
+      "target": "paraglide_runtime_isexcludedbyroutestrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1310",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_shouldredirect",
+      "target": "paraglide_runtime_localizeurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1313",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_shouldredirect",
+      "target": "paraglide_runtime_normalizeurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1314",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocale",
+      "target": "paraglide_runtime_tolocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1329",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocale",
+      "target": "paraglide_runtime_extractlocalefromrequestasync",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1334",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocale",
+      "target": "paraglide_runtime_getlocaleforurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1339",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolvelocale",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1341",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_resolveurl",
+      "target": "paraglide_runtime_geturlorigin",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1354",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizehref",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1423",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizehref",
+      "target": "paraglide_runtime_geturlorigin",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1425",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_localizehref",
+      "target": "paraglide_runtime_localizeurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1426",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizehref",
+      "target": "paraglide_runtime_geturlorigin",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1484",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_delocalizehref",
+      "target": "paraglide_runtime_delocalizeurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1485",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_generatestaticlocalizedurls",
+      "target": "paraglide_runtime_localizeurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1591",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_definecustomserverstrategy",
+      "target": "paraglide_runtime_iscustomstrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1662",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_runtime_definecustomclientstrategy",
+      "target": "paraglide_runtime_iscustomstrategy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/runtime.js",
+      "source_location": "L1678",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "paraglide_runtime_findmatchingroutestrategy",
+      "callee": "exec",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_getstrategyforurl",
+      "callee": "isArray",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_getlocale",
+      "callee": "getStore",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_resolvelocalewithstrategies",
+      "callee": "getItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L290",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_resolvelocalewithstrategies",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L292",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_resolvelocalewithstrategies",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L293",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_gettextdirection",
+      "callee": "getTextInfo",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L365",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_gettextdirection",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L373",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_gettextdirection",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L373",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_gettextdirection",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L374",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_navigateorreload",
+      "callee": "reload",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L389",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_setlocale",
+      "callee": "setItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L481",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_setlocale",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L483",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_setlocale",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L484",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_setlocale",
+      "callee": "catch",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L489",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_setlocale",
+      "callee": "push",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L494",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_setlocale",
+      "callee": "then",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L508",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_setlocale",
+      "callee": "runReload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L512",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_geturlorigin",
+      "callee": "getStore",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L544",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_tolocale",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L573",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_tolocale",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L575",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_islocale",
+      "callee": "some",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L597",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_assertislocale",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L610",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L656",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L656",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L656",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromrequestwithstrategies",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L656",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromrequestasync",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L741",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromrequestasync",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L742",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromcookie",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L781",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromheader",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L799",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromheader",
+      "callee": "sort",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L802",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromheader",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L802",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_extractlocalefromurl",
+      "callee": "exec",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L897",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_defaulturlpatternextractlocale",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L919",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurl",
+      "callee": "exec",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L979",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurl",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L983",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurl",
+      "callee": "exec",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L990",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurl",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L992",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurldefaultpattern",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1016",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurldefaultpattern",
+      "callee": "shift",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1019",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurldefaultpattern",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1023",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizeurldefaultpattern",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1027",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_delocalizeurl",
+      "callee": "exec",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1079",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_delocalizeurl",
+      "callee": "exec",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1088",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_delocalizeurldefaultpattern",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_delocalizeurldefaultpattern",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_delocalizeurldefaultpattern",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_fillpattern",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_fillpattern",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_fillpattern",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1188",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_fillpattern",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1212",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_shouldredirect",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1310",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_normalizeurl",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1378",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_localizehref",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1429",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_delocalizehref",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1488",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_trackmessagecall",
+      "callee": "getStore",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1501",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_trackmessagecall",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1503",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1560",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1566",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "from",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1570",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "exec",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1582",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1594",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1595",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1596",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1613",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_generatestaticlocalizedurls",
+      "callee": "from",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1616",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_runtime_iscustomstrategy",
+      "callee": "test",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\runtime.js",
+      "source_location": "L1649",
+      "receiver": null
+    }
+  ]
+}

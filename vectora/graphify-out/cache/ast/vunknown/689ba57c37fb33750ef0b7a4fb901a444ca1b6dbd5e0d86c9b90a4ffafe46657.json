@@ -1,0 +1,869 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "label": "license.py",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_license_require_root",
+      "label": "_require_root()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "request",
+      "label": "Request",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_license_license_status",
+      "label": "license_status()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L60"
+    },
+    {
+      "id": "handlers_license_license_validate",
+      "label": "license_validate()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "handlers_license_connectbody",
+      "label": "ConnectBody",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L99"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_license_connect_url",
+      "label": "_connect_url()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L106"
+    },
+    {
+      "id": "handlers_license_license_connect",
+      "label": "license_connect()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "handlers_license_portal_url",
+      "label": "_portal_url()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L168"
+    },
+    {
+      "id": "handlers_license_vectora_token",
+      "label": "_vectora_token()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L172"
+    },
+    {
+      "id": "handlers_license_license_portal",
+      "label": "license_portal()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L182"
+    },
+    {
+      "id": "handlers_license_rationale_1",
+      "label": "Handler de status, valida\u00e7\u00e3o, conex\u00e3o e portal de licen\u00e7a.  Endpoints:  - ``GET",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_license_rationale_47",
+      "label": "Lan\u00e7a 401/403 se o usu\u00e1rio da request n\u00e3o \u00e9 root (espelha admin.py).",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "handlers_license_rationale_61",
+      "label": "Devolve o status atual da licen\u00e7a (lido do cache local).",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "handlers_license_rationale_77",
+      "label": "For\u00e7a revalida\u00e7\u00e3o remota do token atual (ignora cache fresco).      Sempre respo",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "handlers_license_rationale_100",
+      "label": "Credenciais da conta vectora.company para conectar a licen\u00e7a.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "handlers_license_rationale_112",
+      "label": "Login com a conta vectora.company \u2192 obt\u00e9m e ativa o VECTORA_TOKEN.      Chama a",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L112"
+    },
+    {
+      "id": "handlers_license_rationale_183",
+      "label": "Cria sess\u00e3o de Customer Portal (Stripe INTL ou Asaas BR).      Repassa o ``VECTO",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L183"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "httpx",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "backend_services_license",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_require_root",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_require_root",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_require_root",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_license_status",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_license_validate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_connectbody",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_connectbody",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_connect_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_license_connect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_license_connect",
+      "target": "handlers_license_connectbody",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_license_connect",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_portal_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L168",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_vectora_token",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "target": "handlers_license_license_portal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_license_portal",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_license_connect",
+      "target": "handlers_license_require_root",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_license_connect",
+      "target": "handlers_license_connect_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_license_portal",
+      "target": "handlers_license_vectora_token",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_license_portal",
+      "target": "handlers_license_portal_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_license_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_rationale_47",
+      "target": "handlers_license_require_root",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_rationale_61",
+      "target": "handlers_license_license_status",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_rationale_77",
+      "target": "handlers_license_license_validate",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_rationale_100",
+      "target": "handlers_license_connectbody",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_rationale_112",
+      "target": "handlers_license_license_connect",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_license_rationale_183",
+      "target": "handlers_license_license_portal",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/license.py",
+      "source_location": "L183",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "handlers_license_require_root",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_require_root",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_status",
+      "callee": "read_cached_status",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_status",
+      "callee": "to_dict",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_validate",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_validate",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_validate",
+      "callee": "load_token_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_validate",
+      "callee": "validate_license_async",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_validate",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_validate",
+      "callee": "to_dict",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_connect_url",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_connect_url",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L122",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L125",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L145",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L149",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L149",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L151",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "write_token_to_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L158",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "clear_license_cache",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "validate_license_async",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_connect",
+      "callee": "to_dict",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L165",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_portal_url",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_portal_url",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_vectora_token",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_vectora_token",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_vectora_token",
+      "callee": "LicenseError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L175",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L193",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L198",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L207",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L209",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L225",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L227",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_license_license_portal",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\license.py",
+      "source_location": "L230",
+      "receiver": null
+    }
+  ]
+}

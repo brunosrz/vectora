@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_onboarding_next_js",
+      "label": "onboarding_next.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_onboarding_next_en_onboarding_next",
+      "label": "en_onboarding_next()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_onboarding_next_es_onboarding_next",
+      "label": "es_onboarding_next()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_onboarding_next_pt_onboarding_next",
+      "label": "pt_onboarding_next()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_onboarding_next_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_onboarding_next_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_onboarding_next_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_onboarding_next_js",
+      "target": "messages_onboarding_next_en_onboarding_next",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_onboarding_next_js",
+      "target": "messages_onboarding_next_es_onboarding_next",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_onboarding_next_js",
+      "target": "messages_onboarding_next_pt_onboarding_next",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/onboarding_next.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

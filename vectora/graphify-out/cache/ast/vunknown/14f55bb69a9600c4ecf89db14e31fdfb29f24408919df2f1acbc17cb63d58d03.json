@@ -1,0 +1,34 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "label": "messages.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages.js",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_index_js",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_index_js",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages.js",
+      "source_location": "L4",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

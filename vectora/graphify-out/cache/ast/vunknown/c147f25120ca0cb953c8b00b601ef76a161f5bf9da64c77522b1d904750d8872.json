@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_header_git_status_badge_tsx",
+      "label": "git-status-badge.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "header_git_status_badge_gitstatus",
+      "label": "GitStatus",
+      "file_type": "code",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "header_git_status_badge_gitstatusbadge",
+      "label": "GitStatusBadge()",
+      "file_type": "code",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L30"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_git_status_badge_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_git_status_badge_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_git_status_badge_tsx",
+      "target": "stores_workspaces_store_useworkspacesstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_git_status_badge_tsx",
+      "target": "header_git_status_badge_gitstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_git_status_badge_tsx",
+      "target": "header_git_status_badge_gitstatusbadge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/git-status-badge.tsx",
+      "source_location": "L30",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "header_git_status_badge_gitstatusbadge",
+      "callee": "useWorkspacesStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\git-status-badge.tsx",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_git_status_badge_gitstatusbadge",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\git-status-badge.tsx",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_git_status_badge_gitstatusbadge",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\git-status-badge.tsx",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_git_status_badge_gitstatusbadge",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\git-status-badge.tsx",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_git_status_badge_gitstatusbadge",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\git-status-badge.tsx",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_git_status_badge_gitstatusbadge",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\git-status-badge.tsx",
+      "source_location": "L57",
+      "receiver": null
+    }
+  ]
+}

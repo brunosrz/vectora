@@ -1,0 +1,107 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_agent_status_line_tsx",
+      "label": "agent-status-line.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_agent_status_line_activetool",
+      "label": "ActiveTool",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "chat_agent_status_line_agentstatuslineprops",
+      "label": "AgentStatusLineProps",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L11"
+    },
+    {
+      "id": "chat_agent_status_line_formatelapsed",
+      "label": "formatElapsed()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "chat_agent_status_line_agentstatusline",
+      "label": "AgentStatusLine()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L20"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_agent_status_line_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_agent_status_line_tsx",
+      "target": "chat_agent_status_line_activetool",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_agent_status_line_tsx",
+      "target": "chat_agent_status_line_agentstatuslineprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_agent_status_line_tsx",
+      "target": "chat_agent_status_line_formatelapsed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_agent_status_line_tsx",
+      "target": "chat_agent_status_line_agentstatusline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "chat_agent_status_line_agentstatusline",
+      "target": "chat_agent_status_line_formatelapsed",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/agent-status-line.tsx",
+      "source_location": "L46",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_agent_status_line_formatelapsed",
+      "callee": "toFixed",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\agent-status-line.tsx",
+      "source_location": "L17",
+      "receiver": null
+    }
+  ]
+}

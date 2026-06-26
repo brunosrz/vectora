@@ -1,0 +1,134 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_message_helpers_generatemessageid",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_message_helpers_createusermessage",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_message_helpers_updatemessageinlist",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_message_helpers_ensuremessageexists",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_content_helpers_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_content_helpers_extracttextfromcontent",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_validation_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_validation_createimageattachment",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_validation_validateimagefile",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_attachments_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "target": "chat_attachments_toapiattachments",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/index.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

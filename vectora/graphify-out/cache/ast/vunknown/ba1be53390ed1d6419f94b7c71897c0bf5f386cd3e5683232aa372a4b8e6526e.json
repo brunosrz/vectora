@@ -1,0 +1,327 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "label": "settings-menu.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "header_settings_menu_settingsmenu",
+      "label": "SettingsMenu()",
+      "file_type": "code",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "navigation",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "stores_auth_store_useauthstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_preferencias_dialog_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "stores_preferencias_dialog_store_usepreferenciasdialogstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_environment_dialog_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "stores_environment_dialog_store_useenvironmentdialogstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_administracao_dialog_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "stores_administracao_dialog_store_useadministracaodialogstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_auth_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "types_auth_role_colors",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "types_auth_role_labels",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_index_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "preferencias_index_preferenciasdialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_environment_index_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "environment_index_environmentdialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_administracao_index_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "administracao_index_admindialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_header_settings_menu_tsx",
+      "target": "header_settings_menu_settingsmenu",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/header/settings-menu.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "useRouter",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L17",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "useAuthStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "usePreferenciasDialogStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L19",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "useEnvironmentDialogStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "useAdministracaoDialogStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L21",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "toUpperCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "from",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "header_settings_menu_settingsmenu",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\header\\settings-menu.tsx",
+      "source_location": "L88",
+      "receiver": null
+    }
+  ]
+}

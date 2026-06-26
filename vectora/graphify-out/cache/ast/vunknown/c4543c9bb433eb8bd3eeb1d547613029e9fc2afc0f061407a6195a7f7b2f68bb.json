@@ -1,0 +1,581 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "label": "deployment-config.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "config_deployment_config_config_storage",
+      "label": "CONFIG_STORAGE",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L22"
+    },
+    {
+      "id": "config_deployment_config_modelconfig",
+      "label": "ModelConfig",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L32"
+    },
+    {
+      "id": "config_deployment_config_modelkey",
+      "label": "ModelKey",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L204"
+    },
+    {
+      "id": "config_deployment_config_modeloption",
+      "label": "ModelOption",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L205"
+    },
+    {
+      "id": "config_deployment_config_agentconfig",
+      "label": "AgentConfig",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L211"
+    },
+    {
+      "id": "config_deployment_config_agentkey",
+      "label": "AgentKey",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L227"
+    },
+    {
+      "id": "config_deployment_config_agenttype",
+      "label": "AgentType",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L228"
+    },
+    {
+      "id": "config_deployment_config_deploymentconfig",
+      "label": "DeploymentConfig",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L234"
+    },
+    {
+      "id": "config_deployment_config_deployment",
+      "label": "DEPLOYMENT",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L242"
+    },
+    {
+      "id": "config_deployment_config_getdeploymentconfig",
+      "label": "getDeploymentConfig()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L288"
+    },
+    {
+      "id": "config_deployment_config_getallowedmodels",
+      "label": "getAllowedModels()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L296"
+    },
+    {
+      "id": "config_deployment_config_getdefaultmodel",
+      "label": "getDefaultModel()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L300"
+    },
+    {
+      "id": "config_deployment_config_ismodelallowed",
+      "label": "isModelAllowed()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L304"
+    },
+    {
+      "id": "config_deployment_config_getmodeldisplayname",
+      "label": "getModelDisplayName()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L308"
+    },
+    {
+      "id": "config_deployment_config_getmodelprovider",
+      "label": "getModelProvider()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L313"
+    },
+    {
+      "id": "config_deployment_config_model_context_windows",
+      "label": "MODEL_CONTEXT_WINDOWS",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L325"
+    },
+    {
+      "id": "config_deployment_config_getcontextwindow",
+      "label": "getContextWindow()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L353"
+    },
+    {
+      "id": "config_deployment_config_getallowedagents",
+      "label": "getAllowedAgents()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L369"
+    },
+    {
+      "id": "config_deployment_config_getdefaultagent",
+      "label": "getDefaultAgent()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L373"
+    },
+    {
+      "id": "config_deployment_config_isagentallowed",
+      "label": "isAgentAllowed()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L377"
+    },
+    {
+      "id": "config_deployment_config_getagentdisplayname",
+      "label": "getAgentDisplayName()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L381"
+    },
+    {
+      "id": "config_deployment_config_getagentshortdisplayname",
+      "label": "getAgentShortDisplayName()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L386"
+    },
+    {
+      "id": "config_deployment_config_isauthrequired",
+      "label": "isAuthRequired()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L395"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_config_storage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_modelconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_modelkey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L204",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_modeloption",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L205",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_agentconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_agentkey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_agenttype",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L228",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_deploymentconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L234",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_deployment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L242",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getdeploymentconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L288",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getallowedmodels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L296",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getdefaultmodel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L300",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_ismodelallowed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L304",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getmodeldisplayname",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L308",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getmodelprovider",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L313",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_model_context_windows",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L325",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getcontextwindow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L353",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getallowedagents",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L369",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getdefaultagent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L373",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_isagentallowed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L377",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getagentdisplayname",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L381",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_getagentshortdisplayname",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L386",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_deployment_config_ts",
+      "target": "config_deployment_config_isauthrequired",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L395",
+      "weight": 1.0
+    },
+    {
+      "source": "config_deployment_config_getallowedmodels",
+      "target": "config_deployment_config_getdeploymentconfig",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L297",
+      "weight": 1.0
+    },
+    {
+      "source": "config_deployment_config_getdefaultmodel",
+      "target": "config_deployment_config_getdeploymentconfig",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L301",
+      "weight": 1.0
+    },
+    {
+      "source": "config_deployment_config_ismodelallowed",
+      "target": "config_deployment_config_getallowedmodels",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L305",
+      "weight": 1.0
+    },
+    {
+      "source": "config_deployment_config_getallowedagents",
+      "target": "config_deployment_config_getdeploymentconfig",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L370",
+      "weight": 1.0
+    },
+    {
+      "source": "config_deployment_config_getdefaultagent",
+      "target": "config_deployment_config_getdeploymentconfig",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L374",
+      "weight": 1.0
+    },
+    {
+      "source": "config_deployment_config_isagentallowed",
+      "target": "config_deployment_config_getallowedagents",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L378",
+      "weight": 1.0
+    },
+    {
+      "source": "config_deployment_config_isauthrequired",
+      "target": "config_deployment_config_getdeploymentconfig",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/deployment-config.ts",
+      "source_location": "L396",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "config_deployment_config_ismodelallowed",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L305",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getmodeldisplayname",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L309",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getmodeldisplayname",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L309",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getmodelprovider",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L316",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getmodelprovider",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L316",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getcontextwindow",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L356",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getcontextwindow",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L357",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getcontextwindow",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L358",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getcontextwindow",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L359",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getcontextwindow",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L360",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getcontextwindow",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L361",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_isagentallowed",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L378",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getagentdisplayname",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L382",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getagentdisplayname",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L382",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getagentshortdisplayname",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L387",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_deployment_config_getagentshortdisplayname",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\deployment-config.ts",
+      "source_location": "L387",
+      "receiver": null
+    }
+  ]
+}

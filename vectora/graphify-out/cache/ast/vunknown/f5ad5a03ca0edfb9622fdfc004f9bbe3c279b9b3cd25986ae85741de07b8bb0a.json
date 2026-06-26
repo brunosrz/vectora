@@ -1,0 +1,338 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_nodes_parallel_tools_py",
+      "label": "parallel_tools.py",
+      "file_type": "code",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "nodes_parallel_tools_paralleltoolnode",
+      "label": "ParallelToolNode",
+      "file_type": "code",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "toolnode",
+      "label": "ToolNode",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "nodes_parallel_tools_paralleltoolnode_arun",
+      "label": ".arun()",
+      "file_type": "code",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "label": "._run_tool()",
+      "file_type": "code",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "nodes_parallel_tools_rationale_1",
+      "label": "Execu\u00e7\u00e3o paralela de tools (DE-12).",
+      "file_type": "rationale",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "nodes_parallel_tools_rationale_15",
+      "label": "ToolNode que executa tools independentes em paralelo via asyncio.gather.",
+      "file_type": "rationale",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L15"
+    },
+    {
+      "id": "nodes_parallel_tools_rationale_18",
+      "label": "Executa tools em paralelo quando poss\u00edvel.",
+      "file_type": "rationale",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "nodes_parallel_tools_rationale_51",
+      "label": "Executa uma chamada de tool assincronamente.",
+      "file_type": "rationale",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L51"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_nodes_parallel_tools_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_nodes_parallel_tools_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_nodes_parallel_tools_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_nodes_parallel_tools_py",
+      "target": "langgraph_prebuilt",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_nodes_parallel_tools_py",
+      "target": "nodes_parallel_tools_paralleltoolnode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode",
+      "target": "toolnode",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode",
+      "target": "nodes_parallel_tools_paralleltoolnode_arun",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode_arun",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode_arun",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode_arun",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode",
+      "target": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_paralleltoolnode_arun",
+      "target": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_nodes_parallel_tools_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_rationale_15",
+      "target": "nodes_parallel_tools_paralleltoolnode",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_rationale_18",
+      "target": "nodes_parallel_tools_paralleltoolnode_arun",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "nodes_parallel_tools_rationale_51",
+      "target": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/nodes/parallel_tools.py",
+      "source_location": "L51",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_arun",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L19",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_arun",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_arun",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_arun",
+      "callee": "values",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_arun",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_arun",
+      "callee": "gather",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_arun",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "nodes_parallel_tools_paralleltoolnode_run_tool",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\nodes\\parallel_tools.py",
+      "source_location": "L63",
+      "receiver": null
+    }
+  ]
+}

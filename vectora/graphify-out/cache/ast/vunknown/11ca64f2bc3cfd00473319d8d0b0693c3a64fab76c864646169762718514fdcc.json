@@ -1,0 +1,361 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_server_js",
+      "label": "server.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "paraglide_server_paraglidemiddleware",
+      "label": "paraglideMiddleware()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L94"
+    },
+    {
+      "id": "paraglide_server_resolvemiddlewareurl",
+      "label": "resolveMiddlewareUrl()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L192"
+    },
+    {
+      "id": "paraglide_server_clonerequestwithfallback",
+      "label": "cloneRequestWithFallback()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L216"
+    },
+    {
+      "id": "paraglide_server_createmockasynclocalstorage",
+      "label": "createMockAsyncLocalStorage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L255"
+    },
+    {
+      "id": "paraglide_server_compiledbundles",
+      "label": "compiledBundles",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L282"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_server_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_server_js",
+      "target": "paraglide_server_paraglidemiddleware",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_server_js",
+      "target": "paraglide_server_resolvemiddlewareurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_server_js",
+      "target": "paraglide_server_clonerequestwithfallback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L216",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_server_js",
+      "target": "paraglide_server_createmockasynclocalstorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_server_js",
+      "target": "paraglide_server_compiledbundles",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L282",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_server_paraglidemiddleware",
+      "target": "async_hooks",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_server_paraglidemiddleware",
+      "target": "paraglide_server_createmockasynclocalstorage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_server_paraglidemiddleware",
+      "target": "paraglide_server_resolvemiddlewareurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "paraglide_server_paraglidemiddleware",
+      "target": "paraglide_server_clonerequestwithfallback",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/server.js",
+      "source_location": "L105",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "overwriteServerAsyncLocalStorage",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "overwriteServerAsyncLocalStorage",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "isExcludedByRouteStrategy",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "getStrategyForUrl",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "shouldRedirect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "onRedirect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "deLocalizeUrl",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L142",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L150",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L153",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L153",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L154",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "from",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L158",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "push",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L174",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_paraglidemiddleware",
+      "callee": "delete",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_resolvemiddlewareurl",
+      "callee": "effectiveRequestUrl",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_clonerequestwithfallback",
+      "callee": "clone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L221",
+      "receiver": null
+    },
+    {
+      "caller_nid": "paraglide_server_clonerequestwithfallback",
+      "callee": "clone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\paraglide\\server.js",
+      "source_location": "L234",
+      "receiver": null
+    }
+  ]
+}

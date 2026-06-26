@@ -1,0 +1,57 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_hydrated_ts",
+      "label": "use-hydrated.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-hydrated.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "hooks_use_hydrated_usehydrated",
+      "label": "useHydrated()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-hydrated.ts",
+      "source_location": "L22"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_hydrated_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-hydrated.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_hydrated_ts",
+      "target": "hooks_use_hydrated_usehydrated",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-hydrated.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "hooks_use_hydrated_usehydrated",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-hydrated.ts",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_hydrated_usehydrated",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-hydrated.ts",
+      "source_location": "L24",
+      "receiver": null
+    }
+  ]
+}

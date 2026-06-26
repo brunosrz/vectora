@@ -1,0 +1,536 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "label": "test_api_background.py",
+      "file_type": "code",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "integration_test_api_background_req",
+      "label": "_req()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L42"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "integration_test_api_background_db",
+      "label": "db()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "label": "test_post_task_with_uuid_user_does_not_crash()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "label": "test_patch_and_delete_enforce_session_scope()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "label": "test_manual_run_creates_run_and_registers_thread()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "integration_test_api_background_rationale_1",
+      "label": "Integra\u00e7\u00e3o handler\u2194servi\u00e7o de tarefas em segundo plano.  Exercita os endpoints s",
+      "file_type": "rationale",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "types",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "backend",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "backend_api_handlers_background",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "backend_services",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "backend_services",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "integration_test_api_background_req",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_test_api_background_req",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "integration_test_api_background_db",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "target": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "target": "integration_test_api_background_req",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "target": "integration_test_api_background_req",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "target": "integration_test_api_background_req",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_test_api_background_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_integration_test_api_background_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_api_background.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "integration_test_api_background_req",
+      "callee": "SimpleNamespace",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_req",
+      "callee": "SimpleNamespace",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_req",
+      "callee": "SimpleNamespace",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_db",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_db",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_db",
+      "callee": "_connect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_db",
+      "callee": "executescript",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_db",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_db",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "post_task",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "CreateTaskRequest",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "get_tasks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "get_tasks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "post_task",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_post_task_with_uuid_user_does_not_crash",
+      "callee": "CreateTaskRequest",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "post_task",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "CreateTaskRequest",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "patch_task",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "UpdateTaskRequest",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "patch_task",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "UpdateTaskRequest",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "delete_task_endpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_patch_and_delete_enforce_session_scope",
+      "callee": "get_tasks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "SimpleNamespace",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L135",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "post_task",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L154",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "CreateTaskRequest",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "BackgroundTasks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "run_task_endpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "bt",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "get_runs",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L180",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "run_task_endpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_test_api_background_test_manual_run_creates_run_and_registers_thread",
+      "callee": "BackgroundTasks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\test_api_background.py",
+      "source_location": "L181",
+      "receiver": null
+    }
+  ]
+}

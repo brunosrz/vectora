@@ -1,0 +1,71 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_mcp_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "backend/mcp/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "mcp_init_getattr",
+      "label": "__getattr__()",
+      "file_type": "code",
+      "source_file": "backend/mcp/__init__.py",
+      "source_location": "L30"
+    },
+    {
+      "id": "mcp_init_rationale_1",
+      "label": "MCP Module: Model Context Protocol integration for Vectora.  Exposes Vectora cap",
+      "file_type": "rationale",
+      "source_file": "backend/mcp/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "mcp_init_rationale_31",
+      "label": "Lazy imports para evitar circular import e carregamento pesado.",
+      "file_type": "rationale",
+      "source_file": "backend/mcp/__init__.py",
+      "source_location": "L31"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_mcp_init_py",
+      "target": "mcp_init_getattr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/__init__.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_init_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_mcp_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mcp_init_rationale_31",
+      "target": "mcp_init_getattr",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/mcp/__init__.py",
+      "source_location": "L31",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "mcp_init_getattr",
+      "callee": "AttributeError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\mcp\\__init__.py",
+      "source_location": "L40",
+      "receiver": null
+    }
+  ]
+}

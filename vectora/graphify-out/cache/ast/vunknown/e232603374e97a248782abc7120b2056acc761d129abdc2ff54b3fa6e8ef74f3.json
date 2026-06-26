@@ -1,0 +1,432 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "label": "plans.py",
+      "file_type": "code",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_plans_plan_id",
+      "label": "_plan_id()",
+      "file_type": "code",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "services_plans_index_path",
+      "label": "_index_path()",
+      "file_type": "code",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_plans_load_index",
+      "label": "_load_index()",
+      "file_type": "code",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "services_plans_save_plan",
+      "label": "save_plan()",
+      "file_type": "code",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "services_plans_list_plans",
+      "label": "list_plans()",
+      "file_type": "code",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L87"
+    },
+    {
+      "id": "services_plans_rationale_1",
+      "label": "Armazenamento de planos de implementa\u00e7\u00e3o por workspace.  Planos s\u00e3o salvos em do",
+      "file_type": "rationale",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_plans_rationale_54",
+      "label": "Salva um plano globalmente e, se existir, na c\u00f3pia local do workspace.      Reto",
+      "file_type": "rationale",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "services_plans_rationale_88",
+      "label": "Lista os planos salvos globalmente para um workspace.",
+      "file_type": "rationale",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L88"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "hashlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "services_plans_plan_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "services_plans_index_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_index_path",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "services_plans_load_index",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "services_plans_save_plan",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_save_plan",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "target": "services_plans_list_plans",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L87",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_load_index",
+      "target": "services_plans_index_path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_save_plan",
+      "target": "services_plans_plan_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_save_plan",
+      "target": "services_plans_load_index",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_save_plan",
+      "target": "services_plans_index_path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_save_plan",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_list_plans",
+      "target": "services_plans_load_index",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_plans_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_rationale_54",
+      "target": "services_plans_save_plan",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "services_plans_rationale_88",
+      "target": "services_plans_list_plans",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/plans.py",
+      "source_location": "L88",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_plans_plan_id",
+      "callee": "sha256",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_plan_id",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_plan_id",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_plan_id",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_plan_id",
+      "callee": "hexdigest",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_load_index",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_load_index",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_load_index",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_load_index",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "is_dir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_save_plan",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_plans_list_plans",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\plans.py",
+      "source_location": "L89",
+      "receiver": null
+    }
+  ]
+}

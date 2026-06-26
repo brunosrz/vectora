@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "label": "tool-call-renderer-traces.test.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_tool_call_renderer_traces_test_maketool",
+      "label": "makeTool()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L15"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tool_call_renderer_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "target": "chat_tool_call_renderer_toolcallrenderer",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "target": "types_index_toolcall",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_tests_tool_call_renderer_traces_test_tsx",
+      "target": "tests_tool_call_renderer_traces_test_maketool",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/__tests__/tool-call-renderer-traces.test.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

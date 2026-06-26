@@ -1,0 +1,243 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_optimize_py",
+      "label": "optimize.py",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "lancedb_optimize_optimize_table",
+      "label": "optimize_table()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "lancedb_optimize_schedule_optimize",
+      "label": "schedule_optimize()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L75"
+    },
+    {
+      "id": "task",
+      "label": "Task",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "lancedb_optimize_rationale_1",
+      "label": "Otimiza\u00e7\u00e3o peri\u00f3dica de tabelas LanceDB.  LanceDB \u00e9 um banco de dados baseado em",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "lancedb_optimize_rationale_32",
+      "label": "Compacta fragmentos e remove vers\u00f5es antigas da ``table``.      Executa em ordem",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "lancedb_optimize_rationale_81",
+      "label": "Agenda otimiza\u00e7\u00e3o peri\u00f3dica em background.      Cria uma ``asyncio.Task`` que ro",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L81"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_optimize_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_optimize_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_optimize_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_optimize_py",
+      "target": "lancedb_optimize_optimize_table",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_optimize_optimize_table",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_optimize_py",
+      "target": "lancedb_optimize_schedule_optimize",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_optimize_schedule_optimize",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_optimize_schedule_optimize",
+      "target": "task",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_optimize_schedule_optimize",
+      "target": "task",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_optimize_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_optimize_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_optimize_rationale_32",
+      "target": "lancedb_optimize_optimize_table",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_optimize_rationale_81",
+      "target": "lancedb_optimize_schedule_optimize",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/optimize.py",
+      "source_location": "L81",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "lancedb_optimize_optimize_table",
+      "callee": "optimize",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_optimize_optimize_table",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_optimize_optimize_table",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_optimize_optimize_table",
+      "callee": "cleanup_old_versions",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_optimize_optimize_table",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_optimize_optimize_table",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_optimize_schedule_optimize",
+      "callee": "create_task",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_optimize_schedule_optimize",
+      "callee": "_loop",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\optimize.py",
+      "source_location": "L120",
+      "receiver": null
+    }
+  ]
+}

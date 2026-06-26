@@ -1,0 +1,1113 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "label": "test_services_tracer.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_services_tracer_tr",
+      "label": "tr()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager",
+      "label": "TestSpanContextManager",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L30"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_span_records_on_success",
+      "label": ".test_span_records_on_success()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_span_records_duration",
+      "label": ".test_span_records_duration()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "label": ".test_span_marks_error_on_exception()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_span_set_stores_metadata",
+      "label": ".test_span_set_stores_metadata()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L63"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_span_set_in_out_tokens",
+      "label": ".test_span_set_in_out_tokens()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L73"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_span_set_custom_status",
+      "label": ".test_span_set_custom_status()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L82"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_span_no_session_id",
+      "label": ".test_span_no_session_id()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L90"
+    },
+    {
+      "id": "unit_test_services_tracer_testspancontextmanager_test_multiple_spans_same_session",
+      "label": ".test_multiple_spans_same_session()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "unit_test_services_tracer_testrecordsync",
+      "label": "TestRecordSync",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L112"
+    },
+    {
+      "id": "unit_test_services_tracer_testrecordsync_test_record_sync_creates_span",
+      "label": ".test_record_sync_creates_span()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L114"
+    },
+    {
+      "id": "unit_test_services_tracer_testrecordsync_test_record_sync_with_status_error",
+      "label": ".test_record_sync_with_status_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L122"
+    },
+    {
+      "id": "unit_test_services_tracer_testrecordsync_test_record_sync_with_session_id",
+      "label": ".test_record_sync_with_session_id()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L129"
+    },
+    {
+      "id": "unit_test_services_tracer_testrecordsync_test_record_sync_doesnt_raise_on_bad_path",
+      "label": ".test_record_sync_doesnt_raise_on_bad_path()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "unit_test_services_tracer_testquerymethods",
+      "label": "TestQueryMethods",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L141"
+    },
+    {
+      "id": "unit_test_services_tracer_testquerymethods_test_get_session_returns_only_matching",
+      "label": ".test_get_session_returns_only_matching()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L143"
+    },
+    {
+      "id": "unit_test_services_tracer_testquerymethods_test_get_recent_respects_limit",
+      "label": ".test_get_recent_respects_limit()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L155"
+    },
+    {
+      "id": "unit_test_services_tracer_testquerymethods_test_get_session_empty_returns_empty",
+      "label": ".test_get_session_empty_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L164"
+    },
+    {
+      "id": "unit_test_services_tracer_testquerymethods_test_get_recent_on_empty_db_returns_empty",
+      "label": ".test_get_recent_on_empty_db_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L169"
+    },
+    {
+      "id": "unit_test_services_tracer_testquerymethods_test_get_recent_on_missing_db_returns_empty",
+      "label": ".test_get_recent_on_missing_db_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L174"
+    },
+    {
+      "id": "unit_test_services_tracer_testclearmethods",
+      "label": "TestClearMethods",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L181"
+    },
+    {
+      "id": "unit_test_services_tracer_testclearmethods_test_clear_session_removes_only_target",
+      "label": ".test_clear_session_removes_only_target()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L183"
+    },
+    {
+      "id": "unit_test_services_tracer_testclearmethods_test_clear_all_removes_everything",
+      "label": ".test_clear_all_removes_everything()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L195"
+    },
+    {
+      "id": "unit_test_services_tracer_testclearmethods_test_clear_session_nonexistent_returns_zero",
+      "label": ".test_clear_session_nonexistent_returns_zero()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L206"
+    },
+    {
+      "id": "unit_test_services_tracer_testclearmethods_test_clear_all_on_missing_db_returns_zero",
+      "label": ".test_clear_all_on_missing_db_returns_zero()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L211"
+    },
+    {
+      "id": "unit_test_services_tracer_testsingleton",
+      "label": "TestSingleton",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L217"
+    },
+    {
+      "id": "unit_test_services_tracer_testsingleton_test_module_singleton_exists",
+      "label": ".test_module_singleton_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L218"
+    },
+    {
+      "id": "unit_test_services_tracer_testsingleton_test_two_imports_same_object",
+      "label": ".test_two_imports_same_object()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L222"
+    },
+    {
+      "id": "unit_test_services_tracer_testsingleton_test_singleton_can_record_and_query",
+      "label": ".test_singleton_can_record_and_query()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L229"
+    },
+    {
+      "id": "unit_test_services_tracer_rationale_1",
+      "label": "Tests for src/services/tracer.py  Cobre VectoraTracer sem APIs externas: - span(",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_services_tracer_rationale_26",
+      "label": "Tracer isolado com banco tempor\u00e1rio.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "unit_test_services_tracer_rationale_135",
+      "label": "record_sync deve ser silencioso em caso de erro.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L135"
+    },
+    {
+      "id": "unit_test_services_tracer_rationale_219",
+      "label": "O tracer singleton de m\u00f3dulo deve ser uma inst\u00e2ncia de VectoraTracer.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L219"
+    },
+    {
+      "id": "unit_test_services_tracer_rationale_223",
+      "label": "Importa\u00e7\u00f5es m\u00faltiplas devem retornar o mesmo objeto.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L223"
+    },
+    {
+      "id": "unit_test_services_tracer_rationale_230",
+      "label": "O singleton funciona com DB tempor\u00e1rio.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L230"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "time",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "backend_services_tracer",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "unit_test_services_tracer_tr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "unit_test_services_tracer_testspancontextmanager",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_span_records_on_success",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_span_records_duration",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_span_set_stores_metadata",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_span_set_in_out_tokens",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_span_set_custom_status",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_span_no_session_id",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testspancontextmanager",
+      "target": "unit_test_services_tracer_testspancontextmanager_test_multiple_spans_same_session",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "unit_test_services_tracer_testrecordsync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testrecordsync",
+      "target": "unit_test_services_tracer_testrecordsync_test_record_sync_creates_span",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testrecordsync",
+      "target": "unit_test_services_tracer_testrecordsync_test_record_sync_with_status_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testrecordsync",
+      "target": "unit_test_services_tracer_testrecordsync_test_record_sync_with_session_id",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testrecordsync",
+      "target": "unit_test_services_tracer_testrecordsync_test_record_sync_doesnt_raise_on_bad_path",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "unit_test_services_tracer_testquerymethods",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testquerymethods",
+      "target": "unit_test_services_tracer_testquerymethods_test_get_session_returns_only_matching",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testquerymethods",
+      "target": "unit_test_services_tracer_testquerymethods_test_get_recent_respects_limit",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testquerymethods",
+      "target": "unit_test_services_tracer_testquerymethods_test_get_session_empty_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testquerymethods",
+      "target": "unit_test_services_tracer_testquerymethods_test_get_recent_on_empty_db_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L169",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testquerymethods",
+      "target": "unit_test_services_tracer_testquerymethods_test_get_recent_on_missing_db_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "unit_test_services_tracer_testclearmethods",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testclearmethods",
+      "target": "unit_test_services_tracer_testclearmethods_test_clear_session_removes_only_target",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testclearmethods",
+      "target": "unit_test_services_tracer_testclearmethods_test_clear_all_removes_everything",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L195",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testclearmethods",
+      "target": "unit_test_services_tracer_testclearmethods_test_clear_session_nonexistent_returns_zero",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L206",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testclearmethods",
+      "target": "unit_test_services_tracer_testclearmethods_test_clear_all_on_missing_db_returns_zero",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "target": "unit_test_services_tracer_testsingleton",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L217",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testsingleton",
+      "target": "unit_test_services_tracer_testsingleton_test_module_singleton_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L218",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testsingleton",
+      "target": "unit_test_services_tracer_testsingleton_test_two_imports_same_object",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L222",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_testsingleton",
+      "target": "unit_test_services_tracer_testsingleton_test_singleton_can_record_and_query",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_tracer_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_rationale_26",
+      "target": "unit_test_services_tracer_tr",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_rationale_135",
+      "target": "unit_test_services_tracer_testrecordsync_test_record_sync_doesnt_raise_on_bad_path",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_rationale_219",
+      "target": "unit_test_services_tracer_testsingleton_test_module_singleton_exists",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_rationale_223",
+      "target": "unit_test_services_tracer_testsingleton_test_two_imports_same_object",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L223",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_tracer_rationale_230",
+      "target": "unit_test_services_tracer_testsingleton_test_singleton_can_record_and_query",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_tracer.py",
+      "source_location": "L230",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_services_tracer_tr",
+      "callee": "VectoraTracer",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_records_on_success",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_records_on_success",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_records_duration",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_records_duration",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_records_duration",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_marks_error_on_exception",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_set_stores_metadata",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_set_stores_metadata",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_set_stores_metadata",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_set_in_out_tokens",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_set_in_out_tokens",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_set_custom_status",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_set_custom_status",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_no_session_id",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_span_no_session_id",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_multiple_spans_same_session",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_multiple_spans_same_session",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_multiple_spans_same_session",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testspancontextmanager_test_multiple_spans_same_session",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L106",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_creates_span",
+      "callee": "record_sync",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_creates_span",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_creates_span",
+      "callee": "approx",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_with_status_error",
+      "callee": "record_sync",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_with_status_error",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_with_session_id",
+      "callee": "record_sync",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_with_session_id",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_doesnt_raise_on_bad_path",
+      "callee": "VectoraTracer",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testrecordsync_test_record_sync_doesnt_raise_on_bad_path",
+      "callee": "record_sync",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_session_returns_only_matching",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L144",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_session_returns_only_matching",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_session_returns_only_matching",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L149",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_session_returns_only_matching",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L150",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_recent_respects_limit",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_recent_respects_limit",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_session_empty_returns_empty",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L165",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_recent_on_empty_db_returns_empty",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_recent_on_missing_db_returns_empty",
+      "callee": "VectoraTracer",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L175",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testquerymethods_test_get_recent_on_missing_db_returns_empty",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L177",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_session_removes_only_target",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L184",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_session_removes_only_target",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_session_removes_only_target",
+      "callee": "clear_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L189",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_session_removes_only_target",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L191",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_session_removes_only_target",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L192",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_all_removes_everything",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L196",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_all_removes_everything",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L198",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_all_removes_everything",
+      "callee": "clear_all",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_all_removes_everything",
+      "callee": "get_recent",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_session_nonexistent_returns_zero",
+      "callee": "clear_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L207",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_all_on_missing_db_returns_zero",
+      "callee": "VectoraTracer",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L212",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testclearmethods_test_clear_all_on_missing_db_returns_zero",
+      "callee": "clear_all",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L213",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testsingleton_test_singleton_can_record_and_query",
+      "callee": "VectoraTracer",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L231",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testsingleton_test_singleton_can_record_and_query",
+      "callee": "span",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L232",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_tracer_testsingleton_test_singleton_can_record_and_query",
+      "callee": "get_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_tracer.py",
+      "source_location": "L234",
+      "receiver": null
+    }
+  ]
+}

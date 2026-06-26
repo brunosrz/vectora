@@ -1,0 +1,167 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_turbo_json",
+      "label": "turbo.json",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_turbo_schema",
+      "label": "$schema",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "frontend_turbo_tasks",
+      "label": "tasks",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "frontend_turbo_tasks_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "frontend_turbo_build_outputs",
+      "label": "outputs",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "frontend_turbo_tasks_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "frontend_turbo_dev_persistent",
+      "label": "persistent",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "frontend_turbo_dev_cache",
+      "label": "cache",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "frontend_turbo_tasks_lint_oxc",
+      "label": "lint:oxc",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "frontend_turbo_lint_oxc_outputs",
+      "label": "outputs",
+      "file_type": "code",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L12"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_turbo_json",
+      "target": "frontend_turbo_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_turbo_json",
+      "target": "frontend_turbo_tasks",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_turbo_tasks",
+      "target": "frontend_turbo_tasks_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_turbo_tasks_build",
+      "target": "frontend_turbo_build_outputs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_turbo_build_outputs",
+      "target": "ref_dist",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_turbo_tasks",
+      "target": "frontend_turbo_tasks_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_turbo_tasks_dev",
+      "target": "frontend_turbo_dev_persistent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_turbo_tasks_dev",
+      "target": "frontend_turbo_dev_cache",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_turbo_tasks",
+      "target": "frontend_turbo_tasks_lint_oxc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_turbo_tasks_lint_oxc",
+      "target": "frontend_turbo_lint_oxc_outputs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/turbo.json",
+      "source_location": "L12",
+      "weight": 1.0
+    }
+  ]
+}

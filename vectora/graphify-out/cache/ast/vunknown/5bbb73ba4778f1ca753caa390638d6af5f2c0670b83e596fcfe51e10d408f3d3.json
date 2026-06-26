@@ -1,0 +1,939 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "label": "use-stream-handler.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_use_stream_handler_isnetworkerror",
+      "label": "isNetworkError()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L55"
+    },
+    {
+      "id": "chat_use_stream_handler_streamerrormessage",
+      "label": "streamErrorMessage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L69"
+    },
+    {
+      "id": "chat_use_stream_handler_announcesseconnected",
+      "label": "announceSSEConnected()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L81"
+    },
+    {
+      "id": "chat_use_stream_handler_announcessedropped",
+      "label": "announceSSEDropped()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L91"
+    },
+    {
+      "id": "chat_use_stream_handler_usestreamhandlerprops",
+      "label": "UseStreamHandlerProps",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L101"
+    },
+    {
+      "id": "chat_use_stream_handler_usestreamhandlerreturn",
+      "label": "UseStreamHandlerReturn",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L114"
+    },
+    {
+      "id": "chat_use_stream_handler_usestreamhandler",
+      "label": "useStreamHandler()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L131"
+    },
+    {
+      "id": "chat_use_stream_handler_handleevent",
+      "label": "handleEvent()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L558"
+    },
+    {
+      "id": "chat_use_stream_handler_files_diff_tools",
+      "label": "FILES_DIFF_TOOLS",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L780"
+    },
+    {
+      "id": "chat_use_stream_handler_invalidateworkbenchfor",
+      "label": "invalidateWorkbenchFor()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L791"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "types_index_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "types_index_toolcall",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "types_index_imageattachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "api_vectora_client_streamchat",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "api_vectora_client_resumechat",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "api_vectora_client_streamevent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "api_vectora_client_chatconfig",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "api_vectora_client_resumechatrequest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_index_ensuremessageexists",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_index_updatemessageinlist",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_index_toapiattachments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_agent_settings_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "layout_agent_settings_agentconfig",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_settings_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "stores_settings_store_usesettingsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "stores_workspaces_store_useworkspacesstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workbench_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "stores_workbench_store_useworkbenchstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "hooks_use_network_status_usenetworkstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_stream_interruption_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "utils_stream_interruption_markstreamstarted",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "utils_stream_interruption_markstreamended",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_isnetworkerror",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_streamerrormessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_announcesseconnected",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_announcessedropped",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_usestreamhandlerprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_usestreamhandlerreturn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_usestreamhandler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_handleevent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L558",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_files_diff_tools",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L780",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "target": "chat_use_stream_handler_invalidateworkbenchfor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L791",
+      "weight": 1.0
+    },
+    {
+      "source": "chat_use_stream_handler_announcessedropped",
+      "target": "chat_use_stream_handler_isnetworkerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "chat_use_stream_handler_handleevent",
+      "target": "chat_use_stream_handler_invalidateworkbenchfor",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-stream-handler.ts",
+      "source_location": "L596",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_use_stream_handler_isnetworkerror",
+      "callee": "test",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_streamerrormessage",
+      "callee": "chat_error_rate_limit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_streamerrormessage",
+      "callee": "chat_error_auth",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_streamerrormessage",
+      "callee": "chat_error_generic",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcesseconnected",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcesseconnected",
+      "callee": "success",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcesseconnected",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcesseconnected",
+      "callee": "network_sse_reconnected",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcesseconnected",
+      "callee": "setSSEStatus",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcesseconnected",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcessedropped",
+      "callee": "setSSEStatus",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_announcessedropped",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_usestreamhandler",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_usestreamhandler",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_usestreamhandler",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L407",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "parse",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L572",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L588",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "parse",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L603",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L608",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L623",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L640",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L651",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L674",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L685",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L710",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setMessages",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L723",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "setTimeout",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L738",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "getActive",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L752",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L752",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L755",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "invalidateFiles",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L756",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L756",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L757",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "invalidateDiff",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L758",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L758",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L759",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "invalidatePlan",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L760",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L760",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L761",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L761",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "markPending",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L762",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_handleevent",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L762",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "invalidatePlan",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L796",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L796",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "has",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L800",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "getActive",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L801",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L801",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "invalidateFiles",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L803",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L803",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "invalidateDiff",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L804",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L804",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "markPending",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L806",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_stream_handler_invalidateworkbenchfor",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-stream-handler.ts",
+      "source_location": "L806",
+      "receiver": null
+    }
+  ]
+}

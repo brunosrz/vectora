@@ -1,0 +1,141 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_server_json",
+      "label": "server.json",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "vectora_server_schema",
+      "label": "$schema",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "vectora_server_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "vectora_server_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "vectora_server_repository",
+      "label": "repository",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "vectora_server_repository_url",
+      "label": "url",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "vectora_server_repository_source",
+      "label": "source",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "vectora_server_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "vectora_server_packages",
+      "label": "packages",
+      "file_type": "code",
+      "source_file": "server.json",
+      "source_location": "L10"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_server_json",
+      "target": "vectora_server_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_server_json",
+      "target": "vectora_server_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_server_json",
+      "target": "vectora_server_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_server_json",
+      "target": "vectora_server_repository",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_server_repository",
+      "target": "vectora_server_repository_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "vectora_server_repository",
+      "target": "vectora_server_repository_source",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_server_json",
+      "target": "vectora_server_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_server_json",
+      "target": "vectora_server_packages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.json",
+      "source_location": "L10",
+      "weight": 1.0
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "label": "tools.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "types_tools_toolcall",
+      "label": "ToolCall",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L16"
+    },
+    {
+      "id": "types_tools_subgraphoutput",
+      "label": "SubgraphOutput",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L34"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_render_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "types_render_renderhint",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "types_render_toolcategory",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_render_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "types_render_renderhint",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "types_render_toolcategory",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "types_tools_toolcall",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_tools_ts",
+      "target": "types_tools_subgraphoutput",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/tools.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

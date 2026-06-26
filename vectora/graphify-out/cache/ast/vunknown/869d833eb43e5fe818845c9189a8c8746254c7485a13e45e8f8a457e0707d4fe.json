@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "label": "message-helpers.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_message_helpers_generatemessageid",
+      "label": "generateMessageId()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "chat_message_helpers_createusermessage",
+      "label": "createUserMessage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L32"
+    },
+    {
+      "id": "chat_message_helpers_updatemessageinlist",
+      "label": "updateMessageInList()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L47"
+    },
+    {
+      "id": "chat_message_helpers_ensuremessageexists",
+      "label": "ensureMessageExists()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L63"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "target": "types_index_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "target": "chat_message_helpers_generatemessageid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "target": "chat_message_helpers_createusermessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "target": "chat_message_helpers_updatemessageinlist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_message_helpers_ts",
+      "target": "chat_message_helpers_ensuremessageexists",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "chat_message_helpers_createusermessage",
+      "target": "chat_message_helpers_generatemessageid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/chat/message-helpers.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_message_helpers_generatemessageid",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\chat\\message-helpers.ts",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_message_helpers_ensuremessageexists",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\chat\\message-helpers.ts",
+      "source_location": "L68",
+      "receiver": null
+    }
+  ]
+}

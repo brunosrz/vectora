@@ -1,0 +1,141 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_native_base64_tool_py",
+      "label": "base64_tool.py",
+      "file_type": "code",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_base64_tool_base64_encode",
+      "label": "base64_encode()",
+      "file_type": "code",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "native_base64_tool_rationale_1",
+      "label": "Tool de encode/decode base64.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_base64_tool_rationale_15",
+      "label": "Codifica ou decodifica uma string em Base64.      Args:         text: String a s",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L15"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_base64_tool_py",
+      "target": "base64",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_base64_tool_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_base64_tool_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_base64_tool_py",
+      "target": "native_base64_tool_base64_encode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "native_base64_tool_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_native_base64_tool_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "native_base64_tool_rationale_15",
+      "target": "native_base64_tool_base64_encode",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/base64_tool.py",
+      "source_location": "L15",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "native_base64_tool_base64_encode",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\base64_tool.py",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_base64_tool_base64_encode",
+      "callee": "b64encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\base64_tool.py",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_base64_tool_base64_encode",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\base64_tool.py",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_base64_tool_base64_encode",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\base64_tool.py",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_base64_tool_base64_encode",
+      "callee": "b64decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\base64_tool.py",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_base64_tool_base64_encode",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\base64_tool.py",
+      "source_location": "L28",
+      "receiver": null
+    }
+  ]
+}

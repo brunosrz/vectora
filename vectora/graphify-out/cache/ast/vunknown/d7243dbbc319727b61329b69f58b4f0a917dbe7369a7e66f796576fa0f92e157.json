@@ -1,0 +1,117 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_segment_provider_tsx",
+      "label": "segment-provider.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "providers_segment_provider_window",
+      "label": "Window",
+      "file_type": "code",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "providers_segment_provider_segmentprovider",
+      "label": "SegmentProvider()",
+      "file_type": "code",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "providers_segment_provider_trackevent",
+      "label": "trackEvent()",
+      "file_type": "code",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L43"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_segment_provider_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_segment_provider_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_user_id_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_segment_provider_tsx",
+      "target": "auth_use_user_id_useuserid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_segment_provider_tsx",
+      "target": "providers_segment_provider_window",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_segment_provider_tsx",
+      "target": "providers_segment_provider_segmentprovider",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_providers_segment_provider_tsx",
+      "target": "providers_segment_provider_trackevent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/providers/segment-provider.tsx",
+      "source_location": "L43",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "providers_segment_provider_segmentprovider",
+      "callee": "useUserId",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\segment-provider.tsx",
+      "source_location": "L19",
+      "receiver": null
+    },
+    {
+      "caller_nid": "providers_segment_provider_segmentprovider",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\segment-provider.tsx",
+      "source_location": "L21",
+      "receiver": null
+    },
+    {
+      "caller_nid": "providers_segment_provider_trackevent",
+      "callee": "track",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\providers\\segment-provider.tsx",
+      "source_location": "L51",
+      "receiver": null
+    }
+  ]
+}

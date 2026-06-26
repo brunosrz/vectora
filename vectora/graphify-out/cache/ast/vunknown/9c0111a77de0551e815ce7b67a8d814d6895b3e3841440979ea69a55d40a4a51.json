@@ -1,0 +1,241 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "label": "setup-wizard.test.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_setup_wizard_test_renderatsteptoken",
+      "label": "renderAtStepToken()",
+      "file_type": "code",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L70"
+    },
+    {
+      "id": "tests_setup_wizard_test_mockstoragefetch",
+      "label": "mockStorageFetch()",
+      "file_type": "code",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L122"
+    },
+    {
+      "id": "tests_setup_wizard_test_renderatstepmode",
+      "label": "renderAtStepMode()",
+      "file_type": "code",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L165"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_setup_wizard_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "onboarding_setup_wizard_setupwizard",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "onboarding_setup_wizard_isonboardingdone",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "tests_setup_wizard_test_renderatsteptoken",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "tests_setup_wizard_test_mockstoragefetch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_onboarding_tests_setup_wizard_test_tsx",
+      "target": "tests_setup_wizard_test_renderatstepmode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/onboarding/__tests__/setup-wizard.test.tsx",
+      "source_location": "L165",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "render",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "fn",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "waitFor",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "click",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "getByRole",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "waitFor",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "click",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "getByRole",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatsteptoken",
+      "callee": "waitFor",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_mockstoragefetch",
+      "callee": "fn",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatstepmode",
+      "callee": "render",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatstepmode",
+      "callee": "fn",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatstepmode",
+      "callee": "waitFor",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatstepmode",
+      "callee": "act",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatstepmode",
+      "callee": "waitFor",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_setup_wizard_test_renderatstepmode",
+      "callee": "act",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\onboarding\\__tests__\\setup-wizard.test.tsx",
+      "source_location": "L174",
+      "receiver": null
+    }
+  ]
+}

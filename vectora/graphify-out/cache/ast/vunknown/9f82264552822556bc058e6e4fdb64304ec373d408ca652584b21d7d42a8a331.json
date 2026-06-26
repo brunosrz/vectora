@@ -1,0 +1,835 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "label": "data_migration.py",
+      "file_type": "code",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "migrations_data_migration_migrate_to_postgres",
+      "label": "migrate_to_postgres()",
+      "file_type": "code",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "console",
+      "label": "Console",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "migrations_data_migration_migrate_to_qdrant",
+      "label": "migrate_to_qdrant()",
+      "file_type": "code",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L144"
+    },
+    {
+      "id": "migrations_data_migration_migrate_to_pgvector",
+      "label": "migrate_to_pgvector()",
+      "file_type": "code",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L236"
+    },
+    {
+      "id": "migrations_data_migration_migrate_memory_to_langgraph",
+      "label": "migrate_memory_to_langgraph()",
+      "file_type": "code",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L365"
+    },
+    {
+      "id": "migrations_data_migration_rationale_1",
+      "label": "Migra\u00e7\u00f5es de dados entre backends de storage.  Suporta 4 opera\u00e7\u00f5es:  * ``to-post",
+      "file_type": "rationale",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "migrations_data_migration_rationale_48",
+      "label": "Migra dados SQLite \u2192 Postgres.      Usa ``asyncpg`` COPY binary para m\u00e1xima perf",
+      "file_type": "rationale",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "migrations_data_migration_rationale_154",
+      "label": "Migra vetores LanceDB \u2192 Qdrant em batches.      Args:         lancedb_path:  Dir",
+      "file_type": "rationale",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L154"
+    },
+    {
+      "id": "migrations_data_migration_rationale_245",
+      "label": "Migra vetores LanceDB \u2192 Postgres pgvector.      Cria a tabela ``vectora_vectors_",
+      "file_type": "rationale",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L245"
+    },
+    {
+      "id": "migrations_data_migration_rationale_371",
+      "label": "Migra mem\u00f3rias do store antigo para LangGraph BaseStore.      L\u00ea registros da ta",
+      "file_type": "rationale",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L371"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "target": "rich_console",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "target": "migrations_data_migration_migrate_to_postgres",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_to_postgres",
+      "target": "console",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_to_postgres",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "target": "migrations_data_migration_migrate_to_qdrant",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_to_qdrant",
+      "target": "console",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_to_qdrant",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "target": "migrations_data_migration_migrate_to_pgvector",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_to_pgvector",
+      "target": "console",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_to_pgvector",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "target": "migrations_data_migration_migrate_memory_to_langgraph",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L365",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_memory_to_langgraph",
+      "target": "console",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L365",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_migrate_memory_to_langgraph",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L365",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_storage_migrations_data_migration_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_rationale_48",
+      "target": "migrations_data_migration_migrate_to_postgres",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_rationale_154",
+      "target": "migrations_data_migration_migrate_to_qdrant",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L154",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_rationale_245",
+      "target": "migrations_data_migration_migrate_to_pgvector",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "migrations_data_migration_rationale_371",
+      "target": "migrations_data_migration_migrate_memory_to_langgraph",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/migrations/data_migration.py",
+      "source_location": "L371",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "execute_fetchall",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_postgres",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "connect_async",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "list_tables",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "open_table",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "count_rows",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "QdrantClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "to_list",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "limit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "offset",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "query",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L209",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L209",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L213",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L217",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "PointStruct",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L217",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_qdrant",
+      "callee": "upsert",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L220",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "connect_async",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L266",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "list_tables",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L267",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "open_table",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L277",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "count_rows",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L278",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L290",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L291",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L295",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "to_list",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L298",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "limit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L298",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "query",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L298",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L302",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L302",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L306",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L307",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "to_list",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L322",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "limit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L322",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "offset",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L322",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "query",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L322",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L327",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L327",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L330",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L331",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L334",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L338",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L343",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L345",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_to_pgvector",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L362",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L397",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L401",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L404",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L411",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L412",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "get_store",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L421",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L422",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "keys",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L429",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "keys",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L433",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L440",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "aput",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L446",
+      "receiver": null
+    },
+    {
+      "caller_nid": "migrations_data_migration_migrate_memory_to_langgraph",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\migrations\\data_migration.py",
+      "source_location": "L454",
+      "receiver": null
+    }
+  ]
+}

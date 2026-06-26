@@ -1,0 +1,181 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "label": "ids.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_ids_normalize_id",
+      "label": "normalize_id()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "context_graph_ids_make_id",
+      "label": "make_id()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "context_graph_ids_rationale_1",
+      "label": "Single source of truth for node-ID normalization.  Three independent producers m",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_ids_rationale_33",
+      "label": "r\"\"\"Normalize a single ID string to its canonical form.      Idempotent: ``norma",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "context_graph_ids_rationale_44",
+      "label": "Build a canonical node ID from one or more name parts.      Parts are joined wit",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L44"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "target": "unicodedata",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "target": "context_graph_ids_normalize_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "target": "context_graph_ids_make_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_ids_make_id",
+      "target": "context_graph_ids_normalize_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_ids_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_ids_rationale_33",
+      "target": "context_graph_ids_normalize_id",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_ids_rationale_44",
+      "target": "context_graph_ids_make_id",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/ids.py",
+      "source_location": "L44",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "context_graph_ids_normalize_id",
+      "callee": "normalize",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\ids.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_ids_normalize_id",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\ids.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_ids_normalize_id",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\ids.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_ids_normalize_id",
+      "callee": "casefold",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\ids.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_ids_normalize_id",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\ids.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_ids_make_id",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\ids.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_ids_make_id",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\ids.py",
+      "source_location": "L50",
+      "receiver": null
+    }
+  ]
+}

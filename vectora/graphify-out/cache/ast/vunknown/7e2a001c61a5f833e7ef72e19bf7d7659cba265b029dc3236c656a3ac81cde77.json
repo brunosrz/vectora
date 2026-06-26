@@ -1,0 +1,77 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_pins_ts",
+      "label": "use-pins.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-pins.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "hooks_use_pins_usepins",
+      "label": "usePins()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-pins.ts",
+      "source_location": "L10"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_pins_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-pins.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_pins_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workbench_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-pins.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_pins_ts",
+      "target": "stores_workbench_store_useworkbenchstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-pins.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_pins_ts",
+      "target": "hooks_use_pins_usepins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-pins.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "hooks_use_pins_usepins",
+      "callee": "useWorkbenchStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-pins.ts",
+      "source_location": "L11",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_pins_usepins",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-pins.ts",
+      "source_location": "L12",
+      "receiver": null
+    }
+  ]
+}

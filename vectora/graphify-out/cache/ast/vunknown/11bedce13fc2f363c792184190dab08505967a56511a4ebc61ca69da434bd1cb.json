@@ -1,0 +1,934 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_mcp_ingest_py",
+      "label": "test_context_graph_mcp_ingest.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "label": "TestIsMcpConfigPath",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L13"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_json",
+      "label": ".test_mcp_json()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_claude_desktop_config",
+      "label": ".test_claude_desktop_config()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_servers_json",
+      "label": ".test_mcp_servers_json()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_plain",
+      "label": ".test_mcp_plain()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_random_json_not_mcp",
+      "label": ".test_random_json_not_mcp()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_non_json_not_mcp",
+      "label": ".test_non_json_not_mcp()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "label": "TestExtractMcpConfig",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L45"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "label": "._write()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_basic_mcp_servers",
+      "label": ".test_basic_mcp_servers()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_nested_mcp_servers",
+      "label": ".test_nested_mcp_servers()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L75"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_vars_not_exposed",
+      "label": ".test_env_vars_not_exposed()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_var_names_may_appear",
+      "label": ".test_env_var_names_may_appear()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L113"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_not_found_returns_error",
+      "label": ".test_file_not_found_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L132"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_too_large_returns_error",
+      "label": ".test_file_too_large_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L139"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_invalid_json_returns_error",
+      "label": ".test_invalid_json_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_root_not_object_returns_error",
+      "label": ".test_root_not_object_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L158"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_no_mcp_servers_returns_error",
+      "label": ".test_no_mcp_servers_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_max_servers_limit",
+      "label": ".test_max_servers_limit()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L173"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_edges_to_config_file",
+      "label": ".test_server_edges_to_config_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L188"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_non_dict_server_entry_skipped",
+      "label": ".test_non_dict_server_entry_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L202"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_name_with_special_chars_produces_node",
+      "label": ".test_server_name_with_special_chars_produces_node()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L219"
+    },
+    {
+      "id": "unit_test_context_graph_mcp_ingest_rationale_1",
+      "label": "Testes para backend/services/context_graph/mcp_ingest.py.  Cobre: is_mcp_config_",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_mcp_ingest_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_mcp_ingest_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_mcp_ingest_py",
+      "target": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "target": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_json",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "target": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_claude_desktop_config",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "target": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_servers_json",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "target": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_plain",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "target": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_random_json_not_mcp",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath",
+      "target": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_non_json_not_mcp",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_mcp_ingest_py",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_basic_mcp_servers",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_basic_mcp_servers",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_nested_mcp_servers",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_nested_mcp_servers",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_vars_not_exposed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_vars_not_exposed",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_var_names_may_appear",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_var_names_may_appear",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_not_found_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_not_found_returns_error",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_too_large_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_too_large_returns_error",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_invalid_json_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_invalid_json_returns_error",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_root_not_object_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_root_not_object_returns_error",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_no_mcp_servers_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_no_mcp_servers_returns_error",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_max_servers_limit",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_max_servers_limit",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_edges_to_config_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_edges_to_config_file",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_non_dict_server_entry_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_non_dict_server_entry_skipped",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_name_with_special_chars_produces_node",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_name_with_special_chars_produces_node",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_json",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_claude_desktop_config",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_servers_json",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_plain",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_random_json_not_mcp",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_non_json_not_mcp",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_basic_mcp_servers",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_nested_mcp_servers",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_vars_not_exposed",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_var_names_may_appear",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_no_mcp_servers_returns_error",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L169",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_max_servers_limit",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_edges_to_config_file",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_non_dict_server_entry_skipped",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L205",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_name_with_special_chars_produces_node",
+      "target": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L222",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_mcp_ingest_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_mcp_ingest_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_mcp_ingest.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_json",
+      "callee": "is_mcp_config_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L17",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_claude_desktop_config",
+      "callee": "is_mcp_config_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_servers_json",
+      "callee": "is_mcp_config_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_mcp_plain",
+      "callee": "is_mcp_config_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_random_json_not_mcp",
+      "callee": "is_mcp_config_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testismcpconfigpath_test_non_json_not_mcp",
+      "callee": "is_mcp_config_path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_write",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_basic_mcp_servers",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_nested_mcp_servers",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_vars_not_exposed",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_vars_not_exposed",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_var_names_may_appear",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_env_var_names_may_appear",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_not_found_returns_error",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_too_large_returns_error",
+      "callee": "write_bytes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_file_too_large_returns_error",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L147",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_invalid_json_returns_error",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L154",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_invalid_json_returns_error",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L155",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_root_not_object_returns_error",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_root_not_object_returns_error",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_no_mcp_servers_returns_error",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_max_servers_limit",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L183",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_max_servers_limit",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_edges_to_config_file",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L199",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_non_dict_server_entry_skipped",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_name_with_special_chars_produces_node",
+      "callee": "extract_mcp_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_mcp_ingest_testextractmcpconfig_test_server_name_with_special_chars_produces_node",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_mcp_ingest.py",
+      "source_location": "L231",
+      "receiver": null
+    }
+  ]
+}

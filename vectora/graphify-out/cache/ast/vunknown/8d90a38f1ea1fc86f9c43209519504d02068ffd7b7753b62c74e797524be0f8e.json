@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "label": "use-feedback.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_use_feedback_test_msg",
+      "label": "msg()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L13"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "target": "types_index_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_feedback_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "target": "chat_use_feedback_usefeedback",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_feedback_test_ts",
+      "target": "tests_use_feedback_test_msg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-feedback.test.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

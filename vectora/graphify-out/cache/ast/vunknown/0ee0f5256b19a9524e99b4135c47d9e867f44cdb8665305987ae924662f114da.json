@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_native_time_parse_py",
+      "label": "time_parse.py",
+      "file_type": "code",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_time_parse_time_parse",
+      "label": "time_parse()",
+      "file_type": "code",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L10"
+    },
+    {
+      "id": "native_time_parse_rationale_1",
+      "label": "Tool: parse datetime from string.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "native_time_parse_rationale_11",
+      "label": "Parse string para datetime (ISO ou human-readable).      Args:         date_stri",
+      "file_type": "rationale",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L11"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_time_parse_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_time_parse_py",
+      "target": "dateutil",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_time_parse_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_native_time_parse_py",
+      "target": "native_time_parse_time_parse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "native_time_parse_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_native_time_parse_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "native_time_parse_rationale_11",
+      "target": "native_time_parse_time_parse",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/native/time_parse.py",
+      "source_location": "L11",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "native_time_parse_time_parse",
+      "callee": "parse",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\time_parse.py",
+      "source_location": "L21",
+      "receiver": null
+    },
+    {
+      "caller_nid": "native_time_parse_time_parse",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\native\\time_parse.py",
+      "source_location": "L22",
+      "receiver": null
+    }
+  ]
+}

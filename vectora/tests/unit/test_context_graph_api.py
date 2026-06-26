@@ -115,6 +115,30 @@ class TestReadStatusFile:
         assert s.status == "error"
         assert "Pipeline falhou" in (s.error or "")
 
+    def test_reads_running_with_step_info(self, tmp_path):
+        from backend.api.handlers.context_graph import _read_status_file
+
+        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir.mkdir(parents=True)
+        _write_status(
+            graph_dir,
+            "running",
+            step=2,
+            step_total=9,
+            step_label="Extraindo AST...",
+            files_total=10,
+            files_done=3,
+            files_list=["src/a.py", "src/b.py"],
+        )
+        s = _read_status_file(graph_dir)
+        assert s is not None
+        assert s.step == 2
+        assert s.step_total == 9
+        assert s.step_label == "Extraindo AST..."
+        assert s.files_total == 10
+        assert s.files_done == 3
+        assert s.files_list == ["src/a.py", "src/b.py"]
+
 
 # ---------------------------------------------------------------------------
 # _require_graph_json

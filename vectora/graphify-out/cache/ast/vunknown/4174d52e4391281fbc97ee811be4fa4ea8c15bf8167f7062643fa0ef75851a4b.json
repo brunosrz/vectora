@@ -1,0 +1,1441 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "label": "test_tools_fs.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tools_fs_trusted_ws",
+      "label": "trusted_ws()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileread",
+      "label": "TestFileRead",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileread_test_reads_existing_file",
+      "label": ".test_reads_existing_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileread_test_file_not_found",
+      "label": ".test_file_not_found()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileread_test_blocked_path",
+      "label": ".test_blocked_path()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "unit_test_tools_fs_testfilewrite",
+      "label": "TestFileWrite",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L83"
+    },
+    {
+      "id": "unit_test_tools_fs_testfilewrite_test_creates_new_file",
+      "label": ".test_creates_new_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L84"
+    },
+    {
+      "id": "unit_test_tools_fs_testfilewrite_test_overwrites_existing_file",
+      "label": ".test_overwrites_existing_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L94"
+    },
+    {
+      "id": "unit_test_tools_fs_testfilewrite_test_creates_parent_dirs",
+      "label": ".test_creates_parent_dirs()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L104"
+    },
+    {
+      "id": "unit_test_tools_fs_testfilewrite_test_blocked_path",
+      "label": ".test_blocked_path()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "unit_test_tools_fs_testfilewrite_test_requires_trust",
+      "label": ".test_requires_trust()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L120"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileedit",
+      "label": "TestFileEdit",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L152"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileedit_test_replaces_text",
+      "label": ".test_replaces_text()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L153"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileedit_test_replace_all",
+      "label": ".test_replace_all()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L165"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileedit_test_creates_file_when_old_text_empty",
+      "label": ".test_creates_file_when_old_text_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L181"
+    },
+    {
+      "id": "unit_test_tools_fs_testfileedit_test_text_not_found",
+      "label": ".test_text_not_found()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L192"
+    },
+    {
+      "id": "unit_test_tools_fs_testgrep",
+      "label": "TestGrep",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L209"
+    },
+    {
+      "id": "unit_test_tools_fs_testgrep_test_finds_pattern_in_file",
+      "label": ".test_finds_pattern_in_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L210"
+    },
+    {
+      "id": "unit_test_tools_fs_testgrep_test_no_match_returns_message",
+      "label": ".test_no_match_returns_message()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L220"
+    },
+    {
+      "id": "unit_test_tools_fs_testgrep_test_invalid_pattern",
+      "label": ".test_invalid_pattern()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L230"
+    },
+    {
+      "id": "unit_test_tools_fs_testlistdir",
+      "label": "TestListDir",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L245"
+    },
+    {
+      "id": "unit_test_tools_fs_testlistdir_test_lists_files",
+      "label": ".test_lists_files()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L246"
+    },
+    {
+      "id": "unit_test_tools_fs_testlistdir_test_recursive",
+      "label": ".test_recursive()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L255"
+    },
+    {
+      "id": "unit_test_tools_fs_testlistdir_test_nonexistent_dir",
+      "label": ".test_nonexistent_dir()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L266"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact",
+      "label": "TestCreateArtifact",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L278"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "label": ".test_creates_file_and_returns_json()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L279"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_saved_under_session_dir",
+      "label": ".test_saved_under_session_dir()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L300"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "label": ".test_no_overwrite_collision()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L318"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_invalid_type_returns_error",
+      "label": ".test_invalid_type_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L334"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_empty_title_returns_error",
+      "label": ".test_empty_title_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L349"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_empty_content_returns_error",
+      "label": ".test_empty_content_returns_error()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L364"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_all_valid_types_accepted",
+      "label": ".test_all_valid_types_accepted()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L379"
+    },
+    {
+      "id": "unit_test_tools_fs_testcreateartifact_test_default_session_id",
+      "label": ".test_default_session_id()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L395"
+    },
+    {
+      "id": "unit_test_tools_fs_testartifactslug",
+      "label": "TestArtifactSlug",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L417"
+    },
+    {
+      "id": "unit_test_tools_fs_testartifactslug_test_basic_slug",
+      "label": ".test_basic_slug()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L418"
+    },
+    {
+      "id": "unit_test_tools_fs_testartifactslug_test_max_length",
+      "label": ".test_max_length()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L424"
+    },
+    {
+      "id": "unit_test_tools_fs_testartifactslug_test_empty_falls_back",
+      "label": ".test_empty_falls_back()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L430"
+    },
+    {
+      "id": "unit_test_tools_fs_testartifactslug_test_spaces_become_hyphens",
+      "label": ".test_spaces_become_hyphens()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L436"
+    },
+    {
+      "id": "unit_test_tools_fs_testartifactslug_test_no_consecutive_hyphens",
+      "label": ".test_no_consecutive_hyphens()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L441"
+    },
+    {
+      "id": "unit_test_tools_fs_rationale_1",
+      "label": "Tests for src/tools/fs.py",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tools_fs_rationale_20",
+      "label": "Workspace confi\u00e1vel apontando para tmp_path + config para as tools.      As tool",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L20"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "backend_vtypes",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_trusted_ws",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_testfileread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfileread",
+      "target": "unit_test_tools_fs_testfileread_test_reads_existing_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfileread",
+      "target": "unit_test_tools_fs_testfileread_test_file_not_found",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfileread",
+      "target": "unit_test_tools_fs_testfileread_test_blocked_path",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_testfilewrite",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfilewrite",
+      "target": "unit_test_tools_fs_testfilewrite_test_creates_new_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfilewrite",
+      "target": "unit_test_tools_fs_testfilewrite_test_overwrites_existing_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfilewrite",
+      "target": "unit_test_tools_fs_testfilewrite_test_creates_parent_dirs",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfilewrite",
+      "target": "unit_test_tools_fs_testfilewrite_test_blocked_path",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfilewrite",
+      "target": "unit_test_tools_fs_testfilewrite_test_requires_trust",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_testfileedit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfileedit",
+      "target": "unit_test_tools_fs_testfileedit_test_replaces_text",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfileedit",
+      "target": "unit_test_tools_fs_testfileedit_test_replace_all",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfileedit",
+      "target": "unit_test_tools_fs_testfileedit_test_creates_file_when_old_text_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testfileedit",
+      "target": "unit_test_tools_fs_testfileedit_test_text_not_found",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_testgrep",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L209",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testgrep",
+      "target": "unit_test_tools_fs_testgrep_test_finds_pattern_in_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L210",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testgrep",
+      "target": "unit_test_tools_fs_testgrep_test_no_match_returns_message",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L220",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testgrep",
+      "target": "unit_test_tools_fs_testgrep_test_invalid_pattern",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L230",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_testlistdir",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testlistdir",
+      "target": "unit_test_tools_fs_testlistdir_test_lists_files",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testlistdir",
+      "target": "unit_test_tools_fs_testlistdir_test_recursive",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testlistdir",
+      "target": "unit_test_tools_fs_testlistdir_test_nonexistent_dir",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L266",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_testcreateartifact",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L278",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L279",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_saved_under_session_dir",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L300",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L318",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_invalid_type_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L334",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_empty_title_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L349",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_empty_content_returns_error",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L364",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_all_valid_types_accepted",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L379",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testcreateartifact",
+      "target": "unit_test_tools_fs_testcreateartifact_test_default_session_id",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L395",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "target": "unit_test_tools_fs_testartifactslug",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L417",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testartifactslug",
+      "target": "unit_test_tools_fs_testartifactslug_test_basic_slug",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L418",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testartifactslug",
+      "target": "unit_test_tools_fs_testartifactslug_test_max_length",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L424",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testartifactslug",
+      "target": "unit_test_tools_fs_testartifactslug_test_empty_falls_back",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L430",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testartifactslug",
+      "target": "unit_test_tools_fs_testartifactslug_test_spaces_become_hyphens",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L436",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_testartifactslug",
+      "target": "unit_test_tools_fs_testartifactslug_test_no_consecutive_hyphens",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L441",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_fs_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_fs_rationale_20",
+      "target": "unit_test_tools_fs_trusted_ws",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_fs.py",
+      "source_location": "L20",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_tools_fs_trusted_ws",
+      "callee": "Workspace",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_reads_existing_file",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_reads_existing_file",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_file_not_found",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_file_not_found",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_file_not_found",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_blocked_path",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_blocked_path",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileread_test_blocked_path",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_creates_new_file",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_creates_new_file",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_creates_new_file",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_creates_new_file",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_overwrites_existing_file",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_overwrites_existing_file",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_overwrites_existing_file",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_creates_parent_dirs",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_creates_parent_dirs",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_blocked_path",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_blocked_path",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_blocked_path",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_requires_trust",
+      "callee": "Workspace",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_requires_trust",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfilewrite_test_requires_trust",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L144",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_replaces_text",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_replaces_text",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L158",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_replaces_text",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_replaces_text",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_replace_all",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_replace_all",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_replace_all",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_creates_file_when_old_text_empty",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_creates_file_when_old_text_empty",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L189",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_creates_file_when_old_text_empty",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L189",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_creates_file_when_old_text_empty",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L190",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_text_not_found",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L196",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_text_not_found",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_text_not_found",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testfileedit_test_text_not_found",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_finds_pattern_in_file",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_finds_pattern_in_file",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_no_match_returns_message",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_no_match_returns_message",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L225",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_no_match_returns_message",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_invalid_pattern",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L233",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_invalid_pattern",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L234",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_invalid_pattern",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L237",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testgrep_test_invalid_pattern",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L237",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_lists_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L249",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_lists_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L250",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_lists_files",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L251",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_recursive",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L259",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_recursive",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L260",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_recursive",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L261",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_nonexistent_dir",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L269",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_nonexistent_dir",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L270",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testlistdir_test_nonexistent_dir",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L270",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L283",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L291",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L296",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L296",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L297",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_creates_file_and_returns_json",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L297",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_saved_under_session_dir",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L304",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_saved_under_session_dir",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L312",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_saved_under_session_dir",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L313",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L328",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L328",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L329",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L329",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L331",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L331",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L332",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_no_overwrite_collision",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L332",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_invalid_type_returns_error",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L338",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_invalid_type_returns_error",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L346",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_empty_title_returns_error",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L353",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_empty_title_returns_error",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L361",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_empty_content_returns_error",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L368",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_empty_content_returns_error",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L376",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_all_valid_types_accepted",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L384",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_all_valid_types_accepted",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L392",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_default_session_id",
+      "callee": "invoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L399",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testcreateartifact_test_default_session_id",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L407",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testartifactslug_test_basic_slug",
+      "callee": "_artifact_slug",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L421",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testartifactslug_test_max_length",
+      "callee": "_artifact_slug",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L428",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testartifactslug_test_empty_falls_back",
+      "callee": "_artifact_slug",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L433",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testartifactslug_test_empty_falls_back",
+      "callee": "_artifact_slug",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L434",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testartifactslug_test_spaces_become_hyphens",
+      "callee": "_artifact_slug",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L439",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_fs_testartifactslug_test_no_consecutive_hyphens",
+      "callee": "_artifact_slug",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_fs.py",
+      "source_location": "L444",
+      "receiver": null
+    }
+  ]
+}

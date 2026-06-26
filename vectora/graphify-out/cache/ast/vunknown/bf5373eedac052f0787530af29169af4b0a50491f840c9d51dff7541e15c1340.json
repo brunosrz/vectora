@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_tests_fs_files_test_ts",
+      "label": "fs_files.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/tests/fs_files.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_fs_files_test_res",
+      "label": "res()",
+      "file_type": "code",
+      "source_file": "frontend/tests/fs_files.test.ts",
+      "source_location": "L11"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_fs_files_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/fs_files.test.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_fs_files_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_fs_files_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/fs_files.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_fs_files_test_ts",
+      "target": "api_fs_files_fetchfile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/fs_files.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_fs_files_test_ts",
+      "target": "api_fs_files_apiupdatefile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/fs_files.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_fs_files_test_ts",
+      "target": "tests_fs_files_test_res",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/fs_files.test.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

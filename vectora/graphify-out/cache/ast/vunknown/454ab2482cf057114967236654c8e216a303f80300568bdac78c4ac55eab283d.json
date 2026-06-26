@@ -1,0 +1,168 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_readme_md",
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "label": "<img src=\"../assets/vectora.svg\" width=\"28\" height=\"28\"> Vectora Chat",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_readme_arquitetura",
+      "label": "Arquitetura",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L7"
+    },
+    {
+      "id": "frontend_readme_pr\u00e9_requisitos",
+      "label": "Pr\u00e9-requisitos",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L27"
+    },
+    {
+      "id": "frontend_readme_desenvolvimento",
+      "label": "Desenvolvimento",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L34"
+    },
+    {
+      "id": "frontend_readme_estrutura_do_projeto",
+      "label": "Estrutura do Projeto",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L55"
+    },
+    {
+      "id": "frontend_readme_schema_driven_rendering",
+      "label": "Schema-driven rendering",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L98"
+    },
+    {
+      "id": "frontend_readme_vari\u00e1veis_de_ambiente",
+      "label": "Vari\u00e1veis de Ambiente",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L133"
+    },
+    {
+      "id": "frontend_readme_tecnologias",
+      "label": "Tecnologias",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L141"
+    },
+    {
+      "id": "frontend_readme_relacionado",
+      "label": "Relacionado",
+      "file_type": "document",
+      "source_file": "frontend/README.md",
+      "source_location": "L153"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_readme_md",
+      "target": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_arquitetura",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_pr\u00e9_requisitos",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_desenvolvimento",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_estrutura_do_projeto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_schema_driven_rendering",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_vari\u00e1veis_de_ambiente",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_tecnologias",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_readme_img_src_assets_vectora_svg_width_28_height_28_vectora_chat",
+      "target": "frontend_readme_relacionado",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_readme_md",
+      "target": "c_users_machi_desktop_vectora_vectora_readme_md",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/README.md",
+      "source_location": "L155",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

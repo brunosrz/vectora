@@ -1,0 +1,119 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "label": "use-context-graph.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_use_context_graph_test_fetch_mock",
+      "label": "FETCH_MOCK",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L11"
+    },
+    {
+      "id": "tests_use_context_graph_test_mockok",
+      "label": "mockOk()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L23"
+    },
+    {
+      "id": "tests_use_context_graph_test_mockfail",
+      "label": "mockFail()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L30"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "target": "tests_use_context_graph_test_fetch_mock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "target": "tests_use_context_graph_test_mockok",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "target": "tests_use_context_graph_test_mockfail",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_context_graph_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_context_graph_test_ts",
+      "target": "hooks_use_context_graph_usecontextgraph",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-context-graph.test.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_use_context_graph_test_mockok",
+      "callee": "stringify",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\__tests__\\use-context-graph.test.ts",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_use_context_graph_test_mockfail",
+      "callee": "stringify",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\__tests__\\use-context-graph.test.ts",
+      "source_location": "L31",
+      "receiver": null
+    }
+  ]
+}

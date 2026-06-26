@@ -1,0 +1,693 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "label": "test_config_settings.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_config_settings_test_settings_loads",
+      "label": "test_settings_loads()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "unit_test_config_settings_test_settings_derived_paths",
+      "label": "test_settings_derived_paths()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "unit_test_config_settings_test_settings_embedding_queue_dsn",
+      "label": "test_settings_embedding_queue_dsn()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_config_settings_test_settings_defaults",
+      "label": "test_settings_defaults()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "unit_test_config_settings_test_settings_get_cohere_api_key_returns_none_or_str",
+      "label": "test_settings_get_cohere_api_key_returns_none_or_str()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "unit_test_config_settings_test_settings_ssl_defaults_none",
+      "label": "test_settings_ssl_defaults_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "unit_test_config_settings_test_settings_ssl_from_env",
+      "label": "test_settings_ssl_from_env()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "unit_test_config_settings_test_cli_parser_accepts_ssl_flags",
+      "label": "test_cli_parser_accepts_ssl_flags()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "unit_test_config_settings_test_cli_parser_ssl_flags_default_none",
+      "label": "test_cli_parser_ssl_flags_default_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L81"
+    },
+    {
+      "id": "unit_test_config_settings_test_cohere_chat_model_default",
+      "label": "test_cohere_chat_model_default()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "unit_test_config_settings_test_cohere_in_get_llm_model_when_provider_set",
+      "label": "test_cohere_in_get_llm_model_when_provider_set()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "unit_test_config_settings_test_cohere_available_when_api_key_set",
+      "label": "test_cohere_available_when_api_key_set()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "unit_test_config_settings_test_cohere_not_available_without_api_key",
+      "label": "test_cohere_not_available_without_api_key()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L115"
+    },
+    {
+      "id": "unit_test_config_settings_test_set_model_cohere",
+      "label": "test_set_model_cohere()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L125"
+    },
+    {
+      "id": "unit_test_config_settings_test_set_model_cohere_default_model",
+      "label": "test_set_model_cohere_default_model()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L131"
+    },
+    {
+      "id": "unit_test_config_settings_test_openai_model_default_is_valid",
+      "label": "test_openai_model_default_is_valid()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L142"
+    },
+    {
+      "id": "unit_test_config_settings_test_openai_model_default_is_gpt4o",
+      "label": "test_openai_model_default_is_gpt4o()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "unit_test_config_settings_test_get_llm_model_google",
+      "label": "test_get_llm_model_google()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L160"
+    },
+    {
+      "id": "unit_test_config_settings_test_get_llm_model_openai",
+      "label": "test_get_llm_model_openai()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L167"
+    },
+    {
+      "id": "unit_test_config_settings_test_get_llm_model_cohere",
+      "label": "test_get_llm_model_cohere()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L174"
+    },
+    {
+      "id": "unit_test_config_settings_test_llm_provider_literal_accepts_cohere",
+      "label": "test_llm_provider_literal_accepts_cohere()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L186"
+    },
+    {
+      "id": "unit_test_config_settings_rationale_1",
+      "label": "Tests for src/settings.py",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "backend_settings",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_settings_loads",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_settings_derived_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_settings_embedding_queue_dsn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_settings_defaults",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_settings_get_cohere_api_key_returns_none_or_str",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_settings_ssl_defaults_none",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_settings_ssl_from_env",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_cli_parser_accepts_ssl_flags",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_cli_parser_ssl_flags_default_none",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_cohere_chat_model_default",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_cohere_in_get_llm_model_when_provider_set",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_cohere_available_when_api_key_set",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_cohere_not_available_without_api_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_set_model_cohere",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_set_model_cohere_default_model",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_openai_model_default_is_valid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_openai_model_default_is_gpt4o",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_get_llm_model_google",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_get_llm_model_openai",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_get_llm_model_cohere",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "target": "unit_test_config_settings_test_llm_provider_literal_accepts_cohere",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_config_settings_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_config_settings_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_config_settings.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_loads",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L17",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_derived_paths",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_derived_paths",
+      "callee": "endswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_embedding_queue_dsn",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_defaults",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_get_cohere_api_key_returns_none_or_str",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_get_cohere_api_key_returns_none_or_str",
+      "callee": "get_cohere_api_key",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_ssl_defaults_none",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_ssl_from_env",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_ssl_from_env",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_settings_ssl_from_env",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cli_parser_accepts_ssl_flags",
+      "callee": "_build_parser",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cli_parser_accepts_ssl_flags",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cli_parser_ssl_flags_default_none",
+      "callee": "_build_parser",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cli_parser_ssl_flags_default_none",
+      "callee": "parse_args",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_chat_model_default",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_in_get_llm_model_when_provider_set",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_in_get_llm_model_when_provider_set",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_available_when_api_key_set",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_available_when_api_key_set",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_available_when_api_key_set",
+      "callee": "get_available_providers",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_not_available_without_api_key",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_not_available_without_api_key",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_cohere_not_available_without_api_key",
+      "callee": "get_available_providers",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_set_model_cohere",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_set_model_cohere",
+      "callee": "set_model",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_set_model_cohere_default_model",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_set_model_cohere_default_model",
+      "callee": "set_model",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L133",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_openai_model_default_is_valid",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_openai_model_default_is_gpt4o",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L151",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_get_llm_model_google",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_get_llm_model_google",
+      "callee": "get_llm_model",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_get_llm_model_openai",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_get_llm_model_openai",
+      "callee": "get_llm_model",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_get_llm_model_cohere",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L176",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_get_llm_model_cohere",
+      "callee": "get_llm_model",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_config_settings_test_llm_provider_literal_accepts_cohere",
+      "callee": "Settings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_config_settings.py",
+      "source_location": "L188",
+      "receiver": null
+    }
+  ]
+}

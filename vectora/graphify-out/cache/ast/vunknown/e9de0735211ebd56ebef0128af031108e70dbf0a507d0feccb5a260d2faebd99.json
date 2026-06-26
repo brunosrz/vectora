@@ -1,0 +1,237 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "label": "test_share_handler.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_share_handler_client",
+      "label": "client()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "unit_test_share_handler_testsharegetnotfound",
+      "label": "TestShareGetNotFound",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "unit_test_share_handler_testsharegetnotfound_test_unknown_token_returns_404",
+      "label": ".test_unknown_token_returns_404()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_share_handler_testsharegetnotfound_test_404_body_has_detail",
+      "label": ".test_404_body_has_detail()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "unit_test_share_handler_testsharecreate",
+      "label": "TestShareCreate",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "unit_test_share_handler_testsharecreate_test_create_share_returns_token_and_url",
+      "label": ".test_create_share_returns_token_and_url()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "unit_test_share_handler_testsharecreate_test_create_share_response_schema",
+      "label": ".test_create_share_response_schema()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "unit_test_share_handler_rationale_1",
+      "label": "Testes para src/api/handlers/share.py.  Valida: - GET /threads/share/{token} ret",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "target": "fastapi_testclient",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "target": "unit_test_share_handler_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "target": "unit_test_share_handler_testsharegetnotfound",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_share_handler_testsharegetnotfound",
+      "target": "unit_test_share_handler_testsharegetnotfound_test_unknown_token_returns_404",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_share_handler_testsharegetnotfound",
+      "target": "unit_test_share_handler_testsharegetnotfound_test_404_body_has_detail",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "target": "unit_test_share_handler_testsharecreate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_share_handler_testsharecreate",
+      "target": "unit_test_share_handler_testsharecreate_test_create_share_returns_token_and_url",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_share_handler_testsharecreate",
+      "target": "unit_test_share_handler_testsharecreate_test_create_share_response_schema",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_share_handler_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_share_handler_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_share_handler.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_share_handler_client",
+      "callee": "create_app",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_share_handler_client",
+      "callee": "TestClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_share_handler_testsharegetnotfound_test_unknown_token_returns_404",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_share_handler_testsharegetnotfound_test_404_body_has_detail",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_share_handler_testsharegetnotfound_test_404_body_has_detail",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_share_handler_testsharecreate_test_create_share_returns_token_and_url",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_share_handler_testsharecreate_test_create_share_response_schema",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_share_handler_testsharecreate_test_create_share_response_schema",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_share_handler.py",
+      "source_location": "L55",
+      "receiver": null
+    }
+  ]
+}

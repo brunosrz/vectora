@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "label": "tabs.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "ui_tabs_tabs",
+      "label": "Tabs()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "ui_tabs_tabslist",
+      "label": "TabsList()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L20"
+    },
+    {
+      "id": "ui_tabs_tabstrigger",
+      "label": "TabsTrigger()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L36"
+    },
+    {
+      "id": "ui_tabs_tabscontent",
+      "label": "TabsContent()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L52"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "react_tabs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "utils_index_cn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "ui_tabs_tabs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "ui_tabs_tabslist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "ui_tabs_tabstrigger",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tabs_tsx",
+      "target": "ui_tabs_tabscontent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/tabs.tsx",
+      "source_location": "L52",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "ui_tabs_tabs",
+      "callee": "cn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\tabs.tsx",
+      "source_location": "L14",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_tabs_tabslist",
+      "callee": "cn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\tabs.tsx",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_tabs_tabstrigger",
+      "callee": "cn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\tabs.tsx",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_tabs_tabscontent",
+      "callee": "cn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\tabs.tsx",
+      "source_location": "L59",
+      "receiver": null
+    }
+  ]
+}

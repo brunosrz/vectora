@@ -1,0 +1,64 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_new_thread_registry_test_ts",
+      "label": "new-thread-registry.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/__tests__/new-thread-registry.test.ts",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_new_thread_registry_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/new-thread-registry.test.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_new_thread_registry_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_new_thread_registry_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/new-thread-registry.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_new_thread_registry_test_ts",
+      "target": "stores_new_thread_registry_markasnew",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/new-thread-registry.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_new_thread_registry_test_ts",
+      "target": "stores_new_thread_registry_isnew",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/new-thread-registry.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_tests_new_thread_registry_test_ts",
+      "target": "stores_new_thread_registry_clearnew",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/__tests__/new-thread-registry.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

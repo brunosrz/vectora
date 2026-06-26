@@ -1,0 +1,1609 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "label": "test_context_graph_build.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_context_graph_build_extraction",
+      "label": "_extraction()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "unit_test_context_graph_build_node",
+      "label": "_node()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "unit_test_context_graph_build_edge",
+      "label": "_edge()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson",
+      "label": "TestBuildFromJson",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_empty_extraction_returns_empty_graph",
+      "label": ".test_empty_extraction_returns_empty_graph()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_nodes_added",
+      "label": ".test_nodes_added()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_edge_added",
+      "label": ".test_edge_added()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_directed_graph",
+      "label": ".test_directed_graph()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_links_key_remapped",
+      "label": ".test_links_key_remapped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L88"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_unknown_edges_skipped",
+      "label": ".test_unknown_edges_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_hyperedges_stored_in_graph",
+      "label": ".test_hyperedges_stored_in_graph()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_source_field_remapped_to_source_file",
+      "label": ".test_source_field_remapped_to_source_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L120"
+    },
+    {
+      "id": "capturefixture",
+      "label": "CaptureFixture",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_invalid_file_type_remapped",
+      "label": ".test_invalid_file_type_remapped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L131"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_none_file_type_defaults_to_concept",
+      "label": ".test_none_file_type_defaults_to_concept()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L148"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_cross_language_inferred_calls_dropped",
+      "label": ".test_cross_language_inferred_calls_dropped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L160"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildfromjson_test_preserves_direction_in_attrs",
+      "label": ".test_preserves_direction_in_attrs()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L182"
+    },
+    {
+      "id": "unit_test_context_graph_build_testedgedata",
+      "label": "TestEdgeData",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L196"
+    },
+    {
+      "id": "unit_test_context_graph_build_testedgedata_test_returns_dict",
+      "label": ".test_returns_dict()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L197"
+    },
+    {
+      "id": "unit_test_context_graph_build_testedgedatas",
+      "label": "TestEdgeDatas",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L210"
+    },
+    {
+      "id": "unit_test_context_graph_build_testedgedatas_test_returns_list",
+      "label": ".test_returns_list()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L211"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdedupenodes",
+      "label": "TestDedupeNodes",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L225"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdedupenodes_test_deduplicates_by_id",
+      "label": ".test_deduplicates_by_id()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L226"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdedupenodes_test_last_writer_wins",
+      "label": ".test_last_writer_wins()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L239"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdedupenodes_test_nodes_without_id_dropped",
+      "label": ".test_nodes_without_id_dropped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L250"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdedupeedges",
+      "label": "TestDedupeEdges",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L257"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdedupeedges_test_deduplicates_exact_parallel",
+      "label": ".test_deduplicates_exact_parallel()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L258"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdedupeedges_test_empty_list",
+      "label": ".test_empty_list()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L269"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdeduplicatebylabel",
+      "label": "TestDeduplicateByLabel",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L275"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdeduplicatebylabel_test_merges_nodes_with_same_label",
+      "label": ".test_merges_nodes_with_same_label()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L276"
+    },
+    {
+      "id": "unit_test_context_graph_build_testdeduplicatebylabel_test_no_duplicates_passthrough",
+      "label": ".test_no_duplicates_passthrough()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L300"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuild",
+      "label": "TestBuild",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L313"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuild_test_merges_multiple_extractions",
+      "label": ".test_merges_multiple_extractions()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L314"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuild_test_empty_extractions",
+      "label": ".test_empty_extractions()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L323"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildmerge",
+      "label": "TestBuildMerge",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L330"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "label": ".test_creates_new_graph_when_no_existing()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L331"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "label": ".test_merges_with_existing()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L342"
+    },
+    {
+      "id": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "label": ".test_prune_deleted_sources()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L360"
+    },
+    {
+      "id": "unit_test_context_graph_build_testprefixgraphforglobal",
+      "label": "TestPrefixGraphForGlobal",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L381"
+    },
+    {
+      "id": "unit_test_context_graph_build_testprefixgraphforglobal_test_prefixes_node_ids",
+      "label": ".test_prefixes_node_ids()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L382"
+    },
+    {
+      "id": "unit_test_context_graph_build_testprefixgraphforglobal_test_adds_repo_attr",
+      "label": ".test_adds_repo_attr()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L393"
+    },
+    {
+      "id": "unit_test_context_graph_build_testprunerepofromgraph",
+      "label": "TestPruneRepoFromGraph",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L404"
+    },
+    {
+      "id": "unit_test_context_graph_build_testprunerepofromgraph_test_removes_nodes_with_repo_tag",
+      "label": ".test_removes_nodes_with_repo_tag()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L405"
+    },
+    {
+      "id": "unit_test_context_graph_build_rationale_1",
+      "label": "Testes para backend/services/context_graph/build.py.  Cobre: build_from_json, bu",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testbuildfromjson",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_empty_extraction_returns_empty_graph",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_nodes_added",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_edge_added",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_directed_graph",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_links_key_remapped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_unknown_edges_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_hyperedges_stored_in_graph",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_source_field_remapped_to_source_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_source_field_remapped_to_source_file",
+      "target": "capturefixture",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_invalid_file_type_remapped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_none_file_type_defaults_to_concept",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L148",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_cross_language_inferred_calls_dropped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson",
+      "target": "unit_test_context_graph_build_testbuildfromjson_test_preserves_direction_in_attrs",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testedgedata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L196",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedata",
+      "target": "unit_test_context_graph_build_testedgedata_test_returns_dict",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L197",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testedgedatas",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L210",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedatas",
+      "target": "unit_test_context_graph_build_testedgedatas_test_returns_list",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testdedupenodes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L225",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testdedupenodes",
+      "target": "unit_test_context_graph_build_testdedupenodes_test_deduplicates_by_id",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L226",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testdedupenodes",
+      "target": "unit_test_context_graph_build_testdedupenodes_test_last_writer_wins",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testdedupenodes",
+      "target": "unit_test_context_graph_build_testdedupenodes_test_nodes_without_id_dropped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L250",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testdedupeedges",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L257",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testdedupeedges",
+      "target": "unit_test_context_graph_build_testdedupeedges_test_deduplicates_exact_parallel",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L258",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testdedupeedges",
+      "target": "unit_test_context_graph_build_testdedupeedges_test_empty_list",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L269",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testdeduplicatebylabel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L275",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testdeduplicatebylabel",
+      "target": "unit_test_context_graph_build_testdeduplicatebylabel_test_merges_nodes_with_same_label",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L276",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testdeduplicatebylabel",
+      "target": "unit_test_context_graph_build_testdeduplicatebylabel_test_no_duplicates_passthrough",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L300",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testbuild",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L313",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuild",
+      "target": "unit_test_context_graph_build_testbuild_test_merges_multiple_extractions",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L314",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuild",
+      "target": "unit_test_context_graph_build_testbuild_test_empty_extractions",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L323",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testbuildmerge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L330",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge",
+      "target": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L331",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L331",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge",
+      "target": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L342",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L342",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge",
+      "target": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L360",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L360",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testprefixgraphforglobal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L381",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprefixgraphforglobal",
+      "target": "unit_test_context_graph_build_testprefixgraphforglobal_test_prefixes_node_ids",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L382",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprefixgraphforglobal",
+      "target": "unit_test_context_graph_build_testprefixgraphforglobal_test_adds_repo_attr",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L393",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "target": "unit_test_context_graph_build_testprunerepofromgraph",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L404",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprunerepofromgraph",
+      "target": "unit_test_context_graph_build_testprunerepofromgraph_test_removes_nodes_with_repo_tag",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L405",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_empty_extraction_returns_empty_graph",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_nodes_added",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_nodes_added",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_edge_added",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_edge_added",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_edge_added",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_directed_graph",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_directed_graph",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_links_key_remapped",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_links_key_remapped",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_unknown_edges_skipped",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_unknown_edges_skipped",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_unknown_edges_skipped",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_hyperedges_stored_in_graph",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_hyperedges_stored_in_graph",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_cross_language_inferred_calls_dropped",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_cross_language_inferred_calls_dropped",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_cross_language_inferred_calls_dropped",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L170",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_preserves_direction_in_attrs",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_preserves_direction_in_attrs",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L187",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildfromjson_test_preserves_direction_in_attrs",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedata_test_returns_dict",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedata_test_returns_dict",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedata_test_returns_dict",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L203",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedatas_test_returns_list",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L215",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedatas_test_returns_list",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L216",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testedgedatas_test_returns_list",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L217",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuild_test_merges_multiple_extractions",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L317",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuild_test_merges_multiple_extractions",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L317",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuild_test_merges_multiple_extractions",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L318",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L335",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L336",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "target": "unit_test_context_graph_build_edge",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L337",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L348",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L353",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L366",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L366",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprefixgraphforglobal_test_prefixes_node_ids",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L388",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprefixgraphforglobal_test_prefixes_node_ids",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L388",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprefixgraphforglobal_test_adds_repo_attr",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L399",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprefixgraphforglobal_test_adds_repo_attr",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L399",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprunerepofromgraph_test_removes_nodes_with_repo_tag",
+      "target": "unit_test_context_graph_build_extraction",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L411",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_testprunerepofromgraph_test_removes_nodes_with_repo_tag",
+      "target": "unit_test_context_graph_build_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L411",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_build_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_build_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_build.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_empty_extraction_returns_empty_graph",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_empty_extraction_returns_empty_graph",
+      "callee": "number_of_nodes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_empty_extraction_returns_empty_graph",
+      "callee": "number_of_edges",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_nodes_added",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_edge_added",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_edge_added",
+      "callee": "has_edge",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_directed_graph",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_links_key_remapped",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_links_key_remapped",
+      "callee": "has_edge",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_unknown_edges_skipped",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_unknown_edges_skipped",
+      "callee": "number_of_edges",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_hyperedges_stored_in_graph",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_source_field_remapped_to_source_file",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_source_field_remapped_to_source_file",
+      "callee": "readouterr",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_invalid_file_type_remapped",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L145",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_none_file_type_defaults_to_concept",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_cross_language_inferred_calls_dropped",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_cross_language_inferred_calls_dropped",
+      "callee": "has_edge",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L180",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildfromjson_test_preserves_direction_in_attrs",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testedgedata_test_returns_dict",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testedgedata_test_returns_dict",
+      "callee": "edge_data",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L206",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testedgedatas_test_returns_list",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testedgedatas_test_returns_list",
+      "callee": "edge_datas",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L220",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdedupenodes_test_deduplicates_by_id",
+      "callee": "dedupe_nodes",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L234",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdedupenodes_test_deduplicates_by_id",
+      "callee": "count",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L236",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdedupenodes_test_deduplicates_by_id",
+      "callee": "count",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L237",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdedupenodes_test_last_writer_wins",
+      "callee": "dedupe_nodes",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L242",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdedupenodes_test_nodes_without_id_dropped",
+      "callee": "dedupe_nodes",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L253",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdedupeedges_test_deduplicates_exact_parallel",
+      "callee": "dedupe_edges",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L266",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdedupeedges_test_empty_list",
+      "callee": "dedupe_edges",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L272",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdeduplicatebylabel_test_merges_nodes_with_same_label",
+      "callee": "deduplicate_by_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L296",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testdeduplicatebylabel_test_no_duplicates_passthrough",
+      "callee": "deduplicate_by_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L308",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuild_test_merges_multiple_extractions",
+      "callee": "build",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L319",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuild_test_empty_extractions",
+      "callee": "build",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L326",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuild_test_empty_extractions",
+      "callee": "number_of_nodes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L327",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "callee": "build_merge",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L339",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_creates_new_graph_when_no_existing",
+      "callee": "number_of_nodes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L340",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L351",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L351",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_merges_with_existing",
+      "callee": "build_merge",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L356",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "callee": "build_merge",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L365",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "callee": "to_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L371",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testbuildmerge_test_prune_deleted_sources",
+      "callee": "build_merge",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L373",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testprefixgraphforglobal_test_prefixes_node_ids",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L388",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testprefixgraphforglobal_test_prefixes_node_ids",
+      "callee": "prefix_graph_for_global",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L389",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testprefixgraphforglobal_test_adds_repo_attr",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L399",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testprefixgraphforglobal_test_adds_repo_attr",
+      "callee": "prefix_graph_for_global",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L400",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testprunerepofromgraph_test_removes_nodes_with_repo_tag",
+      "callee": "build_from_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L411",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_build_testprunerepofromgraph_test_removes_nodes_with_repo_tag",
+      "callee": "prune_repo_from_graph",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_build.py",
+      "source_location": "L414",
+      "receiver": null
+    }
+  ]
+}

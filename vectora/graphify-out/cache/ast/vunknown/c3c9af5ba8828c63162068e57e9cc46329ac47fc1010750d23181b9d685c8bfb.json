@@ -1,0 +1,97 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_skeleton_tsx",
+      "label": "message-skeleton.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_message_skeleton_skeletonline",
+      "label": "SkeletonLine()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "chat_message_skeleton_usermessageskeleton",
+      "label": "UserMessageSkeleton()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L25"
+    },
+    {
+      "id": "chat_message_skeleton_assistantmessageskeleton",
+      "label": "AssistantMessageSkeleton()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L37"
+    },
+    {
+      "id": "chat_message_skeleton_messageskeletons",
+      "label": "MessageSkeletons",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L56"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_skeleton_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_skeleton_tsx",
+      "target": "chat_message_skeleton_skeletonline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_skeleton_tsx",
+      "target": "chat_message_skeleton_usermessageskeleton",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_skeleton_tsx",
+      "target": "chat_message_skeleton_assistantmessageskeleton",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_message_skeleton_tsx",
+      "target": "chat_message_skeleton_messageskeletons",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/message-skeleton.tsx",
+      "source_location": "L56",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_message_skeleton_assistantmessageskeleton",
+      "callee": "from",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\message-skeleton.tsx",
+      "source_location": "L44",
+      "receiver": null
+    }
+  ]
+}

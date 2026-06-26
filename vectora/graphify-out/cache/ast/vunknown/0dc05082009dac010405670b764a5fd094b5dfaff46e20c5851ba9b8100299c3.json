@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_preferencias_dialog_store_ts",
+      "label": "preferencias-dialog-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_preferencias_dialog_store_preferenciastab",
+      "label": "PreferenciasTab",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "stores_preferencias_dialog_store_preferenciasdialogstate",
+      "label": "PreferenciasDialogState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L17"
+    },
+    {
+      "id": "stores_preferencias_dialog_store_usepreferenciasdialogstore",
+      "label": "usePreferenciasDialogStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L25"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_preferencias_dialog_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_preferencias_dialog_store_ts",
+      "target": "stores_preferencias_dialog_store_preferenciastab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_preferencias_dialog_store_ts",
+      "target": "stores_preferencias_dialog_store_preferenciasdialogstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_preferencias_dialog_store_ts",
+      "target": "stores_preferencias_dialog_store_usepreferenciasdialogstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/preferencias-dialog-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

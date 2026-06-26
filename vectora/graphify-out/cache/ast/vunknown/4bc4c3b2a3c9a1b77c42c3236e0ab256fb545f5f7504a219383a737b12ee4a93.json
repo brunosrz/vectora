@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_graph_building_js",
+      "label": "graph_building.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_graph_building_en_graph_building",
+      "label": "en_graph_building()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_graph_building_es_graph_building",
+      "label": "es_graph_building()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_graph_building_pt_graph_building",
+      "label": "pt_graph_building()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_graph_building_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_graph_building_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_graph_building_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_graph_building_js",
+      "target": "messages_graph_building_en_graph_building",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_graph_building_js",
+      "target": "messages_graph_building_es_graph_building",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_graph_building_js",
+      "target": "messages_graph_building_pt_graph_building",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/graph_building.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

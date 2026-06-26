@@ -1,0 +1,343 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "label": "test_guardrails_scope.py",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_guardrails_prompt_mentions_data_science_restriction",
+      "label": "test_guardrails_prompt_mentions_data_science_restriction()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_guardrails_prompt_has_data_science_block_criterion",
+      "label": "test_guardrails_prompt_has_data_science_block_criterion()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_guardrails_prompt_clarifies_ds_libs_need_langchain_context",
+      "label": "test_guardrails_prompt_clarifies_ds_libs_need_langchain_context()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_guardrails_prompt_still_allows_langchain_core_topics",
+      "label": "test_guardrails_prompt_still_allows_langchain_core_topics()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L133"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_guardrails_prompt_default_is_still_allow",
+      "label": "test_guardrails_prompt_default_is_still_allow()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L149"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_guardrails_prompt_has_nsfw_block_rule",
+      "label": "test_guardrails_prompt_has_nsfw_block_rule()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L171"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_guardrails_nsfw_rule_is_zero_tolerance",
+      "label": "test_guardrails_nsfw_rule_is_zero_tolerance()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L191"
+    },
+    {
+      "id": "evals_test_guardrails_scope_test_agent_prompt_has_nsfw_refusal",
+      "label": "test_agent_prompt_has_nsfw_refusal()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L219"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_1",
+      "label": "Tests for guardrails scope restrictions.  These tests verify that the guardrails",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_44",
+      "label": "Guardrails prompt must explicitly mention data science library restrictions.",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_70",
+      "label": "Prompt must have an explicit BLOCK rule for pure data science queries.      The",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_102",
+      "label": "Prompt must state data science libs are only allowed with LangChain context.",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_134",
+      "label": "Core LangChain topics must still appear in the ALWAYS ALLOW section.",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_150",
+      "label": "The default posture must still be ALLOW (no over-correction).",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_172",
+      "label": "Guardrails prompt must explicitly block NSFW/explicit adult content.      This r",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L172"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_192",
+      "label": "NSFW block rule must NOT be inside the 'ONLY BLOCK' section.      The ONLY BLOCK",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L192"
+    },
+    {
+      "id": "evals_test_guardrails_scope_rationale_220",
+      "label": "Main agent prompt must instruct the agent to refuse NSFW content.      Even if t",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L220"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "sys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "backend_middleware_guardrails_middleware",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "backend_prompts_docs_agent_prompt",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_mentions_data_science_restriction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_has_data_science_block_criterion",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_clarifies_ds_libs_need_langchain_context",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_still_allows_langchain_core_topics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_default_is_still_allow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L149",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_has_nsfw_block_rule",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_guardrails_nsfw_rule_is_zero_tolerance",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "target": "evals_test_guardrails_scope_test_agent_prompt_has_nsfw_refusal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_guardrails_scope_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_44",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_mentions_data_science_restriction",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_70",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_has_data_science_block_criterion",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_102",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_clarifies_ds_libs_need_langchain_context",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_134",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_still_allows_langchain_core_topics",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_150",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_default_is_still_allow",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_172",
+      "target": "evals_test_guardrails_scope_test_guardrails_prompt_has_nsfw_block_rule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_192",
+      "target": "evals_test_guardrails_scope_test_guardrails_nsfw_rule_is_zero_tolerance",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_guardrails_scope_rationale_220",
+      "target": "evals_test_guardrails_scope_test_agent_prompt_has_nsfw_refusal",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_guardrails_scope.py",
+      "source_location": "L220",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "evals_test_guardrails_scope_test_guardrails_prompt_has_data_science_block_criterion",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_guardrails_scope.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "evals_test_guardrails_scope_test_guardrails_nsfw_rule_is_zero_tolerance",
+      "callee": "find",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_guardrails_scope.py",
+      "source_location": "L198",
+      "receiver": null
+    }
+  ]
+}

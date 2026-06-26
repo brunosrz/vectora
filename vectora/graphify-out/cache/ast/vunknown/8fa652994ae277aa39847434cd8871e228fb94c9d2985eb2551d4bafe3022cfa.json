@@ -1,0 +1,158 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "label": "async-state.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "types_async_state_asyncstatus",
+      "label": "AsyncStatus",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "types_async_state_asyncslice",
+      "label": "AsyncSlice",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L23"
+    },
+    {
+      "id": "types_async_state_async_idle",
+      "label": "ASYNC_IDLE",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L29"
+    },
+    {
+      "id": "types_async_state_asyncloading",
+      "label": "asyncLoading()",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L32"
+    },
+    {
+      "id": "types_async_state_asyncsuccess",
+      "label": "asyncSuccess()",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L36"
+    },
+    {
+      "id": "types_async_state_asyncerror",
+      "label": "asyncError()",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L40"
+    },
+    {
+      "id": "types_async_state_hasloaded",
+      "label": "hasLoaded()",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L46"
+    },
+    {
+      "id": "types_async_state_actionresult",
+      "label": "ActionResult",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L72"
+    },
+    {
+      "id": "types_async_state_toerrormessage",
+      "label": "toErrorMessage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L76"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_asyncstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_asyncslice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_async_idle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_asyncloading",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_asyncsuccess",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_asyncerror",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_hasloaded",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_actionresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "target": "types_async_state_toerrormessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/async-state.ts",
+      "source_location": "L76",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

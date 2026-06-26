@@ -1,0 +1,150 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "label": "sidebar-mode-toggle.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "sidebar_sidebar_mode_toggle_sidebarmodetoggle",
+      "label": "SidebarModeToggle",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L14"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tooltip_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "ui_tooltip_tooltip",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "ui_tooltip_tooltiptrigger",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "ui_tooltip_tooltipcontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_settings_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "stores_settings_store_usesettingsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_switch_mode_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "hooks_use_switch_mode_useswitchmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_sidebar_mode_toggle_tsx",
+      "target": "sidebar_sidebar_mode_toggle_sidebarmodetoggle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/sidebar-mode-toggle.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

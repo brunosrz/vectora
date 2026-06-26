@@ -1,0 +1,30 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_images_ts",
+      "label": "images.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/images.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "types_images_imageattachment",
+      "label": "ImageAttachment",
+      "file_type": "code",
+      "source_file": "frontend/lib/types/images.ts",
+      "source_location": "L10"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_images_ts",
+      "target": "types_images_imageattachment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/types/images.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

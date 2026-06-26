@@ -1,0 +1,134 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "label": "callout.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "ui_callout_callouttype",
+      "label": "CalloutType",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L14"
+    },
+    {
+      "id": "ui_callout_calloutprops",
+      "label": "CalloutProps",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L16"
+    },
+    {
+      "id": "ui_callout_icons",
+      "label": "ICONS",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L23"
+    },
+    {
+      "id": "ui_callout_styles",
+      "label": "STYLES",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L30"
+    },
+    {
+      "id": "ui_callout_callout",
+      "label": "Callout",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L59"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "utils_index_cn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "ui_callout_callouttype",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "ui_callout_calloutprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "ui_callout_icons",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "ui_callout_styles",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_callout_tsx",
+      "target": "ui_callout_callout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/callout.tsx",
+      "source_location": "L59",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

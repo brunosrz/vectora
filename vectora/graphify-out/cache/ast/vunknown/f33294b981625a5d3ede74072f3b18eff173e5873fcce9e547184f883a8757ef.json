@@ -1,0 +1,86 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "label": "auth-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_auth_store_authstate",
+      "label": "AuthState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "stores_auth_store_useauthstore",
+      "label": "useAuthStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L37"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "target": "middleware",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_auth_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "target": "types_auth_authuser",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "target": "stores_auth_store_authstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_auth_store_ts",
+      "target": "stores_auth_store_useauthstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/auth-store.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_llm_tools_py",
+      "label": "llm_tools.py",
+      "file_type": "code",
+      "source_file": "backend/services/llm_tools.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_llm_tools_rationale_1",
+      "label": "Cache de LLM bindado por usu\u00e1rio \u2014 invalidado em troca de tools/policy.  O deep-",
+      "file_type": "rationale",
+      "source_file": "backend/services/llm_tools.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_llm_tools_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/llm_tools.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "services_llm_tools_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_llm_tools_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/llm_tools.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

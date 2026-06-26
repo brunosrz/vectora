@@ -1,0 +1,637 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "label": "test_tools_plan.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tools_plan_cfg",
+      "label": "_cfg()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_tools_plan_test_marca_item_como_done",
+      "label": "test_marca_item_como_done()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "label": "test_marca_item_como_in_progress()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "label": "test_item_nao_encontrado_retorna_erro()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L86"
+    },
+    {
+      "id": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "label": "test_artifact_inexistente_retorna_erro()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L112"
+    },
+    {
+      "id": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "label": "test_status_invalido_retorna_erro()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "unit_test_tools_plan_test_update_plan_item_nao_e_destrutivo",
+      "label": "test_update_plan_item_nao_e_destrutivo()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L164"
+    },
+    {
+      "id": "unit_test_tools_plan_test_update_plan_item_invalida_plan",
+      "label": "test_update_plan_item_invalida_plan()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L169"
+    },
+    {
+      "id": "unit_test_tools_plan_rationale_1",
+      "label": "Tests TDD para update_plan_item (FASE 2.3).  Cobre: atualiza\u00e7\u00e3o de itens em arti",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tools_plan_rationale_29",
+      "label": "Item pendente \u2192 done atualiza checkbox no markdown.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "unit_test_tools_plan_rationale_59",
+      "label": "status=in_progress coloca prefixo ~> no item.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L59"
+    },
+    {
+      "id": "unit_test_tools_plan_rationale_87",
+      "label": "Item que n\u00e3o existe no artifact \u2192 status: not_found.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L87"
+    },
+    {
+      "id": "unit_test_tools_plan_rationale_113",
+      "label": "Artifact que n\u00e3o existe \u2192 status: not_found.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L113"
+    },
+    {
+      "id": "unit_test_tools_plan_rationale_135",
+      "label": "Status inv\u00e1lido \u2192 status: error (n\u00e3o propaga exception).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L135"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "backend_tools_plans",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_cfg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_cfg",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_test_marca_item_como_done",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_marca_item_como_done",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_test_update_plan_item_nao_e_destrutivo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "target": "unit_test_tools_plan_test_update_plan_item_invalida_plan",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L169",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_marca_item_como_done",
+      "target": "unit_test_tools_plan_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "target": "unit_test_tools_plan_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "target": "unit_test_tools_plan_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "target": "unit_test_tools_plan_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "target": "unit_test_tools_plan_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_plan_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_rationale_29",
+      "target": "unit_test_tools_plan_test_marca_item_como_done",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_rationale_59",
+      "target": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_rationale_87",
+      "target": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L87",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_rationale_113",
+      "target": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_plan_rationale_135",
+      "target": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_plan.py",
+      "source_location": "L135",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_done",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_done",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_done",
+      "callee": "context",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_done",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_done",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_done",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "callee": "context",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_marca_item_como_in_progress",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "callee": "context",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_item_nao_encontrado_retorna_erro",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "callee": "context",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_artifact_inexistente_retorna_erro",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "callee": "context",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L145",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_status_invalido_retorna_erro",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_update_plan_item_nao_e_destrutivo",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_plan_test_update_plan_item_invalida_plan",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_plan.py",
+      "source_location": "L171",
+      "receiver": null
+    }
+  ]
+}

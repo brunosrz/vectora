@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_usage_ts",
+      "label": "usage.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_usage_formattokens",
+      "label": "formatTokens()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L6"
+    },
+    {
+      "id": "utils_usage_formatresetin",
+      "label": "formatResetIn()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L17"
+    },
+    {
+      "id": "utils_usage_usagelevel",
+      "label": "usageLevel()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L33"
+    },
+    {
+      "id": "utils_usage_usagebarcolor",
+      "label": "usageBarColor()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L46"
+    },
+    {
+      "id": "utils_usage_usageringcolor",
+      "label": "usageRingColor()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L53"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_usage_ts",
+      "target": "utils_usage_formattokens",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_usage_ts",
+      "target": "utils_usage_formatresetin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_usage_ts",
+      "target": "utils_usage_usagelevel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_usage_ts",
+      "target": "utils_usage_usagebarcolor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_usage_ts",
+      "target": "utils_usage_usageringcolor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/usage.ts",
+      "source_location": "L53",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "utils_usage_formattokens",
+      "callee": "toFixed",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\usage.ts",
+      "source_location": "L8",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_usage_formattokens",
+      "callee": "toFixed",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\usage.ts",
+      "source_location": "L9",
+      "receiver": null
+    }
+  ]
+}

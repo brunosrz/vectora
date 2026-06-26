@@ -1,0 +1,96 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "label": "thread-group.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "sidebar_thread_group_threadgroupprops",
+      "label": "ThreadGroupProps",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "sidebar_thread_group_threadgroup",
+      "label": "ThreadGroup",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L15"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "target": "threads_index_thread",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_item_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "target": "sidebar_thread_item_threaditem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "target": "sidebar_thread_group_threadgroupprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_group_tsx",
+      "target": "sidebar_thread_group_threadgroup",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-group.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

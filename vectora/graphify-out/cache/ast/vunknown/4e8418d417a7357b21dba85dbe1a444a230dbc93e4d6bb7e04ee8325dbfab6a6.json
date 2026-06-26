@@ -1,0 +1,393 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "label": "jobs.py",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "v1_jobs_submitjobrequest",
+      "label": "SubmitJobRequest",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "v1_jobs_submitjobresponse",
+      "label": "SubmitJobResponse",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "v1_jobs_echo_handler",
+      "label": "_echo_handler()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "v1_jobs_submit",
+      "label": "submit()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "v1_jobs_events",
+      "label": "events()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "streamingresponse",
+      "label": "StreamingResponse",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "v1_jobs_rationale_1",
+      "label": "Jobs ass\u00edncronos da API \u2014 ``POST /v1/jobs`` + ``GET /v1/jobs/{id}/events`` (SSE)",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "v1_jobs_rationale_39",
+      "label": "Payload para submeter um job ass\u00edncrono.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "v1_jobs_rationale_48",
+      "label": "Resposta com o id de acompanhamento.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "v1_jobs_rationale_65",
+      "label": "Enfileira um job e devolve o ``request_id`` para acompanhamento.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "v1_jobs_rationale_77",
+      "label": "Streaming SSE dos eventos do job at\u00e9 ``done``/``error`` (ou idle timeout).",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L77"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "collections_abc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "fastapi_responses",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "backend_services_jobs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "v1_jobs_submitjobrequest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_submitjobrequest",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "v1_jobs_submitjobresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_submitjobresponse",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "v1_jobs_echo_handler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "v1_jobs_submit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_submit",
+      "target": "v1_jobs_submitjobrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_submit",
+      "target": "v1_jobs_submitjobresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "target": "v1_jobs_events",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_events",
+      "target": "streamingresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_submit",
+      "target": "v1_jobs_submitjobresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_events",
+      "target": "streamingresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_v1_jobs_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_rationale_39",
+      "target": "v1_jobs_submitjobrequest",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_rationale_48",
+      "target": "v1_jobs_submitjobresponse",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_rationale_65",
+      "target": "v1_jobs_submit",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "v1_jobs_rationale_77",
+      "target": "v1_jobs_events",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/v1/jobs.py",
+      "source_location": "L77",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "v1_jobs_echo_handler",
+      "callee": "publish_event",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\v1\\jobs.py",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "v1_jobs_echo_handler",
+      "callee": "publish_event",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\v1\\jobs.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "v1_jobs_submit",
+      "callee": "registered_kinds",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\v1\\jobs.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "v1_jobs_submit",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\v1\\jobs.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "v1_jobs_submit",
+      "callee": "registered_kinds",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\v1\\jobs.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "v1_jobs_submit",
+      "callee": "submit_job",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\v1\\jobs.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "v1_jobs_events",
+      "callee": "_gen",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\v1\\jobs.py",
+      "source_location": "L84",
+      "receiver": null
+    }
+  ]
+}

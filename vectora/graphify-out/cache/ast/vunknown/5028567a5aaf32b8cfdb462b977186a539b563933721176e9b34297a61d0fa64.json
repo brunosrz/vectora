@@ -1,0 +1,107 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_index_cn",
+      "label": "cn()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L28"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "target": "clsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "target": "tailwind_merge",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "target": "utils_index_cn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_index_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_logger_ts",
+      "relation": "imports_from",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_index_ts",
+      "target": "utils_logger_logger",
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/index.ts",
+      "source_location": "L43",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "utils_index_cn",
+      "callee": "twMerge",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\index.ts",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_index_cn",
+      "callee": "clsx",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\index.ts",
+      "source_location": "L29",
+      "receiver": null
+    }
+  ]
+}

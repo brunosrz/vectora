@@ -1,0 +1,495 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "label": "test_services_file_watcher.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "label": "test_debounce_collect_batches_rapid_events()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L23"
+    },
+    {
+      "id": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "label": "test_debounce_collect_emits_separate_batches_for_spaced_events()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "unit_test_services_file_watcher_test_file_watcher_start_stop",
+      "label": "test_file_watcher_start_stop()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L75"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "label": "test_file_watcher_publishes_on_change()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L85"
+    },
+    {
+      "id": "monkeypatch",
+      "label": "MonkeyPatch",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_services_file_watcher_test_file_watcher_singleton_per_workspace",
+      "label": "test_file_watcher_singleton_per_workspace()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L105"
+    },
+    {
+      "id": "unit_test_services_file_watcher_rationale_1",
+      "label": "TDD \u2014 File Watcher (FASE 5.1).  Um watcher por workspace: detecta mudancas em di",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_services_file_watcher_rationale_24",
+      "label": "Eventos em <300ms devem ser agrupados em um \u00fanico callback.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "unit_test_services_file_watcher_rationale_48",
+      "label": "Eventos espa\u00e7ados >debounce_ms devem gerar callbacks separados.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "unit_test_services_file_watcher_rationale_76",
+      "label": "FileWatcher deve iniciar e parar sem erros.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "unit_test_services_file_watcher_rationale_88",
+      "label": "Ao detectar mudanca, deve publicar via KV.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L88"
+    },
+    {
+      "id": "unit_test_services_file_watcher_rationale_106",
+      "label": "get_watcher retorna a mesma instancia para o mesmo workspace_id.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L106"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "backend_services_file_watcher",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "backend_services_file_watcher",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "unit_test_services_file_watcher_test_file_watcher_start_stop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_test_file_watcher_start_stop",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "target": "unit_test_services_file_watcher_test_file_watcher_singleton_per_workspace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_test_file_watcher_singleton_per_workspace",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_services_file_watcher_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_rationale_24",
+      "target": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_rationale_48",
+      "target": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_rationale_76",
+      "target": "unit_test_services_file_watcher_test_file_watcher_start_stop",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_rationale_88",
+      "target": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_services_file_watcher_rationale_106",
+      "target": "unit_test_services_file_watcher_test_file_watcher_singleton_per_workspace",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_services_file_watcher.py",
+      "source_location": "L106",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "Queue",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "create_task",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "debounce_collect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "put",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "put",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "cancel",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_batches_rapid_events",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "Queue",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "create_task",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "debounce_collect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L55",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "put",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "put",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "cancel",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_debounce_collect_emits_separate_batches_for_spaced_events",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_start_stop",
+      "callee": "FileWatcher",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_start_stop",
+      "callee": "start",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_start_stop",
+      "callee": "stop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "callee": "FileWatcher",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "callee": "_on_changes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_publishes_on_change",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_singleton_per_workspace",
+      "callee": "get_watcher",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_services_file_watcher_test_file_watcher_singleton_per_workspace",
+      "callee": "get_watcher",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_services_file_watcher.py",
+      "source_location": "L110",
+      "receiver": null
+    }
+  ]
+}

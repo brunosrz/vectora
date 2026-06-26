@@ -1,0 +1,263 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "label": "use-file-upload.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "files_use_file_upload_usefileuploadreturn",
+      "label": "UseFileUploadReturn",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L20"
+    },
+    {
+      "id": "files_use_file_upload_usefileuploadoptions",
+      "label": "UseFileUploadOptions",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L38"
+    },
+    {
+      "id": "files_use_file_upload_isimagefile",
+      "label": "isImageFile()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L42"
+    },
+    {
+      "id": "files_use_file_upload_usefileupload",
+      "label": "useFileUpload()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L68"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "types_index_imageattachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_chat_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "chat_index_createimageattachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "chat_index_validateimagefile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_features_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "constants_features_image_unsupported_model_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "files_use_file_upload_usefileuploadreturn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "files_use_file_upload_usefileuploadoptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "files_use_file_upload_isimagefile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_files_use_file_upload_ts",
+      "target": "files_use_file_upload_usefileupload",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/files/use-file-upload.ts",
+      "source_location": "L68",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "files_use_file_upload_isimagefile",
+      "callee": "startsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_isimagefile",
+      "callee": "test",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L177",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L202",
+      "receiver": null
+    },
+    {
+      "caller_nid": "files_use_file_upload_usefileupload",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\files\\use-file-upload.ts",
+      "source_location": "L219",
+      "receiver": null
+    }
+  ]
+}

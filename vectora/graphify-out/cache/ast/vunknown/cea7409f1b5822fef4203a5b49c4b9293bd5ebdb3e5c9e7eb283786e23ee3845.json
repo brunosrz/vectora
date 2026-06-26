@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_list_skeleton_tsx",
+      "label": "thread-list-skeleton.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/thread-list-skeleton.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "sidebar_thread_list_skeleton_threadlistskeleton",
+      "label": "ThreadListSkeleton",
+      "file_type": "code",
+      "source_file": "frontend/components/sidebar/thread-list-skeleton.tsx",
+      "source_location": "L9"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_list_skeleton_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-list-skeleton.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_thread_list_skeleton_tsx",
+      "target": "sidebar_thread_list_skeleton_threadlistskeleton",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/sidebar/thread-list-skeleton.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

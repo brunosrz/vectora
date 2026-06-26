@@ -1,0 +1,436 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "label": "test_tools_background_task.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tools_background_task_cfg",
+      "label": "_cfg()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_tools_background_task_fake_task",
+      "label": "_fake_task()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "label": "test_cria_tarefa_rotina()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "unit_test_tools_background_task_test_kind_invalido_retorna_erro",
+      "label": "test_kind_invalido_retorna_erro()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L79"
+    },
+    {
+      "id": "unit_test_tools_background_task_test_trigger_invalido_retorna_erro",
+      "label": "test_trigger_invalido_retorna_erro()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "unit_test_tools_background_task_test_sem_sessao_retorna_erro",
+      "label": "test_sem_sessao_retorna_erro()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L125"
+    },
+    {
+      "id": "unit_test_tools_background_task_test_create_background_task_invalida_background",
+      "label": "test_create_background_task_invalida_background()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L147"
+    },
+    {
+      "id": "unit_test_tools_background_task_test_create_background_task_e_destrutiva",
+      "label": "test_create_background_task_e_destrutiva()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L152"
+    },
+    {
+      "id": "unit_test_tools_background_task_rationale_1",
+      "label": "Tests TDD para create_background_task (FASE 2.4).  Cobre: cria\u00e7\u00e3o de tarefa via",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tools_background_task_rationale_49",
+      "label": "Tarefa de rotina com cron v\u00e1lido \u2192 status: created.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "unit_test_tools_background_task_rationale_80",
+      "label": "Kind n\u00e3o reconhecido \u2192 status: error, n\u00e3o propaga.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "unit_test_tools_background_task_rationale_103",
+      "label": "trigger_type desconhecido \u2192 status: error.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L103"
+    },
+    {
+      "id": "unit_test_tools_background_task_rationale_126",
+      "label": "Config sem thread_id \u2192 status: error.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L126"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "backend_tools_background",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_cfg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_cfg",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_fake_task",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_fake_task",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_test_kind_invalido_retorna_erro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_test_trigger_invalido_retorna_erro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_test_sem_sessao_retorna_erro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_test_create_background_task_invalida_background",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "target": "unit_test_tools_background_task_test_create_background_task_e_destrutiva",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "target": "unit_test_tools_background_task_fake_task",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "target": "unit_test_tools_background_task_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_test_kind_invalido_retorna_erro",
+      "target": "unit_test_tools_background_task_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_test_trigger_invalido_retorna_erro",
+      "target": "unit_test_tools_background_task_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tools_background_task_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_rationale_49",
+      "target": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_rationale_80",
+      "target": "unit_test_tools_background_task_test_kind_invalido_retorna_erro",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_rationale_103",
+      "target": "unit_test_tools_background_task_test_trigger_invalido_retorna_erro",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tools_background_task_rationale_126",
+      "target": "unit_test_tools_background_task_test_sem_sessao_retorna_erro",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tools_background_task.py",
+      "source_location": "L126",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_tools_background_task_fake_task",
+      "callee": "_FakeTask",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_cria_tarefa_rotina",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_kind_invalido_retorna_erro",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_kind_invalido_retorna_erro",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_trigger_invalido_retorna_erro",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_trigger_invalido_retorna_erro",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_sem_sessao_retorna_erro",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_sem_sessao_retorna_erro",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_create_background_task_invalida_background",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L149",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tools_background_task_test_create_background_task_e_destrutiva",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tools_background_task.py",
+      "source_location": "L154",
+      "receiver": null
+    }
+  ]
+}

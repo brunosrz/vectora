@@ -1,0 +1,226 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "label": "test_cache_embeddings.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_cache_embeddings_reset",
+      "label": "_reset()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L12"
+    },
+    {
+      "id": "unit_test_cache_embeddings_test_inativo_sempre_recalcula",
+      "label": "test_inativo_sempre_recalcula()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "monkeypatch",
+      "label": "MonkeyPatch",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_cache_embeddings_test_ativo_cacheia",
+      "label": "test_ativo_cacheia()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "unit_test_cache_embeddings_test_textos_distintos_nao_colidem",
+      "label": "test_textos_distintos_nao_colidem()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "unit_test_cache_embeddings_rationale_1",
+      "label": "Cache de embeddings (``services/cache_embeddings.py``).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "target": "backend_services",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "target": "backend_services_kv",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "target": "unit_test_cache_embeddings_reset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "target": "unit_test_cache_embeddings_test_inativo_sempre_recalcula",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cache_embeddings_test_inativo_sempre_recalcula",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "target": "unit_test_cache_embeddings_test_ativo_cacheia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cache_embeddings_test_ativo_cacheia",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "target": "unit_test_cache_embeddings_test_textos_distintos_nao_colidem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cache_embeddings_test_textos_distintos_nao_colidem",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_cache_embeddings_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_cache_embeddings_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_cache_embeddings.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_cache_embeddings_reset",
+      "callee": "reset_kv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L13",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cache_embeddings_reset",
+      "callee": "reset_kv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L15",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cache_embeddings_test_inativo_sempre_recalcula",
+      "callee": "embed_query_cached",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cache_embeddings_test_inativo_sempre_recalcula",
+      "callee": "embed_query_cached",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cache_embeddings_test_ativo_cacheia",
+      "callee": "embed_query_cached",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cache_embeddings_test_ativo_cacheia",
+      "callee": "embed_query_cached",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cache_embeddings_test_textos_distintos_nao_colidem",
+      "callee": "embed_query_cached",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_cache_embeddings_test_textos_distintos_nao_colidem",
+      "callee": "embed_query_cached",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_cache_embeddings.py",
+      "source_location": "L53",
+      "receiver": null
+    }
+  ]
+}

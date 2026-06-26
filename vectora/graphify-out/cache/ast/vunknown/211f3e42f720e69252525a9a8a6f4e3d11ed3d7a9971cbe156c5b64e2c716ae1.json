@@ -1,0 +1,115 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_animations_thinking_timer_tsx",
+      "label": "thinking-timer.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "animations_thinking_timer_thinkingtimerprops",
+      "label": "ThinkingTimerProps",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "animations_thinking_timer_formattime",
+      "label": "formatTime()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L11"
+    },
+    {
+      "id": "animations_thinking_timer_thinkingtimer",
+      "label": "ThinkingTimer()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L21"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_animations_thinking_timer_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_animations_thinking_timer_tsx",
+      "target": "animations_thinking_timer_thinkingtimerprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_animations_thinking_timer_tsx",
+      "target": "animations_thinking_timer_formattime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_animations_thinking_timer_tsx",
+      "target": "animations_thinking_timer_thinkingtimer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "animations_thinking_timer_thinkingtimer",
+      "target": "animations_thinking_timer_formattime",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/animations/thinking-timer.tsx",
+      "source_location": "L43",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "animations_thinking_timer_formattime",
+      "callee": "floor",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\animations\\thinking-timer.tsx",
+      "source_location": "L12",
+      "receiver": null
+    },
+    {
+      "caller_nid": "animations_thinking_timer_formattime",
+      "callee": "floor",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\animations\\thinking-timer.tsx",
+      "source_location": "L16",
+      "receiver": null
+    },
+    {
+      "caller_nid": "animations_thinking_timer_thinkingtimer",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\animations\\thinking-timer.tsx",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "animations_thinking_timer_thinkingtimer",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\animations\\thinking-timer.tsx",
+      "source_location": "L28",
+      "receiver": null
+    }
+  ]
+}

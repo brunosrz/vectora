@@ -1,0 +1,1274 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "label": "test_tray.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tray_test_has_display_windows_sempre_true",
+      "label": "test_has_display_windows_sempre_true()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "monkeypatch",
+      "label": "MonkeyPatch",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_tray_test_has_display_darwin_sempre_true",
+      "label": "test_has_display_darwin_sempre_true()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "unit_test_tray_test_has_display_linux_sem_env_false",
+      "label": "test_has_display_linux_sem_env_false()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "unit_test_tray_test_has_display_linux_com_display_true",
+      "label": "test_has_display_linux_com_display_true()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L45"
+    },
+    {
+      "id": "unit_test_tray_test_has_display_linux_com_wayland_true",
+      "label": "test_has_display_linux_com_wayland_true()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "label": "test_build_icon_image_carrega_png_real()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L68"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "label": "test_build_icon_image_fallback_sem_arquivo()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L88"
+    },
+    {
+      "id": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "label": "test_build_icon_image_fallback_arquivo_corrompido()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L104"
+    },
+    {
+      "id": "unit_test_tray_test_enable_dark_mode_noop_em_nao_windows",
+      "label": "test_enable_dark_mode_noop_em_nao_windows()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L125"
+    },
+    {
+      "id": "unit_test_tray_test_enable_dark_mode_swallows_exception",
+      "label": "test_enable_dark_mode_swallows_exception()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L137"
+    },
+    {
+      "id": "unit_test_tray_fake_server",
+      "label": "_fake_server()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L156"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_tray_test_run_server_modo_electron",
+      "label": "test_run_server_modo_electron()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L163"
+    },
+    {
+      "id": "unit_test_tray_test_run_server_sem_display",
+      "label": "test_run_server_sem_display()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L175"
+    },
+    {
+      "id": "unit_test_tray_test_run_server_sem_pystray",
+      "label": "test_run_server_sem_pystray()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L190"
+    },
+    {
+      "id": "unit_test_tray_test_run_server_sem_pillow",
+      "label": "test_run_server_sem_pillow()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L208"
+    },
+    {
+      "id": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "label": "test_run_server_com_tray_fullstack()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L229"
+    },
+    {
+      "id": "unit_test_tray_rationale_1",
+      "label": "Testes para backend/services/tray.py.  Cobre: _has_display, _build_icon_image (\u00ed",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_tray_rationale_69",
+      "label": "Quando o PNG existe, carrega e redimensiona para 64x64.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "unit_test_tray_rationale_89",
+      "label": "Sem arquivos de \u00edcone, retorna o quadrado roxo de fallback 64x64.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L89"
+    },
+    {
+      "id": "unit_test_tray_rationale_105",
+      "label": "Arquivo existente mas corrompido \u2192 fallback sem exce\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L105"
+    },
+    {
+      "id": "unit_test_tray_rationale_126",
+      "label": "Em plataformas n\u00e3o-Windows, _enable_dark_mode_win32 n\u00e3o toca o ctypes.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L126"
+    },
+    {
+      "id": "unit_test_tray_rationale_138",
+      "label": "Mesmo que ctypes falhe, _enable_dark_mode_win32 n\u00e3o propaga exce\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L138"
+    },
+    {
+      "id": "unit_test_tray_rationale_164",
+      "label": "Sob VECTORA_DESKTOP=1 sobe servidor puro, sem pystray.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L164"
+    },
+    {
+      "id": "unit_test_tray_rationale_176",
+      "label": "Sem display (VPS/Docker) \u2192 servidor puro.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L176"
+    },
+    {
+      "id": "unit_test_tray_rationale_191",
+      "label": "pystray ausente \u2192 servidor puro sem exce\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L191"
+    },
+    {
+      "id": "unit_test_tray_rationale_209",
+      "label": "PIL/Pillow ausente \u2192 servidor puro sem exce\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L209"
+    },
+    {
+      "id": "unit_test_tray_rationale_230",
+      "label": "Fullstack: inicia thread de servidor, cria \u00edcone, chama icon.run().",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L230"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "sys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "threading",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_has_display_windows_sempre_true",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_has_display_windows_sempre_true",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_has_display_darwin_sempre_true",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_has_display_darwin_sempre_true",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_has_display_linux_sem_env_false",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_has_display_linux_sem_env_false",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_has_display_linux_com_display_true",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_has_display_linux_com_display_true",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_has_display_linux_com_wayland_true",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_has_display_linux_com_wayland_true",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_enable_dark_mode_noop_em_nao_windows",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_enable_dark_mode_noop_em_nao_windows",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_enable_dark_mode_swallows_exception",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_enable_dark_mode_swallows_exception",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_fake_server",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_fake_server",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_run_server_modo_electron",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_modo_electron",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_run_server_sem_display",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_sem_display",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_run_server_sem_pystray",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_sem_pystray",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_run_server_sem_pillow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_sem_pillow",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "target": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_modo_electron",
+      "target": "unit_test_tray_fake_server",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_sem_display",
+      "target": "unit_test_tray_fake_server",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_sem_pystray",
+      "target": "unit_test_tray_fake_server",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L195",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_sem_pillow",
+      "target": "unit_test_tray_fake_server",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L213",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "target": "unit_test_tray_fake_server",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L235",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_tray_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_69",
+      "target": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_89",
+      "target": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_105",
+      "target": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_126",
+      "target": "unit_test_tray_test_enable_dark_mode_noop_em_nao_windows",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_138",
+      "target": "unit_test_tray_test_enable_dark_mode_swallows_exception",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_164",
+      "target": "unit_test_tray_test_run_server_modo_electron",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_176",
+      "target": "unit_test_tray_test_run_server_sem_display",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_191",
+      "target": "unit_test_tray_test_run_server_sem_pystray",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_209",
+      "target": "unit_test_tray_test_run_server_sem_pillow",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L209",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_tray_rationale_230",
+      "target": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_tray.py",
+      "source_location": "L230",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_tray_test_has_display_windows_sempre_true",
+      "callee": "_has_display",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_darwin_sempre_true",
+      "callee": "_has_display",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_sem_env_false",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_sem_env_false",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_sem_env_false",
+      "callee": "_has_display",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_com_display_true",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_com_display_true",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_com_display_true",
+      "callee": "_has_display",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_com_wayland_true",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_com_wayland_true",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_has_display_linux_com_wayland_true",
+      "callee": "_has_display",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "callee": "new",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "callee": "save",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_carrega_png_real",
+      "callee": "_build_icon_image",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "callee": "_build_icon_image",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_sem_arquivo",
+      "callee": "getpixel",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "callee": "write_bytes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_build_icon_image_fallback_arquivo_corrompido",
+      "callee": "_build_icon_image",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_enable_dark_mode_noop_em_nao_windows",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L129",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_enable_dark_mode_noop_em_nao_windows",
+      "callee": "AssertionError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_enable_dark_mode_noop_em_nao_windows",
+      "callee": "_enable_dark_mode_win32",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L134",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_enable_dark_mode_swallows_exception",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_enable_dark_mode_swallows_exception",
+      "callee": "OSError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_enable_dark_mode_swallows_exception",
+      "callee": "_enable_dark_mode_win32",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_fake_server",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_fake_server",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_modo_electron",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L165",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_modo_electron",
+      "callee": "run_server_with_tray",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_modo_electron",
+      "callee": "assert_called_once",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_display",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L177",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_display",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_display",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L180",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_display",
+      "callee": "run_server_with_tray",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_display",
+      "callee": "assert_called_once",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pystray",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L192",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pystray",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pystray",
+      "callee": "reload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L202",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pystray",
+      "callee": "run_server_with_tray",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pystray",
+      "callee": "assert_called_once",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L205",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pillow",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L210",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pillow",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L212",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pillow",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pillow",
+      "callee": "reload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pillow",
+      "callee": "run_server_with_tray",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_sem_pillow",
+      "callee": "assert_called_once",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L226",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "delenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L231",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "setenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L233",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "Event",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L237",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L245",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L249",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L250",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "new",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L254",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L257",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L258",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "reload",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L265",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "object",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L268",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "object",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L269",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "run_server_with_tray",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L271",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_tray_test_run_server_com_tray_fullstack",
+      "callee": "assert_called_once",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_tray.py",
+      "source_location": "L273",
+      "receiver": null
+    }
+  ]
+}

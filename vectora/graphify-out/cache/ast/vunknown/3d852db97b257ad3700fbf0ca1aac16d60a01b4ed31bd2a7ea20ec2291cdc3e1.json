@@ -1,0 +1,1959 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "label": "background.py",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_background_cohereratelimiter",
+      "label": "CohereRateLimiter",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L42"
+    },
+    {
+      "id": "services_background_cohereratelimiter_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "services_background_cohereratelimiter_acquire",
+      "label": ".acquire()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "services_background_cohereratelimiter_avg_wait_s",
+      "label": ".avg_wait_s()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "services_background_cohereratelimiter_effective_rate",
+      "label": ".effective_rate()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "services_background_is_rate_limit_error",
+      "label": "_is_rate_limit_error()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L120"
+    },
+    {
+      "id": "exception",
+      "label": "Exception",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_background_cohereratelimitinterceptor",
+      "label": "_CohereRateLimitInterceptor",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L147"
+    },
+    {
+      "id": "services_background_cohereratelimitinterceptor_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L158"
+    },
+    {
+      "id": "services_background_cohereratelimitinterceptor_emit",
+      "label": ".emit()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L162"
+    },
+    {
+      "id": "logrecord",
+      "label": "LogRecord",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_background_backgroundembeddingworker",
+      "label": "BackgroundEmbeddingWorker",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L176"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L179"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_get_queue",
+      "label": "._get_queue()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L219"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_start",
+      "label": ".start()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L233"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_stop",
+      "label": ".stop()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L255"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_reconcile_startup",
+      "label": "._reconcile_startup()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L289"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_run_loop",
+      "label": "._run_loop()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L298"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_process_record",
+      "label": "._process_record()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L351"
+    },
+    {
+      "id": "embeddingqueuerecord",
+      "label": "EmbeddingQueueRecord",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "label": "._trip_rate_limit_breaker()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L457"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_generate_embedding",
+      "label": "._generate_embedding()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L488"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "label": "._write_to_lancedb()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L544"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "label": "._maybe_run_curator()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L620"
+    },
+    {
+      "id": "services_background_backgroundembeddingworker_run_curator",
+      "label": "._run_curator()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L646"
+    },
+    {
+      "id": "services_background_get_worker_pause_state",
+      "label": "get_worker_pause_state()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L676"
+    },
+    {
+      "id": "services_background_get_background_worker",
+      "label": "get_background_worker()",
+      "file_type": "code",
+      "source_file": "backend/services/background.py",
+      "source_location": "L688"
+    },
+    {
+      "id": "services_background_rationale_1",
+      "label": "Background Worker para Processamento de Embeddings Fire-and-Forget.  Loop ass\u00ednc",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_background_rationale_43",
+      "label": "Token bucket rate limiter para chamadas \u00e0 API Cohere.      Garante que o Backgro",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "services_background_rationale_62",
+      "label": "Inicializa o rate limiter.          Args:             calls_per_minute: Limite d",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "services_background_rationale_77",
+      "label": "Aguarda at\u00e9 que seja seguro fazer mais uma chamada \u00e0 API.          Returns:",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "services_background_rationale_102",
+      "label": "Tempo m\u00e9dio de espera por throttle (segundos).",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "services_background_rationale_109",
+      "label": "Taxa efetiva configurada (calls/min).",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "services_background_rationale_121",
+      "label": "``True`` para erros de rate limit / quota da API de embeddings.      Estes n\u00e3o s",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L121"
+    },
+    {
+      "id": "services_background_rationale_148",
+      "label": "Intercepta warnings de rate limit do langchain_cohere.utils silenciosamente.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L148"
+    },
+    {
+      "id": "services_background_rationale_177",
+      "label": "Worker ass\u00edncrono para processamento de embeddings em larga escala.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L177"
+    },
+    {
+      "id": "services_background_rationale_180",
+      "label": "Inicializa o worker com configura\u00e7\u00e3o global.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L180"
+    },
+    {
+      "id": "services_background_rationale_220",
+      "label": "Obt\u00e9m (e inicializa uma vez) a queue de acordo com storage_mode.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L220"
+    },
+    {
+      "id": "services_background_rationale_234",
+      "label": "Inicia o worker como asyncio.Task.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L234"
+    },
+    {
+      "id": "services_background_rationale_256",
+      "label": "Para o worker gracefully.          Args:             timeout_seconds: Segundos p",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L256"
+    },
+    {
+      "id": "services_background_rationale_290",
+      "label": "Recupera records travados em 'processing' na startup.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L290"
+    },
+    {
+      "id": "services_background_rationale_299",
+      "label": "Loop principal: fetch pending \u2192 process \u2192 retry/success/dlq.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L299"
+    },
+    {
+      "id": "services_background_rationale_354",
+      "label": "Processa um registro individual com retry exponencial.          Args:",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L354"
+    },
+    {
+      "id": "services_background_rationale_458",
+      "label": "Pausa o worker e arquiva a fila ao detectar rate limit / quota.          Idempot",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L458"
+    },
+    {
+      "id": "services_background_rationale_489",
+      "label": "Gera embedding via Cohere.          Args:             text: Texto para embeddar",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L489"
+    },
+    {
+      "id": "services_background_rationale_547",
+      "label": "Escreve documento em LanceDB (idempotente via queue_id).          Args:",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L547"
+    },
+    {
+      "id": "services_background_rationale_621",
+      "label": "Dispara o curator para workspaces com docs rec\u00e9m-indexados (B4).          Condi\u00e7",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L621"
+    },
+    {
+      "id": "services_background_rationale_647",
+      "label": "Executa a curadoria para um workspace espec\u00edfico (reentr\u00e2ncia protegida).",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L647"
+    },
+    {
+      "id": "services_background_rationale_677",
+      "label": "Estado do circuit breaker do worker (lido sem instanciar o worker).      Returns",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L677"
+    },
+    {
+      "id": "services_background_rationale_689",
+      "label": "Obt\u00e9m ou cria inst\u00e2ncia singleton do worker (thread-safe).      Returns:",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L689"
+    },
+    {
+      "id": "services_background_rationale_518",
+      "label": "# NOTE: do NOT wrap in SecretStr here.",
+      "file_type": "rationale",
+      "source_file": "backend/services/background.py",
+      "source_location": "L518"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "contextlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "time",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "traceback",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "lancedb",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "pyarrow",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "langchain_cohere",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "backend_services_queue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "backend_settings",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "services_background_cohereratelimiter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimiter",
+      "target": "services_background_cohereratelimiter_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimiter",
+      "target": "services_background_cohereratelimiter_acquire",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimiter",
+      "target": "services_background_cohereratelimiter_avg_wait_s",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimiter",
+      "target": "services_background_cohereratelimiter_effective_rate",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "services_background_is_rate_limit_error",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_is_rate_limit_error",
+      "target": "exception",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "services_background_cohereratelimitinterceptor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimitinterceptor",
+      "target": "services_background_cohereratelimitinterceptor_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimitinterceptor",
+      "target": "services_background_cohereratelimitinterceptor_emit",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimitinterceptor_emit",
+      "target": "logrecord",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "services_background_backgroundembeddingworker",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L179",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_get_queue",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_get_queue",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_start",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L233",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_stop",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_reconcile_startup",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L289",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_run_loop",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L298",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_process_record",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L351",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "embeddingqueuerecord",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L351",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L351",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L457",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L457",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_generate_embedding",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L488",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L544",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "target": "embeddingqueuerecord",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L544",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L620",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker",
+      "target": "services_background_backgroundembeddingworker_run_curator",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L646",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "services_background_get_worker_pause_state",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L676",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "target": "services_background_get_background_worker",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L688",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_get_background_worker",
+      "target": "services_background_backgroundembeddingworker",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L688",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_cohereratelimitinterceptor_init",
+      "target": "services_background_backgroundembeddingworker_init",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_init",
+      "target": "services_background_cohereratelimiter",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_start",
+      "target": "services_background_cohereratelimitinterceptor",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_start",
+      "target": "services_background_backgroundembeddingworker_reconcile_startup",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L250",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_start",
+      "target": "services_background_backgroundembeddingworker_run_loop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L252",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_reconcile_startup",
+      "target": "services_background_backgroundembeddingworker_get_queue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L292",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_run_loop",
+      "target": "services_background_backgroundembeddingworker_get_queue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L310",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_run_loop",
+      "target": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L324",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_run_loop",
+      "target": "services_background_backgroundembeddingworker_process_record",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L337",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "services_background_backgroundembeddingworker_get_queue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L361",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "services_background_cohereratelimiter_acquire",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L380",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "services_background_backgroundembeddingworker_generate_embedding",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L383",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L386",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "services_background_is_rate_limit_error",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L407",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_process_record",
+      "target": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L408",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "target": "services_background_backgroundembeddingworker_run_curator",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L644",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_get_background_worker",
+      "target": "services_background_backgroundembeddingworker",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L706",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_43",
+      "target": "services_background_cohereratelimiter",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_62",
+      "target": "services_background_cohereratelimiter_init",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_77",
+      "target": "services_background_cohereratelimiter_acquire",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_102",
+      "target": "services_background_cohereratelimiter_avg_wait_s",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_109",
+      "target": "services_background_cohereratelimiter_effective_rate",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_121",
+      "target": "services_background_is_rate_limit_error",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_148",
+      "target": "services_background_cohereratelimitinterceptor",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L148",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_177",
+      "target": "services_background_backgroundembeddingworker",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L177",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_180",
+      "target": "services_background_backgroundembeddingworker_init",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L180",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_220",
+      "target": "services_background_backgroundembeddingworker_get_queue",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L220",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_234",
+      "target": "services_background_backgroundembeddingworker_start",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L234",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_256",
+      "target": "services_background_backgroundembeddingworker_stop",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L256",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_290",
+      "target": "services_background_backgroundembeddingworker_reconcile_startup",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L290",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_299",
+      "target": "services_background_backgroundembeddingworker_run_loop",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L299",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_354",
+      "target": "services_background_backgroundembeddingworker_process_record",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L354",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_458",
+      "target": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L458",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_489",
+      "target": "services_background_backgroundembeddingworker_generate_embedding",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L489",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_547",
+      "target": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L547",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_621",
+      "target": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L621",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_647",
+      "target": "services_background_backgroundembeddingworker_run_curator",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L647",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_677",
+      "target": "services_background_get_worker_pause_state",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L677",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_689",
+      "target": "services_background_get_background_worker",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L689",
+      "weight": 1.0
+    },
+    {
+      "source": "services_background_rationale_518",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_background_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/background.py",
+      "source_location": "L518",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_background_cohereratelimiter_init",
+      "callee": "Lock",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimiter_acquire",
+      "callee": "monotonic",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimiter_acquire",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimiter_acquire",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimiter_acquire",
+      "callee": "monotonic",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_is_rate_limit_error",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimitinterceptor_emit",
+      "callee": "getMessage",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimitinterceptor_emit",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimitinterceptor_emit",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimitinterceptor_emit",
+      "callee": "getLogger",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_cohereratelimitinterceptor_emit",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_init",
+      "callee": "Semaphore",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L184",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_init",
+      "callee": "Semaphore",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_get_queue",
+      "callee": "PostgresQueueDB",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L226",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_get_queue",
+      "callee": "_ensure_table",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L227",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_get_queue",
+      "callee": "get_embedding_queue",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_start",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L236",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_start",
+      "callee": "getLogger",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_start",
+      "callee": "addHandler",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L246",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_start",
+      "callee": "create_task",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L252",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_start",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L253",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L264",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "getLogger",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L268",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "removeHandler",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L270",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "timeout",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L276",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L279",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "cancel",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L283",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L284",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_stop",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L287",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_reconcile_startup",
+      "callee": "reconcile",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L293",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_reconcile_startup",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L294",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_reconcile_startup",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L296",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L306",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "get_pending",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L313",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L318",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L325",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L333",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "gather",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L336",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L342",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L345",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L348",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_loop",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L349",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "mark_processing",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L374",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "mark_success",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L389",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L394",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "format_exc",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L412",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L417",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L428",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L436",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "mark_dlq",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L442",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L444",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_process_record",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L449",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L467",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L473",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "callee": "archive_pending",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L481",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_trip_rate_limit_breaker",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L482",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_generate_embedding",
+      "callee": "get_cohere_api_key",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L501",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_generate_embedding",
+      "callee": "ValueError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L504",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_generate_embedding",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L507",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_generate_embedding",
+      "callee": "ImportError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L516",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_generate_embedding",
+      "callee": "CohereEmbeddings",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L526",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_generate_embedding",
+      "callee": "to_thread",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L541",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "ImportError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L558",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "RuntimeError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L562",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "connect_async",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L563",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L563",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "schema",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L566",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "field",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L568",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "string",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L568",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "field",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L569",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "list_",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L569",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "float32",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L569",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "field",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L570",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "string",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L570",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "field",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L571",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "string",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L571",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "open_table",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L588",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "create_table",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L591",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L592",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "open_table",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L597",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L598",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L600",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L612",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L613",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L615",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_write_to_lancedb",
+      "callee": "monotonic",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L616",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "callee": "monotonic",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L636",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "callee": "clear",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L641",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_maybe_run_curator",
+      "callee": "create_task",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L644",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_curator",
+      "callee": "Lock",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L649",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_curator",
+      "callee": "locked",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L652",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_curator",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L653",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_curator",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L660",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_curator",
+      "callee": "curate_workspace_knowledge",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L663",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_curator",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L664",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_background_backgroundembeddingworker_run_curator",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\background.py",
+      "source_location": "L666",
+      "receiver": null
+    }
+  ]
+}

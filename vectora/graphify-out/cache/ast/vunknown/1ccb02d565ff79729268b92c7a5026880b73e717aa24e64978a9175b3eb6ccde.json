@@ -1,0 +1,287 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "label": "string-helpers.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "string_string_helpers_truncate",
+      "label": "truncate()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L11"
+    },
+    {
+      "id": "string_string_helpers_titlegenerationoptions",
+      "label": "TitleGenerationOptions",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L36"
+    },
+    {
+      "id": "string_string_helpers_generatethreadtitle",
+      "label": "generateThreadTitle()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L52"
+    },
+    {
+      "id": "string_string_helpers_generatequicktitle",
+      "label": "generateQuickTitle()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L70"
+    },
+    {
+      "id": "string_string_helpers_truncatetitle",
+      "label": "truncateTitle()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L115"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "target": "string_string_helpers_truncate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_features_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "target": "constants_features_default_title_max_length",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "target": "string_string_helpers_titlegenerationoptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "target": "string_string_helpers_generatethreadtitle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "target": "string_string_helpers_generatequicktitle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_string_string_helpers_ts",
+      "target": "string_string_helpers_truncatetitle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "string_string_helpers_generatethreadtitle",
+      "target": "string_string_helpers_truncatetitle",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "string_string_helpers_generatequicktitle",
+      "target": "string_string_helpers_truncatetitle",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/string/string-helpers.ts",
+      "source_location": "L87",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "string_string_helpers_truncate",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L12",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_generatequicktitle",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_truncatetitle",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_truncatetitle",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_truncatetitle",
+      "callee": "toUpperCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_truncatetitle",
+      "callee": "charAt",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_truncatetitle",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "string_string_helpers_truncatetitle",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\string\\string-helpers.ts",
+      "source_location": "L131",
+      "receiver": null
+    }
+  ]
+}

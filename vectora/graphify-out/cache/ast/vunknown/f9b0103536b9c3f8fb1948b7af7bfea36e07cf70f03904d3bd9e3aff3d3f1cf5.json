@@ -1,0 +1,163 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "label": "toaster.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "ui_toaster_icons",
+      "label": "ICONS",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L28"
+    },
+    {
+      "id": "ui_toaster_level_styles",
+      "label": "LEVEL_STYLES",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L37"
+    },
+    {
+      "id": "ui_toaster_toastcard",
+      "label": "ToastCard()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L59"
+    },
+    {
+      "id": "ui_toaster_toaster",
+      "label": "Toaster()",
+      "file_type": "code",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L119"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "stores_toast_store_toast",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "stores_toast_store_toastlevel",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "ui_toaster_icons",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "ui_toaster_level_styles",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "ui_toaster_toastcard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_toaster_tsx",
+      "target": "ui_toaster_toaster",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/ui/toaster.tsx",
+      "source_location": "L119",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "ui_toaster_toastcard",
+      "callee": "useToastStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\toaster.tsx",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_toaster_toastcard",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\toaster.tsx",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "ui_toaster_toaster",
+      "callee": "useToastStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\ui\\toaster.tsx",
+      "source_location": "L120",
+      "receiver": null
+    }
+  ]
+}

@@ -1,0 +1,583 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "label": "test_sx_fs_diff.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_modified_unstaged",
+      "label": "test_parse_porcelain_modified_unstaged()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L6"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_modified_staged",
+      "label": "test_parse_porcelain_modified_staged()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L13"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_modified_both",
+      "label": "test_parse_porcelain_modified_both()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L20"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_untracked",
+      "label": "test_parse_porcelain_untracked()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_added_staged",
+      "label": "test_parse_porcelain_added_staged()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_deleted_unstaged",
+      "label": "test_parse_porcelain_deleted_unstaged()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_rename_uses_destination",
+      "label": "test_parse_porcelain_rename_uses_destination()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_normalizes_windows_paths",
+      "label": "test_parse_porcelain_normalizes_windows_paths()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_multiple_entries",
+      "label": "test_parse_porcelain_multiple_entries()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_porcelain_ignores_short_lines",
+      "label": "test_parse_porcelain_ignores_short_lines()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_diff_file_accepts_decomposed_flags",
+      "label": "test_diff_file_accepts_decomposed_flags()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L81"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_diff_file_status_only_defaults_flags_to_none",
+      "label": "test_diff_file_status_only_defaults_flags_to_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L97"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_untracked_as_diff_single_line",
+      "label": "test_untracked_as_diff_single_line()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L113"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_untracked_as_diff_multiline",
+      "label": "test_untracked_as_diff_multiline()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_untracked_as_diff_empty_content",
+      "label": "test_untracked_as_diff_empty_content()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L133"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_untracked_as_diff_no_trailing_newline",
+      "label": "test_untracked_as_diff_no_trailing_newline()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L141"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_test_parse_unified_diff_staged_only",
+      "label": "test_parse_unified_diff_staged_only()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_1",
+      "label": "Parser de ``git status --porcelain=v1`` e ``DiffFile`` (handler de diff).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_21",
+      "label": "``XY=MM`` \u2014 staged E unstaged simult\u00e2neos sobre o mesmo path.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_29",
+      "label": "``??`` indica path untracked.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_82",
+      "label": "``DiffFile`` aceita ``staged_change``/``unstaged_change``/``untracked``.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L82"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_98",
+      "label": "Construir ``DiffFile`` s\u00f3 com ``status`` resulta em flags ``None``.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_114",
+      "label": "Arquivo untracked com 1 linha gera 1 hunk com header @@ -0,0 +1,1 @@.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L114"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_124",
+      "label": "Arquivo untracked multiline gera linhas prefixadas com +.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L124"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_134",
+      "label": "Arquivo vazio retorna lista vazia de hunks.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_142",
+      "label": "Conte\u00fado sem newline final deve incluir todas as linhas.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L142"
+    },
+    {
+      "id": "unit_test_sx_fs_diff_rationale_151",
+      "label": "Diff de arquivo staged (git diff --cached HEAD) produz hunks corretos.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L151"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_modified_unstaged",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_modified_staged",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_modified_both",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_untracked",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_added_staged",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_deleted_unstaged",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_rename_uses_destination",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_normalizes_windows_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_multiple_entries",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_ignores_short_lines",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_diff_file_accepts_decomposed_flags",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_diff_file_status_only_defaults_flags_to_none",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_single_line",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_multiline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_empty_content",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_no_trailing_newline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "target": "unit_test_sx_fs_diff_test_parse_unified_diff_staged_only",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_sx_fs_diff_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_21",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_modified_both",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_29",
+      "target": "unit_test_sx_fs_diff_test_parse_porcelain_untracked",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_82",
+      "target": "unit_test_sx_fs_diff_test_diff_file_accepts_decomposed_flags",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_98",
+      "target": "unit_test_sx_fs_diff_test_diff_file_status_only_defaults_flags_to_none",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_114",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_single_line",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_124",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_multiline",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_134",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_empty_content",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_142",
+      "target": "unit_test_sx_fs_diff_test_untracked_as_diff_no_trailing_newline",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_sx_fs_diff_rationale_151",
+      "target": "unit_test_sx_fs_diff_test_parse_unified_diff_staged_only",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_sx_fs_diff.py",
+      "source_location": "L151",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_modified_unstaged",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L9",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_modified_staged",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L16",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_modified_both",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_untracked",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_added_staged",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_deleted_unstaged",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_rename_uses_destination",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_normalizes_windows_paths",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_multiple_entries",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_porcelain_ignores_short_lines",
+      "callee": "_parse_porcelain_v1",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_diff_file_accepts_decomposed_flags",
+      "callee": "DiffFile",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_diff_file_status_only_defaults_flags_to_none",
+      "callee": "DiffFile",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_untracked_as_diff_single_line",
+      "callee": "_untracked_as_diff",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_untracked_as_diff_multiline",
+      "callee": "_untracked_as_diff",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_untracked_as_diff_empty_content",
+      "callee": "_untracked_as_diff",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_untracked_as_diff_no_trailing_newline",
+      "callee": "_untracked_as_diff",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L145",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_sx_fs_diff_test_parse_unified_diff_staged_only",
+      "callee": "_parse_unified_diff",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_sx_fs_diff.py",
+      "source_location": "L155",
+      "receiver": null
+    }
+  ]
+}

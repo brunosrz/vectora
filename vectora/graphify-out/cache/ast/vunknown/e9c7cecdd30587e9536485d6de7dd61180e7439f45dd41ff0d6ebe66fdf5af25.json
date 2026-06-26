@@ -1,0 +1,79 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_window_layer_tsx",
+      "label": "window-layer.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/windows/window-layer.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "windows_window_layer_windowlayer",
+      "label": "WindowLayer()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/windows/window-layer.tsx",
+      "source_location": "L12"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_window_layer_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_windows_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/window-layer.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_window_layer_tsx",
+      "target": "stores_windows_store_usewindowsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/window-layer.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_window_layer_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_file_window_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/window-layer.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_window_layer_tsx",
+      "target": "windows_file_window_filewindow",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/window-layer.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_windows_window_layer_tsx",
+      "target": "windows_window_layer_windowlayer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/windows/window-layer.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "windows_window_layer_windowlayer",
+      "callee": "useWindowsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\windows\\window-layer.tsx",
+      "source_location": "L13",
+      "receiver": null
+    }
+  ]
+}

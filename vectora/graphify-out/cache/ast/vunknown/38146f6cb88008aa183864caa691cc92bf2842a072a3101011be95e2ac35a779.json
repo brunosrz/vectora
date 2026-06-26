@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_ci_store_ts",
+      "label": "ci-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_ci_store_cirun",
+      "label": "CIRun",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L11"
+    },
+    {
+      "id": "stores_ci_store_cistate",
+      "label": "CIState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L26"
+    },
+    {
+      "id": "stores_ci_store_usecistore",
+      "label": "useCIStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L32"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_ci_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_ci_store_ts",
+      "target": "stores_ci_store_cirun",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_ci_store_ts",
+      "target": "stores_ci_store_cistate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_ci_store_ts",
+      "target": "stores_ci_store_usecistore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/ci-store.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

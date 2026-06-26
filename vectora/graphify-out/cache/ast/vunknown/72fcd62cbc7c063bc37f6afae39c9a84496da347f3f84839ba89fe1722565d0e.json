@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_api_middleware_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "backend/api/middleware/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "middleware_init_rationale_1",
+      "label": "Middlewares HTTP da API do Vectora \u2014 autentica\u00e7\u00e3o e rate limiting.  Reexporta `A",
+      "file_type": "rationale",
+      "source_file": "backend/api/middleware/__init__.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_middleware_init_py",
+      "target": "backend_api_middleware_auth",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/middleware/__init__.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_middleware_init_py",
+      "target": "backend_api_middleware_rate_limit",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/middleware/__init__.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "middleware_init_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_api_middleware_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/middleware/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

@@ -1,0 +1,74 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_tests_network_status_banner_test_tsx",
+      "label": "network-status-banner.test.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/layout/__tests__/network-status-banner.test.tsx",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_tests_network_status_banner_test_tsx",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/layout/__tests__/network-status-banner.test.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_tests_network_status_banner_test_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/layout/__tests__/network-status-banner.test.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_tests_network_status_banner_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_network_status_banner_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/layout/__tests__/network-status-banner.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_tests_network_status_banner_test_tsx",
+      "target": "layout_network_status_banner_networkstatusbanner",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/layout/__tests__/network-status-banner.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_tests_network_status_banner_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/layout/__tests__/network-status-banner.test.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_tests_network_status_banner_test_tsx",
+      "target": "hooks_use_network_status_usenetworkstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/layout/__tests__/network-status-banner.test.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

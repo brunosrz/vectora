@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_administracao_dialog_store_ts",
+      "label": "administracao-dialog-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_administracao_dialog_store_adminsubtab",
+      "label": "AdminSubTab",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L16"
+    },
+    {
+      "id": "stores_administracao_dialog_store_admindialogstate",
+      "label": "AdminDialogState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L23"
+    },
+    {
+      "id": "stores_administracao_dialog_store_useadministracaodialogstore",
+      "label": "useAdministracaoDialogStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L36"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_administracao_dialog_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_administracao_dialog_store_ts",
+      "target": "stores_administracao_dialog_store_adminsubtab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_administracao_dialog_store_ts",
+      "target": "stores_administracao_dialog_store_admindialogstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_administracao_dialog_store_ts",
+      "target": "stores_administracao_dialog_store_useadministracaodialogstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/administracao-dialog-store.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_workbench_memory_empty_desc_js",
+      "label": "workbench_memory_empty_desc.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_workbench_memory_empty_desc_en_workbench_memory_empty_desc",
+      "label": "en_workbench_memory_empty_desc()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_workbench_memory_empty_desc_es_workbench_memory_empty_desc",
+      "label": "es_workbench_memory_empty_desc()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_workbench_memory_empty_desc_pt_workbench_memory_empty_desc",
+      "label": "pt_workbench_memory_empty_desc()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_workbench_memory_empty_desc_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_workbench_memory_empty_desc_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_workbench_memory_empty_desc_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_workbench_memory_empty_desc_js",
+      "target": "messages_workbench_memory_empty_desc_en_workbench_memory_empty_desc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_workbench_memory_empty_desc_js",
+      "target": "messages_workbench_memory_empty_desc_es_workbench_memory_empty_desc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_workbench_memory_empty_desc_js",
+      "target": "messages_workbench_memory_empty_desc_pt_workbench_memory_empty_desc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/workbench_memory_empty_desc.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

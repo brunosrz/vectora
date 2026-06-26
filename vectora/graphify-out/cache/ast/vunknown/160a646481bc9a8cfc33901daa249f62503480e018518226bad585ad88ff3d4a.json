@@ -1,0 +1,244 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "label": "test_license_loop.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_license_loop_run_one_iteration",
+      "label": "_run_one_iteration()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "monkeypatch",
+      "label": "MonkeyPatch",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_license_loop_test_loop_sucesso_dorme_6h",
+      "label": "test_loop_sucesso_dorme_6h()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L40"
+    },
+    {
+      "id": "unit_test_license_loop_test_loop_license_error_nao_derruba",
+      "label": "test_loop_license_error_nao_derruba()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "unit_test_license_loop_test_loop_erro_inesperado_nao_derruba",
+      "label": "test_loop_erro_inesperado_nao_derruba()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "unit_test_license_loop_rationale_1",
+      "label": "Testes do loop de revalida\u00e7\u00e3o de licen\u00e7a do servidor (Bloco K).  O loop roda no",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_license_loop_rationale_19",
+      "label": "Executa exatamente 1 itera\u00e7\u00e3o do loop (cancela no primeiro sleep).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L19"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "backend_api",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "backend_services_license",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "unit_test_license_loop_run_one_iteration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_run_one_iteration",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "unit_test_license_loop_test_loop_sucesso_dorme_6h",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_test_loop_sucesso_dorme_6h",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "unit_test_license_loop_test_loop_license_error_nao_derruba",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_test_loop_license_error_nao_derruba",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "target": "unit_test_license_loop_test_loop_erro_inesperado_nao_derruba",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_test_loop_erro_inesperado_nao_derruba",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_test_loop_sucesso_dorme_6h",
+      "target": "unit_test_license_loop_run_one_iteration",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_test_loop_license_error_nao_derruba",
+      "target": "unit_test_license_loop_run_one_iteration",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_test_loop_erro_inesperado_nao_derruba",
+      "target": "unit_test_license_loop_run_one_iteration",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_license_loop_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_license_loop_rationale_19",
+      "target": "unit_test_license_loop_run_one_iteration",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_license_loop.py",
+      "source_location": "L19",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_license_loop_run_one_iteration",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_license_loop.py",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_license_loop_run_one_iteration",
+      "callee": "runner",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_license_loop.py",
+      "source_location": "L36",
+      "receiver": null
+    }
+  ]
+}

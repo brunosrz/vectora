@@ -1,0 +1,751 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "label": "chat-input.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_chat_input_vscodeoption",
+      "label": "VscodeOption",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L38"
+    },
+    {
+      "id": "chat_chat_input_vscodemenu",
+      "label": "VscodeMenu()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L49"
+    },
+    {
+      "id": "chat_chat_input_chatinputprops",
+      "label": "ChatInputProps",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L79"
+    },
+    {
+      "id": "chat_chat_input_empty_queued_messages",
+      "label": "EMPTY_QUEUED_MESSAGES",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L127"
+    },
+    {
+      "id": "chat_chat_input_chatinput",
+      "label": "ChatInput()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L133"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_textarea_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "ui_textarea_textarea",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tooltip_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "ui_tooltip_tooltip",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "ui_tooltip_tooltiptrigger",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "ui_tooltip_tooltipcontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_file_preview_grid_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_file_preview_grid_filepreviewgrid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_voice_input_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_voice_input_button_voiceinputbutton",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_permission_mode_menu_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_permission_mode_menu_permissionmodemenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_chat_params_menu_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_chat_params_menu_chatparamsmenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_plus_menu_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_plus_menu_plusmenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_usage_popover_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_usage_popover_usagepopover",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_slash_command_menu_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_slash_command_menu_slashcommandmenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_at_mention_menu_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "features_at_mention_menu_atmentionmenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_sidebar_workspace_selector_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "sidebar_workspace_selector_workspaceselector",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_model_selector_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "chat_model_selector_modelselector",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_icons_vscode_icon_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "icons_vscode_icon_vscodeicon",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "stores_workspaces_store_useworkspacesstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_settings_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "stores_settings_store_usesettingsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_slash_commands_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "constants_slash_commands_slashcommand",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_layout_agent_settings_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "layout_agent_settings_agentconfig",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "types_index_imageattachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "hooks_use_network_status_usenetworkstatus",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "chat_chat_input_vscodeoption",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "chat_chat_input_vscodemenu",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "chat_chat_input_chatinputprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "chat_chat_input_empty_queued_messages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_chat_input_tsx",
+      "target": "chat_chat_input_chatinput",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/chat-input.tsx",
+      "source_location": "L133",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_chat_input_vscodemenu",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_vscodemenu",
+      "callee": "workbench_open_vscode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_vscodemenu",
+      "callee": "workbench_open_vscode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "useWorkspacesStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "useSettingsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "useNetworkStatus",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "welcome_drop_files",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L274",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "input_initializing",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L298",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "network_disabled_offline",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L300",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "input_loading_placeholder",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L302",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "input_placeholder",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L303",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "network_disabled_offline",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L305",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L319",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "tooltip_chat_send",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L322",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "tooltip_chat_send",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L328",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "input_stopping",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L350",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "tooltip_chat_stop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L351",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "input_stopping",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L355",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "input_stop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L355",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "input_stopping",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L361",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_chat_input_chatinput",
+      "callee": "tooltip_chat_stop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\chat-input.tsx",
+      "source_location": "L362",
+      "receiver": null
+    }
+  ]
+}

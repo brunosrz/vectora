@@ -1,0 +1,475 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "label": "test_background_worker.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_background_worker_reset_worker_singleton",
+      "label": "_reset_worker_singleton()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_background_worker_fakequeue",
+      "label": "_FakeQueue",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "unit_test_background_worker_fakequeue_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_background_worker_fakequeue_mark_processing",
+      "label": ".mark_processing()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "unit_test_background_worker_fakequeue_archive_pending",
+      "label": ".archive_pending()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "unit_test_background_worker_record",
+      "label": "_record()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "embeddingqueuerecord",
+      "label": "EmbeddingQueueRecord",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_background_worker_test_is_rate_limit_error_detects",
+      "label": "test_is_rate_limit_error_detects()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "unit_test_background_worker_test_is_rate_limit_error_ignores_other_errors",
+      "label": "test_is_rate_limit_error_ignores_other_errors()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "unit_test_background_worker_test_trip_breaker_pauses_and_archives",
+      "label": "test_trip_breaker_pauses_and_archives()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L67"
+    },
+    {
+      "id": "unit_test_background_worker_test_trip_breaker_idempotent_across_batch",
+      "label": "test_trip_breaker_idempotent_across_batch()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L85"
+    },
+    {
+      "id": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "label": "test_process_record_rate_limit_trips_breaker_without_retry()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "monkeypatch",
+      "label": "MonkeyPatch",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_background_worker_rationale_1",
+      "label": "Tests for the embedding worker circuit breaker (backend/services/background.py).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_background_worker_rationale_25",
+      "label": "Fila m\u00ednima que conta chamadas \u2014 sem banco.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "unit_test_background_worker_rationale_86",
+      "label": "Segunda task do mesmo batch n\u00e3o re-arquiva a fila.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L86"
+    },
+    {
+      "id": "unit_test_background_worker_rationale_101",
+      "label": "Em rate limit, n\u00e3o re-tenta 3 vezes \u2014 dispara o breaker na 1a falha.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L101"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "backend_services_background",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "backend_services_background",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "backend_services_queue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_reset_worker_singleton",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_fakequeue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_fakequeue",
+      "target": "unit_test_background_worker_fakequeue_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_fakequeue",
+      "target": "unit_test_background_worker_fakequeue_mark_processing",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_fakequeue",
+      "target": "unit_test_background_worker_fakequeue_archive_pending",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_record",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_record",
+      "target": "embeddingqueuerecord",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_test_is_rate_limit_error_detects",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_test_is_rate_limit_error_ignores_other_errors",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_test_trip_breaker_pauses_and_archives",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_test_trip_breaker_idempotent_across_batch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "target": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "target": "monkeypatch",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_record",
+      "target": "embeddingqueuerecord",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_test_trip_breaker_pauses_and_archives",
+      "target": "unit_test_background_worker_fakequeue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_test_trip_breaker_idempotent_across_batch",
+      "target": "unit_test_background_worker_fakequeue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "target": "unit_test_background_worker_fakequeue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "target": "unit_test_background_worker_record",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_background_worker_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_rationale_25",
+      "target": "unit_test_background_worker_fakequeue",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_rationale_86",
+      "target": "unit_test_background_worker_test_trip_breaker_idempotent_across_batch",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_background_worker_rationale_101",
+      "target": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_background_worker.py",
+      "source_location": "L101",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_background_worker_test_is_rate_limit_error_detects",
+      "callee": "_is_rate_limit_error",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_is_rate_limit_error_detects",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_is_rate_limit_error_ignores_other_errors",
+      "callee": "_is_rate_limit_error",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_is_rate_limit_error_ignores_other_errors",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_trip_breaker_pauses_and_archives",
+      "callee": "BackgroundEmbeddingWorker",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_trip_breaker_pauses_and_archives",
+      "callee": "_trip_rate_limit_breaker",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_trip_breaker_pauses_and_archives",
+      "callee": "get_worker_pause_state",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_trip_breaker_idempotent_across_batch",
+      "callee": "BackgroundEmbeddingWorker",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_trip_breaker_idempotent_across_batch",
+      "callee": "_trip_rate_limit_breaker",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_trip_breaker_idempotent_across_batch",
+      "callee": "_trip_rate_limit_breaker",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "callee": "BackgroundEmbeddingWorker",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_background_worker_test_process_record_rate_limit_trips_breaker_without_retry",
+      "callee": "_process_record",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_background_worker.py",
+      "source_location": "L110",
+      "receiver": null
+    }
+  ]
+}

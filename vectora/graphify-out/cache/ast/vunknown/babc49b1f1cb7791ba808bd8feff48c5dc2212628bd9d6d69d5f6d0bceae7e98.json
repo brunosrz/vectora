@@ -1,0 +1,1053 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "label": "gh.py",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_gh_gh_run",
+      "label": "_gh_run()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "tools_gh_resolve_cwd",
+      "label": "_resolve_cwd()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "runnableconfig",
+      "label": "RunnableConfig",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_gh_gh_pr_list",
+      "label": "gh_pr_list()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "injectedtoolarg",
+      "label": "InjectedToolArg",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_gh_gh_pr_create",
+      "label": "gh_pr_create()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L140"
+    },
+    {
+      "id": "tools_gh_gh_pr_view",
+      "label": "gh_pr_view()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L175"
+    },
+    {
+      "id": "tools_gh_gh_pr_merge",
+      "label": "gh_pr_merge()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L216"
+    },
+    {
+      "id": "tools_gh_gh_issue_list",
+      "label": "gh_issue_list()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L246"
+    },
+    {
+      "id": "tools_gh_gh_issue_create",
+      "label": "gh_issue_create()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L288"
+    },
+    {
+      "id": "tools_gh_gh_issue_view",
+      "label": "gh_issue_view()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L323"
+    },
+    {
+      "id": "tools_gh_gh_issue_comment",
+      "label": "gh_issue_comment()",
+      "file_type": "code",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L366"
+    },
+    {
+      "id": "tools_gh_rationale_1",
+      "label": "GitHub CLI tools \u2014 opera\u00e7\u00f5es via `gh` CLI.  G3 \u2014 Bloco G: gh_pr_list, gh_pr_crea",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_gh_rationale_39",
+      "label": "Executa `gh <args>` e retorna dict com status + dados.      - Sucesso: {\"status\"",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "tools_gh_rationale_77",
+      "label": "Resolve workspace \u2192 cwd para passar ao subprocess gh.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "tools_gh_rationale_105",
+      "label": "Lista pull requests do reposit\u00f3rio.      Args:         state: \"open\" | \"closed\"",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L105"
+    },
+    {
+      "id": "tools_gh_rationale_148",
+      "label": "Cria um pull request a partir da branch atual.      Args:         title: T\u00edtulo",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L148"
+    },
+    {
+      "id": "tools_gh_rationale_180",
+      "label": "Exibe detalhes de um pull request.      Args:         pr_number: N\u00famero do PR.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L180"
+    },
+    {
+      "id": "tools_gh_rationale_222",
+      "label": "Faz merge de um pull request.      \u26a0\ufe0f Opera\u00e7\u00e3o destrutiva \u2014 integra commits e po",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L222"
+    },
+    {
+      "id": "tools_gh_rationale_252",
+      "label": "Lista issues do reposit\u00f3rio.      Args:         state: \"open\" | \"closed\" | \"all\"",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L252"
+    },
+    {
+      "id": "tools_gh_rationale_295",
+      "label": "Cria uma issue no reposit\u00f3rio.      Args:         title: T\u00edtulo da issue (obriga",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L295"
+    },
+    {
+      "id": "tools_gh_rationale_328",
+      "label": "Exibe detalhes de uma issue.      Args:         issue_number: N\u00famero da issue.",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L328"
+    },
+    {
+      "id": "tools_gh_rationale_372",
+      "label": "Adiciona um coment\u00e1rio a uma issue.      Args:         issue_number: N\u00famero da i",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L372"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "subprocess",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "langchain_core_runnables",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "langchain_core_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_resolve_cwd",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_pr_list",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_list",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_list",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_pr_create",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_create",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_create",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_pr_view",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_view",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_view",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_pr_merge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L216",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_merge",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L216",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_merge",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L216",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_issue_list",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_list",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_list",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_issue_create",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L288",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_create",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L288",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_create",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L288",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_issue_view",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L323",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_view",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L323",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_view",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L323",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "target": "tools_gh_gh_issue_comment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L366",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_comment",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L366",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_comment",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L366",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_list",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_list",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_create",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L157",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_create",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_view",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_view",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L189",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_merge",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_pr_merge",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L234",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_list",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L259",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_list",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L270",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_create",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L303",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_create",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L311",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_view",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L334",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_view",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L339",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_comment",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L379",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_gh_issue_comment",
+      "target": "tools_gh_gh_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L388",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_gh_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_39",
+      "target": "tools_gh_gh_run",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_77",
+      "target": "tools_gh_resolve_cwd",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_105",
+      "target": "tools_gh_gh_pr_list",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_148",
+      "target": "tools_gh_gh_pr_create",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L148",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_180",
+      "target": "tools_gh_gh_pr_view",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L180",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_222",
+      "target": "tools_gh_gh_pr_merge",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L222",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_252",
+      "target": "tools_gh_gh_issue_list",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L252",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_295",
+      "target": "tools_gh_gh_issue_create",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L295",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_328",
+      "target": "tools_gh_gh_issue_view",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L328",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gh_rationale_372",
+      "target": "tools_gh_gh_issue_comment",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gh.py",
+      "source_location": "L372",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tools_gh_gh_run",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_run",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_run",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_run",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_resolve_cwd",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_resolve_cwd",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_resolve_cwd",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_resolve_cwd",
+      "callee": "get_or_create",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_list",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L129",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_create",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_create",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_create",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L164",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L188",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_view",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L202",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L203",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L205",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_merge",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L233",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_pr_merge",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L272",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_list",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L274",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L275",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_list",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L277",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_create",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L305",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_create",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L312",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L336",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L350",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_view",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L352",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L353",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_view",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L355",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_comment",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L381",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_comment",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L385",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gh_gh_issue_comment",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gh.py",
+      "source_location": "L389",
+      "receiver": null
+    }
+  ]
+}

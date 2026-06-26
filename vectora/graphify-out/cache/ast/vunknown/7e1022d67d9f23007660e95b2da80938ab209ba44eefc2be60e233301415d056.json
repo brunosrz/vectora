@@ -1,0 +1,465 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "label": "workspaces-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_workspaces_store_workspacetransport",
+      "label": "WorkspaceTransport",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L36"
+    },
+    {
+      "id": "stores_workspaces_store_workspaceinfo",
+      "label": "WorkspaceInfo",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L38"
+    },
+    {
+      "id": "stores_workspaces_store_direntry",
+      "label": "DirEntry",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L56"
+    },
+    {
+      "id": "stores_workspaces_store_browseresult",
+      "label": "BrowseResult",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L66"
+    },
+    {
+      "id": "stores_workspaces_store_saferootsummary",
+      "label": "SafeRootSummary",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L81"
+    },
+    {
+      "id": "stores_workspaces_store_codespacesummary",
+      "label": "CodespaceSummary",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L89"
+    },
+    {
+      "id": "stores_workspaces_store_workspacespending",
+      "label": "WorkspacesPending",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L97"
+    },
+    {
+      "id": "stores_workspaces_store_pending_idle",
+      "label": "PENDING_IDLE",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L104"
+    },
+    {
+      "id": "stores_workspaces_store_workspacesstate",
+      "label": "WorkspacesState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L111"
+    },
+    {
+      "id": "stores_workspaces_store_fetchjson",
+      "label": "fetchJson()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L177"
+    },
+    {
+      "id": "stores_workspaces_store_readerrormessage",
+      "label": "readErrorMessage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L190"
+    },
+    {
+      "id": "stores_workspaces_store_httperrormessage",
+      "label": "httpErrorMessage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L201"
+    },
+    {
+      "id": "stores_workspaces_store_setpending",
+      "label": "setPending()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L220"
+    },
+    {
+      "id": "stores_workspaces_store_useworkspacesstore",
+      "label": "useWorkspacesStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L228"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "middleware",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_fetch_retry_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "utils_fetch_retry_fetchjsonwithretry",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "utils_fetch_retry_fetchhttperror",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_async_state_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "types_async_state_asyncerror",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "types_async_state_asyncloading",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "types_async_state_asyncsuccess",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "types_async_state_hasloaded",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "types_async_state_toerrormessage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "types_async_state_asyncstatus",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "types_async_state_actionresult",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_workspacetransport",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_workspaceinfo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_direntry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_browseresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_saferootsummary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_codespacesummary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_workspacespending",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_pending_idle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_workspacesstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_fetchjson",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L177",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_readerrormessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_httperrormessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_setpending",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L220",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_workspaces_store_ts",
+      "target": "stores_workspaces_store_useworkspacesstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/workspaces-store.ts",
+      "source_location": "L228",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "stores_workspaces_store_fetchjson",
+      "callee": "toUpperCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\workspaces-store.ts",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_workspaces_store_fetchjson",
+      "callee": "fetchJsonWithRetry",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\workspaces-store.ts",
+      "source_location": "L180",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_workspaces_store_fetchjson",
+      "callee": "fetch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\workspaces-store.ts",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_workspaces_store_fetchjson",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\workspaces-store.ts",
+      "source_location": "L183",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_workspaces_store_readerrormessage",
+      "callee": "catch",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\workspaces-store.ts",
+      "source_location": "L191",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_workspaces_store_readerrormessage",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\workspaces-store.ts",
+      "source_location": "L191",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_workspaces_store_httperrormessage",
+      "callee": "parse",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\workspaces-store.ts",
+      "source_location": "L204",
+      "receiver": null
+    }
+  ]
+}

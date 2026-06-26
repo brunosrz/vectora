@@ -1,0 +1,473 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "label": "test_threads_history_restore.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_threads_history_restore_roundtripstate",
+      "label": "_RoundtripState",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L23"
+    },
+    {
+      "id": "typeddict",
+      "label": "TypedDict",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_threads_history_restore_fakestate",
+      "label": "_FakeState",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "unit_test_threads_history_restore_fakestate_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "unit_test_threads_history_restore_patch_graph",
+      "label": "_patch_graph()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "label": "test_returns_clean_human_assistant_pairs()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "unit_test_threads_history_restore_test_multimodal_assistant_content_extracted",
+      "label": "test_multimodal_assistant_content_extracted()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L79"
+    },
+    {
+      "id": "unit_test_threads_history_restore_test_empty_state_returns_empty",
+      "label": "test_empty_state_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "unit_test_threads_history_restore_test_no_messages_channel_returns_empty",
+      "label": "test_no_messages_channel_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L97"
+    },
+    {
+      "id": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "label": "test_checkpointer_roundtrip_survives_reconnect()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L103"
+    },
+    {
+      "id": "unit_test_threads_history_restore_rationale_1",
+      "label": "Recupera\u00e7\u00e3o de hist\u00f3rico do checkpointer (regress\u00e3o do bug #1).  A sess\u00e3o abria",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_threads_history_restore_rationale_37",
+      "label": "Patcha get_user_agent para devolver um grafo fake cujo aget_state retorna messag",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "unit_test_threads_history_restore_rationale_104",
+      "label": "Round-trip real: escreve numa conex\u00e3o, reabre em OUTRA e recupera.      Reproduz",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L104"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "langchain_core_messages",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "langgraph_graph_message",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "backend_services",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_roundtripstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_roundtripstate",
+      "target": "typeddict",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_fakestate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_fakestate",
+      "target": "unit_test_threads_history_restore_fakestate_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_patch_graph",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_test_multimodal_assistant_content_extracted",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_test_empty_state_returns_empty",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_test_no_messages_channel_returns_empty",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "target": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "target": "unit_test_threads_history_restore_patch_graph",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_test_multimodal_assistant_content_extracted",
+      "target": "unit_test_threads_history_restore_patch_graph",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_test_empty_state_returns_empty",
+      "target": "unit_test_threads_history_restore_patch_graph",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_test_no_messages_channel_returns_empty",
+      "target": "unit_test_threads_history_restore_patch_graph",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_threads_history_restore_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_rationale_37",
+      "target": "unit_test_threads_history_restore_patch_graph",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_threads_history_restore_rationale_104",
+      "target": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_threads_history_restore.py",
+      "source_location": "L104",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_threads_history_restore_patch_graph",
+      "callee": "object",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "callee": "HumanMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "callee": "AIMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "callee": "HumanMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "callee": "AIMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "callee": "ToolMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "callee": "AIMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_returns_clean_human_assistant_pairs",
+      "callee": "aget_thread_messages",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_multimodal_assistant_content_extracted",
+      "callee": "HumanMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_multimodal_assistant_content_extracted",
+      "callee": "AIMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_multimodal_assistant_content_extracted",
+      "callee": "aget_thread_messages",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_empty_state_returns_empty",
+      "callee": "aget_thread_messages",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_no_messages_channel_returns_empty",
+      "callee": "aget_thread_messages",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "callee": "from_conn_string",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "callee": "_build",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "callee": "HumanMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "callee": "from_conn_string",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L134",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "callee": "aget_state",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L135",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_threads_history_restore_test_checkpointer_roundtrip_survives_reconnect",
+      "callee": "_build",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_threads_history_restore.py",
+      "source_location": "L135",
+      "receiver": null
+    }
+  ]
+}

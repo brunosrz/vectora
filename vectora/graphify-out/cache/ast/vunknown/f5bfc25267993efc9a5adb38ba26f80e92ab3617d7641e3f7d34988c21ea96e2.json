@@ -1,0 +1,503 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "label": "gmail.py",
+      "file_type": "code",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_gmail_token",
+      "label": "_token()",
+      "file_type": "code",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "tools_gmail_decode_body",
+      "label": "_decode_body()",
+      "file_type": "code",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "tools_gmail_extract_text",
+      "label": "_extract_text()",
+      "file_type": "code",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "tools_gmail_gmail_list",
+      "label": "gmail_list()",
+      "file_type": "code",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "tools_gmail_gmail_read",
+      "label": "gmail_read()",
+      "file_type": "code",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L113"
+    },
+    {
+      "id": "tools_gmail_rationale_1",
+      "label": "Tools de Gmail para o agente.  Requer GOOGLE_ACCESS_TOKEN com escopo gmail.reado",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_gmail_rationale_58",
+      "label": "Lista emails do Gmail com filtros opcionais.      Args:         query: Filtro GM",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "tools_gmail_rationale_114",
+      "label": "L\u00ea o conte\u00fado completo de um email do Gmail.      Args:         message_id: ID d",
+      "file_type": "rationale",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L114"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "base64",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "tools_gmail_token",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "tools_gmail_decode_body",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "tools_gmail_extract_text",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "tools_gmail_gmail_list",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "target": "tools_gmail_gmail_read",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gmail_extract_text",
+      "target": "tools_gmail_decode_body",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gmail_gmail_list",
+      "target": "tools_gmail_token",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gmail_gmail_read",
+      "target": "tools_gmail_token",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gmail_gmail_read",
+      "target": "tools_gmail_extract_text",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gmail_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_gmail_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gmail_rationale_58",
+      "target": "tools_gmail_gmail_list",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_gmail_rationale_114",
+      "target": "tools_gmail_gmail_read",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/gmail.py",
+      "source_location": "L114",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tools_gmail_token",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_token",
+      "callee": "RuntimeError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L22",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_decode_body",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_decode_body",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_decode_body",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_decode_body",
+      "callee": "urlsafe_b64decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_extract_text",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_extract_text",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_extract_text",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "raise_for_status",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L106",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_list",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "raise_for_status",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L129",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L133",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_gmail_gmail_read",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\gmail.py",
+      "source_location": "L144",
+      "receiver": null
+    }
+  ]
+}

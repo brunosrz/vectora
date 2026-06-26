@@ -1,0 +1,497 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "label": "file-viewer.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "workbench_file_viewer_monacoreadonly",
+      "label": "MonacoReadOnly",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L19"
+    },
+    {
+      "id": "workbench_file_viewer_ismarkdown",
+      "label": "isMarkdown()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L24"
+    },
+    {
+      "id": "workbench_file_viewer_mediakind",
+      "label": "MediaKind",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L29"
+    },
+    {
+      "id": "workbench_file_viewer_media_by_ext",
+      "label": "MEDIA_BY_EXT",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L31"
+    },
+    {
+      "id": "workbench_file_viewer_getmediakind",
+      "label": "getMediaKind()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L57"
+    },
+    {
+      "id": "workbench_file_viewer_rawfileurl",
+      "label": "rawFileUrl()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L63"
+    },
+    {
+      "id": "workbench_file_viewer_mediaview",
+      "label": "MediaView()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L69"
+    },
+    {
+      "id": "workbench_file_viewer_rawtext",
+      "label": "RawText",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L119"
+    },
+    {
+      "id": "workbench_file_viewer_inlinetexteditor",
+      "label": "InlineTextEditor()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L126"
+    },
+    {
+      "id": "workbench_file_viewer_fileviewer",
+      "label": "FileViewer()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L194"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "next_themes",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_markdown_view_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_markdown_view_markdownview",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_monacoreadonly",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_ismarkdown",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_mediakind",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_media_by_ext",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_getmediakind",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_rawfileurl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_mediaview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_rawtext",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_inlinetexteditor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_file_viewer_tsx",
+      "target": "workbench_file_viewer_fileviewer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L194",
+      "weight": 1.0
+    },
+    {
+      "source": "workbench_file_viewer_mediaview",
+      "target": "workbench_file_viewer_rawfileurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "workbench_file_viewer_fileviewer",
+      "target": "workbench_file_viewer_getmediakind",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "workbench_file_viewer_fileviewer",
+      "target": "workbench_file_viewer_rawfileurl",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L249",
+      "weight": 1.0
+    },
+    {
+      "source": "workbench_file_viewer_fileviewer",
+      "target": "workbench_file_viewer_ismarkdown",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/file-viewer.tsx",
+      "source_location": "L258",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "workbench_file_viewer_ismarkdown",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_ismarkdown",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_ismarkdown",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_getmediakind",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_getmediakind",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_getmediakind",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_inlinetexteditor",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_inlinetexteditor",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_inlinetexteditor",
+      "callee": "useToastStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_inlinetexteditor",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_inlinetexteditor",
+      "callee": "workbench_files_save",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "useTheme",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L202",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L204",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L205",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L206",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L208",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L209",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L211",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "workbench_files_binary",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "workbench_files_download",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L253",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "workbench_files_read_only_truncated",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L264",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "workbench_files_cancel",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "workbench_files_edit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L307",
+      "receiver": null
+    },
+    {
+      "caller_nid": "workbench_file_viewer_fileviewer",
+      "callee": "workbench_files_read_only_truncated",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\file-viewer.tsx",
+      "source_location": "L329",
+      "receiver": null
+    }
+  ]
+}

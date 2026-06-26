@@ -1,0 +1,1436 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "label": "test_context_graph_semantic.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels",
+      "label": "TestNeutraliseInjectionSentinels",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_untrusted_source_tag",
+      "label": ".test_neutralises_untrusted_source_tag()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_im_start_token",
+      "label": ".test_neutralises_im_start_token()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_sys_delimiters",
+      "label": ".test_neutralises_sys_delimiters()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_leaves_normal_text_unchanged",
+      "label": ".test_leaves_normal_text_unchanged()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L45"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testwrapuntrusted",
+      "label": "TestWrapUntrusted",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testwrapuntrusted_test_wraps_content_with_sha",
+      "label": ".test_wraps_content_with_sha()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testwrapuntrusted_test_defangs_injection_in_content",
+      "label": ".test_defangs_injection_in_content()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L63"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testparsellmjson",
+      "label": "TestParseLlmJson",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testparsellmjson_test_clean_json",
+      "label": ".test_clean_json()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L71"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_markdown_fence_json",
+      "label": ".test_json_with_markdown_fence_json()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L78"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_bare_fence",
+      "label": ".test_json_with_bare_fence()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L85"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_preamble_fallback",
+      "label": ".test_json_with_preamble_fallback()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testparsellmjson_test_invalid_json_returns_empty",
+      "label": ".test_invalid_json_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L99"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testparsellmjson_test_oversized_returns_empty",
+      "label": ".test_oversized_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L106"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testresponseishollow",
+      "label": "TestResponseIsHollow",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L115"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testresponseishollow_test_none_content_is_hollow",
+      "label": ".test_none_content_is_hollow()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L116"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testresponseishollow_test_empty_content_is_hollow",
+      "label": ".test_empty_content_is_hollow()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L121"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testresponseishollow_test_no_nodes_edges_is_hollow",
+      "label": ".test_no_nodes_edges_is_hollow()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L126"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testresponseishollow_test_with_nodes_not_hollow",
+      "label": ".test_with_nodes_not_hollow()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L131"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testresponseishollow_test_with_hyperedges_not_hollow",
+      "label": ".test_with_hyperedges_not_hollow()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L136"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testestimatefiletokens",
+      "label": "TestEstimateFileTokens",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L142"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testestimatefiletokens_test_existing_file",
+      "label": ".test_existing_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L143"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testestimatefiletokens_test_vision_ext_returns_constant",
+      "label": ".test_vision_ext_returns_constant()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L151"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testestimatefiletokens_test_missing_file_returns_zero",
+      "label": ".test_missing_file_returns_zero()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L160"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testestimatefiletokens_test_file_slice_uses_range",
+      "label": ".test_file_slice_uses_range()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testpackchunks",
+      "label": "TestPackChunks",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L177"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testpackchunks_test_empty_list_returns_empty",
+      "label": ".test_empty_list_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L178"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testpackchunks_test_negative_budget_raises",
+      "label": ".test_negative_budget_raises()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L183"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testpackchunks_test_single_chunk_when_within_budget",
+      "label": ".test_single_chunk_when_within_budget()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L191"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testpackchunks_test_multiple_chunks_when_over_budget",
+      "label": ".test_multiple_chunks_when_over_budget()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L199"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testmergeresults",
+      "label": "TestMergeResults",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L212"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testmergeresults_test_merges_lists",
+      "label": ".test_merges_lists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L213"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testlookslikecontextexceeded",
+      "label": "TestLooksLikeContextExceeded",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L237"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "label": ".test_detects_context_markers()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L238"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_other_errors_not_detected",
+      "label": ".test_other_errors_not_detected()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L245"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractionsystemprompt",
+      "label": "TestExtractionSystemPrompt",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L251"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractionsystemprompt_test_base_mode",
+      "label": ".test_base_mode()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L252"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractionsystemprompt_test_deep_mode_adds_suffix",
+      "label": ".test_deep_mode_adds_suffix()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L258"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractsemantic",
+      "label": "TestExtractSemantic",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L268"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractsemantic_test_empty_files_returns_empty",
+      "label": ".test_empty_files_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L270"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "label": ".test_mocked_llm_returns_nodes()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L278"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "label": ".test_llm_failure_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L297"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "label": ".test_hollow_response_sets_finish_reason_length()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L312"
+    },
+    {
+      "id": "unit_test_context_graph_semantic_rationale_1",
+      "label": "Testes para backend/services/context_graph/semantic.py.  Cobre: _neutralise_inje",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels",
+      "target": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_untrusted_source_tag",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels",
+      "target": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_im_start_token",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels",
+      "target": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_sys_delimiters",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels",
+      "target": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_leaves_normal_text_unchanged",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testwrapuntrusted",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testwrapuntrusted",
+      "target": "unit_test_context_graph_semantic_testwrapuntrusted_test_wraps_content_with_sha",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testwrapuntrusted",
+      "target": "unit_test_context_graph_semantic_testwrapuntrusted_test_defangs_injection_in_content",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testparsellmjson",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testparsellmjson",
+      "target": "unit_test_context_graph_semantic_testparsellmjson_test_clean_json",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testparsellmjson",
+      "target": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_markdown_fence_json",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testparsellmjson",
+      "target": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_bare_fence",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testparsellmjson",
+      "target": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_preamble_fallback",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testparsellmjson",
+      "target": "unit_test_context_graph_semantic_testparsellmjson_test_invalid_json_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testparsellmjson",
+      "target": "unit_test_context_graph_semantic_testparsellmjson_test_oversized_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testresponseishollow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testresponseishollow",
+      "target": "unit_test_context_graph_semantic_testresponseishollow_test_none_content_is_hollow",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testresponseishollow",
+      "target": "unit_test_context_graph_semantic_testresponseishollow_test_empty_content_is_hollow",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testresponseishollow",
+      "target": "unit_test_context_graph_semantic_testresponseishollow_test_no_nodes_edges_is_hollow",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testresponseishollow",
+      "target": "unit_test_context_graph_semantic_testresponseishollow_test_with_nodes_not_hollow",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testresponseishollow",
+      "target": "unit_test_context_graph_semantic_testresponseishollow_test_with_hyperedges_not_hollow",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testestimatefiletokens",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens",
+      "target": "unit_test_context_graph_semantic_testestimatefiletokens_test_existing_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens_test_existing_file",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens",
+      "target": "unit_test_context_graph_semantic_testestimatefiletokens_test_vision_ext_returns_constant",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens_test_vision_ext_returns_constant",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens",
+      "target": "unit_test_context_graph_semantic_testestimatefiletokens_test_missing_file_returns_zero",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens_test_missing_file_returns_zero",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens",
+      "target": "unit_test_context_graph_semantic_testestimatefiletokens_test_file_slice_uses_range",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testestimatefiletokens_test_file_slice_uses_range",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testpackchunks",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L177",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testpackchunks",
+      "target": "unit_test_context_graph_semantic_testpackchunks_test_empty_list_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L178",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testpackchunks",
+      "target": "unit_test_context_graph_semantic_testpackchunks_test_negative_budget_raises",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testpackchunks_test_negative_budget_raises",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testpackchunks",
+      "target": "unit_test_context_graph_semantic_testpackchunks_test_single_chunk_when_within_budget",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testpackchunks_test_single_chunk_when_within_budget",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testpackchunks",
+      "target": "unit_test_context_graph_semantic_testpackchunks_test_multiple_chunks_when_over_budget",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testpackchunks_test_multiple_chunks_when_over_budget",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testmergeresults",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L212",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testmergeresults",
+      "target": "unit_test_context_graph_semantic_testmergeresults_test_merges_lists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L213",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testlookslikecontextexceeded",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L237",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testlookslikecontextexceeded",
+      "target": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testlookslikecontextexceeded",
+      "target": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_other_errors_not_detected",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testextractionsystemprompt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L251",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractionsystemprompt",
+      "target": "unit_test_context_graph_semantic_testextractionsystemprompt_test_base_mode",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L252",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractionsystemprompt",
+      "target": "unit_test_context_graph_semantic_testextractionsystemprompt_test_deep_mode_adds_suffix",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L258",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "target": "unit_test_context_graph_semantic_testextractsemantic",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic",
+      "target": "unit_test_context_graph_semantic_testextractsemantic_test_empty_files_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L270",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic_test_empty_files_returns_empty",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L270",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic",
+      "target": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L278",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L278",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic",
+      "target": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L297",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L297",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic",
+      "target": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L312",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L312",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_semantic_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_semantic_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_semantic.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_untrusted_source_tag",
+      "callee": "_neutralise_injection_sentinels",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_im_start_token",
+      "callee": "_neutralise_injection_sentinels",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_neutralises_sys_delimiters",
+      "callee": "_neutralise_injection_sentinels",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testneutraliseinjectionsentinels_test_leaves_normal_text_unchanged",
+      "callee": "_neutralise_injection_sentinels",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testwrapuntrusted_test_wraps_content_with_sha",
+      "callee": "_wrap_untrusted",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L58",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testwrapuntrusted_test_defangs_injection_in_content",
+      "callee": "_wrap_untrusted",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_clean_json",
+      "callee": "_parse_llm_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_markdown_fence_json",
+      "callee": "_parse_llm_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_markdown_fence_json",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_bare_fence",
+      "callee": "_parse_llm_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_preamble_fallback",
+      "callee": "_parse_llm_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_json_with_preamble_fallback",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_invalid_json_returns_empty",
+      "callee": "_parse_llm_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testparsellmjson_test_oversized_returns_empty",
+      "callee": "_parse_llm_json",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testresponseishollow_test_none_content_is_hollow",
+      "callee": "_response_is_hollow",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testresponseishollow_test_empty_content_is_hollow",
+      "callee": "_response_is_hollow",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testresponseishollow_test_no_nodes_edges_is_hollow",
+      "callee": "_response_is_hollow",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L129",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testresponseishollow_test_with_nodes_not_hollow",
+      "callee": "_response_is_hollow",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L134",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testresponseishollow_test_with_hyperedges_not_hollow",
+      "callee": "_response_is_hollow",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_existing_file",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L147",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_existing_file",
+      "callee": "_estimate_file_tokens",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_vision_ext_returns_constant",
+      "callee": "write_bytes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L156",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_vision_ext_returns_constant",
+      "callee": "_estimate_file_tokens",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_missing_file_returns_zero",
+      "callee": "_estimate_file_tokens",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_file_slice_uses_range",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_file_slice_uses_range",
+      "callee": "FileSlice",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testestimatefiletokens_test_file_slice_uses_range",
+      "callee": "_estimate_file_tokens",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_empty_list_returns_empty",
+      "callee": "_pack_chunks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_negative_budget_raises",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_negative_budget_raises",
+      "callee": "raises",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L188",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_negative_budget_raises",
+      "callee": "_pack_chunks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L189",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_single_chunk_when_within_budget",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_single_chunk_when_within_budget",
+      "callee": "_pack_chunks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L196",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_multiple_chunks_when_over_budget",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L205",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_multiple_chunks_when_over_budget",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L206",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testpackchunks_test_multiple_chunks_when_over_budget",
+      "callee": "_pack_chunks",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L208",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testmergeresults_test_merges_lists",
+      "callee": "_merge_results",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "callee": "_looks_like_context_exceeded",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L241",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L241",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "callee": "_looks_like_context_exceeded",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L242",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L242",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "callee": "_looks_like_context_exceeded",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L243",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_detects_context_markers",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L243",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_other_errors_not_detected",
+      "callee": "_looks_like_context_exceeded",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L248",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testlookslikecontextexceeded_test_other_errors_not_detected",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L248",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractionsystemprompt_test_base_mode",
+      "callee": "_extraction_system",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L255",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractionsystemprompt_test_deep_mode_adds_suffix",
+      "callee": "_extraction_system",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L264",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractionsystemprompt_test_deep_mode_adds_suffix",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L265",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_empty_files_returns_empty",
+      "callee": "extract_semantic",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L273",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L284",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "callee": "AsyncMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L288",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "callee": "AsyncMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L289",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L291",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "callee": "extract_semantic",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L292",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_mocked_llm_returns_nodes",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L294",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L301",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "callee": "AsyncMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L303",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "callee": "AsyncMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L304",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "callee": "Exception",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L304",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L306",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_llm_failure_returns_empty",
+      "callee": "extract_semantic",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L307",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L316",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L318",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "callee": "AsyncMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L322",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "callee": "AsyncMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L323",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L325",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_semantic_testextractsemantic_test_hollow_response_sets_finish_reason_length",
+      "callee": "extract_semantic",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_semantic.py",
+      "source_location": "L326",
+      "receiver": null
+    }
+  ]
+}

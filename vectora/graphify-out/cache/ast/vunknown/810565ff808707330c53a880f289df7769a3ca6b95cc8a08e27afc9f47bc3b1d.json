@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_input_stop_js",
+      "label": "input_stop.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_input_stop_en_input_stop",
+      "label": "en_input_stop()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_input_stop_es_input_stop",
+      "label": "es_input_stop()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_input_stop_pt_input_stop",
+      "label": "pt_input_stop()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_input_stop_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_input_stop_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_input_stop_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_input_stop_js",
+      "target": "messages_input_stop_en_input_stop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_input_stop_js",
+      "target": "messages_input_stop_es_input_stop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_input_stop_js",
+      "target": "messages_input_stop_pt_input_stop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/input_stop.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

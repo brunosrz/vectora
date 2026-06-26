@@ -1,0 +1,2503 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "label": "oauth.py",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_oauth_relay_callback_url",
+      "label": "_relay_callback_url()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_oauth_get_user",
+      "label": "_get_user()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L231"
+    },
+    {
+      "id": "request",
+      "label": "Request",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_oauth_github_cfg",
+      "label": "_github_cfg()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L238"
+    },
+    {
+      "id": "handlers_oauth_list_integrations",
+      "label": "list_integrations()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L268"
+    },
+    {
+      "id": "handlers_oauth_verify_integration",
+      "label": "verify_integration()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L294"
+    },
+    {
+      "id": "handlers_oauth_verify_apikey",
+      "label": "_verify_apikey()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L317"
+    },
+    {
+      "id": "handlers_oauth_github_oauth_start",
+      "label": "github_oauth_start()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L446"
+    },
+    {
+      "id": "redirectresponse",
+      "label": "RedirectResponse",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_oauth_github_oauth_callback",
+      "label": "github_oauth_callback()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L468"
+    },
+    {
+      "id": "handlers_oauth_github_oauth_status",
+      "label": "github_oauth_status()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L519"
+    },
+    {
+      "id": "handlers_oauth_github_oauth_disconnect",
+      "label": "github_oauth_disconnect()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L554"
+    },
+    {
+      "id": "handlers_oauth_gitlab_cfg",
+      "label": "_gitlab_cfg()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L572"
+    },
+    {
+      "id": "handlers_oauth_gitlab_oauth_start",
+      "label": "gitlab_oauth_start()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L590"
+    },
+    {
+      "id": "handlers_oauth_gitlab_oauth_callback",
+      "label": "gitlab_oauth_callback()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L608"
+    },
+    {
+      "id": "handlers_oauth_gitlab_oauth_status",
+      "label": "gitlab_oauth_status()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L652"
+    },
+    {
+      "id": "handlers_oauth_gitlab_oauth_disconnect",
+      "label": "gitlab_oauth_disconnect()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L683"
+    },
+    {
+      "id": "handlers_oauth_google_cfg",
+      "label": "_google_cfg()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L699"
+    },
+    {
+      "id": "handlers_oauth_google_oauth_start",
+      "label": "google_oauth_start()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L716"
+    },
+    {
+      "id": "handlers_oauth_google_oauth_callback",
+      "label": "google_oauth_callback()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L740"
+    },
+    {
+      "id": "handlers_oauth_google_oauth_status",
+      "label": "google_oauth_status()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L790"
+    },
+    {
+      "id": "handlers_oauth_google_oauth_disconnect",
+      "label": "google_oauth_disconnect()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L827"
+    },
+    {
+      "id": "handlers_oauth_slack_cfg",
+      "label": "_slack_cfg()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L844"
+    },
+    {
+      "id": "handlers_oauth_slack_oauth_start",
+      "label": "slack_oauth_start()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L861"
+    },
+    {
+      "id": "handlers_oauth_slack_oauth_callback",
+      "label": "slack_oauth_callback()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L880"
+    },
+    {
+      "id": "handlers_oauth_slack_oauth_status",
+      "label": "slack_oauth_status()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L924"
+    },
+    {
+      "id": "handlers_oauth_slack_oauth_disconnect",
+      "label": "slack_oauth_disconnect()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L961"
+    },
+    {
+      "id": "handlers_oauth_rationale_1",
+      "label": "Handler de OAuth e registry de integra\u00e7\u00f5es externas.  O1 \u2014 API Key integrations:",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_oauth_rationale_41",
+      "label": "Retorna URL de callback via relay se token dispon\u00edvel, ou None.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L41"
+    },
+    {
+      "id": "handlers_oauth_rationale_239",
+      "label": "L\u00ea configura\u00e7\u00e3o OAuth do GitHub nas env vars.      Retorna (client_id, client_se",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L239"
+    },
+    {
+      "id": "handlers_oauth_rationale_269",
+      "label": "Lista todas as integra\u00e7\u00f5es com status de conex\u00e3o do usu\u00e1rio atual.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L269"
+    },
+    {
+      "id": "handlers_oauth_rationale_295",
+      "label": "Testa se a chave/token da integra\u00e7\u00e3o est\u00e1 funcional.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L295"
+    },
+    {
+      "id": "handlers_oauth_rationale_318",
+      "label": "Faz uma chamada m\u00ednima para validar a chave de cada provedor.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L318"
+    },
+    {
+      "id": "handlers_oauth_rationale_447",
+      "label": "Inicia o fluxo OAuth do GitHub \u2014 redireciona para github.com/login/oauth.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L447"
+    },
+    {
+      "id": "handlers_oauth_rationale_471",
+      "label": "Callback do GitHub \u2014 troca code por token e salva como env_override.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L471"
+    },
+    {
+      "id": "handlers_oauth_rationale_520",
+      "label": "Retorna se o GitHub est\u00e1 conectado e o username associado.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L520"
+    },
+    {
+      "id": "handlers_oauth_rationale_555",
+      "label": "Remove o GITHUB_TOKEN dos env_overrides do usu\u00e1rio.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L555"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "fastapi_responses",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_relay_callback_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_relay_callback_url",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_get_user",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_get_user",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_get_user",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_github_cfg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_list_integrations",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_list_integrations",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_verify_integration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L294",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_verify_integration",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L294",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_verify_apikey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L317",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_github_oauth_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L446",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_start",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L446",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_start",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L446",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_github_oauth_callback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L468",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_callback",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L468",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L468",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_github_oauth_status",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L519",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_status",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L519",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_github_oauth_disconnect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L554",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_disconnect",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L554",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_gitlab_cfg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L572",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_gitlab_oauth_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L590",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_start",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L590",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_start",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L590",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_gitlab_oauth_callback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L608",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_callback",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L608",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L608",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_gitlab_oauth_status",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L652",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_status",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L652",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_gitlab_oauth_disconnect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L683",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_disconnect",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L683",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_google_cfg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L699",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_google_oauth_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L716",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_start",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L716",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_start",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L716",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_google_oauth_callback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L740",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_callback",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L740",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L740",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_google_oauth_status",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L790",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_status",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L790",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_google_oauth_disconnect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L827",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_disconnect",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L827",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_slack_cfg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L844",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_slack_oauth_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L861",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_start",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L861",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_start",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L861",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_slack_oauth_callback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L880",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_callback",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L880",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L880",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_slack_oauth_status",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L924",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_status",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L924",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "target": "handlers_oauth_slack_oauth_disconnect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L961",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_disconnect",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L961",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_cfg",
+      "target": "handlers_oauth_relay_callback_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L248",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_list_integrations",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L270",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_verify_integration",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L296",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_verify_integration",
+      "target": "handlers_oauth_verify_apikey",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L310",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_start",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L448",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_start",
+      "target": "handlers_oauth_github_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L449",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_start",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L464",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_callback",
+      "target": "handlers_oauth_github_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L475",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L494",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_status",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L521",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_github_oauth_disconnect",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L556",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_cfg",
+      "target": "handlers_oauth_relay_callback_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L578",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_start",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L591",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_start",
+      "target": "handlers_oauth_gitlab_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L592",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_start",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L604",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_callback",
+      "target": "handlers_oauth_gitlab_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L613",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L631",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_status",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L653",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_gitlab_oauth_disconnect",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L684",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_cfg",
+      "target": "handlers_oauth_relay_callback_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L704",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_start",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L717",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_start",
+      "target": "handlers_oauth_google_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L718",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_start",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L736",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_callback",
+      "target": "handlers_oauth_google_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L745",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L763",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_status",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L791",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_google_oauth_disconnect",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L828",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_cfg",
+      "target": "handlers_oauth_relay_callback_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L849",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_start",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L862",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_start",
+      "target": "handlers_oauth_slack_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L863",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_start",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L876",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_callback",
+      "target": "handlers_oauth_slack_cfg",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L885",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_callback",
+      "target": "redirectresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L903",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_status",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L925",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_slack_oauth_disconnect",
+      "target": "handlers_oauth_get_user",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L962",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_oauth_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_41",
+      "target": "handlers_oauth_relay_callback_url",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_239",
+      "target": "handlers_oauth_github_cfg",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_269",
+      "target": "handlers_oauth_list_integrations",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L269",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_295",
+      "target": "handlers_oauth_verify_integration",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L295",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_318",
+      "target": "handlers_oauth_verify_apikey",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L318",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_447",
+      "target": "handlers_oauth_github_oauth_start",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L447",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_471",
+      "target": "handlers_oauth_github_oauth_callback",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L471",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_520",
+      "target": "handlers_oauth_github_oauth_status",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L520",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_oauth_rationale_555",
+      "target": "handlers_oauth_github_oauth_disconnect",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/oauth.py",
+      "source_location": "L555",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "handlers_oauth_relay_callback_url",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_relay_callback_url",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_get_user",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L234",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L245",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_cfg",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L252",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_list_integrations",
+      "callee": "get_env_overrides",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L274",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_list_integrations",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_list_integrations",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_list_integrations",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L283",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_integration",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L297",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_integration",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L299",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_integration",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L305",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_integration",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L313",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L321",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L323",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L332",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L341",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L351",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L360",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L368",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L368",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L373",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L374",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L379",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L379",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L384",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L389",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L389",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L394",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L403",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L407",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L408",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L409",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L410",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L413",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L418",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L419",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L424",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L432",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_verify_apikey",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L432",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_start",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L451",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_start",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L452",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L473",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L480",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L481",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "error",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L493",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L498",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L499",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "error",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L501",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "set_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L509",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L510",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_callback",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L512",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "get_env_overrides",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L525",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L526",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L526",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L528",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L537",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L538",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L546",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_status",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L546",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_disconnect",
+      "callee": "delete_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L560",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_disconnect",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L561",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_github_oauth_disconnect",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L563",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L573",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L574",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L575",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L577",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_cfg",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L582",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_start",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L593",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_start",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L594",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L612",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L617",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L618",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "error",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L630",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L635",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L635",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "set_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L642",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L643",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_callback",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L645",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "get_env_overrides",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L657",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L658",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L658",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L660",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L668",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L669",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L670",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L675",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_status",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L675",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_disconnect",
+      "callee": "delete_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L688",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_gitlab_oauth_disconnect",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L690",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L700",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L701",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L703",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_cfg",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L708",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_start",
+      "callee": "quote",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L729",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_start",
+      "callee": "quote",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L731",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L744",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L749",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L750",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "error",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L762",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L767",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L768",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L769",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "set_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L776",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "set_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L778",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L781",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_callback",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L783",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "get_env_overrides",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L795",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L796",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L796",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L800",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L808",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L809",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L814",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L817",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L818",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_disconnect",
+      "callee": "delete_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L832",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_disconnect",
+      "callee": "delete_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L833",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_google_oauth_disconnect",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L835",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L845",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L846",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_cfg",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L848",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_cfg",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L853",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_start",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L864",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_start",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L865",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_start",
+      "callee": "quote",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L872",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L884",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L889",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L890",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L900",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L901",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "error",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L902",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L907",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "set_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L914",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L915",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_callback",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L917",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get_env_overrides",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L929",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L930",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L930",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L934",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "AsyncClient",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L942",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L943",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L947",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L948",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L951",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_status",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L952",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_disconnect",
+      "callee": "delete_env_override",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L966",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_oauth_slack_oauth_disconnect",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\oauth.py",
+      "source_location": "L968",
+      "receiver": null
+    }
+  ]
+}

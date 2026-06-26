@@ -1,0 +1,102 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "label": "fs-files.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_fs_files_test_res",
+      "label": "res()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L10"
+    },
+    {
+      "id": "tests_fs_files_test_resnobody",
+      "label": "resNoBody()",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "tests_fs_files_test_fetchmock",
+      "label": "fetchMock",
+      "file_type": "code",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L31"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_fs_files_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "target": "api_fs_files_fetchfile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "target": "api_fs_files_apiupdatefile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "target": "tests_fs_files_test_res",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "target": "tests_fs_files_test_resnobody",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_tests_fs_files_test_ts",
+      "target": "tests_fs_files_test_fetchmock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/api/__tests__/fs-files.test.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

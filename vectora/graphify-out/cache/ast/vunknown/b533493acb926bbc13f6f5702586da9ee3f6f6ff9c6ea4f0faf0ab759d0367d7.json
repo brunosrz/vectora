@@ -1,0 +1,461 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "label": "preferencias-tab.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tabs_preferencias_tab_themeforpreset",
+      "label": "themeForPreset()",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L37"
+    },
+    {
+      "id": "tabs_preferencias_tab_custom_color_fields",
+      "label": "CUSTOM_COLOR_FIELDS",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L41"
+    },
+    {
+      "id": "tabs_preferencias_tab_preferenciastab",
+      "label": "PreferenciasTab()",
+      "file_type": "code",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L52"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_label_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_label_label",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_select_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_select_select",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_select_selectcontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_select_selectitem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_select_selecttrigger",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_select_selectvalue",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_textarea_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_textarea_textarea",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_settings_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "stores_settings_store_usesettingsstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "stores_settings_store_supported_langs",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "stores_settings_store_theme",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "stores_settings_store_lang",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "stores_settings_store_sidebarposition",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_theme_presets_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "theme_presets_theme_presets",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "theme_presets_default_custom_colors",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "theme_presets_basethemecolors",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "paraglide_messages_m",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_i18n_dyn_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "lib_i18n_dyn_mdyn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "tabs_preferencias_tab_themeforpreset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "tabs_preferencias_tab_custom_color_fields",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_settings_preferencias_tabs_preferencias_tab_tsx",
+      "target": "tabs_preferencias_tab_preferenciastab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/settings/preferencias/tabs/preferencias-tab.tsx",
+      "source_location": "L52",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tabs_preferencias_tab_themeforpreset",
+      "callee": "endsWith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "useSettingsStore",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_theme",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_theme_system",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_theme_palette_custom",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L133",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_theme_palette_help",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_language",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_sidebar_position",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_sidebar_position_left",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_sidebar_position_right",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L200",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_custom_prompt",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L208",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_custom_prompt_placeholder",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L211",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_custom_prompt_help",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_training",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L225",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_training_add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L233",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tabs_preferencias_tab_preferenciastab",
+      "callee": "prefs_training_help",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\settings\\preferencias\\tabs\\preferencias-tab.tsx",
+      "source_location": "L237",
+      "receiver": null
+    }
+  ]
+}

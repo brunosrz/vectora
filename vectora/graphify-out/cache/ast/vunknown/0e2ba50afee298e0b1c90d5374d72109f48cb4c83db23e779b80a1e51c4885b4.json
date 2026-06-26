@@ -1,0 +1,619 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "label": "test_api_chat_config.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_thread_and_user_always_present",
+      "label": "test_thread_and_user_always_present()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_optional_fields_absent_by_default",
+      "label": "test_optional_fields_absent_by_default()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L23"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_permission_mode_default_is_ask",
+      "label": "test_permission_mode_default_is_ask()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_permission_mode_passthrough",
+      "label": "test_permission_mode_passthrough()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L42"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_permission_mode_empty_string_omitted",
+      "label": "test_permission_mode_empty_string_omitted()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_reasoning_effort_passthrough",
+      "label": "test_reasoning_effort_passthrough()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_reasoning_effort_default_omitted",
+      "label": "test_reasoning_effort_default_omitted()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L63"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_workspace_and_prompt_passthrough",
+      "label": "test_workspace_and_prompt_passthrough()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_model_absent_by_default",
+      "label": "test_model_absent_by_default()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L90"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_model_provider_hyphen_normalized_to_underscore",
+      "label": "test_model_provider_hyphen_normalized_to_underscore()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_model_provider_without_hyphen_passthrough",
+      "label": "test_model_provider_without_hyphen_passthrough()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_model_without_colon_passthrough",
+      "label": "test_model_without_colon_passthrough()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L107"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_resolve_keeps_explicit_workspace",
+      "label": "test_resolve_keeps_explicit_workspace()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L118"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_resolve_reuses_active_workspace",
+      "label": "test_resolve_reuses_active_workspace()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "unit_test_api_chat_config_test_resolve_creates_session_workspace_when_no_active",
+      "label": "test_resolve_creates_session_workspace_when_no_active()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L152"
+    },
+    {
+      "id": "unit_test_api_chat_config_rationale_1",
+      "label": "Tests para a montagem do RunnableConfig em src/api/handlers/chat.py.  Cobre R2 (",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_api_chat_config_rationale_24",
+      "label": "Sem valores, os campos opcionais n\u00e3o entram no configurable.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "unit_test_api_chat_config_rationale_37",
+      "label": "ChatConfig default traz permission_mode='ask' \u2192 presente no configurable.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "unit_test_api_chat_config_rationale_64",
+      "label": "Default vazio \u2192 modelo usa seu pr\u00f3prio default (campo ausente).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "unit_test_api_chat_config_rationale_119",
+      "label": "Workspace escolhido pelo cliente \u00e9 mantido \u2014 sem criar pasta de sess\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L119"
+    },
+    {
+      "id": "unit_test_api_chat_config_rationale_124",
+      "label": "Sem workspace pedido mas com um ativo, reusa o ativo (n\u00e3o cria por thread).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L124"
+    },
+    {
+      "id": "unit_test_api_chat_config_rationale_153",
+      "label": "Sem workspace pedido e sem ativo, deriva o padr\u00e3o da sess\u00e3o via registry.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L153"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "backend_api_handlers_chat",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "backend_api_schemas",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_thread_and_user_always_present",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_optional_fields_absent_by_default",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_permission_mode_default_is_ask",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_permission_mode_passthrough",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_permission_mode_empty_string_omitted",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_reasoning_effort_passthrough",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_reasoning_effort_default_omitted",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_workspace_and_prompt_passthrough",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_model_absent_by_default",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_model_provider_hyphen_normalized_to_underscore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_model_provider_without_hyphen_passthrough",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_model_without_colon_passthrough",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_resolve_keeps_explicit_workspace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_resolve_reuses_active_workspace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "target": "unit_test_api_chat_config_test_resolve_creates_session_workspace_when_no_active",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_chat_config_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_chat_config_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_chat_config_rationale_24",
+      "target": "unit_test_api_chat_config_test_optional_fields_absent_by_default",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_chat_config_rationale_37",
+      "target": "unit_test_api_chat_config_test_permission_mode_default_is_ask",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_chat_config_rationale_64",
+      "target": "unit_test_api_chat_config_test_reasoning_effort_default_omitted",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_chat_config_rationale_119",
+      "target": "unit_test_api_chat_config_test_resolve_keeps_explicit_workspace",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_chat_config_rationale_124",
+      "target": "unit_test_api_chat_config_test_resolve_reuses_active_workspace",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_chat_config_rationale_153",
+      "target": "unit_test_api_chat_config_test_resolve_creates_session_workspace_when_no_active",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_chat_config.py",
+      "source_location": "L153",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_api_chat_config_test_thread_and_user_always_present",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_thread_and_user_always_present",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_optional_fields_absent_by_default",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_optional_fields_absent_by_default",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L25",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_permission_mode_default_is_ask",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_permission_mode_default_is_ask",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_permission_mode_passthrough",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_permission_mode_passthrough",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_permission_mode_empty_string_omitted",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_permission_mode_empty_string_omitted",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_reasoning_effort_passthrough",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_reasoning_effort_passthrough",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_reasoning_effort_default_omitted",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_reasoning_effort_default_omitted",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_workspace_and_prompt_passthrough",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_workspace_and_prompt_passthrough",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_absent_by_default",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_absent_by_default",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_provider_hyphen_normalized_to_underscore",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_provider_hyphen_normalized_to_underscore",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_provider_without_hyphen_passthrough",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_provider_without_hyphen_passthrough",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_without_colon_passthrough",
+      "callee": "_build_configurable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_model_without_colon_passthrough",
+      "callee": "ChatConfig",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L109",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_resolve_keeps_explicit_workspace",
+      "callee": "_resolve_workspace_id",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_resolve_reuses_active_workspace",
+      "callee": "_FakeRegistry",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L144",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_resolve_reuses_active_workspace",
+      "callee": "_resolve_workspace_id",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_resolve_creates_session_workspace_when_no_active",
+      "callee": "_FakeRegistry",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_chat_config_test_resolve_creates_session_workspace_when_no_active",
+      "callee": "_resolve_workspace_id",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_chat_config.py",
+      "source_location": "L175",
+      "receiver": null
+    }
+  ]
+}

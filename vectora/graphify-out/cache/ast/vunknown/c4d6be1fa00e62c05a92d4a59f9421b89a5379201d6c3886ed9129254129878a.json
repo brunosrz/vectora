@@ -1,0 +1,177 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "label": "test_retry_middleware_wiring.py",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "evals_test_retry_middleware_wiring_test_retry_middleware_is_in_agent_middleware_list",
+      "label": "test_retry_middleware_is_in_agent_middleware_list()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L10"
+    },
+    {
+      "id": "evals_test_retry_middleware_wiring_test_retry_middleware_config_is_exported",
+      "label": "test_retry_middleware_config_is_exported()",
+      "file_type": "code",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "evals_test_retry_middleware_wiring_rationale_11",
+      "label": "Ensure ModelRetryMiddleware is wired into docs_agent's middleware stack.",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L11"
+    },
+    {
+      "id": "evals_test_retry_middleware_wiring_rationale_27",
+      "label": "Ensure model_retry_middleware is properly exported from config.",
+      "file_type": "rationale",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L27"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "target": "backend_agent",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "target": "backend_agent_docs_graph",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "target": "backend_middleware_retry_middleware",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "target": "langsmith",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "target": "evals_test_retry_middleware_wiring_test_retry_middleware_is_in_agent_middleware_list",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_tests_evals_test_retry_middleware_wiring_py",
+      "target": "evals_test_retry_middleware_wiring_test_retry_middleware_config_is_exported",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_retry_middleware_wiring_rationale_11",
+      "target": "evals_test_retry_middleware_wiring_test_retry_middleware_is_in_agent_middleware_list",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "evals_test_retry_middleware_wiring_rationale_27",
+      "target": "evals_test_retry_middleware_wiring_test_retry_middleware_config_is_exported",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/tests/evals/test_retry_middleware_wiring.py",
+      "source_location": "L27",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "evals_test_retry_middleware_wiring_test_retry_middleware_is_in_agent_middleware_list",
+      "callee": "log_inputs",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_retry_middleware_wiring.py",
+      "source_location": "L13",
+      "receiver": null
+    },
+    {
+      "caller_nid": "evals_test_retry_middleware_wiring_test_retry_middleware_is_in_agent_middleware_list",
+      "callee": "log_outputs",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_retry_middleware_wiring.py",
+      "source_location": "L17",
+      "receiver": null
+    },
+    {
+      "caller_nid": "evals_test_retry_middleware_wiring_test_retry_middleware_is_in_agent_middleware_list",
+      "callee": "log_reference_outputs",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_retry_middleware_wiring.py",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "evals_test_retry_middleware_wiring_test_retry_middleware_config_is_exported",
+      "callee": "log_inputs",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_retry_middleware_wiring.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "evals_test_retry_middleware_wiring_test_retry_middleware_config_is_exported",
+      "callee": "log_outputs",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_retry_middleware_wiring.py",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "evals_test_retry_middleware_wiring_test_retry_middleware_config_is_exported",
+      "callee": "log_reference_outputs",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\tests\\evals\\test_retry_middleware_wiring.py",
+      "source_location": "L36",
+      "receiver": null
+    }
+  ]
+}

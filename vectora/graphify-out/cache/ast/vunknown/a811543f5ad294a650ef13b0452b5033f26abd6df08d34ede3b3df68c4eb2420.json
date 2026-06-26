@@ -1,0 +1,217 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "label": "client-config.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "config_client_config_fallback_client",
+      "label": "FALLBACK_CLIENT",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L5"
+    },
+    {
+      "id": "config_client_config_derivelabel",
+      "label": "deriveLabel()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "config_client_config_generateclientid",
+      "label": "generateClientId()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L28"
+    },
+    {
+      "id": "config_client_config_resolveclientprofile",
+      "label": "resolveClientProfile()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L40"
+    },
+    {
+      "id": "config_client_config_createclientprofile",
+      "label": "createClientProfile()",
+      "file_type": "code",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L62"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "target": "threads_index_clientprofile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "target": "config_client_config_fallback_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "target": "config_client_config_derivelabel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "target": "config_client_config_generateclientid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "target": "config_client_config_resolveclientprofile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "target": "config_client_config_createclientprofile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "config_client_config_resolveclientprofile",
+      "target": "config_client_config_derivelabel",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "config_client_config_createclientprofile",
+      "target": "config_client_config_generateclientid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "config_client_config_createclientprofile",
+      "target": "config_client_config_resolveclientprofile",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/config/client-config.ts",
+      "source_location": "L71",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "config_client_config_derivelabel",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L16",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_derivelabel",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L17",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_derivelabel",
+      "callee": "toUpperCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_derivelabel",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_generateclientid",
+      "callee": "randomUUID",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_generateclientid",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_generateclientid",
+      "callee": "toString",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_generateclientid",
+      "callee": "random",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "config_client_config_resolveclientprofile",
+      "callee": "trim",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\config\\client-config.ts",
+      "source_location": "L47",
+      "receiver": null
+    }
+  ]
+}

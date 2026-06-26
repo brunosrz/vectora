@@ -1,0 +1,1026 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "label": "auth.py",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_auth_save_session",
+      "label": "_save_session()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "backend_auth_load_session",
+      "label": "_load_session()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "backend_auth_clear_session",
+      "label": "_clear_session()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L75"
+    },
+    {
+      "id": "backend_auth_get_active_session",
+      "label": "get_active_session()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L88"
+    },
+    {
+      "id": "backend_auth_get_bearer_token",
+      "label": "get_bearer_token()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L93"
+    },
+    {
+      "id": "backend_auth_get_server_url",
+      "label": "_get_server_url()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L107"
+    },
+    {
+      "id": "backend_auth_prompt_server_url",
+      "label": "_prompt_server_url()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L116"
+    },
+    {
+      "id": "backend_auth_cmd_signup",
+      "label": "cmd_signup()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_auth_cmd_login",
+      "label": "cmd_login()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L174"
+    },
+    {
+      "id": "backend_auth_cmd_logout",
+      "label": "cmd_logout()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L214"
+    },
+    {
+      "id": "backend_auth_cmd_whoami",
+      "label": "cmd_whoami()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L239"
+    },
+    {
+      "id": "backend_auth_cmd_refresh",
+      "label": "cmd_refresh()",
+      "file_type": "code",
+      "source_file": "backend/auth.py",
+      "source_location": "L251"
+    },
+    {
+      "id": "backend_auth_rationale_1",
+      "label": "Subcomando `vectora auth` \u2014 gerenciamento de autentica\u00e7\u00e3o no CLI.  Comandos:",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_auth_rationale_39",
+      "label": "Persiste a sess\u00e3o autenticada (tokens + info do usu\u00e1rio).",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "backend_auth_rationale_56",
+      "label": "Carrega a sess\u00e3o autenticada, ou None se n\u00e3o houver.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "backend_auth_rationale_76",
+      "label": "Remove a sess\u00e3o autenticada do storage local.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "backend_auth_rationale_89",
+      "label": "Retorna a sess\u00e3o ativa, ou None se n\u00e3o estiver logado.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L89"
+    },
+    {
+      "id": "backend_auth_rationale_94",
+      "label": "Retorna o access_token da sess\u00e3o ativa, se dispon\u00edvel.      Usado por comandos C",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L94"
+    },
+    {
+      "id": "backend_auth_rationale_108",
+      "label": "L\u00ea a URL do servidor do storage ou usa o padr\u00e3o local.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "backend_auth_rationale_117",
+      "label": "Pede a URL do servidor ao usu\u00e1rio.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L117"
+    },
+    {
+      "id": "backend_auth_rationale_124",
+      "label": "Cria uma nova conta no servidor Vectora configurado.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L124"
+    },
+    {
+      "id": "backend_auth_rationale_175",
+      "label": "Autentica com email e senha no servidor Vectora.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L175"
+    },
+    {
+      "id": "backend_auth_rationale_215",
+      "label": "Invalida o refresh token no servidor e limpa a sess\u00e3o local.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L215"
+    },
+    {
+      "id": "backend_auth_rationale_240",
+      "label": "Mostra o usu\u00e1rio autenticado atual.",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L240"
+    },
+    {
+      "id": "backend_auth_rationale_252",
+      "label": "For\u00e7a rota\u00e7\u00e3o de tokens (\u00fatil para debug).",
+      "file_type": "rationale",
+      "source_file": "backend/auth.py",
+      "source_location": "L252"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "contextlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_save_session",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_load_session",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_clear_session",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_get_active_session",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_get_bearer_token",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_get_server_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_prompt_server_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_cmd_signup",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_signup",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_cmd_login",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_login",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_cmd_logout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L214",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_logout",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L214",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_cmd_whoami",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_whoami",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "target": "backend_auth_cmd_refresh",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L251",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_refresh",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L251",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_get_active_session",
+      "target": "backend_auth_load_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_get_bearer_token",
+      "target": "backend_auth_load_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_get_server_url",
+      "target": "backend_auth_load_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_signup",
+      "target": "backend_auth_prompt_server_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_signup",
+      "target": "backend_auth_save_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_login",
+      "target": "backend_auth_prompt_server_url",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L180",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_login",
+      "target": "backend_auth_save_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L200",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_logout",
+      "target": "backend_auth_load_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L218",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_logout",
+      "target": "backend_auth_clear_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L234",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_whoami",
+      "target": "backend_auth_load_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L241",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_refresh",
+      "target": "backend_auth_load_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_cmd_refresh",
+      "target": "backend_auth_save_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L284",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_auth_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_39",
+      "target": "backend_auth_save_session",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_56",
+      "target": "backend_auth_load_session",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_76",
+      "target": "backend_auth_clear_session",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_89",
+      "target": "backend_auth_get_active_session",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_94",
+      "target": "backend_auth_get_bearer_token",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_108",
+      "target": "backend_auth_get_server_url",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_117",
+      "target": "backend_auth_prompt_server_url",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_124",
+      "target": "backend_auth_cmd_signup",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_175",
+      "target": "backend_auth_cmd_login",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_215",
+      "target": "backend_auth_cmd_logout",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L215",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_240",
+      "target": "backend_auth_cmd_whoami",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_auth_rationale_252",
+      "target": "backend_auth_cmd_refresh",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/auth.py",
+      "source_location": "L252",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "backend_auth_save_session",
+      "callee": "set_password",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_save_session",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_save_session",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_save_session",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_save_session",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_save_session",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_save_session",
+      "callee": "chmod",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_load_session",
+      "callee": "get_password",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_load_session",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_load_session",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_load_session",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_load_session",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_clear_session",
+      "callee": "delete_password",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_clear_session",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_clear_session",
+      "callee": "unlink",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_get_bearer_token",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_get_server_url",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_prompt_server_url",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_prompt_server_url",
+      "callee": "input",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "input",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "getpass",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "getpass",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L153",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L153",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_signup",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_login",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_login",
+      "callee": "input",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_login",
+      "callee": "getpass",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_login",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_login",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_login",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_login",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L199",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_logout",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_logout",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_logout",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L227",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_logout",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_whoami",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L246",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_whoami",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L246",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_whoami",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_refresh",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L260",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_refresh",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L261",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_refresh",
+      "callee": "post",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L264",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_refresh",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L274",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_refresh",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L274",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_refresh",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L277",
+      "receiver": null
+    },
+    {
+      "caller_nid": "backend_auth_cmd_refresh",
+      "callee": "update",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\auth.py",
+      "source_location": "L278",
+      "receiver": null
+    }
+  ]
+}

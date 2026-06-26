@@ -1,0 +1,727 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "label": "conftest.py",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "integration_conftest_cleanup_session_1212",
+      "label": "_cleanup_session_1212()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "integration_conftest_integration_cleanup",
+      "label": "integration_cleanup()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L81"
+    },
+    {
+      "id": "integration_conftest_storage_stack_ok",
+      "label": "_storage_stack_ok()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "integration_conftest_pg_dsn",
+      "label": "pg_dsn()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "integration_conftest_redis_url",
+      "label": "redis_url()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L130"
+    },
+    {
+      "id": "integration_conftest_qdrant_url",
+      "label": "qdrant_url()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L137"
+    },
+    {
+      "id": "integration_conftest_pg_pool",
+      "label": "pg_pool()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L144"
+    },
+    {
+      "id": "integration_conftest_pg_conn",
+      "label": "pg_conn()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L171"
+    },
+    {
+      "id": "integration_conftest_redis_client",
+      "label": "redis_client()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L178"
+    },
+    {
+      "id": "integration_conftest_qdrant_client",
+      "label": "qdrant_client()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L203"
+    },
+    {
+      "id": "integration_conftest_embed_direct",
+      "label": "embed_direct()",
+      "file_type": "code",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L230"
+    },
+    {
+      "id": "integration_conftest_rationale_1",
+      "label": "Fixtures compartilhadas para testes de integra\u00e7\u00e3o \u2014 session 1212.  Todos os test",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "integration_conftest_rationale_37",
+      "label": "Remove dados de teste da session 1212: checkpoints + LanceDB + traces.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "integration_conftest_rationale_82",
+      "label": "Limpeza s\u00edncrona (scope=session) \u2014 chame explicitamente nos testes de integra\u00e7\u00e3o",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L82"
+    },
+    {
+      "id": "integration_conftest_rationale_101",
+      "label": "True se Postgres (5432), Redis (6379) e Qdrant (6333) respondem na porta.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "integration_conftest_rationale_145",
+      "label": "Pool asyncpg para testes de integra\u00e7\u00e3o. Skip se Postgres indispon\u00edvel.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L145"
+    },
+    {
+      "id": "integration_conftest_rationale_172",
+      "label": "Conex\u00e3o asyncpg isolada por teste.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L172"
+    },
+    {
+      "id": "integration_conftest_rationale_179",
+      "label": "Cliente redis.asyncio para testes de integra\u00e7\u00e3o. Skip se Redis indispon\u00edvel.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L179"
+    },
+    {
+      "id": "integration_conftest_rationale_204",
+      "label": "QdrantClient s\u00edncrono para testes de integra\u00e7\u00e3o. Skip se Qdrant indispon\u00edvel.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L204"
+    },
+    {
+      "id": "integration_conftest_rationale_231",
+      "label": "Embeda texto diretamente no LanceDB (bypass da fila \u2014 s\u00f3 para testes).      Usa",
+      "file_type": "rationale",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L231"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_cleanup_session_1212",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_integration_cleanup",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_storage_stack_ok",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_pg_dsn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_redis_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_qdrant_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_pg_pool",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_pg_conn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_redis_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L178",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_qdrant_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L203",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "target": "integration_conftest_embed_direct",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L230",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_integration_cleanup",
+      "target": "integration_conftest_cleanup_session_1212",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_integration_conftest_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_37",
+      "target": "integration_conftest_cleanup_session_1212",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_82",
+      "target": "integration_conftest_integration_cleanup",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_101",
+      "target": "integration_conftest_storage_stack_ok",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_145",
+      "target": "integration_conftest_pg_pool",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_172",
+      "target": "integration_conftest_pg_conn",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_179",
+      "target": "integration_conftest_redis_client",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L179",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_204",
+      "target": "integration_conftest_qdrant_client",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L204",
+      "weight": 1.0
+    },
+    {
+      "source": "integration_conftest_rationale_231",
+      "target": "integration_conftest_embed_direct",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/conftest.py",
+      "source_location": "L231",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "RuntimeError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "connect_async",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "list_tables",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L63",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "drop_table",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "clear_session",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_cleanup_session_1212",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_integration_cleanup",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_storage_stack_ok",
+      "callee": "getenv",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_storage_stack_ok",
+      "callee": "_docker_available",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_storage_stack_ok",
+      "callee": "stack_up",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L111",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_storage_stack_ok",
+      "callee": "create_connection",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_pg_dsn",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_pg_pool",
+      "callee": "skip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L147",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_pg_pool",
+      "callee": "create_pool",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L156",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_pg_pool",
+      "callee": "skip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_pg_pool",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_pg_pool",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_pg_conn",
+      "callee": "acquire",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_redis_client",
+      "callee": "skip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_redis_client",
+      "callee": "from_url",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_redis_client",
+      "callee": "ping",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L190",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_redis_client",
+      "callee": "aclose",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_redis_client",
+      "callee": "skip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_redis_client",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L196",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_redis_client",
+      "callee": "aclose",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L199",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_qdrant_client",
+      "callee": "skip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L206",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_qdrant_client",
+      "callee": "QdrantClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L212",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_qdrant_client",
+      "callee": "get_collections",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_qdrant_client",
+      "callee": "skip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L219",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_qdrant_client",
+      "callee": "sleep",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L220",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_embed_direct",
+      "callee": "BackgroundEmbeddingWorker",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L241",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_embed_direct",
+      "callee": "_generate_embedding",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L242",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_embed_direct",
+      "callee": "EmbeddingQueueRecord",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_embed_direct",
+      "callee": "uuid4",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L245",
+      "receiver": null
+    },
+    {
+      "caller_nid": "integration_conftest_embed_direct",
+      "callee": "_write_to_lancedb",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\integration\\conftest.py",
+      "source_location": "L250",
+      "receiver": null
+    }
+  ]
+}

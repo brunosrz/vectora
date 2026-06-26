@@ -1,0 +1,1025 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "label": "dev_stack.py",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "storage_dev_stack_servicespec",
+      "label": "ServiceSpec",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "storage_dev_stack_docker_run_cmd",
+      "label": "docker_run_cmd()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L88"
+    },
+    {
+      "id": "storage_dev_stack_compose_file",
+      "label": "compose_file()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L110"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "storage_dev_stack_stackresult",
+      "label": "StackResult",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L120"
+    },
+    {
+      "id": "storage_dev_stack_run",
+      "label": "_run()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L125"
+    },
+    {
+      "id": "completedprocess",
+      "label": "CompletedProcess",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "storage_dev_stack_run_detached",
+      "label": "_run_detached()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L131"
+    },
+    {
+      "id": "storage_dev_stack_docker_available",
+      "label": "_docker_available()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L148"
+    },
+    {
+      "id": "storage_dev_stack_existing_containers",
+      "label": "_existing_containers()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L158"
+    },
+    {
+      "id": "storage_dev_stack_container_matches_spec",
+      "label": "_container_matches_spec()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L165"
+    },
+    {
+      "id": "storage_dev_stack_stack_up",
+      "label": "stack_up()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L188"
+    },
+    {
+      "id": "storage_dev_stack_stack_down",
+      "label": "stack_down()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L234"
+    },
+    {
+      "id": "storage_dev_stack_running_containers",
+      "label": "_running_containers()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L267"
+    },
+    {
+      "id": "storage_dev_stack_stack_status",
+      "label": "stack_status()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L274"
+    },
+    {
+      "id": "storage_dev_stack_connection_urls",
+      "label": "connection_urls()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L295"
+    },
+    {
+      "id": "storage_dev_stack_connection_defaults",
+      "label": "connection_defaults()",
+      "file_type": "code",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L315"
+    },
+    {
+      "id": "storage_dev_stack_rationale_1",
+      "label": "Stack local de infra \u2014 Postgres+pgvector, Redis e Qdrant via Docker.  Fonte \u00fanic",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "storage_dev_stack_rationale_36",
+      "label": "Um servi\u00e7o da infra local \u2014 espelho 1:1 do compose.dev.yml.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "storage_dev_stack_rationale_89",
+      "label": "Monta o ``docker run`` equivalente para subir o servi\u00e7o em dev local.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L89"
+    },
+    {
+      "id": "storage_dev_stack_rationale_111",
+      "label": "Localiza o ``docker-compose.yml`` do repo (infra: postgres, redis, qdrant).",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "storage_dev_stack_rationale_132",
+      "label": "Roda comando docker que inicia processos em background (up -d, run -d, start).",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L132"
+    },
+    {
+      "id": "storage_dev_stack_rationale_166",
+      "label": "True se o container existente foi criado com o ``command`` do spec atual.      C",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "storage_dev_stack_rationale_189",
+      "label": "Sobe Postgres, Redis e Qdrant \u2014 compose quando dispon\u00edvel, docker run sen\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L189"
+    },
+    {
+      "id": "storage_dev_stack_rationale_235",
+      "label": "Para os containers da infra local (sem apagar volumes).",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L235"
+    },
+    {
+      "id": "storage_dev_stack_rationale_275",
+      "label": "Estado de cada servi\u00e7o da infra local: rodando, parado ou ausente.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L275"
+    },
+    {
+      "id": "storage_dev_stack_rationale_296",
+      "label": "URLs de conex\u00e3o da stack local \u2014 as mesmas do defaults.env.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L296"
+    },
+    {
+      "id": "storage_dev_stack_rationale_316",
+      "label": "Config default por servi\u00e7o para pr\u00e9-preencher o Setup Wizard.      Fonte \u00fanica d",
+      "file_type": "rationale",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L316"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "subprocess",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "dataclasses",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_servicespec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_docker_run_cmd",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_docker_run_cmd",
+      "target": "storage_dev_stack_servicespec",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_compose_file",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_compose_file",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_stackresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_run",
+      "target": "completedprocess",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_run",
+      "target": "completedprocess",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_run_detached",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_docker_available",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L148",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_existing_containers",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_container_matches_spec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_container_matches_spec",
+      "target": "storage_dev_stack_servicespec",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_stack_up",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_stackresult",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_stack_down",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L234",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_down",
+      "target": "storage_dev_stack_stackresult",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L234",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_running_containers",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L267",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_stack_status",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L274",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_status",
+      "target": "storage_dev_stack_stackresult",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L274",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_connection_urls",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L295",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "target": "storage_dev_stack_connection_defaults",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L315",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_compose_file",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_docker_available",
+      "target": "storage_dev_stack_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_existing_containers",
+      "target": "storage_dev_stack_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_container_matches_spec",
+      "target": "storage_dev_stack_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L178",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_stackresult",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_docker_available",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_compose_file",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L200",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_run_detached",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_existing_containers",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L210",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_container_matches_spec",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L215",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_up",
+      "target": "storage_dev_stack_docker_run_cmd",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L224",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_down",
+      "target": "storage_dev_stack_stackresult",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_down",
+      "target": "storage_dev_stack_docker_available",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_down",
+      "target": "storage_dev_stack_compose_file",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L243",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_down",
+      "target": "storage_dev_stack_run_detached",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_down",
+      "target": "storage_dev_stack_existing_containers",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L253",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_running_containers",
+      "target": "storage_dev_stack_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_status",
+      "target": "storage_dev_stack_stackresult",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L276",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_status",
+      "target": "storage_dev_stack_docker_available",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L278",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_status",
+      "target": "storage_dev_stack_existing_containers",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L283",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_stack_status",
+      "target": "storage_dev_stack_running_containers",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L284",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_storage_dev_stack_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_36",
+      "target": "storage_dev_stack_servicespec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_89",
+      "target": "storage_dev_stack_docker_run_cmd",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_111",
+      "target": "storage_dev_stack_compose_file",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_132",
+      "target": "storage_dev_stack_run_detached",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_166",
+      "target": "storage_dev_stack_container_matches_spec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_189",
+      "target": "storage_dev_stack_stack_up",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L189",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_235",
+      "target": "storage_dev_stack_stack_down",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L235",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_275",
+      "target": "storage_dev_stack_stack_status",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L275",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_296",
+      "target": "storage_dev_stack_connection_urls",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L296",
+      "weight": 1.0
+    },
+    {
+      "source": "storage_dev_stack_rationale_316",
+      "target": "storage_dev_stack_connection_defaults",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/dev_stack.py",
+      "source_location": "L316",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "storage_dev_stack_docker_run_cmd",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_compose_file",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_compose_file",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_run",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_run_detached",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_existing_containers",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_existing_containers",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_existing_containers",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_container_matches_spec",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_container_matches_spec",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_up",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L194",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_up",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L204",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_up",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L207",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_up",
+      "callee": "discard",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L217",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_up",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_up",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L227",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_up",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_down",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L240",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_down",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L247",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_down",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L250",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_down",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L256",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_down",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L260",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_down",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L263",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_running_containers",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L271",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_running_containers",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L271",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_running_containers",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L271",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_status",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L280",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_status",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L287",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_status",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L289",
+      "receiver": null
+    },
+    {
+      "caller_nid": "storage_dev_stack_stack_status",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\dev_stack.py",
+      "source_location": "L291",
+      "receiver": null
+    }
+  ]
+}

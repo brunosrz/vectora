@@ -1,0 +1,105 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_icons_file_icon_tsx",
+      "label": "file-icon.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "icons_file_icon_iconspec",
+      "label": "IconSpec",
+      "file_type": "code",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "icons_file_icon_ext_map",
+      "label": "EXT_MAP",
+      "file_type": "code",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L27"
+    },
+    {
+      "id": "icons_file_icon_fileicon",
+      "label": "FileIcon()",
+      "file_type": "code",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L84"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_icons_file_icon_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_icons_file_icon_tsx",
+      "target": "icons_file_icon_iconspec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_icons_file_icon_tsx",
+      "target": "icons_file_icon_ext_map",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_icons_file_icon_tsx",
+      "target": "icons_file_icon_fileicon",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/icons/file-icon.tsx",
+      "source_location": "L84",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "icons_file_icon_fileicon",
+      "callee": "includes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\icons\\file-icon.tsx",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "icons_file_icon_fileicon",
+      "callee": "toLowerCase",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\icons\\file-icon.tsx",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "icons_file_icon_fileicon",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\icons\\file-icon.tsx",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "icons_file_icon_fileicon",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\icons\\file-icon.tsx",
+      "source_location": "L92",
+      "receiver": null
+    }
+  ]
+}

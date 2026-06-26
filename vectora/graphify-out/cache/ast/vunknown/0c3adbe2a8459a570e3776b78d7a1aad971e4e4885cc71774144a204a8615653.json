@@ -1,0 +1,99 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "label": "voice-input-button.test.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_voice_input_button_test_renderbtn",
+      "label": "renderBtn()",
+      "file_type": "code",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L13"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_ui_tooltip_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "target": "ui_tooltip_tooltipprovider",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_voice_input_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "target": "features_voice_input_button_voiceinputbutton",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_chat_features_tests_voice_input_button_test_tsx",
+      "target": "tests_voice_input_button_test_renderbtn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/chat/features/__tests__/voice-input-button.test.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_voice_input_button_test_renderbtn",
+      "callee": "render",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\chat\\features\\__tests__\\voice-input-button.test.tsx",
+      "source_location": "L16",
+      "receiver": null
+    }
+  ]
+}

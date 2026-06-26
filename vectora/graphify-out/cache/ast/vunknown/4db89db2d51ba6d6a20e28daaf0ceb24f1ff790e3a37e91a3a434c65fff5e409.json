@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_storage_sqlite_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "backend/storage/sqlite/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "sqlite_init_rationale_1",
+      "label": "Pool de conex\u00f5es SQLite ass\u00edncronas.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/sqlite/__init__.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_sqlite_init_py",
+      "target": "backend_storage_sqlite_pool",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/sqlite/__init__.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "sqlite_init_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_storage_sqlite_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/sqlite/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

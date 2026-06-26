@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_paths_py",
+      "label": "paths.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_paths_out_path",
+      "label": "out_path()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L30"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_paths_default_graph_json",
+      "label": "default_graph_json()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "context_graph_paths_rationale_1",
+      "label": "Single source of truth for the graphify output-directory name.  The output direc",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_paths_rationale_31",
+      "label": "A path inside the configured output dir, e.g. ``out_path(\"cache\")``.      ``Path",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "context_graph_paths_rationale_40",
+      "label": "Default ``graph.json`` path under the configured output dir.      The package-wi",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L40"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_paths_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_paths_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_paths_py",
+      "target": "context_graph_paths_out_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_paths_out_path",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_paths_py",
+      "target": "context_graph_paths_default_graph_json",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_paths_out_path",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_paths_default_graph_json",
+      "target": "context_graph_paths_out_path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_paths_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_paths_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_paths_rationale_31",
+      "target": "context_graph_paths_out_path",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_paths_rationale_40",
+      "target": "context_graph_paths_default_graph_json",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/paths.py",
+      "source_location": "L40",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

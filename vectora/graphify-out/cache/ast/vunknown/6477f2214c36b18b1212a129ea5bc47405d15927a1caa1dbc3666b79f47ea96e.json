@@ -1,0 +1,2809 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "label": "threads.py",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_threads_user_id",
+      "label": "_user_id()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "request",
+      "label": "Request",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_ensure_schema",
+      "label": "_ensure_schema()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_get_db",
+      "label": "_get_db()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L106"
+    },
+    {
+      "id": "handlers_threads_ensure_sessions_table",
+      "label": "ensure_sessions_table()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L122"
+    },
+    {
+      "id": "handlers_threads_row_to_thread",
+      "label": "_row_to_thread()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L133"
+    },
+    {
+      "id": "thread",
+      "label": "Thread",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_upsert_session",
+      "label": "_upsert_session()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L161"
+    },
+    {
+      "id": "handlers_threads_normalize_pins",
+      "label": "_normalize_pins()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L217"
+    },
+    {
+      "id": "handlers_threads_get_session_pins",
+      "label": "_get_session_pins()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L229"
+    },
+    {
+      "id": "handlers_threads_set_session_pins",
+      "label": "_set_session_pins()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L246"
+    },
+    {
+      "id": "handlers_threads_build_pinned_context",
+      "label": "build_pinned_context()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L286"
+    },
+    {
+      "id": "handlers_threads_get_thread_pins",
+      "label": "get_thread_pins()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L340"
+    },
+    {
+      "id": "getthreadpinsrequest",
+      "label": "GetThreadPinsRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "threadpinsresponse",
+      "label": "ThreadPinsResponse",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_set_thread_pins",
+      "label": "set_thread_pins()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L348"
+    },
+    {
+      "id": "setthreadpinsrequest",
+      "label": "SetThreadPinsRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_create_thread",
+      "label": "create_thread()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L359"
+    },
+    {
+      "id": "createthreadrequest",
+      "label": "CreateThreadRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_get_thread",
+      "label": "get_thread()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L404"
+    },
+    {
+      "id": "getthreadrequest",
+      "label": "GetThreadRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_list_threads",
+      "label": "list_threads()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L425"
+    },
+    {
+      "id": "listthreadsrequest",
+      "label": "ListThreadsRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "listthreadsresponse",
+      "label": "ListThreadsResponse",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_delete_thread",
+      "label": "delete_thread()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L443"
+    },
+    {
+      "id": "deletethreadrequest",
+      "label": "DeleteThreadRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_update_thread",
+      "label": "update_thread()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L459"
+    },
+    {
+      "id": "updatethreadrequest",
+      "label": "UpdateThreadRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_get_history",
+      "label": "get_history()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L499"
+    },
+    {
+      "id": "gethistoryrequest",
+      "label": "GetHistoryRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "gethistoryresponse",
+      "label": "GetHistoryResponse",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_ai_title",
+      "label": "_ai_title()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L522"
+    },
+    {
+      "id": "handlers_threads_generate_title",
+      "label": "generate_title()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L560"
+    },
+    {
+      "id": "generatetitlerequest",
+      "label": "GenerateTitleRequest",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "generatetitleresponse",
+      "label": "GenerateTitleResponse",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_checkpointartifact",
+      "label": "CheckpointArtifact",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L605"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_checkpointsresponse",
+      "label": "CheckpointsResponse",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L618"
+    },
+    {
+      "id": "handlers_threads_rewindrequest",
+      "label": "RewindRequest",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L622"
+    },
+    {
+      "id": "handlers_threads_rewindresponse",
+      "label": "RewindResponse",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L626"
+    },
+    {
+      "id": "handlers_threads_list_thread_checkpoints",
+      "label": "list_thread_checkpoints()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L632"
+    },
+    {
+      "id": "handlers_threads_rewind_thread",
+      "label": "rewind_thread()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L669"
+    },
+    {
+      "id": "query",
+      "label": "Query",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_get_thread_history_paginated",
+      "label": "get_thread_history_paginated()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L800"
+    },
+    {
+      "id": "pagedhistoryresponse",
+      "label": "PagedHistoryResponse",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_threads_activityresponse",
+      "label": "ActivityResponse",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L841"
+    },
+    {
+      "id": "handlers_threads_thread_activity",
+      "label": "thread_activity()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L848"
+    },
+    {
+      "id": "handlers_threads_rationale_1",
+      "label": "Handler do servi\u00e7o ThreadService \u2014 CRUD de threads via REST.  Endpoints (todos P",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_threads_rationale_55",
+      "label": "Extrai o user_id do request autenticado, ou 'local' em modo CLI.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L55"
+    },
+    {
+      "id": "handlers_threads_rationale_70",
+      "label": "Cria as tabelas do banco de checkpoints/sess\u00f5es se n\u00e3o existirem.      Idempoten",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "handlers_threads_rationale_107",
+      "label": "Retorna conex\u00e3o aiosqlite com o banco de checkpoints/sess\u00f5es.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L107"
+    },
+    {
+      "id": "handlers_threads_rationale_123",
+      "label": "Cria a tabela ``vectora_sessions`` ao boot (chamada do lifespan).",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "handlers_threads_rationale_134",
+      "label": "Converte uma linha da tabela vectora_sessions em Thread.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L134"
+    },
+    {
+      "id": "handlers_threads_rationale_167",
+      "label": "Garante que thread_id existe em vectora_sessions (cria ou atualiza).      Chamad",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L167"
+    },
+    {
+      "id": "handlers_threads_rationale_218",
+      "label": "Limpa a lista de pins: trim, separador POSIX, dedup, descarta vazios.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L218"
+    },
+    {
+      "id": "handlers_threads_rationale_230",
+      "label": "L\u00ea os pins gravados na sess\u00e3o; thread inexistente ou extra inv\u00e1lido \u2192 [].",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L230"
+    },
+    {
+      "id": "handlers_threads_rationale_247",
+      "label": "Grava os pins na sess\u00e3o (UPSERT), mesclando com o extra existente.      Devolve",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L247"
+    },
+    {
+      "id": "handlers_threads_rationale_292",
+      "label": "Monta o bloco ``<pinned_files>`` com o conte\u00fado dos arquivos fixados.      Lido",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L292"
+    },
+    {
+      "id": "handlers_threads_rationale_360",
+      "label": "Cria uma nova thread e a associa ao workspace escolhido pelo usu\u00e1rio.      Quand",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L360"
+    },
+    {
+      "id": "handlers_threads_rationale_460",
+      "label": "Atualiza metadados (title) de uma thread existente.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L460"
+    },
+    {
+      "id": "handlers_threads_rationale_500",
+      "label": "Retorna o hist\u00f3rico de mensagens de uma thread via checkpointer LangGraph.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L500"
+    },
+    {
+      "id": "handlers_threads_rationale_523",
+      "label": "Gera um t\u00edtulo curto (\u22646 palavras) para a sess\u00e3o via LLM.      Defensivo: qualqu",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L523"
+    },
+    {
+      "id": "handlers_threads_rationale_561",
+      "label": "Atribui (uma vez) um t\u00edtulo gerado pela IA \u00e0 sess\u00e3o e persiste.      Idempotente",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L561"
+    },
+    {
+      "id": "handlers_threads_rationale_606",
+      "label": "Metadados de um snapshot de rewind gravado para uma thread.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L606"
+    },
+    {
+      "id": "handlers_threads_rationale_633",
+      "label": "Lista os checkpoints de rewind gravados para uma thread.      Retorna apenas art",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L633"
+    },
+    {
+      "id": "handlers_threads_rationale_674",
+      "label": "Restaura o workspace para o estado do checkpoint indicado.      Requer que o ``w",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L674"
+    },
+    {
+      "id": "handlers_threads_rationale_805",
+      "label": "Hist\u00f3rico paginado de mensagens de uma thread.      Retorna as ``limit`` mensage",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L805"
+    },
+    {
+      "id": "handlers_threads_rationale_849",
+      "label": "Retorna um resumo da atividade da thread: arquivos modificados e     contagem de",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L849"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "contextlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "uuid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "backend_api_schemas",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_user_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_user_id",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_ensure_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_ensure_schema",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_get_db",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_db",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_ensure_sessions_table",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_row_to_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_row_to_thread",
+      "target": "thread",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_upsert_session",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L161",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_normalize_pins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L217",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_get_session_pins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_set_session_pins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_build_pinned_context",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L286",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_build_pinned_context",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L286",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_get_thread_pins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L340",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread_pins",
+      "target": "getthreadpinsrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L340",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread_pins",
+      "target": "threadpinsresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L340",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_set_thread_pins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L348",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_set_thread_pins",
+      "target": "setthreadpinsrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L348",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_set_thread_pins",
+      "target": "threadpinsresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L348",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_create_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L359",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_create_thread",
+      "target": "createthreadrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L359",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_create_thread",
+      "target": "request",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L359",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_create_thread",
+      "target": "thread",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L359",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_get_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L404",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread",
+      "target": "getthreadrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L404",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread",
+      "target": "thread",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L404",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_list_threads",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L425",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_threads",
+      "target": "listthreadsrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L425",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_threads",
+      "target": "listthreadsresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L425",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_delete_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L443",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_delete_thread",
+      "target": "deletethreadrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L443",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_update_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L459",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_update_thread",
+      "target": "updatethreadrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L459",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_update_thread",
+      "target": "thread",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L459",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_get_history",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L499",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_history",
+      "target": "gethistoryrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L499",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_history",
+      "target": "gethistoryresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L499",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_ai_title",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L522",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_generate_title",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L560",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_generate_title",
+      "target": "generatetitlerequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L560",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_generate_title",
+      "target": "generatetitleresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L560",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_checkpointartifact",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L605",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_checkpointartifact",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L605",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_checkpointsresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L618",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_checkpointsresponse",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L618",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_rewindrequest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L622",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rewindrequest",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L622",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_rewindresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L626",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rewindresponse",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L626",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_list_thread_checkpoints",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L632",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_thread_checkpoints",
+      "target": "handlers_threads_checkpointsresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L632",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_rewind_thread",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L669",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rewind_thread",
+      "target": "handlers_threads_rewindrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L669",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rewind_thread",
+      "target": "query",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L669",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rewind_thread",
+      "target": "handlers_threads_rewindresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L669",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_get_thread_history_paginated",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L800",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread_history_paginated",
+      "target": "pagedhistoryresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L800",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_activityresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L841",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_activityresponse",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L841",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "target": "handlers_threads_thread_activity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L848",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_thread_activity",
+      "target": "handlers_threads_activityresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L848",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_db",
+      "target": "handlers_threads_ensure_schema",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_ensure_sessions_table",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_ensure_sessions_table",
+      "target": "handlers_threads_ensure_schema",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_row_to_thread",
+      "target": "thread",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L146",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_upsert_session",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_session_pins",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_set_session_pins",
+      "target": "handlers_threads_normalize_pins",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L251",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_set_session_pins",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L252",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_build_pinned_context",
+      "target": "handlers_threads_get_session_pins",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L304",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread_pins",
+      "target": "threadpinsresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L341",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread_pins",
+      "target": "handlers_threads_get_session_pins",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L343",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_set_thread_pins",
+      "target": "handlers_threads_set_session_pins",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L349",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_set_thread_pins",
+      "target": "threadpinsresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L350",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_create_thread",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L367",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_create_thread",
+      "target": "handlers_threads_user_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L376",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_create_thread",
+      "target": "thread",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L389",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L405",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread",
+      "target": "handlers_threads_row_to_thread",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L416",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_threads",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L427",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_threads",
+      "target": "listthreadsresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L434",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_threads",
+      "target": "handlers_threads_row_to_thread",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L434",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_delete_thread",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L444",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_update_thread",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L461",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_update_thread",
+      "target": "handlers_threads_row_to_thread",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L472",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_update_thread",
+      "target": "thread",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L485",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_history",
+      "target": "gethistoryresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L510",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_generate_title",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L569",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_generate_title",
+      "target": "generatetitleresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L581",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_generate_title",
+      "target": "handlers_threads_ai_title",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L591",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_generate_title",
+      "target": "handlers_threads_upsert_session",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L592",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_thread_checkpoints",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L641",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_thread_checkpoints",
+      "target": "handlers_threads_checkpointsresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L651",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_list_thread_checkpoints",
+      "target": "handlers_threads_checkpointartifact",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L653",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rewind_thread",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L687",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rewind_thread",
+      "target": "handlers_threads_rewindresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L791",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_get_thread_history_paginated",
+      "target": "pagedhistoryresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L817",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_thread_activity",
+      "target": "handlers_threads_get_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L854",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_thread_activity",
+      "target": "handlers_threads_activityresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L879",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_threads_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_55",
+      "target": "handlers_threads_user_id",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_70",
+      "target": "handlers_threads_ensure_schema",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_107",
+      "target": "handlers_threads_get_db",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_123",
+      "target": "handlers_threads_ensure_sessions_table",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_134",
+      "target": "handlers_threads_row_to_thread",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_167",
+      "target": "handlers_threads_upsert_session",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_218",
+      "target": "handlers_threads_normalize_pins",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L218",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_230",
+      "target": "handlers_threads_get_session_pins",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L230",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_247",
+      "target": "handlers_threads_set_session_pins",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L247",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_292",
+      "target": "handlers_threads_build_pinned_context",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L292",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_360",
+      "target": "handlers_threads_create_thread",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L360",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_460",
+      "target": "handlers_threads_update_thread",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L460",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_500",
+      "target": "handlers_threads_get_history",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L500",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_523",
+      "target": "handlers_threads_ai_title",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L523",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_561",
+      "target": "handlers_threads_generate_title",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L561",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_606",
+      "target": "handlers_threads_checkpointartifact",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L606",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_633",
+      "target": "handlers_threads_list_thread_checkpoints",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L633",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_674",
+      "target": "handlers_threads_rewind_thread",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L674",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_805",
+      "target": "handlers_threads_get_thread_history_paginated",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L805",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_threads_rationale_849",
+      "target": "handlers_threads_thread_activity",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/threads.py",
+      "source_location": "L849",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "handlers_threads_ensure_schema",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ensure_schema",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L91",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ensure_schema",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_db",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_db",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_db",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_db",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_row_to_thread",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_row_to_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_row_to_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L142",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_row_to_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L176",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L176",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L198",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_upsert_session",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L209",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_normalize_pins",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L222",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_normalize_pins",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L222",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_normalize_pins",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_normalize_pins",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L225",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_session_pins",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L232",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_session_pins",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_session_pins",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L239",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_session_pins",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L242",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L253",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L253",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L255",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L258",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L262",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L266",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L268",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_set_session_pins",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L279",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L311",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L311",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L318",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L321",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "read_bytes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L323",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L326",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L329",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L331",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_build_pinned_context",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L336",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "uuid4",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L368",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L369",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L369",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L375",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "set_active",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L376",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L380",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L381",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_create_thread",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L388",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_thread",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L406",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_thread",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L411",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L413",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_list_threads",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L428",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_list_threads",
+      "callee": "fetchall",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L433",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_delete_thread",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L445",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_delete_thread",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L449",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L462",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L467",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L469",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L475",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L479",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L479",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L480",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L482",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_update_thread",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L484",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_history",
+      "callee": "aget_thread_messages",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L508",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_history",
+      "callee": "HistoryMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L509",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_history",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L513",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_history",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L514",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L528",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L528",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L528",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "load_llm",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L534",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "ainvoke",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L543",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "SystemMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L545",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "HumanMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L546",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L550",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L550",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L550",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L550",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L552",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L552",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L552",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_ai_title",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L555",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_generate_title",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L570",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_generate_title",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L574",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_generate_title",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L577",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_generate_title",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L577",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_generate_title",
+      "callee": "aget_thread_messages",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L585",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_generate_title",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L596",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_generate_title",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L597",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_list_thread_checkpoints",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L642",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_list_thread_checkpoints",
+      "callee": "fetchall",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L649",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_list_thread_checkpoints",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L660",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L688",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L695",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L698",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L708",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L712",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L715",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L715",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L720",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L731",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L733",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L739",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "Repo",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L745",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L747",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "acquire_workspace_lock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L752",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "restore_git_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L755",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L757",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L762",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L763",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L767",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "acquire_workspace_lock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L772",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "restore_snapshot_checkpoint",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L775",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L777",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L782",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L783",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_rewind_thread",
+      "callee": "HTTPException",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L786",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_thread_history_paginated",
+      "callee": "aget_thread_messages",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L814",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_thread_history_paginated",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L816",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_get_thread_history_paginated",
+      "callee": "HistoryMessage",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L830",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_thread_activity",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L857",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_thread_activity",
+      "callee": "fetchall",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L861",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_thread_activity",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L865",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_thread_activity",
+      "callee": "extend",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L866",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_thread_activity",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L866",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_thread_activity",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L870",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_threads_thread_activity",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\threads.py",
+      "source_location": "L874",
+      "receiver": null
+    }
+  ]
+}

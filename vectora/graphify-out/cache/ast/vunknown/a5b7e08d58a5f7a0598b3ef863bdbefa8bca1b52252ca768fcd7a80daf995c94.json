@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_file_tree_skeleton_tsx",
+      "label": "file-tree-skeleton.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/file-tree-skeleton.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "tabs_file_tree_skeleton_row_shapes",
+      "label": "ROW_SHAPES",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/file-tree-skeleton.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "tabs_file_tree_skeleton_filetreeskeleton",
+      "label": "FileTreeSkeleton",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/tabs/file-tree-skeleton.tsx",
+      "source_location": "L20"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_file_tree_skeleton_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/file-tree-skeleton.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_file_tree_skeleton_tsx",
+      "target": "tabs_file_tree_skeleton_row_shapes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/file-tree-skeleton.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_tabs_file_tree_skeleton_tsx",
+      "target": "tabs_file_tree_skeleton_filetreeskeleton",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/tabs/file-tree-skeleton.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

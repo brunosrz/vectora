@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_settings_tab_account_js",
+      "label": "settings_tab_account.js",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "messages_settings_tab_account_en_settings_tab_account",
+      "label": "en_settings_tab_account()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "messages_settings_tab_account_es_settings_tab_account",
+      "label": "es_settings_tab_account()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L12"
+    },
+    {
+      "id": "messages_settings_tab_account_pt_settings_tab_account",
+      "label": "pt_settings_tab_account()",
+      "file_type": "code",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_settings_tab_account_js",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_runtime_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_settings_tab_account_js",
+      "target": "paraglide_runtime_getlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_settings_tab_account_js",
+      "target": "paraglide_runtime_experimentalstaticlocale",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_settings_tab_account_js",
+      "target": "messages_settings_tab_account_en_settings_tab_account",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_settings_tab_account_js",
+      "target": "messages_settings_tab_account_es_settings_tab_account",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_paraglide_messages_settings_tab_account_js",
+      "target": "messages_settings_tab_account_pt_settings_tab_account",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/paraglide/messages/settings_tab_account.js",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

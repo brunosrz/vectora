@@ -1,0 +1,79 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_monaco_readonly_tsx",
+      "label": "monaco-readonly.tsx",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/monaco-readonly.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "workbench_monaco_readonly_monacoreadonly",
+      "label": "MonacoReadOnly()",
+      "file_type": "code",
+      "source_file": "frontend/components/workbench/monaco-readonly.tsx",
+      "source_location": "L17"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_monaco_readonly_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/monaco-readonly.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_monaco_readonly_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/monaco-readonly.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_monaco_readonly_tsx",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_monaco_setup_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/monaco-readonly.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_monaco_readonly_tsx",
+      "target": "monaco_setup_languagefrompath",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/monaco-readonly.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_components_workbench_monaco_readonly_tsx",
+      "target": "workbench_monaco_readonly_monacoreadonly",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/workbench/monaco-readonly.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "workbench_monaco_readonly_monacoreadonly",
+      "callee": "languageFromPath",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\components\\workbench\\monaco-readonly.tsx",
+      "source_location": "L29",
+      "receiver": null
+    }
+  ]
+}

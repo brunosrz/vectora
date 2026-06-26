@@ -1,0 +1,365 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_rate_limit_py",
+      "label": "test_api_rate_limit.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetclientip",
+      "label": "TestGetClientIp",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetclientip_make_request",
+      "label": "._make_request()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetclientip_test_returns_forwarded_for_when_present",
+      "label": ".test_returns_forwarded_for_when_present()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetclientip_test_returns_client_host_when_no_forwarded",
+      "label": ".test_returns_client_host_when_no_forwarded()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetclientip_test_returns_unknown_when_no_client",
+      "label": ".test_returns_unknown_when_no_client()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testattachlimiter",
+      "label": "TestAttachLimiter",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testattachlimiter_test_attach_does_not_raise",
+      "label": ".test_attach_does_not_raise()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testattachlimiter_test_limiter_attached_to_app_state",
+      "label": ".test_limiter_attached_to_app_state()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetlimiter",
+      "label": "TestGetLimiter",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetlimiter_test_returns_none_when_no_limiter",
+      "label": ".test_returns_none_when_no_limiter()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "unit_test_api_rate_limit_testgetlimiter_test_returns_limiter_when_present",
+      "label": ".test_returns_limiter_when_present()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "unit_test_api_rate_limit_rationale_1",
+      "label": "Testes unit\u00e1rios para src/api/middleware/rate_limit.py (Bloco C \u2014 C13).  Cobre:",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_rate_limit_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_rate_limit_py",
+      "target": "unit_test_api_rate_limit_testgetclientip",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetclientip",
+      "target": "unit_test_api_rate_limit_testgetclientip_make_request",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetclientip",
+      "target": "unit_test_api_rate_limit_testgetclientip_test_returns_forwarded_for_when_present",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetclientip",
+      "target": "unit_test_api_rate_limit_testgetclientip_test_returns_client_host_when_no_forwarded",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetclientip",
+      "target": "unit_test_api_rate_limit_testgetclientip_test_returns_unknown_when_no_client",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_rate_limit_py",
+      "target": "unit_test_api_rate_limit_testattachlimiter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testattachlimiter",
+      "target": "unit_test_api_rate_limit_testattachlimiter_test_attach_does_not_raise",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testattachlimiter",
+      "target": "unit_test_api_rate_limit_testattachlimiter_test_limiter_attached_to_app_state",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_rate_limit_py",
+      "target": "unit_test_api_rate_limit_testgetlimiter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetlimiter",
+      "target": "unit_test_api_rate_limit_testgetlimiter_test_returns_none_when_no_limiter",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetlimiter",
+      "target": "unit_test_api_rate_limit_testgetlimiter_test_returns_limiter_when_present",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetclientip_test_returns_forwarded_for_when_present",
+      "target": "unit_test_api_rate_limit_testgetclientip_make_request",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_testgetclientip_test_returns_client_host_when_no_forwarded",
+      "target": "unit_test_api_rate_limit_testgetclientip_make_request",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_rate_limit_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_rate_limit_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_rate_limit.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetclientip_make_request",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetclientip_make_request",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetclientip_test_returns_forwarded_for_when_present",
+      "callee": "_get_client_ip",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetclientip_test_returns_client_host_when_no_forwarded",
+      "callee": "_get_client_ip",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetclientip_test_returns_unknown_when_no_client",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetclientip_test_returns_unknown_when_no_client",
+      "callee": "_get_client_ip",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testattachlimiter_test_attach_does_not_raise",
+      "callee": "FastAPI",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testattachlimiter_test_attach_does_not_raise",
+      "callee": "attach_limiter",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testattachlimiter_test_limiter_attached_to_app_state",
+      "callee": "FastAPI",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testattachlimiter_test_limiter_attached_to_app_state",
+      "callee": "attach_limiter",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetlimiter_test_returns_none_when_no_limiter",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetlimiter_test_returns_none_when_no_limiter",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetlimiter_test_returns_none_when_no_limiter",
+      "callee": "get_limiter",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetlimiter_test_returns_limiter_when_present",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetlimiter_test_returns_limiter_when_present",
+      "callee": "object",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_rate_limit_testgetlimiter_test_returns_limiter_when_present",
+      "callee": "get_limiter",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_rate_limit.py",
+      "source_location": "L110",
+      "receiver": null
+    }
+  ]
+}

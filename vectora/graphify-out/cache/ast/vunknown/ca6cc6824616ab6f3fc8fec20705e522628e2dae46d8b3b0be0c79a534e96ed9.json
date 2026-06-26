@@ -1,0 +1,135 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "label": "use-webhook-workbench.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_use_webhook_workbench_test_handler",
+      "label": "Handler",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "tests_use_webhook_workbench_test_mount",
+      "label": "mount()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L44"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "tests_use_webhook_workbench_test_handler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_webhook_workbench_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "hooks_use_webhook_workbench_usewebhookworkbench",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_ci_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "stores_ci_store_usecistore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_toast_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "stores_toast_store_usetoaststore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_tests_use_webhook_workbench_test_ts",
+      "target": "tests_use_webhook_workbench_test_mount",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/__tests__/use-webhook-workbench.test.ts",
+      "source_location": "L44",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_use_webhook_workbench_test_mount",
+      "callee": "renderHook",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\__tests__\\use-webhook-workbench.test.ts",
+      "source_location": "L46",
+      "receiver": null
+    }
+  ]
+}

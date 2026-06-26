@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_streaming_store_ts",
+      "label": "streaming-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/streaming-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_streaming_store_streamingstore",
+      "label": "StreamingStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/streaming-store.ts",
+      "source_location": "L3"
+    },
+    {
+      "id": "stores_streaming_store_usestreamingstore",
+      "label": "useStreamingStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/streaming-store.ts",
+      "source_location": "L8"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_streaming_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/streaming-store.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_streaming_store_ts",
+      "target": "stores_streaming_store_streamingstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/streaming-store.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_streaming_store_ts",
+      "target": "stores_streaming_store_usestreamingstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/streaming-store.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

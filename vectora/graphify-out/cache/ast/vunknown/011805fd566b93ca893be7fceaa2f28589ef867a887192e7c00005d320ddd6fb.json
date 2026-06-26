@@ -1,0 +1,363 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "label": "cache_embeddings.py",
+      "file_type": "code",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_cache_embeddings_key",
+      "label": "_key()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "services_cache_embeddings_redis_active",
+      "label": "_redis_active()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "services_cache_embeddings_get_cached",
+      "label": "get_cached()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L42"
+    },
+    {
+      "id": "services_cache_embeddings_put_cached",
+      "label": "put_cached()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "services_cache_embeddings_embed_query_cached",
+      "label": "embed_query_cached()",
+      "file_type": "code",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L73"
+    },
+    {
+      "id": "services_cache_embeddings_rationale_1",
+      "label": "Cache de embeddings ``hash(text + model) \u2192 vetor`` em Redis (TTL 24h).  Ativo ap",
+      "file_type": "rationale",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_cache_embeddings_rationale_45",
+      "label": "Vetor em cache para ``text``/``model`` ou ``None`` (miss / cache inativo).",
+      "file_type": "rationale",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L45"
+    },
+    {
+      "id": "services_cache_embeddings_rationale_60",
+      "label": "Grava o vetor no cache (no-op se cache inativo). Falhas s\u00e3o ignoradas.",
+      "file_type": "rationale",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L60"
+    },
+    {
+      "id": "services_cache_embeddings_rationale_76",
+      "label": "Embedding de ``text`` com cache Redis quando dispon\u00edvel.      ``embed_fn`` \u00e9 a f",
+      "file_type": "rationale",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L76"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "hashlib",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "collections_abc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "services_cache_embeddings_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "services_cache_embeddings_redis_active",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "services_cache_embeddings_get_cached",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "services_cache_embeddings_put_cached",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "target": "services_cache_embeddings_embed_query_cached",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_get_cached",
+      "target": "services_cache_embeddings_redis_active",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_get_cached",
+      "target": "services_cache_embeddings_key",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_put_cached",
+      "target": "services_cache_embeddings_redis_active",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_put_cached",
+      "target": "services_cache_embeddings_key",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_embed_query_cached",
+      "target": "services_cache_embeddings_get_cached",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_embed_query_cached",
+      "target": "services_cache_embeddings_put_cached",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_cache_embeddings_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_rationale_45",
+      "target": "services_cache_embeddings_get_cached",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_rationale_60",
+      "target": "services_cache_embeddings_put_cached",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "services_cache_embeddings_rationale_76",
+      "target": "services_cache_embeddings_embed_query_cached",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/cache_embeddings.py",
+      "source_location": "L76",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_cache_embeddings_key",
+      "callee": "hexdigest",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_key",
+      "callee": "sha256",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_key",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_redis_active",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L34",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_redis_active",
+      "callee": "redis_reachable",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_get_cached",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_get_cached",
+      "callee": "get_kv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_get_cached",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_put_cached",
+      "callee": "get_kv",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_put_cached",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_put_cached",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_embed_query_cached",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_cache_embeddings_embed_query_cached",
+      "callee": "embed_fn",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\cache_embeddings.py",
+      "source_location": "L85",
+      "receiver": null
+    }
+  ]
+}

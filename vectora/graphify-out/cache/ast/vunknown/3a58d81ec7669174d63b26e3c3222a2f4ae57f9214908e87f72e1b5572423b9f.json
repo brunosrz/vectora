@@ -1,0 +1,525 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_oxlintrc_json",
+      "label": ".oxlintrc.json",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_oxlintrc_schema",
+      "label": "$schema",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "frontend_oxlintrc_plugins",
+      "label": "plugins",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "frontend_oxlintrc_categories",
+      "label": "categories",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "frontend_oxlintrc_categories_correctness",
+      "label": "correctness",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "frontend_oxlintrc_categories_suspicious",
+      "label": "suspicious",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "frontend_oxlintrc_categories_perf",
+      "label": "perf",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "frontend_oxlintrc_categories_style",
+      "label": "style",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "frontend_oxlintrc_rules",
+      "label": "rules",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_no_console",
+      "label": "no-console",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_no_unused_vars",
+      "label": "no-unused-vars",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_typescript_no_unused_vars",
+      "label": "typescript/no-unused-vars",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_react_jsx_key",
+      "label": "react/jsx-key",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_react_no_array_index_key",
+      "label": "react/no-array-index-key",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_react_react_in_jsx_scope",
+      "label": "react/react-in-jsx-scope",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_react_hooks_exhaustive_deps",
+      "label": "react-hooks/exhaustive-deps",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_unicorn_no_null",
+      "label": "unicorn/no-null",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_unicorn_prefer_module",
+      "label": "unicorn/prefer-module",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_unicorn_filename_case",
+      "label": "unicorn/filename-case",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_import_no_cycle",
+      "label": "import/no-cycle",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_react_no_unstable_nested_components",
+      "label": "react/no-unstable-nested-components",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_import_no_unassigned_import",
+      "label": "import/no-unassigned-import",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "frontend_oxlintrc_ignorepatterns",
+      "label": "ignorePatterns",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_oxlintrc_json",
+      "target": "frontend_oxlintrc_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_oxlintrc_json",
+      "target": "frontend_oxlintrc_plugins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_plugins",
+      "target": "ref_react",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_plugins",
+      "target": "ref_typescript",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_plugins",
+      "target": "ref_unicorn",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_plugins",
+      "target": "ref_import",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_oxlintrc_json",
+      "target": "frontend_oxlintrc_categories",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_categories",
+      "target": "frontend_oxlintrc_categories_correctness",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_categories",
+      "target": "frontend_oxlintrc_categories_suspicious",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_categories",
+      "target": "frontend_oxlintrc_categories_perf",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_categories",
+      "target": "frontend_oxlintrc_categories_style",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_oxlintrc_json",
+      "target": "frontend_oxlintrc_rules",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_no_console",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_no_unused_vars",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_typescript_no_unused_vars",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_react_jsx_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_react_no_array_index_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_react_react_in_jsx_scope",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_react_hooks_exhaustive_deps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_unicorn_no_null",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_unicorn_prefer_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_unicorn_filename_case",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_import_no_cycle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_react_no_unstable_nested_components",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules_react_no_unstable_nested_components",
+      "target": "ref_warn",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_import_no_unassigned_import",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules_import_no_unassigned_import",
+      "target": "ref_warn",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_oxlintrc_json",
+      "target": "frontend_oxlintrc_ignorepatterns",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_node_modules",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_next",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_out",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_dist",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_build",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_public_service_worker_js",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_lib_paraglide",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_e2e",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_playwright_report",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_ignorepatterns",
+      "target": "ref_test_results",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    }
+  ]
+}

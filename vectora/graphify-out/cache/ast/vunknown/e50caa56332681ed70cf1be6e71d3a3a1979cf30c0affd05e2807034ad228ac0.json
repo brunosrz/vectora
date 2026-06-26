@@ -1,0 +1,1664 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "label": "test_context_graph_symbol_resolution.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_code_node",
+      "label": "_code_node()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel",
+      "label": "TestNormaliseCallableLabel",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L18"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_parens",
+      "label": ".test_strips_parens()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_lowercases",
+      "label": ".test_lowercases()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_leading_dot",
+      "label": ".test_strips_leading_dot()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_whitespace",
+      "label": ".test_strips_whitespace()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L40"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "label": "TestNodeIsResolvableSymbol",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_code_node_with_label",
+      "label": ".test_code_node_with_label()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_document_node_not_resolvable",
+      "label": ".test_document_node_not_resolvable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_empty_label_not_resolvable",
+      "label": ".test_empty_label_not_resolvable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L68"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_file_extension_label_not_resolvable",
+      "label": ".test_file_extension_label_not_resolvable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L78"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_js_extension_not_resolvable",
+      "label": ".test_js_extension_not_resolvable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L85"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_no_file_type_not_resolvable",
+      "label": ".test_no_file_type_not_resolvable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildlabelindex",
+      "label": "TestBuildLabelIndex",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_indexes_code_nodes",
+      "label": ".test_indexes_code_nodes()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_skips_non_code",
+      "label": ".test_skips_non_code()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_multiple_nodes_same_label",
+      "label": ".test_multiple_nodes_same_label()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L116"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_node_without_id_skipped",
+      "label": ".test_node_without_id_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testexistingedgepairs",
+      "label": "TestExistingEdgePairs",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L131"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_basic_pairs",
+      "label": ".test_basic_pairs()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L132"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_missing_source_or_target_skipped",
+      "label": ".test_missing_source_or_target_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L139"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_empty_edges",
+      "label": ".test_empty_edges()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L149"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testiterrawcalls",
+      "label": "TestIterRawCalls",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L155"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_basic_iteration",
+      "label": ".test_basic_iteration()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L156"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_dict_skipped",
+      "label": ".test_non_dict_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L164"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_list_raw_calls_skipped",
+      "label": ".test_non_list_raw_calls_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L170"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_dict_items_inside_list_skipped",
+      "label": ".test_non_dict_items_inside_list_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L176"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testmodulestem",
+      "label": "TestModuleStem",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L183"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testmodulestem_test_plain_module",
+      "label": ".test_plain_module()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L184"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testmodulestem_test_dotted_module",
+      "label": ".test_dotted_module()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L189"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testmodulestem_test_relative_import",
+      "label": ".test_relative_import()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L194"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testmodulestem_test_none_returns_empty",
+      "label": ".test_none_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L199"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "label": "TestParsePythonImportAliases",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L205"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import",
+      "label": ".test_from_import()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L206"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import_as",
+      "label": ".test_from_import_as()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L217"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_star_import_skipped",
+      "label": ".test_star_import_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L228"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_nested_import_not_indexed",
+      "label": ".test_nested_import_not_indexed()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L238"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_plain_import_not_indexed",
+      "label": ".test_plain_import_not_indexed()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L248"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_missing_file_returns_empty",
+      "label": ".test_missing_file_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L258"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_syntax_error_returns_empty",
+      "label": ".test_syntax_error_returns_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L266"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_relative_import",
+      "label": ".test_relative_import()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L276"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_source_location_stored",
+      "label": ".test_source_location_stored()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L287"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex",
+      "label": "TestBuildPythonSymbolIndex",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L298"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_builds_stem_symbol_index",
+      "label": ".test_builds_stem_symbol_index()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L299"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_skips_non_code",
+      "label": ".test_skips_non_code()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L308"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_no_source_file_skipped",
+      "label": ".test_no_source_file_skipped()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L324"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol",
+      "label": "TestFindUniquePythonSymbol",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L334"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_finds_unique",
+      "label": ".test_finds_unique()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L335"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_ambiguous_returns_none",
+      "label": ".test_ambiguous_returns_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L354"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_missing_returns_none",
+      "label": ".test_missing_returns_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L377"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls",
+      "label": "TestResolvePythonImportGuidedCalls",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L394"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_resolves_call_via_import",
+      "label": ".test_resolves_call_via_import()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L395"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_member_calls",
+      "label": ".test_skips_member_calls()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L424"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_non_python_files",
+      "label": ".test_skips_non_python_files()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L443"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_no_duplicate_edges",
+      "label": ".test_no_duplicate_edges()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L454"
+    },
+    {
+      "id": "unit_test_context_graph_symbol_resolution_rationale_1",
+      "label": "Testes para backend/services/context_graph/symbol_resolution.py.  Cobre: normali",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel",
+      "target": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_parens",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel",
+      "target": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_lowercases",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel",
+      "target": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_leading_dot",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel",
+      "target": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_whitespace",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_code_node_with_label",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_document_node_not_resolvable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_empty_label_not_resolvable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_file_extension_label_not_resolvable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_js_extension_not_resolvable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_no_file_type_not_resolvable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildlabelindex",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildlabelindex",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_indexes_code_nodes",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildlabelindex",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_skips_non_code",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildlabelindex",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_multiple_nodes_same_label",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildlabelindex",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_node_without_id_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testexistingedgepairs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testexistingedgepairs",
+      "target": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_basic_pairs",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testexistingedgepairs",
+      "target": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_missing_source_or_target_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testexistingedgepairs",
+      "target": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_empty_edges",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L149",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testiterrawcalls",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testiterrawcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_basic_iteration",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testiterrawcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_dict_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testiterrawcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_list_raw_calls_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L170",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testiterrawcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_dict_items_inside_list_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testmodulestem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testmodulestem",
+      "target": "unit_test_context_graph_symbol_resolution_testmodulestem_test_plain_module",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L184",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testmodulestem",
+      "target": "unit_test_context_graph_symbol_resolution_testmodulestem_test_dotted_module",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L189",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testmodulestem",
+      "target": "unit_test_context_graph_symbol_resolution_testmodulestem_test_relative_import",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L194",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testmodulestem",
+      "target": "unit_test_context_graph_symbol_resolution_testmodulestem_test_none_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L205",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L206",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L206",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import_as",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L217",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import_as",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L217",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_star_import_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L228",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_star_import_skipped",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L228",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_nested_import_not_indexed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_nested_import_not_indexed",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_plain_import_not_indexed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L248",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_plain_import_not_indexed",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L248",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_missing_file_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L258",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_missing_file_returns_empty",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L258",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_syntax_error_returns_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L266",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_syntax_error_returns_empty",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L266",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_relative_import",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L276",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_relative_import",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L276",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases",
+      "target": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_source_location_stored",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L287",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_source_location_stored",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L287",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L298",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_builds_stem_symbol_index",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L299",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_skips_non_code",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L308",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex",
+      "target": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_no_source_file_skipped",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L324",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L334",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_finds_unique",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L335",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_ambiguous_returns_none",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L354",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol",
+      "target": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_missing_returns_none",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L377",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "target": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L394",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_resolves_call_via_import",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L395",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_resolves_call_via_import",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L395",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_member_calls",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L424",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_member_calls",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L424",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_non_python_files",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L443",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_non_python_files",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L443",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls",
+      "target": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_no_duplicate_edges",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L454",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_no_duplicate_edges",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L454",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_code_node_with_label",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_file_extension_label_not_resolvable",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_js_extension_not_resolvable",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_indexes_code_nodes",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_multiple_nodes_same_label",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_builds_stem_symbol_index",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L304",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_finds_unique",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L342",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_ambiguous_returns_none",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L362",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_resolves_call_via_import",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L404",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_member_calls",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L432",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_no_duplicate_edges",
+      "target": "unit_test_context_graph_symbol_resolution_code_node",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L461",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_context_graph_symbol_resolution_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_context_graph_symbol_resolution_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_context_graph_symbol_resolution.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_parens",
+      "callee": "normalise_callable_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L24",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_lowercases",
+      "callee": "normalise_callable_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_leading_dot",
+      "callee": "normalise_callable_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnormalisecallablelabel_test_strips_whitespace",
+      "callee": "normalise_callable_label",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_code_node_with_label",
+      "callee": "node_is_resolvable_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_document_node_not_resolvable",
+      "callee": "node_is_resolvable_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_empty_label_not_resolvable",
+      "callee": "node_is_resolvable_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_file_extension_label_not_resolvable",
+      "callee": "node_is_resolvable_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_js_extension_not_resolvable",
+      "callee": "node_is_resolvable_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testnodeisresolvablesymbol_test_no_file_type_not_resolvable",
+      "callee": "node_is_resolvable_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_indexes_code_nodes",
+      "callee": "build_label_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_skips_non_code",
+      "callee": "build_label_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_multiple_nodes_same_label",
+      "callee": "build_label_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testbuildlabelindex_test_node_without_id_skipped",
+      "callee": "build_label_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_basic_pairs",
+      "callee": "existing_edge_pairs",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L136",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_missing_source_or_target_skipped",
+      "callee": "existing_edge_pairs",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L146",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testexistingedgepairs_test_empty_edges",
+      "callee": "existing_edge_pairs",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L152",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_basic_iteration",
+      "callee": "iter_raw_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_dict_skipped",
+      "callee": "iter_raw_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_list_raw_calls_skipped",
+      "callee": "iter_raw_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testiterrawcalls_test_non_dict_items_inside_list_skipped",
+      "callee": "iter_raw_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testmodulestem_test_plain_module",
+      "callee": "_module_stem",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testmodulestem_test_dotted_module",
+      "callee": "_module_stem",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L192",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testmodulestem_test_relative_import",
+      "callee": "_module_stem",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testmodulestem_test_none_returns_empty",
+      "callee": "_module_stem",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L202",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L212",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L213",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import_as",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_from_import_as",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_star_import_skipped",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L234",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_star_import_skipped",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_nested_import_not_indexed",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_nested_import_not_indexed",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L245",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_plain_import_not_indexed",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L254",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_plain_import_not_indexed",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L255",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_missing_file_returns_empty",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L263",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_syntax_error_returns_empty",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L272",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_syntax_error_returns_empty",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L273",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_relative_import",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_relative_import",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L283",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_source_location_stored",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L293",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_source_location_stored",
+      "callee": "parse_python_import_aliases",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L294",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testparsepythonimportaliases_test_source_location_stored",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L295",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_builds_stem_symbol_index",
+      "callee": "build_python_symbol_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L305",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_skips_non_code",
+      "callee": "build_python_symbol_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L321",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testbuildpythonsymbolindex_test_no_source_file_skipped",
+      "callee": "build_python_symbol_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L330",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_finds_unique",
+      "callee": "build_python_symbol_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L343",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_finds_unique",
+      "callee": "ImportedSymbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L344",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_finds_unique",
+      "callee": "find_unique_python_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L351",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_ambiguous_returns_none",
+      "callee": "build_python_symbol_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L365",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_ambiguous_returns_none",
+      "callee": "ImportedSymbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L366",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_ambiguous_returns_none",
+      "callee": "find_unique_python_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L373",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_missing_returns_none",
+      "callee": "ImportedSymbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L383",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testfinduniquepythonsymbol_test_missing_returns_none",
+      "callee": "find_unique_python_symbol",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L390",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_resolves_call_via_import",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L401",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_resolves_call_via_import",
+      "callee": "resolve_python_import_guided_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L418",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_member_calls",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L430",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_member_calls",
+      "callee": "resolve_python_import_guided_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L440",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_non_python_files",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L449",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_skips_non_python_files",
+      "callee": "resolve_python_import_guided_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L451",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_no_duplicate_edges",
+      "callee": "write_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L460",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_context_graph_symbol_resolution_testresolvepythonimportguidedcalls_test_no_duplicate_edges",
+      "callee": "resolve_python_import_guided_calls",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_context_graph_symbol_resolution.py",
+      "source_location": "L476",
+      "receiver": null
+    }
+  ]
+}

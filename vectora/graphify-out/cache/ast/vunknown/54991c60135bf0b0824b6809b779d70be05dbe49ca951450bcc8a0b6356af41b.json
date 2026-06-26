@@ -1,0 +1,1220 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "label": "agent_factory.py",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_agent_factory_get_interrupt_on",
+      "label": "get_interrupt_on()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "services_agent_factory_subagent_specs",
+      "label": "_subagent_specs()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L198"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_agent_factory_build_session_system_prompt",
+      "label": "_build_session_system_prompt()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L237"
+    },
+    {
+      "id": "services_agent_factory_agents_md_paths",
+      "label": "_agents_md_paths()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L282"
+    },
+    {
+      "id": "services_agent_factory_ensure_infra",
+      "label": "_ensure_infra()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L298"
+    },
+    {
+      "id": "services_agent_factory_build_graph_async",
+      "label": "_build_graph_async()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L320"
+    },
+    {
+      "id": "services_agent_factory_get_user_agent",
+      "label": "get_user_agent()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L407"
+    },
+    {
+      "id": "services_agent_factory_message_text",
+      "label": "_message_text()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L441"
+    },
+    {
+      "id": "services_agent_factory_aget_thread_messages",
+      "label": "aget_thread_messages()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L460"
+    },
+    {
+      "id": "services_agent_factory_reset_default_graph",
+      "label": "reset_default_graph()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L503"
+    },
+    {
+      "id": "services_agent_factory_track_versions",
+      "label": "_track_versions()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L516"
+    },
+    {
+      "id": "services_agent_factory_invalidate_llm_cache",
+      "label": "_invalidate_llm_cache()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L531"
+    },
+    {
+      "id": "services_agent_factory_coder_compensate",
+      "label": "coder_compensate()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L549"
+    },
+    {
+      "id": "services_agent_factory_aclose",
+      "label": "aclose()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L609"
+    },
+    {
+      "id": "services_agent_factory_awarm",
+      "label": "awarm()",
+      "file_type": "code",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L632"
+    },
+    {
+      "id": "services_agent_factory_rationale_1",
+      "label": "Factory do agente Vectora usando create_deep_agent (harness can\u00f4nico).  Substitu",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_agent_factory_rationale_57",
+      "label": "Mapeia permission_mode para interrupt_on.      Preservado para compatibilidade c",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "services_agent_factory_rationale_199",
+      "label": "Retorna a lista de SubAgent specs filtrada pela pol\u00edtica ABAC do usu\u00e1rio.      I",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L199"
+    },
+    {
+      "id": "services_agent_factory_rationale_240",
+      "label": "Monta system prompt completo com contexto da sess\u00e3o.      Concatena o prompt bas",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L240"
+    },
+    {
+      "id": "services_agent_factory_rationale_283",
+      "label": "Retorna os paths de AGENTS.md que o MemoryMiddleware deve carregar.      Carrega",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L283"
+    },
+    {
+      "id": "services_agent_factory_rationale_299",
+      "label": "Abre (uma \u00fanica vez) o checkpointer SQLite + store compartilhados.      Todos os",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L299"
+    },
+    {
+      "id": "services_agent_factory_rationale_321",
+      "label": "Compila um grafo deepagents para ``model_id`` (checkpointer/store compartilhados",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L321"
+    },
+    {
+      "id": "services_agent_factory_rationale_410",
+      "label": "Retorna o grafo compilado para (user_id, model, chat_mode), cache por sess\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L410"
+    },
+    {
+      "id": "services_agent_factory_rationale_442",
+      "label": "Extrai o texto de uma mensagem (str ou lista de partes multimodais).      Mensag",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L442"
+    },
+    {
+      "id": "services_agent_factory_rationale_461",
+      "label": "Mensagens persistidas de uma thread como ``(role, text)``.      Usa o grafo deep",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L461"
+    },
+    {
+      "id": "services_agent_factory_rationale_504",
+      "label": "Invalida o grafo do modelo padr\u00e3o ap\u00f3s troca de provider/model.      ``apply_mod",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L504"
+    },
+    {
+      "id": "services_agent_factory_rationale_517",
+      "label": "Atualiza rastreamento de vers\u00e3o sem bloquear o caller.",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L517"
+    },
+    {
+      "id": "services_agent_factory_rationale_532",
+      "label": "Remove entradas stale do cache de LLM bound (llm_tools._bound_cache).",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L532"
+    },
+    {
+      "id": "services_agent_factory_rationale_550",
+      "label": "Rollback de emerg\u00eancia via ``git stash`` ap\u00f3s falha catastr\u00f3fica do coder.",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L550"
+    },
+    {
+      "id": "services_agent_factory_rationale_610",
+      "label": "Fecha o grafo + checkpointer SQLite. Idempotente.      Deve ser chamado no shutd",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L610"
+    },
+    {
+      "id": "services_agent_factory_rationale_633",
+      "label": "Inicializa o grafo eagerly no startup (opt-in).      Evita que a primeira reques",
+      "file_type": "rationale",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L633"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "backend_agents_identity",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "backend_services",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "backend_services_plugins",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "backend_services_skills",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_get_interrupt_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_subagent_specs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_subagent_specs",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_build_session_system_prompt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L237",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_agents_md_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L282",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_ensure_infra",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L298",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_build_graph_async",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L320",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_build_graph_async",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L320",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_get_user_agent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L407",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_get_user_agent",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L407",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_message_text",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L441",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_message_text",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L441",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_aget_thread_messages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L460",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_reset_default_graph",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L503",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_track_versions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L516",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_invalidate_llm_cache",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L531",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_coder_compensate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L549",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_aclose",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L609",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "target": "services_agent_factory_awarm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L632",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_build_graph_async",
+      "target": "services_agent_factory_ensure_infra",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L328",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_build_graph_async",
+      "target": "services_agent_factory_subagent_specs",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L343",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_build_graph_async",
+      "target": "services_agent_factory_build_session_system_prompt",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L345",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_build_graph_async",
+      "target": "services_agent_factory_agents_md_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L371",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_get_user_agent",
+      "target": "services_agent_factory_build_graph_async",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L426",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_get_user_agent",
+      "target": "services_agent_factory_track_versions",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L429",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_aget_thread_messages",
+      "target": "services_agent_factory_ensure_infra",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L469",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_aget_thread_messages",
+      "target": "services_agent_factory_get_user_agent",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L475",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_aget_thread_messages",
+      "target": "services_agent_factory_message_text",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L495",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_track_versions",
+      "target": "services_agent_factory_invalidate_llm_cache",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L526",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_awarm",
+      "target": "services_agent_factory_get_user_agent",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L639",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_agent_factory_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_57",
+      "target": "services_agent_factory_get_interrupt_on",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_199",
+      "target": "services_agent_factory_subagent_specs",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_240",
+      "target": "services_agent_factory_build_session_system_prompt",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_283",
+      "target": "services_agent_factory_agents_md_paths",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L283",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_299",
+      "target": "services_agent_factory_ensure_infra",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L299",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_321",
+      "target": "services_agent_factory_build_graph_async",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L321",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_410",
+      "target": "services_agent_factory_get_user_agent",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L410",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_442",
+      "target": "services_agent_factory_message_text",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L442",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_461",
+      "target": "services_agent_factory_aget_thread_messages",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L461",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_504",
+      "target": "services_agent_factory_reset_default_graph",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L504",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_517",
+      "target": "services_agent_factory_track_versions",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L517",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_532",
+      "target": "services_agent_factory_invalidate_llm_cache",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L532",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_550",
+      "target": "services_agent_factory_coder_compensate",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L550",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_610",
+      "target": "services_agent_factory_aclose",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L610",
+      "weight": 1.0
+    },
+    {
+      "source": "services_agent_factory_rationale_633",
+      "target": "services_agent_factory_awarm",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/agent_factory.py",
+      "source_location": "L633",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_agent_factory_get_interrupt_on",
+      "callee": "fromkeys",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_get_interrupt_on",
+      "callee": "fromkeys",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_subagent_specs",
+      "callee": "copy",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L216",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_subagent_specs",
+      "callee": "copy",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L216",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_subagent_specs",
+      "callee": "get_disabled",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L219",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_subagent_specs",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_session_system_prompt",
+      "callee": "_load_session_context",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L252",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_agents_md_paths",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L292",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_agents_md_paths",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L293",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_agents_md_paths",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L294",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_ensure_infra",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L309",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_ensure_infra",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L310",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_ensure_infra",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L310",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_ensure_infra",
+      "callee": "from_conn_string",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L311",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_ensure_infra",
+      "callee": "__aenter__",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L312",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_ensure_infra",
+      "callee": "build_store",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L317",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "_cast",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L340",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "load_llm",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L340",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "_register_profiles",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L351",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "build_middleware_stack",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L360",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "list_skill_paths",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L368",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "create_deep_agent",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L373",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "build_backend_lazy",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L379",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_build_graph_async",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L396",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_message_text",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L452",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_message_text",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L453",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_message_text",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L453",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_message_text",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L455",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_message_text",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L456",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aget_thread_messages",
+      "callee": "aget_state",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L478",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aget_thread_messages",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L480",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aget_thread_messages",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L491",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aget_thread_messages",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L495",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aget_thread_messages",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L499",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_reset_default_graph",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L512",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_reset_default_graph",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L513",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_track_versions",
+      "callee": "tools_version",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L519",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_track_versions",
+      "callee": "policy_version",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L520",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_track_versions",
+      "callee": "skills_version",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L521",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_track_versions",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L522",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_invalidate_llm_cache",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L540",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "_resolve_workspace_root",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L572",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "is_dir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L573",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L574",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "which",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L577",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "run",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L581",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L595",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L595",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L597",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L599",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "decode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L599",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L600",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_coder_compensate",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L605",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aclose",
+      "callee": "clear",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L623",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aclose",
+      "callee": "clear",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L624",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aclose",
+      "callee": "__aexit__",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L626",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aclose",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L627",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_aclose",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L629",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_agent_factory_awarm",
+      "callee": "warning",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\agent_factory.py",
+      "source_location": "L641",
+      "receiver": null
+    }
+  ]
+}

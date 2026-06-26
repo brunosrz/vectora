@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_e2e_session_recovery_spec_ts",
+      "label": "session-recovery.spec.ts",
+      "file_type": "code",
+      "source_file": "frontend/e2e/session-recovery.spec.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "e2e_session_recovery_spec_sendprompt",
+      "label": "sendPrompt()",
+      "file_type": "code",
+      "source_file": "frontend/e2e/session-recovery.spec.ts",
+      "source_location": "L16"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_e2e_session_recovery_spec_ts",
+      "target": "test",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/e2e/session-recovery.spec.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_e2e_session_recovery_spec_ts",
+      "target": "e2e_session_recovery_spec_sendprompt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/e2e/session-recovery.spec.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "e2e_session_recovery_spec_sendprompt",
+      "callee": "getByTestId",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\e2e\\session-recovery.spec.ts",
+      "source_location": "L17",
+      "receiver": null
+    },
+    {
+      "caller_nid": "e2e_session_recovery_spec_sendprompt",
+      "callee": "toBeVisible",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\e2e\\session-recovery.spec.ts",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "e2e_session_recovery_spec_sendprompt",
+      "callee": "expect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\e2e\\session-recovery.spec.ts",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "e2e_session_recovery_spec_sendprompt",
+      "callee": "fill",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\e2e\\session-recovery.spec.ts",
+      "source_location": "L19",
+      "receiver": null
+    },
+    {
+      "caller_nid": "e2e_session_recovery_spec_sendprompt",
+      "callee": "click",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\e2e\\session-recovery.spec.ts",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "e2e_session_recovery_spec_sendprompt",
+      "callee": "getByTestId",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\e2e\\session-recovery.spec.ts",
+      "source_location": "L20",
+      "receiver": null
+    }
+  ]
+}

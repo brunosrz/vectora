@@ -1,0 +1,166 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_conftest_py",
+      "label": "conftest.py",
+      "file_type": "code",
+      "source_file": "tests/conftest.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_conftest_pytest_sessionfinish",
+      "label": "pytest_sessionfinish()",
+      "file_type": "code",
+      "source_file": "tests/conftest.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "tests_conftest_pytest_unconfigure",
+      "label": "pytest_unconfigure()",
+      "file_type": "code",
+      "source_file": "tests/conftest.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tests_conftest_rationale_1",
+      "label": "Configura\u00e7\u00e3o compartilhada por toda a su\u00edte Python (escopo ``tests/``).  \u26a0\ufe0f Rede",
+      "file_type": "rationale",
+      "source_file": "tests/conftest.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_conftest_rationale_39",
+      "label": "Memoriza o c\u00f3digo de sa\u00edda final para o pytest_unconfigure.      O pytest injeta",
+      "file_type": "rationale",
+      "source_file": "tests/conftest.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "tests_conftest_rationale_49",
+      "label": "For\u00e7a o t\u00e9rmino do processo ap\u00f3s o pytest concluir todo o relat\u00f3rio.      Roda n",
+      "file_type": "rationale",
+      "source_file": "tests/conftest.py",
+      "source_location": "L49"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_conftest_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_conftest_py",
+      "target": "sys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_conftest_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_conftest_py",
+      "target": "tests_conftest_pytest_sessionfinish",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_conftest_py",
+      "target": "tests_conftest_pytest_unconfigure",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_conftest_pytest_unconfigure",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_conftest_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_conftest_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_conftest_rationale_39",
+      "target": "tests_conftest_pytest_sessionfinish",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_conftest_rationale_49",
+      "target": "tests_conftest_pytest_unconfigure",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/conftest.py",
+      "source_location": "L49",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_conftest_pytest_unconfigure",
+      "callee": "flush",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\conftest.py",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_conftest_pytest_unconfigure",
+      "callee": "flush",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\conftest.py",
+      "source_location": "L60",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_conftest_pytest_unconfigure",
+      "callee": "_exit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\conftest.py",
+      "source_location": "L61",
+      "receiver": null
+    }
+  ]
+}

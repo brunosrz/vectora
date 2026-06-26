@@ -1,0 +1,207 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "label": "threads-store.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_threads_store_threadcacheentry",
+      "label": "ThreadCacheEntry",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L33"
+    },
+    {
+      "id": "stores_threads_store_estimatebytes",
+      "label": "estimateBytes()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L44"
+    },
+    {
+      "id": "stores_threads_store_applygc",
+      "label": "applyGC()",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L56"
+    },
+    {
+      "id": "stores_threads_store_threadsstate",
+      "label": "ThreadsState",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L84"
+    },
+    {
+      "id": "stores_threads_store_usethreadsstore",
+      "label": "useThreadsStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L121"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "immer",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "types_index_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "stores_threads_store_threadcacheentry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "stores_threads_store_estimatebytes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "stores_threads_store_applygc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "stores_threads_store_threadsstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_threads_store_ts",
+      "target": "stores_threads_store_usethreadsstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/stores/threads-store.ts",
+      "source_location": "L121",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "stores_threads_store_estimatebytes",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_estimatebytes",
+      "callee": "stringify",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L46",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_applygc",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L59",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_applygc",
+      "callee": "entries",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_applygc",
+      "callee": "sort",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_applygc",
+      "callee": "slice",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_applygc",
+      "callee": "reduce",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_applygc",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L77",
+      "receiver": null
+    },
+    {
+      "caller_nid": "stores_threads_store_applygc",
+      "callee": "fromEntries",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\stores\\threads-store.ts",
+      "source_location": "L81",
+      "receiver": null
+    }
+  ]
+}

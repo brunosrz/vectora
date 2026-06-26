@@ -1,0 +1,175 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "label": "use-stream-handler.test.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_use_stream_handler_test_streamchatmock",
+      "label": "streamChatMock",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "tests_use_stream_handler_test_resumechatmock",
+      "label": "resumeChatMock",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L16"
+    },
+    {
+      "id": "tests_use_stream_handler_test_gen",
+      "label": "gen()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L25"
+    },
+    {
+      "id": "tests_use_stream_handler_test_run",
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L43"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "types_index_message",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_api_vectora_client_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "api_vectora_client_streamevent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "tests_use_stream_handler_test_streamchatmock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "tests_use_stream_handler_test_resumechatmock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_stream_handler_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "chat_use_stream_handler_usestreamhandler",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "tests_use_stream_handler_test_gen",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_tests_use_stream_handler_test_ts",
+      "target": "tests_use_stream_handler_test_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/__tests__/use-stream-handler.test.ts",
+      "source_location": "L43",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tests_use_stream_handler_test_gen",
+      "callee": "(async function* () {\n    for (const e of events) yield e;\n  })",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\__tests__\\use-stream-handler.test.ts",
+      "source_location": "L26",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tests_use_stream_handler_test_run",
+      "callee": "renderHook",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\__tests__\\use-stream-handler.test.ts",
+      "source_location": "L44",
+      "receiver": null
+    }
+  ]
+}

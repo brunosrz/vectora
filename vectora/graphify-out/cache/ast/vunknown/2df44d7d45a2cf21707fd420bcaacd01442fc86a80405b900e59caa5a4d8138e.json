@@ -1,0 +1,239 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_main_ports_py",
+      "label": "test_main_ports.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_main_ports_is_bindable",
+      "label": "_is_bindable()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "unit_test_main_ports_testfindfreeport",
+      "label": "TestFindFreePort",
+      "file_type": "code",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_main_ports_testfindfreeport_test_returns_valid_free_port_without_preference",
+      "label": ".test_returns_valid_free_port_without_preference()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "unit_test_main_ports_testfindfreeport_test_returns_preferred_when_available",
+      "label": ".test_returns_preferred_when_available()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "label": ".test_falls_back_when_preferred_is_busy()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "unit_test_main_ports_rationale_1",
+      "label": "Tests \u2014 descoberta din\u00e2mica de portas em src/main.py.  Garante que o servidor ch",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_main_ports_py",
+      "target": "socket",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_main_ports_py",
+      "target": "backend_main",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_main_ports_py",
+      "target": "unit_test_main_ports_is_bindable",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_main_ports_py",
+      "target": "unit_test_main_ports_testfindfreeport",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_main_ports_testfindfreeport",
+      "target": "unit_test_main_ports_testfindfreeport_test_returns_valid_free_port_without_preference",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_main_ports_testfindfreeport",
+      "target": "unit_test_main_ports_testfindfreeport_test_returns_preferred_when_available",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_main_ports_testfindfreeport",
+      "target": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_main_ports_testfindfreeport_test_returns_valid_free_port_without_preference",
+      "target": "unit_test_main_ports_is_bindable",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "target": "unit_test_main_ports_is_bindable",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_main_ports_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_main_ports_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_main_ports.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_main_ports_is_bindable",
+      "callee": "socket",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L18",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_is_bindable",
+      "callee": "setsockopt",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L19",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_is_bindable",
+      "callee": "bind",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L21",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_returns_valid_free_port_without_preference",
+      "callee": "_find_free_port",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L29",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_returns_preferred_when_available",
+      "callee": "_find_free_port",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L36",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_returns_preferred_when_available",
+      "callee": "_find_free_port",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "callee": "socket",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "callee": "bind",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "callee": "listen",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "callee": "getsockname",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_main_ports_testfindfreeport_test_falls_back_when_preferred_is_busy",
+      "callee": "_find_free_port",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_main_ports.py",
+      "source_location": "L46",
+      "receiver": null
+    }
+  ]
+}

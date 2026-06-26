@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, RefreshCw, ExternalLink } from "lucide-react";
+import { Loader2, RefreshCw, ExternalLink, X } from "lucide-react";
 
 import { useContextGraph } from "@/lib/hooks/use-context-graph";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -69,14 +69,6 @@ export function ContextGraphTab({
     <div className="flex flex-col h-full overflow-hidden">
       {/* Barra de ação */}
       <div className="flex items-center justify-end gap-2 px-3 py-2 border-b border-border/60 shrink-0">
-        {isRunning && (
-          <button
-            onClick={() => void cancel()}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-border/80"
-          >
-            {m.graph_cancel_button()}
-          </button>
-        )}
         {isBuilt && !isRunning && (
           <button
             onClick={() => update()}
@@ -88,15 +80,19 @@ export function ContextGraphTab({
           </button>
         )}
         <button
-          onClick={handleBuild}
-          disabled={isRunning || loading}
+          onClick={isRunning ? () => void cancel() : handleBuild}
+          disabled={!isRunning && loading}
           data-testid="graph-build-btn"
-          className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={
+            isRunning
+              ? "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+              : "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          }
         >
           {isRunning ? (
             <>
-              <Loader2 className="h-3 w-3 animate-spin" />
-              {m.graph_building()}
+              <X className="h-3 w-3" />
+              {m.graph_cancel_button()}
             </>
           ) : (
             <>
@@ -125,9 +121,65 @@ export function ContextGraphTab({
 
         {/* Status: running */}
         {isRunning && (
-          <div className="h-full flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <p>{m.graph_building()}</p>
+          <div className="flex flex-col gap-3 px-3 py-4">
+            {/* Spinner + label */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              <span>{status.step_label ?? m.graph_building()}</span>
+            </div>
+
+            {/* Barra de progresso por etapa */}
+            {status.step != null && status.step_total != null && (
+              <div className="space-y-1">
+                <div className="h-1 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary/70 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.round((status.step / status.step_total) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground/50 text-right">
+                  {status.step}/{status.step_total}
+                </p>
+              </div>
+            )}
+
+            {/* Contador de arquivos */}
+            {status.files_total != null && status.files_total > 0 && (
+              <p className="text-xs text-muted-foreground/60">
+                {m.graph_files_progress({
+                  done: status.files_done ?? 0,
+                  total: status.files_total,
+                })}
+              </p>
+            )}
+
+            {/* Lista de arquivos */}
+            {status.files_list && status.files_list.length > 0 && (
+              <div className="max-h-40 overflow-y-auto space-y-0.5">
+                {status.files_list.slice(0, 50).map((file, i) => {
+                  const done = i < (status.files_done ?? 0);
+                  return (
+                    <div
+                      key={i}
+                      className={`text-[10px] flex items-center gap-1.5 transition-opacity ${
+                        done
+                          ? "text-muted-foreground"
+                          : "text-muted-foreground/30"
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                          done ? "bg-primary/70" : "bg-muted-foreground/20"
+                        }`}
+                      />
+                      <span className="truncate">{file}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

@@ -1,0 +1,631 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "label": "debug_dump.py",
+      "file_type": "code",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_debug_dump_generate_debug_dump",
+      "label": "generate_debug_dump()",
+      "file_type": "code",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "services_debug_dump_create_qa_report",
+      "label": "create_qa_report()",
+      "file_type": "code",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L136"
+    },
+    {
+      "id": "services_debug_dump_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L209"
+    },
+    {
+      "id": "services_debug_dump_rationale_1",
+      "label": "Debug Dump Generator - Cria arquivo .tar.gz com estado completo para auditoria d",
+      "file_type": "rationale",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_debug_dump_rationale_31",
+      "label": "Gera arquivo de debug dump para auditoria de QA.      Cria um .tar.gz contendo:",
+      "file_type": "rationale",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "services_debug_dump_rationale_143",
+      "label": "Cria relat\u00f3rio estruturado de bug para QA.      Args:         debug_dump_path: C",
+      "file_type": "rationale",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L143"
+    },
+    {
+      "id": "services_debug_dump_rationale_210",
+      "label": "CLI para gerar debug dumps.",
+      "file_type": "rationale",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L210"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "platform",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "sys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "tarfile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "io",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "backend_settings",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "backend_version",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "services_debug_dump_generate_debug_dump",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "services_debug_dump_create_qa_report",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "target": "services_debug_dump_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L209",
+      "weight": 1.0
+    },
+    {
+      "source": "services_debug_dump_main",
+      "target": "services_debug_dump_generate_debug_dump",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "services_debug_dump_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_debug_dump_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_debug_dump_rationale_31",
+      "target": "services_debug_dump_generate_debug_dump",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "services_debug_dump_rationale_143",
+      "target": "services_debug_dump_create_qa_report",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "services_debug_dump_rationale_210",
+      "target": "services_debug_dump_main",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/debug_dump.py",
+      "source_location": "L210",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L54",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "platform",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L64",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "machine",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "get_llm_provider",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L66",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "TarInfo",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "addfile",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "BytesIO",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L83",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "glob",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "glob",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L89",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "glob",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L97",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "glob",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "readlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L107",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "upper",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "encode",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "TarInfo",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "addfile",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "BytesIO",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L122",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "info",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L125",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_generate_debug_dump",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_create_qa_report",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_create_qa_report",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_create_qa_report",
+      "callee": "upper",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_create_qa_report",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_debug_dump_create_qa_report",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\debug_dump.py",
+      "source_location": "L171",
+      "receiver": null
+    }
+  ]
+}

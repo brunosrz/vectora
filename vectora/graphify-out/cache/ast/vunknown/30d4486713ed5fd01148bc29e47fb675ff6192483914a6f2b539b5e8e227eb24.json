@@ -1,0 +1,685 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "label": "ignore.py",
+      "file_type": "code",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_ignore_load_vectoraignore_spec",
+      "label": "load_vectoraignore_spec()",
+      "file_type": "code",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "pathspec",
+      "label": "PathSpec",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "services_ignore_load_ignore_spec",
+      "label": "load_ignore_spec()",
+      "file_type": "code",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "services_ignore_load_gitignore_spec",
+      "label": "load_gitignore_spec()",
+      "file_type": "code",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L111"
+    },
+    {
+      "id": "services_ignore_is_ignored",
+      "label": "is_ignored()",
+      "file_type": "code",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L135"
+    },
+    {
+      "id": "services_ignore_walk_files",
+      "label": "walk_files()",
+      "file_type": "code",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L181"
+    },
+    {
+      "id": "services_ignore_iter_files",
+      "label": "iter_files()",
+      "file_type": "code",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L253"
+    },
+    {
+      "id": "services_ignore_rationale_1",
+      "label": "Utilit\u00e1rios de filtragem baseada em .gitignore e .vectoraignore via pathspec.  M",
+      "file_type": "rationale",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_ignore_rationale_50",
+      "label": "Carrega o .vectoraignore mais pr\u00f3ximo e retorna um PathSpec gitwildmatch.      M",
+      "file_type": "rationale",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "services_ignore_rationale_77",
+      "label": "Combina .gitignore + .vectoraignore num \u00fanico PathSpec gitwildmatch.      Cada a",
+      "file_type": "rationale",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "services_ignore_rationale_112",
+      "label": "Carrega o .gitignore mais pr\u00f3ximo e retorna um PathSpec gitwildmatch.      Sobe",
+      "file_type": "rationale",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L112"
+    },
+    {
+      "id": "services_ignore_rationale_136",
+      "label": "Retorna True se ``path`` deve ser ignorado.      Tr\u00eas camadas de verifica\u00e7\u00e3o, em",
+      "file_type": "rationale",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L136"
+    },
+    {
+      "id": "services_ignore_rationale_188",
+      "label": "Varre ``base_dir`` com poda de diret\u00f3rios e retorna (entradas, ignorados).",
+      "file_type": "rationale",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L188"
+    },
+    {
+      "id": "services_ignore_rationale_258",
+      "label": "Lista arquivos em ``base_dir`` respeitando .gitignore.      Wrapper de conveni\u00ean",
+      "file_type": "rationale",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L258"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "pathspec",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "services_ignore_load_vectoraignore_spec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_load_vectoraignore_spec",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_load_vectoraignore_spec",
+      "target": "pathspec",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "services_ignore_load_ignore_spec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_load_ignore_spec",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_load_ignore_spec",
+      "target": "pathspec",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "services_ignore_load_gitignore_spec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_load_gitignore_spec",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_load_gitignore_spec",
+      "target": "pathspec",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "services_ignore_is_ignored",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_is_ignored",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_is_ignored",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_is_ignored",
+      "target": "pathspec",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "services_ignore_walk_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_walk_files",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_walk_files",
+      "target": "pathspec",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_walk_files",
+      "target": "path",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "target": "services_ignore_iter_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L253",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_iter_files",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L253",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_iter_files",
+      "target": "pathspec",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L253",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_iter_files",
+      "target": "path",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L253",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_walk_files",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L225",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_walk_files",
+      "target": "services_ignore_is_ignored",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_iter_files",
+      "target": "services_ignore_walk_files",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L272",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_ignore_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_rationale_50",
+      "target": "services_ignore_load_vectoraignore_spec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_rationale_77",
+      "target": "services_ignore_load_ignore_spec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_rationale_112",
+      "target": "services_ignore_load_gitignore_spec",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_rationale_136",
+      "target": "services_ignore_is_ignored",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_rationale_188",
+      "target": "services_ignore_walk_files",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "services_ignore_rationale_258",
+      "target": "services_ignore_iter_files",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/ignore.py",
+      "source_location": "L258",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "services_ignore_load_vectoraignore_spec",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_vectoraignore_spec",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_vectoraignore_spec",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_vectoraignore_spec",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_vectoraignore_spec",
+      "callee": "from_lines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_vectoraignore_spec",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_ignore_spec",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_ignore_spec",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_ignore_spec",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L98",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_ignore_spec",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L100",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_ignore_spec",
+      "callee": "extend",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_ignore_spec",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_ignore_spec",
+      "callee": "from_lines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L108",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_gitignore_spec",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_gitignore_spec",
+      "callee": "resolve",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L124",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_gitignore_spec",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L126",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_gitignore_spec",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_gitignore_spec",
+      "callee": "from_lines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L129",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_load_gitignore_spec",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L129",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_is_ignored",
+      "callee": "relative_to",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_is_ignored",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_is_ignored",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L219",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "walk",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "relative_to",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L233",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "match_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L238",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L240",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "fnmatch",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L243",
+      "receiver": null
+    },
+    {
+      "caller_nid": "services_ignore_walk_files",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\ignore.py",
+      "source_location": "L249",
+      "receiver": null
+    }
+  ]
+}

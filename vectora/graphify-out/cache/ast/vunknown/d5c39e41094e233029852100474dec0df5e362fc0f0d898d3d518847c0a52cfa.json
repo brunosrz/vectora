@@ -1,0 +1,523 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "label": "connection.py",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "lancedb_connection_lancedbconnectioncache",
+      "label": "LanceDBConnectionCache",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L34"
+    },
+    {
+      "id": "lancedb_connection_lancedbconnectioncache_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "lancedb_connection_lancedbconnectioncache_connect",
+      "label": ".connect()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "lancedb_connection_lancedbconnectioncache_resolve_path",
+      "label": "._resolve_path()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "lancedb_connection_lancedbconnectioncache_close_all",
+      "label": ".close_all()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "lancedb_connection_lancedbconnectioncache_cached_paths",
+      "label": ".cached_paths()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L105"
+    },
+    {
+      "id": "lancedb_connection_default_lancedb_cache",
+      "label": "default_lancedb_cache()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L118"
+    },
+    {
+      "id": "lancedb_connection_get_lancedb",
+      "label": "get_lancedb()",
+      "file_type": "code",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L126"
+    },
+    {
+      "id": "lancedb_connection_rationale_1",
+      "label": "Cache de conex\u00f5es LanceDB ass\u00edncronas (lite mode).  LanceDB abre uma conex\u00e3o por",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "lancedb_connection_rationale_35",
+      "label": "Cache processo-local de conex\u00f5es LanceDB ass\u00edncronas.      Cada path \u00fanico mant\u00e9",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "lancedb_connection_rationale_50",
+      "label": "Retorna (ou cria) a conex\u00e3o LanceDB para ``path``.          Args:             pa",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "lancedb_connection_rationale_96",
+      "label": "Fecha todas as conex\u00f5es cacheadas. Usado em shutdown ou testes.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L96"
+    },
+    {
+      "id": "lancedb_connection_rationale_106",
+      "label": "Lista de paths com conex\u00f5es ativas no cache.",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L106"
+    },
+    {
+      "id": "lancedb_connection_rationale_119",
+      "label": "Retorna o cache singleton do processo (cria na primeira chamada).",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L119"
+    },
+    {
+      "id": "lancedb_connection_rationale_127",
+      "label": "Atalho: retorna a conex\u00e3o LanceDB para ``path`` via cache padr\u00e3o.      Na maiori",
+      "file_type": "rationale",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L127"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "target": "asyncio",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "target": "lancedb_connection_lancedbconnectioncache",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache",
+      "target": "lancedb_connection_lancedbconnectioncache_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_init",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache",
+      "target": "lancedb_connection_lancedbconnectioncache_connect",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_connect",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_connect",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache",
+      "target": "lancedb_connection_lancedbconnectioncache_resolve_path",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_resolve_path",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_resolve_path",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache",
+      "target": "lancedb_connection_lancedbconnectioncache_close_all",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache",
+      "target": "lancedb_connection_lancedbconnectioncache_cached_paths",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_cached_paths",
+      "target": "path",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "target": "lancedb_connection_default_lancedb_cache",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_default_lancedb_cache",
+      "target": "lancedb_connection_lancedbconnectioncache",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "target": "lancedb_connection_get_lancedb",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_get_lancedb",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_get_lancedb",
+      "target": "any",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_init",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_connect",
+      "target": "lancedb_connection_lancedbconnectioncache_resolve_path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_lancedbconnectioncache_resolve_path",
+      "target": "path",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_default_lancedb_cache",
+      "target": "lancedb_connection_lancedbconnectioncache",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_get_lancedb",
+      "target": "lancedb_connection_lancedbconnectioncache_connect",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_get_lancedb",
+      "target": "lancedb_connection_default_lancedb_cache",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_storage_lancedb_connection_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_rationale_35",
+      "target": "lancedb_connection_lancedbconnectioncache",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_rationale_50",
+      "target": "lancedb_connection_lancedbconnectioncache_connect",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_rationale_96",
+      "target": "lancedb_connection_lancedbconnectioncache_close_all",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_rationale_106",
+      "target": "lancedb_connection_lancedbconnectioncache_cached_paths",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_rationale_119",
+      "target": "lancedb_connection_default_lancedb_cache",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "lancedb_connection_rationale_127",
+      "target": "lancedb_connection_get_lancedb",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/storage/lancedb/connection.py",
+      "source_location": "L127",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_init",
+      "callee": "Lock",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_connect",
+      "callee": "mkdir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_connect",
+      "callee": "connect_async",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_connect",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_resolve_path",
+      "callee": "RuntimeError",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_close_all",
+      "callee": "clear",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L101",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_close_all",
+      "callee": "debug",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "lancedb_connection_lancedbconnectioncache_cached_paths",
+      "callee": "keys",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\storage\\lancedb\\connection.py",
+      "source_location": "L107",
+      "receiver": null
+    }
+  ]
+}

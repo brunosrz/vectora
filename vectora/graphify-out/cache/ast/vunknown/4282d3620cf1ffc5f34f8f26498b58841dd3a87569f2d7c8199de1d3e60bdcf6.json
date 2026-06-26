@@ -1,0 +1,157 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_stream_interruption_ts",
+      "label": "stream-interruption.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_stream_interruption_storage",
+      "label": "storage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "utils_stream_interruption_markstreamstarted",
+      "label": "markStreamStarted()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "utils_stream_interruption_markstreamended",
+      "label": "markStreamEnded()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L36"
+    },
+    {
+      "id": "utils_stream_interruption_consumeinterruptedflag",
+      "label": "consumeInterruptedFlag()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L45"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_stream_interruption_ts",
+      "target": "utils_stream_interruption_storage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_stream_interruption_ts",
+      "target": "utils_stream_interruption_markstreamstarted",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_stream_interruption_ts",
+      "target": "utils_stream_interruption_markstreamended",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_stream_interruption_ts",
+      "target": "utils_stream_interruption_consumeinterruptedflag",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_stream_interruption_markstreamstarted",
+      "target": "utils_stream_interruption_storage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_stream_interruption_markstreamended",
+      "target": "utils_stream_interruption_storage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_stream_interruption_consumeinterruptedflag",
+      "target": "utils_stream_interruption_storage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/stream-interruption.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "utils_stream_interruption_markstreamstarted",
+      "callee": "setItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\stream-interruption.ts",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_stream_interruption_markstreamstarted",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\stream-interruption.ts",
+      "source_location": "L32",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_stream_interruption_markstreamended",
+      "callee": "removeItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\stream-interruption.ts",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_stream_interruption_consumeinterruptedflag",
+      "callee": "getItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\stream-interruption.ts",
+      "source_location": "L49",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_stream_interruption_consumeinterruptedflag",
+      "callee": "removeItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\stream-interruption.ts",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_stream_interruption_consumeinterruptedflag",
+      "callee": "now",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\stream-interruption.ts",
+      "source_location": "L53",
+      "receiver": null
+    }
+  ]
+}

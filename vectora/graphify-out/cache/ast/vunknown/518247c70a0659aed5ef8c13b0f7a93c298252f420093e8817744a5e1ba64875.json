@@ -1,0 +1,66 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_src_next_shims_d_ts",
+      "label": "next-shims.d.ts",
+      "file_type": "code",
+      "source_file": "frontend/src/next-shims.d.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_next_shims_d_nextlinkprops",
+      "label": "NextLinkProps",
+      "file_type": "code",
+      "source_file": "frontend/src/next-shims.d.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "src_next_shims_d_nextimageprops",
+      "label": "NextImageProps",
+      "file_type": "code",
+      "source_file": "frontend/src/next-shims.d.ts",
+      "source_location": "L31"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_next_shims_d_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/next-shims.d.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_next_shims_d_ts",
+      "target": "src_next_shims_d_nextlinkprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/next-shims.d.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_next_shims_d_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/next-shims.d.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_src_next_shims_d_ts",
+      "target": "src_next_shims_d_nextimageprops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/next-shims.d.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": []
+}

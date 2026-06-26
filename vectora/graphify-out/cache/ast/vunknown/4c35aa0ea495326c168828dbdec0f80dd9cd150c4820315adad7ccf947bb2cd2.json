@@ -1,0 +1,638 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "label": "artifacts.py",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_artifacts_listartifactsresponse",
+      "label": "ListArtifactsResponse",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_artifacts_artifactcontent",
+      "label": "ArtifactContent",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L30"
+    },
+    {
+      "id": "handlers_artifacts_artifacts_dir",
+      "label": "_artifacts_dir()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_artifacts_read_preview",
+      "label": "_read_preview()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "handlers_artifacts_list_artifacts",
+      "label": "list_artifacts()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "query",
+      "label": "Query",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handlers_artifacts_get_artifact",
+      "label": "get_artifact()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L93"
+    },
+    {
+      "id": "handlers_artifacts_format_mtime",
+      "label": "_format_mtime()",
+      "file_type": "code",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L127"
+    },
+    {
+      "id": "handlers_artifacts_rationale_1",
+      "label": "Handler de artifacts \u2014 lista planos/specs/guias gravados pelo agente.  Reusa ``A",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "handlers_artifacts_rationale_39",
+      "label": "Pasta de artifacts da sess\u00e3o. Sanitiza o session_id (sem traversal).",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "handlers_artifacts_rationale_56",
+      "label": "Lista os artifacts da sess\u00e3o, mais novos primeiro.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "handlers_artifacts_rationale_97",
+      "label": "Devolve o markdown completo de um artifact.",
+      "file_type": "rationale",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L97"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "backend_vtypes_documents",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "handlers_artifacts_listartifactsresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_listartifactsresponse",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "handlers_artifacts_artifactcontent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_artifactcontent",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "handlers_artifacts_artifacts_dir",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_artifacts_dir",
+      "target": "path",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "handlers_artifacts_read_preview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_read_preview",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "handlers_artifacts_list_artifacts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_list_artifacts",
+      "target": "query",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_list_artifacts",
+      "target": "handlers_artifacts_listartifactsresponse",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "handlers_artifacts_get_artifact",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_get_artifact",
+      "target": "query",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_get_artifact",
+      "target": "handlers_artifacts_artifactcontent",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "target": "handlers_artifacts_format_mtime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_list_artifacts",
+      "target": "handlers_artifacts_listartifactsresponse",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_list_artifacts",
+      "target": "handlers_artifacts_artifacts_dir",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_list_artifacts",
+      "target": "handlers_artifacts_format_mtime",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_list_artifacts",
+      "target": "handlers_artifacts_read_preview",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_get_artifact",
+      "target": "handlers_artifacts_artifacts_dir",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_get_artifact",
+      "target": "handlers_artifacts_artifactcontent",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_get_artifact",
+      "target": "handlers_artifacts_format_mtime",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_api_handlers_artifacts_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_rationale_39",
+      "target": "handlers_artifacts_artifacts_dir",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_rationale_56",
+      "target": "handlers_artifacts_list_artifacts",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "handlers_artifacts_rationale_97",
+      "target": "handlers_artifacts_get_artifact",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/api/handlers/artifacts.py",
+      "source_location": "L97",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "handlers_artifacts_artifacts_dir",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_artifacts_dir",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_artifacts_dir",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_artifacts_dir",
+      "callee": "home",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_read_preview",
+      "callee": "read",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L47",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "is_dir",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "glob",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L67",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L76",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_list_artifacts",
+      "callee": "ArtifactMetadata",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "is_file",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L112",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L113",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_get_artifact",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_format_mtime",
+      "callee": "isoformat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "handlers_artifacts_format_mtime",
+      "callee": "fromtimestamp",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\api\\handlers\\artifacts.py",
+      "source_location": "L130",
+      "receiver": null
+    }
+  ]
+}

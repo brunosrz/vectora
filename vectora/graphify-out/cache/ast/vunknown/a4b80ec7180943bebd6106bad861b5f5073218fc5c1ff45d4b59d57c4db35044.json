@@ -1,0 +1,839 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "label": "manifest_ingest.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_manifest_ingest_is_package_manifest_path",
+      "label": "is_package_manifest_path()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_manifest_ingest_pkg_id",
+      "label": "_pkg_id()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "context_graph_manifest_ingest_extract_package_manifest",
+      "label": "extract_package_manifest()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L40"
+    },
+    {
+      "id": "any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_manifest_ingest_coerce_deps",
+      "label": "_coerce_deps()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "context_graph_manifest_ingest_parse_apm",
+      "label": "_parse_apm()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "context_graph_manifest_ingest_parse_apm_fallback",
+      "label": "_parse_apm_fallback()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L124"
+    },
+    {
+      "id": "context_graph_manifest_ingest_pep508_name",
+      "label": "_pep508_name()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L147"
+    },
+    {
+      "id": "context_graph_manifest_ingest_parse_pyproject",
+      "label": "_parse_pyproject()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L151"
+    },
+    {
+      "id": "context_graph_manifest_ingest_parse_gomod",
+      "label": "_parse_gomod()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L177"
+    },
+    {
+      "id": "context_graph_manifest_ingest_parse_pom",
+      "label": "_parse_pom()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L205"
+    },
+    {
+      "id": "context_graph_manifest_ingest_rationale_1",
+      "label": "Deterministic package-manifest ingestion.  Package manifests (apm.yml, pyproject",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "xml_etree_elementtree",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_ids_py",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_is_package_manifest_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_is_package_manifest_path",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_pkg_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_extract_package_manifest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_extract_package_manifest",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_extract_package_manifest",
+      "target": "any",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_coerce_deps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_coerce_deps",
+      "target": "any",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_parse_apm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_parse_apm_fallback",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_pep508_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_parse_pyproject",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_parse_gomod",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L177",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "target": "context_graph_manifest_ingest_parse_pom",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L205",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_extract_package_manifest",
+      "target": "context_graph_manifest_ingest_pkg_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_parse_apm",
+      "target": "context_graph_manifest_ingest_parse_apm_fallback",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_parse_apm",
+      "target": "context_graph_manifest_ingest_coerce_deps",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_parse_pyproject",
+      "target": "context_graph_manifest_ingest_pep508_name",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_manifest_ingest_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_manifest_ingest_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/manifest_ingest.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "context_graph_manifest_ingest_is_package_manifest_path",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_pkg_id",
+      "callee": "make_id",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "stat",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L48",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "_PARSERS[eco]",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L50",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L68",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_extract_package_manifest",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_coerce_deps",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_coerce_deps",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L104",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm",
+      "callee": "safe_load",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "group",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L132",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L134",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L138",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "group",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_apm_fallback",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L142",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_pep508_name",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_pep508_name",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L148",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L162",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L165",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L167",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "lower",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L168",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L169",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pyproject",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "splitlines",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L181",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L184",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "group",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L188",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "startswith",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L192",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L195",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "group",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L197",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "match",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L199",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_gomod",
+      "callee": "group",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L201",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L206",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "fromstring",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L207",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "findtext",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L208",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "findtext",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L209",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "findall",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "findtext",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "findtext",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L216",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L218",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_manifest_ingest_parse_pom",
+      "callee": "findtext",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\manifest_ingest.py",
+      "source_location": "L219",
+      "receiver": null
+    }
+  ]
+}

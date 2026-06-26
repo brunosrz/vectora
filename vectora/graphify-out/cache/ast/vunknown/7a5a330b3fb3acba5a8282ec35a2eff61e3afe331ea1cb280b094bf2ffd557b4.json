@@ -1,0 +1,141 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "label": "use-network-status.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "hooks_use_network_status_ssestatus",
+      "label": "SSEStatus",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "hooks_use_network_status_networkstate",
+      "label": "NetworkState",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "hooks_use_network_status_usenetworkstore",
+      "label": "useNetworkStore",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L26"
+    },
+    {
+      "id": "hooks_use_network_status_networkstatus",
+      "label": "NetworkStatus",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "hooks_use_network_status_usenetworkstatus",
+      "label": "useNetworkStatus()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L40"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "target": "zustand",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "target": "hooks_use_network_status_ssestatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "target": "hooks_use_network_status_networkstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "target": "hooks_use_network_status_usenetworkstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "target": "hooks_use_network_status_networkstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_use_network_status_ts",
+      "target": "hooks_use_network_status_usenetworkstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "hooks_use_network_status_usenetworkstatus",
+      "target": "hooks_use_network_status_usenetworkstore",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/use-network-status.ts",
+      "source_location": "L41",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "hooks_use_network_status_usenetworkstatus",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-network-status.ts",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "hooks_use_network_status_usenetworkstatus",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\use-network-status.ts",
+      "source_location": "L47",
+      "receiver": null
+    }
+  ]
+}

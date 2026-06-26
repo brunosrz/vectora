@@ -1,0 +1,1073 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "label": "context_graph.py",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_context_graph_active_workspace_id",
+      "label": "_active_workspace_id()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "runnableconfig",
+      "label": "RunnableConfig",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_context_graph_load_graph_data",
+      "label": "_load_graph_data()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "tools_context_graph_build_knowledge_graph",
+      "label": "build_knowledge_graph()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "injectedtoolarg",
+      "label": "InjectedToolArg",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tools_context_graph_graph_update",
+      "label": "graph_update()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "tools_context_graph_graph_query",
+      "label": "graph_query()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L136"
+    },
+    {
+      "id": "tools_context_graph_graph_explain",
+      "label": "graph_explain()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L190"
+    },
+    {
+      "id": "tools_context_graph_graph_path",
+      "label": "graph_path()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L240"
+    },
+    {
+      "id": "tools_context_graph_graph_affected",
+      "label": "graph_affected()",
+      "file_type": "code",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L291"
+    },
+    {
+      "id": "tools_context_graph_rationale_1",
+      "label": "Tools do Context Graph para o agente.  Cada tool \u00e9 defensiva (\u00a711): captura exce",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_context_graph_rationale_32",
+      "label": "Carrega graph.json do workspace. Retorna (data, error_msg).",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "tools_context_graph_rationale_53",
+      "label": "Constr\u00f3i o grafo de contexto do workspace ativo (build completo).      Extrai n\u00f3",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "tools_context_graph_rationale_99",
+      "label": "Atualiza o grafo de contexto incrementalmente (s\u00f3 arquivos novos/modificados).",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L99"
+    },
+    {
+      "id": "tools_context_graph_rationale_141",
+      "label": "Consulta o grafo de contexto por pergunta livre.      Retorna n\u00f3s relevantes e s",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L141"
+    },
+    {
+      "id": "tools_context_graph_rationale_194",
+      "label": "Explica um n\u00f3 do grafo de contexto mostrando sua vizinhan\u00e7a e conex\u00f5es.      Arg",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L194"
+    },
+    {
+      "id": "tools_context_graph_rationale_245",
+      "label": "Encontra o caminho mais curto entre dois n\u00f3s no grafo de contexto.      Args:",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L245"
+    },
+    {
+      "id": "tools_context_graph_rationale_296",
+      "label": "Encontra todos os componentes afetados se o n\u00f3 consultado mudar.      Percorre a",
+      "file_type": "rationale",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L296"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "logging",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "langchain_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "langchain_core_runnables",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "langchain_core_tools",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_active_workspace_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_active_workspace_id",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_load_graph_data",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_build_knowledge_graph",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_build_knowledge_graph",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_build_knowledge_graph",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_graph_update",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_update",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_update",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_graph_query",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_query",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_query",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_graph_explain",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_explain",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_explain",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_graph_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_path",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_path",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "target": "tools_context_graph_graph_affected",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L291",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_affected",
+      "target": "runnableconfig",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L291",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_affected",
+      "target": "injectedtoolarg",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L291",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_build_knowledge_graph",
+      "target": "tools_context_graph_active_workspace_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_update",
+      "target": "tools_context_graph_active_workspace_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_query",
+      "target": "tools_context_graph_active_workspace_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_query",
+      "target": "tools_context_graph_load_graph_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_explain",
+      "target": "tools_context_graph_active_workspace_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L203",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_explain",
+      "target": "tools_context_graph_load_graph_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_path",
+      "target": "tools_context_graph_active_workspace_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_path",
+      "target": "tools_context_graph_load_graph_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L259",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_affected",
+      "target": "tools_context_graph_active_workspace_id",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L310",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_graph_affected",
+      "target": "tools_context_graph_load_graph_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L314",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_tools_context_graph_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_32",
+      "target": "tools_context_graph_load_graph_data",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_53",
+      "target": "tools_context_graph_build_knowledge_graph",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_99",
+      "target": "tools_context_graph_graph_update",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_141",
+      "target": "tools_context_graph_graph_query",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_194",
+      "target": "tools_context_graph_graph_explain",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L194",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_245",
+      "target": "tools_context_graph_graph_path",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_context_graph_rationale_296",
+      "target": "tools_context_graph_graph_affected",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tools/context_graph.py",
+      "source_location": "L296",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "tools_context_graph_active_workspace_id",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L27",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_active_workspace_id",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_active_workspace_id",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L28",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_load_graph_data",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L35",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_load_graph_data",
+      "callee": "Path",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_load_graph_data",
+      "callee": "exists",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L39",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_load_graph_data",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_load_graph_data",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L42",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "build_workspace_graph",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "extend",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_build_knowledge_graph",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L90",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_update",
+      "callee": "build_workspace_graph",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L117",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_update",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_update",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_update",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_update",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "query_nodes",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L165",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L177",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "extend",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_query",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "explain_node",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L213",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L217",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L219",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L219",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L221",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L222",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L224",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L225",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L227",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L229",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L230",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L232",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_explain",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "path_between",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L265",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L267",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "_exists",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L276",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "_exists",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L278",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L282",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L283",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_path",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L286",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_affected",
+      "callee": "affected_summary",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L320",
+      "receiver": null
+    },
+    {
+      "caller_nid": "tools_context_graph_graph_affected",
+      "callee": "exception",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\tools\\context_graph.py",
+      "source_location": "L323",
+      "receiver": null
+    }
+  ]
+}

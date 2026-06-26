@@ -1,0 +1,183 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "label": "use-client-profile.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "auth_use_client_profile_useclientprofilereturn",
+      "label": "UseClientProfileReturn",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L37"
+    },
+    {
+      "id": "auth_use_client_profile_useclientprofile",
+      "label": "useClientProfile()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L68"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_threads_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "threads_index_clientprofile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_config_client_config_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "config_client_config_createclientprofile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "config_client_config_resolveclientprofile",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_constants_features_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "constants_features_storage_keys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "auth_use_client_profile_useclientprofilereturn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_auth_use_client_profile_ts",
+      "target": "auth_use_client_profile_useclientprofile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/auth/use-client-profile.ts",
+      "source_location": "L68",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "auth_use_client_profile_useclientprofile",
+      "callee": "useRef",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\auth\\use-client-profile.ts",
+      "source_location": "L69",
+      "receiver": null
+    },
+    {
+      "caller_nid": "auth_use_client_profile_useclientprofile",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\auth\\use-client-profile.ts",
+      "source_location": "L70",
+      "receiver": null
+    },
+    {
+      "caller_nid": "auth_use_client_profile_useclientprofile",
+      "callee": "useState",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\auth\\use-client-profile.ts",
+      "source_location": "L75",
+      "receiver": null
+    },
+    {
+      "caller_nid": "auth_use_client_profile_useclientprofile",
+      "callee": "useEffect",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\auth\\use-client-profile.ts",
+      "source_location": "L78",
+      "receiver": null
+    },
+    {
+      "caller_nid": "auth_use_client_profile_useclientprofile",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\auth\\use-client-profile.ts",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "auth_use_client_profile_useclientprofile",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\auth\\use-client-profile.ts",
+      "source_location": "L130",
+      "receiver": null
+    },
+    {
+      "caller_nid": "auth_use_client_profile_useclientprofile",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\auth\\use-client-profile.ts",
+      "source_location": "L145",
+      "receiver": null
+    }
+  ]
+}

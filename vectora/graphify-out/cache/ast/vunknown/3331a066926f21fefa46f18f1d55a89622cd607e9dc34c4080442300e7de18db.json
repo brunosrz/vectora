@@ -1,0 +1,149 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "label": "use-chat-state.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "chat_use_chat_state_chatuistate",
+      "label": "ChatUIState",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L18"
+    },
+    {
+      "id": "chat_use_chat_state_chatuiaction",
+      "label": "ChatUIAction",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L32"
+    },
+    {
+      "id": "chat_use_chat_state_chatuireducer",
+      "label": "chatUIReducer()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L54"
+    },
+    {
+      "id": "chat_use_chat_state_usechatstate",
+      "label": "useChatState()",
+      "file_type": "code",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L139"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "target": "c_users_machi_desktop_vectora_vectora_frontend_lib_stores_chat_input_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "target": "stores_chat_input_store_usechatinputstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "target": "chat_use_chat_state_chatuistate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "target": "chat_use_chat_state_chatuiaction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "target": "chat_use_chat_state_chatuireducer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_hooks_chat_use_chat_state_ts",
+      "target": "chat_use_chat_state_usechatstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/hooks/chat/use-chat-state.ts",
+      "source_location": "L139",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "chat_use_chat_state_usechatstate",
+      "callee": "getDraft",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-chat-state.ts",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_chat_state_usechatstate",
+      "callee": "getState",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-chat-state.ts",
+      "source_location": "L141",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_chat_state_usechatstate",
+      "callee": "useReducer",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-chat-state.ts",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_chat_state_usechatstate",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-chat-state.ts",
+      "source_location": "L157",
+      "receiver": null
+    },
+    {
+      "caller_nid": "chat_use_chat_state_usechatstate",
+      "callee": "useCallback",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\hooks\\chat\\use-chat-state.ts",
+      "source_location": "L168",
+      "receiver": null
+    }
+  ]
+}

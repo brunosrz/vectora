@@ -1,0 +1,711 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "label": "affected.py",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_affected_affectedhit",
+      "label": "AffectedHit",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "context_graph_affected_node_label",
+      "label": "_node_label()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "graph",
+      "label": "Graph",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_affected_format_location",
+      "label": "_format_location()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L43"
+    },
+    {
+      "id": "context_graph_affected_bare_name",
+      "label": "_bare_name()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "context_graph_affected_normalize_label",
+      "label": "_normalize_label()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "context_graph_affected_resolve_seed",
+      "label": "resolve_seed()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L60"
+    },
+    {
+      "id": "context_graph_affected_affected_nodes",
+      "label": "affected_nodes()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "context_graph_affected_format_affected",
+      "label": "format_affected()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L145"
+    },
+    {
+      "id": "context_graph_affected_load_graph",
+      "label": "load_graph()",
+      "file_type": "code",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L176"
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "context_graph_affected_rationale_1",
+      "label": "Resolu\u00e7\u00e3o de seed e an\u00e1lise de n\u00f3s afetados no grafo de contexto.  Porta de grap",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "context_graph_affected_rationale_61",
+      "label": "Resolve uma query de texto para um node_id \u00fanico no grafo.      Tenta em sequ\u00eanc",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "context_graph_affected_rationale_108",
+      "label": "BFS sobre arestas de entrada para encontrar n\u00f3s afetados por mudan\u00e7a em seed.",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "context_graph_affected_rationale_152",
+      "label": "Formata texto de impacto para o LLM: seed \u2192 lista de n\u00f3s afetados com rela\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L152"
+    },
+    {
+      "id": "context_graph_affected_rationale_177",
+      "label": "Carrega graph.json como DiGraph NetworkX, normalizando edges/links.",
+      "file_type": "rationale",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L177"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "unicodedata",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "collections",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "collections_abc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "dataclasses",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "networkx",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_affectedhit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_node_label",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_node_label",
+      "target": "graph",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_format_location",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_bare_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_normalize_label",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_resolve_seed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_resolve_seed",
+      "target": "graph",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_affected_nodes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_affected_nodes",
+      "target": "graph",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_affected_nodes",
+      "target": "context_graph_affected_affectedhit",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_format_affected",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_format_affected",
+      "target": "graph",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "target": "context_graph_affected_load_graph",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_load_graph",
+      "target": "path",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_load_graph",
+      "target": "graph",
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L176",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_bare_name",
+      "target": "context_graph_affected_normalize_label",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_resolve_seed",
+      "target": "context_graph_affected_normalize_label",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_resolve_seed",
+      "target": "context_graph_affected_bare_name",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_affected_nodes",
+      "target": "context_graph_affected_affectedhit",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_format_affected",
+      "target": "context_graph_affected_resolve_seed",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L154",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_format_affected",
+      "target": "context_graph_affected_affected_nodes",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_format_affected",
+      "target": "context_graph_affected_node_label",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_format_affected",
+      "target": "context_graph_affected_format_location",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_backend_services_context_graph_affected_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_rationale_61",
+      "target": "context_graph_affected_resolve_seed",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_rationale_108",
+      "target": "context_graph_affected_affected_nodes",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_rationale_152",
+      "target": "context_graph_affected_format_affected",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "context_graph_affected_rationale_177",
+      "target": "context_graph_affected_load_graph",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/context_graph/affected.py",
+      "source_location": "L177",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "context_graph_affected_node_label",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_format_location",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L44",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_format_location",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L45",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_bare_name",
+      "callee": "removesuffix",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_normalize_label",
+      "callee": "casefold",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_normalize_label",
+      "callee": "normalize",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L57",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "nodes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "nodes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L79",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L80",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "nodes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L86",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "nodes",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_resolve_seed",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L94",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "deque",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L115",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "popleft",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "in_edges",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "edges",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L127",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L131",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "add",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L137",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_affected_nodes",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_format_affected",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L161",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_format_affected",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L165",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_format_affected",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L166",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_format_affected",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_format_affected",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L173",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_load_graph",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_load_graph",
+      "callee": "read_text",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L182",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_load_graph",
+      "callee": "node_link_graph",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L187",
+      "receiver": null
+    },
+    {
+      "caller_nid": "context_graph_affected_load_graph",
+      "callee": "node_link_graph",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\backend\\services\\context_graph\\affected.py",
+      "source_location": "L189",
+      "receiver": null
+    }
+  ]
+}

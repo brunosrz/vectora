@@ -1,0 +1,769 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_storage_migrations_py",
+      "label": "test_storage_migrations.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner",
+      "label": "TestMigrationRunner",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L12"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_runner_conn",
+      "label": ".runner_conn()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_raw_conn",
+      "label": ".raw_conn()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_test_status_lists_pending_migrations",
+      "label": ".test_status_lists_pending_migrations()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_test_status_shows_applied_after_upgrade",
+      "label": ".test_status_shows_applied_after_upgrade()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_applies_sqlite_migrations",
+      "label": ".test_upgrade_applies_sqlite_migrations()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_idempotent",
+      "label": ".test_upgrade_idempotent()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L67"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_test_schema_migrations_table_created",
+      "label": ".test_schema_migrations_table_created()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_without_row_factory",
+      "label": ".test_upgrade_without_row_factory()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "unit_test_storage_migrations_testdatamigrationdryrun",
+      "label": "TestDataMigrationDryRun",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L103"
+    },
+    {
+      "id": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "label": ".test_to_postgres_dry_run()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L107"
+    },
+    {
+      "id": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run_missing_table",
+      "label": ".test_to_postgres_dry_run_missing_table()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L132"
+    },
+    {
+      "id": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_missing_table",
+      "label": ".test_memory_to_langgraph_missing_table()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "label": ".test_memory_to_langgraph_dry_run()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L170"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_1",
+      "label": "Tests \u2014 storage/migrations/runner.py e data_migration.py.  Runner SQLite: usa as",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_13",
+      "label": "Schema migration runner (F2).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L13"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_27",
+      "label": "Conex\u00e3o sem row_factory \u2014 simula o contexto de produ\u00e7\u00e3o (server.py).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_37",
+      "label": "status() lista as migrations SQLite como pendentes num banco vazio.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_48",
+      "label": "status() mostra applied=True ap\u00f3s upgrade() rodar.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_58",
+      "label": "upgrade() aplica as migrations SQLite e retorna lista de vers\u00f5es.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_68",
+      "label": "Segunda chamada a upgrade() n\u00e3o re-aplica migrations j\u00e1 aplicadas.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L68"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_78",
+      "label": "Tabela schema_migrations \u00e9 criada ao instanciar runner.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L78"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_92",
+      "label": "upgrade() funciona com conex\u00e3o sem row_factory (caso de produ\u00e7\u00e3o).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_104",
+      "label": "Migra\u00e7\u00f5es de dados (F12) \u2014 apenas dry-run para n\u00e3o precisar de infra.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L104"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_108",
+      "label": "dry-run retorna contagem sem conectar ao Postgres.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L108"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_133",
+      "label": "Tabela ausente n\u00e3o levanta erro no dry-run.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L133"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_151",
+      "label": "Banco sem tabela 'memories' retorna total=0 sem erro.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L151"
+    },
+    {
+      "id": "unit_test_storage_migrations_rationale_171",
+      "label": "dry-run conta registros sem chamar store.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L171"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_storage_migrations_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_storage_migrations_py",
+      "target": "unit_test_storage_migrations_testmigrationrunner",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_runner_conn",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_raw_conn",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_status_lists_pending_migrations",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_status_shows_applied_after_upgrade",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_applies_sqlite_migrations",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_idempotent",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_schema_migrations_table_created",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testmigrationrunner",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_without_row_factory",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_storage_migrations_py",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testdatamigrationdryrun",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testdatamigrationdryrun",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run_missing_table",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testdatamigrationdryrun",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_missing_table",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_testdatamigrationdryrun",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L170",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_storage_migrations_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_13",
+      "target": "unit_test_storage_migrations_testmigrationrunner",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_27",
+      "target": "unit_test_storage_migrations_testmigrationrunner_raw_conn",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_37",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_status_lists_pending_migrations",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_48",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_status_shows_applied_after_upgrade",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_58",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_applies_sqlite_migrations",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_68",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_idempotent",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_78",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_schema_migrations_table_created",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_92",
+      "target": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_without_row_factory",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_104",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_108",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_133",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run_missing_table",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_151",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_missing_table",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_storage_migrations_rationale_171",
+      "target": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_storage_migrations.py",
+      "source_location": "L171",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_runner_conn",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L20",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_runner_conn",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L23",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_raw_conn",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L31",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_raw_conn",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_status_lists_pending_migrations",
+      "callee": "MigrationRunner",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L40",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_status_lists_pending_migrations",
+      "callee": "status",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L41",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_status_shows_applied_after_upgrade",
+      "callee": "MigrationRunner",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L51",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_status_shows_applied_after_upgrade",
+      "callee": "upgrade",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L52",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_status_shows_applied_after_upgrade",
+      "callee": "status",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L53",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_applies_sqlite_migrations",
+      "callee": "MigrationRunner",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L61",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_applies_sqlite_migrations",
+      "callee": "upgrade",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L62",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_idempotent",
+      "callee": "MigrationRunner",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L71",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_idempotent",
+      "callee": "upgrade",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L72",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_idempotent",
+      "callee": "upgrade",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L73",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_schema_migrations_table_created",
+      "callee": "MigrationRunner",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L81",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_schema_migrations_table_created",
+      "callee": "upgrade",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L82",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_schema_migrations_table_created",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L84",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_schema_migrations_table_created",
+      "callee": "fetchone",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_without_row_factory",
+      "callee": "MigrationRunner",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_without_row_factory",
+      "callee": "upgrade",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L96",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testmigrationrunner_test_upgrade_without_row_factory",
+      "callee": "upgrade",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L99",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L114",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L116",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L119",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L120",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run",
+      "callee": "migrate_to_postgres",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L122",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run_missing_table",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L139",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run_missing_table",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L140",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_to_postgres_dry_run_missing_table",
+      "callee": "migrate_to_postgres",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L142",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_missing_table",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L159",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_missing_table",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L160",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_missing_table",
+      "callee": "migrate_memory_to_langgraph",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L163",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "callee": "connect",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L180",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "callee": "execute",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L183",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "callee": "commit",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_storage_migrations_testdatamigrationdryrun_test_memory_to_langgraph_dry_run",
+      "callee": "migrate_memory_to_langgraph",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_storage_migrations.py",
+      "source_location": "L188",
+      "receiver": null
+    }
+  ]
+}

@@ -1,0 +1,959 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "label": "test_api_server.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_api_server_headless_app",
+      "label": "headless_app()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "unit_test_api_server_client",
+      "label": "client()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "unit_test_api_server_testlifespan",
+      "label": "TestLifespan",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L46"
+    },
+    {
+      "id": "unit_test_api_server_testlifespan_test_lifespan_starts_embedding_worker",
+      "label": ".test_lifespan_starts_embedding_worker()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "unit_test_api_server_testhealth",
+      "label": "TestHealth",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L83"
+    },
+    {
+      "id": "unit_test_api_server_testhealth_test_health_ok",
+      "label": ".test_health_ok()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L84"
+    },
+    {
+      "id": "unit_test_api_server_testhealth_test_health_version_non_empty",
+      "label": ".test_health_version_non_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "unit_test_api_server_testmetrics",
+      "label": "TestMetrics",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L101"
+    },
+    {
+      "id": "unit_test_api_server_testmetrics_test_metrics_returns_list",
+      "label": ".test_metrics_returns_list()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "unit_test_api_server_collect_route_paths",
+      "label": "_collect_route_paths()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L113"
+    },
+    {
+      "id": "unit_test_api_server_testroutes",
+      "label": "TestRoutes",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L127"
+    },
+    {
+      "id": "unit_test_api_server_testroutes_route_paths",
+      "label": "._route_paths()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L128"
+    },
+    {
+      "id": "unit_test_api_server_testroutes_test_stream_chat_route_exists",
+      "label": ".test_stream_chat_route_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L131"
+    },
+    {
+      "id": "unit_test_api_server_testroutes_test_resume_chat_route_exists",
+      "label": ".test_resume_chat_route_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L135"
+    },
+    {
+      "id": "unit_test_api_server_testroutes_test_get_tools_route_exists",
+      "label": ".test_get_tools_route_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L139"
+    },
+    {
+      "id": "unit_test_api_server_testroutes_test_workspaces_active_route_exists",
+      "label": ".test_workspaces_active_route_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L143"
+    },
+    {
+      "id": "unit_test_api_server_testroutes_test_thread_routes_exist",
+      "label": ".test_thread_routes_exist()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L151"
+    },
+    {
+      "id": "unit_test_api_server_testroutes_test_share_routes_exist",
+      "label": ".test_share_routes_exist()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L162"
+    },
+    {
+      "id": "unit_test_api_server_testworkspacesactive",
+      "label": "TestWorkspacesActive",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L173"
+    },
+    {
+      "id": "unit_test_api_server_testworkspacesactive_test_returns_200",
+      "label": ".test_returns_200()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L174"
+    },
+    {
+      "id": "unit_test_api_server_testworkspacesactive_test_response_has_workspace_key",
+      "label": ".test_response_has_workspace_key()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L178"
+    },
+    {
+      "id": "unit_test_api_server_testworkspacesactive_test_workspace_is_none_or_object",
+      "label": ".test_workspace_is_none_or_object()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L185"
+    },
+    {
+      "id": "unit_test_api_server_testmcpmount",
+      "label": "TestMcpMount",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L198"
+    },
+    {
+      "id": "unit_test_api_server_testmcpmount_test_mcp_mounted_at_slash_mcp",
+      "label": ".test_mcp_mounted_at_slash_mcp()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L204"
+    },
+    {
+      "id": "unit_test_api_server_testmcpmount_test_api_tools_schema_route_exists",
+      "label": ".test_api_tools_schema_route_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L208"
+    },
+    {
+      "id": "unit_test_api_server_testmcpmount_test_lifespan_runs_mcp_env_bootstrap",
+      "label": ".test_lifespan_runs_mcp_env_bootstrap()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L212"
+    },
+    {
+      "id": "unit_test_api_server_testgettools",
+      "label": "TestGetTools",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L237"
+    },
+    {
+      "id": "unit_test_api_server_testgettools_test_get_tools_returns_200",
+      "label": ".test_get_tools_returns_200()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L238"
+    },
+    {
+      "id": "unit_test_api_server_testgettools_test_get_tools_has_tools_key",
+      "label": ".test_get_tools_has_tools_key()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L242"
+    },
+    {
+      "id": "unit_test_api_server_testgettools_test_get_tools_each_has_name",
+      "label": ".test_get_tools_each_has_name()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L248"
+    },
+    {
+      "id": "unit_test_api_server_testchatmodewithoutstaticdir",
+      "label": "TestChatModeWithoutStaticDir",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L262"
+    },
+    {
+      "id": "unit_test_api_server_testchatmodewithoutstaticdir_test_chat_mode_with_frontend_proxy",
+      "label": ".test_chat_mode_with_frontend_proxy()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L263"
+    },
+    {
+      "id": "unit_test_api_server_rationale_1",
+      "label": "Testes unit\u00e1rios para src/api/server.py e handlers.  Valida: - Cria\u00e7\u00e3o da FastAP",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_api_server_rationale_25",
+      "label": "App FastAPI em modo headless (sem static files).      Auth \u00e9 desabilitada via en",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "unit_test_api_server_rationale_47",
+      "label": "Regress\u00e3o: o ciclo de vida do app precisa INICIAR o embedding worker.      O bug",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "unit_test_api_server_rationale_114",
+      "label": "Coleta paths recursivamente \u2014 FastAPI 0.138 usa _IncludedRouter sem .path.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L114"
+    },
+    {
+      "id": "unit_test_api_server_rationale_199",
+      "label": "O MCP sobe com todo boot do backend, montado em /mcp, e o ``_lifespan``     do F",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L199"
+    },
+    {
+      "id": "unit_test_api_server_rationale_264",
+      "label": "create_app(serve_static=True) registra o proxy do frontend sem explodir.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L264"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "fastapi_testclient",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_headless_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testlifespan",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testlifespan",
+      "target": "unit_test_api_server_testlifespan_test_lifespan_starts_embedding_worker",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testhealth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testhealth",
+      "target": "unit_test_api_server_testhealth_test_health_ok",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testhealth",
+      "target": "unit_test_api_server_testhealth_test_health_version_non_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testmetrics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testmetrics",
+      "target": "unit_test_api_server_testmetrics_test_metrics_returns_list",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_collect_route_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testroutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes",
+      "target": "unit_test_api_server_testroutes_route_paths",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes",
+      "target": "unit_test_api_server_testroutes_test_stream_chat_route_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes",
+      "target": "unit_test_api_server_testroutes_test_resume_chat_route_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes",
+      "target": "unit_test_api_server_testroutes_test_get_tools_route_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes",
+      "target": "unit_test_api_server_testroutes_test_workspaces_active_route_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes",
+      "target": "unit_test_api_server_testroutes_test_thread_routes_exist",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes",
+      "target": "unit_test_api_server_testroutes_test_share_routes_exist",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testworkspacesactive",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testworkspacesactive",
+      "target": "unit_test_api_server_testworkspacesactive_test_returns_200",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testworkspacesactive",
+      "target": "unit_test_api_server_testworkspacesactive_test_response_has_workspace_key",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L178",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testworkspacesactive",
+      "target": "unit_test_api_server_testworkspacesactive_test_workspace_is_none_or_object",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L185",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testmcpmount",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testmcpmount",
+      "target": "unit_test_api_server_testmcpmount_test_mcp_mounted_at_slash_mcp",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L204",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testmcpmount",
+      "target": "unit_test_api_server_testmcpmount_test_api_tools_schema_route_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testmcpmount",
+      "target": "unit_test_api_server_testmcpmount_test_lifespan_runs_mcp_env_bootstrap",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L212",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testgettools",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L237",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testgettools",
+      "target": "unit_test_api_server_testgettools_test_get_tools_returns_200",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testgettools",
+      "target": "unit_test_api_server_testgettools_test_get_tools_has_tools_key",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L242",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testgettools",
+      "target": "unit_test_api_server_testgettools_test_get_tools_each_has_name",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L248",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "target": "unit_test_api_server_testchatmodewithoutstaticdir",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L262",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testchatmodewithoutstaticdir",
+      "target": "unit_test_api_server_testchatmodewithoutstaticdir_test_chat_mode_with_frontend_proxy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L263",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes_route_paths",
+      "target": "unit_test_api_server_collect_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes_test_stream_chat_route_exists",
+      "target": "unit_test_api_server_testroutes_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes_test_resume_chat_route_exists",
+      "target": "unit_test_api_server_testroutes_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes_test_get_tools_route_exists",
+      "target": "unit_test_api_server_testroutes_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes_test_workspaces_active_route_exists",
+      "target": "unit_test_api_server_testroutes_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes_test_thread_routes_exist",
+      "target": "unit_test_api_server_testroutes_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testroutes_test_share_routes_exist",
+      "target": "unit_test_api_server_testroutes_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testmcpmount_test_mcp_mounted_at_slash_mcp",
+      "target": "unit_test_api_server_collect_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L205",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_testmcpmount_test_api_tools_schema_route_exists",
+      "target": "unit_test_api_server_collect_route_paths",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L209",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_api_server_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_rationale_25",
+      "target": "unit_test_api_server_headless_app",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_rationale_47",
+      "target": "unit_test_api_server_testlifespan",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_rationale_114",
+      "target": "unit_test_api_server_collect_route_paths",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_rationale_199",
+      "target": "unit_test_api_server_testmcpmount",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_api_server_rationale_264",
+      "target": "unit_test_api_server_testchatmodewithoutstaticdir_test_chat_mode_with_frontend_proxy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_api_server.py",
+      "source_location": "L264",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_api_server_headless_app",
+      "callee": "create_app",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L33",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_client",
+      "callee": "TestClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L38",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testlifespan_test_lifespan_starts_embedding_worker",
+      "callee": "TestClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testhealth_test_health_ok",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L85",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testhealth_test_health_ok",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L87",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testhealth_test_health_version_non_empty",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L92",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testhealth_test_health_version_non_empty",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L93",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testmetrics_test_metrics_returns_list",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L103",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testmetrics_test_metrics_returns_list",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L105",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_collect_route_paths",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_collect_route_paths",
+      "callee": "extend",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L121",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_collect_route_paths",
+      "callee": "extend",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L123",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testworkspacesactive_test_returns_200",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L175",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testworkspacesactive_test_response_has_workspace_key",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testworkspacesactive_test_response_has_workspace_key",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testworkspacesactive_test_workspace_is_none_or_object",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testworkspacesactive_test_workspace_is_none_or_object",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testworkspacesactive_test_workspace_is_none_or_object",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L190",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testmcpmount_test_lifespan_runs_mcp_env_bootstrap",
+      "callee": "TestClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L223",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testgettools_test_get_tools_returns_200",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L239",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testgettools_test_get_tools_has_tools_key",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L243",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testgettools_test_get_tools_has_tools_key",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L244",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testgettools_test_get_tools_each_has_name",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L249",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testgettools_test_get_tools_each_has_name",
+      "callee": "json",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L250",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testchatmodewithoutstaticdir_test_chat_mode_with_frontend_proxy",
+      "callee": "create_app",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L267",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testchatmodewithoutstaticdir_test_chat_mode_with_frontend_proxy",
+      "callee": "TestClient",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L268",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_api_server_testchatmodewithoutstaticdir_test_chat_mode_with_frontend_proxy",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_api_server.py",
+      "source_location": "L269",
+      "receiver": null
+    }
+  ]
+}

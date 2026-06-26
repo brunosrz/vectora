@@ -1,0 +1,1995 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "label": "test_e_b_parity.py",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_e_b_parity_testvectoracontext",
+      "label": "TestVectoraContext",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_full",
+      "label": ".test_ctx_from_config_full()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_empty",
+      "label": ".test_ctx_from_config_empty()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L52"
+    },
+    {
+      "id": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_partial",
+      "label": ".test_ctx_from_config_partial()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "unit_test_e_b_parity_testvectoracontext_test_ctx_locale_fallback",
+      "label": ".test_ctx_locale_fallback()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmiddlewarestack",
+      "label": "TestMiddlewareStack",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L83"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmiddlewarestack_test_bypass_mode_no_hitl",
+      "label": ".test_bypass_mode_no_hitl()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L84"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmiddlewarestack_test_auto_mode_no_hitl",
+      "label": ".test_auto_mode_no_hitl()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmiddlewarestack_test_ask_mode_has_hitl",
+      "label": ".test_ask_mode_has_hitl()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmiddlewarestack_test_plan_mode_has_hitl",
+      "label": ".test_plan_mode_has_hitl()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L106"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmiddlewarestack_test_accept_edits_has_hitl",
+      "label": ".test_accept_edits_has_hitl()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L114"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmiddlewarestack_test_no_duplicate_summarization_middleware",
+      "label": ".test_no_duplicate_summarization_middleware()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L122"
+    },
+    {
+      "id": "unit_test_e_b_parity_testharnessprofiles",
+      "label": "TestHarnessProfiles",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L138"
+    },
+    {
+      "id": "unit_test_e_b_parity_testharnessprofiles_test_register_profiles_idempotent",
+      "label": ".test_register_profiles_idempotent()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L139"
+    },
+    {
+      "id": "unit_test_e_b_parity_testharnessprofiles_test_profiles_cover_providers",
+      "label": ".test_profiles_cover_providers()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L146"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission",
+      "label": "TestFilesystemPermission",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L165"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_deny_env_file",
+      "label": ".test_deny_env_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_deny_ssh_key",
+      "label": ".test_deny_ssh_key()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L174"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_allow_workspace",
+      "label": ".test_allow_workspace()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L181"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_allow_memories_read",
+      "label": ".test_allow_memories_read()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L188"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_deny_skills_write",
+      "label": ".test_deny_skills_write()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L194"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_allow_skills_read",
+      "label": ".test_allow_skills_read()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L202"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_interrupt_external_write",
+      "label": ".test_interrupt_external_write()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L210"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_allow_external_read",
+      "label": ".test_allow_external_read()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L217"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_is_allowed_helper",
+      "label": ".test_is_allowed_helper()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L224"
+    },
+    {
+      "id": "unit_test_e_b_parity_testfilesystempermission_test_requires_interrupt_helper",
+      "label": ".test_requires_interrupt_helper()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L231"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmemorytoolsnamespace",
+      "label": "TestMemoryToolsNamespace",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L244"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_authenticated",
+      "label": ".test_user_id_from_config_authenticated()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L245"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_workspace",
+      "label": ".test_user_id_from_config_workspace()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L254"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_thread_fallback",
+      "label": ".test_user_id_from_config_thread_fallback()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L263"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_none",
+      "label": ".test_user_id_from_config_none()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L272"
+    },
+    {
+      "id": "unit_test_e_b_parity_testmemorytoolsnamespace_test_memory_namespace_structure",
+      "label": ".test_memory_namespace_structure()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L278"
+    },
+    {
+      "id": "unit_test_e_b_parity_testbuildstore",
+      "label": "TestBuildStore",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L296"
+    },
+    {
+      "id": "unit_test_e_b_parity_testbuildstore_test_build_store_returns_async_sqlite_store",
+      "label": ".test_build_store_returns_async_sqlite_store()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L297"
+    },
+    {
+      "id": "unit_test_e_b_parity_testbuildstore_test_build_store_no_index_when_no_key",
+      "label": ".test_build_store_no_index_when_no_key()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L312"
+    },
+    {
+      "id": "unit_test_e_b_parity_testbuildbackend",
+      "label": "TestBuildBackend",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L328"
+    },
+    {
+      "id": "unit_test_e_b_parity_testbuildbackend_test_composite_backend_created",
+      "label": ".test_composite_backend_created()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L329"
+    },
+    {
+      "id": "unit_test_e_b_parity_testsubagentspecs",
+      "label": "TestSubagentSpecs",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L342"
+    },
+    {
+      "id": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_returns_two",
+      "label": ".test_subagent_specs_returns_two()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L343"
+    },
+    {
+      "id": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "label": ".test_subagent_specs_abac_filtering()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L353"
+    },
+    {
+      "id": "unit_test_e_b_parity_testagentsmdpaths",
+      "label": "TestAgentsMdPaths",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L398"
+    },
+    {
+      "id": "unit_test_e_b_parity_testagentsmdpaths_test_returns_none_when_no_file",
+      "label": ".test_returns_none_when_no_file()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L399"
+    },
+    {
+      "id": "unit_test_e_b_parity_testagentsmdpaths_test_returns_list_when_file_exists",
+      "label": ".test_returns_list_when_file_exists()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L412"
+    },
+    {
+      "id": "unit_test_e_b_parity_testlangsmith",
+      "label": "TestLangSmith",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L433"
+    },
+    {
+      "id": "unit_test_e_b_parity_testlangsmith_test_enable_disabled_by_default",
+      "label": ".test_enable_disabled_by_default()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L434"
+    },
+    {
+      "id": "unit_test_e_b_parity_testlangsmith_test_enable_without_key_returns_false",
+      "label": ".test_enable_without_key_returns_false()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L443"
+    },
+    {
+      "id": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "label": ".test_enable_sets_env_vars()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L464"
+    },
+    {
+      "id": "unit_test_e_b_parity_testlangsmith_test_disable_clears_env_vars",
+      "label": ".test_disable_clears_env_vars()",
+      "file_type": "code",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L488"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_1",
+      "label": "Testes de paridade E.B \u2014 verifica que o harness deepagents est\u00e1 corretamente con",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_29",
+      "label": "Todos os campos s\u00e3o preenchidos corretamente.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_53",
+      "label": "Valores padr\u00e3o quando config \u00e9 None.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_62",
+      "label": "Campos ausentes recebem defaults.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_71",
+      "label": "``locale`` aceita ``language`` como alias.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L71"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_85",
+      "label": "Mode bypass retorna stack sem HITL.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L85"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_92",
+      "label": "Mode auto retorna stack sem HITL.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_99",
+      "label": "Mode ask deve incluir HumanInTheLoopMiddleware.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L99"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_107",
+      "label": "Mode plan deve incluir HumanInTheLoopMiddleware.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L107"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_115",
+      "label": "Mode accept_edits inclui HITL para terminal (n\u00e3o para file_write).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L115"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_123",
+      "label": "build_middleware_stack n\u00e3o adiciona SummarizationMiddleware \u2014         create_dee",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L123"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_140",
+      "label": "_register_profiles() pode ser chamado m\u00faltiplas vezes sem erro.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L140"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_147",
+      "label": "Os tr\u00eas providers principais devem ter perfis registrados.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L147"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_167",
+      "label": "Arquivos .env devem ser DENY para qualquer opera\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L167"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_175",
+      "label": "Chaves SSH privadas devem ser DENY.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L175"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_182",
+      "label": "Paths sob /workspace/ devem ser ALLOW.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L182"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_189",
+      "label": "Leitura de mem\u00f3rias deve ser ALLOW.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L189"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_195",
+      "label": "Escrita em skills deve ser DENY.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L195"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_203",
+      "label": "Leitura de skills deve ser ALLOW.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L203"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_211",
+      "label": "Escrita fora do workspace deve ser INTERRUPT.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L211"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_218",
+      "label": "Leitura fora do workspace deve ser ALLOW (sem interrupt).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L218"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_225",
+      "label": "Atalho is_allowed() funciona corretamente.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L225"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_232",
+      "label": "requires_interrupt() detecta ops que precisam de aprova\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L232"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_246",
+      "label": "user_id autenticado deve ser retornado limpo.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L246"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_255",
+      "label": "workspace_id usado quando n\u00e3o h\u00e1 user_id.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L255"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_264",
+      "label": "thread_id como fallback.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L264"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_273",
+      "label": "None retorna 'local'.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L273"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_279",
+      "label": "Namespace deve ser tupla 3-uple.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L279"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_298",
+      "label": "build_store() (async) retorna AsyncSqliteStore persistente (F5).",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L298"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_313",
+      "label": "Sem API key Cohere, build_store() retorna store sem indexa\u00e7\u00e3o.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L313"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_330",
+      "label": "build_backend() deve criar CompositeBackend sem erros.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L330"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_344",
+      "label": "Por padr\u00e3o retorna coder + search.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L344"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_354",
+      "label": "Com user_id e disabled tools, tools s\u00e3o removidas das specs.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L354"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_400",
+      "label": "Sem AGENTS.md retorna None.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L400"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_413",
+      "label": "Com AGENTS.md existente retorna lista com o path.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L413"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_435",
+      "label": "Com langsmith_tracing=False, enable retorna False.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L435"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_444",
+      "label": "Com tracing=True mas sem api_key, retorna False.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L444"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_465",
+      "label": "Com tracing=True e api_key, seta vars de ambiente corretamente.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L465"
+    },
+    {
+      "id": "unit_test_e_b_parity_rationale_489",
+      "label": "disable_langsmith_tracing() remove as vars.",
+      "file_type": "rationale",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L489"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testvectoracontext",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testvectoracontext",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_full",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testvectoracontext",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testvectoracontext",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_partial",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testvectoracontext",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_locale_fallback",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testmiddlewarestack",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmiddlewarestack",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_bypass_mode_no_hitl",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmiddlewarestack",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_auto_mode_no_hitl",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmiddlewarestack",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_ask_mode_has_hitl",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmiddlewarestack",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_plan_mode_has_hitl",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmiddlewarestack",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_accept_edits_has_hitl",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmiddlewarestack",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_no_duplicate_summarization_middleware",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testharnessprofiles",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testharnessprofiles",
+      "target": "unit_test_e_b_parity_testharnessprofiles_test_register_profiles_idempotent",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testharnessprofiles",
+      "target": "unit_test_e_b_parity_testharnessprofiles_test_profiles_cover_providers",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L146",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testfilesystempermission",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_deny_env_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_deny_ssh_key",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_workspace",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_memories_read",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_deny_skills_write",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L194",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_skills_read",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_interrupt_external_write",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L210",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_external_read",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L217",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_is_allowed_helper",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L224",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testfilesystempermission",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_requires_interrupt_helper",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L244",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmemorytoolsnamespace",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_authenticated",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmemorytoolsnamespace",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_workspace",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L254",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmemorytoolsnamespace",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_thread_fallback",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L263",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmemorytoolsnamespace",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_none",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L272",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testmemorytoolsnamespace",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_memory_namespace_structure",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L278",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testbuildstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L296",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testbuildstore",
+      "target": "unit_test_e_b_parity_testbuildstore_test_build_store_returns_async_sqlite_store",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L297",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testbuildstore",
+      "target": "unit_test_e_b_parity_testbuildstore_test_build_store_no_index_when_no_key",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L312",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testbuildbackend",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L328",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testbuildbackend",
+      "target": "unit_test_e_b_parity_testbuildbackend_test_composite_backend_created",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L329",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testsubagentspecs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L342",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testsubagentspecs",
+      "target": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_returns_two",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L343",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testsubagentspecs",
+      "target": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L353",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testagentsmdpaths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L398",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testagentsmdpaths",
+      "target": "unit_test_e_b_parity_testagentsmdpaths_test_returns_none_when_no_file",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L399",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testagentsmdpaths",
+      "target": "unit_test_e_b_parity_testagentsmdpaths_test_returns_list_when_file_exists",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L412",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "target": "unit_test_e_b_parity_testlangsmith",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L433",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testlangsmith",
+      "target": "unit_test_e_b_parity_testlangsmith_test_enable_disabled_by_default",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L434",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testlangsmith",
+      "target": "unit_test_e_b_parity_testlangsmith_test_enable_without_key_returns_false",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L443",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testlangsmith",
+      "target": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L464",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_testlangsmith",
+      "target": "unit_test_e_b_parity_testlangsmith_test_disable_clears_env_vars",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L488",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_1",
+      "target": "c_users_machi_desktop_vectora_vectora_tests_unit_test_e_b_parity_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_29",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_full",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_53",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_empty",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_62",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_partial",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_71",
+      "target": "unit_test_e_b_parity_testvectoracontext_test_ctx_locale_fallback",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_85",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_bypass_mode_no_hitl",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_92",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_auto_mode_no_hitl",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_99",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_ask_mode_has_hitl",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_107",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_plan_mode_has_hitl",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_115",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_accept_edits_has_hitl",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_123",
+      "target": "unit_test_e_b_parity_testmiddlewarestack_test_no_duplicate_summarization_middleware",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_140",
+      "target": "unit_test_e_b_parity_testharnessprofiles_test_register_profiles_idempotent",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_147",
+      "target": "unit_test_e_b_parity_testharnessprofiles_test_profiles_cover_providers",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_167",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_deny_env_file",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_175",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_deny_ssh_key",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_182",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_workspace",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_189",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_memories_read",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L189",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_195",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_deny_skills_write",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L195",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_203",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_skills_read",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L203",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_211",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_interrupt_external_write",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L211",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_218",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_allow_external_read",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L218",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_225",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_is_allowed_helper",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L225",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_232",
+      "target": "unit_test_e_b_parity_testfilesystempermission_test_requires_interrupt_helper",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L232",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_246",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_authenticated",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_255",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_workspace",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_264",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_thread_fallback",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L264",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_273",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_none",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L273",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_279",
+      "target": "unit_test_e_b_parity_testmemorytoolsnamespace_test_memory_namespace_structure",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L279",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_298",
+      "target": "unit_test_e_b_parity_testbuildstore_test_build_store_returns_async_sqlite_store",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L298",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_313",
+      "target": "unit_test_e_b_parity_testbuildstore_test_build_store_no_index_when_no_key",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L313",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_330",
+      "target": "unit_test_e_b_parity_testbuildbackend_test_composite_backend_created",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L330",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_344",
+      "target": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_returns_two",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L344",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_354",
+      "target": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L354",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_400",
+      "target": "unit_test_e_b_parity_testagentsmdpaths_test_returns_none_when_no_file",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L400",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_413",
+      "target": "unit_test_e_b_parity_testagentsmdpaths_test_returns_list_when_file_exists",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L413",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_435",
+      "target": "unit_test_e_b_parity_testlangsmith_test_enable_disabled_by_default",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L435",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_444",
+      "target": "unit_test_e_b_parity_testlangsmith_test_enable_without_key_returns_false",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L444",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_465",
+      "target": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L465",
+      "weight": 1.0
+    },
+    {
+      "source": "unit_test_e_b_parity_rationale_489",
+      "target": "unit_test_e_b_parity_testlangsmith_test_disable_clears_env_vars",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/test_e_b_parity.py",
+      "source_location": "L489",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_full",
+      "callee": "ctx_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L43",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_empty",
+      "callee": "ctx_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L56",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testvectoracontext_test_ctx_from_config_partial",
+      "callee": "ctx_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L65",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testvectoracontext_test_ctx_locale_fallback",
+      "callee": "ctx_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L74",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmiddlewarestack_test_bypass_mode_no_hitl",
+      "callee": "build_middleware_stack",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L88",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmiddlewarestack_test_auto_mode_no_hitl",
+      "callee": "build_middleware_stack",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L95",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmiddlewarestack_test_ask_mode_has_hitl",
+      "callee": "build_middleware_stack",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L102",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmiddlewarestack_test_plan_mode_has_hitl",
+      "callee": "build_middleware_stack",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L110",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmiddlewarestack_test_accept_edits_has_hitl",
+      "callee": "build_middleware_stack",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L118",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmiddlewarestack_test_no_duplicate_summarization_middleware",
+      "callee": "build_middleware_stack",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L128",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testharnessprofiles_test_register_profiles_idempotent",
+      "callee": "_register_profiles",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L143",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testharnessprofiles_test_register_profiles_idempotent",
+      "callee": "_register_profiles",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L144",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testharnessprofiles_test_profiles_cover_providers",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L150",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testharnessprofiles_test_profiles_cover_providers",
+      "callee": "_register_profiles",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L151",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_deny_env_file",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L170",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_deny_env_file",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L171",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_deny_env_file",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L172",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_deny_ssh_key",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L178",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_deny_ssh_key",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L179",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_allow_workspace",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L185",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_allow_workspace",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L186",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_allow_memories_read",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L192",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_deny_skills_write",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L199",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_allow_skills_read",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L207",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_interrupt_external_write",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L214",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_interrupt_external_write",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L215",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_allow_external_read",
+      "callee": "check",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L221",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_is_allowed_helper",
+      "callee": "is_allowed",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L228",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_is_allowed_helper",
+      "callee": "is_allowed",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L229",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_requires_interrupt_helper",
+      "callee": "requires_interrupt",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L235",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testfilesystempermission_test_requires_interrupt_helper",
+      "callee": "requires_interrupt",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L236",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_authenticated",
+      "callee": "_user_id_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L252",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_workspace",
+      "callee": "_user_id_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L261",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_thread_fallback",
+      "callee": "_user_id_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L270",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmemorytoolsnamespace_test_user_id_from_config_none",
+      "callee": "_user_id_from_config",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L276",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testmemorytoolsnamespace_test_memory_namespace_structure",
+      "callee": "_memory_namespace",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L285",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testbuildstore_test_build_store_returns_async_sqlite_store",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L305",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testbuildstore_test_build_store_returns_async_sqlite_store",
+      "callee": "build_store",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L306",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testbuildstore_test_build_store_returns_async_sqlite_store",
+      "callee": "suppress",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L309",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testbuildstore_test_build_store_returns_async_sqlite_store",
+      "callee": "close",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L310",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testbuildstore_test_build_store_no_index_when_no_key",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L316",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testbuildstore_test_build_store_no_index_when_no_key",
+      "callee": "_build_index",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L319",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testbuildbackend_test_composite_backend_created",
+      "callee": "build_backend",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L333",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_returns_two",
+      "callee": "_subagent_specs",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L347",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L357",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L359",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L363",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L372",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L381",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testsubagentspecs_test_subagent_specs_abac_filtering",
+      "callee": "_subagent_specs",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L385",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_none_when_no_file",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L403",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_none_when_no_file",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L404",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_none_when_no_file",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L406",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_none_when_no_file",
+      "callee": "_agents_md_paths",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L409",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_list_when_file_exists",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L416",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_list_when_file_exists",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L417",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_list_when_file_exists",
+      "callee": "MagicMock",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L419",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testagentsmdpaths_test_returns_list_when_file_exists",
+      "callee": "_agents_md_paths",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L423",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_disabled_by_default",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L438",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_disabled_by_default",
+      "callee": "enable_langsmith_tracing",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L440",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_without_key_returns_false",
+      "callee": "pop",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L450",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_without_key_returns_false",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L454",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_without_key_returns_false",
+      "callee": "enable_langsmith_tracing",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L457",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_without_key_returns_false",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L460",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "callee": "patch",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L474",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "callee": "enable_langsmith_tracing",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L479",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L482",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L483",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L484",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_enable_sets_env_vars",
+      "callee": "disable_langsmith_tracing",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L486",
+      "receiver": null
+    },
+    {
+      "caller_nid": "unit_test_e_b_parity_testlangsmith_test_disable_clears_env_vars",
+      "callee": "disable_langsmith_tracing",
+      "is_member_call": false,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\tests\\unit\\test_e_b_parity.py",
+      "source_location": "L496",
+      "receiver": null
+    }
+  ]
+}

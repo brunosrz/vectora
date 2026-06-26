@@ -1,0 +1,107 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_return_to_ts",
+      "label": "return-to.ts",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_return_to_storage",
+      "label": "storage()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "utils_return_to_savereturnto",
+      "label": "saveReturnTo()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L29"
+    },
+    {
+      "id": "utils_return_to_consumereturnto",
+      "label": "consumeReturnTo()",
+      "file_type": "code",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L34"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_return_to_ts",
+      "target": "utils_return_to_storage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_return_to_ts",
+      "target": "utils_return_to_savereturnto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_machi_desktop_vectora_vectora_frontend_lib_utils_return_to_ts",
+      "target": "utils_return_to_consumereturnto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_return_to_savereturnto",
+      "target": "utils_return_to_storage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_return_to_consumereturnto",
+      "target": "utils_return_to_storage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/lib/utils/return-to.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "utils_return_to_savereturnto",
+      "callee": "setItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\return-to.ts",
+      "source_location": "L30",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_return_to_consumereturnto",
+      "callee": "getItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\return-to.ts",
+      "source_location": "L37",
+      "receiver": null
+    },
+    {
+      "caller_nid": "utils_return_to_consumereturnto",
+      "callee": "removeItem",
+      "is_member_call": true,
+      "source_file": "C:\\Users\\Machi\\Desktop\\vectora\\vectora\\frontend\\lib\\utils\\return-to.ts",
+      "source_location": "L38",
+      "receiver": null
+    }
+  ]
+}
