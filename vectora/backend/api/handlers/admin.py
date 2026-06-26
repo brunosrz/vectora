@@ -522,6 +522,34 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Ordem de fallback de providers LLM (Parte A) — persiste em settings.json
+# ---------------------------------------------------------------------------
+
+
+class FallbackOrderBody(BaseModel):
+    order: list[str] = []
+
+
+@router.get("/model/fallback-order")
+async def get_fallback_order(request: Request) -> dict:
+    """Lê a ordem de fallback de providers LLM (lista de 'provider:model')."""
+    require_admin(_get_user(request))
+    from backend.services.runtime_settings import runtime_settings
+
+    return {"fallback_order": runtime_settings.fallback_order}
+
+
+@router.patch("/model/fallback-order")
+async def patch_fallback_order(request: Request, body: FallbackOrderBody) -> dict:
+    """Define a ordem de fallback de LLM; devolve a lista normalizada persistida."""
+    require_admin(_get_user(request))
+    from backend.services.runtime_settings import runtime_settings
+
+    runtime_settings.set_fallback_order(body.order)
+    return {"status": "updated", "fallback_order": runtime_settings.fallback_order}
+
+
+# ---------------------------------------------------------------------------
 # F.3.3 — Pastas Seguras (SafeRoot)
 # ---------------------------------------------------------------------------
 

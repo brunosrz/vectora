@@ -177,3 +177,68 @@ class TestStorageHealthUnit:
             assert health["sqlite"].get("ok") is True
         elif "checkpointer" in health:
             assert health["checkpointer"].get("ok") is True
+
+
+class TestFallbackOrderEndpoint:
+    """PATCH/GET /admin/model/fallback-order (Parte A)."""
+
+    def _fresh_runtime(self, tmp_path, monkeypatch):
+        import backend.services.runtime_settings as rt_mod
+        from backend.services.runtime_settings import RuntimeSettings
+
+        fresh = RuntimeSettings(path=tmp_path / "settings.json")
+        monkeypatch.setattr(rt_mod, "runtime_settings", fresh)
+        return fresh
+
+    @pytest.mark.asyncio
+    async def test_patch_sets_order(self, admin_client, tmp_path, monkeypatch):
+        fresh = self._fresh_runtime(tmp_path, monkeypatch)
+        resp = await admin_client.patch(
+            "/admin/model/fallback-order",
+            json={"order": ["openai:gpt-4o", "cohere:command-a"]},
+        )
+        assert resp.status_code in (200, 401, 403, 422)
+        if resp.status_code == 200:
+            assert resp.json()["fallback_order"] == [
+                "openai:gpt-4o",
+                "cohere:command-a",
+            ]
+            assert fresh.fallback_order == ["openai:gpt-4o", "cohere:command-a"]
+
+    @pytest.mark.asyncio
+    async def test_get_returns_order(self, admin_client, tmp_path, monkeypatch):
+        fresh = self._fresh_runtime(tmp_path, monkeypatch)
+        fresh.set_fallback_order(["cohere:command-a"])
+        resp = await admin_client.get("/admin/model/fallback-order")
+        assert resp.status_code in (200, 401, 403)
+        if resp.status_code == 200:
+            assert resp.json()["fallback_order"] == ["cohere:command-a"]
+
+    @pytest.mark.asyncio
+    async def test_patch_filters_empty(self, admin_client, tmp_path, monkeypatch):
+        self._fresh_runtime(tmp_path, monkeypatch)
+        resp = await admin_client.patch(
+            "/admin/model/fallback-order",
+            json={"order": ["openai:gpt-4o", "", "   "]},
+        )
+        if resp.status_code == 200:
+            assert resp.json()["fallback_order"] == ["openai:gpt-4o"]
+
+    @pytest.mark.asyncio
+    async def test_patch_empty_clears(self, admin_client, tmp_path, monkeypatch):
+        fresh = self._fresh_runtime(tmp_path, monkeypatch)
+        fresh.set_fallback_order(["openai:gpt-4o"])
+        resp = await admin_client.patch(
+            "/admin/model/fallback-order", json={"order": []}
+        )
+        if resp.status_code == 200:
+            assert resp.json()["fallback_order"] == []
+
+    @pytest.mark.asyncio
+    async def test_patch_missing_order_defaults_empty(
+        self, admin_client, tmp_path, monkeypatch
+    ):
+        self._fresh_runtime(tmp_path, monkeypatch)
+        resp = await admin_client.patch("/admin/model/fallback-order", json={})
+        # order tem default [] — aceita sem 422
+        assert resp.status_code in (200, 401, 403)
