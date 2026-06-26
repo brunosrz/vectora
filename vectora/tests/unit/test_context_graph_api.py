@@ -526,3 +526,87 @@ class TestDeleteBuild:
                 await delete_build(_fake_request(), "ws1")
 
         mock_task.cancel.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _run_build — status final (paused/error/done) — Parte C
+# ---------------------------------------------------------------------------
+
+
+class TestRunBuildStatus:
+    async def _run(self, tmp_path: Path, side_effect):
+        from backend.api.handlers.context_graph import BuildRequest, _run_build
+
+        registry, _ = _make_registry(tmp_path)
+        with (
+            patch("backend.services.workspace.workspace_registry", registry),
+            patch(
+                "backend.services.context_graph.pipeline.build_workspace_graph",
+                side_effect=side_effect,
+            ),
+        ):
+            await _run_build("ws1", BuildRequest())
+        from backend.api.handlers.context_graph import _read_status_file
+
+        return _read_status_file(tmp_path / ".vectora" / "graph")
+
+    @pytest.mark.asyncio
+    async def test_quota_exhausted_writes_paused(self, tmp_path):
+        from backend.services.provider_fallback import QuotaExhaustedError
+
+        async def boom(*a, **k):
+            raise QuotaExhaustedError("todos os providers esgotaram a quota")
+
+        s = await self._run(tmp_path, boom)
+        assert s is not None
+        assert s.status == "paused"
+        assert "esgotaram" in (s.error or "")
+
+    @pytest.mark.asyncio
+    async def test_generic_error_writes_error(self, tmp_path):
+        async def boom(*a, **k):
+            raise ValueError("pipeline quebrou")
+
+        s = await self._run(tmp_path, boom)
+        assert s is not None
+        assert s.status == "error"
+
+    @pytest.mark.asyncio
+    async def test_quota_not_classified_as_error(self, tmp_path):
+        from backend.services.provider_fallback import QuotaExhaustedError
+
+        async def boom(*a, **k):
+            raise QuotaExhaustedError("quota")
+
+        s = await self._run(tmp_path, boom)
+        assert s is not None
+        assert s.status != "error"
+
+    @pytest.mark.asyncio
+    async def test_success_writes_done_with_counts(self, tmp_path):
+        result = MagicMock()
+        result.error = None
+        result.node_count = 7
+        result.edge_count = 9
+
+        async def ok(*a, **k):
+            return result
+
+        s = await self._run(tmp_path, ok)
+        assert s is not None
+        assert s.status == "done"
+        assert s.node_count == 7
+        assert s.edge_count == 9
+
+    @pytest.mark.asyncio
+    async def test_result_error_writes_error(self, tmp_path):
+        result = MagicMock()
+        result.error = "extração falhou"
+
+        async def err(*a, **k):
+            return result
+
+        s = await self._run(tmp_path, err)
+        assert s is not None
+        assert s.status == "error"
+        assert s.error == "extração falhou"

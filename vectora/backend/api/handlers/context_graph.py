@@ -229,7 +229,18 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
                 node_count=result.node_count,
                 edge_count=result.edge_count,
             )
-    except Exception:
+    except Exception as exc:
+        from backend.services.provider_fallback import QuotaExhaustedError
+
+        if isinstance(exc, QuotaExhaustedError):
+            # Quota esgotada em TODOS os providers — não é erro de pipeline:
+            # pausa o build (grafo parcial servido) p/ o usuário renovar e retomar.
+            logger.warning(
+                "context-graph: quota esgotada em todos os providers — build pausado",
+                extra={"workspace_id": workspace_id},
+            )
+            _write_status(d, "paused", error=str(exc))
+            return
         logger.exception(
             "context-graph: falha no build em background",
             extra={"workspace_id": workspace_id},
