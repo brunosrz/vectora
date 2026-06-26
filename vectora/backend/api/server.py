@@ -298,16 +298,6 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar memory consolidation: %s", exc)
 
-    # Túnel ngrok — expõe /webhook/* para o mundo externo em desenvolvimento.
-    # Só ativo quando NGROK_AUTHTOKEN ou ngrok_enabled=true nas settings.
-    try:
-        from backend.services.ngrok_tunnel import start_tunnel
-
-        _port = int(os.environ.get("VECTORA_PORT", "8080"))
-        start_tunnel(_port)
-    except Exception as exc:
-        logger.warning("api/server: falha ao iniciar túnel ngrok: %s", exc)
-
     try:
         yield
     finally:
@@ -318,12 +308,6 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             from backend.services.background_tasks import get_scheduler as _gs
 
             await _gs().stop()
-        except Exception:
-            pass
-        try:
-            from backend.services.ngrok_tunnel import stop_tunnel
-
-            stop_tunnel()
         except Exception:
             pass
         license_task.cancel()

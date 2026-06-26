@@ -84,7 +84,6 @@ dependencies = [
     "langchain-redis>=0.2.5",
     "langgraph-checkpoint-postgres>=3.1.0",
     "psycopg[binary]>=3.3.4",
-    "pyngrok>=7.2.6",
     "networkx>=3.4",
     "numpy>=1.21",
     "rapidfuzz>=3.0",

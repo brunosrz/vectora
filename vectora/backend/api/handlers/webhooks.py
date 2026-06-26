@@ -475,17 +475,3 @@ async def webhook_events_stream(request: Request) -> Any:
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
-
-
-# ---------------------------------------------------------------------------
-# Endpoint de descoberta da URL pública ngrok
-# ---------------------------------------------------------------------------
-
-
-@router.get("/webhook/ngrok-url")
-async def ngrok_url() -> dict[str, str | None]:
-    """Retorna a URL pública do túnel ngrok ativo, ou null se não estiver rodando."""
-    from backend.services.ngrok_tunnel import get_public_url
-
-    url = get_public_url()
-    return {"url": url}

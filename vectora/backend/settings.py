@@ -521,36 +521,6 @@ class Settings(BaseSettings):
     """Provider de email: 'resend', 'sendgrid' ou 'mailgun'. Vazio = desativado."""
 
     # ============================================================================
-    # NGROK — túnel público para desenvolvimento local
-    # ============================================================================
-
-    ngrok_authtoken: str = ""
-    """Auth token do ngrok (dashboard.ngrok.com/get-started/your-authtoken).
-    Quando configurado, o Vectora inicia automaticamente um túnel público em
-    /webhook/* permitindo que GitHub, Slack e Linear entreguem webhooks no localhost.
-    Sem token, o ngrok funciona com limitações (URL temporária, 1 sessão simultânea).
-    """
-
-    ngrok_enabled: bool = True
-    """Liga o túnel ngrok automaticamente no startup quando NGROK_AUTHTOKEN estiver
-    configurado. Desative com NGROK_ENABLED=false para desligar o túnel mesmo
-    tendo o token configurado."""
-
-    ngrok_domain: str = ""
-    """Domínio estático ngrok (opcional).
-
-    Sem isso: URL muda a cada restart (ex: https://abc123.ngrok-free.app).
-    Com isso: URL fixa entre restarts.
-
-    Como obter domínio estático GRATUITO:
-      1. dashboard.ngrok.com/cloud-edge/domains → 'Create Domain'
-      2. Copie o domínio (ex: lucky-rabbit-abc123.ngrok-free.app)
-      3. No .env: NGROK_DOMAIN=lucky-rabbit-abc123.ngrok-free.app
-
-    Domínio próprio (ex: vectora.app): requer plano pago ngrok Pro + CNAME configurado.
-    """
-
-    # ============================================================================
     # PYDANTIC CONFIGURATION
     # ============================================================================
 

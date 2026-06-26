@@ -205,7 +205,7 @@ O Vectora conecta com serviços externos via **OAuth** (GitHub, GitLab, Google/G
 Slack) e **API keys** (Linear, Jira, Notion), com tools dedicadas — `google_drive_*`,
 `gmail_*`, `slack_*`, `linear_*`, `jira_*`, `notion_*`. Recebe eventos externos por
 **webhooks** (`/webhook/{provider}`, com verificação de assinatura), expostos publicamente
-por um túnel **ngrok** no modo desktop. CI do GitHub (workflow/check runs) aparece em tempo
+via relay próprio em `*.vectora.chat` (WebSocket persistente, zero configuração). CI do GitHub (workflow/check runs) aparece em tempo
 real no workbench de Git.
 
 ### Comandos do usuário
