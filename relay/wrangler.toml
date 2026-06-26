@@ -1,0 +1,23 @@
+name = "vectora-relay"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+[durable_objects]
+bindings = [
+  { name = "RELAY_SESSION", class_name = "RelaySession" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RelaySession"]
+
+[[kv_namespaces]]
+binding = "RELAY_METRICS"
+id = "placeholder"
+
+[vars]
+MAX_PAYLOAD_BYTES = "5242880"
+QUEUE_TTL_MS = "600000"
+
+# VECTORA_JWT_SECRET e RELAY_HMAC_SECRET entram via: wrangler secret put
