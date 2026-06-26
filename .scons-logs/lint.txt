@@ -17,7 +17,7 @@ $ paraglide-js compile --project ./project.inlang --outdir ./lib/paraglide
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend exec oxlint
 Already up to date
-Done in 62ms using pnpm v11.5.0
+Done in 58ms using pnpm v11.5.0
 Found 0 warnings and 0 errors.
 Finished in 1.1s on 325 files with 146 rules using 8 threads.
 

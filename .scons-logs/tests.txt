@@ -1,42 +1,91 @@
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend run i18n:compile
 Already up to date
-Done in 50ms using pnpm v11.5.0
+Done in 56ms using pnpm v11.5.0
 $ paraglide-js compile --project ./project.inlang --outdir ./lib/paraglide
 ℹ [paraglide-js] Compiling inlang project ...
 ✔ [paraglide-js] Successfully compiled inlang project.
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend exec vitest run
 Already up to date
-Done in 97ms using pnpm v11.5.0
+Done in 96ms using pnpm v11.5.0
 
  RUN  v4.1.9 C:/Users/Machi/Desktop/vectora/vectora/frontend
 
-···············x····················································································································································································································································································································································································································································································································································································································································································································································································································
+·······································································································································································································································································································································································································································································································································································································································································································································································································································
 
-⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
-
- FAIL  components/workbench/tabs/__tests__/context-graph-tab.test.tsx > ContextGraphTab > estado running > botão está desabilitado
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ components/workbench/tabs/__tests__/context-graph-tab.test.tsx:123:28
-    121|       render(<ContextGraphTab threadId="t1" />);
-    122|       const btn = document.querySelector("button") as HTMLButtonElemen…
-    123|       expect(btn.disabled).toBe(true);
-       |                            ^
-    124|     });
-    125|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  77 passed (77)
+      Tests  807 passed (807)
+   Start at  10:51:20
+   Duration  76.09s (transform 60.24s, setup 37.87s, import 157.07s, tests 29.53s, environment 171.62s)
 
 
- Test Files  1 failed | 76 passed (77)
-      Tests  1 failed | 803 passed (804)
-   Start at  09:40:10
-   Duration  75.71s (transform 68.24s, setup 38.69s, import 165.52s, tests 28.48s, environment 185.92s)
+>> [vectora] uv run pytest tests -q --tb=short
+........................................ssssssssss.sssssssssss.....s....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................  warning: skipped C:\Users\Machi\AppData\Local\Temp\pytest-of-Machi\pytest-628\test_returns_empty_on_exceptio0\broken.py (RuntimeError: parse failed)
+.......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................sss.VECTORA_IPC_PIPE=\\.\pipe\vectora-5828
+......................................................................................................................................................................s.............s.............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+2234 passed, 27 skipped in 112.77s (0:01:52)
+
+>> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir relay run test
+$ vitest run
+✘ [ERROR] Missing "./config" specifier in "@cloudflare/vitest-pool-workers" package [plugin externalize-deps]
+
+    node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild/lib/main.js:1498:27:
+      1498 │         let result = await callback({
+           ╵                            ^
+
+    at e (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:6667:8)
+    at n (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:6679:14)
+    at o (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:6707:10)
+    at resolveExportsOrImports (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:32907:45)
+    at resolveDeepImport (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:32921:22)
+    at tryNodeResolve (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:32796:70)
+    at nodeResolveWithVite (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:33026:9)
+    at file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:35925:18
+    at requestCallbacks.on-resolve (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1498:28)
+    at handleRequest (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:909:17)
+
+  This error came from the "onResolve" callback registered here:
+
+    node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild/lib/main.js:1422:20:
+      1422 │       let promise = setup({
+           ╵                     ^
+
+    at setup (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:35919:13)
+    at handlePlugins (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1422:21)
+    at buildOrContextImpl (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1135:5)
+    at Object.buildOrContext (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:961:5)
+    at C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:2316:15
+    at new Promise (<anonymous>)
+    at Object.build (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:2315:25)
+    at build (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:2166:51)
+    at bundleConfigFile (file:///C:/Users/Machi/Desktop/vectora/relay/node_modules/.pnpm/vite@7.3.6/node_modules/vite/dist/node/chunks/config.js:35895:23)
+
+  The plugin "externalize-deps" was triggered by this import
+
+    vitest.config.ts:1:338:
+      1 │ ...efineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
+        ╵                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+failed to load config from C:\Users\Machi\Desktop\vectora\relay\vitest.config.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Build failed with 1 error:
+node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild/lib/main.js:1498:27: ERROR: [plugin: externalize-deps] Missing "./config" specifier in "@cloudflare/vitest-pool-workers" package
+    at failureErrorWithLog (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1748:15)
+    at C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1207:25
+    at runOnEndCallbacks (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1588:45)
+    at buildResponseToResult (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1205:7)
+    at C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:1232:16
+    at responseCallbacks.<computed> (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:884:9)
+    at handleIncomingPacket (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:939:12)
+    at Socket.readFromStdout (C:\Users\Machi\Desktop\vectora\relay\node_modules\.pnpm\esbuild@0.28.1\node_modules\esbuild\lib\main.js:862:7)
+    at Socket.emit (node:events:509:20)
+    at addChunk (node:internal/streams/readable:568:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}
+
+
+
+[ELIFECYCLE] Test failed. See above for more details.
