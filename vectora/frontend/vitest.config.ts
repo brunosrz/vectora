@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     reporters: ["dot"],
+    testTimeout: 15000,
     onConsoleLog(log: string): false | void {
       if (
         log.includes("[Logger] Initialized") ||

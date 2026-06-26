@@ -1,14 +1,14 @@
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend run i18n:compile
 Already up to date
-Done in 72ms using pnpm v11.5.0
+Done in 55ms using pnpm v11.5.0
 $ paraglide-js compile --project ./project.inlang --outdir ./lib/paraglide
 i [paraglide-js] Compiling inlang project ...
 √ [paraglide-js] Successfully compiled inlang project.
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend exec vitest run
 Already up to date
-Done in 181ms using pnpm v11.5.0
+Done in 80ms using pnpm v11.5.0
 
  RUN  v4.1.9 C:/Users/Machi/Desktop/vectora/vectora/frontend
 
@@ -16,15 +16,15 @@ Done in 181ms using pnpm v11.5.0
 
  Test Files  77 passed (77)
       Tests  807 passed (807)
-   Start at  11:03:32
-   Duration  135.52s (transform 86.03s, setup 56.71s, import 331.41s, tests 52.47s, environment 266.60s)
+   Start at  11:20:54
+   Duration  91.75s (transform 74.05s, setup 30.43s, import 246.86s, tests 39.05s, environment 134.54s)
 
 
 >> [vectora] uv run pytest tests -q --tb=short
-........................................ssssssssss.sssssssssss.....s....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................  warning: skipped C:\Users\Machi\AppData\Local\Temp\pytest-of-Machi\pytest-629\test_returns_empty_on_exceptio0\broken.py (RuntimeError: parse failed)
-.......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................sss.VECTORA_IPC_PIPE=\\.\pipe\vectora-11752
+........................................ssssssssss.sssssssssss.....s....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................  warning: skipped C:\Users\Machi\AppData\Local\Temp\pytest-of-Machi\pytest-631\test_returns_empty_on_exceptio0\broken.py (RuntimeError: parse failed)
+.......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................sss.VECTORA_IPC_PIPE=\\.\pipe\vectora-11392
 ......................................................................................................................................................................s.............s.............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
-2234 passed, 27 skipped in 113.88s (0:01:53)
+2234 passed, 27 skipped in 109.31s (0:01:49)
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir relay run test
 $ vitest run
@@ -34,26 +34,16 @@ $ vitest run
 
  Test Files  2 passed (2)
       Tests  14 passed | 3 skipped (17)
-   Start at  11:07:50
-   Duration  2.64s (transform 170ms, setup 0ms, import 257ms, tests 116ms, environment 0ms)
+   Start at  11:24:23
+   Duration  2.35s (transform 234ms, setup 0ms, import 313ms, tests 55ms, environment 0ms)
 
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir company run test
 $ vitest run
-ReferenceError: module is not defined
-    at C:/Users/Machi/Desktop/vectora/company/node_modules/.pnpm/react@19.2.7/node_modules/react/index.js:6:3
-    at ESModulesEvaluator.runInlinedModule (file:///C:/Users/Machi/Desktop/vectora/company/node_modules/.pnpm/vite@8.0.16_@types+node@25._38661ecc4ebe20bc0b1598e75459656f/node_modules/vite/dist/node/module-runner.js:1006:161)
-    at ModuleRunner.directRequest (file:///C:/Users/Machi/Desktop/vectora/company/node_modules/.pnpm/vite@8.0.16_@types+node@25._38661ecc4ebe20bc0b1598e75459656f/node_modules/vite/dist/node/module-runner.js:1259:80)
-    at ModuleRunner.cachedRequest (file:///C:/Users/Machi/Desktop/vectora/company/node_modules/.pnpm/vite@8.0.16_@types+node@25._38661ecc4ebe20bc0b1598e75459656f/node_modules/vite/dist/node/module-runner.js:1166:73)
 
  RUN  v4.1.8 C:/Users/Machi/Desktop/vectora/company
 
-No test files found, exiting with code 1
+No test files found, exiting with code 0
 
 include: **/*.{test,spec}.?(c|m)[jt]s?(x)
 exclude:  **/node_modules/**, **/.git/**
-
-close timed out after 10000ms
-Tests closed successfully but something prevents Vite server from exiting
-You can try to identify the cause by enabling "hanging-process" reporter. See https://vitest.dev/guide/reporters.html#hanging-process-reporter
-[ELIFECYCLE] Test failed. See above for more details.
