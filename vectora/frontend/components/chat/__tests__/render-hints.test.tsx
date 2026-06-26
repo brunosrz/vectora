@@ -34,6 +34,18 @@ describe("Render Hints — registry dispatch", () => {
     expect(img).not.toBeNull();
   });
 
+  it("renders browser_screenshot hint with an img element", () => {
+    const tool = makeTool({
+      renderHint: "browser_screenshot",
+      output: { url: "https://example.com/screen.png", alt: "page" },
+    });
+    const { container } = render(
+      <ToolCallRenderer tool={tool} isStreaming={false} />,
+    );
+    const img = container.querySelector("img");
+    expect(img).not.toBeNull();
+  });
+
   it("renders thinking_step hint with accordion structure", () => {
     const tool = makeTool({
       renderHint: "thinking_step",
@@ -41,6 +53,43 @@ describe("Render Hints — registry dispatch", () => {
     });
     render(<ToolCallRenderer tool={tool} isStreaming={false} />);
     expect(screen.getByText(/Analisando o código/i)).toBeDefined();
+  });
+
+  it("renders json_tree hint with collapsible JSON", () => {
+    const tool = makeTool({
+      renderHint: "json_tree",
+      output: { key: "value", nested: { a: 1 } },
+    });
+    const { container } = render(
+      <ToolCallRenderer tool={tool} isStreaming={false} />,
+    );
+    // json_tree usa details/summary — deve ter elemento details
+    const details = container.querySelector("details");
+    expect(details).not.toBeNull();
+  });
+
+  it("renders chart_inline hint with svg element", () => {
+    const tool = makeTool({
+      renderHint: "chart_inline",
+      output: { labels: ["Jan", "Feb", "Mar"], values: [10, 25, 15], title: "Vendas" },
+    });
+    const { container } = render(
+      <ToolCallRenderer tool={tool} isStreaming={false} />,
+    );
+    const svg = container.querySelector("svg");
+    expect(svg).not.toBeNull();
+  });
+
+  it("renders db_result hint as table", () => {
+    const tool = makeTool({
+      renderHint: "db_result",
+      output: { rows: [{ id: 1, name: "Alice" }], columns: ["id", "name"] },
+    });
+    const { container } = render(
+      <ToolCallRenderer tool={tool} isStreaming={false} />,
+    );
+    const table = container.querySelector("table");
+    expect(table).not.toBeNull();
   });
 
   it("renders json hint as fallback for unknown output", () => {

@@ -397,6 +397,119 @@ function ArtifactCard({ data }: { data: unknown }) {
   );
 }
 
+/** Árvore JSON colapsável — json_tree */
+function JsonTree({ data }: { data: unknown }) {
+  const text = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  return (
+    <details className="mt-1">
+      <summary className="cursor-pointer text-[11px] text-muted-foreground hover:opacity-80">
+        JSON
+      </summary>
+      <pre className="mt-1 text-[10px] font-mono whitespace-pre-wrap break-words max-h-64 overflow-y-auto rounded bg-muted/60 p-2">
+        {text}
+      </pre>
+    </details>
+  );
+}
+
+/** Gráfico de barras SVG embutido — chart_inline */
+function ChartInline({ data }: { data: unknown }) {
+  let labels: string[] = [];
+  let values: number[] = [];
+  let title = "";
+  if (data && typeof data === "object") {
+    const d = data as Record<string, unknown>;
+    labels = Array.isArray(d.labels) ? (d.labels as string[]) : [];
+    values = Array.isArray(d.values) ? (d.values as number[]) : [];
+    title = String(d.title ?? "");
+  }
+  if (labels.length === 0 || values.length === 0) {
+    return <JsonViewer data={data} label="Ver output" />;
+  }
+  const max = Math.max(...values, 1);
+  const barW = 28;
+  const gap = 6;
+  const chartH = 80;
+  const totalW = (barW + gap) * labels.length;
+  return (
+    <div className="mt-1 text-[11px]">
+      {title && <div className="text-muted-foreground mb-1 font-medium">{title}</div>}
+      <svg width={totalW} height={chartH + 20} role="img" aria-label={title}>
+        {labels.map((lbl, i) => {
+          const barH = Math.round((values[i]! / max) * chartH);
+          const x = i * (barW + gap);
+          return (
+            <g key={lbl}>
+              <rect
+                x={x}
+                y={chartH - barH}
+                width={barW}
+                height={barH}
+                rx={2}
+                className="fill-primary/70"
+              />
+              <text
+                x={x + barW / 2}
+                y={chartH + 12}
+                textAnchor="middle"
+                fontSize={9}
+                className="fill-muted-foreground"
+              >
+                {lbl}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/** Tabela de resultado SQL — db_result */
+function DbResult({ data }: { data: unknown }) {
+  let rows: Record<string, unknown>[] = [];
+  let columns: string[] = [];
+  if (data && typeof data === "object") {
+    const d = data as Record<string, unknown>;
+    rows = Array.isArray(d.rows) ? (d.rows as Record<string, unknown>[]) : [];
+    columns = Array.isArray(d.columns)
+      ? (d.columns as string[])
+      : rows[0]
+        ? Object.keys(rows[0])
+        : [];
+  }
+  if (columns.length === 0) return <JsonViewer data={data} label="Ver output" />;
+  return (
+    <div className="mt-1 overflow-x-auto max-h-48">
+      <table className="text-[11px] w-full border-collapse">
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th
+                key={col}
+                className="border border-border bg-muted/50 px-2 py-1 text-left font-semibold"
+              >
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, ri) => (
+            <tr key={ri} className="odd:bg-muted/20">
+              {columns.map((col) => (
+                <td key={col} className="border border-border px-2 py-1">
+                  {String(row[col] ?? "")}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ============================================================================
 // Dispatch map
 // ============================================================================
@@ -419,7 +532,11 @@ const RENDERERS: Record<RenderHint, RendererFn> = {
   queue_badge: (out) => <QueueBadge data={out} />,
   artifact: (out) => <ArtifactCard data={out} />,
   image_preview: (out) => <ImagePreview data={out} />,
+  browser_screenshot: (out) => <ImagePreview data={out} />,
   thinking_step: (out) => <ThinkingStep data={out} />,
+  json_tree: (out) => <JsonTree data={out} />,
+  chart_inline: (out) => <ChartInline data={out} />,
+  db_result: (out) => <DbResult data={out} />,
   json: (out) => <JsonViewer data={out} label="Ver output" />,
 };
 

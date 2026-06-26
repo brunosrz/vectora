@@ -15,8 +15,12 @@ export type RenderHint =
   | "queue_progress" // ingest_docs — barra de progresso com contagem
   | "queue_badge" // embedding — badge com queue_id + status
   | "artifact" // create_artifact — card com ícone + link para download
-  | "image_preview" // ferramentas que retornam URL de imagem (browser screenshot, etc.)
+  | "image_preview" // ferramentas que retornam URL de imagem
+  | "browser_screenshot" // screenshot de browser — usa o mesmo ImagePreview
   | "thinking_step" // sequential_thinking — accordion com passo de raciocínio
+  | "json_tree" // árvore JSON colapsável interativa
+  | "chart_inline" // gráfico de barras SVG embutido (labels + values)
+  | "db_result" // resultado de query SQL — tabela com colunas + linhas
   | "json"; // save_memory, get_memory, delete_memory, fallback universal
 
 /** Categoria de uma tool — agrupa tools afins na UI. */
