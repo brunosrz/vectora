@@ -200,8 +200,8 @@ async def get_langchain_vector_store(
     return vs
 
 
-def _build_lc_embeddings() -> Any:
-    """Retorna ``CohereEmbeddings`` se disponível, ou None (modo sem embeddings)."""
+def _build_cohere_embeddings() -> Any:
+    """``CohereEmbeddings`` se a key Cohere estiver configurada, senão None."""
     try:
         from langchain_cohere import CohereEmbeddings
 
@@ -218,6 +218,35 @@ def _build_lc_embeddings() -> Any:
         )
     except Exception:
         return None
+
+
+def _build_voyage_embeddings() -> Any:
+    """``VoyageAIEmbeddings`` se a key VoyageAI estiver configurada, senão None."""
+    try:
+        from langchain_voyageai import VoyageAIEmbeddings
+
+        from backend.settings import settings as _s
+
+        key = _s.voyage_api_key
+        model = _s.voyage_embedding_model
+        if not key or not model:
+            return None
+
+        return VoyageAIEmbeddings(
+            voyage_api_key=key,  # ty: ignore[unknown-argument]
+            model=model,
+        )
+    except Exception:
+        return None
+
+
+def _build_lc_embeddings() -> Any:
+    """Embeddings com fallback Cohere↔Voyage.
+
+    Prefere Cohere; cai para VoyageAI quando Cohere não está configurado. Só
+    devolve None (modo sem embeddings) quando nenhum dos dois tem credencial.
+    """
+    return _build_cohere_embeddings() or _build_voyage_embeddings()
 
 
 def _build_lancedb_vs(

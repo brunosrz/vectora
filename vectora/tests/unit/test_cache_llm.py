@@ -98,3 +98,57 @@ def test_semantic_sem_embeddings_cai_para_exato(
     out = cache_llm._build_redis_cache("redis://localhost:6379/0")
     assert isinstance(out, _FakeRedisCache)
     assert captured["redis_url"] == "redis://localhost:6379/0"
+
+
+# ---------------------------------------------------------------------------
+# Embeddings: fallback Cohere↔Voyage (Parte B)
+# ---------------------------------------------------------------------------
+
+
+class TestEmbeddingsFallback:
+    def test_prefers_cohere_when_both_available(self, monkeypatch):
+        from backend.storage import factory
+
+        cohere = object()
+        voyage = object()
+        monkeypatch.setattr(factory, "_build_cohere_embeddings", lambda: cohere)
+        monkeypatch.setattr(factory, "_build_voyage_embeddings", lambda: voyage)
+        assert factory._build_lc_embeddings() is cohere
+
+    def test_falls_back_to_voyage_when_cohere_absent(self, monkeypatch):
+        from backend.storage import factory
+
+        voyage = object()
+        monkeypatch.setattr(factory, "_build_cohere_embeddings", lambda: None)
+        monkeypatch.setattr(factory, "_build_voyage_embeddings", lambda: voyage)
+        assert factory._build_lc_embeddings() is voyage
+
+    def test_none_when_neither_available(self, monkeypatch):
+        from backend.storage import factory
+
+        monkeypatch.setattr(factory, "_build_cohere_embeddings", lambda: None)
+        monkeypatch.setattr(factory, "_build_voyage_embeddings", lambda: None)
+        assert factory._build_lc_embeddings() is None
+
+    def test_voyage_builder_none_without_key(self, monkeypatch):
+        from backend.settings import settings as s
+        from backend.storage import factory
+
+        monkeypatch.setattr(s, "voyage_api_key", None)
+        assert factory._build_voyage_embeddings() is None
+
+    def test_voyage_builder_none_without_model(self, monkeypatch):
+        from backend.settings import settings as s
+        from backend.storage import factory
+
+        monkeypatch.setattr(s, "voyage_api_key", "voy-1")
+        monkeypatch.setattr(s, "voyage_embedding_model", "")
+        assert factory._build_voyage_embeddings() is None
+
+    def test_cohere_builder_none_without_key(self, monkeypatch):
+        from backend.settings import Settings
+        from backend.storage import factory
+
+        # get_cohere_api_key é método — patcha na classe (Pydantic bloqueia na instância).
+        monkeypatch.setattr(Settings, "get_cohere_api_key", lambda self: None)
+        assert factory._build_cohere_embeddings() is None
