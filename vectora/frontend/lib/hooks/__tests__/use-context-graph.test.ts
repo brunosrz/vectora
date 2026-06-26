@@ -374,4 +374,68 @@ describe("useContextGraph", () => {
       vi.useRealTimers();
     }
   });
+
+  // ── status paused (Parte C — quota esgotada) ──────────────────────────────────
+
+  it("status paused é preservado com a mensagem de erro", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "paused", error: "quota esgotada" }),
+    );
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    expect(result.current.status.status).toBe("paused");
+    expect(result.current.status.error).toBe("quota esgotada");
+  });
+
+  it("status paused não dispara busca de report (só done busca)", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(mockOk({ status: "paused" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    expect(FETCH_MOCK).toHaveBeenCalledTimes(1);
+    expect(result.current.report).toBeNull();
+  });
+
+  it("status paused não agenda polling", async () => {
+    vi.useFakeTimers();
+    try {
+      FETCH_MOCK.mockResolvedValue(mockOk({ status: "paused" }));
+      renderHook(() => useContextGraph("ws1"));
+      await act(async () => {
+        await Promise.resolve();
+      });
+      const before = FETCH_MOCK.mock.calls.length;
+      await act(async () => {
+        vi.advanceTimersByTime(6000);
+        await Promise.resolve();
+      });
+      expect(FETCH_MOCK.mock.calls.length).toBe(before);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("status error é preservado com a mensagem", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "error", error: "boom" }),
+    );
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    expect(result.current.status.status).toBe("error");
+    expect(result.current.status.error).toBe("boom");
+  });
+
+  it("rebuild a partir de paused chama /build (Continuar)", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "paused" }),
+    ).mockResolvedValueOnce(mockOk({ status: "queued" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    await act(async () => {
+      await result.current.build();
+    });
+    expect(
+      FETCH_MOCK.mock.calls.some((a) => String(a[0]).includes("/build")),
+    ).toBe(true);
+    expect(result.current.status.status).toBe("running");
+  });
 });
