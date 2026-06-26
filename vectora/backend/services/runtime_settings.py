@@ -203,6 +203,20 @@ class RuntimeSettings:
         self.set("language", language if language in _VALID_LANGUAGES else "en")
 
     @property
+    def fallback_order(self) -> list[str]:
+        """Ordem de fallback de providers LLM (lista de 'provider:model')."""
+        val = self.get("llm_fallback_order", [])
+        return [str(x) for x in val] if isinstance(val, list) else []
+
+    def set_fallback_order(self, order: list[str]) -> None:
+        """Define a ordem de fallback de LLM e persiste.
+
+        Filtra entradas vazias/em branco, preserva a ordem fornecida.
+        """
+        clean = [str(x).strip() for x in order if str(x).strip()]
+        self.set("llm_fallback_order", clean)
+
+    @property
     def last_session_by_dir(self) -> dict[str, str]:
         """Mapping of working directory path -> thread_id (6-digit string)."""
         val = self.get("last_session_by_dir", {})
