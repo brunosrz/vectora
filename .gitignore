@@ -306,6 +306,7 @@ dist
 # It should NEVER be committed to the repository
 data/
 .src/
+.vectora/
 
 # AI assistant configuration directories
 # These may contain API keys, conversation history, or local session data
@@ -342,7 +343,6 @@ AbilitySystem_repo/
 
 # WIP isolado fora do src/
 /.wip/
-.vectora/
 /desktop/dist-electron
 /desktop/build-resources
 /vectora/electron/dist-electron/
@@ -353,4 +353,3 @@ AbilitySystem_repo/
 *.msi
 env.gha
 /graphify
-/vectora

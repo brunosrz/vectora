@@ -49,7 +49,12 @@ describe("Render Hints — registry dispatch", () => {
   it("renders thinking_step hint with accordion structure", () => {
     const tool = makeTool({
       renderHint: "thinking_step",
-      output: { thought: "Analisando o código...", thought_number: 1, total_thoughts: 3, is_final: false },
+      output: {
+        thought: "Analisando o código...",
+        thought_number: 1,
+        total_thoughts: 3,
+        is_final: false,
+      },
     });
     render(<ToolCallRenderer tool={tool} isStreaming={false} />);
     expect(screen.getByText(/Analisando o código/i)).toBeDefined();
@@ -71,7 +76,11 @@ describe("Render Hints — registry dispatch", () => {
   it("renders chart_inline hint with svg element", () => {
     const tool = makeTool({
       renderHint: "chart_inline",
-      output: { labels: ["Jan", "Feb", "Mar"], values: [10, 25, 15], title: "Vendas" },
+      output: {
+        labels: ["Jan", "Feb", "Mar"],
+        values: [10, 25, 15],
+        title: "Vendas",
+      },
     });
     const { container } = render(
       <ToolCallRenderer tool={tool} isStreaming={false} />,

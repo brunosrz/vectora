@@ -36,8 +36,8 @@
 
   /* Typography */
   --ifm-font-family-base: "Inter", "Segoe UI", system-ui, sans-serif;
-  --ifm-font-family-monospace:
-    "Aeonik Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --ifm-font-family-monospace: "Aeonik Mono", "JetBrains Mono", "Fira Code",
+    ui-monospace, monospace;
   --ifm-code-font-size: 90%;
 
   /* Code blocks */

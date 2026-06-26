@@ -19,11 +19,12 @@
 #    and new semantic results using an explicit `seen` set keyed on node["id"],
 #    so duplicates across cache hits and new extractions are resolved there
 #    before any graph construction happens.
-#
+
 from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import os
 import re
 import sys
@@ -31,6 +32,8 @@ import unicodedata
 from pathlib import Path
 
 import networkx as nx
+
+logger = logging.getLogger(__name__)
 
 from .ids import normalize_id as _normalize_id
 from .paths import default_graph_json as _default_graph_json
@@ -180,7 +183,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
     # Dangling edges (stdlib/external imports) are expected - only warn about real schema errors.
     real_errors = [e for e in errors if "does not match any node id" not in e]
     if real_errors:
-        print(f"[context_graph] Extraction warning ({len(real_errors)} issues): {real_errors[0]}", file=sys.stderr)
+        logger.warning("Extraction warning (%d issues): %s", len(real_errors), real_errors[0])
     G: nx.Graph = nx.DiGraph() if directed else nx.Graph()
     for node in extraction.get("nodes", []):
         if "source_file" in node:
@@ -420,7 +423,7 @@ def deduplicate_by_label(nodes: list[dict], edges: list[dict]) -> tuple[list[dic
     if not remap:
         return nodes, edges
 
-    print(f"[context_graph] Deduplicated {len(remap)} duplicate node(s) by label.", file=sys.stderr)
+    logger.debug("Deduplicated %d duplicate node(s) by label.", len(remap))
     deduped_nodes = list(canonical.values())
     deduped_edges = []
     for edge in edges:
@@ -529,10 +532,7 @@ def build_merge(
         n_files = len(prune_sources)
         n_nodes = len(to_remove)
         if n_nodes:
-            print(
-                f"[context_graph] Pruned {n_nodes} node(s) from {n_files} deleted source file(s).",
-                file=sys.stderr,
-            )
+            logger.debug("Pruned %d node(s) from %d deleted source file(s).", n_nodes, n_files)
 
         edges_to_remove = [
             (u, v) for u, v, d in G.edges(data=True)
@@ -540,16 +540,12 @@ def build_merge(
         ]
         if edges_to_remove:
             G.remove_edges_from(edges_to_remove)
-            print(
-                f"[context_graph] Pruned {len(edges_to_remove)} edge(s) from deleted source file(s).",
-                file=sys.stderr,
-            )
+            logger.debug("Pruned %d edge(s) from deleted source file(s).", len(edges_to_remove))
 
         if not n_nodes and not edges_to_remove:
-            print(
-                f"[context_graph] {n_files} source file(s) deleted since last run — "
-                f"no matching nodes or edges in graph, already clean.",
-                file=sys.stderr,
+            logger.debug(
+                "%d source file(s) deleted since last run — no matching nodes or edges, already clean.",
+                n_files,
             )
 
     # Safety check: refuse to shrink the graph silently (#479)

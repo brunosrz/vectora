@@ -122,7 +122,7 @@ ou **MCP de terceiro** (via MCP Library).
 | Tool                       | Categoria | Backend           | Justificativa                    |
 | -------------------------- | --------- | ----------------- | -------------------------------- |
 | `image_resize_crop`        | Image     | Pillow (PIL)      | Manipulação básica sem chamar IA |
-| `image_convert_format`     | Image     | Pillow            | PNG ↔ JPEG ↔ WebP                |
+| `image_convert_format`     | Image     | Pillow            | PNG ↔ JPEG ↔ WebP              |
 | `image_metadata`           | Image     | Pillow + exifread | EXIF, dimensões, etc.            |
 | `image_ocr`                | Image     | Tesseract         | OCR sem pagar API                |
 | `audio_convert`            | Audio     | FFmpeg wrap       | Formato + sample rate + duration |

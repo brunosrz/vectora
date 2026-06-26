@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import html as _html
 import json
+import logging
 import math
 import os
 import re
@@ -11,6 +12,8 @@ import shutil
 from collections import Counter
 from datetime import date
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -88,11 +91,10 @@ def backup_if_protected(out_dir: Path) -> Path | None:
                 except Exception:
                     pass
         if copied:
-            print(f"[context_graph] backed up {reason} graph ({copied} files) -> {backup_dir.name}/")
+            logger.debug("backed up %s graph (%d files) -> %s/", reason, copied, backup_dir.name)
         return backup_dir
     except Exception as exc:
-        import sys
-        print(f"[context_graph] warning: backup failed ({exc}) - continuing with overwrite", file=sys.stderr)
+        logger.warning("backup failed (%s) - continuing with overwrite", exc)
         return None
 
 def _obsidian_tag(name: str) -> str:
@@ -494,16 +496,16 @@ def to_json(G: nx.Graph, communities: dict[int, list[str]], output_path: str, *,
             existing_n = len(existing_data.get("nodes", []))
             new_n = G.number_of_nodes()
             if new_n < existing_n:
-                import sys as _sys
-                print(
-                    f"[context_graph] WARNING: new graph has {new_n} nodes but existing "
-                    f"graph.json has {existing_n} (net -{existing_n - new_n}). "
-                    f"Refusing to overwrite. Possible causes: missing chunk files from "
-                    f"a previous session, or fuzzy dedup collapsed same-named symbols "
-                    f"across files during an --update on an already-current graph. "
-                    f"Run a full rebuild (/graphify .) to be safe, or pass force=True "
-                    f"only if you have verified the reduction is legitimate.",
-                    file=_sys.stderr,
+                logger.warning(
+                    "new graph has %d nodes but existing graph.json has %d (net -%d). "
+                    "Refusing to overwrite. Possible causes: missing chunk files from "
+                    "a previous session, or fuzzy dedup collapsed same-named symbols "
+                    "across files during an --update on an already-current graph. "
+                    "Run a full rebuild (/graphify .) to be safe, or pass force=True "
+                    "only if you have verified the reduction is legitimate.",
+                    new_n,
+                    existing_n,
+                    existing_n - new_n,
                 )
                 return False
         except Exception:

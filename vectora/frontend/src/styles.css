@@ -113,8 +113,8 @@
 
   --radius: 0.5rem;
 
-  --font-aeonik-mono:
-    "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, Monaco, monospace;
+  --font-aeonik-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo,
+    Monaco, monospace;
 }
 
 @layer base {

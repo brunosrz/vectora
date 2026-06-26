@@ -99,7 +99,7 @@ export function SkillsTab() {
         ...v,
         [id]: {
           state: data.ok ? "ok" : "error",
-          msg: data.ok ? m.skills_verify_ok() : (data.error ?? ""),
+          msg: data.ok ? m.skills_verify_ok() : data.error ?? "",
         },
       }));
     } catch {

@@ -137,7 +137,7 @@ function SearchResultsViewer({ results }: { results: unknown }) {
     const parsed = typeof results === "string" ? JSON.parse(results) : results;
     items = Array.isArray(parsed)
       ? parsed
-      : (parsed?.memories ?? parsed?.results ?? []);
+      : parsed?.memories ?? parsed?.results ?? [];
   } catch {
     return <JsonViewer data={results} label="Ver resultados" />;
   }
@@ -264,7 +264,7 @@ function QueueBadge({ data }: { data: unknown }) {
     info =
       typeof data === "string"
         ? JSON.parse(data)
-        : ((data as Record<string, unknown>) ?? {});
+        : (data as Record<string, unknown>) ?? {};
   } catch {
     /* usa {} */
   }
@@ -286,7 +286,7 @@ function QueueProgress({ data }: { data: unknown }) {
     info =
       typeof data === "string"
         ? JSON.parse(data)
-        : ((data as Record<string, unknown>) ?? {});
+        : (data as Record<string, unknown>) ?? {};
   } catch {
     /* usa {} */
   }
@@ -341,7 +341,10 @@ function ImagePreview({ data }: { data: unknown }) {
 function ThinkingStep({ data }: { data: unknown }) {
   let d: Record<string, unknown> = {};
   try {
-    d = (typeof data === "string" ? JSON.parse(data) : (data as Record<string, unknown>)) ?? {};
+    d =
+      (typeof data === "string"
+        ? JSON.parse(data)
+        : (data as Record<string, unknown>)) ?? {};
   } catch {
     /* usa {} */
   }
@@ -357,8 +360,12 @@ function ThinkingStep({ data }: { data: unknown }) {
           <span className="text-[10px] font-mono text-primary/60">
             {num}/{total}
           </span>
-          {isFinal && <span className="text-green-500 text-[10px]">✓ Final</span>}
-          {isRevision && <span className="text-amber-500 text-[10px]">↩ Revisão</span>}
+          {isFinal && (
+            <span className="text-green-500 text-[10px]">✓ Final</span>
+          )}
+          {isRevision && (
+            <span className="text-amber-500 text-[10px]">↩ Revisão</span>
+          )}
         </div>
       )}
       <p className="whitespace-pre-wrap">{thought}</p>
@@ -373,7 +380,7 @@ function ArtifactCard({ data }: { data: unknown }) {
     info =
       typeof data === "string"
         ? JSON.parse(data)
-        : ((data as Record<string, unknown>) ?? {});
+        : (data as Record<string, unknown>) ?? {};
   } catch {
     /* usa {} */
   }
@@ -433,7 +440,9 @@ function ChartInline({ data }: { data: unknown }) {
   const totalW = (barW + gap) * labels.length;
   return (
     <div className="mt-1 text-[11px]">
-      {title && <div className="text-muted-foreground mb-1 font-medium">{title}</div>}
+      {title && (
+        <div className="text-muted-foreground mb-1 font-medium">{title}</div>
+      )}
       <svg width={totalW} height={chartH + 20} role="img" aria-label={title}>
         {labels.map((lbl, i) => {
           const barH = Math.round((values[i]! / max) * chartH);
@@ -478,7 +487,8 @@ function DbResult({ data }: { data: unknown }) {
         ? Object.keys(rows[0])
         : [];
   }
-  if (columns.length === 0) return <JsonViewer data={data} label="Ver output" />;
+  if (columns.length === 0)
+    return <JsonViewer data={data} label="Ver output" />;
   return (
     <div className="mt-1 overflow-x-auto max-h-48">
       <table className="text-[11px] w-full border-collapse">

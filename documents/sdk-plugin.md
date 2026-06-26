@@ -169,7 +169,7 @@ só-integração, ou qualquer combinação.
     "network": ["imap.*", "smtp.*"], // allow-list de hosts
     "filesystem": ["workspace"], // "workspace" | path globs | false
     "secrets": ["EMAIL_PASSWORD", "GOOGLE_OAUTH_TOKEN"], // chaves no vault do user
-    "spawn_processes": false,
+    "spawn_processes": false
   },
 
   "contributes": {
@@ -179,58 +179,58 @@ só-integração, ou qualquer combinação.
         "entry": "backend.tools:email_search",
         "render_hint": "table",
         "category": "communication",
-        "destructive": false,
+        "destructive": false
       },
       {
         "name": "email_send",
         "entry": "backend.tools:email_send",
         "render_hint": "code_block",
         "category": "communication",
-        "destructive": true,
-      },
+        "destructive": true
+      }
     ],
     "workbench_tabs": [
       {
         "id": "inbox",
         "title_key": "ext.acme.email.inbox",
         "icon": "Mail",
-        "ui_entry": "ui/dist/index.js#InboxTab",
-      },
+        "ui_entry": "ui/dist/index.js#InboxTab"
+      }
     ],
     "slash_commands": [
       {
         "command": "/email",
         "title_key": "ext.acme.email.cmd",
-        "tool": "email_search",
-      },
+        "tool": "email_search"
+      }
     ],
     "render_hints": [
-      { "id": "email_thread", "ui_entry": "ui/dist/index.js#EmailThreadView" },
+      { "id": "email_thread", "ui_entry": "ui/dist/index.js#EmailThreadView" }
     ],
     "integrations": [
       {
         "id": "email",
         "env_var": "EMAIL_PASSWORD",
         "oauth": "google",
-        "docs_url": "https://github.com/acme/vectora-email#setup",
-      },
+        "docs_url": "https://github.com/acme/vectora-email#setup"
+      }
     ],
     "settings": [
-      { "key": "acme.email.poll_interval_s", "type": "number", "default": 60 },
+      { "key": "acme.email.poll_interval_s", "type": "number", "default": 60 }
     ],
     "skills": ["skills/triage-inbox.skill.md"],
-    "mcp_servers": "mcp/servers.json",
+    "mcp_servers": "mcp/servers.json"
   },
 
   "entrypoints": {
     "backend": {
       "runtime": "python",
       "module": "backend",
-      "isolation": "subprocess",
+      "isolation": "subprocess"
     },
     "node": { "runtime": "node", "main": "node/dist/index.js" },
-    "ui": { "module": "ui/dist/index.js" },
-  },
+    "ui": { "module": "ui/dist/index.js" }
+  }
 }
 ```
 

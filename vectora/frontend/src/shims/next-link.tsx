@@ -13,10 +13,8 @@
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Link as RouterLink } from "@tanstack/react-router";
 
-interface NextLinkProps extends Omit<
-  AnchorHTMLAttributes<HTMLAnchorElement>,
-  "href"
-> {
+interface NextLinkProps
+  extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
   href: string;
   prefetch?: boolean;
   replace?: boolean;

@@ -710,7 +710,10 @@ async function handleEvent(
         setMessages((prev) =>
           updateMessageInList(prev, assistantMessageId, (m) => ({
             ...m,
-            activeTool: { name: event.tool_name, argsPreview: event.args_preview },
+            activeTool: {
+              name: event.tool_name,
+              argsPreview: event.args_preview,
+            },
           })),
         );
       } else {

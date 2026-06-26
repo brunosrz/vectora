@@ -3759,6 +3759,7 @@ Settings → Avançado (opt-in explícito).
 
 1. **Gravação** (antes do refactor): rodar o agente atual em ~50 inputs
    representativos e gravar:
+
    - Mensagens emitidas (texto + tool_calls).
    - Sequência de HITL events (com timestamps relativos).
    - Estado final do thread.
@@ -5444,6 +5445,7 @@ policy pública (apenas `service_role` via edge functions).
 ### K2 — Edge functions (`supabase/functions/`)
 
 - **`on-signup`** (trigger `auth.users INSERT`):
+
   1. Cria `profiles`.
   2. Gera token `vct_` + 96 hex chars via
      `crypto.getRandomValues(new Uint8Array(48))`. SHA-256 do raw.
@@ -5451,6 +5453,7 @@ policy pública (apenas `service_role` via edge functions).
   4. Cria `subscriptions` trial 30 dias Plus.
 
 - **`validate-license`** (chamada pelo Vectora Agent):
+
   - `POST {token, vectora_version}` → busca por hash, checa
     subscription, computa `days_remaining`, audita em
     `license_checks`.
@@ -5459,6 +5462,7 @@ policy pública (apenas `service_role` via edge functions).
     Agent cobre o caso geral).
 
 - **`get-token`** (reveal único, auth Supabase JWT):
+
   - `GET` → retorna `token` raw + apaga do banco (apenas hash
     permanece). Segunda chamada → `revealed: false`.
 
@@ -5470,6 +5474,7 @@ policy pública (apenas `service_role` via edge functions).
   Currency `usd` (INTL) ou `brl` (BR).
 
 - **`stripe-webhook`**: processa eventos:
+
   - `checkout.session.completed` → `status='active'`, atualiza
     tier.
   - `invoice.payment_succeeded` → renova `current_period_end`.
@@ -5480,6 +5485,7 @@ policy pública (apenas `service_role` via edge functions).
 
 - **`asaas-webhook`**: processa eventos
   ([docs.asaas.com](https://docs.asaas.com/docs/payment-events)):
+
   - `PAYMENT_CREATED` → cobrança nova (nova fatura da subscription).
   - `PAYMENT_CONFIRMED` → pagamento feito, saldo não disponível.
   - `PAYMENT_RECEIVED` → recebido (saldo liberado), renova
@@ -6066,6 +6072,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
 ### N7 — IDE plugins (VS Code, JetBrains, Zed, Neovim)
 
 - **VS Code extension** (`vectora.code`):
+
   - Sidebar com chat panel (webview apontando para
     `http://localhost:8080/?embed=1`).
   - Inline completions via Language Server (LSP) consumindo
@@ -6076,6 +6083,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
   - Publish em VS Code Marketplace + Open VSX.
 
 - **JetBrains plugin** (IntelliJ Platform):
+
   - Tool Window com chat (JCEF browser apontando para
     `http://localhost:8080/?embed=1`).
   - Actions: `Vectora: Explain` (Cmd+Shift+E), `Vectora: Refactor`.
@@ -6083,6 +6091,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
   - Publish em JetBrains Marketplace.
 
 - **Zed extension** via ACP (I4 / J7):
+
   - Manifest `extension.toml` apontando para `vectora` como
     ACP-compatible agent.
   - User configura `acp_url=https://vectora.company.local/v1/acp`

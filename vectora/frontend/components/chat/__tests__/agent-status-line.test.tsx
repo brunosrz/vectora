@@ -43,7 +43,11 @@ describe("AgentStatusLine", () => {
   it("renders elapsed time when elapsedMs is provided", () => {
     render(
       <AgentStatusLine
-        activeTool={{ name: "file_edit", argsPreview: "main.py", elapsedMs: 1234 }}
+        activeTool={{
+          name: "file_edit",
+          argsPreview: "main.py",
+          elapsedMs: 1234,
+        }}
       />,
     );
     // Should show something like "1.2s" or "1234ms"

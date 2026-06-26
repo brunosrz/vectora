@@ -5,10 +5,13 @@ Jaro-Winkler verification → same-community boost → union-find merge.
 """
 from __future__ import annotations
 
+import logging
 import math
 import re
 import unicodedata
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 from rapidfuzz.distance import Jaro, JaroWinkler
 
@@ -397,13 +400,12 @@ def deduplicate_entities(
         return unique_nodes, edges
 
     total = len(remap)
-    msg = f"[context_graph] Deduplicated {total} node(s)"
-    if exact_merges:
-        msg += f" ({exact_merges} exact"
-        if fuzzy_merges:
-            msg += f", {fuzzy_merges} fuzzy"
-        msg += ")"
-    print(msg + ".", flush=True)
+    if exact_merges and fuzzy_merges:
+        logger.debug("Deduplicated %d node(s) (%d exact, %d fuzzy).", total, exact_merges, fuzzy_merges)
+    elif exact_merges:
+        logger.debug("Deduplicated %d node(s) (%d exact).", total, exact_merges)
+    else:
+        logger.debug("Deduplicated %d node(s).", total)
 
     deduped_nodes = [n for n in unique_nodes if n["id"] not in remap]
     deduped_edges = []
@@ -496,7 +498,7 @@ def _llm_tiebreak(
     try:
         llm = load_llm(backend)
     except Exception as exc:
-        print(f"[context_graph] --dedup-llm: cannot load LLM {backend!r} ({exc}); skipping.", flush=True)
+        logger.warning("--dedup-llm: cannot load LLM %r (%s); skipping.", backend, exc)
         return
 
     for batch_start in range(0, len(ambiguous), batch_size):
@@ -537,4 +539,4 @@ def _llm_tiebreak(
                         uf.union(winner["id"], a["id"])
                         uf.union(winner["id"], b["id"])
         except Exception as exc:
-            print(f"[context_graph] --dedup-llm batch failed: {exc}", flush=True)
+            logger.warning("--dedup-llm batch failed: %s", exc)

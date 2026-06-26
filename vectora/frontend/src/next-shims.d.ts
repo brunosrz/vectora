@@ -10,10 +10,8 @@
 
 declare module "next/link" {
   import type { AnchorHTMLAttributes, ReactNode } from "react";
-  interface NextLinkProps extends Omit<
-    AnchorHTMLAttributes<HTMLAnchorElement>,
-    "href"
-  > {
+  interface NextLinkProps
+    extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
     href: string;
     prefetch?: boolean;
     replace?: boolean;
@@ -30,10 +28,11 @@ declare module "next/link" {
 
 declare module "next/image" {
   import type { ImgHTMLAttributes } from "react";
-  interface NextImageProps extends Omit<
-    ImgHTMLAttributes<HTMLImageElement>,
-    "src" | "alt" | "width" | "height"
-  > {
+  interface NextImageProps
+    extends Omit<
+      ImgHTMLAttributes<HTMLImageElement>,
+      "src" | "alt" | "width" | "height"
+    > {
     src: string | { src: string; width?: number; height?: number };
     alt: string;
     width?: number | string;

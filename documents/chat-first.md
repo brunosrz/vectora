@@ -2526,12 +2526,12 @@ files: {
       fetchedAt: Record<path, number>;
     }
   >;
-  (setExpanded(wsId, path, open),
+  setExpanded(wsId, path, open),
     setEntries(wsId, path, entries),
     setOpenFile(wsId, path),
     setContent(wsId, path, response),
     setFilter(wsId, filter),
-    invalidate(wsId));
+    invalidate(wsId);
 }
 ```
 
@@ -2561,10 +2561,10 @@ diff: {
       fileFetchedAt: Record<path, number>;
     }
   >;
-  (setSummary(wsId, summary),
+  setSummary(wsId, summary),
     setOpenFile(wsId, path, open),
     setHunks(wsId, path, hunks),
-    invalidate(wsId));
+    invalidate(wsId);
 }
 ```
 
@@ -2584,10 +2584,10 @@ plan: {
       fetchedAt: number;
     }
   >;
-  (setItems(threadId, items),
+  setItems(threadId, items),
     setOpenSlug(threadId, slug),
     setContent(threadId, slug, content),
-    invalidate(threadId));
+    invalidate(threadId);
 }
 ```
 
