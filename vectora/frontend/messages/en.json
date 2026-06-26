@@ -512,6 +512,8 @@
   "graph_rebuild_button": "Rebuild graph",
   "graph_building": "Building…",
   "graph_not_built": "Graph not yet built",
+  "graph_paused": "Build paused — all models' quota exhausted",
+  "graph_continue_button": "Continue",
   "graph_build_description": "Analyzes the workspace code and generates a knowledge graph with relationships between functions, classes, and concepts.",
   "graph_god_nodes_title": "God Nodes",
   "graph_questions_title": "Suggested questions",

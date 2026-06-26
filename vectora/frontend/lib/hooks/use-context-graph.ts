@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 
 export interface GraphStatus {
-  status: "not_built" | "running" | "done" | "error" | "unknown" | "queued";
+  status:
+    | "not_built"
+    | "running"
+    | "done"
+    | "error"
+    | "unknown"
+    | "queued"
+    | "paused";
   node_count?: number | null;
   edge_count?: number | null;
   error?: string | null;

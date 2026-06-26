@@ -31,6 +31,7 @@ export function ContextGraphTab({
 
   const isBuilt = status.status === "done";
   const isRunning = status.status === "running" || status.status === "queued";
+  const isPaused = status.status === "paused";
 
   function handleBuild() {
     build();
@@ -111,8 +112,29 @@ export function ContextGraphTab({
           </div>
         )}
 
+        {/* Status: paused (quota esgotada em todos os providers) */}
+        {isPaused && (
+          <div
+            data-testid="graph-paused"
+            className="px-3 py-4 text-sm text-center space-y-3"
+          >
+            <p className="text-amber-500">{m.graph_paused()}</p>
+            {status.error && (
+              <p className="text-xs text-muted-foreground">{status.error}</p>
+            )}
+            <button
+              onClick={handleBuild}
+              disabled={loading}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 mx-auto"
+            >
+              <RefreshCw className="h-3 w-3" />
+              {m.graph_continue_button()}
+            </button>
+          </div>
+        )}
+
         {/* Status: not built */}
-        {!isBuilt && !isRunning && status.status !== "error" && (
+        {!isBuilt && !isRunning && !isPaused && status.status !== "error" && (
           <div className="px-3 py-4 text-sm text-muted-foreground text-center space-y-2">
             <p>{m.graph_not_built()}</p>
             <p className="text-xs">{m.graph_build_description()}</p>

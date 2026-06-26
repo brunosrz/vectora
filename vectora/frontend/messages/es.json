@@ -512,6 +512,8 @@
   "graph_rebuild_button": "Reconstruir grafo",
   "graph_building": "Construyendo…",
   "graph_not_built": "Grafo aún no construido",
+  "graph_paused": "Compilación pausada — cuota de todos los modelos agotada",
+  "graph_continue_button": "Continuar",
   "graph_build_description": "Analiza el código del workspace y genera un grafo de conocimiento con relaciones entre funciones, clases y conceptos.",
   "graph_god_nodes_title": "God Nodes",
   "graph_questions_title": "Preguntas sugeridas",

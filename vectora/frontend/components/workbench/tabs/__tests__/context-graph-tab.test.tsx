@@ -394,4 +394,45 @@ describe("ContextGraphTab", () => {
       );
     });
   });
+
+  describe("estado paused (quota esgotada)", () => {
+    it("exibe a mensagem graph_paused", () => {
+      setup({ status: { status: "paused" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByText("graph_paused")).toBeTruthy();
+    });
+
+    it("renderiza o container data-testid=graph-paused", () => {
+      setup({ status: { status: "paused" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(
+        document.querySelector("[data-testid='graph-paused']"),
+      ).toBeTruthy();
+    });
+
+    it("mostra o botão Continuar", () => {
+      setup({ status: { status: "paused" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByText("graph_continue_button")).toBeTruthy();
+    });
+
+    it("clicar em Continuar chama build()", () => {
+      setup({ status: { status: "paused" } });
+      render(<ContextGraphTab threadId="t1" />);
+      fireEvent.click(screen.getByText("graph_continue_button"));
+      expect(mockBuild).toHaveBeenCalled();
+    });
+
+    it("exibe a mensagem de erro da quota quando presente", () => {
+      setup({ status: { status: "paused", error: "todos esgotaram" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByText("todos esgotaram")).toBeTruthy();
+    });
+
+    it("não exibe graph_not_built em paused", () => {
+      setup({ status: { status: "paused" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.queryByText("graph_not_built")).toBeNull();
+    });
+  });
 });
