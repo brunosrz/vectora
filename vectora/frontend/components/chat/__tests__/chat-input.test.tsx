@@ -155,4 +155,79 @@ describe("ChatInput", () => {
       document.querySelector("[data-testid='workspace-selector']"),
     ).toBeNull();
   });
+
+  // ── erros / fila / botão VS Code (render direto da ChatInput) ────────────────
+
+  it("exibe uploadError quando presente", () => {
+    render(
+      <ChatInput {...baseProps({ uploadError: "Arquivo grande demais" })} />,
+    );
+    expect(screen.getByText("Arquivo grande demais")).toBeTruthy();
+  });
+
+  it("não exibe bloco de uploadError quando null", () => {
+    render(<ChatInput {...baseProps({ uploadError: null })} />);
+    expect(screen.queryByText(/demais/)).toBeNull();
+  });
+
+  it("exibe voiceError quando presente", () => {
+    render(
+      <ChatInput {...baseProps({ voiceError: "Microfone indisponível" })} />,
+    );
+    expect(screen.getByText("Microfone indisponível")).toBeTruthy();
+  });
+
+  it("renderiza mensagens enfileiradas", () => {
+    render(
+      <ChatInput
+        {...baseProps({
+          queuedMessages: [
+            { id: "q1", content: "primeira na fila" },
+            { id: "q2", content: "segunda na fila" },
+          ],
+        })}
+      />,
+    );
+    expect(screen.getByText("primeira na fila")).toBeTruthy();
+    expect(screen.getByText("segunda na fila")).toBeTruthy();
+  });
+
+  it("sem mensagens enfileiradas não renderiza a fila", () => {
+    render(<ChatInput {...baseProps({ queuedMessages: [] })} />);
+    expect(screen.queryByText(/na fila/)).toBeNull();
+  });
+
+  it("botão VS Code aparece em code mode com workspace ativo", () => {
+    mockSettings.chatMode = false;
+    mockWsState.getActive = () => ({ id: "ws1" }) as never;
+    try {
+      render(<ChatInput {...baseProps()} />);
+      expect(screen.queryByLabelText(m.workbench_open_vscode())).toBeTruthy();
+    } finally {
+      mockWsState.getActive = () => null;
+    }
+  });
+
+  it("botão VS Code NÃO aparece em chat mode mesmo com workspace", () => {
+    mockSettings.chatMode = true;
+    mockWsState.getActive = () => ({ id: "ws1" }) as never;
+    try {
+      render(<ChatInput {...baseProps()} />);
+      expect(screen.queryByLabelText(m.workbench_open_vscode())).toBeNull();
+    } finally {
+      mockWsState.getActive = () => null;
+      mockSettings.chatMode = false;
+    }
+  });
+
+  it("botão VS Code NÃO aparece sem workspace ativo", () => {
+    mockSettings.chatMode = false;
+    render(<ChatInput {...baseProps()} />);
+    expect(screen.queryByLabelText(m.workbench_open_vscode())).toBeNull();
+  });
+
+  it("enviar fica desabilitado sem userId", () => {
+    render(<ChatInput {...baseProps({ input: "oi", userId: null })} />);
+    expect(sendButton().disabled).toBe(true);
+  });
 });
