@@ -62,14 +62,31 @@ async function fetchIntegrations(): Promise<Integration[]> {
   return data.integrations ?? [];
 }
 
-async function fetchNgrokUrl(): Promise<string | null> {
+interface RelayStatus {
+  connected: boolean;
+  token: string | null;
+  subdomain: string | null;
+  webhook_base: string | null;
+}
+
+async function fetchRelayStatus(): Promise<RelayStatus> {
   try {
-    const res = await fetch("/webhook/ngrok-url");
-    if (!res.ok) return null;
-    const data = (await res.json()) as { url?: string | null };
-    return data.url ?? null;
+    const res = await fetch("/relay/status");
+    if (!res.ok)
+      return {
+        connected: false,
+        token: null,
+        subdomain: null,
+        webhook_base: null,
+      };
+    return (await res.json()) as RelayStatus;
   } catch {
-    return null;
+    return {
+      connected: false,
+      token: null,
+      subdomain: null,
+      webhook_base: null,
+    };
   }
 }
 
@@ -112,11 +129,11 @@ function startOAuth(provider: string): void {
 function IntegrationCard({
   integ,
   onUpdated,
-  ngrokUrl,
+  relayWebhookBase,
 }: {
   integ: Integration;
   onUpdated: () => void;
-  ngrokUrl: string | null;
+  relayWebhookBase: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [keyValue, setKeyValue] = useState("");
@@ -132,10 +149,10 @@ function IntegrationCard({
   const allowToken = integ.kind === "apikey" || integ.kind === "hybrid";
   const hasWebhook = WEBHOOK_PROVIDERS.has(integ.id);
 
-  // URL de webhook — usa ngrok quando disponível (desenvolvimento local),
+  // URL de webhook — usa relay (*.vectora.chat) quando conectado,
   // ou a origem do site em produção (self-hosted com domínio próprio).
-  const webhookUrl = ngrokUrl
-    ? `${ngrokUrl}/webhook/${integ.id}`
+  const webhookUrl = relayWebhookBase
+    ? `${relayWebhookBase}/webhook/${integ.id}`
     : typeof window !== "undefined"
       ? `${window.location.origin}/webhook/${integ.id}`
       : `/webhook/${integ.id}`;
@@ -459,17 +476,22 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
 export function IntegracoesTab() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [ngrokUrl, setNgrokUrl] = useState<string | null>(null);
+  const [relay, setRelay] = useState<RelayStatus>({
+    connected: false,
+    token: null,
+    subdomain: null,
+    webhook_base: null,
+  });
 
   const load = async () => {
     setLoading(true);
     try {
-      const [data, tunnel] = await Promise.all([
+      const [data, relayStatus] = await Promise.all([
         fetchIntegrations(),
-        fetchNgrokUrl(),
+        fetchRelayStatus(),
       ]);
       setIntegrations(data);
-      setNgrokUrl(tunnel);
+      setRelay(relayStatus);
     } finally {
       setLoading(false);
     }
@@ -516,24 +538,33 @@ export function IntegracoesTab() {
         </p>
       </div>
 
-      {/* Banner ngrok — mostra URL pública quando o túnel estiver ativo */}
-      {ngrokUrl && (
-        <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2 text-xs space-y-0.5">
-          <p className="font-medium text-green-600 dark:text-green-400">
-            Túnel ngrok ativo
+      {/* Banner relay — mostra subdomain e status de conexão */}
+      <div
+        className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${relay.connected ? "border-green-500/30 bg-green-500/5" : "border-border bg-muted/30"}`}
+      >
+        <div className="flex items-center justify-between">
+          <p
+            className={`font-medium ${relay.connected ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+          >
+            {relay.connected ? m.relay_connected() : m.relay_disconnected()}
           </p>
-          <p className="text-muted-foreground font-mono break-all">
-            {ngrokUrl}
-          </p>
-          <p className="text-muted-foreground">
-            Use{" "}
-            <span className="font-mono">
-              {ngrokUrl}/webhook/&#123;provider&#125;
-            </span>{" "}
-            como Webhook URL no GitHub, Slack ou Linear.
-          </p>
+          {relay.subdomain && (
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {relay.subdomain}
+            </span>
+          )}
         </div>
-      )}
+        {relay.webhook_base ? (
+          <p className="text-muted-foreground">
+            {m.relay_webhook_hint()}{" "}
+            <span className="font-mono">
+              {relay.webhook_base}/webhook/&#123;provider&#125;
+            </span>
+          </p>
+        ) : (
+          <p className="text-muted-foreground">{m.relay_no_token()}</p>
+        )}
+      </div>
 
       {/* Cards por categoria */}
       {CATEGORIES.map((cat) => {
@@ -549,7 +580,7 @@ export function IntegracoesTab() {
                 key={integ.id}
                 integ={integ}
                 onUpdated={load}
-                ngrokUrl={ngrokUrl}
+                relayWebhookBase={relay.webhook_base}
               />
             ))}
           </div>

@@ -35,6 +35,10 @@ class TestRelayTokenPersistence:
         save_token("xyz789", relay_token_file)
         assert relay_token_file.read_text() == "xyz789"
 
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32",
+        reason="Windows usa ACLs NTFS; chmod POSIX não aplica",
+    )
     def test_token_salvo_tem_permissao_restrita(self, relay_token_file: Path) -> None:
         import stat
 
@@ -59,6 +63,8 @@ class TestRelayClientBackoff:
 
         async def fake_sleep(d: float) -> None:
             delays.append(d)
+            if len(delays) >= 3:
+                raise asyncio.CancelledError
 
         with patch("backend.relay.asyncio.sleep", fake_sleep):
             with patch(
@@ -69,8 +75,8 @@ class TestRelayClientBackoff:
                     "backend.relay.RelayClient._register", return_value="tok123"
                 ):
                     try:
-                        await asyncio.wait_for(client._connect_loop(), timeout=0.1)
-                    except (asyncio.TimeoutError, StopAsyncIteration):
+                        await client._connect_loop()
+                    except asyncio.CancelledError:
                         pass
 
         assert len(delays) >= 2

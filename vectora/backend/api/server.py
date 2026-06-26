@@ -46,6 +46,7 @@ from backend.api.handlers.mcp_marketplace import router as mcp_marketplace_route
 from backend.api.handlers.memory import router as memory_router
 from backend.api.handlers.oauth import router as oauth_router
 from backend.api.handlers.plugins import router as plugins_router
+from backend.api.handlers.relay import router as relay_router
 from backend.api.handlers.share import router as share_router
 from backend.api.handlers.skills import router as skills_router
 from backend.api.handlers.terminal import router as terminal_router
@@ -298,12 +299,39 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar memory consolidation: %s", exc)
 
+    # Relay client — WebSocket persistente para receber webhooks e callbacks OAuth.
+    # Só inicia quando RELAY_ENABLED=true nas settings (padrão).
+    _relay_client = None
+    try:
+        from backend.settings import get_settings as _gs_relay
+
+        _cfg = _gs_relay()
+        if _cfg.relay_enabled:
+            from backend.relay import RelayClient
+            from backend.services.auth import create_relay_jwt
+
+            async def _relay_jwt_getter() -> str:
+                return create_relay_jwt()
+
+            _relay_client = RelayClient(
+                relay_url=_cfg.relay_url,
+                jwt_getter=_relay_jwt_getter,
+            )
+            _relay_client.start()
+    except Exception as exc:
+        logger.warning("api/server: falha ao iniciar relay client: %s", exc)
+
     try:
         yield
     finally:
         logger.info("api/server: shutdown — fechando recursos")
         if consolidation_task is not None:
             consolidation_task.cancel()
+        if _relay_client is not None:
+            try:
+                await _relay_client.stop()
+            except Exception:
+                pass
         try:
             from backend.services.background_tasks import get_scheduler as _gs
 
@@ -420,6 +448,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(share_router)
     app.include_router(memory_router)
     app.include_router(oauth_router)
+    app.include_router(relay_router)
     app.include_router(webhooks_router)
     app.include_router(admin_router)
     app.include_router(workspace_router)

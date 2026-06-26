@@ -521,6 +521,17 @@ class Settings(BaseSettings):
     """Provider de email: 'resend', 'sendgrid' ou 'mailgun'. Vazio = desativado."""
 
     # ============================================================================
+    # RELAY — túnel público via Cloudflare Workers (*.vectora.chat)
+    # ============================================================================
+
+    relay_url: str = "wss://relay.vectora.chat"
+    """URL base do Cloudflare Worker de relay. Não altere em produção."""
+
+    relay_enabled: bool = True
+    """Inicia o RelayClient automaticamente quando há integrações OAuth/webhook
+    configuradas. Desative com RELAY_ENABLED=false para desligar."""
+
+    # ============================================================================
     # PYDANTIC CONFIGURATION
     # ============================================================================
 
