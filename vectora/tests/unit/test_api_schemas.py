@@ -28,6 +28,7 @@ from backend.api.schemas import (
     HITLEvent,
     ListThreadsRequest,
     ListThreadsResponse,
+    ModelSwitchedEvent,
     NodeEvent,
     ResumeChatRequest,
     SharedThread,
@@ -114,6 +115,22 @@ class TestEventModels:
         assert data["type"] == "tool_call"
         assert data["tool_name"] == "web_search"
         assert data["render_hint"] == "web_results"
+
+    def test_model_switched_event(self):
+        ev = ModelSwitchedEvent(
+            from_model="openai:gpt-4o",
+            to_model="google-genai:gemini-2.5-flash",
+        )
+        line = encode_event(ev)
+        data = json.loads(line[6:])
+        assert data["type"] == "model_switched"
+        assert data["from_model"] == "openai:gpt-4o"
+        assert data["to_model"] == "google-genai:gemini-2.5-flash"
+
+    def test_model_switched_in_type_map(self):
+        from backend.api.schemas import _TYPE_MAP
+
+        assert _TYPE_MAP[ModelSwitchedEvent] == "model_switched"
 
     def test_tool_result_event(self):
         ev = ToolResultEvent(

@@ -262,6 +262,17 @@ class ToolActivityEvent(BaseModel):
     elapsed_ms: int | None = None
 
 
+class ModelSwitchedEvent(BaseModel):
+    """Provider trocado automaticamente por quota esgotada (fallback).
+
+    O frontend mostra um toast e atualiza o model selector para o novo modelo.
+    Campos ``from_model``/``to_model`` no formato ``"provider:model"``.
+    """
+
+    from_model: str
+    to_model: str
+
+
 # ---------------------------------------------------------------------------
 # Envelope de streaming
 # ---------------------------------------------------------------------------
@@ -284,6 +295,7 @@ StreamChatEventPayload = (
     | MessageBreakEvent
     | WorkbenchInvalidateEvent
     | ToolActivityEvent
+    | ModelSwitchedEvent
 )
 
 _TYPE_MAP: dict[type, str] = {
@@ -301,6 +313,7 @@ _TYPE_MAP: dict[type, str] = {
     MessageBreakEvent: "message_break",
     WorkbenchInvalidateEvent: "workbench_invalidate",
     ToolActivityEvent: "tool_activity",
+    ModelSwitchedEvent: "model_switched",
 }
 
 

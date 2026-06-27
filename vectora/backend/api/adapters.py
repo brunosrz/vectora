@@ -21,6 +21,7 @@ from backend.api.schemas import (
     ErrorEvent,
     HITLEvent,
     MessageBreakEvent,
+    ModelSwitchedEvent,
     NodeEvent,
     RagCitation,
     RagCitationEvent,
@@ -351,6 +352,20 @@ def adapt_stream(
 
                 # Extrai data uma vez para o bloco HITL + orchestrator abaixo
                 data = event.get("data", {})
+
+                # ── Fallback de provider: troca automática por quota ──────────
+                # O FallbackChatModel emite um custom event ao trocar de provider;
+                # convertemos em SSE para o frontend mostrar o toast + atualizar
+                # o model selector para o novo modelo ativo.
+                if kind == "on_custom_event" and name == "model_switched":
+                    sw = data if isinstance(data, dict) else {}
+                    yield encode_event(
+                        ModelSwitchedEvent(
+                            from_model=str(sw.get("from", "")),
+                            to_model=str(sw.get("to", "")),
+                        )
+                    )
+                    continue
 
                 # ── HITL: interrupt() chamado em algum nó ────────────────────
                 # Quando hitl_check chama interrupt(payload), o LangGraph emite

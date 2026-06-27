@@ -25,6 +25,23 @@ from langchain_core.messages import BaseMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 
 
+async def _emit_switch(from_model: str, to_model: str) -> None:
+    """Emite um evento custom ``model_switched`` no stream do grafo.
+
+    Flui pelo ``astream_events`` (como ``on_custom_event``), que o handler de chat
+    converte em SSE para o frontend trocar o model selector + mostrar o toast.
+    Defensivo: se não houver callback manager ativo, não faz nada.
+    """
+    try:
+        from langchain_core.callbacks.manager import adispatch_custom_event
+
+        await adispatch_custom_event(
+            "model_switched", {"from": from_model, "to": to_model}
+        )
+    except Exception:
+        pass
+
+
 class FallbackChatModel(BaseChatModel):
     """Modelo de chat com fallback de provider por quota (ver módulo)."""
 
@@ -97,6 +114,7 @@ class FallbackChatModel(BaseChatModel):
                 last_exc = exc
                 if i + 1 < len(candidates):
                     record_switch(mid, candidates[i + 1])
+                    await _emit_switch(mid, candidates[i + 1])
         raise QuotaExhaustedError(
             f"Todos os providers esgotaram a quota (último: {candidates[-1]}).",
             model_id=candidates[-1],
