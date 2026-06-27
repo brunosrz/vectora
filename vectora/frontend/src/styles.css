@@ -44,6 +44,13 @@
   --destructive: #f97583;
   --destructive-foreground: #1a1a1a;
 
+  /* Highlights de etapa do Context Graph (bolinhas por arquivo): cada estágio
+     do build (AST → semântica → concluído) tem cor própria para tornar o
+     progresso visível. Únicos acentos coloridos da paleta neutra. */
+  --graph-stage-ast: #4a9eff;
+  --graph-stage-semantic: #b66dff;
+  --graph-stage-done: #5ec26a;
+
   color-scheme: dark;
 }
 
@@ -78,6 +85,11 @@
   --destructive: #d32f2f;
   --destructive-foreground: #ffffff;
 
+  /* Highlights de etapa do Context Graph — tons mais escuros p/ contraste no claro. */
+  --graph-stage-ast: #1f6feb;
+  --graph-stage-semantic: #8957e5;
+  --graph-stage-done: #2da44e;
+
   color-scheme: light;
 }
 
@@ -110,6 +122,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-graph-stage-ast: var(--graph-stage-ast);
+  --color-graph-stage-semantic: var(--graph-stage-semantic);
+  --color-graph-stage-done: var(--graph-stage-done);
 
   --radius: 0.5rem;
 

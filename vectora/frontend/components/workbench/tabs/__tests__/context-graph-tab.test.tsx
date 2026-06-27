@@ -77,7 +77,10 @@ afterEach(() => {
 });
 
 // Importação após os mocks
-import { ContextGraphTab } from "@/components/workbench/tabs/context-graph-tab";
+import {
+  ContextGraphTab,
+  graphStageColor,
+} from "@/components/workbench/tabs/context-graph-tab";
 
 // ── testes ───────────────────────────────────────────────────────────────────
 
@@ -449,6 +452,27 @@ describe("ContextGraphTab", () => {
       setup({ status: { status: "paused" } });
       render(<ContextGraphTab threadId="t1" />);
       expect(screen.queryByText(/\d+\/\d+/)).toBeNull();
+    });
+  });
+
+  describe("graphStageColor — cor por etapa (highlights do theme)", () => {
+    it("etapa AST (≤2) usa o highlight de AST", () => {
+      expect(graphStageColor(1)).toBe("var(--color-graph-stage-ast)");
+      expect(graphStageColor(2)).toBe("var(--color-graph-stage-ast)");
+    });
+
+    it("etapa semântica (3) usa o highlight de semântica", () => {
+      expect(graphStageColor(3)).toBe("var(--color-graph-stage-semantic)");
+    });
+
+    it("etapas pós-semântica (≥4) usam o highlight de concluído", () => {
+      expect(graphStageColor(4)).toBe("var(--color-graph-stage-done)");
+      expect(graphStageColor(9)).toBe("var(--color-graph-stage-done)");
+    });
+
+    it("step nulo/indefinido cai no estágio inicial (AST)", () => {
+      expect(graphStageColor(null)).toBe("var(--color-graph-stage-ast)");
+      expect(graphStageColor(undefined)).toBe("var(--color-graph-stage-ast)");
     });
   });
 });

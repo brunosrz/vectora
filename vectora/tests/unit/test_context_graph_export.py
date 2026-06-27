@@ -133,26 +133,26 @@ class TestBackupIfProtected:
     ):
         from backend.services.context_graph.export import backup_if_protected
 
-        monkeypatch.delenv("GRAPHIFY_NO_BACKUP", raising=False)
+        monkeypatch.delenv("GRAPH_NO_BACKUP", raising=False)
         result = backup_if_protected(tmp_path)
         assert result is None
 
     def test_env_var_disables_backup(self, tmp_path: Path):
         from backend.services.context_graph.export import backup_if_protected
 
-        os.environ["GRAPHIFY_NO_BACKUP"] = "1"
+        os.environ["GRAPH_NO_BACKUP"] = "1"
         try:
             result = backup_if_protected(tmp_path)
             assert result is None
         finally:
-            del os.environ["GRAPHIFY_NO_BACKUP"]
+            del os.environ["GRAPH_NO_BACKUP"]
 
     def test_non_semantic_non_curated_no_backup(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
         from backend.services.context_graph.export import backup_if_protected
 
-        monkeypatch.delenv("GRAPHIFY_NO_BACKUP", raising=False)
+        monkeypatch.delenv("GRAPH_NO_BACKUP", raising=False)
         (tmp_path / "graph.json").write_text("{}", encoding="utf-8")
         result = backup_if_protected(tmp_path)
         assert result is None
@@ -162,9 +162,9 @@ class TestBackupIfProtected:
     ):
         from backend.services.context_graph.export import backup_if_protected
 
-        monkeypatch.delenv("GRAPHIFY_NO_BACKUP", raising=False)
+        monkeypatch.delenv("GRAPH_NO_BACKUP", raising=False)
         (tmp_path / "graph.json").write_text("{}", encoding="utf-8")
-        (tmp_path / ".graphify_semantic_marker").write_text("1", encoding="utf-8")
+        (tmp_path / ".vectora_semantic_marker").write_text("1", encoding="utf-8")
         result = backup_if_protected(tmp_path)
         assert result is not None
         assert result.exists()
@@ -174,10 +174,10 @@ class TestBackupIfProtected:
     ):
         from backend.services.context_graph.export import backup_if_protected
 
-        monkeypatch.delenv("GRAPHIFY_NO_BACKUP", raising=False)
+        monkeypatch.delenv("GRAPH_NO_BACKUP", raising=False)
         (tmp_path / "graph.json").write_text("{}", encoding="utf-8")
         labels = {"0": "My Custom Label", "1": "Community 1"}
-        (tmp_path / ".graphify_labels.json").write_text(
+        (tmp_path / ".vectora_labels.json").write_text(
             json.dumps(labels), encoding="utf-8"
         )
         result = backup_if_protected(tmp_path)
@@ -188,10 +188,10 @@ class TestBackupIfProtected:
     ):
         from backend.services.context_graph.export import backup_if_protected
 
-        monkeypatch.delenv("GRAPHIFY_NO_BACKUP", raising=False)
+        monkeypatch.delenv("GRAPH_NO_BACKUP", raising=False)
         (tmp_path / "graph.json").write_text("{}", encoding="utf-8")
         labels = {"0": "Community 0", "1": "Community 1"}
-        (tmp_path / ".graphify_labels.json").write_text(
+        (tmp_path / ".vectora_labels.json").write_text(
             json.dumps(labels), encoding="utf-8"
         )
         result = backup_if_protected(tmp_path)
@@ -202,9 +202,9 @@ class TestBackupIfProtected:
     ):
         from backend.services.context_graph.export import backup_if_protected
 
-        monkeypatch.delenv("GRAPHIFY_NO_BACKUP", raising=False)
+        monkeypatch.delenv("GRAPH_NO_BACKUP", raising=False)
         (tmp_path / "graph.json").write_text('{"nodes":[]}', encoding="utf-8")
-        (tmp_path / ".graphify_semantic_marker").write_text("1", encoding="utf-8")
+        (tmp_path / ".vectora_semantic_marker").write_text("1", encoding="utf-8")
         backup1 = backup_if_protected(tmp_path)
         backup2 = backup_if_protected(tmp_path)
         assert backup1 == backup2
@@ -251,7 +251,7 @@ class TestToJson:
     def test_creates_json_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         from backend.services.context_graph.export import to_json
 
-        monkeypatch.setenv("GRAPHIFY_NO_BACKUP", "1")
+        monkeypatch.setenv("GRAPH_NO_BACKUP", "1")
         G = _simple_graph()
         output = str(tmp_path / "graph.json")
         to_json(G, {0: ["a", "b"]}, output)
@@ -262,7 +262,7 @@ class TestToJson:
     ):
         from backend.services.context_graph.export import to_json
 
-        monkeypatch.setenv("GRAPHIFY_NO_BACKUP", "1")
+        monkeypatch.setenv("GRAPH_NO_BACKUP", "1")
         G = _simple_graph()
         output = str(tmp_path / "graph.json")
         to_json(G, {0: ["a", "b"]}, output)
@@ -275,7 +275,7 @@ class TestToJson:
     ):
         from backend.services.context_graph.export import to_json
 
-        monkeypatch.setenv("GRAPHIFY_NO_BACKUP", "1")
+        monkeypatch.setenv("GRAPH_NO_BACKUP", "1")
         # Create a larger existing graph (more nodes than our new one)
         big_graph = {
             "nodes": [{"id": f"n{i}", "label": f"N{i}"} for i in range(100)],
@@ -293,7 +293,7 @@ class TestToJson:
     ):
         from backend.services.context_graph.export import to_json
 
-        monkeypatch.setenv("GRAPHIFY_NO_BACKUP", "1")
+        monkeypatch.setenv("GRAPH_NO_BACKUP", "1")
         G = _simple_graph()
         output = str(tmp_path / "graph.json")
         Path(output).write_text('{"original": true}', encoding="utf-8")
@@ -343,7 +343,7 @@ class TestToHtml:
     def test_creates_html_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         from backend.services.context_graph.export import to_html
 
-        monkeypatch.setenv("GRAPHIFY_NO_BACKUP", "1")
+        monkeypatch.setenv("GRAPH_NO_BACKUP", "1")
         G = _simple_graph()
         output = str(tmp_path / "graph.html")
         communities = {0: ["a", "b"]}
@@ -357,7 +357,7 @@ class TestToHtml:
     ):
         from backend.services.context_graph.export import to_html
 
-        monkeypatch.setenv("GRAPHIFY_NO_BACKUP", "1")
+        monkeypatch.setenv("GRAPH_NO_BACKUP", "1")
         G = _simple_graph()
         output = str(tmp_path / "graph.html")
         to_html(G, {0: ["a", "b"]}, output, community_labels={0: "Auth"})

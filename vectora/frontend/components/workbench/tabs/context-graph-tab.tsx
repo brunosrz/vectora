@@ -12,6 +12,17 @@ interface ContextGraphTabProps {
   onSendPrompt?: (text: string) => void;
 }
 
+/**
+ * Cor (CSS var do theme) da bolinha de um arquivo concluído, conforme a etapa
+ * atual do build: AST (≤2) → semântica (3) → concluído/pós (≥4). Torna visível
+ * por qual estágio o build está passando, em vez de uma cor única.
+ */
+export function graphStageColor(step: number | null | undefined): string {
+  if (step != null && step >= 4) return "var(--color-graph-stage-done)";
+  if (step === 3) return "var(--color-graph-stage-semantic)";
+  return "var(--color-graph-stage-ast)";
+}
+
 export function ContextGraphTab({
   threadId,
   onSendPrompt,
@@ -194,7 +205,9 @@ export function ContextGraphTab({
             )}
 
             {/* Lista de arquivos — preenche o espaço vertical disponível em vez
-                de cortar cedo; mostra todos os arquivos detectados. */}
+                de cortar cedo; mostra todos os arquivos detectados. A bolinha de
+                cada arquivo concluído usa a cor da etapa atual (AST → semântica →
+                concluído), tornando visível por qual estágio o build está passando. */}
             {status.files_list && status.files_list.length > 0 && (
               <div className="max-h-[55vh] overflow-y-auto space-y-0.5">
                 {status.files_list.map((file, i) => {
@@ -209,9 +222,13 @@ export function ContextGraphTab({
                       }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                          done ? "bg-primary/70" : "bg-muted-foreground/20"
-                        }`}
+                        className="w-1.5 h-1.5 rounded-full shrink-0 transition-colors"
+                        style={{
+                          backgroundColor: done
+                            ? graphStageColor(status.step)
+                            : "var(--color-muted-foreground)",
+                          opacity: done ? 0.85 : 0.2,
+                        }}
                       />
                       <span className="truncate">{file}</span>
                     </div>
