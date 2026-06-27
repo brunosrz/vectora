@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from .paths import GRAPHIFY_OUT, GRAPHIFY_OUT_NAME
+from .paths import GRAPH_OUT, GRAPH_OUT_NAME
 
 _ALLOWED_SCHEMES = {"http", "https"}
 _MAX_FETCH_BYTES = 52_428_800   # 50 MB hard cap for binary downloads
@@ -24,7 +24,7 @@ _MAX_GRAPH_FILE_BYTES = 512 * 1024 * 1024   # 512 MiB
 
 
 def _max_graph_file_bytes() -> int:
-    raw = os.environ.get("GRAPHIFY_MAX_GRAPH_BYTES", "").strip()
+    raw = os.environ.get("GRAPH_MAX_GRAPH_BYTES", "").strip()
     if not raw:
         return _MAX_GRAPH_FILE_BYTES
     text = raw.upper()
@@ -187,11 +187,11 @@ def validate_graph_path(path: str | Path, base: Path | None = None) -> Path:
     if base is None:
         resolved_hint = Path(path).resolve()
         for candidate in [resolved_hint, *resolved_hint.parents]:
-            if candidate.name == GRAPHIFY_OUT_NAME:
+            if candidate.name == GRAPH_OUT_NAME:
                 base = candidate
                 break
         if base is None:
-            base = Path(GRAPHIFY_OUT).resolve()
+            base = Path(GRAPH_OUT).resolve()
     base = base.resolve()
     if not base.exists():
         raise ValueError(
@@ -220,8 +220,8 @@ def check_graph_file_size_cap(path: Path) -> None:
     if size > cap:
         raise ValueError(
             f"graph file {path} is {size:_d} bytes, exceeds {cap:_d}-byte cap\n"
-            f"(set GRAPHIFY_MAX_GRAPH_BYTES=<bytes> or "
-            f"GRAPHIFY_MAX_GRAPH_BYTES=<N>GB to raise the limit)"
+            f"(set GRAPH_MAX_GRAPH_BYTES=<bytes> or "
+            f"GRAPH_MAX_GRAPH_BYTES=<N>GB to raise the limit)"
         )
 
 

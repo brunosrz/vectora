@@ -1,4 +1,4 @@
-# validate extraction JSON against the graphify schema before graph assembly
+# validate extraction JSON against the context graph schema before graph assembly
 from __future__ import annotations
 
 VALID_FILE_TYPES = {"code", "document", "paper", "image", "rationale", "concept"}
@@ -9,7 +9,7 @@ REQUIRED_EDGE_FIELDS = {"source", "target", "relation", "confidence", "source_fi
 
 def validate_extraction(data: dict) -> list[str]:
     """
-    Validate an extraction JSON dict against the graphify schema.
+    Validate an extraction JSON dict against the context graph schema.
     Returns a list of error strings - empty list means valid.
     """
     if not isinstance(data, dict):

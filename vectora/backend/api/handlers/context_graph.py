@@ -34,7 +34,7 @@ router = APIRouter(
     prefix="/workspaces/{workspace_id}/context-graph", tags=["context-graph"]
 )
 
-_GRAPH_DIR = ".vectora/graph"
+_GRAPH_DIR = ".vectora/context-graph"
 _STATUS_FILE = "build_status.json"
 
 
@@ -319,6 +319,20 @@ async def get_status(request: Request, workspace_id: str) -> StatusResponse:
 
     from_file = _read_status_file(d)
     if from_file is not None:
+        # Status "running"/"queued" sem task ativa neste processo é órfão (o build
+        # morreu — restart/OOM). Não devolve spinner travado: se há checkpoint AST,
+        # oferece resume ("paused"); senão, volta a "not_built" (botão Construir).
+        if from_file.status in ("running", "queued") and (
+            workspace_id not in _active_builds
+        ):
+            if (d / "checkpoint_ast.json").exists():
+                _write_status(
+                    d, "paused", error="Build interrompido — retome do checkpoint."
+                )
+                stale = _read_status_file(d)
+                return stale if stale is not None else StatusResponse(status="paused")
+            _write_status(d, "not_built")
+            return StatusResponse(status="not_built")
         return from_file
 
     graph_file = d / "graph.json"

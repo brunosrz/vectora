@@ -57,14 +57,14 @@ def _append_graph_summary(workspace_cwd: str, result: dict) -> None:
     """Injeta resumo do Context Graph no resultado de workspace_describe, se existir."""
     from pathlib import Path
 
-    graph_file = Path(workspace_cwd) / ".vectora/graph/graph.json"
+    graph_file = Path(workspace_cwd) / ".vectora/context-graph/graph.json"
     if not graph_file.exists():
         return
     try:
         data = json.loads(graph_file.read_text(encoding="utf-8"))
         n_nodes = len(data.get("nodes", []))
         n_edges = len(data.get("edges", []))
-        report_file = Path(workspace_cwd) / ".vectora/graph/GRAPH_REPORT.md"
+        report_file = Path(workspace_cwd) / ".vectora/context-graph/GRAPH_REPORT.md"
         god_nodes: list[str] = []
         if report_file.exists():
             report_text = report_file.read_text(encoding="utf-8")

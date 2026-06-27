@@ -16,7 +16,7 @@ def _suppress_output():
     graspologic's leiden() emits ANSI escape sequences (progress bars,
     colored warnings) that corrupt PowerShell 5.1's scroll buffer on
     Windows (see issue #19). Redirecting stdout/stderr to devnull during
-    the call prevents this without losing any graphify output.
+    the call prevents this without losing any context graph output.
     """
     return contextlib.redirect_stdout(io.StringIO())
 
@@ -104,7 +104,7 @@ def cluster(
     exclude_hubs_percentile: if set (0-100), nodes whose degree exceeds this
         percentile are excluded from partitioning and reattached to their
         majority-vote neighbour community afterwards. Useful for staging/utility
-        super-hubs that inflate god-node rankings (#919).
+        super-hubs that inflate god-node rankings.
     """
     if G.number_of_nodes() == 0:
         return {}

@@ -10,13 +10,13 @@ import re
 import tempfile
 from pathlib import Path
 
-# Output directory name — override with GRAPHIFY_OUT env var for worktrees or
-# shared-output setups. Accepts a relative name ("graphify-out-feature") or an
-# absolute path ("/shared/graphify-out"). Single source of truth in graphify.paths
-# (#1423); re-exported here as _GRAPHIFY_OUT for the existing call sites.
-from .paths import GRAPHIFY_OUT as _GRAPHIFY_OUT
+# Output directory name — override with GRAPH_OUT env var for worktrees or
+# shared-output setups. Accepts a relative name (".vectora/context-graph-feature") or an
+# absolute path ("/shared/.vectora/context-graph"). Single source of truth in paths
+#; re-exported here as _GRAPH_OUT for the existing call sites.
+from .paths import GRAPH_OUT as _GRAPH_OUT
 
-# AST cache entries are the output of graphify's own extractor code, so they
+# AST cache entries are the output of the engine's own extractor code, so they
 # are only valid for the version that wrote them: keying purely on file
 # content means extractor fixes shipped in a new release keep serving stale
 # pre-fix results. The AST cache is therefore namespaced by package version
@@ -24,19 +24,14 @@ from .paths import GRAPHIFY_OUT as _GRAPHIFY_OUT
 # use. The semantic cache is deliberately NOT versioned — its entries are
 # produced by the LLM from file contents, and invalidating them on every
 # release would re-bill extraction for unchanged files.
-try:
-    from importlib.metadata import version as _pkg_version
-
-    _EXTRACTOR_VERSION = _pkg_version("graphifyy")
-except Exception:
-    _EXTRACTOR_VERSION = "unknown"
+_EXTRACTOR_VERSION = "1"
 
 # Version dirs already swept this process — cleanup runs once per (base, version).
 _cleaned_ast_dirs: set[str] = set()
 
 
 def _cleanup_stale_ast_entries(ast_base: Path, current_dir: Path) -> None:
-    """Remove AST cache entries left behind by other graphify versions.
+    """Remove AST cache entries left behind by other context graph versions.
 
     Sweeps sibling ``v*/`` directories and unversioned ``*.json`` entries
     (the pre-versioning layout) under ``cache/ast/``. Best-effort: failures
@@ -65,7 +60,7 @@ def _cleanup_stale_ast_entries(ast_base: Path, current_dir: Path) -> None:
 # A frontmatter delimiter is a whole line of exactly three dashes (optional
 # trailing whitespace). Substring checks like startswith("---") /
 # find("\n---") also match `----` thematic breaks and `--- text` prose,
-# silently dropping everything above them from the hash (#1259).
+# silently dropping everything above them from the hash.
 _FRONTMATTER_DELIM = re.compile(r"^---[ \t]*\r?$", re.MULTILINE)
 
 
@@ -89,14 +84,14 @@ def _body_content(content: bytes) -> bytes:
 # size+mtime_ns are unchanged — same trade-off as make(1).
 # Correctness risks: `touch` causes a harmless extra re-hash; same-size edits
 # within NFS second-resolution mtime have a 1-second window (same as make).
-# Use `graphify extract --force` to bypass when needed.
+# Use `context graph extract --force` to bypass when needed.
 _stat_index: dict[str, dict] = {}
 _stat_index_root: Path | None = None
 _stat_index_dirty: bool = False
 
 
 def _stat_index_file(root: Path) -> Path:
-    _out = Path(_GRAPHIFY_OUT)
+    _out = Path(_GRAPH_OUT)
     base = _out if _out.is_absolute() else Path(root).resolve() / _out
     return base / "cache" / "stat-index.json"
 
@@ -205,14 +200,14 @@ def _relativize_source_files_in(payload: dict, root: Path) -> None:
     """Mutate ``payload`` to rewrite absolute ``source_file`` fields as
     forward-slash relative paths from ``root``.
 
-    Mirror of :func:`graphify.watch._relativize_source_files` so cached
-    extraction fragments persist in portable form (#777). Already-relative
+    Mirror of :func:`watch._relativize_source_files` so cached
+    extraction fragments persist in portable form. Already-relative
     fields and out-of-root paths pass through unchanged.
 
     Only ``root`` is resolved — ``source_file`` itself is relativized
     symbolically so in-root symlinks keep their original name rather than
     pointing at the resolved target. Same reasoning as
-    :func:`graphify.detect._to_relative_for_storage`.
+    :func:`detect._to_relative_for_storage`.
     """
     try:
         root_resolved = Path(root).resolve()
@@ -269,14 +264,14 @@ def cache_dir(root: Path = Path(), kind: str = "ast") -> Path:
     """Returns the cache directory for ``kind`` - creates it if needed.
 
     kind is "ast" or "semantic". Separate subdirectories prevent semantic cache
-    entries from overwriting AST cache entries for the same source_file (#582).
+    entries from overwriting AST cache entries for the same source_file.
 
-    AST entries live in graphify-out/cache/ast/v{version}/ — namespaced by
-    graphify version because they depend on extractor code, not just file
-    contents. Semantic entries live unversioned in graphify-out/cache/semantic/
+    AST entries live in .vectora/context-graph/cache/ast/v{version}/ — namespaced by
+    context graph version because they depend on extractor code, not just file
+    contents. Semantic entries live unversioned in .vectora/context-graph/cache/semantic/
     (re-extraction costs LLM calls).
     """
-    _out = Path(_GRAPHIFY_OUT)
+    _out = Path(_GRAPH_OUT)
     base = _out if _out.is_absolute() else Path(root).resolve() / _out
     d = base / "cache" / kind
     if kind == "ast":
@@ -290,10 +285,10 @@ def load_cached(path: Path, root: Path = Path(), kind: str = "ast") -> dict | No
     """Return cached extraction for this file if hash matches, else None.
 
     Cache key: SHA256 of file contents.
-    Cache value: stored as graphify-out/cache/{kind}/{hash}.json (AST entries
+    Cache value: stored as .vectora/context-graph/cache/{kind}/{hash}.json (AST entries
     under the per-version subdirectory, see :func:`cache_dir`).
 
-    AST entries written by other graphify versions — including the legacy
+    AST entries written by other context graph versions — including the legacy
     flat cache/ layout (pre-0.5.3) and the unversioned cache/ast/ layout —
     are deliberately not consulted: they were produced by a different
     extractor and may be stale.
@@ -311,7 +306,7 @@ def load_cached(path: Path, root: Path = Path(), kind: str = "ast") -> dict | No
             return None
         # Re-anchor relative source_file fields so callers see the same
         # absolute-path shape that a fresh in-process extraction produces
-        # (#777). Legacy entries with absolute source_file pass through.
+        #. Legacy entries with absolute source_file pass through.
         if isinstance(result, dict):
             _absolutize_source_files_in(result, root)
         return result
@@ -321,7 +316,7 @@ def load_cached(path: Path, root: Path = Path(), kind: str = "ast") -> dict | No
 def save_cached(path: Path, result: dict, root: Path = Path(), kind: str = "ast") -> None:
     """Save extraction result for this file.
 
-    Stores as graphify-out/cache/{kind}/{hash}.json where hash = SHA256 of current file contents.
+    Stores as .vectora/context-graph/cache/{kind}/{hash}.json where hash = SHA256 of current file contents.
     result should be a dict with 'nodes' and 'edges' lists.
 
     No-ops if `path` is not a regular file. Subagent-produced semantic fragments
@@ -333,7 +328,7 @@ def save_cached(path: Path, result: dict, root: Path = Path(), kind: str = "ast"
         return
     # Relativize source_file fields against ``root`` before write so the
     # cache file on disk is portable across machines and checkout
-    # directories (#777). The cache key is content-hashed so lookup is
+    # directories. The cache key is content-hashed so lookup is
     # already path-independent; this fixes the embedded path leak.
     #
     # Serialize a relativized copy rather than mutating the caller's dict —
@@ -371,7 +366,7 @@ def save_cached(path: Path, result: dict, root: Path = Path(), kind: str = "ast"
 
 def cached_files(root: Path = Path()) -> set[str]:
     """Return set of file hashes that have a valid cache entry (any kind)."""
-    base = Path(root).resolve() / _GRAPHIFY_OUT / "cache"
+    base = Path(root).resolve() / _GRAPH_OUT / "cache"
     hashes: set[str] = set()
     # Legacy flat entries
     if base.is_dir():
@@ -386,7 +381,7 @@ def cached_files(root: Path = Path()) -> set[str]:
 
 def clear_cache(root: Path = Path()) -> None:
     """Delete all cache entries (ast/, semantic/, and legacy flat entries)."""
-    base = Path(root).resolve() / _GRAPHIFY_OUT / "cache"
+    base = Path(root).resolve() / _GRAPH_OUT / "cache"
     # Legacy flat entries
     if base.is_dir():
         for f in base.glob("*.json"):
@@ -438,7 +433,7 @@ def save_semantic_cache(
 
     Groups nodes and edges by source_file, then saves one cache entry per file
     under cache/semantic/ (separate from AST entries in cache/ast/) to prevent
-    hash-key collisions (#582).
+    hash-key collisions.
     Returns the number of files cached.
     """
     from collections import defaultdict

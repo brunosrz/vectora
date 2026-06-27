@@ -193,10 +193,11 @@ export function ContextGraphTab({
               </p>
             )}
 
-            {/* Lista de arquivos */}
+            {/* Lista de arquivos — preenche o espaço vertical disponível em vez
+                de cortar cedo; mostra todos os arquivos detectados. */}
             {status.files_list && status.files_list.length > 0 && (
-              <div className="max-h-40 overflow-y-auto space-y-0.5">
-                {status.files_list.slice(0, 50).map((file, i) => {
+              <div className="max-h-[55vh] overflow-y-auto space-y-0.5">
+                {status.files_list.map((file, i) => {
                   const done = i < (status.files_done ?? 0);
                   return (
                     <div

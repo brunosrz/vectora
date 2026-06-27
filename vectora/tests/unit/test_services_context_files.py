@@ -188,7 +188,7 @@ class TestCollectContextFiles:
         assert "auth-context.md" in names
 
     def test_excludes_graph_subdir(self, tmp_path):
-        d = tmp_path / ".vectora" / "graph"
+        d = tmp_path / ".vectora" / "context-graph"
         d.mkdir(parents=True)
         (d / "notes.md").write_text("Graph notes", encoding="utf-8")
         files = collect_context_files(str(tmp_path))

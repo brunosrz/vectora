@@ -35,7 +35,7 @@ def _load_graph_data(workspace_id: str) -> tuple[dict | None, str | None]:
     ws = workspace_registry.get(workspace_id)
     if ws is None:
         return None, "Workspace não encontrado."
-    graph_file = Path(ws.cwd) / ".vectora/graph/graph.json"
+    graph_file = Path(ws.cwd) / ".vectora/context-graph/graph.json"
     if not graph_file.exists():
         return None, "Grafo não encontrado. Execute build_knowledge_graph primeiro."
     try:

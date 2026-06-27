@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum, StrEnum
 from pathlib import Path
 
-from .paths import GRAPHIFY_OUT, GRAPHIFY_OUT_NAME, out_path
+from .paths import GRAPH_OUT, GRAPH_OUT_NAME, out_path
 
 # Google Workspace não entra no v1 do Context Graph — stubs para manter a API estável.
 GOOGLE_WORKSPACE_EXTENSIONS: frozenset[str] = frozenset()
@@ -47,7 +47,7 @@ CORPUS_UPPER_THRESHOLD = 500_000  # words - above this, warn about token cost
 FILE_COUNT_UPPER = 500             # files - above this, warn about token cost
 
 # Resource caps for parsing untrusted office/PDF files (F2). A corpus is
-# attacker-controllable (graphify runs on cloned/shared folders), and .docx/.xlsx
+# attacker-controllable (context graph runs on cloned/shared folders), and .docx/.xlsx
 # are zip+XML containers: a few-KB zip-bomb can decompress to gigabytes and
 # OOM-kill the process at load_workbook/Document time. Screen the file before any
 # parser touches it.
@@ -395,7 +395,7 @@ def classify_file(path: Path) -> FileType | None:
     # Package manifests (apm.yml, pyproject.toml, go.mod, pom.xml) are parsed
     # deterministically, so route them to the AST path (CODE) rather than the LLM
     # document path — otherwise apm.yml (a .yml "document") would be LLM-extracted
-    # and a package would split into duplicate file-anchored nodes (#1377).
+    # and a package would split into duplicate file-anchored nodes.
     from .manifest_ingest import is_package_manifest_path
     if is_package_manifest_path(path):
         return FileType.CODE
@@ -522,7 +522,7 @@ def xlsx_to_markdown(path: Path) -> str:
 def xlsx_extract_structure(path: Path) -> dict:
     """Extract structural nodes (sheets, named tables, column headers) from an .xlsx file.
 
-    Returns a nodes/edges dict compatible with the graphify extract pipeline.
+    Returns a nodes/edges dict compatible with the context graph extract pipeline.
     Used in addition to xlsx_to_markdown so Claude sees both structure and content.
     """
     def _nid(*parts: str) -> str:
@@ -630,7 +630,7 @@ def convert_office_file(path: Path, out_dir: Path) -> Path | None:
     # os.walk/rglob return filenames in NFD, while Python string literals and
     # directly-constructed Path objects are NFC, so the same source file would
     # otherwise hash to different sidecar names across runs — causing --update
-    # to treat every Office file as new and re-extract it (#1226).
+    # to treat every Office file as new and re-extract it.
     import hashlib
     import unicodedata
     normalized_path = unicodedata.normalize("NFC", str(path.resolve()))
@@ -670,18 +670,18 @@ _SKIP_DIRS = {
     "site-packages", "lib64",
     ".pytest_cache", ".mypy_cache", ".ruff_cache",
     ".tox", ".eggs", "*.egg-info",
-    "graphify-out", GRAPHIFY_OUT_NAME,  # never treat own output as source input (#524); honour GRAPHIFY_OUT (#1423)
+    ".vectora/context-graph", GRAPH_OUT_NAME,  # never treat own output as source input; honour GRAPH_OUT
     # Coverage/test-artefact dirs — generated, never architecturally meaningful
-    "coverage", "lcov-report",              # Vitest/Istanbul/nyc HTML reports (#870)
-    "visual-tests", "visual-test",          # Playwright/visual-regression bundles (#869)
+    "coverage", "lcov-report",              # Vitest/Istanbul/nyc HTML reports
+    "visual-tests", "visual-test",          # Playwright/visual-regression bundles
     "__snapshots__", "snapshots",           # Jest/Vitest snapshot dirs
     "storybook-static",                     # Storybook production build output
     "dist-protected",                       # Protected dist variants (same noise as dist)
-    # Framework cache/build dirs — generated, never architecturally meaningful (#873)
+    # Framework cache/build dirs — generated, never architecturally meaningful
     ".next", ".nuxt", ".turbo", ".angular",
     ".idea", ".cache", ".parcel-cache", ".svelte-kit", ".terraform", ".serverless",
-    ".graphify",  # graphify's own extraction cache — never index self-generated data
-    ".worktrees",  # git worktree convention (#947) — sibling checkouts, always redundant
+    ".vectora",  # the engine's own extraction cache — never index self-generated data
+    ".worktrees",  # git worktree convention — sibling checkouts, always redundant
 }
 
 # Large generated files that are never useful to extract
@@ -708,7 +708,7 @@ _VCS_MARKERS = (".git", ".hg", ".svn", "_darcs", ".fossil")
 
 
 def _parse_gitignore_line(raw: str) -> str:
-    """Parse one raw line from a .graphifyignore file per gitignore spec.
+    """Parse one raw line from a .vectoraignore file per gitignore spec.
 
     - Strip newline chars
     - Strip inline comments (whitespace + # suffix), but only when # is
@@ -743,8 +743,8 @@ def _find_vcs_root(start: Path) -> Path | None:
         current = parent
 
 
-def _load_graphifyignore(root: Path) -> list[tuple[Path, str]]:
-    """Read .graphifyignore files and return (anchor_dir, pattern) pairs.
+def _load_ignore_patterns(root: Path) -> list[tuple[Path, str]]:
+    """Read .vectoraignore files and return (anchor_dir, pattern) pairs.
 
     Patterns are returned outer-first so that inner (closer) rules are
     appended last and win via last-match-wins semantics — matching gitignore
@@ -768,17 +768,17 @@ def _load_graphifyignore(root: Path) -> list[tuple[Path, str]]:
 
     patterns: list[tuple[Path, str]] = []
     for d in dirs:
-        # Merge .gitignore and .graphifyignore for this dir (#1363). Previously
-        # the presence of a .graphifyignore made graphify skip that dir's
+        # Merge .gitignore and .vectoraignore for this dir. Previously
+        # the presence of a .vectoraignore made context graph skip that dir's
         # .gitignore entirely, so a file excluded only by .gitignore (e.g. a
         # neutrally-named secret like prod-dump.sql) silently got indexed into
         # the graph — whose artifacts embed file contents and are often
-        # committed. .gitignore is read first and .graphifyignore last, so
-        # .graphifyignore patterns (including `!` negations) win on conflict via
-        # last-match-wins; adding a .graphifyignore can only ever exclude MORE,
+        # committed. .gitignore is read first and .vectoraignore last, so
+        # .vectoraignore patterns (including `!` negations) win on conflict via
+        # last-match-wins; adding a .vectoraignore can only ever exclude MORE,
         # never re-include a .gitignore-excluded file (#945 kept: a project with
         # only a .gitignore still gets sensible defaults).
-        for fname in (".gitignore", ".graphifyignore", ".vectoraignore"):
+        for fname in (".gitignore", ".vectoraignore"):
             ignore_file = d / fname
             if ignore_file.exists():
                 for raw in ignore_file.read_text(encoding="utf-8", errors="ignore").splitlines():
@@ -795,7 +795,7 @@ def _is_ignored(
     *,
     _cache: dict[Path, bool] | None = None,
 ) -> bool:
-    """Return True if the path should be ignored per .graphifyignore patterns.
+    """Return True if the path should be ignored per .vectoraignore patterns.
 
     Uses gitignore last-match-wins semantics: all patterns are evaluated in
     order; the final matching pattern determines the result. Negation patterns
@@ -882,12 +882,12 @@ def _is_ignored(
     return _eval(path)
 
 
-def _load_graphifyinclude(root: Path) -> list[tuple[Path, str]]:
-    """Read .graphifyinclude allowlist patterns from root and ancestors.
+def _load_include_patterns(root: Path) -> list[tuple[Path, str]]:
+    """Read .vectorainclude allowlist patterns from root and ancestors.
 
     Include patterns opt matching hidden files/dirs into traversal. Sensitive
     files and hard-skipped noise directories are still excluded later.
-    Uses the same VCS-root ceiling logic as _load_graphifyignore.
+    Uses the same VCS-root ceiling logic as _load_ignore_patterns.
     """
     root = root.resolve()
     ceiling = _find_vcs_root(root) or root
@@ -903,7 +903,7 @@ def _load_graphifyinclude(root: Path) -> list[tuple[Path, str]]:
 
     patterns: list[tuple[Path, str]] = []
     for d in dirs:
-        include_file = d / ".graphifyinclude"
+        include_file = d / ".vectorainclude"
         if include_file.exists():
             for raw in include_file.read_text(encoding="utf-8", errors="ignore").splitlines():
                 line = _parse_gitignore_line(raw)
@@ -913,7 +913,7 @@ def _load_graphifyinclude(root: Path) -> list[tuple[Path, str]]:
 
 
 def _is_included(path: Path, root: Path, patterns: list[tuple[Path, str]]) -> bool:
-    """Return True if path matches any .graphifyinclude allowlist pattern."""
+    """Return True if path matches any .vectorainclude allowlist pattern."""
     if not patterns:
         return False
 
@@ -962,7 +962,7 @@ def _is_included(path: Path, root: Path, patterns: list[tuple[Path, str]]) -> bo
 
 
 def _could_contain_included_path(path: Path, root: Path, patterns: list[tuple[Path, str]]) -> bool:
-    """Return True if a directory may contain files matched by .graphifyinclude."""
+    """Return True if a directory may contain files matched by .vectorainclude."""
     if not patterns:
         return False
 
@@ -1023,19 +1023,19 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
     total_words = 0
 
     skipped_sensitive: list[str] = []
-    ignore_patterns = _load_graphifyignore(root)
+    ignore_patterns = _load_ignore_patterns(root)
     ignore_cache: dict[Path, bool] = {}  # shared across all _is_ignored calls in this scan
     # CLI --exclude patterns are anchored at the scan root and appended last
-    # so they win over any .graphifyignore/.gitignore rules (#947).
+    # so they win over any .vectoraignore/.gitignore rules.
     if extra_excludes:
         for pat in extra_excludes:
             line = _parse_gitignore_line(pat)
             if line:
                 ignore_patterns.append((root, line))
-    include_patterns = _load_graphifyinclude(root)
+    include_patterns = _load_include_patterns(root)
 
-    # Always include graphify-out/memory/ - query results filed back into the graph
-    memory_dir = root / GRAPHIFY_OUT / "memory"
+    # Always include .vectora/context-graph/memory/ - query results filed back into the graph
+    memory_dir = root / GRAPH_OUT / "memory"
     scan_paths = [root]
     if memory_dir.exists():
         scan_paths.append(memory_dir)
@@ -1081,7 +1081,7 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
 
     all_files.sort(key=str)
 
-    converted_dir = root / GRAPHIFY_OUT / "converted"
+    converted_dir = root / GRAPH_OUT / "converted"
 
     for p in all_files:
         # For memory dir files, skip hidden/noise filtering
@@ -1102,7 +1102,7 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
                     skipped_sensitive.append(
                         str(p)
                         + " [Google Workspace shortcut skipped - pass --google-workspace "
-                        "or set GRAPHIFY_GOOGLE_WORKSPACE=1]"
+                        "or set GRAPH_GOOGLE_WORKSPACE=1]"
                     )
                     continue
                 try:
@@ -1128,7 +1128,7 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
                     total_words += count_words(md_path)
                 else:
                     # Conversion failed (library not installed) - skip with note
-                    skipped_sensitive.append(str(p) + " [office conversion failed - pip install graphifyy[office]]")
+                    skipped_sensitive.append(str(p) + " [office conversion failed - pip install context_graph[office]]")
                 continue
             files[ftype].append(str(p))
             if ftype != FileType.VIDEO:
@@ -1161,7 +1161,7 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
         "needs_graph": needs_graph,
         "warning": warning,
         "skipped_sensitive": skipped_sensitive,
-        "graphifyignore_patterns": len(ignore_patterns),
+        "ignore_patterns": len(ignore_patterns),
         "scan_root": str(root.resolve()),
     }
 
@@ -1193,7 +1193,7 @@ def _to_relative_for_storage(key: str, root: Path) -> str:
 
     Keys outside ``root`` (out-of-tree symlinked sources, external --include
     paths) and already-relative keys pass through unchanged — mirrors the
-    fallback in :func:`graphify.watch._relativize_source_files` so the
+    fallback in :func:`watch._relativize_source_files` so the
     on-disk artifact survives the round-trip even when some paths cannot be
     portably encoded.
 
@@ -1242,7 +1242,7 @@ def load_manifest(
 
     When ``root`` is provided, stored relative keys are re-anchored against
     it so callers see absolute paths regardless of on-disk format. Legacy
-    manifests with absolute keys pass through unchanged, so a graphify-out/
+    manifests with absolute keys pass through unchanged, so a .vectora/context-graph/
     written by an older version (or by a caller that didn't supply ``root``
     to :func:`save_manifest`) remains readable.
     """
@@ -1264,16 +1264,16 @@ def save_manifest(
 ) -> None:
     """Save current file mtimes + content hashes for change detection.
 
-    kind="ast"      — written by `graphify update` (AST-only rebuild). Stamps
+    kind="ast"      — written by `context graph update` (AST-only rebuild). Stamps
                       ast_hash; preserves an existing semantic_hash only when
                       the file content is unchanged (mtime + hash match).
-    kind="semantic" — written by `graphify extract` after semantic extraction.
+    kind="semantic" — written by `context graph extract` after semantic extraction.
                       Stamps semantic_hash; preserves existing ast_hash.
     kind="both"     — full pipeline: stamps both hashes (default).
 
     When ``root`` is provided, keys are relativized against it before write
     (forward-slash, posix-style) so the on-disk manifest is portable across
-    machines and checkout locations (#777). Out-of-root entries are written
+    machines and checkout locations. Out-of-root entries are written
     as absolute so they continue to round-trip on the saving machine.
     When ``root`` is None the legacy absolute-keyed format is preserved.
     """
@@ -1289,7 +1289,7 @@ def save_manifest(
         return None
 
     # Seed from the existing manifest so incremental callers passing a subset
-    # of files don't silently erase entries for untouched files (#917).
+    # of files don't silently erase entries for untouched files.
     # Prune entries whose file no longer exists on disk — those are genuine
     # deletions that detect_incremental() should treat as gone.
     manifest: dict[str, dict] = {}
@@ -1349,11 +1349,11 @@ def detect_incremental(
 
     kind="semantic" (default for extract): a file is "changed" when its
         semantic_hash is missing or its content has changed since the last
-        semantic extraction pass. Use this for `graphify extract` so that
-        files touched by `graphify update` (AST-only) are re-extracted
+        semantic extraction pass. Use this for `context graph extract` so that
+        files touched by `context graph update` (AST-only) are re-extracted
         semantically.
     kind="ast": a file is "changed" when its ast_hash is missing or its
-        content has changed. Use this for `graphify update`.
+        content has changed. Use this for `context graph update`.
 
     Fast path: mtime unchanged + hash matches → unchanged (free, no disk IO
     beyond stat). Slow path: mtime bumped → compare MD5 against the relevant
@@ -1407,7 +1407,7 @@ def detect_incremental(
                     changed = True
                 else:
                     stored_mtime = stored.get("mtime")
-                    # Schema-drift guard (#1163): tolerate a nested {mtime: ...}
+                    # Schema-drift guard: tolerate a nested {mtime: ...}
                     # dict or any non-numeric value without crashing.
                     if isinstance(stored_mtime, dict):
                         stored_mtime = stored_mtime.get("mtime")

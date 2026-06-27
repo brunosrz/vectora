@@ -1,4 +1,4 @@
-"""Runtime compatibility probe for Graphify MultiDiGraph mode.
+"""Runtime compatibility probe for Context Graph MultiDiGraph mode.
 
 Verifies that the current NetworkX runtime supports the behaviors a future
 opt-in --multigraph build will rely on. The probe is BEHAVIOR-based, not
@@ -45,7 +45,7 @@ class MultigraphCapabilityResult:
     def error_message(self) -> str:
         if self.ok:
             return (
-                "Graphify MultiDiGraph capability probe passed "
+                "Context Graph MultiDiGraph capability probe passed "
                 f"(Python {self.python_version}, NetworkX {self.networkx_version})."
             )
         failed = "; ".join(f"{check.name}: {check.detail}" for check in self.failed)

@@ -9,7 +9,7 @@ from .build import edge_data
 
 # Builtin/mock names that can appear as annotation-derived nodes in pre-existing
 # graphs. Excluded from god-node ranking so they don't displace real abstractions
-# even if they weren't filtered at extraction time (#1147).
+# even if they weren't filtered at extraction time.
 _BUILTIN_NOISE_LABELS = frozenset({
     "str", "int", "float", "bool", "bytes", "bytearray", "complex", "object",
     "True", "False",
@@ -690,7 +690,7 @@ def find_import_cycles(
     # Step 2: Find simple cycles, bounded by length.
     # Pass length_bound so networkx prunes during enumeration rather than
     # enumerating all elementary cycles and post-filtering — avoids exponential
-    # blowup on dense graphs with many long cycles (#1196).
+    # blowup on dense graphs with many long cycles.
     cycles: list[list[str]] = []
     for cycle in nx.simple_cycles(file_graph, length_bound=max_cycle_length):
         if len(cycle) <= max_cycle_length:

@@ -1,4 +1,4 @@
-"""Intra-file slicing for oversized text documents (#1369).
+"""Intra-file slicing for oversized text documents.
 
 The extraction packer (`_pack_chunks_by_tokens`) treats each file as atomic and
 `_read_files` caps every file at ``_FILE_CHAR_CAP`` characters, so a document

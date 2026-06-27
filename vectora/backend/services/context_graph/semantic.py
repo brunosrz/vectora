@@ -1,6 +1,6 @@
 """Extração semântica do Context Graph via LLM do Vectora.
 
-Substitui o transporte LLM do graphify (graphify.llm) pela stack nativa do
+Substitui o transporte LLM do context graph (llm) pela stack nativa do
 Vectora: load_llm() + ainvoke() async. Mantém o prompt de extração, o parsing
 robusto de JSON, o chunking por tokens e o retry/bisect adaptativo.
 

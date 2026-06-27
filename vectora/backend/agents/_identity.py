@@ -197,7 +197,6 @@ imports, references, implements) e comunidades de código. Constrói com **Const
 (extração AST tree-sitter + semântica via LLM). Mostra god nodes (mais conectados),
 conexões surpreendentes e perguntas sugeridas clicáveis. Grafo interativo vis.js.
 Botão **Atualizar** para rebuild incremental (só arquivos novos/modificados).
-Inspirado no graphify (MIT, Safi Shamsi).
 
 ### Integrações
 

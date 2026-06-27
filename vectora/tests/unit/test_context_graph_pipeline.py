@@ -78,7 +78,7 @@ def test_graph_result_metrics():
 
 def test_graph_out_dir():
     d = _graph_out_dir(Path("/tmp/ws"))
-    assert d == Path("/tmp/ws/.vectora/graph")
+    assert d == Path("/tmp/ws/.vectora/context-graph")
 
 
 # ---------------------------------------------------------------------------

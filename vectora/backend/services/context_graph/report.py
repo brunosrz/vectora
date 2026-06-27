@@ -82,7 +82,7 @@ def generate(
             "## Graph Freshness",
             f"- Built from commit: `{built_at_commit[:8]}`",
             "- Run `git rev-parse HEAD` and compare to check if the graph is stale.",
-            "- Run `graphify update .` after code changes (no API cost).",
+            "- Run `context graph update .` after code changes (no API cost).",
         ]
 
     # Community hub navigation - links to _COMMUNITY_*.md files in the Obsidian vault.
@@ -200,7 +200,7 @@ def generate(
             lines.append(f"- **{len(isolated)} isolated node(s):** {', '.join(f'`{l}`' for l in isolated_labels)}{suffix}")
             lines.append("  These have ≤1 connection - possible missing edges or undocumented components.")
         if thin_communities:
-            lines.append(f"- **{len(thin_communities)} thin communities (<{min_community_size} nodes) omitted from report** — run `graphify query` to explore isolated nodes.")
+            lines.append(f"- **{len(thin_communities)} thin communities (<{min_community_size} nodes) omitted from report** — run `context graph query` to explore isolated nodes.")
         if amb_pct > 20:
             lines.append(f"- **High ambiguity: {amb_pct}% of edges are AMBIGUOUS.** Review the Ambiguous Edges section above.")
 

@@ -1,6 +1,6 @@
 """Sanitizador de fragmentos semânticos do Context Graph.
 
-Porta de graphify/semantic_cleanup.py (MIT, Safi Shamsi). Remove nós-prosa do
+Porta de context graph/semantic_cleanup.py (MIT, Safi Shamsi). Remove nós-prosa do
 LLM (rationale/concept sentence-like) antes de entrar no grafo. Chamado em
 semantic.py após _parse_llm_json para garantir qualidade do grafo.
 """

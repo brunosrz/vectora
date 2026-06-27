@@ -95,8 +95,8 @@ class TestValidateGraphPath:
     def test_valid_path_inside_base(self, tmp_path: Path):
         from backend.services.context_graph.security import validate_graph_path
 
-        base = tmp_path / "graphify-out"
-        base.mkdir()
+        base = tmp_path / ".vectora/context-graph"
+        base.mkdir(parents=True)
         target = base / "graph.json"
         target.write_text("{}", encoding="utf-8")
 
@@ -106,8 +106,8 @@ class TestValidateGraphPath:
     def test_path_escape_raises_value_error(self, tmp_path: Path):
         from backend.services.context_graph.security import validate_graph_path
 
-        base = tmp_path / "graphify-out"
-        base.mkdir()
+        base = tmp_path / ".vectora/context-graph"
+        base.mkdir(parents=True)
         escaped = tmp_path / "secret.json"
         escaped.write_text("data", encoding="utf-8")
 
@@ -117,8 +117,8 @@ class TestValidateGraphPath:
     def test_missing_file_raises_file_not_found(self, tmp_path: Path):
         from backend.services.context_graph.security import validate_graph_path
 
-        base = tmp_path / "graphify-out"
-        base.mkdir()
+        base = tmp_path / ".vectora/context-graph"
+        base.mkdir(parents=True)
         target = base / "nonexistent.json"
 
         with pytest.raises(FileNotFoundError):
@@ -164,35 +164,35 @@ class TestMaxGraphFileBytes:
         from backend.services.context_graph.security import _max_graph_file_bytes
 
         with patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("GRAPHIFY_MAX_GRAPH_BYTES", None)
+            os.environ.pop("GRAPH_MAX_GRAPH_BYTES", None)
             result = _max_graph_file_bytes()
         assert result == 512 * 1024 * 1024
 
     def test_mb_suffix(self):
         from backend.services.context_graph.security import _max_graph_file_bytes
 
-        with patch.dict(os.environ, {"GRAPHIFY_MAX_GRAPH_BYTES": "100MB"}):
+        with patch.dict(os.environ, {"GRAPH_MAX_GRAPH_BYTES": "100MB"}):
             result = _max_graph_file_bytes()
         assert result == 100 * 1024 * 1024
 
     def test_gb_suffix(self):
         from backend.services.context_graph.security import _max_graph_file_bytes
 
-        with patch.dict(os.environ, {"GRAPHIFY_MAX_GRAPH_BYTES": "2GB"}):
+        with patch.dict(os.environ, {"GRAPH_MAX_GRAPH_BYTES": "2GB"}):
             result = _max_graph_file_bytes()
         assert result == 2 * 1024 * 1024 * 1024
 
     def test_invalid_value_returns_default(self):
         from backend.services.context_graph.security import _max_graph_file_bytes
 
-        with patch.dict(os.environ, {"GRAPHIFY_MAX_GRAPH_BYTES": "notanumber"}):
+        with patch.dict(os.environ, {"GRAPH_MAX_GRAPH_BYTES": "notanumber"}):
             result = _max_graph_file_bytes()
         assert result == 512 * 1024 * 1024
 
     def test_zero_returns_default(self):
         from backend.services.context_graph.security import _max_graph_file_bytes
 
-        with patch.dict(os.environ, {"GRAPHIFY_MAX_GRAPH_BYTES": "0"}):
+        with patch.dict(os.environ, {"GRAPH_MAX_GRAPH_BYTES": "0"}):
             result = _max_graph_file_bytes()
         assert result == 512 * 1024 * 1024
 

@@ -1,7 +1,7 @@
 """Resolução de seed e análise de nós afetados no grafo de contexto.
 
-Porta de graphify/affected.py (MIT, Safi Shamsi) adaptada para o namespace
-do Vectora: sem dependência de GRAPHIFY_OUT, sem CLI, sem graphify.*.
+Porta de context graph/affected.py (MIT, Safi Shamsi) adaptada para o namespace
+do Vectora: sem dependência de GRAPH_OUT, sem CLI, sem context graph.*.
 """
 from __future__ import annotations
 

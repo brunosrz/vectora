@@ -1,7 +1,7 @@
 """Pipeline principal do Context Graph — build assíncrono por workspace.
 
 Orquestra os passes: detect → AST (asyncio.to_thread) → semântico → build
-→ cluster → analyze → report/export. Grava artefatos em .vectora/graph/
+→ cluster → analyze → report/export. Grava artefatos em .vectora/context-graph/
 dentro do workspace.
 
 Defensivo (§11): cada passo tem try/except com logging estruturado.
@@ -18,7 +18,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_GRAPH_DIR = ".vectora/graph"
+_GRAPH_DIR = ".vectora/context-graph"
 
 
 @dataclass

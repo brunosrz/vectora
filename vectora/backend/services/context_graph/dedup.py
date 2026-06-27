@@ -1,4 +1,4 @@
-"""Entity deduplication pipeline for graphify knowledge graphs.
+"""Entity deduplication pipeline for context graph knowledge graphs.
 
 Pipeline: exact normalization → entropy gate → MinHash/LSH blocking →
 Jaro-Winkler verification → same-community boost → union-find merge.
@@ -95,7 +95,7 @@ _DIGIT_RUN = re.compile(r"\d+")
 
 
 def _numeric_tokens_differ(a: str, b: str) -> bool:
-    """True when two labels carry different embedded numbers (#1284).
+    """True when two labels carry different embedded numbers.
 
     Long labels that differ only in their digit runs ("ADR 0011 §D5" vs
     "ADR 0013 D4", "3.1 Product Goals" vs "1.1 Product Goals", "block3" vs
@@ -115,7 +115,7 @@ def _numeric_tokens_differ(a: str, b: str) -> bool:
 
 
 # file_type values whose identity is anchored to their source location, not
-# their label text. Like code (#1205), these must not be label-merged across
+# their label text. Like code, these must not be label-merged across
 # files: rationale = module/class docstrings, document = headings/positional
 # content. `concept` is intentionally excluded -- it is the type meant to unify
 # across files (protected from over-merge by the numeric/Jaro guards instead).
@@ -123,7 +123,7 @@ _FILE_ANCHORED_NONCODE = frozenset({"rationale", "document"})
 
 
 def _crossfile_fileanchored_blocked(node: dict, neighbor: dict) -> bool:
-    """Block label-based merging of file-anchored non-code nodes across files (#1284).
+    """Block label-based merging of file-anchored non-code nodes across files.
 
     rationale/document nodes are docstring- and heading-derived and as
     file-anchored as the code they describe (#1205's reasoning, one layer up):
@@ -180,8 +180,7 @@ def _is_code(node: dict) -> bool:
     Code-node identity is the node ID (which already encodes the fully
     qualified path: module/class/symbol). The label is only a display name
     (e.g. a bare ``.draw()`` method name, or a function name shared by two
-    parallel backends), so label-based merging conflates distinct symbols
-    (#1205). Genuine duplicates — the same symbol re-extracted — share an ID
+    parallel backends), so label-based merging conflates distinct symbols. Genuine duplicates — the same symbol re-extracted — share an ID
     and are already collapsed by the exact-ID ``seen_ids`` pre-dedup above,
     so code never needs label-based merging.
     """
@@ -236,7 +235,7 @@ def deduplicate_entities(
     norm_to_nodes: dict[str, list[dict]] = defaultdict(list)
     for node in unique_nodes:
         # Code symbols are keyed by ID, never by label — skip them entirely so
-        # distinct same-named symbols are never merged by string similarity (#1205).
+        # distinct same-named symbols are never merged by string similarity.
         if _is_code(node):
             continue
         key = _norm(node.get("label", node.get("id", "")))
@@ -257,7 +256,7 @@ def deduplicate_entities(
         for sf, file_group in by_file.items():
             if not sf:
                 # No source_file — cannot prove same symbol; skip to avoid
-                # collapsing distinct nodes that happen to share a label (#1178).
+                # collapsing distinct nodes that happen to share a label.
                 continue
             if len(file_group) > 1:
                 winner = _pick_winner(file_group)
@@ -272,7 +271,7 @@ def deduplicate_entities(
         # Code symbols are excluded from fuzzy matching too: two functions with
         # similar long names in different files (parallel backends, sibling
         # classes) must not be fuzzy-merged, and a code↔concept fuzzy match must
-        # not transitively union two distinct code symbols via a concept (#1205).
+        # not transitively union two distinct code symbols via a concept.
         if _is_code(node):
             continue
         key = _norm(node.get("label", node.get("id", "")))
@@ -323,7 +322,7 @@ def deduplicate_entities(
                 # prefix but diverge in a distinguishing token ("testing-library
                 # jest-native" vs "react-native") past threshold, fabricating
                 # destructive cross-file merges; on Jaro alone they fall short
-                # while true cross-file duplicates still clear it (#1243). Same-file
+                # while true cross-file duplicates still clear it. Same-file
                 # near-duplicates keep Jaro-Winkler (low-risk, and a mid-string
                 # stopword insertion needs the prefix bonus to merge); short labels
                 # keep Jaro-Winkler too (gated by _short_label_blocked).
@@ -340,13 +339,13 @@ def deduplicate_entities(
                 # Prefix-extension pairs (getActiveSession / getActiveSessions,
                 # parseConfig / parseConfigFile) are almost never duplicates —
                 # one is a strict suffix-extension of the other. Block the merge
-                # regardless of JW score (#1201).
+                # regardless of JW score.
                 _lo, _hi = sorted((norm_label, neighbor_norm), key=len)
                 if _hi.startswith(_lo) and _hi != _lo:
                     continue
                 # Numbered/versioned siblings and cross-file file-anchored
                 # boilerplate (rationale/document) are decisively distinct
-                # regardless of score (#1284).
+                # regardless of score.
                 if _numeric_tokens_differ(norm_label, neighbor_norm):
                     continue
                 if _crossfile_fileanchored_blocked(node, neighbor):
@@ -413,7 +412,7 @@ def deduplicate_entities(
         e = dict(edge)
         # Tolerate "from"/"to" keys from LLM backends that don't follow the
         # schema exactly — build_from_json normalises later but dedup runs
-        # first so bracket access would KeyError here (#803).
+        # first so bracket access would KeyError here.
         # Use explicit key presence check (not `or`) so empty-string src/tgt
         # aren't silently replaced by the fallback key.
         src = e["source"] if "source" in e else e.get("from")

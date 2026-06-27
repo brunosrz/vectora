@@ -111,7 +111,7 @@ def iter_raw_calls(per_file: Sequence[object]) -> list[dict[str, Any]]:
 
 
 def _module_stem(module_name: str | None) -> str:
-    """Return the final module component used to match Graphify source stems."""
+    """Return the final module component used to match Context Graph source stems."""
 
     if not module_name:
         return ""
@@ -205,7 +205,7 @@ def find_unique_python_symbol(
     symbol_index: dict[tuple[str, str], list[str]],
     imported: ImportedSymbol,
 ) -> str | None:
-    """Resolve one imported symbol to exactly one Graphify node id."""
+    """Resolve one imported symbol to exactly one Context Graph node id."""
 
     candidates = symbol_index.get((imported.module_stem, imported.imported_name.lower()), [])
     if len(candidates) == 1:
@@ -309,7 +309,7 @@ def resolve_cross_file_raw_calls(
 ) -> list[dict[str, Any]]:
     """Resolve unqualified raw calls conservatively after all files are known.
 
-    This intentionally preserves Graphify's existing behavior:
+    This intentionally preserves Context Graph's existing behavior:
     - member calls are skipped;
     - ambiguous labels are skipped;
     - only a single unique candidate is emitted;
@@ -357,9 +357,9 @@ def resolve_cross_file_raw_calls(
 
 
 def _bash_make_id(*parts: str) -> str:
-    """Bash symbol node ID via the single shared recipe (#1378).
+    """Bash symbol node ID via the single shared recipe.
 
-    Previously an inline copy to dodge an import cycle; ``graphify.ids`` is
+    Previously an inline copy to dodge an import cycle; ``ids`` is
     dependency-free, so it can be imported directly.
     """
     return _shared_make_id(*parts)
@@ -375,7 +375,7 @@ def _bash_file_stem(rel_path: Path) -> str:
 
 def _file_node_id_for_path(path: Path, root: Path) -> str:
     # Produce the canonical {parent_dir}_{stem} file-node ID that extract()'s
-    # id_remap generates (#1033), so bash `source` edges land on the real file
+    # id_remap generates, so bash `source` edges land on the real file
     # node instead of an orphan. _bash_make_id / _bash_file_stem are exact copies
     # of extract._make_id / extract._file_stem, so IDs match.
     try:
@@ -398,12 +398,12 @@ def resolve_bash_source_edges(
     those lists, and missing/empty ``id`` / ``target_path`` / ``caller_nid``
     fields all yield silent skips rather than ``KeyError``.
 
-    ``bash_sources[].target_path`` contract (Graphify static-analysis policy):
+    ``bash_sources[].target_path`` contract (Context Graph static-analysis policy):
         - Absolute paths: resolved as-is.
         - Relative paths: resolved against the *source file's* directory
           (i.e. ``Path(path).parent / target_path``).
           NOTE: this is a deterministic static-analysis policy chosen by
-          Graphify, NOT bash runtime semantics. At runtime, ``source ./X``
+          Context Graph, NOT bash runtime semantics. At runtime, ``source ./X``
           is resolved against the shell's current working directory. We
           prefer source-file-relative because static analysis cannot know
           the future CWD; resolving against the file being analyzed gives
@@ -454,7 +454,7 @@ def resolve_bash_source_edges(
             if not isinstance(raw_target, (str, Path)) or not str(raw_target).strip():
                 continue
             # Relative paths resolve against the source file's directory —
-            # Graphify static-analysis policy (NOT bash runtime semantics;
+            # Context Graph static-analysis policy (NOT bash runtime semantics;
             # at runtime `source ./X` is CWD-relative, but static analysis
             # can't know the future CWD, so we resolve relative to the
             # file being analyzed for deterministic, reproducible edges).

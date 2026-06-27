@@ -102,7 +102,7 @@ def dedupe_nodes(nodes: list[dict]) -> list[dict]:
     Mirrors what ``build_from_json``'s ``G.add_node`` does implicitly (idempotent;
     a later node overwrites an earlier one's attributes). The ``--no-cluster``
     write path dumps the raw node list without building a graph, so same-id nodes
-    — e.g. a Swift ``type=module`` anchor emitted once per importing file (#1327)
+    — e.g. a Swift ``type=module`` anchor emitted once per importing file
     — would otherwise appear as duplicates. Insertion order follows each id's
     first appearance; the retained dict is the last one seen.
     """
@@ -123,7 +123,7 @@ def dedupe_edges(edges: list[dict]) -> list[dict]:
     collapses parallel edges automatically. The ``--no-cluster`` and incremental
     ``update`` write paths bypass NetworkX and concatenate edge lists raw, so
     duplicates accumulate and edge counts become non-deterministic across build
-    modes / repeated updates (#1317). Deduping on the connectivity identity is
+    modes / repeated updates. Deduping on the connectivity identity is
     zero-signal-loss and restores idempotency. Callers that intentionally keep
     parallel edges (multigraph output) must not use this.
     """
@@ -144,7 +144,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
     directed=True produces a DiGraph that preserves edge direction (source→target).
     directed=False (default) produces an undirected Graph for backward compatibility.
     root: if given, absolute source_file paths from semantic subagents are made
-        relative to root so all nodes share a consistent path key (#932).
+        relative to root so all nodes share a consistent path key.
     """
     _root = str(Path(root).resolve()) if root else None
     # NetworkX <= 3.1 serialised edges as "links"; remap to "edges" for compatibility.
@@ -156,7 +156,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
         if not isinstance(node, dict):
             continue
         if "source" in node and "source_file" not in node:
-            # Count edges that reference this node so the warning is actionable (#479)
+            # Count edges that reference this node so the warning is actionable
             node_id = node.get("id", "?")
             affected_edges = sum(
                 1 for e in extraction.get("edges", [])
@@ -171,8 +171,8 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
             node["source_file"] = node.pop("source")
         # Default missing/None file_type to "concept" so legacy graph.json
         # entries (and stub nodes preserved by `_rebuild_code` from older
-        # graphify versions that didn't always populate file_type) don't
-        # trigger spurious "invalid file_type 'None'" validator warnings (#660).
+        # context graph versions that didn't always populate file_type) don't
+        # trigger spurious "invalid file_type 'None'" validator warnings.
         if node.get("file_type") in (None, ""):
             node["file_type"] = "concept"
         ft = node.get("file_type", "")
@@ -205,7 +205,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
     # Pass 1: collect canonical nodes — AST-origin nodes take precedence over LLM nodes.
     # When 2+ AST nodes share a key (same-named symbols in same-named files across
     # directories, e.g. render in two index.ts), the key is ambiguous: merging a
-    # ghost would pick an arbitrary winner via set-iteration order (#1257). Track
+    # ghost would pick an arbitrary winner via set-iteration order. Track
     # those keys so Pass 2 skips them — same conservatism as
     # _rewire_unique_stub_nodes, which only merges when exactly one real def exists.
     for nid in node_set:
@@ -290,7 +290,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
         attrs = {k: v for k, v in edge.items() if k not in ("source", "target")}
         # Backfill source_file from the endpoint nodes (every node carries one).
         # Semantic/LLM edges occasionally omit it, which downstream validation
-        # flags and leaves query results with no file reference (#1279).
+        # flags and leaves query results with no file reference.
         if not attrs.get("source_file"):
             attrs["source_file"] = (
                 G.nodes[src].get("source_file")
@@ -326,7 +326,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
         # the lexicographically-later direction would systematically overwrite the
         # earlier one's _src/_tgt, silently flipping the surviving edge's caller
         # and callee. First-seen direction wins instead — drop the redundant
-        # reverse-direction duplicate so the original direction is preserved (#1061).
+        # reverse-direction duplicate so the original direction is preserved.
         if not G.is_directed() and G.has_edge(src, tgt):
             existing = edge_data(G, src, tgt)
             if existing.get("relation") == attrs.get("relation") and (
@@ -338,7 +338,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
     if hyperedges:
         # Relativize hyperedge source_file the same way nodes and edges are
         # (above), so to_json — which has no root and writes G.graph["hyperedges"]
-        # verbatim — never leaks an absolute path from a semantic subagent (#1418).
+        # verbatim — never leaks an absolute path from a semantic subagent.
         for he in hyperedges:
             if isinstance(he, dict) and he.get("source_file"):
                 he["source_file"] = _norm_source_file(he["source_file"], _root)
@@ -361,7 +361,7 @@ def build(
     dedup=True (default) runs entity deduplication before building the graph.
     dedup_llm_backend: if set (e.g. "gemini", "claude", or "kimi"), uses LLM to resolve
         ambiguous pairs in the 75–92 Jaro-Winkler score zone.
-    root: if given, absolute source_file paths are made relative to root (#932).
+    root: if given, absolute source_file paths are made relative to root.
 
     Extractions are merged in order. For nodes with the same ID, the last
     extraction's attributes win (NetworkX add_node overwrites). Pass AST
@@ -452,7 +452,7 @@ def build_merge(
     file's stale nodes/edges don't accumulate. Files absent from new_chunks are
     preserved unchanged; deleted files are removed via prune_sources.
     Safe to call repeatedly.
-    root: if given, absolute source_file paths in new_chunks are made relative (#932).
+    root: if given, absolute source_file paths in new_chunks are made relative.
     """
     graph_path = Path(graph_path if graph_path is not None else _default_graph_json())
     if graph_path.exists():
@@ -462,7 +462,7 @@ def build_merge(
         # silently flips directional edges (e.g. `calls`) when the callee
         # was inserted before the caller. The _src/_tgt direction-preserving
         # attrs are popped before saving in export.py, so going through the
-        # NetworkX round-trip loses direction permanently (#760).
+        # NetworkX round-trip loses direction permanently.
         from .security import check_graph_file_size_cap
         check_graph_file_size_cap(graph_path)
         data = json.loads(graph_path.read_text(encoding="utf-8"))
@@ -483,7 +483,7 @@ def build_merge(
     # version survive forever. Brand-new files aren't in base, so this is a no-op
     # for them; genuinely deleted files are still handled via prune_sources.
     # Matched in both raw and _norm_source_file form because new_chunks may carry
-    # absolute win32 paths while the stored graph keeps relative posix (#1007).
+    # absolute win32 paths while the stored graph keeps relative posix.
     _replace_root = str(Path(root).resolve()) if root is not None else None
     new_sources: set[str] = set()
     for ch in new_chunks:
@@ -548,14 +548,14 @@ def build_merge(
                 n_files,
             )
 
-    # Safety check: refuse to shrink the graph silently (#479)
+    # Safety check: refuse to shrink the graph silently
     # Skip when dedup or prune_sources is active — shrinkage is intentional there.
     if graph_path.exists() and not dedup and not prune_sources:
         existing_n = len(existing_nodes)
         new_n = G.number_of_nodes()
         if new_n < existing_n:
             raise ValueError(
-                f"graphify: build_merge would shrink graph from {existing_n} → {new_n} nodes. "
+                f"context graph: build_merge would shrink graph from {existing_n} → {new_n} nodes. "
                 f"Pass prune_sources explicitly if you intend to remove nodes."
             )
 

@@ -25,7 +25,7 @@ class TestGraphOutDir:
         from backend.services.context_graph.pipeline import _graph_out_dir
 
         result = _graph_out_dir(tmp_path)
-        assert result == tmp_path / ".vectora" / "graph"
+        assert result == tmp_path / ".vectora" / "context-graph"
 
 
 class TestGraphResult:

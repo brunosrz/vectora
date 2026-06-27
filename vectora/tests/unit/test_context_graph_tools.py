@@ -37,7 +37,7 @@ SAMPLE_GRAPH = {
 
 
 def _make_ws(tmp_path: Path) -> tuple[MagicMock, Path]:
-    graph_dir = tmp_path / ".vectora" / "graph"
+    graph_dir = tmp_path / ".vectora" / "context-graph"
     graph_dir.mkdir(parents=True)
     graph_file = graph_dir / "graph.json"
     graph_file.write_text(json.dumps(SAMPLE_GRAPH), encoding="utf-8")

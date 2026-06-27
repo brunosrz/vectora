@@ -28,7 +28,7 @@ def _make_registry(tmp_path: Path) -> tuple[MagicMock, MagicMock]:
 
 
 def _write_graph(tmp_path: Path, data: dict) -> Path:
-    d = tmp_path / ".vectora" / "graph"
+    d = tmp_path / ".vectora" / "context-graph"
     d.mkdir(parents=True, exist_ok=True)
     (d / "graph.json").write_text(json.dumps(data), encoding="utf-8")
     return d
@@ -66,7 +66,7 @@ class TestGraphDir:
         registry, _ = _make_registry(tmp_path)
         with patch("backend.services.workspace.workspace_registry", registry):
             result = _graph_dir("ws1")
-        assert result == tmp_path / ".vectora" / "graph"
+        assert result == tmp_path / ".vectora" / "context-graph"
 
 
 # ---------------------------------------------------------------------------
@@ -78,14 +78,14 @@ class TestReadStatusFile:
     def test_returns_none_when_file_absent(self, tmp_path):
         from backend.api.handlers.context_graph import _read_status_file
 
-        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir = tmp_path / ".vectora" / "context-graph"
         graph_dir.mkdir(parents=True)
         assert _read_status_file(graph_dir) is None
 
     def test_reads_done_status_with_counts(self, tmp_path):
         from backend.api.handlers.context_graph import _read_status_file
 
-        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir = tmp_path / ".vectora" / "context-graph"
         graph_dir.mkdir(parents=True)
         _write_status(graph_dir, "done", node_count=5, edge_count=12)
         s = _read_status_file(graph_dir)
@@ -97,7 +97,7 @@ class TestReadStatusFile:
     def test_reads_running_status(self, tmp_path):
         from backend.api.handlers.context_graph import _read_status_file
 
-        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir = tmp_path / ".vectora" / "context-graph"
         graph_dir.mkdir(parents=True)
         _write_status(graph_dir, "running")
         s = _read_status_file(graph_dir)
@@ -107,7 +107,7 @@ class TestReadStatusFile:
     def test_reads_error_status(self, tmp_path):
         from backend.api.handlers.context_graph import _read_status_file
 
-        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir = tmp_path / ".vectora" / "context-graph"
         graph_dir.mkdir(parents=True)
         _write_status(graph_dir, "error", error="Pipeline falhou")
         s = _read_status_file(graph_dir)
@@ -118,7 +118,7 @@ class TestReadStatusFile:
     def test_reads_running_with_step_info(self, tmp_path):
         from backend.api.handlers.context_graph import _read_status_file
 
-        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir = tmp_path / ".vectora" / "context-graph"
         graph_dir.mkdir(parents=True)
         _write_status(
             graph_dir,
@@ -175,14 +175,48 @@ class TestRequireGraphJson:
 class TestGetStatus:
     @pytest.mark.asyncio
     async def test_running_from_status_file(self, tmp_path):
+        from backend.api.handlers import context_graph as cg
         from backend.api.handlers.context_graph import get_status
 
         graph_dir = _write_graph(tmp_path, {})
         _write_status(graph_dir, "running")
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        # Build ativo neste processo → status "running" é legítimo (não-órfão).
+        with (
+            patch("backend.services.workspace.workspace_registry", registry),
+            patch.dict(cg._active_builds, {"ws1": object()}, clear=False),
+        ):
             s = await get_status(_fake_request(), "ws1")
         assert s.status == "running"
+
+    @pytest.mark.asyncio
+    async def test_stale_running_without_active_task_returns_not_built(self, tmp_path):
+        # Status "running" no disco mas sem task ativa (processo morreu) → órfão.
+        from backend.api.handlers import context_graph as cg
+        from backend.api.handlers.context_graph import get_status
+
+        graph_dir = _write_graph(tmp_path, {})
+        _write_status(graph_dir, "running")
+        registry, _ = _make_registry(tmp_path)
+        cg._active_builds.pop("ws1", None)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            s = await get_status(_fake_request(), "ws1")
+        assert s.status == "not_built"
+
+    @pytest.mark.asyncio
+    async def test_stale_running_with_checkpoint_returns_paused(self, tmp_path):
+        # Órfão mas com checkpoint AST → oferece resume (paused), não do zero.
+        from backend.api.handlers import context_graph as cg
+        from backend.api.handlers.context_graph import get_status
+
+        graph_dir = _write_graph(tmp_path, {})
+        _write_status(graph_dir, "running")
+        (graph_dir / "checkpoint_ast.json").write_text("{}", encoding="utf-8")
+        registry, _ = _make_registry(tmp_path)
+        cg._active_builds.pop("ws1", None)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            s = await get_status(_fake_request(), "ws1")
+        assert s.status == "paused"
 
     @pytest.mark.asyncio
     async def test_error_from_status_file(self, tmp_path):
@@ -454,7 +488,7 @@ class TestPostBuild:
     async def test_build_ja_em_andamento_retorna_running(self, tmp_path):
         from backend.api.handlers.context_graph import BuildRequest, post_build
 
-        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir = tmp_path / ".vectora" / "context-graph"
         graph_dir.mkdir(parents=True)
         _write_status(graph_dir, "running")
         registry, _ = _make_registry(tmp_path)
@@ -508,7 +542,7 @@ class TestDeleteBuild:
     async def test_cancela_task_ativa(self, tmp_path):
         from backend.api.handlers.context_graph import delete_build
 
-        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir = tmp_path / ".vectora" / "context-graph"
         graph_dir.mkdir(parents=True)
         _write_status(graph_dir, "running")
 
@@ -572,7 +606,7 @@ class TestRunBuildStatus:
             await _run_build("ws1", BuildRequest())
         from backend.api.handlers.context_graph import _read_status_file
 
-        return _read_status_file(tmp_path / ".vectora" / "graph")
+        return _read_status_file(tmp_path / ".vectora" / "context-graph")
 
     @pytest.mark.asyncio
     async def test_quota_exhausted_writes_paused(self, tmp_path):
@@ -660,7 +694,7 @@ class TestRunBuildStatus:
 
         from backend.api.handlers.context_graph import _read_status_file
 
-        s = _read_status_file(tmp_path / ".vectora" / "graph")
+        s = _read_status_file(tmp_path / ".vectora" / "context-graph")
         assert s is not None
         assert s.status == "paused"
         assert s.step == 3
