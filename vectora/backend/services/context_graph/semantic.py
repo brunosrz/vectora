@@ -188,8 +188,64 @@ def _parse_llm_json(raw: str) -> dict[str, Any]:
                         pass
                     break
 
+    # Estratégia 3: reparo de JSON truncado (resposta cortada por max tokens). Em
+    # vez de descartar o chunk inteiro, recupera os nós/arestas já completos
+    # fechando os containers abertos no último elemento íntegro.
+    repaired = _repair_truncated_json(stripped)
+    if repaired is not None:
+        logger.info("semantic: JSON truncado reparado — recuperados nós/arestas parciais")
+        return repaired
+
     logger.warning("semantic: LLM retornou JSON inválido — chunk descartado (primeiros 200 chars: %r)", raw[:200])
     return {"nodes": [], "edges": [], "hyperedges": []}
+
+
+def _repair_truncated_json(raw: str) -> dict[str, Any] | None:
+    """Repara JSON cortado por max tokens, salvando os elementos completos.
+
+    Caminha o texto rastreando profundidade de ``{}``/``[]`` e strings; marca o
+    ponto seguro após cada container fechado (``}``/``]``) e, ao final, trunca no
+    último ponto seguro e fecha os containers ainda abertos. Devolve o dict ou
+    ``None`` se nada aproveitável.
+    """
+    start = raw.find("{")
+    if start == -1:
+        return None
+    s = raw[start:]
+    stack: list[str] = []
+    in_string = False
+    escape = False
+    safe_end: int | None = None
+    safe_stack: list[str] | None = None
+    for i, ch in enumerate(s):
+        if escape:
+            escape = False
+            continue
+        if in_string:
+            if ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]":
+            if not stack:
+                break
+            stack.pop()
+            safe_end = i + 1
+            safe_stack = list(stack)
+    if safe_end is None or safe_stack is None:
+        return None
+    candidate = s[:safe_end].rstrip().rstrip(",")
+    closing = "".join(reversed(safe_stack))
+    try:
+        parsed = json.loads(candidate + closing)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
+        return None
 
 
 def _response_is_hollow(raw_content: str | None, parsed: dict[str, Any]) -> bool:

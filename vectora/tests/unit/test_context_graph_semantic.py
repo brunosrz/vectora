@@ -103,6 +103,39 @@ class TestParseLlmJson:
         assert result["nodes"] == []
         assert result["edges"] == []
 
+    def test_truncated_json_salvages_complete_nodes(self):
+        # Resposta cortada por max tokens no meio do 3º nó: recupera os 2 completos.
+        from backend.services.context_graph.semantic import _parse_llm_json
+
+        raw = (
+            '```json\n{"nodes": ['
+            '{"id": "a", "label": "A"}, '
+            '{"id": "b", "label": "B"}, '
+            '{"id": "c", "label": "C'
+        )
+        result = _parse_llm_json(raw)
+        ids = [n.get("id") for n in result["nodes"]]
+        assert ids == ["a", "b"]
+
+    def test_truncated_json_salvages_with_fence_and_edges(self):
+        from backend.services.context_graph.semantic import _parse_llm_json
+
+        raw = (
+            '{"nodes": [{"id": "x"}], '
+            '"edges": [{"source": "x", "target": "y"}, {"source": "x"'
+        )
+        result = _parse_llm_json(raw)
+        assert result["nodes"] == [{"id": "x"}]
+        assert result["edges"] == [{"source": "x", "target": "y"}]
+
+    def test_truncated_before_any_complete_element_returns_empty(self):
+        from backend.services.context_graph.semantic import _parse_llm_json
+
+        # Cortado antes de fechar qualquer container → nada aproveitável.
+        result = _parse_llm_json('```json\n{"nodes": [{"id": "a')
+        assert result["nodes"] == []
+        assert result["edges"] == []
+
     def test_oversized_returns_empty(self):
         from backend.services.context_graph import semantic as sem_mod
         from backend.services.context_graph.semantic import _parse_llm_json
