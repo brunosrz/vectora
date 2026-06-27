@@ -13,7 +13,7 @@
  * o dialog é aberto pela primeira vez.
  */
 
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import {
   Dialog,
   DialogDescription,
@@ -21,11 +21,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 import { m as msg } from "@/lib/paraglide/messages";
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
-const AdminTab = lazy(() =>
-  import("./admin-tab").then((m) => ({ default: m.AdminTab })),
+const AdminTab = lazyWithRetry(
+  () => import("./admin-tab").then((m) => ({ default: m.AdminTab })),
+  "admin-tab",
 );
 
 function AdminFallback() {
@@ -57,9 +60,11 @@ export function AdminDialog() {
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto pt-2">
-          <Suspense fallback={<AdminFallback />}>
-            <AdminTab />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<AdminFallback />}>
+              <AdminTab />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </ResizableDialogContent>
     </Dialog>

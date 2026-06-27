@@ -19,7 +19,7 @@
  * vem on-demand.
  */
 
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import {
   Dialog,
   DialogDescription,
@@ -28,22 +28,28 @@ import {
 } from "@/components/ui/dialog";
 import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import {
   usePreferenciasDialogStore,
   type PreferenciasTab,
 } from "@/lib/stores/preferencias-dialog-store";
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 
-const ContaTab = lazy(() =>
-  import("./tabs/conta-tab").then((m) => ({ default: m.ContaTab })),
+const ContaTab = lazyWithRetry(
+  () => import("./tabs/conta-tab").then((m) => ({ default: m.ContaTab })),
+  "conta-tab",
 );
-const MemoriaTab = lazy(() =>
-  import("./tabs/memoria-tab").then((m) => ({ default: m.MemoriaTab })),
+const MemoriaTab = lazyWithRetry(
+  () => import("./tabs/memoria-tab").then((m) => ({ default: m.MemoriaTab })),
+  "memoria-tab",
 );
-const PreferenciasTab = lazy(() =>
-  import("./tabs/preferencias-tab").then((m) => ({
-    default: m.PreferenciasTab,
-  })),
+const PreferenciasTab = lazyWithRetry(
+  () =>
+    import("./tabs/preferencias-tab").then((m) => ({
+      default: m.PreferenciasTab,
+    })),
+  "preferencias-tab",
 );
 
 function TabFallback() {
@@ -94,17 +100,19 @@ export function PreferenciasDialog() {
           </TabsList>
 
           <div className="flex-1 overflow-y-auto pt-4">
-            <Suspense fallback={<TabFallback />}>
-              <TabsContent value="preferencias" className="mt-0">
-                <PreferenciasTab />
-              </TabsContent>
-              <TabsContent value="memoria" className="mt-0">
-                <MemoriaTab />
-              </TabsContent>
-              <TabsContent value="conta" className="mt-0">
-                <ContaTab />
-              </TabsContent>
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={<TabFallback />}>
+                <TabsContent value="preferencias" className="mt-0">
+                  <PreferenciasTab />
+                </TabsContent>
+                <TabsContent value="memoria" className="mt-0">
+                  <MemoriaTab />
+                </TabsContent>
+                <TabsContent value="conta" className="mt-0">
+                  <ContaTab />
+                </TabsContent>
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </Tabs>
       </ResizableDialogContent>

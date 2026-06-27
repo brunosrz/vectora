@@ -18,7 +18,7 @@
  * o custo de uma feature secundária.
  */
 
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import {
   Dialog,
   DialogDescription,
@@ -27,25 +27,32 @@ import {
 } from "@/components/ui/dialog";
 import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import {
   useEnvironmentDialogStore,
   type EnvironmentTab,
 } from "@/lib/stores/environment-dialog-store";
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 
-const EnvsTab = lazy(() =>
-  import("./tabs/envs-tab").then((m) => ({ default: m.EnvsTab })),
+const EnvsTab = lazyWithRetry(
+  () => import("./tabs/envs-tab").then((m) => ({ default: m.EnvsTab })),
+  "envs-tab",
 );
-const SkillsTab = lazy(() =>
-  import("./tabs/skills-tab").then((m) => ({ default: m.SkillsTab })),
+const SkillsTab = lazyWithRetry(
+  () => import("./tabs/skills-tab").then((m) => ({ default: m.SkillsTab })),
+  "skills-tab",
 );
-const PluginsTab = lazy(() =>
-  import("./tabs/plugins-tab").then((m) => ({ default: m.PluginsTab })),
+const PluginsTab = lazyWithRetry(
+  () => import("./tabs/plugins-tab").then((m) => ({ default: m.PluginsTab })),
+  "plugins-tab",
 );
-const IntegracoesTab = lazy(() =>
-  import("./tabs/integracoes-tab").then((m) => ({
-    default: m.IntegracoesTab,
-  })),
+const IntegracoesTab = lazyWithRetry(
+  () =>
+    import("./tabs/integracoes-tab").then((m) => ({
+      default: m.IntegracoesTab,
+    })),
+  "integracoes-tab",
 );
 
 function TabFallback() {
@@ -99,20 +106,22 @@ export function EnvironmentDialog() {
           </TabsList>
 
           <div className="flex-1 overflow-y-auto pt-4">
-            <Suspense fallback={<TabFallback />}>
-              <TabsContent value="envs" className="mt-0">
-                <EnvsTab />
-              </TabsContent>
-              <TabsContent value="skills" className="mt-0">
-                <SkillsTab />
-              </TabsContent>
-              <TabsContent value="plugins" className="mt-0">
-                <PluginsTab />
-              </TabsContent>
-              <TabsContent value="integracoes" className="mt-0">
-                <IntegracoesTab />
-              </TabsContent>
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={<TabFallback />}>
+                <TabsContent value="envs" className="mt-0">
+                  <EnvsTab />
+                </TabsContent>
+                <TabsContent value="skills" className="mt-0">
+                  <SkillsTab />
+                </TabsContent>
+                <TabsContent value="plugins" className="mt-0">
+                  <PluginsTab />
+                </TabsContent>
+                <TabsContent value="integracoes" className="mt-0">
+                  <IntegracoesTab />
+                </TabsContent>
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </Tabs>
       </ResizableDialogContent>
