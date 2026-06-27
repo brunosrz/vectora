@@ -808,6 +808,8 @@
   "prefs_fallback_order_remove": "Remove from queue",
   "prefs_fallback_order_move_up": "Move up",
   "prefs_fallback_order_move_down": "Move down",
+  "prefs_fallback_order_add": "Add",
+  "prefs_fallback_order_add_placeholder": "Add model…",
   "workbench_memory_no_result": "No result",
   "workbench_memory_empty_title": "Memory is empty",
   "workbench_memory_empty_desc": "Knowledge base (RAG) and web results the agent retrieves this session show up here.",

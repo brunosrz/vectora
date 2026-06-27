@@ -173,7 +173,9 @@ function FallbackOrderSection() {
         <div className="flex gap-2 pt-1">
           <Select value={addModel} onValueChange={setAddModel}>
             <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="Adicionar modelo…" />
+              <SelectValue
+                placeholder={m.prefs_fallback_order_add_placeholder()}
+              />
             </SelectTrigger>
             <SelectContent>
               {available.map((mid) => (
@@ -191,7 +193,7 @@ function FallbackOrderSection() {
             disabled={!addModel}
           >
             <Plus className="w-3.5 h-3.5 mr-1" />
-            Adicionar
+            {m.prefs_fallback_order_add()}
           </Button>
         </div>
       )}

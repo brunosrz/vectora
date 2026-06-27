@@ -808,6 +808,8 @@
   "prefs_fallback_order_remove": "Remover da fila",
   "prefs_fallback_order_move_up": "Mover para cima",
   "prefs_fallback_order_move_down": "Mover para baixo",
+  "prefs_fallback_order_add": "Adicionar",
+  "prefs_fallback_order_add_placeholder": "Adicionar modelo…",
   "workbench_memory_no_result": "Sem resultado",
   "workbench_memory_empty_title": "Memória vazia",
   "workbench_memory_empty_desc": "O contexto que o agente recupera nesta sessão (base de conhecimento e web) aparece aqui.",
