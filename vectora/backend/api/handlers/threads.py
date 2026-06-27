@@ -85,9 +85,11 @@ async def _ensure_schema(db: Any) -> None:
             created_at    TEXT    NOT NULL,
             last_activity TEXT    NOT NULL,
             message_count INTEGER NOT NULL DEFAULT 0,
-            extra         TEXT    NOT NULL DEFAULT '{}'
+            extra         TEXT    NOT NULL DEFAULT '{}',
+            mode          TEXT    NOT NULL DEFAULT 'code'
         )
     """)
+    await _migrate_mode_column(db)
     await db.execute("""
         CREATE TABLE IF NOT EXISTS vectora_checkpoint_artifacts (
             id              TEXT PRIMARY KEY,
@@ -100,6 +102,37 @@ async def _ensure_schema(db: Any) -> None:
             created_at      TEXT NOT NULL
         )
     """)
+    await db.commit()
+
+
+async def _migrate_mode_column(db: Any) -> None:
+    """Promove ``mode`` de ``extra`` JSON para coluna de 1ª classe (idempotente).
+
+    Em bancos antigos a coluna não existe: adiciona via ALTER TABLE e faz backfill
+    a partir de ``extra["mode"]`` normalizado (``dev``→``code``). Bancos novos já
+    nascem com a coluna (DEFAULT 'code') e o backfill é no-op.
+    """
+    async with db.execute("PRAGMA table_info(vectora_sessions)") as cur:
+        cols = {row[1] for row in await cur.fetchall()}
+    if "mode" not in cols:
+        await db.execute(
+            "ALTER TABLE vectora_sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'code'"
+        )
+
+    # Backfill: linhas cujo mode da coluna ainda não reflete o extra["mode"].
+    async with db.execute("SELECT thread_id, extra, mode FROM vectora_sessions") as cur:
+        rows = await cur.fetchall()
+    for thread_id, extra_json, current in rows:
+        try:
+            extra = json.loads(extra_json or "{}")
+        except Exception:
+            extra = {}
+        desired = _normalize_mode(extra.get("mode"))
+        if desired != current:
+            await db.execute(
+                "UPDATE vectora_sessions SET mode = ? WHERE thread_id = ?",
+                (desired, thread_id),
+            )
     await db.commit()
 
 
@@ -143,18 +176,23 @@ def _normalize_mode(mode: str | None) -> str:
 
 
 def _row_to_thread(row: tuple) -> Thread:
-    """Converte uma linha da tabela vectora_sessions em Thread."""
-    thread_id, _, created_at, last_activity, _, extra_json = row
+    """Converte uma linha da tabela vectora_sessions em Thread.
+
+    A linha traz 7 colunas (com ``mode`` de 1ª classe na última posição). O modo
+    vem da coluna; ``extra["mode"]`` é apenas fallback para linhas ainda não
+    migradas que cheguem por uma SELECT de 6 colunas.
+    """
+    thread_id, _, created_at, last_activity, _, extra_json = row[:6]
+    mode_col = row[6] if len(row) > 6 else None
     title = ""
     workspace_id = ""
-    mode = "code"
     try:
         extra = json.loads(extra_json or "{}")
         title = extra.get("title", "")
         workspace_id = extra.get("workspace_id", "")
-        mode = _normalize_mode(extra.get("mode"))
     except Exception:
-        pass
+        extra = {}
+    mode = _normalize_mode(mode_col if mode_col is not None else extra.get("mode"))
     return Thread(
         id=str(thread_id),
         created_at=created_at,
@@ -205,18 +243,21 @@ async def _upsert_session(
     if mode is not None:
         extra["mode"] = mode
     extra_json = json.dumps(extra)
+    # Coluna mode é 1ª classe; mantém extra["mode"] em sincronia por retrocompat.
+    mode_col = _normalize_mode(extra.get("mode"))
 
-    # ON CONFLICT preserva created_at original; atualiza last_activity e extra.
+    # ON CONFLICT preserva created_at original; atualiza last_activity, extra e mode.
     await db.execute(
         """
         INSERT INTO vectora_sessions
-            (thread_id, created_at, last_activity, message_count, extra)
-        VALUES (?, ?, ?, 0, ?)
+            (thread_id, created_at, last_activity, message_count, extra, mode)
+        VALUES (?, ?, ?, 0, ?, ?)
         ON CONFLICT(thread_id) DO UPDATE SET
             last_activity = excluded.last_activity,
-            extra        = excluded.extra
+            extra        = excluded.extra,
+            mode         = excluded.mode
         """,
-        (thread_id, now, now, extra_json),
+        (thread_id, now, now, extra_json, mode_col),
     )
     await db.commit()
 
@@ -416,7 +457,7 @@ async def create_thread(body: CreateThreadRequest, http_request: Request) -> Thr
 async def get_thread(request: GetThreadRequest) -> Thread:
     db = await _get_db()
     async with db.execute(
-        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra "
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode "
         "FROM vectora_sessions WHERE thread_id = ?",
         (request.thread_id,),
     ) as cur:
@@ -437,11 +478,18 @@ async def get_thread(request: GetThreadRequest) -> Thread:
 async def list_threads(request: ListThreadsRequest) -> ListThreadsResponse:
     limit = max(1, min(request.limit or 50, 200))
     db = await _get_db()
-    async with db.execute(
-        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra "
-        "FROM vectora_sessions ORDER BY last_activity DESC LIMIT ?",
-        (limit,),
-    ) as cur:
+    cols = (
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode "
+        "FROM vectora_sessions "
+    )
+    mode_filter = _normalize_mode(request.mode) if request.mode else ""
+    if mode_filter:
+        query = cols + "WHERE mode = ? ORDER BY last_activity DESC LIMIT ?"
+        params: tuple[Any, ...] = (mode_filter, limit)
+    else:
+        query = cols + "ORDER BY last_activity DESC LIMIT ?"
+        params = (limit,)
+    async with db.execute(query, params) as cur:
         rows = await cur.fetchall()
     return ListThreadsResponse(threads=[_row_to_thread(r) for r in rows])
 
@@ -472,7 +520,7 @@ async def update_thread(request: UpdateThreadRequest) -> Thread:
     """Atualiza metadados (title) de uma thread existente."""
     db = await _get_db()
     async with db.execute(
-        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra "
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode "
         "FROM vectora_sessions WHERE thread_id = ?",
         (request.thread_id,),
     ) as cur:

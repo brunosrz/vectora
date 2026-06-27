@@ -92,6 +92,8 @@ class GetThreadRequest(BaseModel):
 
 class ListThreadsRequest(BaseModel):
     limit: int = 50
+    # Filtro opcional por modo de 1ª classe ("chat"/"code"); vazio = todos.
+    mode: str = ""
 
 
 class DeleteThreadRequest(BaseModel):

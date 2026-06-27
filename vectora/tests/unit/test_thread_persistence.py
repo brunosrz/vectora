@@ -645,3 +645,104 @@ class TestRowToThreadMode:
         bad_row = ("tid", "human", "2026-01-01", "2026-01-02", 0, "NOTJSON{")
         t = _row_to_thread(bad_row)
         assert t.mode == "code"
+
+
+# ---------------------------------------------------------------------------
+# Coluna mode de 1ª classe — migração, backfill e filtro (Parte E)
+# ---------------------------------------------------------------------------
+
+
+class TestModeColumn:
+    """mode promovido de extra JSON para coluna; aiosqlite real."""
+
+    async def _fresh_db(self):
+        import aiosqlite
+
+        from backend.api.handlers.threads import _ensure_schema
+
+        db = await aiosqlite.connect(":memory:")
+        await _ensure_schema(db)
+        return db
+
+    @pytest.mark.asyncio
+    async def test_migrate_adds_column_and_backfills_dev_to_code(self):
+        import aiosqlite
+
+        from backend.api.handlers.threads import _migrate_mode_column
+
+        db = await aiosqlite.connect(":memory:")
+        # Schema ANTIGO (sem coluna mode), com modos em extra.
+        await db.execute(
+            "CREATE TABLE vectora_sessions (thread_id TEXT PRIMARY KEY, "
+            "user_type TEXT, created_at TEXT, last_activity TEXT, "
+            "message_count INTEGER, extra TEXT)"
+        )
+        await db.execute(
+            "INSERT INTO vectora_sessions VALUES (?,?,?,?,?,?)",
+            ("t-dev", "human", "c", "a", 0, json.dumps({"mode": "dev"})),
+        )
+        await db.execute(
+            "INSERT INTO vectora_sessions VALUES (?,?,?,?,?,?)",
+            ("t-chat", "human", "c", "a", 0, json.dumps({"mode": "chat"})),
+        )
+        await db.execute(
+            "INSERT INTO vectora_sessions VALUES (?,?,?,?,?,?)",
+            ("t-none", "human", "c", "a", 0, "{}"),
+        )
+        await db.commit()
+
+        await _migrate_mode_column(db)
+
+        async with db.execute(
+            "SELECT thread_id, mode FROM vectora_sessions ORDER BY thread_id"
+        ) as cur:
+            rows = {r[0]: r[1] for r in await cur.fetchall()}
+        await db.close()
+        assert rows == {"t-dev": "code", "t-chat": "chat", "t-none": "code"}
+
+    @pytest.mark.asyncio
+    async def test_migrate_is_idempotent(self):
+        from backend.api.handlers.threads import _migrate_mode_column
+
+        db = await self._fresh_db()
+        # Rodar de novo num schema que já tem a coluna não deve quebrar.
+        await _migrate_mode_column(db)
+        async with db.execute("PRAGMA table_info(vectora_sessions)") as cur:
+            cols = [r[1] for r in await cur.fetchall()]
+        await db.close()
+        assert cols.count("mode") == 1
+
+    @pytest.mark.asyncio
+    async def test_upsert_writes_mode_column_and_list_filters(self):
+        from backend.api.handlers import threads as th
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            await th._upsert_session("t-code", mode="code")
+            await th._upsert_session("t-chat", mode="chat")
+
+            from backend.api.schemas import ListThreadsRequest
+
+            all_threads = await th.list_threads(ListThreadsRequest(limit=50))
+            only_chat = await th.list_threads(ListThreadsRequest(limit=50, mode="chat"))
+            only_code = await th.list_threads(ListThreadsRequest(limit=50, mode="code"))
+        await db.close()
+
+        assert {t.id for t in all_threads.threads} == {"t-code", "t-chat"}
+        assert [t.id for t in only_chat.threads] == ["t-chat"]
+        assert [t.id for t in only_code.threads] == ["t-code"]
+        assert only_chat.threads[0].mode == "chat"
+
+    @pytest.mark.asyncio
+    async def test_upsert_normalizes_dev_to_code_in_column(self):
+        from backend.api.handlers import threads as th
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            await th._upsert_session("t-legacy", mode="dev")
+            async with db.execute(
+                "SELECT mode FROM vectora_sessions WHERE thread_id = ?", ("t-legacy",)
+            ) as cur:
+                row = await cur.fetchone()
+        await db.close()
+        assert row[0] == "code"
