@@ -295,3 +295,32 @@ class TestDetect:
         result = detect(tmp_path)
         code_files = result.get("files", {}).get("code", [])
         assert not any("secret_impl.py" in str(p) for p in code_files)
+
+    def test_follows_vectoraignore(self, tmp_path: Path):
+        # .vectoraignore é o ignore unificado do Vectora (vale também p/ RAG/fs);
+        # o context graph deve respeitá-lo igual ao .gitignore.
+        from backend.services.context_graph.detect import detect
+
+        (tmp_path / ".vectoraignore").write_text(
+            "ignored_by_vectora.py\n", encoding="utf-8"
+        )
+        (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+        (tmp_path / "ignored_by_vectora.py").write_text("y = 2\n", encoding="utf-8")
+        result = detect(tmp_path)
+        code_files = result.get("files", {}).get("code", [])
+        assert any("app.py" in str(p) for p in code_files)
+        assert not any("ignored_by_vectora.py" in str(p) for p in code_files)
+
+    def test_vectoraignore_negation_wins_over_gitignore(self, tmp_path: Path):
+        # last-match-wins: .vectoraignore é lido por último, então uma negação
+        # nele re-inclui um arquivo excluído pelo .gitignore.
+        from backend.services.context_graph.detect import detect
+
+        (tmp_path / ".gitignore").write_text("*.gen.py\n", encoding="utf-8")
+        (tmp_path / ".vectoraignore").write_text("!keep.gen.py\n", encoding="utf-8")
+        (tmp_path / "drop.gen.py").write_text("a = 1\n", encoding="utf-8")
+        (tmp_path / "keep.gen.py").write_text("b = 2\n", encoding="utf-8")
+        result = detect(tmp_path)
+        code_files = [str(p) for p in result.get("files", {}).get("code", [])]
+        assert any("keep.gen.py" in p for p in code_files)
+        assert not any("drop.gen.py" in p for p in code_files)

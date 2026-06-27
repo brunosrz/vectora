@@ -778,7 +778,7 @@ def _load_graphifyignore(root: Path) -> list[tuple[Path, str]]:
         # last-match-wins; adding a .graphifyignore can only ever exclude MORE,
         # never re-include a .gitignore-excluded file (#945 kept: a project with
         # only a .gitignore still gets sensible defaults).
-        for fname in (".gitignore", ".graphifyignore"):
+        for fname in (".gitignore", ".graphifyignore", ".vectoraignore"):
             ignore_file = d / fname
             if ignore_file.exists():
                 for raw in ignore_file.read_text(encoding="utf-8", errors="ignore").splitlines():
