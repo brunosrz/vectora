@@ -226,3 +226,212 @@ class TestTryWithFallback:
             with pytest.raises(ValueError):
                 await pf.try_with_fallback(fn, "openai:gpt-4o")
         assert calls == ["openai:gpt-4o"]  # não tentou fallback
+
+
+# ---------------------------------------------------------------------------
+# FallbackChatModel — LLM do chat com fallback de provider (A2)
+# ---------------------------------------------------------------------------
+
+
+class _FakeLLM:
+    """LLM fake: astream/ainvoke configuráveis para simular quota/sucesso."""
+
+    def __init__(
+        self,
+        *,
+        chunks: list[str] | None = None,
+        stream_error: Exception | None = None,
+        error_after: int = 0,
+        invoke_result: object = None,
+        invoke_error: Exception | None = None,
+    ) -> None:
+        self._chunks = chunks or []
+        self._stream_error = stream_error
+        self._error_after = error_after
+        self._invoke_result = invoke_result
+        self._invoke_error = invoke_error
+        self.bound_with: object = None
+
+    async def astream(self, messages, stop=None, **kwargs):
+        from langchain_core.messages import AIMessageChunk
+
+        for i, c in enumerate(self._chunks):
+            if self._stream_error is not None and i >= self._error_after:
+                raise self._stream_error
+            yield AIMessageChunk(content=c)
+        if self._stream_error is not None and self._error_after >= len(self._chunks):
+            raise self._stream_error
+
+    async def ainvoke(self, messages, stop=None, **kwargs):
+        if self._invoke_error is not None:
+            raise self._invoke_error
+        return self._invoke_result
+
+    def bind_tools(self, tools, **kwargs):
+        self.bound_with = tools
+        return self
+
+
+def _loader(mapping: dict[str, _FakeLLM]):
+    def _load(mid: str) -> _FakeLLM:
+        return mapping[mid]
+
+    return _load
+
+
+class TestFallbackChatModel:
+    def test_llm_type(self):
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        assert FallbackChatModel(primary_model_id="p")._llm_type == "vectora-fallback"
+
+    async def test_no_chain_delegates_to_primary(self):
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        primary = _FakeLLM(chunks=["he", "llo"])
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm", _loader({"openai:gpt-4o": primary})
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=[]),
+        ):
+            out = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+        assert "".join(str(c.message.content) for c in out) == "hello"
+
+    async def test_quota_before_first_chunk_switches(self):
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        pf.drain_switches()
+        primary = _FakeLLM(chunks=[], stream_error=Exception("429 quota"))
+        fb = _FakeLLM(chunks=["ok"])
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm",
+                _loader({"openai:gpt-4o": primary, "cohere:command-a": fb}),
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            out = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+        assert "".join(str(c.message.content) for c in out) == "ok"
+        assert pf.drain_switches() == [
+            {"from": "openai:gpt-4o", "to": "cohere:command-a"}
+        ]
+
+    async def test_quota_after_chunk_reraises(self):
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        primary = _FakeLLM(chunks=["a"], stream_error=Exception("429"), error_after=1)
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm", _loader({"openai:gpt-4o": primary})
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            with pytest.raises(Exception, match="429"):
+                _ = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+
+    async def test_non_quota_reraises_immediately(self):
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        primary = _FakeLLM(chunks=[], stream_error=ValueError("boom"))
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm", _loader({"openai:gpt-4o": primary})
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            with pytest.raises(ValueError):
+                _ = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+
+    async def test_all_exhausted_raises_quota(self):
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        a = _FakeLLM(chunks=[], stream_error=Exception("quota"))
+        b = _FakeLLM(chunks=[], stream_error=Exception("rate limit"))
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm",
+                _loader({"openai:gpt-4o": a, "cohere:command-a": b}),
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            with pytest.raises(pf.QuotaExhaustedError):
+                _ = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+
+    async def test_agenerate_switches_on_quota(self):
+        from langchain_core.messages import AIMessage, HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        pf.drain_switches()
+        primary = _FakeLLM(invoke_error=Exception("429 RESOURCE_EXHAUSTED"))
+        fb = _FakeLLM(invoke_result=AIMessage(content="resposta"))
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm",
+                _loader({"openai:gpt-4o": primary, "cohere:command-a": fb}),
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            res = await fcm._agenerate([HumanMessage(content="hi")])
+        assert res.generations[0].message.content == "resposta"
+        assert pf.drain_switches() == [
+            {"from": "openai:gpt-4o", "to": "cohere:command-a"}
+        ]
+
+    async def test_agenerate_non_quota_reraises(self):
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        primary = _FakeLLM(invoke_error=ValueError("boom"))
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm", _loader({"openai:gpt-4o": primary})
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=[]),
+        ):
+            with pytest.raises(ValueError):
+                await fcm._agenerate([HumanMessage(content="hi")])
+
+    def test_bind_tools_returns_new_with_tools(self):
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        tools = [{"name": "t1"}]
+        bound = fcm.bind_tools(tools)
+        assert bound is not fcm
+        assert bound.primary_model_id == "openai:gpt-4o"
+        assert bound.bound_tools == tools
+
+    def test_bind_tools_propagates_to_inner(self):
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        primary = _FakeLLM(chunks=["x"])
+        bound = FallbackChatModel(primary_model_id="openai:gpt-4o").bind_tools(
+            [{"name": "t1"}]
+        )
+        with patch(
+            "backend.services.utils.load_llm",
+            _loader({"openai:gpt-4o": primary}),
+        ):
+            inner = bound._inner("openai:gpt-4o")
+        assert inner is primary
+        assert primary.bound_with == [{"name": "t1"}]

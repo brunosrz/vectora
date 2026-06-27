@@ -333,11 +333,15 @@ async def _build_graph_async(model_id: str = "", chat_mode: bool = False) -> Any
     from langchain_core.language_models.chat_models import BaseChatModel
 
     from backend.nodes.tools import ALL_TOOLS, CHAT_TOOLS
-    from backend.services.utils import load_llm
+    from backend.services.fallback_chat_model import FallbackChatModel
 
-    # load_llm() retorna BaseChatModel concreto em runtime (deepagents exige
-    # um BaseChatModel, não um modelo configurável). A anotação usa a base.
-    llm: BaseChatModel = _cast("BaseChatModel", load_llm(model_id))
+    # FallbackChatModel envolve o LLM do modelo escolhido: em 429/quota antes do
+    # primeiro token, troca para o próximo provider de `fallback_order` (lido em
+    # runtime), registrando a troca p/ o handler de chat notificar a UI. Cadeia
+    # vazia → delega ao primário de forma transparente (sem overhead semântico).
+    llm: BaseChatModel = _cast(
+        "BaseChatModel", FallbackChatModel(primary_model_id=model_id)
+    )
     tools = CHAT_TOOLS if chat_mode else ALL_TOOLS
     # Chat puro não usa subagents (coder/search são orientados a dev/filesystem).
     subagents = [] if chat_mode else _subagent_specs()
