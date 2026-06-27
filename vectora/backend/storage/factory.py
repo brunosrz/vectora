@@ -243,10 +243,23 @@ def _build_voyage_embeddings() -> Any:
 def _build_lc_embeddings() -> Any:
     """Embeddings com fallback Cohere↔Voyage.
 
-    Prefere Cohere; cai para VoyageAI quando Cohere não está configurado. Só
-    devolve None (modo sem embeddings) quando nenhum dos dois tem credencial.
+    Com ambos configurados, devolve ``FallbackEmbeddings`` (usa Cohere; troca para
+    Voyage em quota esgotada, em runtime). Com só um, devolve esse. Só devolve None
+    (modo sem embeddings) quando nenhum dos dois tem credencial.
     """
-    return _build_cohere_embeddings() or _build_voyage_embeddings()
+    cohere = _build_cohere_embeddings()
+    voyage = _build_voyage_embeddings()
+    if cohere is not None and voyage is not None:
+        from backend.services.fallback_embeddings import FallbackEmbeddings
+        from backend.settings import settings as _s
+
+        return FallbackEmbeddings(
+            cohere,
+            voyage,
+            primary_id=f"cohere:{_s.embedding_model}",
+            secondary_id=f"voyage:{_s.voyage_embedding_model}",
+        )
+    return cohere or voyage
 
 
 def _build_lancedb_vs(

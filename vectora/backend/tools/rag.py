@@ -64,35 +64,73 @@ def _is_cohere_quota_error(err: str) -> bool:
     )
 
 
+def _build_cohere_reranker() -> Any:
+    """``CohereRerank`` se a key Cohere e o SDK existem, senão None."""
+    if CohereRerank is None:
+        return None
+    key = settings.get_cohere_api_key()
+    if not key:
+        return None
+    return CohereRerank(
+        cohere_api_key=SecretStr(key),
+        model=settings.reranker_model,
+        top_n=settings.reranker_top_k,
+    )
+
+
+def _build_voyage_reranker() -> Any:
+    """``VoyageAIRerank`` se a key Voyage e o SDK existem, senão None."""
+    try:
+        from langchain_voyageai import VoyageAIRerank
+    except Exception:
+        return None
+    key = settings.voyage_api_key
+    if not key:
+        return None
+    return VoyageAIRerank(
+        voyage_api_key=key,  # ty: ignore[unknown-argument]
+        model=settings.voyage_rerank_model,
+        top_k=settings.reranker_top_k,
+    )
+
+
 def _build_reranker() -> Any:
-    """Reranker conforme ``settings.reranker_type``: "cohere" (CohereRerank) ou
-    "voyage" (VoyageAIRerank). Retorna ``None`` se o provider não tem credencial
-    ou SDK disponível — o caller cai para os resultados sem rerank.
+    """Reranker com fallback Cohere↔Voyage por quota.
+
+    ``settings.reranker_type`` define o primário ("cohere"/"voyage"); o outro vira
+    secundário. Com ambos disponíveis devolve ``FallbackReranker`` (troca em quota
+    esgotada, em runtime). Com só um, devolve esse. Sem nenhum, ``None`` — o caller
+    cai para os resultados sem rerank.
     """
     rtype = settings.reranker_type
-    if rtype == "cohere" and CohereRerank is not None:
-        key = settings.get_cohere_api_key()
-        if not key:
-            return None
-        return CohereRerank(
-            cohere_api_key=SecretStr(key),
-            model=settings.reranker_model,
-            top_n=settings.reranker_top_k,
-        )
     if rtype == "voyage":
-        try:
-            from langchain_voyageai import VoyageAIRerank
-        except Exception:
+        primary = _build_voyage_reranker()
+        if primary is None:
             return None
-        key = settings.voyage_api_key
-        if not key:
+        secondary = _build_cohere_reranker()
+        primary_id = f"voyage:{settings.voyage_rerank_model}"
+        secondary_id = f"cohere:{settings.reranker_model}"
+    elif rtype == "cohere":
+        primary = _build_cohere_reranker()
+        if primary is None:
             return None
-        return VoyageAIRerank(
-            voyage_api_key=key,  # ty: ignore[unknown-argument]
-            model=settings.voyage_rerank_model,
-            top_k=settings.reranker_top_k,
-        )
-    return None
+        secondary = _build_voyage_reranker()
+        primary_id = f"cohere:{settings.reranker_model}"
+        secondary_id = f"voyage:{settings.voyage_rerank_model}"
+    else:
+        return None
+
+    if secondary is None:
+        return primary
+
+    from backend.services.fallback_reranker import FallbackReranker
+
+    return FallbackReranker(
+        primary,
+        secondary,
+        primary_id=primary_id,
+        secondary_id=secondary_id,
+    )
 
 
 @tool(

@@ -649,7 +649,81 @@ class TestBuildReranker:
             ms.voyage_api_key = "voy-1"
             ms.voyage_rerank_model = "rerank-2"
             ms.reranker_top_k = 5
+            ms.get_cohere_api_key.return_value = None  # sem secundário → voyage puro
             out = _build_reranker()
         assert isinstance(out, VoyageAIRerank)
         assert out.model == "rerank-2"
         assert out.top_k == 5
+
+    def test_both_configured_returns_fallback_reranker(self):
+        from backend.services.fallback_reranker import FallbackReranker
+        from backend.tools.rag import _build_reranker
+
+        with patch("backend.tools.rag.settings") as ms:
+            ms.reranker_type = "cohere"
+            ms.get_cohere_api_key.return_value = "ck-1"
+            ms.reranker_model = "rerank-english-v3.0"
+            ms.voyage_api_key = "voy-1"
+            ms.voyage_rerank_model = "rerank-2"
+            ms.reranker_top_k = 5
+            out = _build_reranker()
+        assert isinstance(out, FallbackReranker)
+        assert out.primary_id == "cohere:rerank-english-v3.0"
+        assert out.secondary_id == "voyage:rerank-2"
+
+
+class TestFallbackRerankerBehavior:
+    def _wrap(self, primary, secondary):
+        from backend.services.fallback_reranker import FallbackReranker
+
+        return FallbackReranker(
+            primary,
+            secondary,
+            primary_id="cohere:r",
+            secondary_id="voyage:r",
+        )
+
+    def test_compress_primary_ok_no_switch(self):
+        from backend.services import provider_fallback as pf
+
+        pf.drain_switches()
+        primary = MagicMock()
+        primary.compress_documents.return_value = ["doc-primary"]
+        secondary = MagicMock()
+        out = self._wrap(primary, secondary).compress_documents(["d"], "q")
+        assert out == ["doc-primary"]
+        secondary.compress_documents.assert_not_called()
+        assert pf.drain_switches() == []
+
+    def test_compress_primary_quota_switches(self):
+        from backend.services import provider_fallback as pf
+
+        pf.drain_switches()
+        primary = MagicMock()
+        primary.compress_documents.side_effect = Exception("429 quota")
+        secondary = MagicMock()
+        secondary.compress_documents.return_value = ["doc-secondary"]
+        out = self._wrap(primary, secondary).compress_documents(["d"], "q")
+        assert out == ["doc-secondary"]
+        assert pf.drain_switches() == [{"from": "cohere:r", "to": "voyage:r"}]
+
+    def test_compress_non_quota_reraises(self):
+        primary = MagicMock()
+        primary.compress_documents.side_effect = ValueError("boom")
+        secondary = MagicMock()
+        with pytest.raises(ValueError):
+            self._wrap(primary, secondary).compress_documents(["d"], "q")
+        secondary.compress_documents.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_acompress_quota_switches(self):
+        from backend.services import provider_fallback as pf
+
+        pf.drain_switches()
+        primary = MagicMock()
+        primary.acompress_documents = AsyncMock(side_effect=Exception("rate limit"))
+        secondary = MagicMock()
+        secondary.acompress_documents = AsyncMock(return_value=["async-secondary"])
+        out = await self._wrap(primary, secondary).acompress_documents(["d"], "q")
+        assert out == ["async-secondary"]
+        assert pf.drain_switches() == [{"from": "cohere:r", "to": "voyage:r"}]
