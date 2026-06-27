@@ -353,3 +353,4 @@ AbilitySystem_repo/
 *.msi
 env.gha
 /graphify
+/.scons-logs
