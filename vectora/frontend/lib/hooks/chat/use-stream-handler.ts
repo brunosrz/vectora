@@ -407,7 +407,7 @@ export function useStreamHandler({
 
       return { assistantContent, runId: resolvedRunId };
     },
-    [threadId, setMessages, agentConfig, shouldInterruptRef],
+    [threadId, setMessages, agentConfig, shouldInterruptRef, onModelSwitched],
   );
 
   // ---------------------------------------------------------------------------
