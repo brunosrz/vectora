@@ -172,3 +172,19 @@ describe("isPinned", () => {
     expect(s().isPinned("t1", "b.py")).toBe(false);
   });
 });
+
+describe("WORKBENCH_TABS — ordem das abas", () => {
+  it("segue a ordem: files, git(diff), plan, background, preview, memory(storage), context_graph, terminal", async () => {
+    const { WORKBENCH_TABS } = await import("@/lib/stores/workbench-store");
+    expect(WORKBENCH_TABS).toEqual([
+      "files",
+      "diff",
+      "plan",
+      "background",
+      "preview",
+      "storage",
+      "context_graph",
+      "terminal",
+    ]);
+  });
+});

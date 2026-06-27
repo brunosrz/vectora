@@ -1,0 +1,11 @@
+# Paraglide JS é gerado (i18n:compile) — não formatar nem versionar formatação.
+# O hook de prettier roda da raiz do monorepo, então precisa do ignore aqui
+# (os .prettierignore por-subprojeto não se aplicam à invocação da raiz).
+**/paraglide/
+**/src/paraglide/
+
+# Outros artefatos gerados / vendorizados
+**/dist/
+**/build/
+**/.vectora/
+graphify-out/

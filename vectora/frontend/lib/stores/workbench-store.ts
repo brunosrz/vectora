@@ -49,15 +49,17 @@ export type WorkbenchTab =
   | "background"
   | "context_graph";
 
+// Ordem: file system → git → plan → segundo plano → preview → memory (rag) →
+// context graph → terminal (shell).
 export const WORKBENCH_TABS: WorkbenchTab[] = [
   "files",
   "diff",
   "plan",
+  "background",
   "preview",
   "storage",
-  "background",
-  "terminal",
   "context_graph",
+  "terminal",
 ];
 
 // ── Files cache ────────────────────────────────────────────────────────────
@@ -328,7 +330,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
               activeByThread: {
                 ...s.activeByThread,
                 [threadId]: wasActive
-                  ? filtered[0]?.id ?? null
+                  ? (filtered[0]?.id ?? null)
                   : s.activeByThread[threadId],
               },
             };

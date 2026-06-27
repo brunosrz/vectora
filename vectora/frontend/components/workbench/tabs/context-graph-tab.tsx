@@ -80,8 +80,8 @@ export function ContextGraphTab({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Barra de ação */}
-      <div className="flex items-center justify-end gap-2 px-3 py-2 border-b border-border/60 shrink-0">
+      {/* Barra de ação — alinhada à esquerda (padrão dos workbenches). */}
+      <div className="flex items-center justify-start gap-2 px-3 py-2 border-b border-border/60 shrink-0">
         {isBuilt && !isRunning && (
           <button
             onClick={() => update()}
