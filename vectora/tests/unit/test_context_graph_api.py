@@ -536,6 +536,32 @@ class TestPostBuild:
         _, kwargs = mock_pipeline.call_args
         assert kwargs.get("resume") is True
 
+    @pytest.mark.asyncio
+    async def test_file_types_repassa_ao_pipeline(self, tmp_path):
+        # file_types do BuildRequest deve chegar ao pipeline (None quando vazio).
+        from backend.api.handlers.context_graph import BuildRequest, _run_build
+
+        registry, _ = _make_registry(tmp_path)
+
+        async def pipeline_ok(*_a, **_k):
+            return MagicMock(error=None, node_count=0, edge_count=0)
+
+        mock_pipeline = AsyncMock(side_effect=pipeline_ok)
+        with (
+            patch("backend.services.workspace.workspace_registry", registry),
+            patch(
+                "backend.services.context_graph.pipeline.build_workspace_graph",
+                new=mock_pipeline,
+            ),
+        ):
+            await _run_build("ws1", BuildRequest(file_types=["document"]))
+            await _run_build("ws1", BuildRequest(file_types=[]))
+
+        first = mock_pipeline.call_args_list[0].kwargs
+        second = mock_pipeline.call_args_list[1].kwargs
+        assert first.get("file_types") == ["document"]
+        assert second.get("file_types") is None  # vazio → None (todos)
+
 
 class TestDeleteBuild:
     @pytest.mark.asyncio

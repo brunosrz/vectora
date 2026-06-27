@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, RefreshCw, ExternalLink, X } from "lucide-react";
+import { Loader2, RefreshCw, ExternalLink, X, Settings2 } from "lucide-react";
 
 import { useContextGraph } from "@/lib/hooks/use-context-graph";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import {
+  useContextGraphSettingsStore,
+  ALL_GRAPH_FILE_TYPES,
+  type GraphFileType,
+} from "@/lib/stores/context-graph-settings-store";
 import { m } from "@/lib/paraglide/messages";
 
 interface ContextGraphTabProps {
@@ -40,13 +45,18 @@ export function ContextGraphTab({
     getHtmlUrl,
   } = useContextGraph(workspaceId);
   const [showReport, setShowReport] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const fileTypes = useContextGraphSettingsStore((s) => s.fileTypes);
+  const graphMode = useContextGraphSettingsStore((s) => s.mode);
+  const toggleFileType = useContextGraphSettingsStore((s) => s.toggleFileType);
+  const setGraphMode = useContextGraphSettingsStore((s) => s.setMode);
 
   const isBuilt = status.status === "done";
   const isRunning = status.status === "running" || status.status === "queued";
   const isPaused = status.status === "paused";
 
   function handleBuild() {
-    build();
+    build({ mode: graphMode, fileTypes });
   }
 
   function handleQuestion(q: string) {
@@ -81,10 +91,10 @@ export function ContextGraphTab({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Barra de ação — alinhada à esquerda (padrão dos workbenches). */}
-      <div className="flex items-center justify-start gap-2 px-3 py-2 border-b border-border/60 shrink-0">
+      <div className="relative flex items-center justify-start gap-2 px-3 py-2 border-b border-border/60 shrink-0">
         {isBuilt && !isRunning && (
           <button
-            onClick={() => update()}
+            onClick={() => update({ mode: graphMode, fileTypes })}
             disabled={loading}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-border/80 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -114,6 +124,84 @@ export function ContextGraphTab({
             </>
           )}
         </button>
+
+        {/* Configurações do grafo: tipos de arquivo + modo. */}
+        <button
+          onClick={() => setShowSettings((v) => !v)}
+          disabled={isRunning}
+          aria-label={m.graph_settings_title()}
+          title={m.graph_settings_title()}
+          data-testid="graph-settings-btn"
+          aria-expanded={showSettings}
+          className="flex items-center justify-center h-6 w-6 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
+
+        {showSettings && (
+          <div
+            data-testid="graph-settings-panel"
+            className="absolute left-3 top-11 z-20 w-64 rounded-lg border border-border bg-popover shadow-xl p-3 space-y-3 text-xs"
+          >
+            <div>
+              <p className="font-medium text-foreground">
+                {m.graph_settings_filetypes()}
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                {m.graph_settings_filetypes_help()}
+              </p>
+              <div className="mt-1.5 space-y-1">
+                {ALL_GRAPH_FILE_TYPES.map((t: GraphFileType) => (
+                  <label
+                    key={t}
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={fileTypes.includes(t)}
+                      onChange={() => toggleFileType(t)}
+                      className="accent-[var(--color-primary)]"
+                    />
+                    <span className="text-foreground">
+                      {t === "code"
+                        ? m.graph_filetype_code()
+                        : t === "document"
+                          ? m.graph_filetype_document()
+                          : m.graph_filetype_paper()}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="font-medium text-foreground">
+                {m.graph_settings_mode()}
+              </p>
+              <div className="mt-1.5 space-y-1">
+                {(["semantic", "ast"] as const).map((mo) => (
+                  <label
+                    key={mo}
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <input
+                      type="radio"
+                      name="graph-mode"
+                      checked={graphMode === mo}
+                      onChange={() => setGraphMode(mo)}
+                      className="accent-[var(--color-primary)]"
+                    />
+                    <span className="text-foreground">
+                      {mo === "semantic"
+                        ? m.graph_mode_semantic()
+                        : m.graph_mode_ast()}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0">

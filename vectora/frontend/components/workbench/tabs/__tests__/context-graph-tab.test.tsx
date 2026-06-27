@@ -98,7 +98,7 @@ describe("ContextGraphTab", () => {
       expect(screen.getByText("graph_build_button")).toBeTruthy();
     });
 
-    it("clicar no botão chama build()", async () => {
+    it("clicar no botão chama build() com mode + fileTypes dos settings", async () => {
       setup();
       render(<ContextGraphTab threadId="t1" />);
       const btn = document.querySelector("button") as HTMLButtonElement;
@@ -106,6 +106,12 @@ describe("ContextGraphTab", () => {
         fireEvent.click(btn);
       });
       expect(mockBuild).toHaveBeenCalledTimes(1);
+      expect(mockBuild).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: "semantic",
+          fileTypes: expect.arrayContaining(["code", "document", "paper"]),
+        }),
+      );
     });
 
     it("botão está habilitado em not_built", () => {
@@ -113,6 +119,20 @@ describe("ContextGraphTab", () => {
       render(<ContextGraphTab threadId="t1" />);
       const btn = document.querySelector("button") as HTMLButtonElement;
       expect(btn.disabled).toBe(false);
+    });
+
+    it("o gear abre o painel de settings (tipos + modo)", async () => {
+      setup();
+      render(<ContextGraphTab threadId="t1" />);
+      expect(
+        screen.queryByTestId("graph-settings-panel"),
+      ).not.toBeInTheDocument();
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("graph-settings-btn"));
+      });
+      expect(screen.getByTestId("graph-settings-panel")).toBeInTheDocument();
+      expect(screen.getByText("graph_filetype_document")).toBeTruthy();
+      expect(screen.getByText("graph_mode_semantic")).toBeTruthy();
     });
   });
 

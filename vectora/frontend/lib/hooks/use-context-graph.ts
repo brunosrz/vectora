@@ -81,6 +81,7 @@ export function useContextGraph(workspaceId: string | null | undefined) {
         mode?: string;
         update?: boolean;
         resume?: boolean;
+        fileTypes?: string[];
       } = {},
     ) => {
       if (!workspaceId) return;
@@ -94,6 +95,7 @@ export function useContextGraph(workspaceId: string | null | undefined) {
           mode: opts.mode ?? "semantic",
           update: opts.update ?? false,
           resume: opts.resume ?? false,
+          file_types: opts.fileTypes ?? [],
         }),
       }).catch(() => null);
       setLoading(false);
@@ -129,14 +131,18 @@ export function useContextGraph(workspaceId: string | null | undefined) {
   );
 
   const update = useCallback(
-    async (opts: { model?: string } = {}) => {
+    async (
+      opts: { model?: string; mode?: string; fileTypes?: string[] } = {},
+    ) => {
       await build({ ...opts, update: true });
     },
     [build],
   );
 
   const resume = useCallback(
-    async (opts: { model?: string } = {}) => {
+    async (
+      opts: { model?: string; mode?: string; fileTypes?: string[] } = {},
+    ) => {
       // Retoma um build pausado por quota: reusa o checkpoint AST e refaz só a
       // semântica (resume=true), em vez de reprocessar do zero.
       await build({ ...opts, resume: true });

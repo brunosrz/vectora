@@ -885,5 +885,14 @@
   "integrations_none_active": "No integrations configured",
   "integrations_active_count": "{n} active integration",
   "integrations_active_count_plural": "{n} active integrations",
-  "integrations_keys_private": "Keys stored privately, never shared."
+  "integrations_keys_private": "Keys stored privately, never shared.",
+  "graph_settings_title": "Graph settings",
+  "graph_settings_filetypes": "File types to index",
+  "graph_settings_filetypes_help": "Empty = all. Index only documents to use it like Obsidian, leaving code for RAG.",
+  "graph_filetype_code": "Code",
+  "graph_filetype_document": "Documents (Markdown)",
+  "graph_filetype_paper": "PDFs / papers",
+  "graph_settings_mode": "Extraction mode",
+  "graph_mode_semantic": "Semantic (AST + LLM)",
+  "graph_mode_ast": "Structure only (AST, no LLM)"
 }

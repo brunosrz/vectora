@@ -48,6 +48,8 @@ class BuildRequest(BaseModel):
     mode: str = "semantic"
     update: bool = False
     resume: bool = False
+    # Tipos de arquivo a indexar ("code"/"document"/"paper"); vazio = todos.
+    file_types: list[str] = []
 
 
 class BuildResponse(BaseModel):
@@ -236,6 +238,7 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
             mode=req.mode,
             update=req.update,
             resume=req.resume,
+            file_types=req.file_types or None,
             on_progress=on_progress,
         )
         if result.error:

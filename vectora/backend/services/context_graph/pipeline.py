@@ -78,6 +78,7 @@ async def build_workspace_graph(
     mode: str = "semantic",
     update: bool = False,
     resume: bool = False,
+    file_types: list[str] | None = None,
     on_progress: Callable[[int, int, str, int, int, list[str] | None], None] | None = None,
 ) -> GraphResult:
     """Constrói (ou atualiza) o grafo de contexto de um workspace.
@@ -136,21 +137,30 @@ async def build_workspace_graph(
 
         _progress(1, "Detectando arquivos...")
         logger.info("context_graph: detectando arquivos em %s", workspace_path)
-        if update and graph_json.exists():
+        incremental = update and graph_json.exists()
+        if incremental:
             corpus = await asyncio.to_thread(
                 detect_incremental,
                 workspace_path,
                 manifest_path,
                 kind="semantic" if mode == "semantic" else "ast",
             )
-            all_files: list[str] = [
-                f
-                for flist in corpus.get("new_files", {}).values()
-                for f in flist
-            ]
+            files_key = "new_files"
         else:
             corpus = await asyncio.to_thread(detect, workspace_path)
-            all_files = [f for flist in corpus.get("files", {}).values() for f in flist]
+            files_key = "files"
+
+        # Filtro de tipos (settings do Context Graph): indexa só os tipos pedidos
+        # (ex.: só "document" p/ usar como Obsidian, deixando "code" para o RAG).
+        # Vazio/None = todos os tipos.
+        if file_types:
+            allowed = set(file_types)
+            fmap = corpus.get(files_key, {})
+            corpus[files_key] = {k: v for k, v in fmap.items() if k in allowed}
+
+        all_files: list[str] = [
+            f for flist in corpus.get(files_key, {}).values() for f in flist
+        ]
 
         if not all_files:
             logger.info("context_graph: nenhum arquivo novo detectado")
@@ -198,7 +208,7 @@ async def build_workspace_graph(
         if mode == "semantic":
             from .semantic import extract_semantic
 
-            files_map = corpus.get("new_files" if update else "files") or {}
+            files_map = corpus.get(files_key) or {}
             text_paths = (
                 [Path(f) for f in files_map.get("code", [])]
                 + [Path(f) for f in files_map.get("document", [])]
