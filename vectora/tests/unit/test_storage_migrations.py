@@ -99,6 +99,58 @@ class TestMigrationRunner:
         second = await runner.upgrade()
         assert second == []
 
+    @pytest.mark.asyncio
+    async def test_vectora_sessions_table_created(self, runner_conn):
+        """A migration 0002 cria a tabela vectora_sessions."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        await MigrationRunner(runner_conn).upgrade()
+        cur = await runner_conn.execute(
+            "SELECT name FROM sqlite_master "
+            "WHERE type='table' AND name='vectora_sessions'"
+        )
+        assert await cur.fetchone() is not None
+
+    @pytest.mark.asyncio
+    async def test_vectora_sessions_has_extra_column(self, runner_conn):
+        """vectora_sessions tem a coluna extra (onde mode/title/workspace vivem)."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        await MigrationRunner(runner_conn).upgrade()
+        cur = await runner_conn.execute("PRAGMA table_info(vectora_sessions)")
+        cols = {row[1] for row in await cur.fetchall()}
+        assert "extra" in cols
+        assert "thread_id" in cols
+
+    @pytest.mark.asyncio
+    async def test_applied_versions_sorted(self, runner_conn):
+        """upgrade() aplica em ordem ascendente de versão."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        applied = await MigrationRunner(runner_conn).upgrade()
+        assert applied == sorted(applied)
+
+    @pytest.mark.asyncio
+    async def test_known_migrations_in_status(self, runner_conn):
+        """status() inclui as migrations base 0001 (auth) e 0002 (sessions)."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        statuses = await MigrationRunner(runner_conn).status()
+        versions = {s.version for s in statuses}
+        assert "0001" in versions
+        assert "0002" in versions
+
+    @pytest.mark.asyncio
+    async def test_status_all_applied_count_matches(self, runner_conn):
+        """Após upgrade num banco vazio, todas as migrations ficam applied."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        runner = MigrationRunner(runner_conn)
+        applied = await runner.upgrade()
+        statuses = await runner.status()
+        assert len(applied) == len(statuses)
+        assert all(s.applied for s in statuses)
+
 
 class TestDataMigrationDryRun:
     """Migrações de dados (F12) — apenas dry-run para não precisar de infra."""
