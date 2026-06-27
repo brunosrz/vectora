@@ -44,6 +44,7 @@
   "network_disabled_offline": "No disponible sin conexión",
   "chat_stream_interrupted": "La respuesta anterior puede haberse interrumpido (la pestaña se cerró o recargó durante la transmisión).",
   "chat_auto_send_failed": "No se pudo enviar el mensaje automáticamente",
+  "chat_model_switched": "Modelo cambiado automáticamente: {from} → {to} (cuota agotada)",
   "time_just_now": "Ahora mismo",
   "time_minutes_ago": "hace {n} min",
   "time_hour_ago": "hace 1 hora",

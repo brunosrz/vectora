@@ -109,6 +109,8 @@ interface UseStreamHandlerProps {
   userId?: string | null;
   userEmail?: string | null;
   userName?: string | null;
+  /** Troca automática de provider por quota — atualiza model selector + toast. */
+  onModelSwitched?: (fromModel: string, toModel: string) => void;
 }
 
 interface UseStreamHandlerReturn {
@@ -133,6 +135,7 @@ export function useStreamHandler({
   setMessages,
   agentConfig,
   shouldInterruptRef,
+  onModelSwitched,
 }: UseStreamHandlerProps): UseStreamHandlerReturn {
   // AbortController para interromper o stream quando shouldInterruptRef === true
   const abortRef = useRef<AbortController | null>(null);
@@ -273,6 +276,12 @@ export function useStreamHandler({
           // para garantir que o conteúdo de texto está atualizado antes
           // de eventos que dependem do estado (ex: tool_call, done)
           flushNow();
+
+          // Fallback automático de provider por quota: atualiza model selector + toast
+          if (event.type === "model_switched") {
+            onModelSwitched?.(event.from_model, event.to_model);
+            continue;
+          }
 
           // Multi-bubble: quebra de bolha — finaliza activeId e cria nova mensagem
           if (event.type === "message_break") {

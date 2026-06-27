@@ -44,6 +44,7 @@
   "network_disabled_offline": "Indisponível sem conexão",
   "chat_stream_interrupted": "A resposta anterior pode ter sido interrompida (aba fechada ou recarregada durante a geração).",
   "chat_auto_send_failed": "Falha ao enviar mensagem automaticamente",
+  "chat_model_switched": "Modelo trocado automaticamente: {from} → {to} (quota esgotada)",
   "time_just_now": "Agora mesmo",
   "time_minutes_ago": "há {n} min",
   "time_hour_ago": "há 1 hora",

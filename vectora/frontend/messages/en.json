@@ -44,6 +44,7 @@
   "network_disabled_offline": "Unavailable while offline",
   "chat_stream_interrupted": "The previous response may have been interrupted (tab closed or reloaded mid-stream).",
   "chat_auto_send_failed": "Failed to auto-send message",
+  "chat_model_switched": "Model switched automatically: {from} → {to} (quota exhausted)",
   "time_just_now": "Just now",
   "time_minutes_ago": "{n} min ago",
   "time_hour_ago": "1 hour ago",

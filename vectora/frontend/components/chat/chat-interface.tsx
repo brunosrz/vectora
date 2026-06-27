@@ -361,6 +361,16 @@ export function ChatInterface({
     userId,
     userEmail,
     userName,
+    onModelSwitched: (fromModel, toModel) => {
+      // Quota esgotada: o backend trocou de provider. Reflete no model selector
+      // e avisa o usuário (igual ao aviso de VECTORA_TOKEN).
+      if (onAgentConfigChange && agentConfig) {
+        onAgentConfigChange({ ...agentConfig, model: toModel });
+      }
+      useToastStore
+        .getState()
+        .warning(msg.chat_model_switched({ from: fromModel, to: toModel }));
+    },
   });
 
   // E2 — HITL: retoma execução pausada após decisão do usuário

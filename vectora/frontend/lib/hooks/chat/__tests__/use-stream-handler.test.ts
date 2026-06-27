@@ -253,4 +253,57 @@ describe("useStreamHandler.processStream", () => {
     const found = withContent.find((m) => m.content === "só uma bolha");
     expect(found).toBeTruthy();
   });
+
+  // ── model_switched (A4 — fallback de provider por quota) ─────────────────────
+
+  it("evento model_switched chama onModelSwitched(from, to)", async () => {
+    const onModelSwitched = vi.fn();
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "token", content: "oi" },
+        {
+          type: "model_switched",
+          from_model: "openai:gpt-4o",
+          to_model: "google-genai:gemini-2.5-flash",
+        },
+        { type: "done", thread_id: "t1", run_id: "r1" },
+      ]),
+    );
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages, onModelSwitched }),
+    );
+    await result.current.processStream("oi", "a1");
+    expect(onModelSwitched).toHaveBeenCalledWith(
+      "openai:gpt-4o",
+      "google-genai:gemini-2.5-flash",
+    );
+  });
+
+  it("model_switched não interrompe o stream de tokens", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "a" },
+        { type: "model_switched", from_model: "x:1", to_model: "y:2" },
+        { type: "token", content: "b" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+    expect(out.assistantContent).toBe("ab");
+  });
+
+  it("sem onModelSwitched, model_switched é ignorado sem erro", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "ok" },
+        { type: "model_switched", from_model: "x:1", to_model: "y:2" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+    expect(out.assistantContent).toBe("ok");
+  });
 });

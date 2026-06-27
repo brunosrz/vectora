@@ -131,7 +131,8 @@ export type StreamEvent =
       tool_call_id: string;
       args_preview: string;
       elapsed_ms: number | null;
-    };
+    }
+  | { type: "model_switched"; from_model: string; to_model: string };
 
 export interface Thread {
   id: string;
