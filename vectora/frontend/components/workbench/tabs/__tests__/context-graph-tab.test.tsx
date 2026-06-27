@@ -438,5 +438,17 @@ describe("ContextGraphTab", () => {
       render(<ContextGraphTab threadId="t1" />);
       expect(screen.queryByText("graph_not_built")).toBeNull();
     });
+
+    it("exibe contador step/step_total quando paused com progresso parcial", () => {
+      setup({ status: { status: "paused", step: 3, step_total: 9 } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByText("3/9")).toBeTruthy();
+    });
+
+    it("não exibe contador step quando paused sem step info", () => {
+      setup({ status: { status: "paused" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.queryByText(/\d+\/\d+/)).toBeNull();
+    });
   });
 });

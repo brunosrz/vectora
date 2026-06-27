@@ -120,6 +120,21 @@ export function ContextGraphTab({
             className="px-3 py-4 text-sm text-center space-y-3"
           >
             <p className="text-amber-500">{m.graph_paused()}</p>
+            {status.step != null && status.step_total != null && (
+              <div className="space-y-1">
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-amber-500 transition-all"
+                    style={{
+                      width: `${Math.round((status.step / status.step_total) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {status.step}/{status.step_total}
+                </p>
+              </div>
+            )}
             {status.error && (
               <p className="text-xs text-muted-foreground">{status.error}</p>
             )}

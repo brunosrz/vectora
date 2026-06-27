@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -478,6 +478,30 @@ class TestPostBuild:
 
         assert exc.value.status_code == 404
 
+    @pytest.mark.asyncio
+    async def test_resume_repassa_flag_ao_pipeline(self, tmp_path):
+        """resume=True no BuildRequest deve chegar ao build_workspace_graph via _run_build."""
+        from backend.api.handlers.context_graph import BuildRequest, _run_build
+
+        registry, _ = _make_registry(tmp_path)
+
+        async def pipeline_ok(*_a, resume=False, **_k):
+            return MagicMock(error=None, node_count=0, edge_count=0)
+
+        mock_pipeline = AsyncMock(side_effect=pipeline_ok)
+        with (
+            patch("backend.services.workspace.workspace_registry", registry),
+            patch(
+                "backend.services.context_graph.pipeline.build_workspace_graph",
+                new=mock_pipeline,
+            ),
+        ):
+            await _run_build("ws1", BuildRequest(resume=True))
+
+        assert mock_pipeline.call_count == 1
+        _, kwargs = mock_pipeline.call_args
+        assert kwargs.get("resume") is True
+
 
 class TestDeleteBuild:
     @pytest.mark.asyncio
@@ -610,3 +634,49 @@ class TestRunBuildStatus:
         assert s is not None
         assert s.status == "error"
         assert s.error == "extração falhou"
+
+    @pytest.mark.asyncio
+    async def test_paused_preserva_step_do_ultimo_on_progress(self, tmp_path):
+        """Ao pausar por quota, step/step_total do último on_progress devem
+        aparecer no status paused (para o frontend mostrar x/y passos)."""
+        from backend.api.handlers.context_graph import BuildRequest, _run_build
+        from backend.services.provider_fallback import QuotaExhaustedError
+
+        registry, _ = _make_registry(tmp_path)
+
+        async def boom_after_progress(*a, on_progress=None, **k):
+            if on_progress:
+                on_progress(3, 9, "Análise semântica", 5, 10)
+            raise QuotaExhaustedError("quota")
+
+        with (
+            patch("backend.services.workspace.workspace_registry", registry),
+            patch(
+                "backend.services.context_graph.pipeline.build_workspace_graph",
+                side_effect=boom_after_progress,
+            ),
+        ):
+            await _run_build("ws1", BuildRequest())
+
+        from backend.api.handlers.context_graph import _read_status_file
+
+        s = _read_status_file(tmp_path / ".vectora" / "graph")
+        assert s is not None
+        assert s.status == "paused"
+        assert s.step == 3
+        assert s.step_total == 9
+        assert s.partial is True
+
+    @pytest.mark.asyncio
+    async def test_paused_sem_on_progress_nao_tem_step(self, tmp_path):
+        """Se quota estoura antes de qualquer on_progress, step deve ser None."""
+        from backend.services.provider_fallback import QuotaExhaustedError
+
+        async def boom_imediato(*a, **k):
+            raise QuotaExhaustedError("quota imediata")
+
+        s = await self._run(tmp_path, boom_imediato)
+        assert s is not None
+        assert s.status == "paused"
+        assert s.step is None
+        assert s.partial is True

@@ -66,6 +66,8 @@ class StatusResponse(BaseModel):
     files_total: int | None = None
     files_done: int | None = None
     files_list: list[str] | None = None
+    partial: bool = False
+    provider_switched_to: str | None = None
 
 
 class QueryRequest(BaseModel):
@@ -168,6 +170,8 @@ def _read_status_file(graph_dir: Path) -> StatusResponse | None:
             files_total=data.get("files_total"),
             files_done=data.get("files_done"),
             files_list=data.get("files_list"),
+            partial=bool(data.get("partial", False)),
+            provider_switched_to=data.get("provider_switched_to"),
         )
     except Exception:
         return None
@@ -188,7 +192,14 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
         files_done=0,
     )
 
-    _state: dict[str, Any] = {"files_list": []}
+    _state: dict[str, Any] = {
+        "files_list": [],
+        "step": None,
+        "step_total": None,
+        "step_label": None,
+        "files_total": 0,
+        "files_done": 0,
+    }
 
     def on_progress(
         step: int,
@@ -198,6 +209,11 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
         files_total: int,
         files_list: list[str] | None = None,
     ) -> None:
+        _state["step"] = step
+        _state["step_total"] = step_total
+        _state["step_label"] = label
+        _state["files_done"] = files_done
+        _state["files_total"] = files_total
         if files_list is not None:
             _state["files_list"] = files_list
         kw: dict[str, Any] = {
@@ -241,7 +257,14 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
                 "context-graph: quota esgotada em todos os providers — build pausado",
                 extra={"workspace_id": workspace_id},
             )
-            _write_status(d, "paused", error=str(exc))
+            paused_kw: dict[str, Any] = {"error": str(exc), "partial": True}
+            if _state["step"] is not None:
+                paused_kw["step"] = _state["step"]
+                paused_kw["step_total"] = _state["step_total"]
+                paused_kw["step_label"] = _state["step_label"]
+                paused_kw["files_total"] = _state["files_total"]
+                paused_kw["files_done"] = _state["files_done"]
+            _write_status(d, "paused", **paused_kw)
             return
         logger.exception(
             "context-graph: falha no build em background",
