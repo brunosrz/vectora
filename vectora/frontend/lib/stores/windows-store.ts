@@ -38,6 +38,8 @@ interface WindowsState {
   open: (workspaceId: string, path: string) => void;
   /** Fecha a janela inteira (todas as abas). */
   close: (id: string) => void;
+  /** Fecha todas as janelas (reset ao iniciar nova conversa / apagar sessão). */
+  closeAll: () => void;
   /** Remove uma aba. Se for a última, fecha a janela. */
   closeTab: (id: string, path: string) => void;
   /** Ativa uma aba existente na janela. */
@@ -110,6 +112,8 @@ export const useWindowsStore = create<WindowsState>()(
       close: (id) =>
         set((s) => ({ windows: s.windows.filter((w) => w.id !== id) })),
 
+      closeAll: () => set({ windows: [] }),
+
       closeTab: (id, path) =>
         set((s) => {
           const win = s.windows.find((w) => w.id === id);
@@ -120,7 +124,7 @@ export const useWindowsStore = create<WindowsState>()(
           }
           const activeTab =
             win.activeTab === path
-              ? tabs[Math.max(0, win.tabs.indexOf(path) - 1)] ?? tabs[0]
+              ? (tabs[Math.max(0, win.tabs.indexOf(path) - 1)] ?? tabs[0])
               : win.activeTab;
           return {
             windows: s.windows.map((w) =>

@@ -31,6 +31,7 @@ import {
   useUpdateThread,
   threadsQueryKey,
 } from "@/lib/queries/threads";
+import { useWindowsStore } from "@/lib/stores/windows-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import {
   listThreads,
@@ -211,6 +212,9 @@ function SessionPage() {
 
   const handleNewChat = useCallback(() => {
     // Chat: cria sessão direto (sem workspace/folders). Dev: dialog de workspace.
+    // Reset do fundo: fecha janelas de arquivo da sessão anterior para a nova
+    // conversa não herdar o conteúdo visual da atual.
+    useWindowsStore.getState().closeAll();
     if (chatMode) {
       const id = safeRandomUUID();
       markAsNew(id);
@@ -226,6 +230,7 @@ function SessionPage() {
       // Não persiste a thread no backend ainda — isso evita acumular
       // conversas vazias na sidebar. A thread só é criada (via StreamChat)
       // quando a primeira mensagem é enviada.
+      useWindowsStore.getState().closeAll();
       if (workspaceId) {
         void useWorkspacesStore.getState().setActive(workspaceId);
       }
@@ -240,9 +245,17 @@ function SessionPage() {
   const handleDeleteThread = useCallback(
     async (id: string) => {
       await deleteThreadMutation.mutateAsync(id);
-      if (id === threadId) void navigate({ to: "/" });
+      if (id !== threadId) return;
+      useWindowsStore.getState().closeAll();
+      if (chatMode) {
+        void navigate({ to: "/" });
+      } else {
+        // Code: não herda uma sessão; reabre o modal de seleção de workspace
+        // (mesmo fluxo da "Nova conversa"), em vez de cair numa sessão herdada.
+        setShowNewChatDialog(true);
+      }
     },
-    [deleteThreadMutation, threadId, navigate],
+    [deleteThreadMutation, threadId, navigate, chatMode],
   );
 
   const handleThreadNotFound = useCallback(() => {

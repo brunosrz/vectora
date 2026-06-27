@@ -307,3 +307,20 @@ describe("windows-store — fluxo multi-arquivo (abas)", () => {
     expect(winOf("ws1")?.activeTab).toBe("a.ts");
   });
 });
+
+describe("windows-store — closeAll (reset de nova conversa / delete)", () => {
+  it("fecha todas as janelas de uma vez", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws2", "b.ts");
+    s().open("ws3", "c.ts");
+    expect(s().windows).toHaveLength(3);
+    s().closeAll();
+    expect(s().windows).toHaveLength(0);
+  });
+
+  it("closeAll sem janelas é no-op (não quebra)", () => {
+    expect(s().windows).toHaveLength(0);
+    s().closeAll();
+    expect(s().windows).toHaveLength(0);
+  });
+});
