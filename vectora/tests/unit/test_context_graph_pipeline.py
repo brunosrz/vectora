@@ -15,7 +15,9 @@ import pytest
 from backend.services.context_graph.pipeline import (
     GraphResult,
     _graph_out_dir,
+    _load_ast_checkpoint,
     _run_ast_extraction,
+    _write_ast_checkpoint,
 )
 
 # ---------------------------------------------------------------------------
@@ -172,3 +174,30 @@ async def test_build_workspace_graph_no_files(tmp_path):
 
     assert result.error is None
     assert result.node_count == 0
+
+
+# ---------------------------------------------------------------------------
+# Checkpoint do AST — resume de build pausado por quota (Parte C)
+# ---------------------------------------------------------------------------
+
+
+class TestAstCheckpoint:
+    def test_write_then_load_roundtrip(self, tmp_path: Path):
+        ast = {"nodes": [{"id": "a"}], "edges": [], "hyperedges": []}
+        _write_ast_checkpoint(tmp_path, ast)
+        assert _load_ast_checkpoint(tmp_path) == ast
+
+    def test_load_missing_returns_none(self, tmp_path: Path):
+        assert _load_ast_checkpoint(tmp_path) is None
+
+    def test_load_invalid_json_returns_none(self, tmp_path: Path):
+        (tmp_path / "checkpoint_ast.json").write_text("{nope", encoding="utf-8")
+        assert _load_ast_checkpoint(tmp_path) is None
+
+    def test_load_non_dict_returns_none(self, tmp_path: Path):
+        (tmp_path / "checkpoint_ast.json").write_text("[1, 2, 3]", encoding="utf-8")
+        assert _load_ast_checkpoint(tmp_path) is None
+
+    def test_write_failure_does_not_raise(self, tmp_path: Path):
+        # Diretório inexistente → escrita falha, mas é defensiva (não levanta).
+        _write_ast_checkpoint(tmp_path / "missing-subdir", {"nodes": []})

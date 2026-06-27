@@ -47,6 +47,7 @@ class BuildRequest(BaseModel):
     model: str = ""
     mode: str = "semantic"
     update: bool = False
+    resume: bool = False
 
 
 class BuildResponse(BaseModel):
@@ -218,6 +219,7 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
             model=req.model,
             mode=req.mode,
             update=req.update,
+            resume=req.resume,
             on_progress=on_progress,
         )
         if result.error:

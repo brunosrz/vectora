@@ -41,12 +41,43 @@ def _graph_out_dir(workspace_path: Path) -> Path:
     return workspace_path / _GRAPH_DIR
 
 
+_AST_CHECKPOINT = "checkpoint_ast.json"
+
+
+def _write_ast_checkpoint(out_dir: Path, ast_results: dict[str, Any]) -> None:
+    """Persiste o resultado do AST (passo determinístico e CPU-pesado).
+
+    Permite que um build pausado por quota retome a partir da semântica, sem
+    re-detectar nem re-extrair AST. Defensivo: falha de escrita não derruba o build.
+    """
+    try:
+        (out_dir / _AST_CHECKPOINT).write_text(
+            json.dumps(ast_results), encoding="utf-8"
+        )
+    except Exception:
+        logger.warning("context_graph: falha ao gravar checkpoint AST", exc_info=True)
+
+
+def _load_ast_checkpoint(out_dir: Path) -> dict[str, Any] | None:
+    """Carrega o checkpoint do AST se existir e for válido, senão None."""
+    path = out_dir / _AST_CHECKPOINT
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except Exception:
+        logger.warning("context_graph: checkpoint AST inválido", exc_info=True)
+        return None
+
+
 async def build_workspace_graph(
     workspace_id: str,
     *,
     model: str = "",
     mode: str = "semantic",
     update: bool = False,
+    resume: bool = False,
     on_progress: Callable[[int, int, str, int, int, list[str] | None], None] | None = None,
 ) -> GraphResult:
     """Constrói (ou atualiza) o grafo de contexto de um workspace.
@@ -60,6 +91,7 @@ async def build_workspace_graph(
     Returns:
         GraphResult com caminhos dos artefatos e métricas básicas.
     """
+    from backend.services.provider_fallback import QuotaExhaustedError
     from backend.services.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
@@ -142,15 +174,23 @@ async def build_workspace_graph(
         # ── Passo 2: extração AST (CPU-bound → thread) ────────────────────────
         _progress(2, "Extraindo AST...")
         ast_results: dict[str, Any] = {"nodes": [], "edges": [], "hyperedges": []}
-        try:
-            ast_results = await asyncio.to_thread(
-                _run_ast_extraction,
-                all_files,
-                workspace_path,
-                lambda done: _progress(2, "Extraindo AST...", done),
-            )
-        except Exception:
-            logger.exception("context_graph: falha na extração AST", extra={"workspace_id": workspace_id})
+        cached_ast = _load_ast_checkpoint(out_dir) if resume else None
+        if cached_ast is not None:
+            # Retoma de um build pausado: reusa o AST já computado, pula direto
+            # para a semântica (passo onde a quota costuma estourar).
+            ast_results = cached_ast
+            logger.info("context_graph: retomando do checkpoint AST", extra={"workspace_id": workspace_id})
+        else:
+            try:
+                ast_results = await asyncio.to_thread(
+                    _run_ast_extraction,
+                    all_files,
+                    workspace_path,
+                    lambda done: _progress(2, "Extraindo AST...", done),
+                )
+                _write_ast_checkpoint(out_dir, ast_results)
+            except Exception:
+                logger.exception("context_graph: falha na extração AST", extra={"workspace_id": workspace_id})
 
         # ── Passo 3: extração semântica (async LLM) ───────────────────────────
         _progress(3, "Análise semântica...", _files_total)
@@ -175,6 +215,14 @@ async def build_workspace_graph(
                     )
                     result.input_tokens = semantic_results.get("input_tokens", 0)
                     result.output_tokens = semantic_results.get("output_tokens", 0)
+                except QuotaExhaustedError:
+                    # Quota total: o checkpoint AST já está gravado. Propaga para o
+                    # handler marcar "paused" — o usuário retoma com resume=True.
+                    logger.warning(
+                        "context_graph: quota esgotada na semântica — build pausado",
+                        extra={"workspace_id": workspace_id},
+                    )
+                    raise
                 except Exception:
                     logger.exception("context_graph: falha na extração semântica", extra={"workspace_id": workspace_id})
 
@@ -296,6 +344,10 @@ async def build_workspace_graph(
         )
         return result
 
+    except QuotaExhaustedError:
+        # Build pausado por quota — propaga para o handler marcar "paused" e o
+        # checkpoint AST preservado permite retomar (resume=True).
+        raise
     except Exception:
         logger.exception("context_graph: falha catastrófica no pipeline", extra={"workspace_id": workspace_id})
         result.error = "Falha no pipeline do context graph — veja os logs."

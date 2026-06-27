@@ -309,6 +309,30 @@ class TestExtractSemantic:
         assert result["nodes"] == []
 
     @pytest.mark.asyncio
+    async def test_quota_propagates_not_degrade(self, tmp_path: Path):
+        # Quota total NÃO degrada em silêncio — propaga p/ o pipeline pausar.
+        from backend.services.context_graph.semantic import extract_semantic
+        from backend.services.provider_fallback import QuotaExhaustedError
+
+        f = tmp_path / "code.py"
+        f.write_text("print('hello')\n", encoding="utf-8")
+
+        mock_llm = AsyncMock()
+        mock_llm.ainvoke = AsyncMock(
+            side_effect=Exception("429 RESOURCE_EXHAUSTED quota")
+        )
+
+        with (
+            patch("backend.services.utils.load_llm", return_value=mock_llm),
+            patch(
+                "backend.services.provider_fallback.get_fallback_chain",
+                return_value=[],
+            ),
+        ):
+            with pytest.raises(QuotaExhaustedError):
+                await extract_semantic([f], tmp_path, model_id="test:model")
+
+    @pytest.mark.asyncio
     async def test_hollow_response_sets_finish_reason_length(self, tmp_path: Path):
         from backend.services.context_graph.semantic import extract_semantic
 

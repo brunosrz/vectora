@@ -36,6 +36,7 @@ vi.mock("@/lib/stores/workspaces-store", () => ({
 
 const mockBuild = vi.fn();
 const mockUpdate = vi.fn();
+const mockResume = vi.fn();
 const mockCancel = vi.fn(() => Promise.resolve());
 const mockQueryAffected = vi.fn(() => Promise.resolve(""));
 const mockGetHtmlUrl = vi.fn(() => "/workspaces/ws1/context-graph/html");
@@ -61,6 +62,7 @@ function setup(
     loading: false,
     build: mockBuild,
     update: mockUpdate,
+    resume: mockResume,
     cancel: mockCancel,
     queryAffected: mockQueryAffected,
     getHtmlUrl: mockGetHtmlUrl,
@@ -416,12 +418,13 @@ describe("ContextGraphTab", () => {
       expect(screen.getByText("graph_continue_button")).toBeTruthy();
     });
 
-    it("clicar em Continuar retoma incremental (chama update, não build do zero)", () => {
+    it("clicar em Continuar retoma do checkpoint (chama resume, não build do zero)", () => {
       setup({ status: { status: "paused" } });
       render(<ContextGraphTab threadId="t1" />);
       fireEvent.click(screen.getByText("graph_continue_button"));
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockResume).toHaveBeenCalled();
       expect(mockBuild).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
 
     it("exibe a mensagem de erro da quota quando presente", () => {

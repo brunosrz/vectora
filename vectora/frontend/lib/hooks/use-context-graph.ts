@@ -75,7 +75,14 @@ export function useContextGraph(workspaceId: string | null | undefined) {
   }, [status.status, fetchStatus]);
 
   const build = useCallback(
-    async (opts: { model?: string; mode?: string; update?: boolean } = {}) => {
+    async (
+      opts: {
+        model?: string;
+        mode?: string;
+        update?: boolean;
+        resume?: boolean;
+      } = {},
+    ) => {
       if (!workspaceId) return;
       setLoading(true);
       setStatus({ status: "queued" });
@@ -86,6 +93,7 @@ export function useContextGraph(workspaceId: string | null | undefined) {
           model: opts.model ?? "",
           mode: opts.mode ?? "semantic",
           update: opts.update ?? false,
+          resume: opts.resume ?? false,
         }),
       }).catch(() => null);
       setLoading(false);
@@ -127,6 +135,15 @@ export function useContextGraph(workspaceId: string | null | undefined) {
     [build],
   );
 
+  const resume = useCallback(
+    async (opts: { model?: string } = {}) => {
+      // Retoma um build pausado por quota: reusa o checkpoint AST e refaz só a
+      // semântica (resume=true), em vez de reprocessar do zero.
+      await build({ ...opts, resume: true });
+    },
+    [build],
+  );
+
   const cancel = useCallback(async () => {
     if (!workspaceId) return;
     await fetch(`${base(workspaceId)}/build`, { method: "DELETE" }).catch(
@@ -141,6 +158,7 @@ export function useContextGraph(workspaceId: string | null | undefined) {
     loading,
     build,
     update,
+    resume,
     cancel,
     queryAffected,
     fetchStatus,

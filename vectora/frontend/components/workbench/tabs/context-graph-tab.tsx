@@ -23,6 +23,7 @@ export function ContextGraphTab({
     loading,
     build,
     update,
+    resume,
     cancel,
     queryAffected,
     getHtmlUrl,
@@ -123,7 +124,7 @@ export function ContextGraphTab({
               <p className="text-xs text-muted-foreground">{status.error}</p>
             )}
             <button
-              onClick={() => update()}
+              onClick={() => resume()}
               disabled={loading}
               className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 mx-auto"
             >

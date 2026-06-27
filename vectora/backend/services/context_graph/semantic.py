@@ -349,11 +349,17 @@ async def _extract_chunk_with_retry(
     _depth: int = 0,
 ) -> dict[str, Any]:
     """Extrai um chunk com retry/bisect em caso de truncamento ou contexto excedido."""
+    from backend.services.provider_fallback import QuotaExhaustedError
+
     from .file_slice import FileSlice, bisect_slice
 
     user_msg = _read_files(chunk, root)
     try:
         result = await _call_llm_async(user_msg, model_id=model_id, deep=deep)
+    except QuotaExhaustedError:
+        # Quota total (todos os providers esgotaram) — propaga para o pipeline
+        # pausar o build e gravar checkpoint, em vez de degradar em silêncio.
+        raise
     except Exception as exc:
         if not _looks_like_context_exceeded(exc):
             logger.exception("semantic: erro irrecuperável no chunk", extra={"depth": _depth})
@@ -424,6 +430,8 @@ async def extract_semantic(
     Retorna dict com nodes, edges, hyperedges, input_tokens, output_tokens.
     Defensivo (§11): captura todas as exceções e retorna resultado parcial.
     """
+    from backend.services.provider_fallback import QuotaExhaustedError
+
     from .file_slice import expand_oversized_files
 
     try:
@@ -448,6 +456,9 @@ async def extract_semantic(
 
         merged: dict[str, Any] = {"nodes": [], "edges": [], "hyperedges": [], "input_tokens": 0, "output_tokens": 0}
         for r in results:
+            if isinstance(r, QuotaExhaustedError):
+                # Quota total — propaga para o pipeline pausar (não degrada).
+                raise r
             if isinstance(r, BaseException):
                 logger.exception("semantic: chunk com erro irrecuperável", extra={"error": str(r)})
                 continue
@@ -465,6 +476,8 @@ async def extract_semantic(
         )
         return merged
 
+    except QuotaExhaustedError:
+        raise
     except Exception:
         logger.exception("semantic: falha catastrófica na extração semântica", extra={"model_id": model_id})
         return {"nodes": [], "edges": [], "hyperedges": [], "input_tokens": 0, "output_tokens": 0}

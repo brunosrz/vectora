@@ -128,6 +128,27 @@ describe("useContextGraph", () => {
     expect(body.update).toBe(true);
   });
 
+  it("resume envia resume=true no body do build (retoma pausado)", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "paused" }),
+    ).mockResolvedValueOnce(mockOk({ status: "queued" }));
+
+    const { result } = renderHook(() => useContextGraph("ws-resume"));
+    await act(async () => {});
+
+    await act(async () => {
+      await result.current.resume();
+    });
+
+    const call = FETCH_MOCK.mock.calls.find(
+      (args) =>
+        String(args[0]).includes("/build") && args[1]?.method === "POST",
+    );
+    const body = JSON.parse(call![1].body as string);
+    expect(body.resume).toBe(true);
+    expect(body.update).toBe(false);
+  });
+
   it("build falha silenciosamente se fetch rejeita (sem lançar)", async () => {
     FETCH_MOCK.mockResolvedValueOnce(
       mockOk({ status: "not_built" }),
