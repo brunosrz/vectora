@@ -36,7 +36,39 @@ export function ModelSelector({
 }: ModelSelectorProps) {
   const allowedModels = getAllowedModels();
   const [open, setOpen] = useState(false);
+  // Providers com API key configurada (backend). null = ainda não carregado →
+  // mostra todos; lista vazia/erro também cai no fallback de mostrar todos para
+  // nunca travar o usuário sem opções.
+  const [configuredProviders, setConfiguredProviders] = useState<
+    string[] | null
+  >(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof fetch === "undefined") return;
+    let alive = true;
+    fetch("/models/providers")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { providers?: string[] } | null) => {
+        if (alive && Array.isArray(data?.providers))
+          setConfiguredProviders(data.providers);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Esconde modelos cujo provider não tem credencial. Mantém sempre o modelo
+  // ativo visível (mesmo sem key) para não sumir com a seleção atual.
+  const visibleModels =
+    configuredProviders && configuredProviders.length > 0
+      ? allowedModels.filter(
+          (model) =>
+            model === value ||
+            configuredProviders.includes(getModelProvider(model)),
+        )
+      : allowedModels;
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -80,7 +112,7 @@ export function ModelSelector({
           </div>
 
           <div className="max-h-72 overflow-y-auto">
-            {allowedModels.map((model) => (
+            {visibleModels.map((model) => (
               <button
                 key={model}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-left transition-colors"

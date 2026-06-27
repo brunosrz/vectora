@@ -5,14 +5,24 @@
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { ModelSelector } from "../model-selector";
 import {
   getAllowedModels,
   getModelDisplayName,
+  getModelProvider,
 } from "@/lib/config/deployment-config";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("ModelSelector", () => {
   it("exibe o nome do modelo ativo e começa fechado", () => {
@@ -48,5 +58,64 @@ describe("ModelSelector", () => {
     expect(optionButton).toBeTruthy();
     fireEvent.click(optionButton!);
     expect(onChange).toHaveBeenCalledWith(other);
+  });
+
+  it("esconde modelos de providers sem credencial (só os configurados)", async () => {
+    const models = getAllowedModels();
+    const gemini = models.find((m) => getModelProvider(m) === "google-genai");
+    const openai = models.find((m) => getModelProvider(m) === "openai");
+    expect(gemini && openai).toBeTruthy();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ providers: ["google-genai"] }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        ),
+      ),
+    );
+
+    render(<ModelSelector value={gemini!} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+
+    // Gemini (configurado) aparece; OpenAI (sem key) some após o fetch resolver.
+    await waitFor(() => {
+      expect(
+        screen.queryByText(getModelDisplayName(openai!)),
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getAllByText(getModelDisplayName(gemini!)).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("mantém o modelo ativo visível mesmo se seu provider não tem key", async () => {
+    const models = getAllowedModels();
+    const openai = models.find((m) => getModelProvider(m) === "openai");
+    expect(openai).toBeTruthy();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ providers: ["google-genai"] }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        ),
+      ),
+    );
+
+    // value = modelo OpenAI, mas só google-genai configurado → ainda aparece.
+    render(<ModelSelector value={openai!} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(getModelDisplayName(openai!)).length,
+      ).toBeGreaterThan(0);
+    });
   });
 });

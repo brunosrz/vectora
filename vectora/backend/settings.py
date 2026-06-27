@@ -811,6 +811,25 @@ class Settings(BaseSettings):
         }
         return key_map.get(self.llm_provider)
 
+    def configured_llm_providers(self) -> list[str]:
+        """Providers de LLM com credencial configurada (para o model selector).
+
+        Ollama não exige key — é incluído só quando ``ollama_base_url`` aponta para
+        um host. Cohere usa a precedência de ``get_cohere_api_key`` (env inclusa).
+        """
+        providers: list[str] = []
+        if self.google_api_key:
+            providers.append("google-genai")
+        if self.openai_api_key:
+            providers.append("openai")
+        if self.anthropic_api_key:
+            providers.append("anthropic")
+        if self.get_cohere_api_key():
+            providers.append("cohere")
+        if getattr(self, "ollama_base_url", ""):
+            providers.append("ollama")
+        return providers
+
     def get_cohere_api_key(self) -> str | None:
         """Get the API key for Cohere embeddings and reranking.
 

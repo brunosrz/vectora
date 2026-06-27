@@ -235,3 +235,65 @@ def test_voyage_key_independent_from_cohere(monkeypatch):
     s = Settings()
     assert s.voyage_api_key == "voy-1"
     assert s.voyage_api_key != s.cohere_api_key
+
+
+class TestConfiguredLlmProviders:
+    """configured_llm_providers: só providers com credencial (model selector)."""
+
+    def test_only_configured_providers_listed(self):
+        s = Settings()
+        s.google_api_key = "g-key"
+        s.openai_api_key = None
+        s.anthropic_api_key = None
+        s.cohere_api_key = "c-key"
+        s.ollama_base_url = None
+        assert s.configured_llm_providers() == ["google-genai", "cohere"]
+
+    def test_no_keys_returns_empty(self):
+        s = Settings()
+        s.google_api_key = None
+        s.openai_api_key = None
+        s.anthropic_api_key = None
+        s.cohere_api_key = None
+        s.ollama_base_url = None
+        # COHERE_API_KEY do ambiente pode existir; isola para o caso vazio.
+        import os as _os
+
+        prev = _os.environ.pop("COHERE_API_KEY", None)
+        try:
+            assert s.configured_llm_providers() == []
+        finally:
+            if prev is not None:
+                _os.environ["COHERE_API_KEY"] = prev
+
+    def test_openai_and_anthropic_when_keyed(self):
+        s = Settings()
+        s.google_api_key = None
+        s.openai_api_key = "o-key"
+        s.anthropic_api_key = "a-key"
+        s.cohere_api_key = None
+        s.ollama_base_url = None
+        import os as _os
+
+        prev = _os.environ.pop("COHERE_API_KEY", None)
+        try:
+            assert s.configured_llm_providers() == ["openai", "anthropic"]
+        finally:
+            if prev is not None:
+                _os.environ["COHERE_API_KEY"] = prev
+
+    def test_ollama_listed_when_base_url_set(self):
+        s = Settings()
+        s.google_api_key = None
+        s.openai_api_key = None
+        s.anthropic_api_key = None
+        s.cohere_api_key = None
+        s.ollama_base_url = "http://localhost:11434"
+        import os as _os
+
+        prev = _os.environ.pop("COHERE_API_KEY", None)
+        try:
+            assert s.configured_llm_providers() == ["ollama"]
+        finally:
+            if prev is not None:
+                _os.environ["COHERE_API_KEY"] = prev
