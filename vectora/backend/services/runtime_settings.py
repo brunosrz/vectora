@@ -217,6 +217,39 @@ class RuntimeSettings:
         self.set("llm_fallback_order", clean)
 
     @property
+    def rag_settings(self) -> dict[str, object]:
+        """Settings de RAG configuráveis em runtime (aba de memória).
+
+        Defaults espelham o comportamento atual: reranker ligado, top_k=5,
+        providers em "auto" (escolhe por key/fallback), ingestão de todos os tipos.
+        """
+        val = self.get("rag_settings", {})
+        data: dict[str, object] = (
+            {str(k): v for k, v in val.items()} if isinstance(val, dict) else {}
+        )
+        raw_top_k = data.get("reranker_top_k", 5)
+        top_k = int(raw_top_k) if isinstance(raw_top_k, (int, float, str)) else 5
+        raw_types = data.get("ingest_file_types")
+        return {
+            "reranker_enabled": bool(data.get("reranker_enabled", True)),
+            "reranker_top_k": top_k or 5,
+            "rerank_provider": str(data.get("rerank_provider", "auto")),
+            "embed_provider": str(data.get("embed_provider", "auto")),
+            "ingest_file_types": (
+                [str(x) for x in raw_types] if isinstance(raw_types, list) else []
+            ),
+        }
+
+    def set_rag_settings(self, **changes: object) -> dict[str, object]:
+        """Mescla mudanças nos settings de RAG e persiste; devolve o estado final."""
+        merged = {
+            **self.rag_settings,
+            **{k: v for k, v in changes.items() if v is not None},
+        }
+        self.set("rag_settings", merged)
+        return self.rag_settings
+
+    @property
     def last_session_by_dir(self) -> dict[str, str]:
         """Mapping of working directory path -> thread_id (6-digit string)."""
         val = self.get("last_session_by_dir", {})

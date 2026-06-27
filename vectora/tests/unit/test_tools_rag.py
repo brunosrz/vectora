@@ -655,6 +655,48 @@ class TestBuildReranker:
         assert out.model == "rerank-2"
         assert out.top_k == 5
 
+    def test_reranker_disabled_returns_none(self):
+        # reranker_enabled=False nos settings de runtime → sem rerank (None).
+        from backend.tools import rag as rag_mod
+        from backend.tools.rag import _build_reranker
+
+        with (
+            patch("backend.tools.rag.settings") as ms,
+            patch.object(
+                rag_mod,
+                "_rag_runtime",
+                lambda: {"reranker_enabled": False, "reranker_top_k": 5},
+            ),
+        ):
+            ms.reranker_type = "cohere"
+            ms.get_cohere_api_key.return_value = "ck-1"
+            assert _build_reranker() is None
+
+    def test_reranker_provider_pref_forces_voyage(self):
+        from langchain_voyageai import VoyageAIRerank
+
+        from backend.tools import rag as rag_mod
+        from backend.tools.rag import _build_reranker
+
+        with (
+            patch("backend.tools.rag.settings") as ms,
+            patch.object(
+                rag_mod,
+                "_rag_runtime",
+                lambda: {
+                    "reranker_enabled": True,
+                    "reranker_top_k": 5,
+                    "rerank_provider": "voyage",
+                },
+            ),
+        ):
+            ms.reranker_type = "cohere"  # mas a preferência força voyage
+            ms.voyage_api_key = "voy-1"
+            ms.voyage_rerank_model = "rerank-2"
+            ms.get_cohere_api_key.return_value = None
+            out = _build_reranker()
+        assert isinstance(out, VoyageAIRerank)
+
     def test_both_configured_returns_fallback_reranker(self):
         from backend.services.fallback_reranker import FallbackReranker
         from backend.tools.rag import _build_reranker

@@ -74,7 +74,7 @@ def _build_cohere_reranker() -> Any:
     return CohereRerank(
         cohere_api_key=SecretStr(key),
         model=settings.reranker_model,
-        top_n=settings.reranker_top_k,
+        top_n=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
     )
 
 
@@ -90,19 +90,31 @@ def _build_voyage_reranker() -> Any:
     return VoyageAIRerank(
         voyage_api_key=key,  # ty: ignore[unknown-argument]
         model=settings.voyage_rerank_model,
-        top_k=settings.reranker_top_k,
+        top_k=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
     )
+
+
+def _rag_runtime() -> dict[str, Any]:
+    """Settings de RAG configurados em runtime (aba de memória)."""
+    from backend.services.runtime_settings import runtime_settings
+
+    return runtime_settings.rag_settings
 
 
 def _build_reranker() -> Any:
     """Reranker com fallback Cohere↔Voyage por quota.
 
-    ``settings.reranker_type`` define o primário ("cohere"/"voyage"); o outro vira
-    secundário. Com ambos disponíveis devolve ``FallbackReranker`` (troca em quota
-    esgotada, em runtime). Com só um, devolve esse. Sem nenhum, ``None`` — o caller
-    cai para os resultados sem rerank.
+    Honra os settings de runtime: ``reranker_enabled`` (off → None, sem rerank) e
+    ``rerank_provider`` ("auto" usa ``settings.reranker_type``; "cohere"/"voyage"
+    força). ``settings.reranker_type`` define o primário; o outro vira secundário.
+    Com ambos disponíveis devolve ``FallbackReranker``; com só um, esse; sem
+    nenhum, ``None`` — o caller cai para os resultados sem rerank.
     """
-    rtype = settings.reranker_type
+    rag = _rag_runtime()
+    if not rag.get("reranker_enabled", True):
+        return None
+    pref = str(rag.get("rerank_provider", "auto"))
+    rtype = pref if pref in ("cohere", "voyage") else settings.reranker_type
     if rtype == "voyage":
         primary = _build_voyage_reranker()
         if primary is None:

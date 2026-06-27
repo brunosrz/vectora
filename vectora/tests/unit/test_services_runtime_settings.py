@@ -220,3 +220,39 @@ class TestReload:
 
         rs.reload()
         assert rs.get("key") == "updated"
+
+
+class TestRagSettings:
+    """rag_settings: defaults + merge + persistência (aba de memória)."""
+
+    def test_defaults(self, rs) -> None:
+        s = rs.rag_settings
+        assert s["reranker_enabled"] is True
+        assert s["reranker_top_k"] == 5
+        assert s["rerank_provider"] == "auto"
+        assert s["embed_provider"] == "auto"
+        assert s["ingest_file_types"] == []
+
+    def test_set_merges_partial(self, rs) -> None:
+        rs.set_rag_settings(reranker_enabled=False, reranker_top_k=12)
+        s = rs.rag_settings
+        assert s["reranker_enabled"] is False
+        assert s["reranker_top_k"] == 12
+        # Campos não informados mantêm o default.
+        assert s["rerank_provider"] == "auto"
+
+    def test_set_ignores_none(self, rs) -> None:
+        rs.set_rag_settings(reranker_top_k=8)
+        rs.set_rag_settings(reranker_top_k=None, rerank_provider="voyage")
+        s = rs.rag_settings
+        assert s["reranker_top_k"] == 8  # não sobrescrito por None
+        assert s["rerank_provider"] == "voyage"
+
+    def test_persists_across_reload(self, tmp_settings_path) -> None:
+        from backend.services.runtime_settings import RuntimeSettings
+
+        rs1 = RuntimeSettings(path=tmp_settings_path)
+        rs1.set_rag_settings(reranker_top_k=20, ingest_file_types=["code"])
+        rs2 = RuntimeSettings(path=tmp_settings_path)
+        assert rs2.rag_settings["reranker_top_k"] == 20
+        assert rs2.rag_settings["ingest_file_types"] == ["code"]
