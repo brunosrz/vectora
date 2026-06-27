@@ -106,14 +106,18 @@ def test_semantic_sem_embeddings_cai_para_exato(
 
 
 class TestEmbeddingsFallback:
-    def test_prefers_cohere_when_both_available(self, monkeypatch):
+    def test_wraps_both_when_both_available(self, monkeypatch):
+        from backend.services.fallback_embeddings import FallbackEmbeddings
         from backend.storage import factory
 
         cohere = object()
         voyage = object()
         monkeypatch.setattr(factory, "_build_cohere_embeddings", lambda: cohere)
         monkeypatch.setattr(factory, "_build_voyage_embeddings", lambda: voyage)
-        assert factory._build_lc_embeddings() is cohere
+        result = factory._build_lc_embeddings()
+        assert isinstance(result, FallbackEmbeddings)
+        assert result.primary is cohere
+        assert result.secondary is voyage
 
     def test_falls_back_to_voyage_when_cohere_absent(self, monkeypatch):
         from backend.storage import factory

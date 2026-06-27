@@ -30,7 +30,8 @@ async def fake_db():
             created_at    TEXT,
             last_activity TEXT,
             message_count INTEGER NOT NULL DEFAULT 0,
-            extra         TEXT    NOT NULL DEFAULT '{}'
+            extra         TEXT    NOT NULL DEFAULT '{}',
+            mode          TEXT    NOT NULL DEFAULT 'code'
         )
         """
     )
