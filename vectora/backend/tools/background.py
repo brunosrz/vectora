@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @tool(
     extras={
-        "invalidates": ["background"],
+        "invalidates": ["tasks"],
         "destructive": False,
         "category": "workspace",
         "icon": "clock",

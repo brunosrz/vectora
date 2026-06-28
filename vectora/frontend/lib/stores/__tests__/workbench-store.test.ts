@@ -180,7 +180,7 @@ describe("WORKBENCH_TABS — ordem das abas", () => {
       "files",
       "diff",
       "plan",
-      "background",
+      "tasks",
       "preview",
       "storage",
       "context_graph",

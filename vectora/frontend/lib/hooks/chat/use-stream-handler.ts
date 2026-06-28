@@ -767,7 +767,7 @@ async function handleEvent(
           useWorkbenchStore.getState().invalidateDiff(ws.id);
         if (tabs.includes("plan") && threadId)
           useWorkbenchStore.getState().invalidatePlan(threadId);
-        if (tabs.includes("background") || tabs.includes("files"))
+        if (tabs.includes("tasks") || tabs.includes("files"))
           useWorkbenchStore.getState().markPending(ws.id);
       }
       break;

@@ -51,7 +51,7 @@ import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
 import { MemoryTab } from "./tabs/memory-tab";
-import { BackgroundTab } from "./tabs/background-tab";
+import { TasksTab } from "./tabs/tasks-tab";
 import { ContextGraphTab } from "./tabs/context-graph-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
@@ -72,7 +72,7 @@ const TAB_ICON: Record<
   plan: FileText,
   preview: MonitorPlay,
   storage: Brain,
-  background: Radar,
+  tasks: Radar,
   context_graph: Waypoints,
 };
 
@@ -105,7 +105,7 @@ function useTabBadge(
       return planItems > 0 ? String(planItems) : null;
     case "preview":
     case "storage":
-    case "background":
+    case "tasks":
     case "context_graph":
       return null;
   }
@@ -252,7 +252,7 @@ export function WorkbenchContent({
         {activeTab === "plan" && <PlanTab threadId={threadId} />}
         {activeTab === "preview" && <PreviewTab threadId={threadId} />}
         {activeTab === "storage" && <MemoryTab threadId={threadId} />}
-        {activeTab === "background" && <BackgroundTab threadId={threadId} />}
+        {activeTab === "tasks" && <TasksTab threadId={threadId} />}
         {activeTab === "context_graph" && (
           <ContextGraphTab threadId={threadId} />
         )}

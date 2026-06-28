@@ -46,7 +46,7 @@ export type WorkbenchTab =
   | "plan"
   | "preview"
   | "storage"
-  | "background"
+  | "tasks"
   | "context_graph";
 
 // Ordem: file system → git → plan → segundo plano → preview → memory (rag) →
@@ -55,7 +55,7 @@ export const WORKBENCH_TABS: WorkbenchTab[] = [
   "files",
   "diff",
   "plan",
-  "background",
+  "tasks",
   "preview",
   "storage",
   "context_graph",
