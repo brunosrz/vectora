@@ -40,11 +40,12 @@ def test_identity_licenca_so_quando_perguntado():
     assert "não é open source" not in lowered
 
 
-def test_identity_conhece_workbench_segundo_plano():
-    """A identidade conhece a workbench de Segundo Plano (background) e integrações."""
+def test_identity_conhece_workbench_tarefas():
+    """A identidade conhece a workbench de Tarefas (tasks, antiga "Segundo plano")."""
     lowered = VECTORA_IDENTITY.lower()
-    assert "background" in lowered
-    assert "segundo plano" in lowered
+    assert "tasks" in lowered
+    assert "tarefas" in lowered
+    assert "segundo plano" in lowered  # descreve a funcionalidade
     assert "webhook" in lowered
 
 

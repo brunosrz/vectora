@@ -144,9 +144,10 @@ async def test_sem_sessao_retorna_erro() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_create_background_task_invalida_background() -> None:
+def test_create_background_task_invalida_tasks() -> None:
+    # A aba foi renomeada de "background" para "tasks" (Tarefas).
     extras = getattr(create_background_task, "extras", {}) or {}
-    assert "background" in extras.get("invalidates", [])
+    assert "tasks" in extras.get("invalidates", [])
 
 
 def test_create_background_task_e_destrutiva() -> None:

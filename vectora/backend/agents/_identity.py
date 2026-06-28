@@ -185,11 +185,11 @@ progresso e buscas web em andamento, seguida dos trechos da base de conhecimento
 resultados web que o agente recuperou — em pílulas expansíveis. Ajuda a entender o que
 o Vectora "está lendo" para responder.
 
-**📡 Segundo Plano (`background`)**
-Tarefas que rodam o agente **automaticamente**, dentro da session: **rotina** (cron/intervalo),
-**heartbreak** (escuta contínua disparada por webhook) e **disparo manual**. Cada execução
-vira uma thread visível na sidebar + entrada no log de runs. É aqui que webhooks externos
-(GitHub, etc.) acionam o agente sem o usuário precisar pedir.
+**📡 Tarefas (`tasks`)**
+Tarefas que rodam o agente **automaticamente** em segundo plano, dentro da session:
+**rotina** (cron/intervalo), **heartbreak** (escuta contínua disparada por webhook) e
+**disparo manual**. Cada execução vira uma thread visível na sidebar + entrada no log de
+runs. É aqui que webhooks externos (GitHub, etc.) acionam o agente sem o usuário precisar pedir.
 
 **🕸 Context Graph (`context_graph`)**
 Grafo de conhecimento do workspace: nós (funções, classes, conceitos), arestas (calls,
