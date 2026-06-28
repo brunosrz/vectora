@@ -75,7 +75,9 @@ def main() -> None:
         collect += ["--collect-all", pkg]
     run(
         [
-            sys.executable,
+            "uv",
+            "run",
+            "python",
             "-m",
             "PyInstaller",
             "--onefile",
@@ -92,7 +94,7 @@ def main() -> None:
             *collect,
             str(VECTORA / "launcher.py"),
         ],
-        cwd=ROOT,
+        cwd=VECTORA,
         desc="PyInstaller -> vectora.exe",
     )
     exe = ROOT / "dist" / ("vectora.exe" if sys.platform == "win32" else "vectora")
