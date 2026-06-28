@@ -131,9 +131,59 @@ def _action_build_chat(target, source, env):
     print(f">> chat dist pronto em {dist}")
 
 
+def _msvc_env() -> dict[str, str] | None:
+    """Captura o ambiente do MSVC (x64) via vcvars64.bat, no Windows.
+
+    O Nuitka ``--msvc=latest`` às vezes não configura o toolchain mesmo com MSVC +
+    Windows SDK instalados (falha com "scons environment variable 'CC' is not
+    set"). Pré-carregar o vcvars exporta INCLUDE/LIB/PATH e o Nuitka reaproveita o
+    ambiente já ativo. O vcvars64.bat pode sair com código ≠ 0 por um aviso interno
+    de vswhere mesmo tendo inicializado o ambiente — por isso validamos INCLUDE/LIB
+    em vez do código de retorno. Retorna ``None`` (sem alterar o env) quando não há
+    toolchain detectável, deixando o Nuitka tentar sua própria detecção.
+    """
+    if sys.platform != "win32":
+        return None
+    program_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+    vswhere = os.path.join(
+        program_files_x86, "Microsoft Visual Studio", "Installer", "vswhere.exe"
+    )
+    if not os.path.isfile(vswhere):
+        return None
+    try:
+        install_path = subprocess.run(
+            [vswhere, "-latest", "-products", "*", "-property", "installationPath"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (subprocess.SubprocessError, OSError):
+        return None
+    vcvars = os.path.join(install_path, "VC", "Auxiliary", "Build", "vcvars64.bat")
+    if not install_path or not os.path.isfile(vcvars):
+        return None
+    proc = subprocess.run(
+        ["cmd", "/c", f'"{vcvars}" >nul 2>&1 && set'],
+        capture_output=True,
+        text=True,
+    )
+    env: dict[str, str] = {}
+    for line in proc.stdout.splitlines():
+        key, sep, value = line.partition("=")
+        if sep:
+            env[key] = value
+    if "INCLUDE" not in env or "LIB" not in env:
+        return None
+    return env
+
+
 def _action_build_nuitka(target, source, env):
     cpu = os.cpu_count() or 4
-    _run(["uv", "run", "nuitka", f"--jobs={cpu}", "backend/launcher.py"], cwd=VECTORA)
+    _run(
+        ["uv", "run", "nuitka", f"--jobs={cpu}", "backend/launcher.py"],
+        cwd=VECTORA,
+        env=_msvc_env(),
+    )
 
     # Nuitka pode sair com código 0 mesmo após FATAL no backend C (ex.: MSVC/
     # Windows SDK não detectados), deixando o binário onefile sem ser gerado.
