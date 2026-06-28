@@ -44,11 +44,11 @@ describe("WORKBENCH_TABS", () => {
       "files",
       "diff",
       "plan",
+      "background",
       "preview",
       "storage",
-      "background",
-      "terminal",
       "context_graph",
+      "terminal",
     ]);
   });
 });
