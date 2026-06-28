@@ -3,6 +3,13 @@ main = "src/index.ts"
 compatibility_date = "2025-06-01"
 compatibility_flags = ["nodejs_compat"]
 
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+[observability.traces]
+enabled = false
+
 [durable_objects]
 bindings = [
   { name = "RELAY_SESSION", class_name = "RelaySession" }
@@ -19,5 +26,3 @@ id = "ae857e96bdf94823a10629562fb28184"
 [vars]
 MAX_PAYLOAD_BYTES = "5242880"
 QUEUE_TTL_MS = "600000"
-
-# VECTORA_JWT_SECRET e RELAY_HMAC_SECRET entram via: wrangler secret put
