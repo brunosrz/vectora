@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Sidebar } from "@/components/sidebar/sidebar";
@@ -209,6 +209,20 @@ function SessionPage() {
     },
     [goTo, threads, setChatMode],
   );
+
+  // Workspace ativo (reativo) — decide se o seletor é necessário.
+  const activeWorkspaceId = useWorkspacesStore((s) => s.active_id);
+
+  // Sessão nova em Code mode sem workspace ativo → abre o seletor de workspace
+  // automaticamente, em vez de cair numa sessão "sem workspace ativo". A sessão
+  // só vira registro de verdade quando o usuário escolhe o workspace e envia a
+  // primeira mensagem; aqui garantimos que a escolha aconteça antes de começar.
+  // (Chat mode não tem workspace, então não abre.)
+  useEffect(() => {
+    if (hydrated && isNew(threadId) && !chatMode && !activeWorkspaceId) {
+      setShowNewChatDialog(true);
+    }
+  }, [hydrated, threadId, chatMode, activeWorkspaceId]);
 
   const handleNewChat = useCallback(() => {
     // Chat: cria sessão direto (sem workspace/folders). Dev: dialog de workspace.
