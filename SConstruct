@@ -184,30 +184,28 @@ def _msvc_env() -> dict[str, str] | None:
 
 
 def _action_build_nuitka(target, source, env):
-    # Jobs do backend C. Vários cl.exe em paralelo compilando módulos C gigantes
-    # (google.genai.types ~157k linhas, lance) estouram a RAM/pagefile → C1002 /
-    # STATUS_COMMITMENT_LIMIT (0xC000012D). Default conservador (2) + `--low-memory`
-    # no launcher.py para o build passar sem ajuste manual; quem tem muita RAM sobe
-    # via NUITKA_JOBS (ex.: NUITKA_JOBS=8).
+    # Build híbrido: Nuitka --mode=package compila SÓ o pacote backend em C
+    # (backend.pyd), depois PyInstaller empacota launcher + backend.pyd + libs
+    # Python num vectora.exe. Compilar só o backend (pequeno) evita o OOM (C1002)
+    # de compilar libs gigantes (google.genai.types ~157k linhas, lance) para C.
+    # Default de jobs conservador (2); quem tem muita RAM sobe via NUITKA_JOBS.
     jobs = int(os.environ.get("NUITKA_JOBS", "2"))
     _run(
-        ["uv", "run", "nuitka", f"--jobs={jobs}", "backend/launcher.py"],
-        cwd=VECTORA,
+        [sys.executable, "build-hybrid.py", "--jobs", str(jobs)],
+        cwd=ROOT,
         env=_msvc_env(),
     )
 
-    # Nuitka pode sair com código 0 mesmo após FATAL no backend C (ex.: MSVC/
-    # Windows SDK não detectados), deixando o binário onefile sem ser gerado.
-    # Sem esta verificação, o release empacotaria um instalador sem o executável.
+    # build-hybrid.py já valida cada fase, mas reconferimos o artefato final:
+    # sem ele, o release empacotaria um instalador sem o executável.
     binary_name = "vectora.exe" if sys.platform == "win32" else "vectora"
-    binary = os.path.join(VECTORA, "dist-nuitka", binary_name)
+    binary = os.path.join(ROOT, "dist", binary_name)
     if not os.path.isfile(binary):
         raise SystemExit(
-            f"ERRO: Nuitka terminou sem gerar {binary}. "
-            "Cheque o toolchain C (MSVC + Windows SDK detectados pelo Nuitka) — "
-            "veja https://nuitka.net/info/scons-backend-failure.html."
+            f"ERRO: build-hybrid.py não gerou {binary}. "
+            "Cheque o toolchain C (MSVC + Windows SDK) e o passo do PyInstaller."
         )
-    print(f">> binário Nuitka pronto em {binary}")
+    print(f">> executável híbrido pronto em {binary}")
 
 
 def _find_signtool() -> str | None:
@@ -300,9 +298,9 @@ def _action_package(target, source, env, platform=""):
         dev_env = _get_dev_cert_env() if sys.platform == "win32" else None
         if dev_env:
             build_env.update(dev_env)
-            nuitka_bin = os.path.join(VECTORA, "dist-nuitka", "vectora.exe")
+            nuitka_bin = os.path.join(ROOT, "dist", "vectora.exe")
             if os.path.isfile(nuitka_bin):
-                print(">> assinando binário Nuitka (extraResource) com dev-cert.pfx...")
+                print(">> assinando binário híbrido (extraResource) com dev-cert.pfx...")
                 _sign_binary(nuitka_bin)
             print(">> assinando instaladores com dev-cert.pfx")
         else:

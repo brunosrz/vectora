@@ -8,63 +8,6 @@ e delega para ``src.main:run``.
 (dev, CI). Nunca documentar em produção.
 """
 
-# ─── Opções de build do Nuitka (FONTE DE VERDADE) ──────────────────────────────
-# O Nuitka LÊ estas diretivas ao compilar este arquivo (`nuitka backend/launcher.py`).
-# `SConstruct` (build-nuitka) e o CI (runner.yml) só precisam chamar o nuitka — não
-# repassam mais estas flags. Paths usam {MAIN_DIRECTORY} (= dir deste script,
-# `backend`) ancorado em `..` para apontar à raiz do repo, independente do CWD.
-#
-# `frontend/dist/` (SPA Vite) é embutido como `chat_static/`; em runtime o FastAPI
-# (backend/api/server.py::_chat_static_root) localiza via __compiled__.containing_dir
-# / NUITKA_ONEFILE_PARENT e serve por StaticFiles. Rode `pnpm --dir frontend build` antes.
-#
-# Os --nofollow-import-to podam ferramentas de DEV que entram no grafo de imports
-# (mypy/pytest/ruff/ty/…): nada disso roda em produção e compilá-las inflava o
-# build em milhares de arquivos C. `--jobs` é o único knob dinâmico e fica no CLI.
-#
-# `--msvc=latest` fixa o compilador no MSVC do VS Build Tools. Sem isso o Nuitka
-# escolhe o `zig` (presente como dep no venv) e a compilação de módulos grandes
-# (google.genai.types, qdrant_client.http.models) passa de minutos para horas.
-# Requer VS Build Tools com workload VCTools + Windows SDK instalados.
-#
-# nuitka-project: --mode=onefile
-# nuitka-project: --msvc=latest
-# `--low-memory`: módulos C gigantes (google.genai.types ~157k linhas, lance)
-# estouram a RAM/pagefile com vários cl.exe paralelos (C1002 / 0xC000012D). Este
-# flag reduz o paralelismo e usa opções de compilação frugais — vale para
-# qualquer invocação (scons ou `uv run nuitka` direto).
-# nuitka-project: --low-memory
-# nuitka-project: --output-filename=vectora
-# --report gera o manifesto do que o Nuitka incluiu e o que tentou importar e não
-# achou (nuitka-report.xml na raiz). Custo ~zero, escrito no fim do build; útil pra
-# auditar imports faltando. NÃO captura lazy imports (`__getattr__`) — esses só o
-# smoke test do binário detecta.
-# nuitka-project: --report={MAIN_DIRECTORY}/../nuitka-report.xml
-# nuitka-project: --output-dir={MAIN_DIRECTORY}/../dist-nuitka
-# nuitka-project: --include-data-dir={MAIN_DIRECTORY}/../frontend/dist=chat_static
-# nuitka-project: --include-data-dir={MAIN_DIRECTORY}/assets=backend/assets
-# nuitka-project: --nofollow-import-to=mypy
-# nuitka-project: --nofollow-import-to=pytest
-# nuitka-project: --nofollow-import-to=_pytest
-# nuitka-project: --nofollow-import-to=coverage
-# nuitka-project: --nofollow-import-to=bandit
-# nuitka-project: --nofollow-import-to=ty
-# nuitka-project: --nofollow-import-to=ruff
-# nuitka-project: --nofollow-import-to=pyright
-# nuitka-project: --nofollow-import-to=IPython
-# nuitka-project: --nofollow-import-to=black
-# nuitka-project: --nofollow-import-to=isort
-# nuitka-project: --include-module=backend.services.ipc_pipe_win
-#
-# langchain_core / langgraph resolvem submódulos por lazy import (`__getattr__`
-# → `_import_utils.import_attr`), invisíveis à análise estática do Nuitka. Sem
-# embarcar os pacotes inteiros o binário falha em runtime com ImportError (ex.:
-# `langchain_core.embeddings.embeddings` puxado por `langgraph.store.base`).
-# nuitka-project: --include-package=langchain_core
-# nuitka-project: --include-package=langgraph
-# nuitka-project: --include-package=langchain
-# nuitka-project: --include-package=deepagents
-
 from __future__ import annotations
 
 import logging
