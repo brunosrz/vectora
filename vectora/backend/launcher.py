@@ -29,6 +29,11 @@ e delega para ``src.main:run``.
 #
 # nuitka-project: --mode=onefile
 # nuitka-project: --msvc=latest
+# `--low-memory`: módulos C gigantes (google.genai.types ~157k linhas, lance)
+# estouram a RAM/pagefile com vários cl.exe paralelos (C1002 / 0xC000012D). Este
+# flag reduz o paralelismo e usa opções de compilação frugais — vale para
+# qualquer invocação (scons ou `uv run nuitka` direto).
+# nuitka-project: --low-memory
 # nuitka-project: --output-filename=vectora
 # --report gera o manifesto do que o Nuitka incluiu e o que tentou importar e não
 # achou (nuitka-report.xml na raiz). Custo ~zero, escrito no fim do build; útil pra

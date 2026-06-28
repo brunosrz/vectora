@@ -355,3 +355,4 @@ env.gha
 /graphify
 /.scons-logs
 /company/supabase/.temp
+/.agents

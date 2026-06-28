@@ -185,11 +185,11 @@ def _msvc_env() -> dict[str, str] | None:
 
 def _action_build_nuitka(target, source, env):
     # Jobs do backend C. Vários cl.exe em paralelo compilando módulos C gigantes
-    # (google.genai.types ~157k linhas, lance) estouram a RAM/pagefile em
-    # máquinas com pouca memória → C1002 / STATUS_COMMITMENT_LIMIT (0xC000012D).
-    # NUITKA_JOBS permite baixar o paralelismo (ex.: NUITKA_JOBS=2) para dar mais
-    # memória a cada compilador.
-    jobs = int(os.environ.get("NUITKA_JOBS", os.cpu_count() or 4))
+    # (google.genai.types ~157k linhas, lance) estouram a RAM/pagefile → C1002 /
+    # STATUS_COMMITMENT_LIMIT (0xC000012D). Default conservador (2) + `--low-memory`
+    # no launcher.py para o build passar sem ajuste manual; quem tem muita RAM sobe
+    # via NUITKA_JOBS (ex.: NUITKA_JOBS=8).
+    jobs = int(os.environ.get("NUITKA_JOBS", "2"))
     _run(
         ["uv", "run", "nuitka", f"--jobs={jobs}", "backend/launcher.py"],
         cwd=VECTORA,
