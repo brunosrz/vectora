@@ -54,10 +54,10 @@ export default function Hero() {
         {/* CTAs */}
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <Link
-            to="/signup"
+            to="/downloads"
             className="flex h-[42px] items-center justify-center rounded-2xl bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-[0px_10px_15px_-3px_rgba(121,184,255,0.25),0px_4px_6px_-4px_rgba(121,184,255,0.25)] transition-colors hover:bg-primary/90 sm:w-auto"
           >
-            {m.hero_cta_trial()}
+            {m.hero_cta_download()}
           </Link>
           <Link
             to="/"

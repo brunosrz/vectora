@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import AuthLayout from "#/components/shared/AuthLayout";
 import { getSession, signIn, sendMagicLink } from "#/server/fns/auth";
@@ -32,6 +32,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showSignupHint, setShowSignupHint] = useState(false);
 
   const loginMutation = useMutation({
     mutationFn: () => signIn({ data: { email, password } }),
@@ -40,6 +41,7 @@ function LoginPage() {
     onError: (err: Error) => {
       const msgFn = AUTH_ERROR_MAP[err.message];
       toast.error(msgFn ? msgFn() : m.error_generic());
+      if (err.message === "Invalid login credentials") setShowSignupHint(true);
     },
   });
 
@@ -96,7 +98,7 @@ function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors font-sans"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             />
             <button
               type="button"
@@ -122,6 +124,16 @@ function LoginPage() {
         >
           {loginMutation.isPending ? m.form_submitting() : m.login_cta()}
         </button>
+
+        {showSignupHint && (
+          <Link
+            to="/signup"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card/60 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <UserPlus className="h-4 w-4" />
+            {m.login_no_account()}
+          </Link>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">

@@ -25,6 +25,7 @@ export const Route = createFileRoute("/signup")({
 const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
   "User already registered": m.error_email_taken,
   "Password should be at least 6 characters": m.error_password_weak,
+  turnstile_failed: m.error_turnstile,
 };
 
 function SignupPage() {
@@ -123,7 +124,7 @@ function SignupPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors font-sans"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             />
             <button
               type="button"
@@ -161,7 +162,8 @@ function SignupPage() {
           {m.signup_have_account()}
         </Link>
         <Link
-          to="/pricing"
+          to="/"
+          hash="pricing"
           className="hover:text-foreground/90 transition-colors"
         >
           {m.signup_see_pricing()}
