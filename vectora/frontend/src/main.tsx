@@ -22,6 +22,22 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// PWA: o service worker (registerType "autoUpdate") precacheia o app. Após um
+// rebuild, o novo SW instala e — com skipWaiting/clientsClaim — assume o controle,
+// disparando `controllerchange`. Recarregamos UMA vez aqui para servir os assets
+// novos em vez do cache antigo, evitando ver UI desatualizada após `scons frontend`.
+if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+  // Na 1ª visita a página ainda não é controlada por um SW; nesse caso o
+  // controllerchange é a instalação inicial (não um update) e NÃO recarregamos.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded || !hadController) return;
+    reloaded = true;
+    window.location.reload();
+  });
+}
+
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("#root não encontrado em index.html");

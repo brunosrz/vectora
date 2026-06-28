@@ -72,6 +72,12 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // O novo SW assume o controle imediatamente (sem esperar todas as abas
+        // fecharem) e dispara `controllerchange` → o app recarrega para os
+        // assets novos (ver src/main.tsx). Evita UI desatualizada após rebuild.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         navigateFallback: "/index.html",
         // O Monaco empacota web workers grandes (ts.worker ~7 MB); precisam
         // ser precacheados para o editor funcionar offline (Electron).
