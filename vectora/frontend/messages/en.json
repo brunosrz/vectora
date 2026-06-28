@@ -334,6 +334,7 @@
   "onboarding_step3_title": "License token",
   "onboarding_step4_title": "Storage mode",
   "onboarding_step5_title": "Workspaces",
+  "onboarding_workspace_select_title": "Choose a workspace",
   "onboarding_step6_title": "What is RAG?",
   "onboarding_step7_title": "All set!",
   "onboarding_welcome_body": "Vectora is your AI coding assistant — it can read, write and run code inside your trusted folders.",

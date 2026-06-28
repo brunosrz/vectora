@@ -474,7 +474,10 @@ function SessionPage() {
       {showOnboarding && userId && (
         <SetupWizard
           userId={userId}
-          onComplete={() => setShowOnboarding(false)}
+          onComplete={(workspaceId) => {
+            setShowOnboarding(false);
+            if (!chatMode) void handleConfirmNewChat(workspaceId);
+          }}
         />
       )}
 

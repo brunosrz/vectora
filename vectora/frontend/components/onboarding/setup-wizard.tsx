@@ -18,7 +18,18 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { Loader2, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  Check,
+  FolderGit2,
+  FolderOpen,
+  FolderPlus,
+} from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +44,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 
 const ONBOARDING_KEY = (userId: string) => `vectora:onboarding-done-${userId}`;
 
@@ -50,12 +61,14 @@ function markOnboardingDone(userId: string): void {
 
 interface SetupWizardProps {
   userId: string;
-  onComplete: () => void;
+  /** Chamado ao terminar; `workspaceId` é null para criar workspace dedicado. */
+  onComplete: (workspaceId: string | null) => void;
 }
 
-/** Props comuns a todos os passos — apenas StepMode usa `onValidityChange`. */
+/** Props comuns a todos os passos. */
 interface StepProps {
   onValidityChange?: (valid: boolean) => void;
+  onWorkspaceSelect?: (id: string | null) => void;
 }
 
 // ===========================================================================
@@ -186,7 +199,7 @@ function LicenseResultBadge({ result }: { result: LicenseResult }) {
 }
 
 function StepToken(_props: StepProps) {
-  const [mode, setMode] = useState<"token" | "login">("token");
+  const [mode, setMode] = useState<"token" | "login">("login");
   const [config, setConfig] = useState<ConfigSummary | null>(null);
   const [result, setResult] = useState<LicenseResult | null>(null);
 
@@ -278,7 +291,7 @@ function StepToken(_props: StepProps) {
               onChange={(e) => setTokenInput(e.target.value)}
               placeholder="vct_…"
               className="h-8 text-xs font-mono flex-1"
-              autoComplete="off"
+              autoComplete="new-password"
             />
             <Button
               type="button"
@@ -783,6 +796,88 @@ function StepWorkspace(_props: StepProps) {
   );
 }
 
+function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
+  const workspaces = useWorkspacesStore((s) => s.workspaces);
+  const activeId = useWorkspacesStore((s) => s.active_id);
+  const hydrate = useWorkspacesStore((s) => s.hydrate);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    void hydrate();
+    setSelected(activeId ?? null);
+  }, [hydrate, activeId]);
+
+  function handleSelect(id: string | null) {
+    setSelected(id);
+    onWorkspaceSelect?.(id);
+  }
+
+  return (
+    <ScrollArea className="max-h-60">
+      <div className="space-y-1 pr-3 py-2">
+        <button
+          type="button"
+          onClick={() => handleSelect(null)}
+          className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
+            selected === null
+              ? "border-border/80 bg-muted/60"
+              : "border-border hover:bg-muted/50"
+          }`}
+        >
+          <FolderPlus className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-foreground">
+              {m.new_chat_create_new()}
+            </span>
+            <span className="block text-xs text-muted-foreground mt-0.5">
+              {m.new_chat_create_new_desc()}
+            </span>
+          </span>
+          {selected === null && (
+            <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground" />
+          )}
+        </button>
+
+        {workspaces.length > 0 && (
+          <p className="px-1 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {m.new_chat_existing_label()}
+          </p>
+        )}
+
+        {workspaces.map((ws) => (
+          <button
+            key={ws.id}
+            type="button"
+            onClick={() => handleSelect(ws.id)}
+            className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
+              selected === ws.id
+                ? "border-border/80 bg-muted/60"
+                : "border-border hover:bg-muted/50"
+            }`}
+          >
+            {ws.is_git_repo ? (
+              <FolderGit2 className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+            ) : (
+              <FolderOpen className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-foreground truncate">
+                {ws.name}
+              </span>
+              <span className="block text-xs text-muted-foreground truncate mt-0.5">
+                {ws.cwd}
+              </span>
+            </span>
+            {selected === ws.id && (
+              <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground" />
+            )}
+          </button>
+        ))}
+      </div>
+    </ScrollArea>
+  );
+}
+
 function StepRag(_props: StepProps) {
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
@@ -808,6 +903,7 @@ const STEP_COMPONENTS = [
   StepToken,
   StepMode,
   StepWorkspace,
+  StepWorkspaceSelect,
   StepRag,
   StepDone,
 ];
@@ -818,6 +914,7 @@ const STEP_TITLE_KEYS = [
   "onboarding.step3_title",
   "onboarding.step4_title",
   "onboarding.step5_title",
+  "onboarding.workspace_select_title",
   "onboarding.step6_title",
   "onboarding.step7_title",
 ] as const;
@@ -860,6 +957,9 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
 export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
   const [step, setStep] = useState(0);
   const [valid, setValid] = useState(true);
+  const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     setValid(true);
@@ -870,9 +970,9 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
       setStep((s) => s + 1);
     } else {
       markOnboardingDone(userId);
-      onComplete();
+      onComplete(selectedWorkspace);
     }
-  }, [step, userId, onComplete]);
+  }, [step, userId, onComplete, selectedWorkspace]);
 
   const handleBack = useCallback(() => {
     setStep((s) => Math.max(0, s - 1));
@@ -880,8 +980,8 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
 
   const handleSkip = useCallback(() => {
     markOnboardingDone(userId);
-    onComplete();
-  }, [userId, onComplete]);
+    onComplete(selectedWorkspace);
+  }, [userId, onComplete, selectedWorkspace]);
 
   const StepContent = STEP_COMPONENTS[step]!;
   const isFirstStep = step === 0;
@@ -901,7 +1001,10 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
         </DialogHeader>
 
         <div className="min-h-[220px]" data-testid="step-content-area">
-          <StepContent onValidityChange={setValid} />
+          <StepContent
+            onValidityChange={setValid}
+            onWorkspaceSelect={setSelectedWorkspace}
+          />
         </div>
 
         <StepIndicator step={step} total={TOTAL_STEPS} />

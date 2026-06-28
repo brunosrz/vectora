@@ -334,6 +334,7 @@
   "onboarding_step3_title": "Token de licença",
   "onboarding_step4_title": "Modo de armazenamento",
   "onboarding_step5_title": "Workspaces",
+  "onboarding_workspace_select_title": "Escolha um workspace",
   "onboarding_step6_title": "O que é RAG?",
   "onboarding_step7_title": "Tudo pronto!",
   "onboarding_welcome_body": "O Vectora é seu assistente de código com IA — ele pode ler, escrever e executar código nas suas pastas confiáveis.",
