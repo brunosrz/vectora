@@ -162,8 +162,11 @@ def _msvc_env() -> dict[str, str] | None:
     vcvars = os.path.join(install_path, "VC", "Auxiliary", "Build", "vcvars64.bat")
     if not install_path or not os.path.isfile(vcvars):
         return None
+    # Forma string (não lista): o cmd precisa parsear o wrap externo de aspas
+    # `cmd /c "..."` para lidar com o caminho do vcvars com espaços + o `&& set`.
+    # A forma lista quebra o redirecionamento/aspas e não captura o ambiente.
     proc = subprocess.run(
-        ["cmd", "/c", f'"{vcvars}" >nul 2>&1 && set'],
+        f'cmd /c ""{vcvars}" >nul 2>&1 && set"',
         capture_output=True,
         text=True,
     )
