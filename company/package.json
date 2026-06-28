@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "dotenv -e .env.local -- cross-env NODE_OPTIONS=--import=./instrument.server.mjs vite dev --port 3000 --host",
     "generate-routes": "tsr generate",
-    "build": "vite build && node -e \"require('fs').copyFileSync('instrument.server.mjs','.output/server/instrument.server.mjs')\"",
+    "build": "vite build && node -e \"if((process.env.NITRO_PRESET||'node-server')==='node-server'){const f=require('fs');f.mkdirSync('.output/server',{recursive:true});f.copyFileSync('instrument.server.mjs','.output/server/instrument.server.mjs')}\"",
     "preview": "vite preview",
     "typecheck": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && tsr generate && tsc --noEmit",
     "test": "vitest run",
