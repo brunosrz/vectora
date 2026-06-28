@@ -114,16 +114,18 @@ export function RagSettingsPanel() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-label={m.rag_settings_title()}
-        title={m.rag_settings_title()}
-        aria-expanded={open}
-        data-testid="rag-settings-btn"
-        className="flex items-center justify-center h-6 w-6 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50"
-      >
-        <Settings2 className="h-3.5 w-3.5" />
-      </button>
+      <div className="flex items-center justify-start px-3 pt-3 shrink-0">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-label={m.rag_settings_title()}
+          title={m.rag_settings_title()}
+          aria-expanded={open}
+          data-testid="rag-settings-btn"
+          className="flex items-center justify-center h-6 w-6 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
 
       <WorkbenchSlidePanel
         open={open}

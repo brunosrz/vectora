@@ -149,10 +149,8 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
 
   if (isEmpty) {
     return (
-      <div className="relative flex h-full flex-col">
-        <div className="flex items-center justify-start px-3 pt-2">
-          <RagSettingsPanel />
-        </div>
+      <div className="flex h-full flex-col">
+        <RagSettingsPanel />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
           <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
           <div className="max-w-[240px]">
@@ -169,10 +167,8 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
   }
 
   return (
-    <div className="relative flex h-full flex-col">
-      <div className="flex items-center justify-start px-3 pt-3 shrink-0">
-        <RagSettingsPanel />
-      </div>
+    <div className="flex h-full flex-col">
+      <RagSettingsPanel />
       <div className="flex-1 space-y-4 overflow-auto px-3 pb-3">
         {hasActivity && (
           <section className="space-y-1.5">

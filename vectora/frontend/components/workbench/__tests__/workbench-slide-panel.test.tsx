@@ -48,17 +48,13 @@ describe("WorkbenchSlidePanel", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("clicar no backdrop chama onClose", () => {
-    const onClose = vi.fn();
+  it("renderiza em fluxo (não é overlay absoluto que cobre o botão)", () => {
     render(
-      <WorkbenchSlidePanel open onClose={onClose} title="X">
+      <WorkbenchSlidePanel open onClose={() => {}} title="X" testId="p">
         <p>c</p>
       </WorkbenchSlidePanel>,
     );
-    // O backdrop é o elemento aria-hidden clicável.
-    const backdrop = document.querySelector('[aria-hidden="true"]');
-    expect(backdrop).toBeTruthy();
-    fireEvent.click(backdrop!);
-    expect(onClose).toHaveBeenCalledTimes(1);
+    // In-flow abaixo do gatilho → não usa posicionamento absoluto.
+    expect(screen.getByTestId("p").className).not.toContain("absolute");
   });
 });
