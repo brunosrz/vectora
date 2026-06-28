@@ -10,11 +10,11 @@ bindings = [
 
 [[migrations]]
 tag = "v1"
-new_classes = ["RelaySession"]
+new_sqlite_classes = ["RelaySession"]
 
 [[kv_namespaces]]
 binding = "RELAY_METRICS"
-id = "placeholder"
+id = "ae857e96bdf94823a10629562fb28184"
 
 [vars]
 MAX_PAYLOAD_BYTES = "5242880"
