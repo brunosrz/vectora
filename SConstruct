@@ -506,6 +506,9 @@ def _action_docker(target, source, env):
 def _action_clean(target, source, env):
     paths = [
         "vectora/dist-nuitka",
+        "dist",
+        "build/pyinstaller",
+        "build/vectora.spec",
         "vectora/frontend/dist",
         "vectora/frontend/.next",
         "vectora/frontend/out",
