@@ -2,20 +2,22 @@
 
 **Vectora** é um assistente de IA self-hosted para equipes de desenvolvimento — roda inteiramente no seu servidor, integra como sub-agente em qualquer orquestrador compatível com MCP (Claude Code, Claude Desktop, extensões VS Code) e vem com um chat web multi-usuário completo.
 
-No seu núcleo, o Vectora resolve o **problema do abismo de conhecimento**: os LLMs não conhecem sua base de código, sua documentação ou as versões mais recentes da sua stack. O Vectora preenche essa lacuna com RAG híbrido (BM25 + vetores densos + reranker Cohere) — você indexa seus documentos uma vez e toda interação com IA passa a ter contexto completo.
+No seu núcleo, o Vectora resolve o **problema do abismo de conhecimento**: os LLMs não conhecem sua base de código, sua documentação ou as versões mais recentes da sua stack. O Vectora preenche essa lacuna por dois caminhos complementares: **RAG híbrido** (BM25 + vetores densos + reranker Cohere/VoyageAI) para recuperação por similaridade, e o **Context Graph** — um grafo de conhecimento nativo do workspace (funções, classes, conceitos e suas relações) para contexto estrutural.
 
 ---
 
 ## Por que o Vectora?
 
 - **Orchestrator + Agentes Especializados** — O Orchestrator é o agente LLM primário. Responde diretamente para consultas simples e delega com instruções explícitas para os especialistas (search, coder, RAG). Sem hops de roteamento desnecessários.
-- **Pipeline RAG híbrido** — Cada recuperação roda BM25 + busca vetorial densa + reranker Cohere. O resultado flui de volta para o Orchestrator para síntese.
+- **Pipeline RAG híbrido** — Cada recuperação roda BM25 + busca vetorial densa + reranker. O resultado flui de volta para o Orchestrator para síntese.
+- **Context Graph nativo** — Analisa o workspace (AST via tree-sitter + extração semântica por LLM) e gera um grafo de conhecimento com god nodes, comunidades e perguntas sugeridas. Configurável por tipo de arquivo (ex.: só markdown, deixando o código para o RAG).
 - **Mais de 20 ferramentas em 6 categorias** — Web search, busca vetorial, filesystem, terminal (PTY), artifacts, memória — sempre disponíveis.
-- **Embeddings curados** — Resultados da busca web passam por um gate de curadoria (reranker Cohere + LLM judge) antes de serem indexados. Sua base de conhecimento nunca é contaminada.
-- **Chat web multi-usuário** — Interface Next.js integrada com autenticação, RBAC, workspaces, terminal embarcado, visualizador de diff e painel de planos.
+- **Resiliência de provider** — Fallback automático de LLM por quota (429 troca de provider sozinho, com aviso visível) e de embeddings/rerank (Cohere↔VoyageAI). O model selector reflete o provider ativo.
+- **Embeddings curados** — Resultados da busca web passam por um gate de curadoria (reranker + LLM judge) antes de serem indexados. Sua base de conhecimento nunca é contaminada.
+- **Chat web multi-usuário** — Interface React (Vite + TanStack Router) integrada com autenticação, RBAC, workspaces e a workbench (terminal, diff/git, planos, context graph, memória — ver abaixo).
 - **Memória persistente entre sessões** — Memória em SQLite com isolamento por usuário.
 - **Infraestrutura zero no modo lite** — SQLite + LanceDB. Sem Docker ou Postgres para uso local ou times pequenos.
-- **Multi-LLM** — Google Gemini (plano gratuito), Cohere, OpenAI, Anthropic, ou Ollama (totalmente local).
+- **Multi-LLM** — Google Gemini (plano gratuito), Cohere, OpenAI, Anthropic, ou Ollama (totalmente local). O model selector lista apenas os providers com API key configurada.
 
 ---
 
@@ -37,6 +39,28 @@ No seu núcleo, o Vectora resolve o **problema do abismo de conhecimento**: os L
 | ≥ 0.7   | `rag_inject` direto — alta confiança                                 |
 | 0.4–0.7 | `rag_rerank` → `rag_inject`                                          |
 | < 0.4   | `search` (com `rag_pending=True`) → `search_finalize` → `rag_inject` |
+
+---
+
+## Workbench (painel lateral)
+
+No modo **Code**, o chat vem com um painel lateral multi-aba — a workbench. As abas
+seguem esta ordem e cada uma renderiza a partir de dados do backend em tempo real:
+
+| Aba               | O que faz                                                                                                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **File System**   | Árvore do workspace; abre arquivos como janelas (com abas), edita, e fixa arquivos ("pin") para manter no contexto.                                                                                                   |
+| **Git**           | `git status` (staged/unstaged/untracked), diff por arquivo com hunks, e contador de mudanças.                                                                                                                         |
+| **Plan**          | Planos, specs e guias gerados pelo agente (`create_artifact`, markdown em `~/.vectora/artifacts/`).                                                                                                                   |
+| **Segundo plano** | Tarefas em segundo plano da sessão + histórico de execuções.                                                                                                                                                          |
+| **Preview**       | Configura targets de run (servidor/comando) e mostra o preview do projeto.                                                                                                                                            |
+| **Memory (RAG)**  | Memórias e citações RAG/web indexadas + **settings de RAG**: reranker on/off + top_k, provider de rerank/embedding (Cohere/Voyage/auto), tipos de arquivo a ingerir, e gestão de coleções (listar/apagar).            |
+| **Context Graph** | Constrói e exibe o grafo de conhecimento do workspace (god nodes, conexões, perguntas) + **settings**: tipos de arquivo a indexar (code/document/paper) e modo (semântico/AST). Build pausável e retomável por quota. |
+| **Terminal**      | Shell embarcado real via PTY (`pywinpty`/`ptyprocess`) renderizado com xterm.js.                                                                                                                                      |
+
+Os artefatos do Context Graph e o cache ficam em `.vectora/context-graph/` dentro do
+workspace; o que estiver no `.vectoraignore` (ignore unificado, vale para context graph,
+RAG, filesystem e chat) é invisível para o Vectora.
 
 ---
 
