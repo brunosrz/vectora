@@ -21,6 +21,7 @@ import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { MarkdownView } from "@/components/workbench/markdown-view";
+import { RagSettingsPanel } from "@/components/workbench/rag-settings-panel";
 import { m } from "@/lib/paraglide/messages";
 
 interface MemoryTabProps {
@@ -148,15 +149,20 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
 
   if (isEmpty) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-        <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
-        <div className="max-w-[240px]">
-          <p className="text-sm font-medium text-foreground">
-            {m.workbench_memory_empty_title()}
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {m.workbench_memory_empty_desc()}
-          </p>
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-start px-3 pt-2">
+          <RagSettingsPanel />
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+          <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
+          <div className="max-w-[240px]">
+            <p className="text-sm font-medium text-foreground">
+              {m.workbench_memory_empty_title()}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {m.workbench_memory_empty_desc()}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -164,6 +170,9 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
 
   return (
     <div className="h-full space-y-4 overflow-auto p-3">
+      <div className="flex items-center justify-start">
+        <RagSettingsPanel />
+      </div>
       {hasActivity && (
         <section className="space-y-1.5">
           <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">

@@ -894,5 +894,19 @@
   "graph_filetype_paper": "PDFs / papers",
   "graph_settings_mode": "Extraction mode",
   "graph_mode_semantic": "Semantic (AST + LLM)",
-  "graph_mode_ast": "Structure only (AST, no LLM)"
+  "graph_mode_ast": "Structure only (AST, no LLM)",
+  "rag_settings_title": "RAG settings",
+  "rag_reranker_enabled": "Reranker enabled",
+  "rag_reranker_help": "Reorders retrieved chunks by relevance (Cohere/Voyage).",
+  "rag_reranker_top_k": "Depth (top_k)",
+  "rag_rerank_provider": "Rerank provider",
+  "rag_embed_provider": "Embedding provider",
+  "rag_provider_auto": "Automatic (by key/fallback)",
+  "rag_provider_cohere": "Cohere",
+  "rag_provider_voyage": "VoyageAI",
+  "rag_collections_title": "Collections",
+  "rag_collections_empty": "No collections yet.",
+  "rag_collection_count": "{n} items",
+  "rag_collection_delete": "Delete collection",
+  "rag_collection_delete_confirm": "Delete collection \"{name}\"? This removes everything indexed in it."
 }

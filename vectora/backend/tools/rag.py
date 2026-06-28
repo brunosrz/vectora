@@ -467,6 +467,21 @@ async def ingest_docs(
     # spec entram em skipped_ignored.
     files_to_ingest, skipped_ignored = walk_files(path, glob_pattern, spec)
 
+    # Filtro por tipo de arquivo dos settings de RAG (code/document/paper).
+    # Vazio = todos. Permite "RAG só de código" enquanto o Context Graph cuida
+    # dos markdowns (e vice-versa).
+    ingest_types = {str(t) for t in _rag_runtime().get("ingest_file_types", [])}
+    if ingest_types:
+        from backend.services.context_graph.detect import classify_file
+
+        filtered: list[Any] = []
+        for fp in files_to_ingest:
+            ftype = classify_file(fp)
+            if ftype is not None and str(ftype) in ingest_types:
+                filtered.append(fp)
+        skipped_ignored += len(files_to_ingest) - len(filtered)
+        files_to_ingest = filtered
+
     if not files_to_ingest:
         return json.dumps(
             {
