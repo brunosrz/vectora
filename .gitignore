@@ -354,3 +354,4 @@ AbilitySystem_repo/
 env.gha
 /graphify
 /.scons-logs
+/company/supabase/.temp

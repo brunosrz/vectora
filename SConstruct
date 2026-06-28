@@ -177,13 +177,21 @@ def _msvc_env() -> dict[str, str] | None:
             env[key] = value
     if "INCLUDE" not in env or "LIB" not in env:
         return None
+    # Força a saída do MSVC em inglês: o clcache do Nuitka parseia o output do
+    # cl, e mensagens localizadas (pt-BR) disparam o aviso de "language pack".
+    env["VSLANG"] = "1033"
     return env
 
 
 def _action_build_nuitka(target, source, env):
-    cpu = os.cpu_count() or 4
+    # Jobs do backend C. Vários cl.exe em paralelo compilando módulos C gigantes
+    # (google.genai.types ~157k linhas, lance) estouram a RAM/pagefile em
+    # máquinas com pouca memória → C1002 / STATUS_COMMITMENT_LIMIT (0xC000012D).
+    # NUITKA_JOBS permite baixar o paralelismo (ex.: NUITKA_JOBS=2) para dar mais
+    # memória a cada compilador.
+    jobs = int(os.environ.get("NUITKA_JOBS", os.cpu_count() or 4))
     _run(
-        ["uv", "run", "nuitka", f"--jobs={cpu}", "backend/launcher.py"],
+        ["uv", "run", "nuitka", f"--jobs={jobs}", "backend/launcher.py"],
         cwd=VECTORA,
         env=_msvc_env(),
     )
