@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import logging
 import os
+import time
+import uuid
 from typing import Any
 
 import httpx
@@ -37,6 +39,11 @@ from backend.services.license import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/license", tags=["license"])
+
+# Estado efêmero de OAuth — states expiram em 5 min; limpeza via task assíncrona.
+_oauth_states: dict[str, float] = {}  # state → expires_at (monotonic)
+_OAUTH_TTL = 300.0  # segundos
+_RELAY_URL = os.getenv("VECTORA_RELAY_URL", "https://relay.vectora.chat")
 
 DEFAULT_PORTAL_URL = "https://vectora.company/functions/v1/create-portal"
 DEFAULT_CONNECT_URL = "https://vectora.company/functions/v1/agent-login"
@@ -163,6 +170,82 @@ async def license_connect(body: ConnectBody, request: Request) -> dict:
     except LicenseError as exc:
         return {"connected": True, "valid": False, "error": str(exc)}
     return {"connected": True, "valid": True, **info.to_dict()}
+
+
+def _oauth_secret() -> str:
+    secret = os.getenv("VECTORA_OAUTH_SECRET", "").strip()
+    if not secret:
+        raise HTTPException(
+            status_code=503,
+            detail="OAuth não configurado. Defina VECTORA_OAUTH_SECRET.",
+        )
+    return secret
+
+
+@router.post("/oauth/init")
+async def license_oauth_init() -> dict:
+    """Gera um state para o device flow OAuth com vectora.company.
+
+    Retorna o state e a URL que o frontend deve abrir no browser.
+    O state expira em 5 minutos.
+    """
+    _oauth_secret()  # falha cedo se não configurado
+    state = str(uuid.uuid4())
+    _oauth_states[state] = time.monotonic() + _OAUTH_TTL
+    company_url = os.getenv("VECTORA_COMPANY_URL", "https://vectora.company")
+    auth_url = f"{company_url}/auth/device?state={state}"
+    return {"state": state, "auth_url": auth_url}
+
+
+@router.get("/oauth/poll")
+async def license_oauth_poll(state: str) -> dict:
+    """Consulta o relay para ver se o token OAuth chegou.
+
+    O frontend faz polling a cada 2s. Quando o token chega:
+    - salva-o em config + env
+    - valida a licença
+    - retorna ``{ok: true}``
+    """
+    if not state or state not in _oauth_states:
+        raise HTTPException(status_code=400, detail="state inválido ou expirado.")
+    if time.monotonic() > _oauth_states[state]:
+        del _oauth_states[state]
+        raise HTTPException(status_code=410, detail="state expirado.")
+
+    secret = _oauth_secret()
+    relay_url = f"{_RELAY_URL}/oauth/token/{state}"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                relay_url,
+                headers={"Authorization": f"Bearer {secret}"},
+            )
+    except httpx.HTTPError as exc:
+        logger.warning("license/oauth/poll: falha de network — %s", exc)
+        return {"pending": True}
+
+    if resp.status_code == 202:
+        return {"pending": True}
+
+    if resp.status_code != 200:
+        logger.warning("license/oauth/poll: relay respondeu %s", resp.status_code)
+        return {"pending": True}
+
+    data = resp.json()
+    token = str(data.get("token", "")).strip()
+    if not token:
+        return {"pending": True}
+
+    del _oauth_states[state]
+    os.environ["VECTORA_TOKEN"] = token
+    write_token_to_config(token)
+    clear_license_cache()
+
+    try:
+        info = await validate_license_async(force=True)
+    except LicenseError as exc:
+        return {"ok": True, "valid": False, "error": str(exc)}
+    return {"ok": True, "valid": True, **info.to_dict()}
 
 
 def _portal_url() -> str:

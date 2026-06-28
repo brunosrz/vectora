@@ -60,7 +60,8 @@ export default function Hero() {
             {m.hero_cta_trial()}
           </Link>
           <Link
-            to="/pricing"
+            to="/"
+            hash="pricing"
             className="flex h-[44px] items-center justify-center rounded-2xl border border-border bg-card/50 px-8 text-sm font-semibold text-foreground/90 transition-colors hover:border-primary hover:text-foreground sm:w-auto"
           >
             {m.hero_cta_pricing()}

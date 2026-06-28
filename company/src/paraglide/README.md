@@ -4,6 +4,7 @@
 
 Compiled from: `C:\Users\Machi\Desktop\vectora\company\project.inlang`
 
+
 ## What is this folder?
 
 This folder contains compiled [Paraglide JS](https://github.com/opral/paraglide-js) output. Paraglide JS compiles your translation messages into tree-shakeable JavaScript functions.
@@ -11,18 +12,15 @@ This folder contains compiled [Paraglide JS](https://github.com/opral/paraglide-
 ## At a glance
 
 Purpose:
-
 - This folder stores compiled i18n message functions.
 - Source translations live outside this folder in your inlang project.
 
 Safe to import:
-
 - `messages.js` — all message functions
 - `runtime.js` — locale utilities
 - `server.js` — server-side middleware
 
 Do not edit:
-
 - All files in this folder are auto-generated.
 - Changes will be overwritten on next compilation.
 
@@ -42,30 +40,24 @@ paraglide/
 import * as m from "./paraglide/messages.js";
 
 // Messages are functions that return localized strings
-m.hello_world(); // "Hello, World!" (in current locale)
+m.hello_world();             // "Hello, World!" (in current locale)
 m.greeting({ name: "Sam" }); // "Hello, Sam!"
 
 // Override locale per-call
-m.hello_world({}, { locale: "de" }); // "Hallo, Welt!"
+m.hello_world({}, { locale: "de" });           // "Hallo, Welt!"
 m.greeting({ name: "Sam" }, { locale: "de" }); // "Hallo, Sam!"
 ```
 
 ## Runtime API
 
 ```js
-import {
-  getLocale,
-  getTextDirection,
-  setLocale,
-  locales,
-  baseLocale,
-} from "./paraglide/runtime.js";
+import { getLocale, getTextDirection, setLocale, locales, baseLocale } from "./paraglide/runtime.js";
 
-getLocale(); // Current locale, e.g., "en"
+getLocale();    // Current locale, e.g., "en"
 getTextDirection(); // "ltr" | "rtl" for current locale
 setLocale("de"); // Set locale
-locales; // Available locales, e.g., ["en", "de", "fr"]
-baseLocale; // Default locale, e.g., "en"
+locales;        // Available locales, e.g., ["en", "de", "fr"]
+baseLocale;     // Default locale, e.g., "en"
 ```
 
 ## Strategy
@@ -94,7 +86,6 @@ See the [strategy documentation](https://paraglidejs.com/strategy) for details.
 Messages can contain markup tags for bold, links, and other inline elements. Translators control where tags appear; developers control how they render.
 
 Important:
-
 - Tag names are app-defined. There is no built-in list of HTML tags.
 - `{#b}...{/b}` does not automatically render as `<b>...</b>`.
 - Renderers/snippets are looked up by the same tag name used in the message.
@@ -151,7 +142,7 @@ import { ParaglideMessage } from "@inlang/paraglide-js-react"; // or -vue, -svel
     b: ({ children }) => <b>{children}</b>,
     icon: () => <span aria-hidden="true" className="icon-wave" />,
   }}
-/>;
+/>
 ```
 
 The available renderer/snippet names come from the message itself. You can inspect them through `message.parts()`, and TypeScript uses the same names to type-check your markup renderers.

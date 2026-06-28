@@ -314,5 +314,13 @@
   "page_downloads_desc": "Download Vectora Desktop for your system.",
   "downloads_recommended": "Recommended",
   "downloads_cta": "Download",
-  "downloads_footer": "Open source · Same compiled binary, no telemetry."
+  "downloads_footer": "Open source · Same compiled binary, no telemetry.",
+  "auth_device_title": "Authorize Vectora",
+  "auth_device_desc": "Click Authorize to connect your Vectora.company account to the desktop app.",
+  "auth_device_btn": "Authorize",
+  "auth_device_success_title": "Authorized!",
+  "auth_device_success_desc": "You can close this tab and return to the Vectora app.",
+  "auth_device_error": "Authorization failed. Try again.",
+  "auth_device_no_token": "Your account has no token yet. Visit the dashboard to generate one.",
+  "auth_device_login_prompt": "You must be logged in to authorize the app."
 }

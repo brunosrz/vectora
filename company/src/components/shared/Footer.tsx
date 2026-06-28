@@ -23,7 +23,7 @@ export default function Footer() {
         <div className="flex flex-col gap-3">
           <p className={titleClass}>{m.footer_product()}</p>
           <div className={linksGridClass}>
-            <Link to="/pricing" className={linkClass}>
+            <Link to="/" hash="pricing" className={linkClass}>
               {m.nav_pricing()}
             </Link>
             <a

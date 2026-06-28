@@ -56,7 +56,8 @@ export default function Header() {
           aria-label="Navegação principal"
         >
           <Link
-            to="/pricing"
+            to="/"
+            hash="pricing"
             className="text-muted-foreground transition-colors hover:text-foreground"
             activeProps={{ className: "text-foreground" }}
           >
@@ -185,7 +186,8 @@ export default function Header() {
         >
           <div className="flex flex-col gap-0.5 text-sm">
             <Link
-              to="/pricing"
+              to="/"
+              hash="pricing"
               onClick={() => setMobileOpen(false)}
               className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
             >

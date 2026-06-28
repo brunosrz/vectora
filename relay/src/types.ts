@@ -3,6 +3,7 @@ export interface Env {
   RELAY_METRICS: KVNamespace;
   VECTORA_JWT_SECRET: string;
   RELAY_HMAC_SECRET: string;
+  VECTORA_OAUTH_SECRET: string;
   MAX_PAYLOAD_BYTES: string;
   QUEUE_TTL_MS: string;
   TEST_IS_WINDOWS?: string;

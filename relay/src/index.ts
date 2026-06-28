@@ -57,6 +57,16 @@ export default {
       );
     }
 
+    // OAuth device flow — company armazena, backend consome
+    if (request.method === "POST" && url.pathname === "/oauth/token") {
+      return handleOAuthStore(request, env);
+    }
+
+    if (request.method === "GET" && url.pathname.startsWith("/oauth/token/")) {
+      const state = url.pathname.slice("/oauth/token/".length);
+      return handleOAuthPoll(state, request, env);
+    }
+
     return new Response("Not Found", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
@@ -97,6 +107,49 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
   };
 
   return Response.json(response);
+}
+
+const OAUTH_TTL_SECONDS = 300; // 5 min
+
+function requireOAuthSecret(request: Request, env: Env): boolean {
+  const auth = request.headers.get("Authorization") ?? "";
+  return auth === `Bearer ${env.VECTORA_OAUTH_SECRET}`;
+}
+
+async function handleOAuthStore(request: Request, env: Env): Promise<Response> {
+  if (!requireOAuthSecret(request, env)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  let body: { state: string; token: string };
+  try {
+    body = (await request.json()) as { state: string; token: string };
+  } catch {
+    return new Response("Bad Request", { status: 400 });
+  }
+  if (!body.state || !body.token) {
+    return new Response("Bad Request — state and token required", {
+      status: 400,
+    });
+  }
+  await env.RELAY_METRICS.put(`oauth:${body.state}`, body.token, {
+    expirationTtl: OAUTH_TTL_SECONDS,
+  });
+  return Response.json({ ok: true });
+}
+
+async function handleOAuthPoll(
+  state: string,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (!requireOAuthSecret(request, env)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  if (!state) return new Response("Bad Request", { status: 400 });
+  const token = await env.RELAY_METRICS.get(`oauth:${state}`);
+  if (!token) return new Response("Pending", { status: 202 });
+  await env.RELAY_METRICS.delete(`oauth:${state}`);
+  return Response.json({ token });
 }
 
 function routeToSession(

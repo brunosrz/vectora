@@ -314,5 +314,13 @@
   "page_downloads_desc": "Descarga Vectora Desktop para tu sistema.",
   "downloads_recommended": "Recomendado",
   "downloads_cta": "Descargar",
-  "downloads_footer": "Código abierto · El mismo binario compilado, sin telemetría."
+  "downloads_footer": "Código abierto · El mismo binario compilado, sin telemetría.",
+  "auth_device_title": "Autorizar Vectora",
+  "auth_device_desc": "Haz clic en Autorizar para conectar tu cuenta Vectora.company a la app de escritorio.",
+  "auth_device_btn": "Autorizar",
+  "auth_device_success_title": "¡Autorizado!",
+  "auth_device_success_desc": "Puedes cerrar esta pestaña y volver a la app Vectora.",
+  "auth_device_error": "Error de autorización. Inténtalo de nuevo.",
+  "auth_device_no_token": "Tu cuenta no tiene token aún. Visita el dashboard para generar uno.",
+  "auth_device_login_prompt": "Debes estar conectado para autorizar la app."
 }

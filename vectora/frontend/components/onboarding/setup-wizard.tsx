@@ -16,13 +16,12 @@
  *   7. Pronto
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Loader2,
   CheckCircle2,
   XCircle,
-  ExternalLink,
   Check,
   FolderGit2,
   FolderOpen,
@@ -198,12 +197,20 @@ function LicenseResultBadge({ result }: { result: LicenseResult }) {
   );
 }
 
+type OAuthState = "idle" | "pending" | "success" | "error";
+
 function StepToken(_props: StepProps) {
-  const [mode, setMode] = useState<"token" | "login">("login");
+  const [mode, setMode] = useState<"login" | "token">("login");
   const [config, setConfig] = useState<ConfigSummary | null>(null);
   const [result, setResult] = useState<LicenseResult | null>(null);
 
-  // Modo token
+  // Modo OAuth
+  const [oauthState, setOAuthState] = useState<OAuthState>("idle");
+  const [authUrl, setAuthUrl] = useState<string | null>(null);
+  const [oauthStateKey, setOAuthStateKey] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Modo token manual
   const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -213,7 +220,63 @@ function StepToken(_props: StepProps) {
       .then((r) => r.json())
       .then(setConfig)
       .catch(() => void 0);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
+
+  const startOAuth = async () => {
+    setOAuthState("pending");
+    setResult(null);
+    try {
+      const init = (await fetch("/license/oauth/init", {
+        method: "POST",
+        credentials: "include",
+      }).then((r) => r.json())) as { state: string; auth_url: string };
+      setOAuthStateKey(init.state);
+      setAuthUrl(init.auth_url);
+      window.open(init.auth_url, "_blank", "noopener,noreferrer");
+      startPolling(init.state);
+    } catch {
+      setOAuthState("error");
+    }
+  };
+
+  const startPolling = (state: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    let attempts = 0;
+    const MAX_ATTEMPTS = 150; // 5 min a 2s
+    pollRef.current = setInterval(async () => {
+      attempts++;
+      if (attempts > MAX_ATTEMPTS) {
+        clearInterval(pollRef.current!);
+        setOAuthState("error");
+        return;
+      }
+      try {
+        const data = (await fetch(
+          `/license/oauth/poll?state=${encodeURIComponent(state)}`,
+          { credentials: "include" },
+        ).then((r) => r.json())) as {
+          pending?: boolean;
+          ok?: boolean;
+          valid?: boolean;
+        };
+        if (data.ok) {
+          clearInterval(pollRef.current!);
+          setOAuthState("success");
+          if (data.valid) {
+            setResult({ valid: true });
+          }
+        } else if (!data.pending) {
+          clearInterval(pollRef.current!);
+          setOAuthState("error");
+        }
+      } catch {
+        // ignora falhas transientes de network
+      }
+    }, 2000);
+  };
 
   const handleSave = async () => {
     const value = tokenInput.trim();
@@ -232,7 +295,6 @@ function StepToken(_props: StepProps) {
       }).then((r) => r.json());
       setConfig(fresh);
       setTokenInput("");
-      // Valida imediatamente — antes o token era salvo sem nenhum feedback.
       const validation = (await fetch("/license/validate", {
         method: "POST",
         credentials: "include",
@@ -251,28 +313,21 @@ function StepToken(_props: StepProps) {
         {m.onboarding_token_body()}
       </p>
 
-      {/* Seletor: colar token OU entrar com a conta vectora.company */}
+      {/* Seletor: Entrar com a conta (padrão, esquerda) | Tenho um token (direita) */}
       <div className="flex gap-1.5">
+        <button
+          type="button"
+          className={segmentClass(mode === "login")}
+          onClick={() => setMode("login")}
+        >
+          {m.onboarding_token_mode_login()}
+        </button>
         <button
           type="button"
           className={segmentClass(mode === "token")}
           onClick={() => setMode("token")}
         >
           {m.onboarding_token_mode_token()}
-        </button>
-        <button
-          type="button"
-          className={segmentClass(mode === "login")}
-          onClick={() => {
-            setMode("login");
-            window.open(
-              "https://vectora.company/dashboard",
-              "_blank",
-              "noopener,noreferrer",
-            );
-          }}
-        >
-          {m.onboarding_token_mode_login()}
         </button>
       </div>
 
@@ -282,7 +337,74 @@ function StepToken(_props: StepProps) {
         </p>
       )}
 
-      {mode === "token" ? (
+      {mode === "login" ? (
+        <div className="space-y-3 pt-1">
+          {oauthState === "idle" && (
+            <button
+              type="button"
+              onClick={() => void startOAuth()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 transition-all hover:bg-primary/90"
+            >
+              <Image
+                src="/vectora.svg"
+                alt=""
+                width={16}
+                height={16}
+                className="h-4 w-4 invert"
+              />
+              {m.onboarding_oauth_btn()}
+            </button>
+          )}
+
+          {oauthState === "pending" && (
+            <div className="flex flex-col items-center gap-2 py-2">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <p className="text-xs text-muted-foreground text-center">
+                {m.onboarding_oauth_waiting()}
+              </p>
+              {authUrl && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.open(authUrl, "_blank", "noopener,noreferrer")
+                  }
+                  className="text-xs text-primary hover:underline"
+                >
+                  {m.onboarding_oauth_open_again()}
+                </button>
+              )}
+            </div>
+          )}
+
+          {oauthState === "success" && (
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <p className="text-sm font-medium">
+                {m.onboarding_oauth_success()}
+              </p>
+            </div>
+          )}
+
+          {oauthState === "error" && (
+            <div className="space-y-2">
+              <p className="text-xs text-destructive">
+                {m.onboarding_oauth_error()}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setOAuthState("idle");
+                  setOAuthStateKey(null);
+                  setAuthUrl(null);
+                }}
+                className="text-xs text-primary hover:underline"
+              >
+                {m.onboarding_oauth_open_again()}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
         <>
           <div className="flex gap-1.5">
             <Input
@@ -328,24 +450,6 @@ function StepToken(_props: StepProps) {
             >
               vectora.company/dashboard
             </a>
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="text-xs text-muted-foreground">
-            {m.onboarding_token_login_hint()}
-          </p>
-          <a
-            href="https://vectora.company/dashboard"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-          >
-            vectora.company/dashboard
-            <ExternalLink className="w-3 h-3" />
-          </a>
-          <p className="text-xs text-muted-foreground">
-            {m.onboarding_token_login_copy_hint()}
           </p>
         </>
       )}
