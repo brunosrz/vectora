@@ -44,6 +44,10 @@ import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { markAsNew, isNew, clearNew } from "@/lib/stores/new-thread-registry";
+import {
+  markWorkspaceChosen,
+  isWorkspaceChosen,
+} from "@/lib/stores/workspace-choice-registry";
 import { safeRandomUUID } from "@/lib/utils/uuid";
 import {
   useBroadcastSync,
@@ -210,19 +214,21 @@ function SessionPage() {
     [goTo, threads, setChatMode],
   );
 
-  // Workspace ativo (reativo) — decide se o seletor é necessário.
-  const activeWorkspaceId = useWorkspacesStore((s) => s.active_id);
-
-  // Sessão nova em Code mode sem workspace ativo → abre o seletor de workspace
-  // automaticamente, em vez de cair numa sessão "sem workspace ativo". A sessão
-  // só vira registro de verdade quando o usuário escolhe o workspace e envia a
-  // primeira mensagem; aqui garantimos que a escolha aconteça antes de começar.
-  // (Chat mode não tem workspace, então não abre.)
+  // Sessão nova em Code mode → abre o seletor de workspace automaticamente, em
+  // vez de herdar silenciosamente o workspace global persistido (ou cair numa
+  // sessão "sem workspace"). A escolha precisa ser explícita por sessão. Não
+  // reabre se o usuário já escolheu o workspace desta thread (evita loop, já que
+  // confirmar gera um id novo e marcado). Chat mode não tem workspace → não abre.
   useEffect(() => {
-    if (hydrated && isNew(threadId) && !chatMode && !activeWorkspaceId) {
+    if (
+      hydrated &&
+      isNew(threadId) &&
+      !chatMode &&
+      !isWorkspaceChosen(threadId)
+    ) {
       setShowNewChatDialog(true);
     }
-  }, [hydrated, threadId, chatMode, activeWorkspaceId]);
+  }, [hydrated, threadId, chatMode]);
 
   const handleNewChat = useCallback(() => {
     // Chat: cria sessão direto (sem workspace/folders). Dev: dialog de workspace.
@@ -250,6 +256,8 @@ function SessionPage() {
       }
       const id = safeRandomUUID();
       markAsNew(id);
+      // Workspace já escolhido para esta thread → a rota não reabre o seletor.
+      markWorkspaceChosen(id);
       goTo(id);
       setIsMobileSidebarOpen(false);
     },
