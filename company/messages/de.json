@@ -306,5 +306,13 @@
   "pricing_feat_everything_plus": "Alles aus Plus",
   "pricing_feat_rest_api": "REST API",
   "pricing_feat_support_sla": "Support (SLA 24h)",
-  "pricing_feat_workspace5": "5 Arbeitsbereiche"
+  "pricing_feat_workspace5": "5 Arbeitsbereiche",
+  "form_password_show": "Passwort anzeigen",
+  "form_password_hide": "Passwort verbergen",
+  "nav_downloads": "Downloads",
+  "page_downloads_title": "Downloads",
+  "page_downloads_desc": "Laden Sie Vectora Desktop für Ihr System herunter.",
+  "downloads_recommended": "Empfohlen",
+  "downloads_cta": "Herunterladen",
+  "downloads_footer": "Open Source · Dasselbe kompilierte Binary, keine Telemetrie."
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
-import { Check, Minus, ChevronDown } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { track } from "#/lib/analytics/plausible";
 
 type Currency = "BRL" | "USD";
@@ -38,31 +38,6 @@ const PRO = {
   ],
 };
 
-const COMPARISON_ROWS = [
-  {
-    label: m.pricing_cmp_storage,
-    plus: () => "10 GB",
-    pro: m.pricing_cmp_unlimited,
-  },
-  {
-    label: m.pricing_cmp_projects,
-    plus: () => "5",
-    pro: m.pricing_cmp_unlimited,
-  },
-  {
-    label: m.pricing_cmp_api_keys,
-    plus: () => "3",
-    pro: m.pricing_cmp_unlimited,
-  },
-  { label: m.pricing_feat_webhooks, plus: () => "—", pro: () => "✓" },
-  {
-    label: m.pricing_cmp_audit,
-    plus: m.pricing_cmp_days7,
-    pro: m.pricing_cmp_days90,
-  },
-  { label: m.pricing_cmp_sla, plus: () => "48h", pro: () => "24h" },
-];
-
 function FeatureRow({ text, ok }: { text: () => string; ok: boolean }) {
   return (
     <li className="flex items-center gap-2 text-[14px]">
@@ -80,7 +55,6 @@ function FeatureRow({ text, ok }: { text: () => string; ok: boolean }) {
 
 export default function PricingSection() {
   const [currency, setCurrency] = useState<Currency>("USD");
-  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
     if (navigator.language.toLowerCase().startsWith("pt")) setCurrency("BRL");
@@ -199,57 +173,6 @@ export default function PricingSection() {
               {m.pricing_cta_trial()}
             </Link>
           </div>
-        </div>
-
-        {/* Comparison toggle */}
-        <div className="flex flex-col items-center gap-6">
-          <button
-            onClick={() => setShowComparison((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-[14px] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {m.pricing_compare()}
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${showComparison ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {showComparison && (
-            <div className="w-full overflow-hidden rounded-xl border border-border fade-up">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-card/50">
-                    <th className="px-5 py-3 text-left font-medium text-muted-foreground">
-                      {m.pricing_cmp_feature()}
-                    </th>
-                    <th className="px-5 py-3 text-center font-medium text-foreground/90">
-                      Plus
-                    </th>
-                    <th className="px-5 py-3 text-center font-medium text-primary">
-                      Pro
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {COMPARISON_ROWS.map((row, i) => (
-                    <tr
-                      key={row.label()}
-                      className={`border-b border-border ${i % 2 === 0 ? "bg-background/30" : ""}`}
-                    >
-                      <td className="px-5 py-3 text-muted-foreground">
-                        {row.label()}
-                      </td>
-                      <td className="px-5 py-3 text-center text-muted-foreground">
-                        {row.plus()}
-                      </td>
-                      <td className="px-5 py-3 text-center font-medium text-primary">
-                        {row.pro()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </div>
     </section>

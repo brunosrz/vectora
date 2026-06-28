@@ -39,7 +39,10 @@ function AgenticDiagram() {
 
       <div
         className="flex flex-col items-center rounded-xl border-2 px-6 py-2 text-center"
-        style={{ borderColor: "var(--primary)", background: "#262626" }}
+        style={{
+          borderColor: "var(--primary)",
+          background: "var(--node-surface)",
+        }}
       >
         <span className="text-[14px] font-semibold leading-5 text-primary">
           Orchestrator

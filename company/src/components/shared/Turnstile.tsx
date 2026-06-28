@@ -35,8 +35,17 @@ export default function Turnstile({
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
 
+  // Em dev (localhost) o widget da Cloudflare não conecta; sem site key também
+  // não há o que renderizar. Em ambos, libera um token-fake — o servidor
+  // (verifyTurnstile) também dispensa a verificação em dev.
+  const bypass = import.meta.env.DEV || !TURNSTILE_SITE_KEY;
+
   useEffect(() => {
-    if (!TURNSTILE_SITE_KEY || !containerRef.current) return;
+    if (bypass) {
+      onSuccess("dev-bypass");
+      return;
+    }
+    if (!containerRef.current) return;
 
     const scriptId = "cf-turnstile-script";
     const render = () => {
@@ -74,9 +83,9 @@ export default function Turnstile({
         window.turnstile.remove(widgetIdRef.current);
       }
     };
-  }, [onSuccess, onError, onExpire]);
+  }, [bypass, onSuccess, onError, onExpire]);
 
-  if (!TURNSTILE_SITE_KEY) return null;
+  if (bypass) return null;
 
   return <div ref={containerRef} className="mt-2" />;
 }

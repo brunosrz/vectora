@@ -21,6 +21,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IssuesRouteImport } from './routes/issues'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DpaRouteImport } from './routes/dpa'
+import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -91,6 +92,11 @@ const DpaRoute = DpaRouteImport.update({
   path: '/dpa',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DownloadsRoute = DownloadsRouteImport.update({
+  id: '/downloads',
+  path: '/downloads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/cookies': typeof CookiesRoute
+  '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
   '/faq': typeof FaqRoute
   '/issues': typeof IssuesRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cookies': typeof CookiesRoute
+  '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
   '/faq': typeof FaqRoute
   '/issues': typeof IssuesRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/cookies': typeof CookiesRoute
+  '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
   '/faq': typeof FaqRoute
   '/issues': typeof IssuesRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/cookies'
+    | '/downloads'
     | '/dpa'
     | '/faq'
     | '/issues'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cookies'
+    | '/downloads'
     | '/dpa'
     | '/faq'
     | '/issues'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/cookies'
+    | '/downloads'
     | '/dpa'
     | '/faq'
     | '/issues'
@@ -281,6 +293,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   CookiesRoute: typeof CookiesRoute
+  DownloadsRoute: typeof DownloadsRoute
   DpaRoute: typeof DpaRoute
   FaqRoute: typeof FaqRoute
   IssuesRoute: typeof IssuesRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DpaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/downloads': {
+      id: '/downloads'
+      path: '/downloads'
+      fullPath: '/downloads'
+      preLoaderRoute: typeof DownloadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cookies': {
       id: '/cookies'
       path: '/cookies'
@@ -472,6 +492,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   CookiesRoute: CookiesRoute,
+  DownloadsRoute: DownloadsRoute,
   DpaRoute: DpaRoute,
   FaqRoute: FaqRoute,
   IssuesRoute: IssuesRoute,

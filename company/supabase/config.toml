@@ -1,8 +1,7 @@
 # Supabase project configuration
 # https://supabase.com/docs/guides/local-development/supabase-cli/local-config
 
-[project]
-project_id = ""   # Preencher com o ID do projeto Supabase
+project_id = "lqclwumwslecrcfibrvn"
 
 [api]
 enabled = true

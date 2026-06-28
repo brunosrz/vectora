@@ -306,5 +306,13 @@
   "pricing_feat_everything_plus": "Всё из Plus",
   "pricing_feat_rest_api": "REST API",
   "pricing_feat_support_sla": "Поддержка (SLA 24h)",
-  "pricing_feat_workspace5": "5 рабочих пространств"
+  "pricing_feat_workspace5": "5 рабочих пространств",
+  "form_password_show": "Показать пароль",
+  "form_password_hide": "Скрыть пароль",
+  "nav_downloads": "Загрузки",
+  "page_downloads_title": "Загрузки",
+  "page_downloads_desc": "Скачайте Vectora Desktop для вашей системы.",
+  "downloads_recommended": "Рекомендуется",
+  "downloads_cta": "Скачать",
+  "downloads_footer": "Открытый код · Тот же скомпилированный бинарник, без телеметрии."
 }

@@ -19,8 +19,15 @@ export async function verifyTurnstile(
   token: string,
   ip?: string,
 ): Promise<TurnstileVerifyResult> {
+  // Em dev (pnpm dev) o widget da Cloudflare não conecta no localhost, e sem
+  // TURNSTILE_SECRET_KEY não há o que verificar. Nesses casos a verificação é
+  // dispensada para não travar signup/login/issues durante o desenvolvimento.
+  if (import.meta.env.DEV || !process.env.TURNSTILE_SECRET_KEY) {
+    return { success: true };
+  }
+
   const body: Record<string, string> = {
-    secret: process.env.TURNSTILE_SECRET_KEY!,
+    secret: process.env.TURNSTILE_SECRET_KEY,
     response: token,
   };
   if (ip) body["remoteip"] = ip;

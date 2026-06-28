@@ -306,5 +306,13 @@
   "pricing_feat_everything_plus": "Todo del plan Plus",
   "pricing_feat_rest_api": "REST API",
   "pricing_feat_support_sla": "Soporte (SLA 24h)",
-  "pricing_feat_workspace5": "5 workspaces"
+  "pricing_feat_workspace5": "5 workspaces",
+  "form_password_show": "Mostrar contraseña",
+  "form_password_hide": "Ocultar contraseña",
+  "nav_downloads": "Descargas",
+  "page_downloads_title": "Descargas",
+  "page_downloads_desc": "Descarga Vectora Desktop para tu sistema.",
+  "downloads_recommended": "Recomendado",
+  "downloads_cta": "Descargar",
+  "downloads_footer": "Código abierto · El mismo binario compilado, sin telemetría."
 }

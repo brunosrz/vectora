@@ -77,6 +77,13 @@ export default function Header() {
           >
             {m.nav_faq()}
           </Link>
+          <Link
+            to="/downloads"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            activeProps={{ className: "text-foreground" }}
+          >
+            {m.nav_downloads()}
+          </Link>
         </nav>
 
         {/* ── Ações (direita) ── */}
@@ -199,6 +206,13 @@ export default function Header() {
               className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
             >
               {m.nav_faq()}
+            </Link>
+            <Link
+              to="/downloads"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {m.nav_downloads()}
             </Link>
 
             {session ? (

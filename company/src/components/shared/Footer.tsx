@@ -5,19 +5,24 @@ import Logo from "./Logo";
 export default function Footer() {
   const year = new Date().getFullYear();
 
-  const linkClass = "transition-colors hover:text-foreground";
+  const linkClass = "whitespace-nowrap transition-colors hover:text-foreground";
+
+  // Títulos em foreground (mais contraste) sinalizam que NÃO são links.
+  const titleClass =
+    "text-[12px] font-semibold uppercase tracking-[0.6px] text-foreground";
+  // Links de cada seção fluem num grid de 3 colunas (quebra em 2 linhas),
+  // colunas dimensionadas ao conteúdo — não numa coluna única empilhada.
+  const linksGridClass =
+    "grid grid-cols-[repeat(3,auto)] justify-start gap-x-6 gap-y-3 text-[14px] text-muted-foreground";
 
   return (
-    <footer className="bg-muted">
-      {/* Top: 3 colunas iguais, links empilhados, gap uniforme. Mobile-first:
-          2 colunas no estreito, 3 a partir de sm. */}
-      <div className="mx-auto grid max-w-[1024px] grid-cols-2 gap-x-8 gap-y-10 px-4 pb-8 pt-10 sm:grid-cols-3 sm:px-6">
+    <footer className="bg-footer">
+      {/* Seções distribuídas na largura (quebram no estreito); links em grid 3-col. */}
+      <div className="mx-auto flex max-w-[1024px] flex-wrap justify-between gap-x-12 gap-y-10 px-4 pb-8 pt-10 sm:px-6">
         {/* Produto */}
-        <div className="flex flex-col gap-2.5">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.6px] text-muted-foreground">
-            {m.footer_product()}
-          </p>
-          <div className="flex flex-col gap-2.5 text-[14px] text-muted-foreground">
+        <div className="flex flex-col gap-3">
+          <p className={titleClass}>{m.footer_product()}</p>
+          <div className={linksGridClass}>
             <Link to="/pricing" className={linkClass}>
               {m.nav_pricing()}
             </Link>
@@ -47,11 +52,9 @@ export default function Footer() {
         </div>
 
         {/* Suporte */}
-        <div className="flex flex-col gap-2.5">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.6px] text-muted-foreground">
-            {m.footer_support()}
-          </p>
-          <div className="flex flex-col gap-2.5 text-[14px] text-muted-foreground">
+        <div className="flex flex-col gap-3">
+          <p className={titleClass}>{m.footer_support()}</p>
+          <div className={linksGridClass}>
             <Link to="/support" className={linkClass}>
               {m.nav_support()}
             </Link>
@@ -70,11 +73,9 @@ export default function Footer() {
         </div>
 
         {/* Legal */}
-        <div className="flex flex-col gap-2.5">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.6px] text-muted-foreground">
-            {m.footer_legal()}
-          </p>
-          <div className="flex flex-col gap-2.5 text-[14px] text-muted-foreground">
+        <div className="flex flex-col gap-3">
+          <p className={titleClass}>{m.footer_legal()}</p>
+          <div className={linksGridClass}>
             <Link to="/privacy" className={linkClass}>
               {m.footer_privacy()}
             </Link>

@@ -64,6 +64,13 @@
   --border: #2a2a2a;
   --input: #2a2a2a;
 
+  /* Superfície "profunda" — footer e botões escuros (mais escura que o card). */
+  --footer: #18191c;
+
+  /* Superfície dos nós de diagrama (SVG). Os tints de acento são misturados
+     COM esta cor, não com preto fixo — assim os boxes adaptam ao tema. */
+  --node-surface: #262626;
+
   /* Destaque — azul do Min Dark, exclusivo para CTAs, links, foco. */
   --primary: #79b8ff;
   --primary-foreground: #0a0a0a;
@@ -83,26 +90,30 @@
 
 /* ── Tema claro — Min Light ────────────────────────────────────────────────── */
 .light {
-  --background: #f2f2f2;
-  --foreground: #141414;
+  --background: #f6f7f9;
+  --foreground: #14161a;
 
-  --muted: #e0e0e0;
-  --muted-foreground: #525252;
+  --muted: #e9ebef;
+  --muted-foreground: #5b616b;
 
   --card: #ffffff;
-  --card-foreground: #141414;
+  --card-foreground: #14161a;
 
   --popover: #ffffff;
-  --popover-foreground: #141414;
+  --popover-foreground: #14161a;
 
-  --secondary: #e4e4e4;
-  --secondary-foreground: #141414;
+  --secondary: #eaecf0;
+  --secondary-foreground: #14161a;
 
-  --accent: #e4e4e4;
-  --accent-foreground: #141414;
+  --accent: #eaecf0;
+  --accent-foreground: #14161a;
 
-  --border: #c8c8c8;
-  --input: #c8c8c8;
+  --border: #d8dbe1;
+  --input: #d8dbe1;
+
+  --footer: #eceef2;
+
+  --node-surface: #eef0f4;
 
   --primary: #1976d2;
   --primary-foreground: #ffffff;
@@ -129,6 +140,9 @@
 
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+
+  --color-footer: var(--footer);
+  --color-node-surface: var(--node-surface);
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);

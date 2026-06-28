@@ -15,7 +15,7 @@ const BULLETS = [
 function RagDiagram() {
   return (
     <div
-      className="rounded-2xl border border-border bg-card/40 p-6"
+      className="flex h-full items-center justify-center rounded-2xl border border-border bg-card/40 p-6"
       aria-hidden
     >
       <svg
@@ -35,7 +35,7 @@ function RagDiagram() {
               width="110"
               height="38"
               rx="8"
-              fill="#262626"
+              fill="var(--node-surface)"
               stroke="var(--primary)"
               strokeWidth="1.9"
             />
@@ -67,7 +67,7 @@ function RagDiagram() {
           cy="160"
           rx="55"
           ry="9"
-          fill="color-mix(in srgb, var(--accent-green) 18%, #000)"
+          fill="color-mix(in srgb, var(--accent-green) 18%, var(--node-surface))"
           stroke="var(--accent-green)"
           strokeWidth="1.9"
         />
@@ -76,14 +76,14 @@ function RagDiagram() {
           y="160"
           width="110"
           height="26"
-          fill="color-mix(in srgb, var(--accent-green) 18%, #000)"
+          fill="color-mix(in srgb, var(--accent-green) 18%, var(--node-surface))"
         />
         <ellipse
           cx="90"
           cy="186"
           rx="55"
           ry="9"
-          fill="color-mix(in srgb, var(--accent-green) 18%, #000)"
+          fill="color-mix(in srgb, var(--accent-green) 18%, var(--node-surface))"
           stroke="var(--accent-green)"
           strokeWidth="1.9"
         />
@@ -131,25 +131,25 @@ function RagDiagram() {
             y: 30,
             label: "Query",
             sub: "multi-query expand",
-            fill: "var(--accent-purple)",
+            fill: "color-mix(in srgb, var(--accent-purple) 16%, var(--node-surface))",
             stroke: "var(--accent-purple)",
-            textFill: "var(--foreground)",
+            textFill: "var(--accent-purple)",
           },
           {
             y: 100,
             label: "Hybrid Search",
             sub: "dense + BM25 + RRF",
-            fill: "#262626",
+            fill: "var(--node-surface)",
             stroke: "var(--primary)",
-            textFill: "var(--foreground)",
+            textFill: "var(--primary)",
           },
           {
             y: 170,
             label: "Reranker",
             sub: "Cohere rerank",
-            fill: "#000",
+            fill: "color-mix(in srgb, var(--accent-amber) 16%, var(--node-surface))",
             stroke: "var(--accent-amber)",
-            textFill: "var(--foreground)",
+            textFill: "var(--accent-amber)",
           },
         ].map((item) => (
           <g key={item.label}>
@@ -221,7 +221,7 @@ function RagDiagram() {
           width="120"
           height="42"
           rx="8"
-          fill="#262626"
+          fill="var(--node-surface)"
           stroke="var(--primary)"
           strokeWidth="2.53"
         />
@@ -262,7 +262,7 @@ function RagDiagram() {
 export default function RagFlowSection() {
   return (
     <section className="bg-background/50 py-[23px]">
-      <div className="mx-auto grid max-w-[1024px] grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-0">
+      <div className="mx-auto grid max-w-[1024px] grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:items-stretch lg:px-0">
         {/* Text — esquerda */}
         <div className="flex flex-col gap-5">
           <h2 className="text-[28px] font-semibold leading-[36px] text-foreground">

@@ -8,13 +8,13 @@ export function getSupabaseBrowserClient() {
   if (client) return client;
 
   const url = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const key = import.meta.env.VITE_SUPABASE_KEY;
 
   // Sem credenciais (dev local sem .env preenchido), o site público deve
   // funcionar sem auth em vez de derrubar a hidratação inteira.
-  if (!url || !anonKey) return null;
+  if (!url || !key) return null;
 
-  client = createBrowserClient<Database>(url, anonKey);
+  client = createBrowserClient<Database>(url, key);
 
   return client;
 }
