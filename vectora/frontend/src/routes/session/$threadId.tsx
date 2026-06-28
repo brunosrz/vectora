@@ -224,11 +224,12 @@ function SessionPage() {
       hydrated &&
       isNew(threadId) &&
       !chatMode &&
-      !isWorkspaceChosen(threadId)
+      !isWorkspaceChosen(threadId) &&
+      !showOnboarding
     ) {
       setShowNewChatDialog(true);
     }
-  }, [hydrated, threadId, chatMode]);
+  }, [hydrated, threadId, chatMode, showOnboarding]);
 
   const handleNewChat = useCallback(() => {
     // Chat: cria sessão direto (sem workspace/folders). Dev: dialog de workspace.

@@ -21,9 +21,9 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Logo size="md" className="justify-center" />
-          <h1 className="mt-4 text-2xl font-semibold text-foreground">
+        <div className="mb-6 text-center">
+          <Logo size="sm" className="justify-center" />
+          <h1 className="mt-2 text-xl font-semibold text-foreground">
             {heading}
           </h1>
           {subheading}

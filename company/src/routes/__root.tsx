@@ -31,7 +31,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => {
     const plausibleDomain =
       typeof import.meta !== "undefined"
-        ? import.meta.env.VITE_PLAUSIBLE_DOMAIN ?? "vectora.company"
+        ? (import.meta.env.VITE_PLAUSIBLE_DOMAIN ?? "vectora.company")
         : "vectora.company";
 
     return {
@@ -99,6 +99,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
   const { location } = useRouterState();
   const isDashboard = location.pathname.startsWith("/dashboard");
+  const isAuth =
+    location.pathname === "/login" ||
+    location.pathname === "/signup" ||
+    location.pathname.startsWith("/auth/");
 
   return (
     // suppressHydrationWarning: a classe do tema (dark/light) é aplicada por
@@ -108,9 +112,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {!isDashboard && <Header />}
+        {!isDashboard && !isAuth && <Header />}
         {children}
-        {!isDashboard && <Footer />}
+        {!isDashboard && !isAuth && <Footer />}
         <Toaster
           position="bottom-right"
           toastOptions={{

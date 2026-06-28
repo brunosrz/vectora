@@ -19,7 +19,6 @@ const SignUpSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(8),
-  country: z.enum(["BR", "INTL"]),
   turnstileToken: z.string(),
 });
 
@@ -33,7 +32,7 @@ export const signUp = createServerFn({ method: "POST" })
     const { error } = await supabase.auth.signUp({
       email: input.email,
       password: input.password,
-      options: { data: { full_name: input.name, country: input.country } },
+      options: { data: { full_name: input.name } },
     });
     if (error) throw new Error(error.message);
 

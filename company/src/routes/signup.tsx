@@ -35,7 +35,6 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [country, setCountry] = useState<"BR" | "INTL">("BR");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const mutation = useMutation({
@@ -45,7 +44,6 @@ function SignupPage() {
           name,
           email,
           password,
-          country,
           turnstileToken: turnstileToken!,
         },
       }),
@@ -125,7 +123,7 @@ function SignupPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors font-sans"
             />
             <button
               type="button"
@@ -141,28 +139,6 @@ function SignupPage() {
                 <Eye className="h-4 w-4" />
               )}
             </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground/90">
-            {m.form_country()}
-          </label>
-          <div className="flex gap-2">
-            {(["BR", "INTL"] as const).map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCountry(c)}
-                className={`flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all ${
-                  country === c
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground/90"
-                }`}
-              >
-                {c === "BR" ? "🇧🇷 Brasil" : "🌍 Internacional"}
-              </button>
-            ))}
           </div>
         </div>
 
