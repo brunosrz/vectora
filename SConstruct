@@ -135,6 +135,19 @@ def _action_build_nuitka(target, source, env):
     cpu = os.cpu_count() or 4
     _run(["uv", "run", "nuitka", f"--jobs={cpu}", "backend/launcher.py"], cwd=VECTORA)
 
+    # Nuitka pode sair com código 0 mesmo após FATAL no backend C (ex.: MSVC/
+    # Windows SDK não detectados), deixando o binário onefile sem ser gerado.
+    # Sem esta verificação, o release empacotaria um instalador sem o executável.
+    binary_name = "vectora.exe" if sys.platform == "win32" else "vectora"
+    binary = os.path.join(VECTORA, "dist-nuitka", binary_name)
+    if not os.path.isfile(binary):
+        raise SystemExit(
+            f"ERRO: Nuitka terminou sem gerar {binary}. "
+            "Cheque o toolchain C (MSVC + Windows SDK detectados pelo Nuitka) — "
+            "veja https://nuitka.net/info/scons-backend-failure.html."
+        )
+    print(f">> binário Nuitka pronto em {binary}")
+
 
 def _find_signtool() -> str | None:
     if sys.platform != "win32":
