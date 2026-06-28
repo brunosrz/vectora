@@ -503,10 +503,10 @@ _build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_de
 
 _FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
 
-_cmd("release-win",   lambda t, s, e: _action_package(t, s, e, "win"),   deps=_FULL_DEPS)
-_cmd("release-mac",   lambda t, s, e: _action_package(t, s, e, "mac"),   deps=_FULL_DEPS)
-_cmd("release-linux", lambda t, s, e: _action_package(t, s, e, "linux"), deps=_FULL_DEPS)
-_cmd("release",       lambda t, s, e: _action_package(t, s, e),          deps=_FULL_DEPS)
+_cmd("release-win",   lambda target, source, env: _action_package(target, source, env, "win"),   deps=_FULL_DEPS)
+_cmd("release-mac",   lambda target, source, env: _action_package(target, source, env, "mac"),   deps=_FULL_DEPS)
+_cmd("release-linux", lambda target, source, env: _action_package(target, source, env, "linux"), deps=_FULL_DEPS)
+_cmd("release",       lambda target, source, env: _action_package(target, source, env),          deps=_FULL_DEPS)
 
 _cmd("tests",         _action_tests)
 _cmd("coverage",      _action_coverage)
