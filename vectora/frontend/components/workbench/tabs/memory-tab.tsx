@@ -149,7 +149,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
 
   if (isEmpty) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="relative flex h-full flex-col">
         <div className="flex items-center justify-start px-3 pt-2">
           <RagSettingsPanel />
         </div>
@@ -169,94 +169,97 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
   }
 
   return (
-    <div className="h-full space-y-4 overflow-auto p-3">
-      <div className="flex items-center justify-start">
+    <div className="relative flex h-full flex-col">
+      <div className="flex items-center justify-start px-3 pt-3 shrink-0">
         <RagSettingsPanel />
       </div>
-      {hasActivity && (
-        <section className="space-y-1.5">
-          <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {m.workbench_memory_activity()}
-          </h3>
-          {ragJobs.map((job) => {
-            const pct =
-              job.total > 0
-                ? Math.min(100, Math.round((job.processed / job.total) * 100))
-                : job.status === "done"
-                  ? 100
-                  : 5;
-            const stalled = job.status === "paused" || job.status === "failed";
-            return (
-              <div
-                key={job.jobId}
-                className="rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
-              >
-                <div className="flex items-center gap-2">
-                  {job.status === "done" ? (
-                    <Database className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                  ) : stalled ? (
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-                  ) : (
-                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
-                  )}
-                  <span className="min-w-0 flex-1 truncate text-xs text-foreground">
-                    {m.workbench_memory_indexing()} {baseName(job.path)}
-                  </span>
-                  <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                    {job.processed}/{job.total}
-                  </span>
-                </div>
-                {stalled && job.errorReason ? (
-                  <p className="mt-1.5 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
-                    {job.errorReason}
-                  </p>
-                ) : (
-                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted/60">
-                    <div
-                      className="h-full bg-primary transition-all duration-300"
-                      style={{ width: `${pct}%` }}
-                    />
+      <div className="flex-1 space-y-4 overflow-auto px-3 pb-3">
+        {hasActivity && (
+          <section className="space-y-1.5">
+            <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {m.workbench_memory_activity()}
+            </h3>
+            {ragJobs.map((job) => {
+              const pct =
+                job.total > 0
+                  ? Math.min(100, Math.round((job.processed / job.total) * 100))
+                  : job.status === "done"
+                    ? 100
+                    : 5;
+              const stalled =
+                job.status === "paused" || job.status === "failed";
+              return (
+                <div
+                  key={job.jobId}
+                  className="rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    {job.status === "done" ? (
+                      <Database className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                    ) : stalled ? (
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                    ) : (
+                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
+                    )}
+                    <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+                      {m.workbench_memory_indexing()} {baseName(job.path)}
+                    </span>
+                    <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                      {job.processed}/{job.total}
+                    </span>
                   </div>
-                )}
+                  {stalled && job.errorReason ? (
+                    <p className="mt-1.5 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
+                      {job.errorReason}
+                    </p>
+                  ) : (
+                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted/60">
+                      <div
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {activeWeb.map((query, i) => (
+              <div
+                key={`active-web-${i}`}
+                className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+              >
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
+                <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+                  {m.workbench_memory_searching()} {query}
+                </span>
               </div>
-            );
-          })}
-          {activeWeb.map((query, i) => (
-            <div
-              key={`active-web-${i}`}
-              className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
-            >
-              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
-              <span className="min-w-0 flex-1 truncate text-xs text-foreground">
-                {m.workbench_memory_searching()} {query}
-              </span>
-            </div>
-          ))}
-        </section>
-      )}
+            ))}
+          </section>
+        )}
 
-      {rag.length > 0 && (
-        <section className="space-y-1.5">
-          <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Database className="h-3 w-3" />
-            {m.workbench_memory_group_rag()} ({rag.length})
-          </h3>
-          {rag.map((item) => (
-            <MemoryPill key={item.id} item={item} />
-          ))}
-        </section>
-      )}
-      {web.length > 0 && (
-        <section className="space-y-1.5">
-          <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Globe className="h-3 w-3" />
-            {m.workbench_memory_group_web()} ({web.length})
-          </h3>
-          {web.map((item) => (
-            <MemoryPill key={item.id} item={item} />
-          ))}
-        </section>
-      )}
+        {rag.length > 0 && (
+          <section className="space-y-1.5">
+            <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <Database className="h-3 w-3" />
+              {m.workbench_memory_group_rag()} ({rag.length})
+            </h3>
+            {rag.map((item) => (
+              <MemoryPill key={item.id} item={item} />
+            ))}
+          </section>
+        )}
+        {web.length > 0 && (
+          <section className="space-y-1.5">
+            <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <Globe className="h-3 w-3" />
+              {m.workbench_memory_group_web()} ({web.length})
+            </h3>
+            {web.map((item) => (
+              <MemoryPill key={item.id} item={item} />
+            ))}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

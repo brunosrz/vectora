@@ -17,6 +17,7 @@ import {
   type GraphFileType,
 } from "@/lib/stores/context-graph-settings-store";
 import { useToastStore } from "@/lib/stores/toast-store";
+import { WorkbenchSlidePanel } from "@/components/workbench/workbench-slide-panel";
 import { m } from "@/lib/paraglide/messages";
 
 interface RagSettings {
@@ -112,7 +113,7 @@ export function RagSettingsPanel() {
   }, []);
 
   return (
-    <div className="relative">
+    <>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={m.rag_settings_title()}
@@ -124,15 +125,13 @@ export function RagSettingsPanel() {
         <Settings2 className="h-3.5 w-3.5" />
       </button>
 
-      {open && (
-        <div
-          data-testid="rag-settings-panel"
-          className="absolute left-0 top-8 z-30 w-72 rounded-lg border border-border bg-popover shadow-xl p-3 space-y-3 text-xs"
-        >
-          <p className="font-medium text-foreground">
-            {m.rag_settings_title()}
-          </p>
-
+      <WorkbenchSlidePanel
+        open={open}
+        onClose={() => setOpen(false)}
+        title={m.rag_settings_title()}
+        testId="rag-settings-panel"
+      >
+        <div className="space-y-3 text-xs">
           {/* Reranker on/off + top_k */}
           <label className="flex items-center justify-between gap-2 cursor-pointer select-none">
             <span className="text-foreground">{m.rag_reranker_enabled()}</span>
@@ -269,8 +268,8 @@ export function RagSettingsPanel() {
             )}
           </div>
         </div>
-      )}
-    </div>
+      </WorkbenchSlidePanel>
+    </>
   );
 }
 

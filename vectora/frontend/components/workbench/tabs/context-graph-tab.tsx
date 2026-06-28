@@ -10,6 +10,7 @@ import {
   ALL_GRAPH_FILE_TYPES,
   type GraphFileType,
 } from "@/lib/stores/context-graph-settings-store";
+import { WorkbenchSlidePanel } from "@/components/workbench/workbench-slide-panel";
 import { m } from "@/lib/paraglide/messages";
 
 interface ContextGraphTabProps {
@@ -89,7 +90,7 @@ export function ContextGraphTab({
   const htmlUrl = getHtmlUrl();
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="relative flex flex-col h-full overflow-hidden">
       {/* Barra de ação — alinhada à esquerda (padrão dos workbenches). */}
       <div className="relative flex items-center justify-start gap-2 px-3 py-2 border-b border-border/60 shrink-0">
         {isBuilt && !isRunning && (
@@ -137,72 +138,75 @@ export function ContextGraphTab({
         >
           <Settings2 className="h-3.5 w-3.5" />
         </button>
+      </div>
 
-        {showSettings && (
-          <div
-            data-testid="graph-settings-panel"
-            className="absolute left-3 top-11 z-20 w-64 rounded-lg border border-border bg-popover shadow-xl p-3 space-y-3 text-xs"
-          >
-            <div>
-              <p className="font-medium text-foreground">
-                {m.graph_settings_filetypes()}
-              </p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground">
-                {m.graph_settings_filetypes_help()}
-              </p>
-              <div className="mt-1.5 space-y-1">
-                {ALL_GRAPH_FILE_TYPES.map((t: GraphFileType) => (
-                  <label
-                    key={t}
-                    className="flex items-center gap-2 cursor-pointer select-none"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={fileTypes.includes(t)}
-                      onChange={() => toggleFileType(t)}
-                      className="accent-[var(--color-primary)]"
-                    />
-                    <span className="text-foreground">
-                      {t === "code"
-                        ? m.graph_filetype_code()
-                        : t === "document"
-                          ? m.graph_filetype_document()
-                          : m.graph_filetype_paper()}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="font-medium text-foreground">
-                {m.graph_settings_mode()}
-              </p>
-              <div className="mt-1.5 space-y-1">
-                {(["semantic", "ast"] as const).map((mo) => (
-                  <label
-                    key={mo}
-                    className="flex items-center gap-2 cursor-pointer select-none"
-                  >
-                    <input
-                      type="radio"
-                      name="graph-mode"
-                      checked={graphMode === mo}
-                      onChange={() => setGraphMode(mo)}
-                      className="accent-[var(--color-primary)]"
-                    />
-                    <span className="text-foreground">
-                      {mo === "semantic"
-                        ? m.graph_mode_semantic()
-                        : m.graph_mode_ast()}
-                    </span>
-                  </label>
-                ))}
-              </div>
+      {/* Configurações do grafo — painel deslizante (base compartilhada). */}
+      <WorkbenchSlidePanel
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        title={m.graph_settings_title()}
+        testId="graph-settings-panel"
+      >
+        <div className="space-y-3 text-xs">
+          <div>
+            <p className="font-medium text-foreground">
+              {m.graph_settings_filetypes()}
+            </p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              {m.graph_settings_filetypes_help()}
+            </p>
+            <div className="mt-1.5 space-y-1">
+              {ALL_GRAPH_FILE_TYPES.map((t: GraphFileType) => (
+                <label
+                  key={t}
+                  className="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={fileTypes.includes(t)}
+                    onChange={() => toggleFileType(t)}
+                    className="accent-[var(--color-primary)]"
+                  />
+                  <span className="text-foreground">
+                    {t === "code"
+                      ? m.graph_filetype_code()
+                      : t === "document"
+                        ? m.graph_filetype_document()
+                        : m.graph_filetype_paper()}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
-        )}
-      </div>
+
+          <div>
+            <p className="font-medium text-foreground">
+              {m.graph_settings_mode()}
+            </p>
+            <div className="mt-1.5 space-y-1">
+              {(["semantic", "ast"] as const).map((mo) => (
+                <label
+                  key={mo}
+                  className="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="radio"
+                    name="graph-mode"
+                    checked={graphMode === mo}
+                    onChange={() => setGraphMode(mo)}
+                    className="accent-[var(--color-primary)]"
+                  />
+                  <span className="text-foreground">
+                    {mo === "semantic"
+                      ? m.graph_mode_semantic()
+                      : m.graph_mode_ast()}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </WorkbenchSlidePanel>
 
       <div className="flex-1 overflow-y-auto min-h-0">
         {/* Status: error */}

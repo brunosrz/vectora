@@ -21,6 +21,7 @@ import {
 import { useWebhookEvents } from "@/lib/hooks/use-webhook-events";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { Switch } from "@/components/ui/switch";
+import { WorkbenchSlidePanel } from "@/components/workbench/workbench-slide-panel";
 import { m } from "@/lib/paraglide/messages";
 
 interface DraftState {
@@ -125,8 +126,8 @@ export function TasksTab({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-3 space-y-4 text-xs">
-      <div className="flex justify-start">
+    <div className="relative flex h-full flex-col text-xs">
+      <div className="flex justify-start px-3 pt-3 shrink-0">
         <button
           onClick={() => setShowForm((v) => !v)}
           className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -137,8 +138,13 @@ export function TasksTab({ threadId }: { threadId: string }) {
         </button>
       </div>
 
-      {showForm && (
-        <div className="border border-border/60 rounded-md p-2 space-y-2">
+      <WorkbenchSlidePanel
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title={m.background_new_task()}
+        testId="tasks-form-panel"
+      >
+        <div className="space-y-2">
           <div className="flex gap-2">
             <select
               value={draft.kind}
@@ -235,115 +241,123 @@ export function TasksTab({ threadId }: { threadId: string }) {
             </button>
           </div>
         </div>
-      )}
+      </WorkbenchSlidePanel>
 
-      {tasks.length === 0 ? (
-        <p className="text-muted-foreground">{m.background_empty()}</p>
-      ) : (
-        <ul className="space-y-2" data-testid="background-task-list">
-          {tasks.map((t) => (
-            <li
-              key={t.id}
-              className="border border-border/60 rounded-md p-2 space-y-1"
-              data-testid="background-task-item"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium truncate">{t.name}</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => void runTask(t.id)}
-                    title={m.background_run_now()}
-                    className="p-1 text-muted-foreground hover:text-foreground"
-                    data-testid="background-run-now"
-                  >
-                    <Play className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => void deleteTask(t.id)}
-                    title={m.background_delete()}
-                    className="p-1 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                  <Switch
-                    checked={t.enabled}
-                    onCheckedChange={(v) => void toggleTask(t.id, v)}
-                    aria-label={
-                      t.enabled ? m.background_active() : m.background_paused()
-                    }
-                  />
-                </div>
-              </div>
-              <p className="text-muted-foreground truncate">{t.instruction}</p>
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <span className="px-1 rounded bg-muted/60">
-                  {t.kind === "routine"
-                    ? m.background_kind_routine()
-                    : m.background_kind_heartbreak()}
-                </span>
-                <span className="px-1 rounded bg-muted/60">
-                  {t.trigger_type === "interval"
-                    ? m.background_trigger_interval()
-                    : t.trigger_type === "webhook"
-                      ? m.background_trigger_webhook()
-                      : m.background_trigger_manual()}
-                </span>
-                <span>
-                  {m.background_last_run()}:{" "}
-                  {t.last_run_at ?? m.background_never()}
-                </span>
-                {runsByTask.has(t.id) && <span>· {runsByTask.get(t.id)}×</span>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="space-y-2">
-        <span className="font-medium">{m.background_runs_title()}</span>
-        {runs.length === 0 ? (
-          <p className="text-muted-foreground">{m.background_no_runs()}</p>
+      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-4">
+        {tasks.length === 0 ? (
+          <p className="text-muted-foreground">{m.background_empty()}</p>
         ) : (
-          <ul className="space-y-1" data-testid="background-run-list">
-            {runs.map((r) => (
+          <ul className="space-y-2" data-testid="background-task-list">
+            {tasks.map((t) => (
               <li
-                key={r.id}
-                className="flex items-center justify-between gap-2 border border-border/40 rounded px-2 py-1"
+                key={t.id}
+                className="border border-border/60 rounded-md p-2 space-y-1"
+                data-testid="background-task-item"
               >
-                <div className="min-w-0">
-                  <span
-                    className={
-                      r.status === "error"
-                        ? "text-destructive"
-                        : r.status === "done"
-                          ? "text-emerald-500"
-                          : "text-amber-500"
-                    }
-                  >
-                    {statusLabel(r.status)}
-                  </span>
-                  <span className="text-muted-foreground ml-2 truncate">
-                    {r.summary ?? ""}
-                  </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium truncate">{t.name}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => void runTask(t.id)}
+                      title={m.background_run_now()}
+                      className="p-1 text-muted-foreground hover:text-foreground"
+                      data-testid="background-run-now"
+                    >
+                      <Play className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => void deleteTask(t.id)}
+                      title={m.background_delete()}
+                      className="p-1 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                    <Switch
+                      checked={t.enabled}
+                      onCheckedChange={(v) => void toggleTask(t.id, v)}
+                      aria-label={
+                        t.enabled
+                          ? m.background_active()
+                          : m.background_paused()
+                      }
+                    />
+                  </div>
                 </div>
-                {r.run_thread_id && (
-                  <button
-                    onClick={() =>
-                      void navigate({
-                        to: "/session/$threadId",
-                        params: { threadId: r.run_thread_id as string },
-                      })
-                    }
-                    title={m.background_open_thread()}
-                    className="p-1 text-muted-foreground hover:text-foreground shrink-0"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                  </button>
-                )}
+                <p className="text-muted-foreground truncate">
+                  {t.instruction}
+                </p>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span className="px-1 rounded bg-muted/60">
+                    {t.kind === "routine"
+                      ? m.background_kind_routine()
+                      : m.background_kind_heartbreak()}
+                  </span>
+                  <span className="px-1 rounded bg-muted/60">
+                    {t.trigger_type === "interval"
+                      ? m.background_trigger_interval()
+                      : t.trigger_type === "webhook"
+                        ? m.background_trigger_webhook()
+                        : m.background_trigger_manual()}
+                  </span>
+                  <span>
+                    {m.background_last_run()}:{" "}
+                    {t.last_run_at ?? m.background_never()}
+                  </span>
+                  {runsByTask.has(t.id) && (
+                    <span>· {runsByTask.get(t.id)}×</span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         )}
+
+        <div className="space-y-2">
+          <span className="font-medium">{m.background_runs_title()}</span>
+          {runs.length === 0 ? (
+            <p className="text-muted-foreground">{m.background_no_runs()}</p>
+          ) : (
+            <ul className="space-y-1" data-testid="background-run-list">
+              {runs.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between gap-2 border border-border/40 rounded px-2 py-1"
+                >
+                  <div className="min-w-0">
+                    <span
+                      className={
+                        r.status === "error"
+                          ? "text-destructive"
+                          : r.status === "done"
+                            ? "text-emerald-500"
+                            : "text-amber-500"
+                      }
+                    >
+                      {statusLabel(r.status)}
+                    </span>
+                    <span className="text-muted-foreground ml-2 truncate">
+                      {r.summary ?? ""}
+                    </span>
+                  </div>
+                  {r.run_thread_id && (
+                    <button
+                      onClick={() =>
+                        void navigate({
+                          to: "/session/$threadId",
+                          params: { threadId: r.run_thread_id as string },
+                        })
+                      }
+                      title={m.background_open_thread()}
+                      className="p-1 text-muted-foreground hover:text-foreground shrink-0"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
