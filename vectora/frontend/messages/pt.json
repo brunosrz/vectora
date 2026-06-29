@@ -270,6 +270,7 @@
   "new_chat_create_new": "Criar um workspace para esta conversa",
   "new_chat_create_new_desc": "Uma pasta dedicada será criada em ~/Documents/vectora/<id-da-conversa>.",
   "new_chat_existing_label": "Workspaces existentes",
+  "new_chat_loading_workspaces": "Carregando workspaces…",
   "new_chat_cancel": "Cancelar",
   "new_chat_confirm": "Iniciar conversa",
   "workspace_select_here": "Usar esta pasta",

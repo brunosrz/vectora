@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, FolderGit2, FolderOpen, FolderPlus } from "lucide-react";
+import {
+  Check,
+  FolderGit2,
+  FolderOpen,
+  FolderPlus,
+  Loader2,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -31,7 +37,9 @@ export function NewChatDialog({
 }: NewChatDialogProps) {
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const activeId = useWorkspacesStore((s) => s.active_id);
+  const status = useWorkspacesStore((s) => s.status);
   const hydrate = useWorkspacesStore((s) => s.hydrate);
+  const isLoadingWorkspaces = status === "loading" && workspaces.length === 0;
 
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -80,7 +88,14 @@ export function NewChatDialog({
               )}
             </button>
 
-            {workspaces.length > 0 && (
+            {isLoadingWorkspaces && (
+              <div className="flex items-center gap-2 px-2 py-3 text-xs text-muted-foreground">
+                <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                {m.new_chat_loading_workspaces()}
+              </div>
+            )}
+
+            {!isLoadingWorkspaces && workspaces.length > 0 && (
               <p className="px-1 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {m.new_chat_existing_label()}
               </p>

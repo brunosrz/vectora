@@ -270,6 +270,7 @@
   "new_chat_create_new": "Create a workspace for this conversation",
   "new_chat_create_new_desc": "A dedicated folder will be created at ~/Documents/vectora/<conversation-id>.",
   "new_chat_existing_label": "Existing workspaces",
+  "new_chat_loading_workspaces": "Loading workspaces…",
   "new_chat_cancel": "Cancel",
   "new_chat_confirm": "Start conversation",
   "workspace_select_here": "Use this folder",

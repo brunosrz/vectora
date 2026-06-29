@@ -48,6 +48,10 @@ import {
   markWorkspaceChosen,
   isWorkspaceChosen,
 } from "@/lib/stores/workspace-choice-registry";
+import {
+  signalWorkspacePreChosen,
+  consumeWorkspacePreChosen,
+} from "@/lib/stores/new-session-signal";
 import { safeRandomUUID } from "@/lib/utils/uuid";
 import {
   useBroadcastSync,
@@ -64,25 +68,46 @@ export const Route = createFileRoute("/session/$threadId")({
   // Prefetch em paralelo: lista de threads (sidebar) + histórico da thread ativa.
   // O histórico fica em cache no queryClient com chave ['thread-history', id]
   // e é consumido por chat-interface.tsx sem segunda viagem ao servidor.
+  // Para "new", o histórico não existe ainda — só prefetch da lista de threads.
   loader: ({ params }) =>
-    Promise.all([
-      queryClient.ensureQueryData({
-        queryKey: threadsQueryKey,
-        queryFn: () => listThreads(50),
-        staleTime: 30_000,
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["thread-history", params.threadId],
-        queryFn: () => getHistory(params.threadId),
-        staleTime: 30_000,
-      }),
-    ]),
+    params.threadId === "new"
+      ? queryClient.ensureQueryData({
+          queryKey: threadsQueryKey,
+          queryFn: () => listThreads(50),
+          staleTime: 30_000,
+        })
+      : Promise.all([
+          queryClient.ensureQueryData({
+            queryKey: threadsQueryKey,
+            queryFn: () => listThreads(50),
+            staleTime: 30_000,
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ["thread-history", params.threadId],
+            queryFn: () => getHistory(params.threadId),
+            staleTime: 30_000,
+          }),
+        ]),
   component: SessionPage,
 });
 
 function SessionPage() {
-  const { threadId } = Route.useParams() as { threadId: string };
+  const { threadId: routeParam } = Route.useParams() as { threadId: string };
   const navigate = useNavigate();
+
+  // /session/new: o UUID vive só em memória; a URL só recebe o ID real quando
+  // a primeira mensagem for persistida (handleThreadUpdate com lastMessage).
+  const isNewRoute = routeParam === "new";
+  const [localNewId] = useState<string>(() => {
+    if (!isNewRoute) return "";
+    const id = safeRandomUUID();
+    markAsNew(id);
+    // consumeWorkspacePreChosen() lê e zera o sinal one-shot definido em
+    // handleConfirmNewChat quando o workspace já foi confirmado antes da navegação.
+    if (consumeWorkspacePreChosen()) markWorkspaceChosen(id);
+    return id;
+  });
+  const threadId = isNewRoute ? localNewId : routeParam;
   const userId = useAuthStore((s) => s.user?.id);
   const pushMention = useChatInputStore((s) => s.pushMention);
 
@@ -237,14 +262,12 @@ function SessionPage() {
     // conversa não herdar o conteúdo visual da atual.
     useWindowsStore.getState().closeAll();
     if (chatMode) {
-      const id = safeRandomUUID();
-      markAsNew(id);
-      goTo(id);
+      void navigate({ to: "/session/$threadId", params: { threadId: "new" } });
       setIsMobileSidebarOpen(false);
       return;
     }
     setShowNewChatDialog(true);
-  }, [chatMode, goTo]);
+  }, [chatMode, navigate]);
 
   const handleConfirmNewChat = useCallback(
     (workspaceId: string | null) => {
@@ -255,14 +278,21 @@ function SessionPage() {
       if (workspaceId) {
         void useWorkspacesStore.getState().setActive(workspaceId);
       }
-      const id = safeRandomUUID();
-      markAsNew(id);
-      // Workspace já escolhido para esta thread → a rota não reabre o seletor.
-      markWorkspaceChosen(id);
-      goTo(id);
+      if (isNewRoute) {
+        // Já em /session/new: apenas marca o workspace como escolhido (sem navegar).
+        markWorkspaceChosen(threadId);
+      } else {
+        // Saindo de uma sessão existente: sinaliza que workspace já foi confirmado
+        // para que o componente destino não reabra o seletor automaticamente.
+        signalWorkspacePreChosen();
+        void navigate({
+          to: "/session/$threadId",
+          params: { threadId: "new" },
+        });
+      }
       setIsMobileSidebarOpen(false);
     },
-    [goTo],
+    [isNewRoute, navigate, threadId],
   );
 
   const handleDeleteThread = useCallback(
@@ -311,9 +341,18 @@ function SessionPage() {
       }
       // Primeira persistência da thread no backend: remove do registry de novas.
       if (isNew(id)) clearNew(id);
+      // Se estávamos em /session/new, atualiza a URL para o ID real (replace
+      // para que o botão Voltar do browser não retorne a /session/new vazio).
+      if (isNewRoute) {
+        void navigate({
+          to: "/session/$threadId",
+          params: { threadId: id },
+          replace: true,
+        });
+      }
       void updateThreadMutation.mutate({ id, updates: { title } });
     },
-    [updateThreadMutation],
+    [updateThreadMutation, isNewRoute, navigate],
   );
 
   // ── Command palette — lista de ações navegáveis (C.30) ───────────────────
