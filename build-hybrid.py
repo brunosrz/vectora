@@ -36,9 +36,10 @@ COLLECT_ALL = [
 ]
 
 
-def run(cmd: list, cwd: Path, desc: str) -> None:
+def run(cmd: list, cwd: Path, desc: str, env: dict | None = None) -> None:
     print(f"\n{'=' * 70}\n-> {desc}\n{'=' * 70}\n$ {' '.join(map(str, cmd))}\n")
-    if subprocess.run(cmd, cwd=str(cwd)).returncode != 0:  # noqa: S603  # nosec B603
+    merged = {**os.environ, **(env or {})}
+    if subprocess.run(cmd, cwd=str(cwd), env=merged).returncode != 0:  # noqa: S603  # nosec B603
         sys.exit(f"FALHA: {desc}")
 
 
@@ -73,6 +74,19 @@ def main() -> None:
     collect: list[str] = []
     for pkg in COLLECT_ALL:
         collect += ["--collect-all", pkg]
+
+    # Módulos declarados pelos hooks do PyInstaller mas não instalados no projeto.
+    # Excluir explicitamente para silenciar os "Hidden import X not found!" warnings.
+    exclude_modules = [
+        "pycparser.lextab",  # gerado em runtime pelo pycparser, não existe no venv
+        "pycparser.yacctab",  # idem
+        "pysqlite2",  # dialeto opcional do SQLAlchemy
+        "MySQLdb",  # dialeto opcional do SQLAlchemy
+    ]
+    excludes: list[str] = []
+    for mod in exclude_modules:
+        excludes += ["--exclude-module", mod]
+
     run(
         [
             "uv",
@@ -92,10 +106,14 @@ def main() -> None:
             "--add-data",
             f"{VECTORA / 'backend' / 'assets'}{SEP}backend/assets",
             *collect,
+            *excludes,
             str(VECTORA / "launcher.py"),
         ],
         cwd=VECTORA,
         desc="PyInstaller -> vectora.exe",
+        # Suprime SyntaxWarning do pacote `future` (escape sequences inválidas
+        # em ficheiros de backports que o PyInstaller importa durante a análise).
+        env={"PYTHONWARNINGS": "ignore::SyntaxWarning"},
     )
     exe = ROOT / "dist" / ("vectora.exe" if sys.platform == "win32" else "vectora")
     if not exe.exists():
