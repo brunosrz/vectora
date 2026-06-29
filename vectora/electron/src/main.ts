@@ -109,12 +109,11 @@ const _HOP_BY_HOP = new Set([
   "keep-alive",
 ]);
 
-/**
- * Armazena um Set-Cookie header string no session do Electron explicitamente.
- * O handler protocol.handle não garante que Chromium processe Set-Cookie
- * automaticamente para schemes customizados — sem isso os cookies nunca chegam
- * nas requests subsequentes e o auth-guard redireciona para signin em loop.
- */
+// Store in-memory de cookies do backend: injetado manualmente em toda request
+// via forwardToBackend porque Chromium não inclui automaticamente cookies de
+// session.defaultSession no Cookie header para schemes customizados (vectora-app://).
+const _cookieStore = new Map<string, string>();
+
 async function storeSetCookie(cookieStr: string): Promise<void> {
   const [nameValuePart, ...attrParts] = cookieStr
     .split(";")
@@ -136,6 +135,17 @@ async function storeSetCookie(cookieStr: string): Promise<void> {
       attrs[part.slice(0, eq).toLowerCase().trim()] = part.slice(eq + 1).trim();
     }
   }
+
+  // Max-Age=0 → deletar o cookie (logout / expiração forçada).
+  if (attrs["max-age"] !== undefined && parseInt(attrs["max-age"], 10) <= 0) {
+    _cookieStore.delete(name);
+    try {
+      await session.defaultSession.cookies.remove(`${APP_SCHEME}://app`, name);
+    } catch {}
+    return;
+  }
+
+  _cookieStore.set(name, value);
 
   const details: Electron.CookiesSetDetails = {
     url: `${APP_SCHEME}://app`,
@@ -174,6 +184,15 @@ async function forwardToBackend(request: Request): Promise<Response> {
   request.headers.forEach((value, key) => {
     if (!_HOP_BY_HOP.has(key.toLowerCase())) headers[key] = value;
   });
+
+  // Injeta cookies do store in-memory no header Cookie. Necessário porque
+  // Chromium não inclui automaticamente cookies de session.defaultSession
+  // nas requests interceptadas por protocol.handle para schemes customizados.
+  if (_cookieStore.size > 0) {
+    headers["cookie"] = Array.from(_cookieStore.entries())
+      .map(([k, v]) => `${k}=${v}`)
+      .join("; ");
+  }
 
   const body =
     request.method !== "GET" && request.method !== "HEAD"
