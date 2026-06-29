@@ -33,6 +33,19 @@ COLLECT_ALL = [
     "lancedb",
     "aiosqlite",
     "httpx",
+    # tiktoken usa um sistema de plugins via namespace package: o registry faz
+    # pkgutil.iter_modules(tiktoken_ext.__path__) para descobrir os encoders.
+    # PyInstaller não vê esse import dentro do backend.pyd compilado.
+    "tiktoken",
+    "tiktoken_ext",
+]
+
+# Módulos que precisam de hidden-import adicional além do collect-all.
+# tiktoken_ext.openai_public é o plugin que define cl100k_base, p50k_base etc.;
+# em ambiente congelado pkgutil.iter_modules pode não enumerar namespace packages
+# automaticamente — o hidden-import garante que o módulo entre no bundle.
+HIDDEN_IMPORTS = [
+    "tiktoken_ext.openai_public",
 ]
 
 
@@ -74,6 +87,9 @@ def main() -> None:
     collect: list[str] = []
     for pkg in COLLECT_ALL:
         collect += ["--collect-all", pkg]
+    hidden: list[str] = []
+    for mod in HIDDEN_IMPORTS:
+        hidden += ["--hidden-import", mod]
 
     # Módulos declarados pelos hooks do PyInstaller mas não instalados no projeto.
     # Excluir explicitamente para silenciar os "Hidden import X not found!" warnings.
@@ -106,6 +122,7 @@ def main() -> None:
             "--add-data",
             f"{VECTORA / 'backend' / 'assets'}{SEP}backend/assets",
             *collect,
+            *hidden,
             *excludes,
             str(VECTORA / "launcher.py"),
         ],
