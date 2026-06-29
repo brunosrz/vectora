@@ -1,0 +1,26 @@
+{
+  "id": "intro",
+  "title": "Introduction",
+  "description": "Vectora is a self-hosted AI agent with RAG, MCP and multi-user web chat. Your data never leaves your server.",
+  "source": "@site/docs/intro.mdx",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/pt/intro",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "id": "intro",
+    "title": "Introduction",
+    "sidebar_position": 1,
+    "slug": "/intro"
+  },
+  "sidebar": "docsSidebar",
+  "next": {
+    "title": "What is Vectora?",
+    "permalink": "/pt/getting-started/introduction"
+  }
+}

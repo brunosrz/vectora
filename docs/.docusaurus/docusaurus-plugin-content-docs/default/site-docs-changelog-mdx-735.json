@@ -1,0 +1,25 @@
+{
+  "id": "changelog",
+  "title": "Changelog",
+  "description": "Unreleased",
+  "source": "@site/docs/changelog.mdx",
+  "sourceDirName": ".",
+  "slug": "/changelog",
+  "permalink": "/pt/changelog",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 99,
+  "frontMatter": {
+    "id": "changelog",
+    "title": "Changelog",
+    "sidebar_position": 99
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Updating Vectora",
+    "permalink": "/pt/self-hosting/updates"
+  }
+}

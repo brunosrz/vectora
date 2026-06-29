@@ -1,0 +1,29 @@
+{
+  "id": "reference/mcp-server",
+  "title": "MCP Server",
+  "description": "Vectora exposes an MCP (Model Context Protocol) server, making it usable as a tool source for any MCP-compatible AI client (Claude Desktop, Zed, Cursor, custom agents).",
+  "source": "@site/docs/reference/mcp-server.mdx",
+  "sourceDirName": "reference",
+  "slug": "/reference/mcp-server",
+  "permalink": "/pt/reference/mcp-server",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "id": "mcp-server",
+    "title": "MCP Server",
+    "sidebar_position": 4
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Agents Reference",
+    "permalink": "/pt/reference/agents"
+  },
+  "next": {
+    "title": "ACP Server",
+    "permalink": "/pt/reference/acp-server"
+  }
+}

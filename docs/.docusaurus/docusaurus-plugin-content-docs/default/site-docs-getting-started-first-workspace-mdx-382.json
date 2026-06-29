@@ -1,0 +1,29 @@
+{
+  "id": "getting-started/first-workspace",
+  "title": "First Workspace",
+  "description": "A Vectora workspace contains users, projects, and a shared knowledge base. This guide walks through the initial configuration after installation.",
+  "source": "@site/docs/getting-started/first-workspace.mdx",
+  "sourceDirName": "getting-started",
+  "slug": "/getting-started/first-workspace",
+  "permalink": "/pt/getting-started/first-workspace",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "id": "first-workspace",
+    "title": "First Workspace",
+    "sidebar_position": 4
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "VECTORA_TOKEN",
+    "permalink": "/pt/getting-started/vectora-token"
+  },
+  "next": {
+    "title": "Upgrade from CLI",
+    "permalink": "/pt/getting-started/upgrade-from-cli"
+  }
+}

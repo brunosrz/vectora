@@ -1,3 +1,5 @@
 {
-  "installCommand": "npx --yes pnpm@11 install"
+  "installCommand": "npx --yes pnpm@11 install --frozen-lockfile=false",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "build"
 }

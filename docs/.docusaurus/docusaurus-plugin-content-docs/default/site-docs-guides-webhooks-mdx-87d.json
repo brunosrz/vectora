@@ -1,0 +1,29 @@
+{
+  "id": "guides/webhooks",
+  "title": "Webhooks",
+  "description": "Vectora (Pro plan) can send HTTP POST requests to your endpoints when specific events occur.",
+  "source": "@site/docs/guides/webhooks.mdx",
+  "sourceDirName": "guides",
+  "slug": "/guides/webhooks",
+  "permalink": "/pt/guides/webhooks",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "id": "webhooks",
+    "title": "Webhooks",
+    "sidebar_position": 6
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "API Keys",
+    "permalink": "/pt/guides/api-keys"
+  },
+  "next": {
+    "title": "Git Workflows",
+    "permalink": "/pt/guides/git-workflows"
+  }
+}

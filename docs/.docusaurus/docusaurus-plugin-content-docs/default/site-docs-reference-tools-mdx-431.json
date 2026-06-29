@@ -1,0 +1,29 @@
+{
+  "id": "reference/tools",
+  "title": "Built-in Tools",
+  "description": "Vectora agents have access to a set of built-in tools that let them interact with the filesystem, terminal, web, and your knowledge bases. Tools are invoked automatically by the orchestrator based on the task.",
+  "source": "@site/docs/reference/tools.mdx",
+  "sourceDirName": "reference",
+  "slug": "/reference/tools",
+  "permalink": "/pt/reference/tools",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "id": "tools",
+    "title": "Built-in Tools",
+    "sidebar_position": 3
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Configuration Reference",
+    "permalink": "/pt/reference/config"
+  },
+  "next": {
+    "title": "Agents Reference",
+    "permalink": "/pt/reference/agents"
+  }
+}

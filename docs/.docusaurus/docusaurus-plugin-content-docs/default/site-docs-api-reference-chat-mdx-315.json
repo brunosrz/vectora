@@ -1,0 +1,29 @@
+{
+  "id": "api-reference/chat",
+  "title": "Chat",
+  "description": "Send a message",
+  "source": "@site/docs/api-reference/chat.mdx",
+  "sourceDirName": "api-reference",
+  "slug": "/api-reference/chat",
+  "permalink": "/pt/api-reference/chat",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "id": "chat",
+    "title": "Chat",
+    "sidebar_position": 3
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Authentication",
+    "permalink": "/pt/api-reference/authentication"
+  },
+  "next": {
+    "title": "Documents",
+    "permalink": "/pt/api-reference/documents"
+  }
+}

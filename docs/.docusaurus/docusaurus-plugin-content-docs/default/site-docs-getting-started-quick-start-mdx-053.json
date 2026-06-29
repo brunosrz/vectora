@@ -1,0 +1,29 @@
+{
+  "id": "getting-started/quick-start",
+  "title": "Quick Start",
+  "description": "Get from zero to your first AI conversation in under 5 minutes.",
+  "source": "@site/docs/getting-started/quick-start.mdx",
+  "sourceDirName": "getting-started",
+  "slug": "/getting-started/quick-start",
+  "permalink": "/pt/getting-started/quick-start",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "id": "quick-start",
+    "title": "Quick Start",
+    "sidebar_position": 2
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Installation",
+    "permalink": "/pt/getting-started/installation"
+  },
+  "next": {
+    "title": "VECTORA_TOKEN",
+    "permalink": "/pt/getting-started/vectora-token"
+  }
+}

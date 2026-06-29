@@ -1,0 +1,29 @@
+{
+  "id": "api-reference/overview",
+  "title": "API Overview",
+  "description": "Vectora exposes a REST API at /v1/ for programmatic access to all AI and workspace features.",
+  "source": "@site/docs/api-reference/overview.mdx",
+  "sourceDirName": "api-reference",
+  "slug": "/api-reference/overview",
+  "permalink": "/pt/api-reference/overview",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "id": "overview",
+    "title": "API Overview",
+    "sidebar_position": 1
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Upgrade from CLI",
+    "permalink": "/pt/getting-started/upgrade-from-cli"
+  },
+  "next": {
+    "title": "Authentication",
+    "permalink": "/pt/api-reference/authentication"
+  }
+}

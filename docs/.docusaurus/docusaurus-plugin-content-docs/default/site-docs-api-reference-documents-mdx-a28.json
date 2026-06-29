@@ -1,0 +1,29 @@
+{
+  "id": "api-reference/documents",
+  "title": "Documents",
+  "description": "Upload a document",
+  "source": "@site/docs/api-reference/documents.mdx",
+  "sourceDirName": "api-reference",
+  "slug": "/api-reference/documents",
+  "permalink": "/pt/api-reference/documents",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "id": "documents",
+    "title": "Documents",
+    "sidebar_position": 4
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Chat",
+    "permalink": "/pt/api-reference/chat"
+  },
+  "next": {
+    "title": "Projects",
+    "permalink": "/pt/api-reference/projects"
+  }
+}

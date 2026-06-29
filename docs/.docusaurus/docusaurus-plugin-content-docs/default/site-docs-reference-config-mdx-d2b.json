@@ -1,0 +1,29 @@
+{
+  "id": "reference/config",
+  "title": "Configuration Reference",
+  "description": "Vectora is configured via a .env file in the same directory as your docker-compose.yml.",
+  "source": "@site/docs/reference/config.mdx",
+  "sourceDirName": "reference",
+  "slug": "/reference/config",
+  "permalink": "/pt/reference/config",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "id": "config",
+    "title": "Configuration Reference",
+    "sidebar_position": 1
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "CLI Reference",
+    "permalink": "/pt/reference/cli"
+  },
+  "next": {
+    "title": "Built-in Tools",
+    "permalink": "/pt/reference/tools"
+  }
+}

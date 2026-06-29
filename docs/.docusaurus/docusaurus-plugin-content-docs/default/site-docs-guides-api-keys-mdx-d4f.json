@@ -1,0 +1,29 @@
+{
+  "id": "guides/api-keys",
+  "title": "API Keys",
+  "description": "API keys allow external services to interact with Vectora programmatically.",
+  "source": "@site/docs/guides/api-keys.mdx",
+  "sourceDirName": "guides",
+  "slug": "/guides/api-keys",
+  "permalink": "/pt/guides/api-keys",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "id": "api-keys",
+    "title": "API Keys",
+    "sidebar_position": 3
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "MCP Integration",
+    "permalink": "/pt/guides/mcp-integration"
+  },
+  "next": {
+    "title": "Webhooks",
+    "permalink": "/pt/guides/webhooks"
+  }
+}

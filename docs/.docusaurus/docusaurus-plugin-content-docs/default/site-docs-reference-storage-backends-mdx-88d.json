@@ -1,0 +1,29 @@
+{
+  "id": "reference/storage-backends",
+  "title": "Storage Backends",
+  "description": "Vectora stores uploaded files (documents, exports) in a configurable backend.",
+  "source": "@site/docs/reference/storage-backends.mdx",
+  "sourceDirName": "reference",
+  "slug": "/reference/storage-backends",
+  "permalink": "/pt/reference/storage-backends",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "id": "storage-backends",
+    "title": "Storage Backends",
+    "sidebar_position": 6
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "ACP Server",
+    "permalink": "/pt/reference/acp-server"
+  },
+  "next": {
+    "title": "Requirements",
+    "permalink": "/pt/self-hosting/requirements"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "defaultLocale": "en",
+  "locales": ["en", "pt"],
+  "path": "i18n",
+  "currentLocale": "pt",
+  "localeConfigs": {
+    "en": {
+      "label": "English",
+      "direction": "ltr",
+      "htmlLang": "en",
+      "calendar": "gregory",
+      "path": "en",
+      "translate": false,
+      "url": "https://docs.vectora.company",
+      "baseUrl": "/"
+    },
+    "pt": {
+      "label": "Português",
+      "direction": "ltr",
+      "htmlLang": "pt-BR",
+      "calendar": "gregory",
+      "path": "pt",
+      "translate": false,
+      "url": "https://docs.vectora.company",
+      "baseUrl": "/pt/"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "guides/team-setup",
+  "title": "Team Setup",
+  "description": "Inviting users",
+  "source": "@site/docs/guides/team-setup.mdx",
+  "sourceDirName": "guides",
+  "slug": "/guides/team-setup",
+  "permalink": "/pt/guides/team-setup",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "id": "team-setup",
+    "title": "Team Setup",
+    "sidebar_position": 2
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Deploy on a VPS",
+    "permalink": "/pt/guides/vps-deploy"
+  },
+  "next": {
+    "title": "RAG Pipeline",
+    "permalink": "/pt/guides/rag-guide"
+  }
+}

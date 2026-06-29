@@ -1,0 +1,29 @@
+{
+  "id": "api-reference/authentication",
+  "title": "Authentication",
+  "description": "API keys",
+  "source": "@site/docs/api-reference/authentication.mdx",
+  "sourceDirName": "api-reference",
+  "slug": "/api-reference/authentication",
+  "permalink": "/pt/api-reference/authentication",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "id": "authentication",
+    "title": "Authentication",
+    "sidebar_position": 2
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "API Overview",
+    "permalink": "/pt/api-reference/overview"
+  },
+  "next": {
+    "title": "Chat",
+    "permalink": "/pt/api-reference/chat"
+  }
+}

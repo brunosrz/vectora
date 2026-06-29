@@ -1,0 +1,29 @@
+{
+  "id": "guides/rag-guide",
+  "title": "RAG Pipeline",
+  "description": "Vectora uses Retrieval-Augmented Generation (RAG) to let the AI answer questions about your documents with high precision.",
+  "source": "@site/docs/guides/rag-guide.mdx",
+  "sourceDirName": "guides",
+  "slug": "/guides/rag-guide",
+  "permalink": "/pt/guides/rag-guide",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "id": "rag-guide",
+    "title": "RAG Pipeline",
+    "sidebar_position": 1
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Team Setup",
+    "permalink": "/pt/guides/team-setup"
+  },
+  "next": {
+    "title": "MCP Integration",
+    "permalink": "/pt/guides/mcp-integration"
+  }
+}

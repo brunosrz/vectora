@@ -1,0 +1,29 @@
+{
+  "id": "guides/vps-deploy",
+  "title": "Deploy on a VPS",
+  "description": "This guide walks through deploying Vectora on a fresh Ubuntu 24.04 VPS. The same steps apply to any Linux server (Debian 12+, Rocky Linux 9+).",
+  "source": "@site/docs/guides/vps-deploy.mdx",
+  "sourceDirName": "guides",
+  "slug": "/guides/vps-deploy",
+  "permalink": "/pt/guides/vps-deploy",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedAt": 1781390529000,
+  "sidebarPosition": 0,
+  "frontMatter": {
+    "id": "vps-deploy",
+    "title": "Deploy on a VPS",
+    "sidebar_position": 0
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Webhooks",
+    "permalink": "/pt/api-reference/webhooks"
+  },
+  "next": {
+    "title": "Team Setup",
+    "permalink": "/pt/guides/team-setup"
+  }
+}

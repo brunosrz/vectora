@@ -1,0 +1,196 @@
+{
+  "/pt/search-24b": {
+    "__comp": "1a4e3797",
+    "__context": {
+      "plugin": "138e0e15"
+    }
+  },
+  "/pt/-cb1": {
+    "__comp": "1df93b7f",
+    "__context": {
+      "plugin": "a7456010"
+    },
+    "config": "5e9f5e1a"
+  },
+  "/pt/-e93": {
+    "__comp": "5e95c892",
+    "__context": {
+      "plugin": "aba21aa0"
+    }
+  },
+  "/pt/-8ee": {
+    "__comp": "a7bd4aaa",
+    "__props": "15769cf5"
+  },
+  "/pt/-e09": {
+    "__comp": "a94703ab"
+  },
+  "/pt/api-reference/authentication-de0": {
+    "__comp": "17896441",
+    "content": "ae217a0b"
+  },
+  "/pt/api-reference/chat-568": {
+    "__comp": "17896441",
+    "content": "31520e48"
+  },
+  "/pt/api-reference/documents-b7f": {
+    "__comp": "17896441",
+    "content": "a28fbac5"
+  },
+  "/pt/api-reference/overview-e9c": {
+    "__comp": "17896441",
+    "content": "2971a109"
+  },
+  "/pt/api-reference/projects-470": {
+    "__comp": "17896441",
+    "content": "6cafed31"
+  },
+  "/pt/api-reference/webhooks-5b4": {
+    "__comp": "17896441",
+    "content": "511e7adf"
+  },
+  "/pt/changelog-036": {
+    "__comp": "17896441",
+    "content": "735d0569"
+  },
+  "/pt/getting-started/first-workspace-d27": {
+    "__comp": "17896441",
+    "content": "382913e8"
+  },
+  "/pt/getting-started/installation-9e8": {
+    "__comp": "17896441",
+    "content": "6459b84b"
+  },
+  "/pt/getting-started/introduction-211": {
+    "__comp": "17896441",
+    "content": "54481e7f"
+  },
+  "/pt/getting-started/quick-start-557": {
+    "__comp": "17896441",
+    "content": "053d6f47"
+  },
+  "/pt/getting-started/upgrade-from-cli-472": {
+    "__comp": "17896441",
+    "content": "63d29b5b"
+  },
+  "/pt/getting-started/vectora-token-7a2": {
+    "__comp": "17896441",
+    "content": "28c6d19c"
+  },
+  "/pt/guides/api-keys-ad4": {
+    "__comp": "17896441",
+    "content": "d4f742cf"
+  },
+  "/pt/guides/data-migration-cc2": {
+    "__comp": "17896441",
+    "content": "cb8ae0e6"
+  },
+  "/pt/guides/git-workflows-56f": {
+    "__comp": "17896441",
+    "content": "f71908fe"
+  },
+  "/pt/guides/github-actions-596": {
+    "__comp": "17896441",
+    "content": "18e56ad2"
+  },
+  "/pt/guides/ide-integration-9f0": {
+    "__comp": "17896441",
+    "content": "f810630c"
+  },
+  "/pt/guides/mcp-integration-8c4": {
+    "__comp": "17896441",
+    "content": "d68b1045"
+  },
+  "/pt/guides/n8n-workflows-382": {
+    "__comp": "17896441",
+    "content": "23291e14"
+  },
+  "/pt/guides/rag-guide-392": {
+    "__comp": "17896441",
+    "content": "33ad8c9d"
+  },
+  "/pt/guides/sdk-python-535": {
+    "__comp": "17896441",
+    "content": "5d97827a"
+  },
+  "/pt/guides/sdk-typescript-59c": {
+    "__comp": "17896441",
+    "content": "0233033d"
+  },
+  "/pt/guides/team-setup-225": {
+    "__comp": "17896441",
+    "content": "1ecfdac7"
+  },
+  "/pt/guides/vps-deploy-487": {
+    "__comp": "17896441",
+    "content": "10beff06"
+  },
+  "/pt/guides/webhooks-c1d": {
+    "__comp": "17896441",
+    "content": "87d62477"
+  },
+  "/pt/intro-324": {
+    "__comp": "17896441",
+    "content": "f8409a7e"
+  },
+  "/pt/reference/acp-server-6b9": {
+    "__comp": "17896441",
+    "content": "0a952d50"
+  },
+  "/pt/reference/agents-217": {
+    "__comp": "17896441",
+    "content": "53ab48d0"
+  },
+  "/pt/reference/cli-5e0": {
+    "__comp": "17896441",
+    "content": "dba39453"
+  },
+  "/pt/reference/config-889": {
+    "__comp": "17896441",
+    "content": "d2b06a37"
+  },
+  "/pt/reference/mcp-server-7f2": {
+    "__comp": "17896441",
+    "content": "60af8ca1"
+  },
+  "/pt/reference/storage-backends-e57": {
+    "__comp": "17896441",
+    "content": "88dd2843"
+  },
+  "/pt/reference/tools-dd9": {
+    "__comp": "17896441",
+    "content": "4310522e"
+  },
+  "/pt/self-hosting/backup-restore-c22": {
+    "__comp": "17896441",
+    "content": "11051caa"
+  },
+  "/pt/self-hosting/docker-407": {
+    "__comp": "17896441",
+    "content": "010a7c94"
+  },
+  "/pt/self-hosting/kubernetes-165": {
+    "__comp": "17896441",
+    "content": "2ad5d9a9"
+  },
+  "/pt/self-hosting/monitoring-0c9": {
+    "__comp": "17896441",
+    "content": "8372fe6e"
+  },
+  "/pt/self-hosting/nginx-traefik-200": {
+    "__comp": "17896441",
+    "content": "9713962e"
+  },
+  "/pt/self-hosting/requirements-832": {
+    "__comp": "17896441",
+    "content": "5151f175"
+  },
+  "/pt/self-hosting/storage-backends-ec0": {
+    "__comp": "17896441",
+    "content": "b0ec7673"
+  },
+  "/pt/self-hosting/updates-ebf": {
+    "__comp": "17896441",
+    "content": "b297c270"
+  }
+}
