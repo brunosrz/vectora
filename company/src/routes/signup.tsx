@@ -24,8 +24,15 @@ export const Route = createFileRoute("/signup")({
 
 const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
   "User already registered": m.error_email_taken,
+  "Email already in use": m.error_email_taken,
   "Password should be at least 6 characters": m.error_password_weak,
+  "Password should be at least 8 characters": m.error_password_weak,
   turnstile_failed: m.error_turnstile,
+  "Email rate limit exceeded": m.error_rate_limit,
+  "For security purposes, you can only request this after": m.error_rate_limit,
+  "signup is disabled": m.error_signup_disabled,
+  "Signups not allowed for this instance": m.error_signup_disabled,
+  "Database error saving new user": m.error_db,
 };
 
 function SignupPage() {
@@ -53,8 +60,12 @@ function SignupPage() {
       navigate({ to: res.redirect as "/dashboard" });
     },
     onError: (err: Error) => {
-      const msgFn = AUTH_ERROR_MAP[err.message];
-      toast.error(msgFn ? msgFn() : m.error_generic());
+      const msgFn =
+        AUTH_ERROR_MAP[err.message] ??
+        Object.entries(AUTH_ERROR_MAP).find(([k]) =>
+          err.message.startsWith(k),
+        )?.[1];
+      toast.error(msgFn ? msgFn() : err.message || m.error_generic());
     },
   });
 

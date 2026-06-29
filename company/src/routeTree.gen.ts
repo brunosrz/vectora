@@ -16,7 +16,6 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IssuesRouteImport } from './routes/issues'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -30,6 +29,7 @@ import { Route as DashboardLicenseRouteImport } from './routes/dashboard/license
 import { Route as DashboardBillingRouteImport } from './routes/dashboard/billing'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard/api-keys'
 import { Route as DashboardAccountRouteImport } from './routes/dashboard/account'
+import { Route as AuthDeviceRouteImport } from './routes/auth/device'
 import { Route as ApiOgRouteImport } from './routes/api/og'
 
 const TermsRoute = TermsRouteImport.update({
@@ -65,11 +65,6 @@ const RoadmapRoute = RoadmapRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -137,6 +132,11 @@ const DashboardAccountRoute = DashboardAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const AuthDeviceRoute = AuthDeviceRouteImport.update({
+  id: '/auth/device',
+  path: '/auth/device',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOgRoute = ApiOgRouteImport.update({
   id: '/api/og',
   path: '/api/og',
@@ -152,7 +152,6 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/issues': typeof IssuesRoute
   '/login': typeof LoginRoute
-  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/roadmap': typeof RoadmapRoute
   '/signup': typeof SignupRoute
@@ -161,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
+  '/auth/device': typeof AuthDeviceRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
@@ -175,7 +175,6 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/issues': typeof IssuesRoute
   '/login': typeof LoginRoute
-  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/roadmap': typeof RoadmapRoute
   '/signup': typeof SignupRoute
@@ -184,6 +183,7 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
+  '/auth/device': typeof AuthDeviceRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
@@ -200,7 +200,6 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/issues': typeof IssuesRoute
   '/login': typeof LoginRoute
-  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/roadmap': typeof RoadmapRoute
   '/signup': typeof SignupRoute
@@ -209,6 +208,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
+  '/auth/device': typeof AuthDeviceRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
@@ -226,7 +226,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/issues'
     | '/login'
-    | '/pricing'
     | '/privacy'
     | '/roadmap'
     | '/signup'
@@ -235,6 +234,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
+    | '/auth/device'
     | '/dashboard/account'
     | '/dashboard/api-keys'
     | '/dashboard/billing'
@@ -249,7 +249,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/issues'
     | '/login'
-    | '/pricing'
     | '/privacy'
     | '/roadmap'
     | '/signup'
@@ -258,6 +257,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
+    | '/auth/device'
     | '/dashboard/account'
     | '/dashboard/api-keys'
     | '/dashboard/billing'
@@ -273,7 +273,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/issues'
     | '/login'
-    | '/pricing'
     | '/privacy'
     | '/roadmap'
     | '/signup'
@@ -282,6 +281,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
+    | '/auth/device'
     | '/dashboard/account'
     | '/dashboard/api-keys'
     | '/dashboard/billing'
@@ -298,7 +298,6 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   IssuesRoute: typeof IssuesRoute
   LoginRoute: typeof LoginRoute
-  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RoadmapRoute: typeof RoadmapRoute
   SignupRoute: typeof SignupRoute
@@ -307,6 +306,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   ApiOgRoute: typeof ApiOgRoute
+  AuthDeviceRoute: typeof AuthDeviceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -358,13 +358,6 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -458,6 +451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/auth/device': {
+      id: '/auth/device'
+      path: '/auth/device'
+      fullPath: '/auth/device'
+      preLoaderRoute: typeof AuthDeviceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/og': {
       id: '/api/og'
       path: '/api/og'
@@ -497,7 +497,6 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   IssuesRoute: IssuesRoute,
   LoginRoute: LoginRoute,
-  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RoadmapRoute: RoadmapRoute,
   SignupRoute: SignupRoute,
@@ -506,7 +505,17 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   ApiOgRoute: ApiOgRoute,
+  AuthDeviceRoute: AuthDeviceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

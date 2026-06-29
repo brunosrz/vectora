@@ -14,6 +14,7 @@ import { initAuthListener } from "#/store/auth";
 import { THEME_INIT_SCRIPT } from "#/lib/theme";
 import Header from "#/components/shared/Header";
 import Footer from "#/components/shared/Footer";
+import CookieConsent from "#/components/shared/CookieConsent";
 import appCss from "../styles.css?url";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -75,12 +76,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         },
         ...(GA4_ID
           ? [
+              // Consent Mode v2: defaults negados até o usuário aceitar.
+              // Lê localStorage aqui (inline, client-only) antes de qualquer
+              // hit do GA4 para estar em conformidade com LGPD/GDPR/CCPA.
+              {
+                children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}try{var _c=localStorage.getItem('cookie-consent');gtag('consent','default',{analytics_storage:_c==='accepted'?'granted':'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'})}catch(e){}`,
+              },
               {
                 src: `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`,
                 async: true,
               },
               {
-                children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${GA4_ID}');`,
+                children: `gtag('js',new Date());gtag('config','${GA4_ID}');`,
               },
             ]
           : []),
@@ -115,6 +122,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         {!isDashboard && !isAuth && <Header />}
         {children}
         {!isDashboard && !isAuth && <Footer />}
+        <CookieConsent />
         <Toaster
           position="bottom-right"
           toastOptions={{

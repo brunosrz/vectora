@@ -323,5 +323,16 @@
   "auth_device_success_desc": "You can close this tab and return to the Vectora app.",
   "auth_device_error": "Authorization failed. Try again.",
   "auth_device_no_token": "Your account has no token yet. Visit the dashboard to generate one.",
-  "auth_device_login_prompt": "You must be logged in to authorize the app."
+  "auth_device_login_prompt": "You must be logged in to authorize the app.",
+
+  "cookie_title": "Cookies & Privacy",
+  "cookie_desc": "We use analytics cookies to understand how the site is used (LGPD · GDPR · CCPA). No advertising cookies.",
+  "cookie_privacy_link": "Privacy Policy",
+  "cookie_policy_link": "Cookie Policy",
+  "cookie_accept": "Accept",
+  "cookie_reject": "Reject",
+
+  "error_rate_limit": "Too many attempts. Wait a moment and try again.",
+  "error_signup_disabled": "Sign-ups are temporarily disabled.",
+  "error_db": "Internal error. Please try again shortly."
 }

@@ -3,10 +3,6 @@
 # Em produção: pnpm wrangler secret put <KEY>
 
 # Como obter:
-#   cat ~/.vectora/auth.key   (gerado automaticamente no primeiro boot do backend)
-VECTORA_JWT_SECRET=
-
-# Como obter:
 #   python3 -c "import secrets; print(secrets.token_hex(32))"
 #   ou: openssl rand -hex 32
 RELAY_HMAC_SECRET=

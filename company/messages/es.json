@@ -323,5 +323,16 @@
   "auth_device_success_desc": "Puedes cerrar esta pestaña y volver a la app Vectora.",
   "auth_device_error": "Error de autorización. Inténtalo de nuevo.",
   "auth_device_no_token": "Tu cuenta no tiene token aún. Visita el dashboard para generar uno.",
-  "auth_device_login_prompt": "Debes estar conectado para autorizar la app."
+  "auth_device_login_prompt": "Debes estar conectado para autorizar la app.",
+
+  "cookie_title": "Cookies y Privacidad",
+  "cookie_desc": "Usamos cookies analíticas para entender cómo se utiliza el sitio (LGPD · GDPR · CCPA). Sin cookies publicitarias.",
+  "cookie_privacy_link": "Política de Privacidad",
+  "cookie_policy_link": "Política de Cookies",
+  "cookie_accept": "Aceptar",
+  "cookie_reject": "Rechazar",
+
+  "error_rate_limit": "Demasiados intentos. Espera unos segundos e inténtalo de nuevo.",
+  "error_signup_disabled": "Los registros están temporalmente desactivados.",
+  "error_db": "Error interno. Inténtalo de nuevo en unos instantes."
 }
