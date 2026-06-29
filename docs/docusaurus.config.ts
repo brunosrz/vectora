@@ -53,7 +53,7 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           routeBasePath: "/",
           editUrl: undefined,
-          showLastUpdateTime: true,
+          showLastUpdateTime: false,
           breadcrumbs: true,
         },
         blog: false,
@@ -125,9 +125,9 @@ const config: Config = {
         {
           title: "Guides",
           items: [
+            { label: "VPS deployment", to: "/guides/vps-deploy" },
+            { label: "API integration", to: "/guides/api-integration" },
             { label: "RAG pipeline", to: "/guides/rag-guide" },
-            { label: "Team setup", to: "/guides/team-setup" },
-            { label: "API keys", to: "/guides/api-keys" },
             { label: "MCP integration", to: "/guides/mcp-integration" },
           ],
         },

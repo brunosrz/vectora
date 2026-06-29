@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
       label: "Guides",
       items: [
         "guides/vps-deploy",
+        "guides/api-integration",
         "guides/team-setup",
         "guides/rag-guide",
         "guides/mcp-integration",

@@ -1,0 +1,389 @@
+---
+id: api-integration
+title: Using Vectora as your AI Engine
+sidebar_position: 1
+---
+
+# Using Vectora as your AI Engine
+
+Vectora runs on your server and exposes a REST API that lets any application — a web app, a mobile app, an n8n workflow, a Python script — use your AI agent and knowledge base without building any LLM infrastructure itself.
+
+This is what the REST API is for: **your product talks to Vectora, Vectora does the AI heavy lifting, your product gets structured answers back.**
+
+```
+Your App  ──POST /v1/chat──►  Vectora (your VPS)
+                                    │
+                          LLM + RAG + Agents
+                                    │
+          ◄── JSON response ─────────┘
+```
+
+## Prerequisites
+
+1. Vectora running on a VPS ([deploy guide](./vps-deploy)) or locally
+2. An API key — go to **Settings → API Keys → New key** in the Vectora dashboard
+3. The base URL of your instance (e.g. `https://ai.yourcompany.com`)
+
+## Your first request
+
+```bash
+export VECTORA_URL="https://ai.yourcompany.com"
+export VECTORA_KEY="vk_live_xxxxxxxxxxxx"
+
+curl -s "$VECTORA_URL/v1/chat" \
+  -H "Authorization: Bearer $VECTORA_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": "proj_abc123",
+    "message": "What is Vectora?"
+  }' | jq '.data.content'
+```
+
+## Chat
+
+### Send a message
+
+```http
+POST /v1/chat
+```
+
+```json
+{
+  "project_id": "proj_abc123",
+  "message": "Summarize the Q3 2024 report.",
+  "session_id": "user-42-session-1"   // optional — groups messages into a conversation
+}
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "id": "msg_01jxxx",
+    "content": "The Q3 2024 report shows...",
+    "session_id": "user-42-session-1",
+    "sources": [
+      {
+        "document_id": "doc_abc",
+        "filename": "q3-report.pdf",
+        "excerpt": "Revenue grew 18% YoY..."
+      }
+    ]
+  },
+  "meta": { "request_id": "req_01jxxx" }
+}
+```
+
+### Streaming (SSE)
+
+For a responsive UI, stream the response token-by-token:
+
+```http
+POST /v1/chat/stream
+```
+
+```bash
+curl -sN "$VECTORA_URL/v1/chat/stream" \
+  -H "Authorization: Bearer $VECTORA_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"project_id":"proj_abc123","message":"Explain how RAG works."}' \
+  | while IFS= read -r line; do
+      [[ "$line" == data:* ]] && echo "${line#data: }" | jq -r '.delta // empty'
+    done
+```
+
+### Python example (with streaming)
+
+```python
+import httpx
+
+VECTORA_URL = "https://ai.yourcompany.com"
+VECTORA_KEY = "vk_live_xxxxxxxxxxxx"
+
+def chat(project_id: str, message: str) -> str:
+    with httpx.Client() as client:
+        r = client.post(
+            f"{VECTORA_URL}/v1/chat",
+            headers={"Authorization": f"Bearer {VECTORA_KEY}"},
+            json={"project_id": project_id, "message": message},
+            timeout=120,
+        )
+        r.raise_for_status()
+        return r.json()["data"]["content"]
+
+def stream_chat(project_id: str, message: str):
+    with httpx.Client() as client:
+        with client.stream(
+            "POST",
+            f"{VECTORA_URL}/v1/chat/stream",
+            headers={"Authorization": f"Bearer {VECTORA_KEY}"},
+            json={"project_id": project_id, "message": message},
+            timeout=120,
+        ) as r:
+            for line in r.iter_lines():
+                if line.startswith("data: "):
+                    import json
+                    chunk = json.loads(line[6:])
+                    if delta := chunk.get("delta"):
+                        yield delta
+
+# Usage
+answer = chat("proj_abc123", "What is the refund policy?")
+print(answer)
+
+# Streaming
+for token in stream_chat("proj_abc123", "Summarize the privacy policy."):
+    print(token, end="", flush=True)
+```
+
+### Node.js / TypeScript example
+
+```typescript
+const VECTORA_URL = "https://ai.yourcompany.com";
+const VECTORA_KEY = "vk_live_xxxxxxxxxxxx";
+
+async function chat(projectId: string, message: string): Promise<string> {
+  const res = await fetch(`${VECTORA_URL}/v1/chat`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${VECTORA_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ project_id: projectId, message }),
+  });
+
+  if (!res.ok) throw new Error(`Vectora error: ${res.status}`);
+  const { data } = await res.json();
+  return data.content;
+}
+
+// Streaming with fetch
+async function streamChat(projectId: string, message: string) {
+  const res = await fetch(`${VECTORA_URL}/v1/chat/stream`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${VECTORA_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ project_id: projectId, message }),
+  });
+
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const lines = decoder.decode(value).split("\n");
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        const chunk = JSON.parse(line.slice(6));
+        if (chunk.delta) process.stdout.write(chunk.delta);
+      }
+    }
+  }
+}
+```
+
+## Document management
+
+### Upload a document
+
+Index a PDF, Markdown file, or plain text so the agent can answer questions about it:
+
+```bash
+curl -s "$VECTORA_URL/v1/documents" \
+  -H "Authorization: Bearer $VECTORA_KEY" \
+  -F "project_id=proj_abc123" \
+  -F "file=@architecture.pdf"
+```
+
+```json
+{
+  "data": {
+    "id": "doc_01jxxx",
+    "filename": "architecture.pdf",
+    "status": "indexing",
+    "chunks": 142
+  }
+}
+```
+
+Documents finish indexing asynchronously. Poll `GET /v1/documents/:id` until `status` is `ready`.
+
+### Semantic search (without chat)
+
+Search the knowledge base directly:
+
+```bash
+curl -s "$VECTORA_URL/v1/search" \
+  -H "Authorization: Bearer $VECTORA_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": "proj_abc123",
+    "query": "cancellation policy",
+    "limit": 5
+  }'
+```
+
+```json
+{
+  "data": [
+    {
+      "document_id": "doc_01jxxx",
+      "filename": "terms.pdf",
+      "excerpt": "Customers may cancel within 30 days...",
+      "score": 0.94
+    }
+  ]
+}
+```
+
+## Building a chatbot
+
+A minimal chatbot that keeps conversation context and uses Vectora as the AI backend:
+
+```python
+import httpx
+
+class VectoraBot:
+    def __init__(self, base_url: str, api_key: str, project_id: str):
+        self.url = base_url
+        self.headers = {"Authorization": f"Bearer {api_key}"}
+        self.project_id = project_id
+        self.session_id = None
+
+    def send(self, message: str) -> str:
+        payload = {
+            "project_id": self.project_id,
+            "message": message,
+        }
+        if self.session_id:
+            payload["session_id"] = self.session_id
+
+        with httpx.Client() as client:
+            r = client.post(
+                f"{self.url}/v1/chat",
+                headers={**self.headers, "Content-Type": "application/json"},
+                json=payload,
+                timeout=120,
+            )
+            r.raise_for_status()
+            data = r.json()["data"]
+            self.session_id = data["session_id"]   # keep session across turns
+            return data["content"]
+
+bot = VectoraBot(
+    base_url="https://ai.yourcompany.com",
+    api_key="vk_live_...",
+    project_id="proj_abc123",
+)
+
+print(bot.send("Hello! What can you help me with?"))
+print(bot.send("Tell me more about the pricing."))  # has context from previous turn
+```
+
+## Error handling
+
+All errors return a consistent JSON structure:
+
+```json
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Too many requests. Retry after 30s.",
+    "request_id": "req_01jxxx"
+  }
+}
+```
+
+| HTTP status | Code | Meaning |
+|---|---|---|
+| 401 | `unauthorized` | Invalid or missing API key |
+| 403 | `forbidden` | Key lacks required scope |
+| 404 | `not_found` | Project or document not found |
+| 429 | `rate_limit_exceeded` | Too many requests |
+| 500 | `internal_error` | Vectora server error |
+| 503 | `model_unavailable` | LLM provider unreachable |
+
+```python
+import httpx
+
+try:
+    r = client.post(f"{VECTORA_URL}/v1/chat", ...)
+    r.raise_for_status()
+except httpx.HTTPStatusError as e:
+    body = e.response.json()
+    code = body["error"]["code"]
+    if code == "rate_limit_exceeded":
+        # back off and retry
+        ...
+    elif code == "unauthorized":
+        # rotate the key
+        ...
+```
+
+## Common patterns
+
+### Multi-tenant: one project per customer
+
+```python
+# Each customer gets their own isolated project
+def get_or_create_project(customer_id: str) -> str:
+    projects = client.get(f"{VECTORA_URL}/v1/projects",
+                          headers=headers).json()["data"]
+    for p in projects:
+        if p["metadata"].get("customer_id") == customer_id:
+            return p["id"]
+
+    r = client.post(f"{VECTORA_URL}/v1/projects",
+                    headers={**headers, "Content-Type": "application/json"},
+                    json={
+                        "name": f"Customer {customer_id}",
+                        "metadata": {"customer_id": customer_id},
+                    }).json()
+    return r["data"]["id"]
+```
+
+### Upload documents on demand
+
+```python
+import httpx, pathlib
+
+def ingest_file(project_id: str, path: str):
+    file = pathlib.Path(path)
+    with httpx.Client() as client:
+        r = client.post(
+            f"{VECTORA_URL}/v1/documents",
+            headers={"Authorization": f"Bearer {VECTORA_KEY}"},
+            files={"file": (file.name, file.read_bytes())},
+            data={"project_id": project_id},
+        )
+        r.raise_for_status()
+        return r.json()["data"]["id"]
+```
+
+### Webhooks for async events
+
+Register a webhook to receive notifications when documents finish indexing:
+
+```bash
+curl -s "$VECTORA_URL/v1/webhooks" \
+  -H "Authorization: Bearer $VECTORA_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://yourapp.com/webhooks/vectora",
+    "events": ["document.indexed", "document.failed"],
+    "project_id": "proj_abc123"
+  }'
+```
+
+See [Webhooks reference](/api-reference/webhooks) for the full event payload schema.
+
+## Next steps
+
+- [REST API Reference](/api-reference/overview) — full endpoint documentation
+- [API Keys guide](/guides/api-keys) — scopes, rotation, best practices
+- [n8n Workflows](/guides/n8n-workflows) — connect Vectora to no-code automation
+- [Webhooks](/guides/webhooks) — react to document and agent events
