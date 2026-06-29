@@ -137,7 +137,14 @@ async function forwardToBackend(request: Request): Promise<Response> {
         const respHeaders = new Headers();
         for (const [key, value] of Object.entries(res.headers)) {
           if (value == null || _HOP_BY_HOP.has(key.toLowerCase())) continue;
-          respHeaders.set(key, Array.isArray(value) ? value.join(", ") : value);
+          if (key.toLowerCase() === "set-cookie" && Array.isArray(value)) {
+            for (const cookie of value) respHeaders.append(key, cookie);
+          } else {
+            respHeaders.set(
+              key,
+              Array.isArray(value) ? value.join(", ") : value,
+            );
+          }
         }
         const stream = Readable.toWeb(res) as unknown as ReadableStream;
         resolve(
@@ -242,18 +249,21 @@ async function startBackend(): Promise<void> {
 
 function handleBackendExit(code: number | null, signal: NodeJS.Signals | null) {
   if ((app as unknown as { isQuitting: boolean }).isQuitting) return;
-  const detail = `code=${code} signal=${signal ?? "none"}`;
+  const logs = _backendLog.slice(-15).join("").trim();
+  const detail = `code=${code} signal=${signal ?? "none"}${logs ? `\n\n${logs}` : ""}`;
   console.error(`[backend] saiu inesperadamente: ${detail}`);
-  if (!mainWindow) return;
-  const action = dialog.showMessageBoxSync(mainWindow, {
-    type: "error",
+  const opts = {
+    type: "error" as const,
     title: "Vectora encerrou inesperadamente",
     message: "O backend Vectora encerrou sem aviso.",
     detail,
     buttons: ["Reiniciar", "Sair"],
     defaultId: 0,
     cancelId: 1,
-  });
+  };
+  const action = mainWindow
+    ? dialog.showMessageBoxSync(mainWindow, opts)
+    : dialog.showMessageBoxSync(opts);
   if (action === 0) {
     void restartBackend();
   } else {
@@ -272,6 +282,8 @@ async function restartBackend(): Promise<void> {
     await waitForBackend();
     if (mainWindow) {
       void mainWindow.loadURL(`${APP_SCHEME}://app/`);
+    } else {
+      createWindow();
     }
   } catch (err) {
     dialog.showErrorBox(
@@ -315,6 +327,11 @@ async function waitForBackend(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 function createWindow(): void {
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+    return;
+  }
   if (backendPort === null && !backendPipePath)
     throw new Error("Backend não iniciado.");
   mainWindow = new BrowserWindow({
@@ -395,6 +412,8 @@ function createTray(): void {
   tray.on("click", () => {
     if (mainWindow) {
       mainWindow.isVisible() ? mainWindow.focus() : mainWindow.show();
+    } else {
+      createWindow();
     }
   });
 }
@@ -408,6 +427,8 @@ function refreshTrayMenu(): void {
         if (mainWindow) {
           mainWindow.show();
           mainWindow.focus();
+        } else {
+          createWindow();
         }
       },
     },
@@ -532,6 +553,8 @@ app.on("second-instance", (_event, argv) => {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.show();
     mainWindow.focus();
+  } else {
+    createWindow();
   }
 });
 
