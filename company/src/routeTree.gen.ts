@@ -21,7 +21,6 @@ import { Route as IssuesRouteImport } from './routes/issues'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DpaRouteImport } from './routes/dpa'
 import { Route as DownloadsRouteImport } from './routes/downloads'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -94,11 +93,6 @@ const DownloadsRoute = DownloadsRouteImport.update({
   path: '/downloads',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
@@ -117,27 +111,27 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => DashboardRoute,
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardLicenseRoute = DashboardLicenseRouteImport.update({
   id: '/license',
   path: '/license',
-  getParentRoute: () => DashboardRoute,
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardBillingRoute = DashboardBillingRouteImport.update({
   id: '/billing',
   path: '/billing',
-  getParentRoute: () => DashboardRoute,
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardApiKeysRoute = DashboardApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
-  getParentRoute: () => DashboardRoute,
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardAccountRoute = DashboardAccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => DashboardRoute,
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const AuthDeviceRoute = AuthDeviceRouteImport.update({
   id: '/auth/device',
@@ -157,7 +151,7 @@ const ApiOgRoute = ApiOgRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
@@ -182,7 +176,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardIndexRoute
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
@@ -203,11 +196,12 @@ export interface FileRoutesByTo {
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/license': typeof DashboardLicenseRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
@@ -259,7 +253,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/cookies'
     | '/downloads'
     | '/dpa'
@@ -280,6 +273,7 @@ export interface FileRouteTypes {
     | '/dashboard/api-keys'
     | '/dashboard/billing'
     | '/dashboard/license'
+    | '/dashboard'
   id:
     | '__root__'
     | '/'
@@ -309,9 +303,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRouteRoute: typeof DashboardRouteRoute
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   CookiesRoute: typeof CookiesRoute
-  DashboardRoute: typeof DashboardRouteWithChildren
   DownloadsRoute: typeof DownloadsRoute
   DpaRoute: typeof DpaRoute
   FaqRoute: typeof FaqRoute
@@ -415,13 +408,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/cookies': {
       id: '/cookies'
       path: '/cookies'
@@ -448,35 +434,35 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardRoute
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/license': {
       id: '/dashboard/license'
       path: '/license'
       fullPath: '/dashboard/license'
       preLoaderRoute: typeof DashboardLicenseRouteImport
-      parentRoute: typeof DashboardRoute
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/billing': {
       id: '/dashboard/billing'
       path: '/billing'
       fullPath: '/dashboard/billing'
       preLoaderRoute: typeof DashboardBillingRouteImport
-      parentRoute: typeof DashboardRoute
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/api-keys': {
       id: '/dashboard/api-keys'
       path: '/api-keys'
       fullPath: '/dashboard/api-keys'
       preLoaderRoute: typeof DashboardApiKeysRouteImport
-      parentRoute: typeof DashboardRoute
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/account': {
       id: '/dashboard/account'
       path: '/account'
       fullPath: '/dashboard/account'
       preLoaderRoute: typeof DashboardAccountRouteImport
-      parentRoute: typeof DashboardRoute
+      parentRoute: typeof DashboardRouteRoute
     }
     '/auth/device': {
       id: '/auth/device'
@@ -502,7 +488,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DashboardRouteChildren {
+interface DashboardRouteRouteChildren {
   DashboardAccountRoute: typeof DashboardAccountRoute
   DashboardApiKeysRoute: typeof DashboardApiKeysRoute
   DashboardBillingRoute: typeof DashboardBillingRoute
@@ -510,7 +496,7 @@ interface DashboardRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
-const DashboardRouteChildren: DashboardRouteChildren = {
+const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardAccountRoute: DashboardAccountRoute,
   DashboardApiKeysRoute: DashboardApiKeysRoute,
   DashboardBillingRoute: DashboardBillingRoute,
@@ -518,15 +504,14 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
-const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
-  DashboardRouteChildren,
+const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
+  DashboardRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRouteRoute: DashboardRouteRoute,
+  DashboardRouteRoute: DashboardRouteRouteWithChildren,
   CookiesRoute: CookiesRoute,
-  DashboardRoute: DashboardRouteWithChildren,
   DownloadsRoute: DownloadsRoute,
   DpaRoute: DpaRoute,
   FaqRoute: FaqRoute,

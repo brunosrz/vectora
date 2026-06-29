@@ -335,10 +335,6 @@
   "oauth_google": "Continuar con Google",
   "oauth_github": "Continuar con GitHub",
   "oauth_divider": "o",
-  "page_dashboard_title": "Panel — Vectora",
-  "dashboard_heading": "Bienvenido a Vectora",
-  "dashboard_desc": "Tu panel está siendo preparado.",
-
   "error_rate_limit": "Demasiados intentos. Espera unos segundos e inténtalo de nuevo.",
   "error_signup_disabled": "Los registros están temporalmente desactivados.",
   "error_db": "Error interno. Inténtalo de nuevo en unos instantes."

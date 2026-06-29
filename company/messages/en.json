@@ -335,10 +335,6 @@
   "oauth_google": "Continue with Google",
   "oauth_github": "Continue with GitHub",
   "oauth_divider": "or",
-  "page_dashboard_title": "Dashboard — Vectora",
-  "dashboard_heading": "Welcome to Vectora",
-  "dashboard_desc": "Your dashboard is being prepared.",
-
   "error_rate_limit": "Too many attempts. Wait a moment and try again.",
   "error_signup_disabled": "Sign-ups are temporarily disabled.",
   "error_db": "Internal error. Please try again shortly."
