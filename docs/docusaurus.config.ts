@@ -2,12 +2,19 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import { themes as prismThemes } from "prism-react-renderer";
 
+const DOCS_URL = process.env.DOCS_URL ?? "https://docs.vectora.company";
+const APP_URL = process.env.APP_URL ?? "https://vectora.company";
+const DISCORD_URL = process.env.DISCORD_URL ?? "https://discord.gg/vectora";
+const GITHUB_URL =
+  process.env.GITHUB_URL ?? "https://github.com/vectora-company/vectora";
+const WHATSAPP_URL = process.env.WHATSAPP_URL ?? "https://wa.me/5535910179164";
+
 const config: Config = {
   title: "Vectora Docs",
   tagline: "Self-hosted AI agent — documentation",
   favicon: "/img/favicon.ico",
 
-  url: "https://docs.vectora.company",
+  url: DOCS_URL,
   baseUrl: "/",
 
   organizationName: "vectora-company",
@@ -90,12 +97,12 @@ const config: Config = {
           label: "API",
         },
         {
-          href: "https://vectora.company",
+          href: APP_URL,
           label: "vectora.company",
           position: "right",
         },
         {
-          href: "https://vectora.company/signup",
+          href: `${APP_URL}/signup`,
           label: "Start free trial →",
           position: "right",
           className: "navbar-cta",
@@ -127,21 +134,18 @@ const config: Config = {
         {
           title: "Product",
           items: [
-            { label: "Pricing", href: "https://vectora.company/pricing" },
-            { label: "Roadmap", href: "https://vectora.company/roadmap" },
+            { label: "Pricing", href: `${APP_URL}/#pricing` },
+            { label: "Roadmap", href: `${APP_URL}/roadmap` },
             { label: "Changelog", to: "/changelog" },
-            { label: "Issues", href: "https://vectora.company/issues" },
+            { label: "Issues", href: `${APP_URL}/issues` },
           ],
         },
         {
           title: "Community",
           items: [
-            { label: "Discord", href: "https://discord.gg/vectora" },
-            {
-              label: "GitHub",
-              href: "https://github.com/vectora-company/vectora",
-            },
-            { label: "WhatsApp", href: "https://wa.me/5535910179164" },
+            { label: "Discord", href: DISCORD_URL },
+            { label: "GitHub", href: GITHUB_URL },
+            { label: "WhatsApp", href: WHATSAPP_URL },
           ],
         },
       ],
