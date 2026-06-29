@@ -55,6 +55,7 @@ import { TasksTab } from "./tabs/tasks-tab";
 import { ContextGraphTab } from "./tabs/context-graph-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 
 interface WorkbenchPanelProps {
   threadId: string;
@@ -109,6 +110,27 @@ function useTabBadge(
     case "context_graph":
       return null;
   }
+}
+
+const BETA_TABS = new Set<WorkbenchTab>(["tasks", "context_graph"]);
+
+function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
+  const Icon = TAB_ICON[tab];
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          disabled
+          className="relative flex items-center justify-center w-8 h-8 rounded-md transition-colors opacity-40 cursor-not-allowed text-muted-foreground"
+        >
+          <Icon className="w-4 h-4" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">
+        {m.workbench_tab_coming_soon()}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 function NavTabButton({
@@ -180,6 +202,7 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const isOpen = useWorkbenchStore((s) => s.isOpen(threadId));
   const selectTab = useWorkbenchStore((s) => s.selectTab);
+  const { enableFeaturesBeta } = useFeatureFlags();
 
   return (
     <div className="h-full w-12 shrink-0 flex flex-col items-center bg-background border-l border-border/60">
@@ -187,17 +210,21 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
           sidebar esquerda — os botões começam abaixo dela, alinhados. */}
       <div className="h-16 w-full shrink-0 border-b border-border/60" />
       <div className="flex flex-col items-center gap-1 pt-2">
-        {WORKBENCH_TABS.map((tab) => (
-          <NavTabButton
-            key={tab}
-            tab={tab}
-            active={hydrated && isOpen && tab === activeTab}
-            threadId={threadId}
-            workspaceId={wsId}
-            hydrated={hydrated}
-            onSelect={() => selectTab(threadId, tab)}
-          />
-        ))}
+        {WORKBENCH_TABS.map((tab) =>
+          !enableFeaturesBeta && BETA_TABS.has(tab) ? (
+            <ComingSoonTabButton key={tab} tab={tab} />
+          ) : (
+            <NavTabButton
+              key={tab}
+              tab={tab}
+              active={hydrated && isOpen && tab === activeTab}
+              threadId={threadId}
+              workspaceId={wsId}
+              hydrated={hydrated}
+              onSelect={() => selectTab(threadId, tab)}
+            />
+          ),
+        )}
       </div>
     </div>
   );

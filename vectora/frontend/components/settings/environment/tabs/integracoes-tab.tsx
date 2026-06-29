@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { m } from "@/lib/paraglide/messages";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -130,10 +131,12 @@ function IntegrationCard({
   integ,
   onUpdated,
   relayWebhookBase,
+  enableFeaturesBeta,
 }: {
   integ: Integration;
   onUpdated: () => void;
   relayWebhookBase: string | null;
+  enableFeaturesBeta: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [keyValue, setKeyValue] = useState("");
@@ -383,8 +386,8 @@ function IntegrationCard({
         </div>
       )}
 
-      {/* OAuth section — para providers com fluxo OAuth */}
-      {isOAuthProvider && (
+      {/* OAuth section — apenas quando feature beta habilitada */}
+      {isOAuthProvider && enableFeaturesBeta && (
         <div className="px-3 pb-3 border-t pt-3 space-y-2">
           {integ.connected ? (
             <div className="flex items-center justify-between">
@@ -474,6 +477,7 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
 // ---------------------------------------------------------------------------
 
 export function IntegracoesTab() {
+  const { enableFeaturesBeta } = useFeatureFlags();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [relay, setRelay] = useState<RelayStatus>({
@@ -538,33 +542,35 @@ export function IntegracoesTab() {
         </p>
       </div>
 
-      {/* Banner relay — mostra subdomain e status de conexão */}
-      <div
-        className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${relay.connected ? "border-green-500/30 bg-green-500/5" : "border-border bg-muted/30"}`}
-      >
-        <div className="flex items-center justify-between">
-          <p
-            className={`font-medium ${relay.connected ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
-          >
-            {relay.connected ? m.relay_connected() : m.relay_disconnected()}
-          </p>
-          {relay.subdomain && (
-            <span className="font-mono text-[10px] text-muted-foreground">
-              {relay.subdomain}
-            </span>
+      {/* Banner relay — visível apenas quando OAuth/relay está habilitado */}
+      {enableFeaturesBeta && (
+        <div
+          className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${relay.connected ? "border-green-500/30 bg-green-500/5" : "border-border bg-muted/30"}`}
+        >
+          <div className="flex items-center justify-between">
+            <p
+              className={`font-medium ${relay.connected ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+            >
+              {relay.connected ? m.relay_connected() : m.relay_disconnected()}
+            </p>
+            {relay.subdomain && (
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {relay.subdomain}
+              </span>
+            )}
+          </div>
+          {relay.webhook_base ? (
+            <p className="text-muted-foreground">
+              {m.relay_webhook_hint()}{" "}
+              <span className="font-mono">
+                {relay.webhook_base}/webhook/&#123;provider&#125;
+              </span>
+            </p>
+          ) : (
+            <p className="text-muted-foreground">{m.relay_no_token()}</p>
           )}
         </div>
-        {relay.webhook_base ? (
-          <p className="text-muted-foreground">
-            {m.relay_webhook_hint()}{" "}
-            <span className="font-mono">
-              {relay.webhook_base}/webhook/&#123;provider&#125;
-            </span>
-          </p>
-        ) : (
-          <p className="text-muted-foreground">{m.relay_no_token()}</p>
-        )}
-      </div>
+      )}
 
       {/* Cards por categoria */}
       {CATEGORIES.map((cat) => {
@@ -581,6 +587,7 @@ export function IntegracoesTab() {
                 integ={integ}
                 onUpdated={load}
                 relayWebhookBase={relay.webhook_base}
+                enableFeaturesBeta={enableFeaturesBeta}
               />
             ))}
           </div>

@@ -59,6 +59,7 @@ _API_PREFIXES: tuple[str, ...] = (
 # Sobrepõe _API_PREFIXES: um path que bate aqui é público mesmo sendo API.
 _EXTRA_PUBLIC_PREFIXES: tuple[str, ...] = (
     "/threads/share/",  # viewer público de conversas compartilhadas
+    "/settings/flags",  # feature flags — frontend precisa antes do login
 )
 
 # VECTORA_AUTH_REQUIRED=false desabilita auth (modo dev local / CLI)
