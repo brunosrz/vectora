@@ -26,6 +26,7 @@ import {
   ipcMain,
   nativeImage,
   protocol,
+  session,
   shell,
 } from "electron";
 import { autoUpdater } from "electron-updater";
@@ -109,6 +110,60 @@ const _HOP_BY_HOP = new Set([
 ]);
 
 /**
+ * Armazena um Set-Cookie header string no session do Electron explicitamente.
+ * O handler protocol.handle não garante que Chromium processe Set-Cookie
+ * automaticamente para schemes customizados — sem isso os cookies nunca chegam
+ * nas requests subsequentes e o auth-guard redireciona para signin em loop.
+ */
+async function storeSetCookie(cookieStr: string): Promise<void> {
+  const [nameValuePart, ...attrParts] = cookieStr
+    .split(";")
+    .map((s) => s.trim());
+  const eqIdx = nameValuePart.indexOf("=");
+  if (eqIdx === -1) return;
+  const name = nameValuePart.slice(0, eqIdx).trim();
+  const value = nameValuePart.slice(eqIdx + 1).trim();
+
+  let httpOnly = false;
+  const attrs: Record<string, string> = {};
+  for (const part of attrParts) {
+    if (part.toLowerCase() === "httponly") {
+      httpOnly = true;
+      continue;
+    }
+    const eq = part.indexOf("=");
+    if (eq !== -1) {
+      attrs[part.slice(0, eq).toLowerCase().trim()] = part.slice(eq + 1).trim();
+    }
+  }
+
+  const details: Electron.CookiesSetDetails = {
+    url: `${APP_SCHEME}://app`,
+    name,
+    value,
+    httpOnly,
+    secure: false,
+    path: attrs["path"] ?? "/",
+    sameSite:
+      attrs["samesite"] === "strict"
+        ? "strict"
+        : attrs["samesite"] === "none"
+          ? "no_restriction"
+          : "lax",
+  };
+  if (attrs["max-age"] !== undefined) {
+    details.expirationDate =
+      Math.floor(Date.now() / 1000) + parseInt(attrs["max-age"], 10);
+  }
+
+  try {
+    await session.defaultSession.cookies.set(details);
+  } catch (err) {
+    console.error(`[auth] falha ao armazenar cookie "${name}":`, err);
+  }
+}
+
+/**
  * Encaminha um request do scheme ``vectora-app://`` para o backend pelo
  * transporte IPC, fazendo streaming da resposta (incl. SSE). ``vectora-app://
  * app/<path>`` → backend ``/<path>``.
@@ -134,25 +189,39 @@ async function forwardToBackend(request: Request): Promise<Response> {
         headers,
       },
       (res) => {
-        const respHeaders = new Headers();
-        for (const [key, value] of Object.entries(res.headers)) {
-          if (value == null || _HOP_BY_HOP.has(key.toLowerCase())) continue;
-          if (key.toLowerCase() === "set-cookie" && Array.isArray(value)) {
-            for (const cookie of value) respHeaders.append(key, cookie);
-          } else {
-            respHeaders.set(
-              key,
-              Array.isArray(value) ? value.join(", ") : value,
-            );
+        void (async () => {
+          const respHeaders = new Headers();
+          for (const [key, value] of Object.entries(res.headers)) {
+            if (value == null || _HOP_BY_HOP.has(key.toLowerCase())) continue;
+            if (key.toLowerCase() === "set-cookie" && Array.isArray(value)) {
+              for (const cookie of value) respHeaders.append(key, cookie);
+            } else {
+              respHeaders.set(
+                key,
+                Array.isArray(value) ? value.join(", ") : value,
+              );
+            }
           }
-        }
-        const stream = Readable.toWeb(res) as unknown as ReadableStream;
-        resolve(
-          new Response(stream, {
-            status: res.statusCode ?? 502,
-            headers: respHeaders,
-          }),
-        );
+          // Armazena cookies explicitamente no session antes de resolver
+          // para que estejam disponíveis na próxima request.
+          const setCookies = res.headers["set-cookie"];
+          if (Array.isArray(setCookies) && setCookies.length > 0) {
+            await Promise.all(setCookies.map(storeSetCookie));
+          }
+          const stream = Readable.toWeb(res) as unknown as ReadableStream;
+          resolve(
+            new Response(stream, {
+              status: res.statusCode ?? 502,
+              headers: respHeaders,
+            }),
+          );
+        })().catch((err) => {
+          resolve(
+            new Response(`Erro interno: ${(err as Error).message}`, {
+              status: 500,
+            }),
+          );
+        });
       },
     );
     req.on("error", (err) =>

@@ -158,9 +158,11 @@ nsis:
   installerIcon: ../frontend/public/vectora.ico
   uninstallerIcon: ../frontend/public/vectora.ico
   shortcutName: Vectora
+  uninstallDisplayName: Vectora
   createDesktopShortcut: true
   createStartMenuShortcut: true
   menuCategory: Vectora
+  # Suporte a instalação silenciosa: vectora-Setup-x.y.z.exe /S
 
 # Auto-update channel name (alpha / beta / latest).
 generateUpdatesFilesForAllChannels: true
