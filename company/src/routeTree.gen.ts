@@ -21,6 +21,7 @@ import { Route as IssuesRouteImport } from './routes/issues'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DpaRouteImport } from './routes/dpa'
 import { Route as DownloadsRouteImport } from './routes/downloads'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -30,6 +31,7 @@ import { Route as DashboardBillingRouteImport } from './routes/dashboard/billing
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard/api-keys'
 import { Route as DashboardAccountRouteImport } from './routes/dashboard/account'
 import { Route as AuthDeviceRouteImport } from './routes/auth/device'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ApiOgRouteImport } from './routes/api/og'
 
 const TermsRoute = TermsRouteImport.update({
@@ -92,6 +94,11 @@ const DownloadsRoute = DownloadsRouteImport.update({
   path: '/downloads',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
@@ -110,31 +117,36 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => DashboardRouteRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardLicenseRoute = DashboardLicenseRouteImport.update({
   id: '/license',
   path: '/license',
-  getParentRoute: () => DashboardRouteRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardBillingRoute = DashboardBillingRouteImport.update({
   id: '/billing',
   path: '/billing',
-  getParentRoute: () => DashboardRouteRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardApiKeysRoute = DashboardApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
-  getParentRoute: () => DashboardRouteRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAccountRoute = DashboardAccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => DashboardRouteRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
 const AuthDeviceRoute = AuthDeviceRouteImport.update({
   id: '/auth/device',
   path: '/auth/device',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOgRoute = ApiOgRouteImport.update({
@@ -145,7 +157,7 @@ const ApiOgRoute = ApiOgRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard': typeof DashboardRouteWithChildren
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
@@ -160,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/device': typeof AuthDeviceRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
@@ -169,6 +182,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardIndexRoute
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
@@ -183,17 +197,17 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/device': typeof AuthDeviceRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/license': typeof DashboardLicenseRoute
-  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard': typeof DashboardRouteWithChildren
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
   '/dpa': typeof DpaRoute
@@ -208,6 +222,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/device': typeof AuthDeviceRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
@@ -234,6 +249,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
+    | '/auth/callback'
     | '/auth/device'
     | '/dashboard/account'
     | '/dashboard/api-keys'
@@ -243,6 +259,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/dashboard'
     | '/cookies'
     | '/downloads'
     | '/dpa'
@@ -257,12 +274,12 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
+    | '/auth/callback'
     | '/auth/device'
     | '/dashboard/account'
     | '/dashboard/api-keys'
     | '/dashboard/billing'
     | '/dashboard/license'
-    | '/dashboard'
   id:
     | '__root__'
     | '/'
@@ -281,6 +298,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
+    | '/auth/callback'
     | '/auth/device'
     | '/dashboard/account'
     | '/dashboard/api-keys'
@@ -291,8 +309,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  DashboardRouteRoute: typeof DashboardRouteRoute
   CookiesRoute: typeof CookiesRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   DownloadsRoute: typeof DownloadsRoute
   DpaRoute: typeof DpaRoute
   FaqRoute: typeof FaqRoute
@@ -306,6 +325,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   ApiOgRoute: typeof ApiOgRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   AuthDeviceRoute: typeof AuthDeviceRoute
 }
 
@@ -395,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cookies': {
       id: '/cookies'
       path: '/cookies'
@@ -421,41 +448,48 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/license': {
       id: '/dashboard/license'
       path: '/license'
       fullPath: '/dashboard/license'
       preLoaderRoute: typeof DashboardLicenseRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/billing': {
       id: '/dashboard/billing'
       path: '/billing'
       fullPath: '/dashboard/billing'
       preLoaderRoute: typeof DashboardBillingRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/api-keys': {
       id: '/dashboard/api-keys'
       path: '/api-keys'
       fullPath: '/dashboard/api-keys'
       preLoaderRoute: typeof DashboardApiKeysRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/account': {
       id: '/dashboard/account'
       path: '/account'
       fullPath: '/dashboard/account'
       preLoaderRoute: typeof DashboardAccountRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardRoute
     }
     '/auth/device': {
       id: '/auth/device'
       path: '/auth/device'
       fullPath: '/auth/device'
       preLoaderRoute: typeof AuthDeviceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/og': {
@@ -468,7 +502,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DashboardRouteRouteChildren {
+interface DashboardRouteChildren {
   DashboardAccountRoute: typeof DashboardAccountRoute
   DashboardApiKeysRoute: typeof DashboardApiKeysRoute
   DashboardBillingRoute: typeof DashboardBillingRoute
@@ -476,7 +510,7 @@ interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
-const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAccountRoute: DashboardAccountRoute,
   DashboardApiKeysRoute: DashboardApiKeysRoute,
   DashboardBillingRoute: DashboardBillingRoute,
@@ -484,14 +518,15 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
-const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
-  DashboardRouteRouteChildren,
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRouteRoute: DashboardRouteRouteWithChildren,
+  DashboardRouteRoute: DashboardRouteRoute,
   CookiesRoute: CookiesRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   DownloadsRoute: DownloadsRoute,
   DpaRoute: DpaRoute,
   FaqRoute: FaqRoute,
@@ -505,6 +540,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   ApiOgRoute: ApiOgRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   AuthDeviceRoute: AuthDeviceRoute,
 }
 export const routeTree = rootRouteImport

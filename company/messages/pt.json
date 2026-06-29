@@ -332,6 +332,13 @@
   "cookie_accept": "Aceitar",
   "cookie_reject": "Rejeitar",
 
+  "oauth_google": "Continuar com Google",
+  "oauth_github": "Continuar com GitHub",
+  "oauth_divider": "ou",
+  "page_dashboard_title": "Dashboard — Vectora",
+  "dashboard_heading": "Bem-vindo ao Vectora",
+  "dashboard_desc": "Seu painel está sendo preparado.",
+
   "error_rate_limit": "Muitas tentativas. Aguarde alguns segundos e tente novamente.",
   "error_signup_disabled": "Cadastros temporariamente desativados.",
   "error_db": "Erro interno. Tente novamente em instantes."

@@ -44,19 +44,19 @@ export const signUp = createServerFn({ method: "POST" })
       year: "numeric",
     });
 
-    const html = await render(
-      createElement(WelcomeEmail, { name: input.name, trialEndsAt }),
-    );
-    await resend.emails
-      .send({
+    try {
+      const html = await render(
+        createElement(WelcomeEmail, { name: input.name, trialEndsAt }),
+      );
+      await resend.emails.send({
         from: FROM_EMAIL,
         to: input.email,
         subject: "Seu Vectora está pronto — trial de 30 dias ativo",
         html,
-      })
-      .catch(() => {
-        // Non-blocking: if email fails, signup still succeeds
       });
+    } catch {
+      // Non-blocking: email failure does not abort signup
+    }
 
     return { redirect: "/dashboard?welcome=true" };
   });
@@ -83,6 +83,15 @@ export const signOut = createServerFn({ method: "POST" }).handler(async () => {
   await supabase.auth.signOut();
   return { ok: true };
 });
+
+export const exchangeOAuthCode = createServerFn({ method: "POST" })
+  .validator(z.object({ code: z.string() }))
+  .handler(async ({ data }) => {
+    const supabase = createSupabaseServerClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(data.code);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
 
 export const sendMagicLink = createServerFn({ method: "POST" })
   .validator(z.object({ email: z.string().email() }))
