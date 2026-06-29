@@ -357,3 +357,4 @@ env.gha
 /company/supabase/.temp
 /.agents
 *.xml
+/docs/.docusaurus
