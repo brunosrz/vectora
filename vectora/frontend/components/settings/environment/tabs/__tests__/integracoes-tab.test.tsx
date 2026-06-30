@@ -24,6 +24,10 @@ import {
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
+vi.mock("@/lib/hooks/use-feature-flags", () => ({
+  useFeatureFlags: () => ({ enableFeaturesBeta: true }),
+}));
+
 afterEach(cleanup);
 
 beforeAll(async () => {

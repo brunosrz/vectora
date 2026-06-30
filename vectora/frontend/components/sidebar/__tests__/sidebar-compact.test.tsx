@@ -12,12 +12,22 @@ vi.mock("@/lib/stores/streaming-store", () => ({
   useStreamingStore: () => null,
 }));
 
+vi.mock("@/lib/stores/settings-store", () => ({
+  useSettingsStore: (sel: (s: unknown) => unknown) =>
+    sel({ sidebarWidth: 0, theme: "light" }),
+}));
+
+vi.mock("@/lib/hooks/use-hydrated", () => ({
+  useHydrated: () => false,
+}));
+
 vi.mock("@/lib/paraglide/messages", () => ({
   m: {
     sidebar_new_conversation: () => "Nova conversa",
     sidebar_documentation: () => "Documentação",
     sidebar_documentation_caption: () => "Saiba mais",
     sidebar_feedback: () => "Feedback",
+    sidebar_docs: () => "Docs",
     sidebar_report_issue: () => "Reportar problema",
     sidebar_workspace_collapse: () => "Recolher",
     sidebar_workspace_expand: () => "Expandir",
