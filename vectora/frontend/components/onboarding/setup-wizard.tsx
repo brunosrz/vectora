@@ -1,19 +1,10 @@
 "use client";
 
 /**
- * SetupWizard — Wizard de primeiro acesso (7 passos).
+ * SetupWizard — Wizard de primeiro acesso (9 passos).
  *
  * Aparece uma única vez por usuário, determinado pela flag
  * `vectora:onboarding-done-<userId>` no localStorage.
- *
- * Passos:
- *   1. Boas-vindas
- *   2. Idioma & Tema
- *   3. Token de licença (VECTORA_TOKEN)
- *   4. Modo de armazenamento (Lite vs Completo)
- *   5. Workspaces (conceito)
- *   6. O que é RAG
- *   7. Pronto
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -45,7 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 
 const ONBOARDING_KEY = (userId: string) => `vectora:onboarding-done-${userId}`;
 
@@ -912,6 +903,271 @@ function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// StepApiKeys — configuração de chaves Google, Cohere e Tavily
+// ---------------------------------------------------------------------------
+
+type KeyStatus = "idle" | "testing" | "ok" | "fail";
+
+interface ApiKeyState {
+  value: string;
+  masked: string;
+  configured: boolean;
+  status: KeyStatus;
+  error: string;
+}
+
+type ApiKeyProvider = "google" | "cohere" | "tavily";
+
+const PROVIDERS: {
+  id: ApiKeyProvider;
+  labelKey: keyof typeof m;
+  descKey: keyof typeof m;
+  urlKey: keyof typeof m;
+  placeholder: string;
+}[] = [
+  {
+    id: "google",
+    labelKey: "onboarding_api_keys_google_label",
+    descKey: "onboarding_api_keys_google_desc",
+    urlKey: "onboarding_api_keys_google_url",
+    placeholder: "AIza…",
+  },
+  {
+    id: "cohere",
+    labelKey: "onboarding_api_keys_cohere_label",
+    descKey: "onboarding_api_keys_cohere_desc",
+    urlKey: "onboarding_api_keys_cohere_url",
+    placeholder: "…",
+  },
+  {
+    id: "tavily",
+    labelKey: "onboarding_api_keys_tavily_label",
+    descKey: "onboarding_api_keys_tavily_desc",
+    urlKey: "onboarding_api_keys_tavily_url",
+    placeholder: "tvly-…",
+  },
+];
+
+function KeyStatusIcon({ status }: { status: KeyStatus }) {
+  if (status === "testing")
+    return (
+      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground shrink-0" />
+    );
+  if (status === "ok")
+    return <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />;
+  if (status === "fail")
+    return <XCircle className="w-3.5 h-3.5 text-destructive shrink-0" />;
+  return null;
+}
+
+function StepApiKeys(_props: StepProps) {
+  const [keys, setKeys] = useState<Record<ApiKeyProvider, ApiKeyState>>({
+    google: {
+      value: "",
+      masked: "",
+      configured: false,
+      status: "idle",
+      error: "",
+    },
+    cohere: {
+      value: "",
+      masked: "",
+      configured: false,
+      status: "idle",
+      error: "",
+    },
+    tavily: {
+      value: "",
+      masked: "",
+      configured: false,
+      status: "idle",
+      error: "",
+    },
+  });
+  const [show, setShow] = useState<Record<ApiKeyProvider, boolean>>({
+    google: false,
+    cohere: false,
+    tavily: false,
+  });
+
+  // Carrega valores pré-configurados e dispara teste automático para os que já existem.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/admin/api-keys", { credentials: "include" });
+        if (!res.ok) return;
+        const data = (await res.json()) as Record<
+          ApiKeyProvider,
+          { configured: boolean; masked: string }
+        >;
+        const next = { ...keys };
+        const toTest: ApiKeyProvider[] = [];
+        for (const id of ["google", "cohere", "tavily"] as ApiKeyProvider[]) {
+          if (data[id]?.configured) {
+            next[id] = {
+              ...next[id],
+              masked: data[id].masked,
+              configured: true,
+              status: "testing",
+            };
+            toTest.push(id);
+          }
+        }
+        setKeys(next);
+        // Testa as pré-configuradas com a chave real (não mascarada — backend testa com env atual).
+        for (const id of toTest) {
+          void testKey(id, "");
+        }
+      } catch {}
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function saveKey(id: ApiKeyProvider, value: string): Promise<void> {
+    if (!value.trim()) return;
+    try {
+      await fetch("/admin/api-keys", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [`${id}_api_key`]: value.trim() }),
+      });
+    } catch {}
+  }
+
+  async function testKey(id: ApiKeyProvider, value: string): Promise<void> {
+    setKeys((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], status: "testing", error: "" },
+    }));
+    try {
+      const res = await fetch("/admin/api-keys/test", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        // Valor vazio → backend usa a env já configurada (para pré-preenchidos).
+        body: JSON.stringify({
+          provider: id,
+          api_key: value.trim() || "__use_env__",
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      setKeys((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          status: data.ok ? "ok" : "fail",
+          error: data.error ?? "",
+        },
+      }));
+    } catch (err) {
+      setKeys((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], status: "fail", error: String(err) },
+      }));
+    }
+  }
+
+  async function handleBlur(id: ApiKeyProvider, value: string): Promise<void> {
+    if (!value.trim()) return;
+    await saveKey(id, value);
+    await testKey(id, value);
+  }
+
+  return (
+    <div className="space-y-4 py-2">
+      <p className="text-sm text-muted-foreground">
+        {m.onboarding_api_keys_body()}
+      </p>
+
+      {PROVIDERS.map((prov) => {
+        const state = keys[prov.id];
+        const isVisible = show[prov.id];
+        const displayValue = isVisible
+          ? state.value
+          : state.value || (state.configured ? state.masked : "");
+        return (
+          <div key={prov.id} className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium text-foreground">
+                {(m[prov.labelKey] as () => string)()}
+              </label>
+              <div className="flex items-center gap-1.5">
+                <KeyStatusIcon status={state.status} />
+                {state.status === "ok" && (
+                  <span className="text-xs text-green-500">
+                    {m.onboarding_api_keys_ok()}
+                  </span>
+                )}
+                {state.status === "fail" && (
+                  <span className="text-xs text-destructive">
+                    {m.onboarding_api_keys_fail()}
+                  </span>
+                )}
+                {state.status === "testing" && (
+                  <span className="text-xs text-muted-foreground">
+                    {m.onboarding_api_keys_testing()}
+                  </span>
+                )}
+                <a
+                  href={(m[prov.urlKey] as () => string)()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline"
+                >
+                  {m.onboarding_api_keys_get_key()}
+                </a>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-snug">
+              {(m[prov.descKey] as () => string)()}
+            </p>
+            <div className="flex gap-1.5">
+              <Input
+                type={isVisible ? "text" : "password"}
+                value={displayValue}
+                placeholder={prov.placeholder}
+                className="h-8 text-xs font-mono flex-1"
+                autoComplete="off"
+                onChange={(e) =>
+                  setKeys((prev) => ({
+                    ...prev,
+                    [prov.id]: {
+                      ...prev[prov.id],
+                      value: e.target.value,
+                      status: "idle",
+                    },
+                  }))
+                }
+                onBlur={(e) => void handleBlur(prov.id, e.target.value)}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2"
+                onClick={() =>
+                  setShow((prev) => ({ ...prev, [prov.id]: !prev[prov.id] }))
+                }
+              >
+                {isVisible
+                  ? m.onboarding_token_hide()
+                  : m.onboarding_token_show()}
+              </Button>
+            </div>
+            {state.status === "fail" && state.error && (
+              <p className="text-xs text-destructive line-clamp-2">
+                {state.error}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function StepRag(_props: StepProps) {
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
@@ -936,6 +1192,7 @@ const STEP_COMPONENTS = [
   StepLanguage,
   StepToken,
   StepMode,
+  StepApiKeys,
   StepWorkspace,
   StepWorkspaceSelect,
   StepRag,
@@ -947,6 +1204,7 @@ const STEP_TITLE_KEYS = [
   "onboarding.step2_title",
   "onboarding.step3_title",
   "onboarding.step4_title",
+  "onboarding.step4b_title",
   "onboarding.step5_title",
   "onboarding.workspace_select_title",
   "onboarding.step6_title",

@@ -640,6 +640,157 @@ async def delete_safe_root(request: Request, root_id: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# API Keys — GET/PATCH/test (Google, Cohere, Tavily)
+# ---------------------------------------------------------------------------
+
+_API_KEY_FIELDS: dict[str, str] = {
+    "google": "GOOGLE_API_KEY",
+    "cohere": "COHERE_API_KEY",
+    "tavily": "TAVILY_API_KEY",
+}
+
+
+def _mask_key(value: str) -> str:
+    """Mostra prefixo + sufixo para conferência sem expor o segredo."""
+    if not value:
+        return ""
+    if len(value) <= 10:
+        return "•" * len(value)
+    return f"{value[:6]}•••{value[-4:]}"
+
+
+class PatchApiKeysBody(BaseModel):
+    google_api_key: str | None = None
+    cohere_api_key: str | None = None
+    tavily_api_key: str | None = None
+
+
+class TestApiKeyBody(BaseModel):
+    provider: str  # "google" | "cohere" | "tavily"
+    api_key: str
+
+
+@router.get("/api-keys")
+async def get_api_keys(request: Request) -> dict:
+    """Retorna status e valores mascarados das API keys de LLM/search."""
+    require_admin(_get_user(request))
+    result: dict[str, dict[str, str | bool]] = {}
+    for provider, env_var in _API_KEY_FIELDS.items():
+        raw = os.environ.get(env_var, "").strip()
+        result[provider] = {
+            "configured": bool(raw),
+            "masked": _mask_key(raw),
+        }
+    return result
+
+
+@router.patch("/api-keys")
+async def patch_api_keys(request: Request, body: PatchApiKeysBody) -> dict:
+    """Salva API keys em ~/.vectora/.env e atualiza os.environ em runtime."""
+    require_admin(_get_user(request))
+    from backend.cli.keys import upsert_env_key
+
+    env = _env_file()
+    updated: list[str] = []
+    mapping = {
+        "GOOGLE_API_KEY": body.google_api_key,
+        "COHERE_API_KEY": body.cohere_api_key,
+        "TAVILY_API_KEY": body.tavily_api_key,
+    }
+    for env_var, value in mapping.items():
+        if value is not None:
+            v = value.strip()
+            upsert_env_key(env, env_var, v)
+            os.environ[env_var] = v
+            # Atualiza settings em runtime para o backend usar sem reiniciar.
+            try:
+                from backend.settings import settings
+
+                attr = env_var.lower()
+                if hasattr(settings, attr):
+                    object.__setattr__(settings, attr, v or None)
+            except Exception:
+                pass
+            updated.append(env_var)
+    logger.info(
+        "admin: api-keys atualizadas por user_id=%s: %s", _get_user(request).id, updated
+    )
+    return {"status": "updated", "updated": updated}
+
+
+@router.post("/api-keys/test")
+async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
+    """Testa uma API key chamando o provider e retorna ok/error."""
+    require_admin(_get_user(request))
+    import asyncio
+    import time
+
+    provider = body.provider.lower().strip()
+    raw_key = body.api_key.strip()
+    # Sentinela: usar a env já configurada (para chaves pré-preenchidas).
+    if raw_key == "__use_env__":
+        env_var = _API_KEY_FIELDS.get(provider, "")
+        raw_key = os.environ.get(env_var, "").strip()
+    api_key = raw_key
+    if not api_key:
+        return {"ok": False, "error": "Chave vazia"}
+
+    start = time.monotonic()
+
+    async def _test_google() -> tuple[bool, str]:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+
+            llm = ChatGoogleGenerativeAI(api_key=api_key, model="gemini-2.0-flash-lite")
+            await asyncio.wait_for(llm.ainvoke("Hi"), timeout=12)
+            return True, ""
+        except asyncio.TimeoutError:
+            return False, "Timeout ao conectar ao Google AI"
+        except Exception as exc:
+            return False, str(exc)
+
+    async def _test_cohere() -> tuple[bool, str]:
+        try:
+            from langchain_cohere import ChatCohere
+            from pydantic import SecretStr
+
+            llm = ChatCohere(
+                cohere_api_key=SecretStr(api_key), model="command-r7b-12-2024"
+            )
+            await asyncio.wait_for(llm.ainvoke("Hi"), timeout=12)
+            return True, ""
+        except asyncio.TimeoutError:
+            return False, "Timeout ao conectar ao Cohere"
+        except Exception as exc:
+            return False, str(exc)
+
+    async def _test_tavily() -> tuple[bool, str]:
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=12) as client:
+                resp = await client.post(
+                    "https://api.tavily.com/search",
+                    json={"query": "test", "max_results": 1},
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+                if resp.status_code == 200:
+                    return True, ""
+                return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
+        except Exception as exc:
+            return False, str(exc)
+
+    testers = {"google": _test_google, "cohere": _test_cohere, "tavily": _test_tavily}
+    tester = testers.get(provider)
+    if tester is None:
+        return {"ok": False, "error": f"Provider desconhecido: {provider}"}
+
+    ok, error = await tester()
+    elapsed_ms = int((time.monotonic() - start) * 1000)
+    return {"ok": ok, "error": error, "latency_ms": elapsed_ms}
+
+
+# ---------------------------------------------------------------------------
 # F10 — Storage endpoints
 # ---------------------------------------------------------------------------
 
