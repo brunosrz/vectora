@@ -60,9 +60,9 @@ export function NewChatDialog({
     onOpenChange(false);
   }
 
-  function handleTrustOpenChange(open: boolean) {
-    setTrustOpen(open);
-    if (!open) {
+  function handleTrustOpenChange(isOpen: boolean) {
+    setTrustOpen(isOpen);
+    if (!isOpen) {
       // WorkspaceTrustDialog chama store.create() que seta active_id
       const newId = useWorkspacesStore.getState().active_id;
       if (newId) setSelected(newId);

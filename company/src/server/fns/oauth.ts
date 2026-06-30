@@ -10,8 +10,7 @@ async function getUid(): Promise<string> {
   return data.user.id;
 }
 
-const RELAY_URL =
-  (process.env.RELAY_URL as string | undefined) ?? "https://relay.vectora.chat";
+const RELAY_URL = process.env.RELAY_URL ?? "https://relay.vectora.chat";
 
 export const authorizeDevice = createServerFn({ method: "POST" })
   .validator(z.object({ state: z.string().min(1) }))

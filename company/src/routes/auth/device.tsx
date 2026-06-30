@@ -80,7 +80,8 @@ function DevicePage() {
 
             {mutation.isError && (
               <p className="text-sm text-destructive">
-                {(mutation.error as Error).message === "no_token"
+                {mutation.error instanceof Error &&
+                mutation.error.message === "no_token"
                   ? m.auth_device_no_token()
                   : m.auth_device_error()}
               </p>

@@ -949,6 +949,18 @@ const PROVIDERS: {
   },
 ];
 
+async function saveKey(id: ApiKeyProvider, value: string): Promise<void> {
+  if (!value.trim()) return;
+  try {
+    await fetch("/admin/api-keys", {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [`${id}_api_key`]: value.trim() }),
+    });
+  } catch {}
+}
+
 function KeyStatusIcon({ status }: { status: KeyStatus }) {
   if (status === "testing")
     return (
@@ -1023,18 +1035,6 @@ function StepApiKeys(_props: StepProps) {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function saveKey(id: ApiKeyProvider, value: string): Promise<void> {
-    if (!value.trim()) return;
-    try {
-      await fetch("/admin/api-keys", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [`${id}_api_key`]: value.trim() }),
-      });
-    } catch {}
-  }
 
   async function testKey(id: ApiKeyProvider, value: string): Promise<void> {
     setKeys((prev) => ({

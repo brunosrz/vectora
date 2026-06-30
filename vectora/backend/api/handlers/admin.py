@@ -744,7 +744,7 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
             llm = ChatGoogleGenerativeAI(api_key=api_key, model="gemini-2.0-flash-lite")
             await asyncio.wait_for(llm.ainvoke("Hi"), timeout=12)
             return True, ""
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False, "Timeout ao conectar ao Google AI"
         except Exception as exc:
             return False, str(exc)
@@ -759,7 +759,7 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
             )
             await asyncio.wait_for(llm.ainvoke("Hi"), timeout=12)
             return True, ""
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False, "Timeout ao conectar ao Cohere"
         except Exception as exc:
             return False, str(exc)

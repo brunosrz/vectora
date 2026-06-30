@@ -133,7 +133,8 @@ class TestApiKeysMaskKey:
 class TestApiKeysEndpoints:
     """GET/PATCH/POST /admin/api-keys — contratos básicos."""
 
-    def test_get_api_keys_structure(self):
+    @pytest.mark.asyncio
+    async def test_get_api_keys_structure(self):
         import os
         from unittest.mock import MagicMock, patch
 
@@ -148,11 +149,9 @@ class TestApiKeysEndpoints:
                 "TAVILY_API_KEY": "tvly-secretkey987",
             },
         ):
-            import asyncio
-
             from backend.api.handlers.admin import get_api_keys
 
-            result = asyncio.get_event_loop().run_until_complete(get_api_keys(request))
+            result = await get_api_keys(request)
 
         assert "google" in result
         assert "cohere" in result
@@ -162,7 +161,8 @@ class TestApiKeysEndpoints:
         assert result["tavily"]["configured"] is True
         assert "AIzaSy" in result["google"]["masked"]
 
-    def test_get_api_keys_returns_masked_not_raw(self):
+    @pytest.mark.asyncio
+    async def test_get_api_keys_returns_masked_not_raw(self):
         import os
         from unittest.mock import MagicMock, patch
 
@@ -171,16 +171,14 @@ class TestApiKeysEndpoints:
 
         raw = "AIzaSyDEADBEEFSECRET9999"
         with patch.dict(os.environ, {"GOOGLE_API_KEY": raw}):
-            import asyncio
-
             from backend.api.handlers.admin import get_api_keys
 
-            result = asyncio.get_event_loop().run_until_complete(get_api_keys(request))
+            result = await get_api_keys(request)
 
         assert result["google"]["masked"] != raw
 
-    def test_test_api_key_empty_returns_error(self):
-        import asyncio
+    @pytest.mark.asyncio
+    async def test_test_api_key_empty_returns_error(self):
         from unittest.mock import MagicMock
 
         from backend.api.handlers.admin import TestApiKeyBody, test_api_key
@@ -188,15 +186,13 @@ class TestApiKeysEndpoints:
         request = MagicMock()
         request.state.user = MagicMock(role="root")
         body = TestApiKeyBody(provider="google", api_key="")
-        result = asyncio.get_event_loop().run_until_complete(
-            test_api_key(request, body)
-        )
+        result = await test_api_key(request, body)
 
         assert result["ok"] is False
         assert "vazia" in result["error"].lower() or result["error"]
 
-    def test_test_api_key_unknown_provider(self):
-        import asyncio
+    @pytest.mark.asyncio
+    async def test_test_api_key_unknown_provider(self):
         from unittest.mock import MagicMock
 
         from backend.api.handlers.admin import TestApiKeyBody, test_api_key
@@ -204,14 +200,12 @@ class TestApiKeysEndpoints:
         request = MagicMock()
         request.state.user = MagicMock(role="root")
         body = TestApiKeyBody(provider="openai_unsupported", api_key="sk-123")
-        result = asyncio.get_event_loop().run_until_complete(
-            test_api_key(request, body)
-        )
+        result = await test_api_key(request, body)
 
         assert result["ok"] is False
 
-    def test_patch_api_keys_calls_upsert(self):
-        import asyncio
+    @pytest.mark.asyncio
+    async def test_patch_api_keys_calls_upsert(self):
         from unittest.mock import MagicMock, patch
 
         from backend.api.handlers.admin import PatchApiKeysBody, patch_api_keys
@@ -226,9 +220,7 @@ class TestApiKeysEndpoints:
             body = PatchApiKeysBody(
                 google_api_key="AIzaSyNEW", cohere_api_key=None, tavily_api_key=None
             )
-            result = asyncio.get_event_loop().run_until_complete(
-                patch_api_keys(request, body)
-            )
+            result = await patch_api_keys(request, body)
 
         assert result["status"] == "updated"
         assert "GOOGLE_API_KEY" in result["updated"]
