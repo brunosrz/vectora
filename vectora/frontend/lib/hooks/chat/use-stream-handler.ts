@@ -43,6 +43,34 @@ import {
 import { m as msg } from "@/lib/paraglide/messages";
 
 // ============================================================================
+// Streaming rendering
+// ============================================================================
+
+// Cede controle ao scheduler do browser para que React consiga commitar
+// atualizações de estado e o browser pinte entre tokens.
+//
+// Problema raiz: reader.read() resolve como microtask quando há dados
+// bufferizados — o loop for-await processa todos os tokens sem nunca ceder ao
+// event loop. requestAnimationFrame não dispara enquanto microtasks estão
+// rodando. scheduler.yield() (Chromium/Electron) cede sem delay artificial;
+// MessageChannel é o fallback (sub-milissegundo, sem o delay mínimo de 4ms
+// do setTimeout).
+function yieldToBrowser(): Promise<void> {
+  type Sched = { yield: () => Promise<void> };
+  const sched = (globalThis as { scheduler?: Sched }).scheduler;
+  if (typeof sched?.yield === "function") return sched.yield();
+  return new Promise<void>((resolve) => {
+    const { port1, port2 } = new MessageChannel();
+    port1.onmessage = () => {
+      port1.close();
+      resolve();
+    };
+    port2.postMessage(null);
+    port2.close();
+  });
+}
+
+// ============================================================================
 // UX-15 — Resiliência de rede: status do SSE
 // ============================================================================
 //
@@ -197,52 +225,9 @@ export function useStreamHandler({
       const attachments =
         images && images.length > 0 ? toApiAttachments(images) : undefined;
 
-      // M2 — Token buffering: acumula tokens dentro de um animation frame (≤16ms)
-      // e faz um único setMessages por frame. Evita layout thrashing em modelos
-      // rápidos como Gemini Flash (100+ tokens/s → 6+ setMessages por frame sem buffer).
-      // Closures capturam activeId por referência — flush sempre vai para a bolha atual.
-      let pendingTokenBatch = "";
-      let flushScheduled = false;
-      // needsSeparator: true após message_break — próximo batch recebe "\n\n" de separação.
+      // needsSeparator: true após message_break — próximo token recebe "\n\n"
+      // de separação (só quando há conteúdo prévio na bolha).
       let needsSeparator = false;
-
-      const scheduleTokenFlush = () => {
-        if (flushScheduled) return;
-        flushScheduled = true;
-        requestAnimationFrame(() => {
-          if (!pendingTokenBatch) {
-            flushScheduled = false;
-            return;
-          }
-          const batch = pendingTokenBatch;
-          pendingTokenBatch = "";
-          flushScheduled = false;
-          const sep = needsSeparator ? "\n\n" : "";
-          needsSeparator = false;
-          setMessages((prev) =>
-            updateMessageInList(prev, activeId, (m) => {
-              const cur = typeof m.content === "string" ? m.content : "";
-              return { ...m, content: cur + (cur && sep ? sep : "") + batch };
-            }),
-          );
-        });
-      };
-
-      // Flush imediato (antes de eventos não-token, e ao final do stream)
-      const flushNow = () => {
-        if (!pendingTokenBatch) return;
-        const batch = pendingTokenBatch;
-        pendingTokenBatch = "";
-        flushScheduled = false;
-        const sep = needsSeparator ? "\n\n" : "";
-        needsSeparator = false;
-        setMessages((prev) =>
-          updateMessageInList(prev, activeId, (m) => {
-            const cur = typeof m.content === "string" ? m.content : "";
-            return { ...m, content: cur + (cur && sep ? sep : "") + batch };
-          }),
-        );
-      };
 
       // UX-18 — marca início; `finally` desmarca por qualquer saída conhecida
       // (done/hitl/error/abort). Se a aba fechar/recarregar no meio, a marca
@@ -274,17 +259,21 @@ export function useStreamHandler({
           }
 
           if (event.type === "token") {
-            // Acumula tokens — serão flushed em batch no próximo animation frame
             assistantContent += event.content;
-            pendingTokenBatch += event.content;
-            scheduleTokenFlush();
+            const token = event.content;
+            const sep = needsSeparator ? "\n\n" : "";
+            needsSeparator = false;
+            setMessages((prev) =>
+              updateMessageInList(prev, activeId, (m) => {
+                const cur = typeof m.content === "string" ? m.content : "";
+                return { ...m, content: cur + (cur && sep ? sep : "") + token };
+              }),
+            );
+            // Cede ao scheduler do browser para que o token apareça na tela
+            // antes do próximo ser processado (streaming visível letra a letra).
+            await yieldToBrowser();
             continue;
           }
-
-          // Antes de qualquer evento não-token: flush tokens pendentes
-          // para garantir que o conteúdo de texto está atualizado antes
-          // de eventos que dependem do estado (ex: tool_call, done)
-          flushNow();
 
           // Fallback automático de provider por quota: atualiza model selector + toast
           if (event.type === "model_switched") {
@@ -319,7 +308,6 @@ export function useStreamHandler({
             // da IA, mostramos uma mensagem limpa e localizada (por código) e
             // marcamos isError para habilitar o retry. Encerra o loop sem
             // throw — o catch fica reservado a quedas de transporte.
-            flushNow();
             const friendly = streamErrorMessage(event.code);
             setMessages((prev) =>
               updateMessageInList(prev, activeId, (m) => ({
@@ -336,14 +324,7 @@ export function useStreamHandler({
             break;
           }
         }
-
-        // Flush final — tokens do último frame ainda pendentes
-        flushNow();
       } catch (err: unknown) {
-        // Flush defensivo: tokens acumulados no rAF pendente seriam
-        // descartados pelos branches abaixo (que sobrescrevem ou ignoram
-        // `content`). Garantir a entrega ANTES de qualquer mutação.
-        flushNow();
         if ((err as { name?: string }).name === "AbortError") {
           // Interrompido pelo usuário — não é um erro; encerra o thinking timer
           setMessages((prev) =>
@@ -424,43 +405,6 @@ export function useStreamHandler({
       // UX-15 — primeiro evento recebido = conexão SSE estabelecida
       let sseConnected = false;
 
-      // M2 — mesmo buffering de tokens usado em processStream
-      let pendingTokenBatch = "";
-      let flushScheduled = false;
-
-      const scheduleTokenFlush = () => {
-        if (flushScheduled) return;
-        flushScheduled = true;
-        requestAnimationFrame(() => {
-          if (!pendingTokenBatch) {
-            flushScheduled = false;
-            return;
-          }
-          const batch = pendingTokenBatch;
-          pendingTokenBatch = "";
-          flushScheduled = false;
-          setMessages((prev) =>
-            updateMessageInList(prev, assistantMessageId, (m) => ({
-              ...m,
-              content: (typeof m.content === "string" ? m.content : "") + batch,
-            })),
-          );
-        });
-      };
-
-      const flushNow = () => {
-        if (!pendingTokenBatch) return;
-        const batch = pendingTokenBatch;
-        pendingTokenBatch = "";
-        flushScheduled = false;
-        setMessages((prev) =>
-          updateMessageInList(prev, assistantMessageId, (m) => ({
-            ...m,
-            content: (typeof m.content === "string" ? m.content : "") + batch,
-          })),
-        );
-      };
-
       // UX-18 — mesma marca de "stream em andamento" do processStream
       markStreamStarted(threadId);
 
@@ -481,17 +425,22 @@ export function useStreamHandler({
 
           if (event.type === "token") {
             assistantContent += event.content;
-            pendingTokenBatch += event.content;
-            scheduleTokenFlush();
+            setMessages((prev) =>
+              updateMessageInList(prev, assistantMessageId, (m) => ({
+                ...m,
+                content:
+                  (typeof m.content === "string" ? m.content : "") +
+                  event.content,
+              })),
+            );
+            await yieldToBrowser();
             continue;
           }
 
-          flushNow();
           await handleEvent(event, assistantMessageId, setMessages, threadId);
 
           if (event.type === "done") break;
           if (event.type === "error") {
-            flushNow();
             const friendly = streamErrorMessage(event.code);
             setMessages((prev) =>
               updateMessageInList(prev, assistantMessageId, (m) => ({
@@ -504,11 +453,7 @@ export function useStreamHandler({
             break;
           }
         }
-
-        flushNow();
       } catch (err: unknown) {
-        // Defensivo: flush antes de qualquer mutação no branch de erro.
-        flushNow();
         if ((err as { name?: string }).name !== "AbortError") {
           // UX-15 — mesma distinção transporte vs. aplicação do processStream
           announceSSEDropped(err);
@@ -555,7 +500,7 @@ export function useStreamHandler({
 // ============================================================================
 
 // handleEvent processa todos os eventos exceto "token"
-// (tokens são buffered diretamente nos loops de processStream/processResume — M2)
+// (tokens são aplicados via setMessages diretamente nos loops)
 async function handleEvent(
   event: StreamEvent,
   assistantMessageId: string,
