@@ -72,6 +72,8 @@ export function streamErrorMessage(code?: string): string {
       return msg.chat_error_rate_limit();
     case "AUTH":
       return msg.chat_error_auth();
+    case "TIMEOUT":
+      return msg.chat_error_timeout();
     default:
       return msg.chat_error_generic();
   }

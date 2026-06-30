@@ -94,6 +94,7 @@ class FallbackChatModel(BaseChatModel):
         from backend.services.provider_fallback import (
             QuotaExhaustedError,
             is_quota_error,
+            is_transient_error,
             record_switch,
         )
 
@@ -108,8 +109,9 @@ class FallbackChatModel(BaseChatModel):
                     yield ChatGenerationChunk(message=msg_chunk)
                 return
             except Exception as exc:
-                # Só troca em quota E antes do primeiro chunk — senão propaga.
-                if not is_quota_error(exc) or streamed:
+                # Troca em quota ou falha transiente (timeout/conexão), mas
+                # nunca depois de já ter streamado chunks (resposta parcial).
+                if not (is_quota_error(exc) or is_transient_error(exc)) or streamed:
                     raise
                 last_exc = exc
                 if i + 1 < len(candidates):
@@ -132,6 +134,7 @@ class FallbackChatModel(BaseChatModel):
         from backend.services.provider_fallback import (
             QuotaExhaustedError,
             is_quota_error,
+            is_transient_error,
             record_switch,
         )
 
@@ -143,7 +146,7 @@ class FallbackChatModel(BaseChatModel):
                 msg = await inner.ainvoke(messages, stop=stop, **kwargs)
                 return ChatResult(generations=[ChatGeneration(message=msg)])
             except Exception as exc:
-                if not is_quota_error(exc):
+                if not (is_quota_error(exc) or is_transient_error(exc)):
                     raise
                 last_exc = exc
                 if i + 1 < len(candidates):

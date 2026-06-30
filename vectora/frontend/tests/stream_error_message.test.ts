@@ -15,6 +15,12 @@ describe("streamErrorMessage", () => {
     expect(streamErrorMessage("AUTH")).toBeTruthy();
   });
 
+  it("TIMEOUT → mensagem de timeout (não genérica)", () => {
+    const timeout = streamErrorMessage("TIMEOUT");
+    expect(timeout).toBeTruthy();
+    expect(timeout).not.toBe(streamErrorMessage("STREAM_ERROR"));
+  });
+
   it("código desconhecido → mensagem genérica", () => {
     expect(streamErrorMessage("STREAM_ERROR")).toBeTruthy();
     expect(streamErrorMessage(undefined)).toBeTruthy();
@@ -23,7 +29,8 @@ describe("streamErrorMessage", () => {
   it("códigos distintos produzem mensagens distintas", () => {
     const rate = streamErrorMessage("RATE_LIMIT");
     const auth = streamErrorMessage("AUTH");
+    const timeout = streamErrorMessage("TIMEOUT");
     const generic = streamErrorMessage("STREAM_ERROR");
-    expect(new Set([rate, auth, generic]).size).toBe(3);
+    expect(new Set([rate, auth, timeout, generic]).size).toBe(4);
   });
 });

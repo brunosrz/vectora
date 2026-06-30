@@ -745,6 +745,7 @@
   "chat_retry": "Intentar de nuevo",
   "chat_error_rate_limit": "Se alcanzó el límite de uso de este modelo. Inténtalo en unos instantes o cambia de modelo.",
   "chat_error_auth": "Falló la autenticación con el proveedor del modelo. Verifica la clave de API en los ajustes.",
+  "chat_error_timeout": "La conexión con el modelo expiró. Inténtalo de nuevo.",
   "chat_error_generic": "Ocurrió un error al generar la respuesta. Inténtalo de nuevo.",
   "chat_feedback_good": "Buena respuesta",
   "chat_feedback_bad": "Mala respuesta",

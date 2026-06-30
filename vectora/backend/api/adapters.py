@@ -58,6 +58,13 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
     ):
         return "RATE_LIMIT", "O limite de uso deste modelo foi atingido."
     if (
+        "timeout" in text
+        or "timed out" in text
+        or "connecttimeout" in text
+        or "readtimeout" in text
+    ):
+        return "TIMEOUT", "A conexão com o modelo expirou. Tente novamente."
+    if (
         "401" in text
         or "403" in text
         or "unauthorized" in text

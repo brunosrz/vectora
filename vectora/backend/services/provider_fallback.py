@@ -18,6 +18,14 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 _QUOTA_MARKERS = ("429", "resource_exhausted", "quota", "rate limit", "rate_limit")
+_TRANSIENT_MARKERS = (
+    "timeout",
+    "timed out",
+    "connecttimeout",
+    "readtimeout",
+    "connection error",
+    "connection refused",
+)
 
 
 class QuotaExhaustedError(Exception):
@@ -43,6 +51,12 @@ def is_quota_error(exc: BaseException) -> bool:
         return True
     msg = str(exc).lower()
     return any(marker in msg for marker in _QUOTA_MARKERS)
+
+
+def is_transient_error(exc: BaseException) -> bool:
+    """True se a exceção indica falha transiente (timeout, conexão) — vale tentar o próximo provider."""
+    msg = str(exc).lower()
+    return any(marker in msg for marker in _TRANSIENT_MARKERS)
 
 
 def _provider_of(model_id: str) -> str:

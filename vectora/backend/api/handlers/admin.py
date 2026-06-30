@@ -738,20 +738,19 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
 
     async def _test_google() -> tuple[bool, str]:
         try:
-            import httpx
+            from langchain_google_genai import ChatGoogleGenerativeAI
 
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.get(
-                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite",
-                    headers={"x-goog-api-key": api_key},
-                )
-            if resp.status_code == 200:
-                return True, ""
-            try:
-                err_msg = resp.json().get("error", {}).get("message", "")
-            except Exception:
-                err_msg = ""
-            return False, err_msg or f"HTTP {resp.status_code}"
+            from backend.settings import settings as _s
+
+            llm = ChatGoogleGenerativeAI(
+                model=_s.google_model,
+                google_api_key=api_key,  # type: ignore[arg-type]
+                max_output_tokens=1,
+                timeout=30,
+                max_retries=0,
+            )
+            await llm.ainvoke("hi")
+            return True, ""
         except Exception as exc:
             return False, str(exc)
 
