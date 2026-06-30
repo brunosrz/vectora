@@ -525,8 +525,11 @@ function refreshTrayMenu(): void {
       },
     },
     {
-      label: "Reiniciar backend",
-      click: () => void restartBackend(),
+      label: "Reiniciar Vectora",
+      click: () => {
+        app.relaunch();
+        app.exit(0);
+      },
     },
     ...(updateReady
       ? [
@@ -668,6 +671,17 @@ app.whenReady().then(async () => {
   // Ponte IPC: serve a SPA e encaminha /auth, /vectora.*, /mcp, SSE… ao backend
   // pelo unix socket (Linux/macOS) ou TCP loopback (Windows).
   protocol.handle(APP_SCHEME, (req) => forwardToBackend(req));
+
+  // Restaura cookies persistidos pelo Electron (session.defaultSession) do
+  // boot anterior para o _cookieStore in-memory. Sem isso a sessão de login
+  // é perdida a cada reinicialização do app.
+  const persisted = await session.defaultSession.cookies.get({
+    url: `${APP_SCHEME}://app`,
+  });
+  for (const c of persisted) {
+    _cookieStore.set(c.name, c.value);
+  }
+
   try {
     await killStaleBackend();
     await startBackend();
