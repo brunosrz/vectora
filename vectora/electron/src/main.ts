@@ -16,7 +16,7 @@
  * Não roda lógica de negócio — é casca nativa que orquestra o backend.
  */
 
-import { spawn, ChildProcess } from "child_process";
+import { spawn, spawnSync, ChildProcess } from "child_process";
 import * as fs from "fs";
 import {
   app,
@@ -714,9 +714,22 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   (app as unknown as { isQuitting: boolean }).isQuitting = true;
   if (backend?.pid) {
-    treeKill(backend.pid);
+    const pid = backend.pid;
+    backend = null;
+    // spawnSync bloqueia até o taskkill terminar — garante que o backend
+    // está morto antes do processo Electron sair (treeKill é async e o
+    // Electron saía antes, deixando o backend órfão).
+    if (process.platform === "win32") {
+      spawnSync("taskkill", ["/T", "/F", "/PID", String(pid)], {
+        stdio: "ignore",
+      });
+    } else {
+      treeKill(pid);
+    }
   }
-  fs.promises.unlink(_BACKEND_PID_FILE).catch(() => {});
+  try {
+    fs.unlinkSync(_BACKEND_PID_FILE);
+  } catch {}
 });
 
 app.on("activate", () => {

@@ -11,6 +11,13 @@
 !macroend
 
 !macro customInstall
+  ; Encerra qualquer instância rodando antes de instalar (cenário de atualização).
+  nsExec::Exec '"$SYSDIR\taskkill.exe" /F /T /IM "Vectora.exe"'
+  Pop $0
+  nsExec::Exec '"$SYSDIR\taskkill.exe" /F /T /IM "vectora.exe"'
+  Pop $0
+  Sleep 500
+
   ; Cria vectora.cmd no diretório de instalação para que `vectora` funcione
   ; diretamente em qualquer terminal após a instalação.
   FileOpen $0 "$INSTDIR\vectora.cmd" w
@@ -32,5 +39,12 @@
 !macroend
 
 !macro customUnInstall
+  ; Encerra Vectora completamente antes de remover os arquivos.
+  ; Sem isso o Windows bloqueia deleção de arquivos abertos pelo processo.
+  nsExec::Exec '"$SYSDIR\taskkill.exe" /F /T /IM "Vectora.exe"'
+  Pop $0
+  nsExec::Exec '"$SYSDIR\taskkill.exe" /F /T /IM "vectora.exe"'
+  Pop $0
+  Sleep 1000
   Delete "$INSTDIR\vectora.cmd"
 !macroend
