@@ -51,6 +51,10 @@
   --graph-stage-semantic: #b66dff;
   --graph-stage-done: #5ec26a;
 
+  /* Bolha de mensagem do usuário — cor distinta do fundo do agente. */
+  --user-bubble: #2563eb;
+  --user-bubble-foreground: #ffffff;
+
   color-scheme: dark;
 }
 
@@ -90,6 +94,9 @@
   --graph-stage-semantic: #8957e5;
   --graph-stage-done: #2da44e;
 
+  --user-bubble: #2563eb;
+  --user-bubble-foreground: #ffffff;
+
   color-scheme: light;
 }
 
@@ -126,6 +133,9 @@
   --color-graph-stage-ast: var(--graph-stage-ast);
   --color-graph-stage-semantic: var(--graph-stage-semantic);
   --color-graph-stage-done: var(--graph-stage-done);
+
+  --color-user-bubble: var(--user-bubble);
+  --color-user-bubble-foreground: var(--user-bubble-foreground);
 
   --radius: 0.5rem;
 

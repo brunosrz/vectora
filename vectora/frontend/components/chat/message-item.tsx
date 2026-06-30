@@ -709,12 +709,14 @@ export const MessageItem = memo(
             }
           }
         `}</style>
-        <div className="flex gap-3 sm:gap-4 items-start group/message">
-          <div
-            className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${message.role === "assistant" && message.isThinking ? "dance-wrapper" : ""}`}
-          >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center">
-              {message.role === "assistant" ? (
+        <div
+          className={`flex gap-3 sm:gap-4 items-start group/message ${message.role === "user" ? "justify-end" : ""}`}
+        >
+          {message.role === "assistant" && (
+            <div
+              className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${message.isThinking ? "dance-wrapper" : ""}`}
+            >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center">
                 <Image
                   src="/assets/images/Assistant Icon.svg"
                   alt="Vectora Assistant"
@@ -722,20 +724,14 @@ export const MessageItem = memo(
                   height={32}
                   className="object-contain"
                 />
-              ) : (
-                <Image
-                  src="/assets/images/User icon.png"
-                  alt="User"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                />
-              )}
+              </div>
             </div>
-          </div>
-          <div className="flex-1 min-w-0 space-y-2">
+          )}
+          <div
+            className={`min-w-0 space-y-2 ${message.role === "user" ? "max-w-[85%]" : "flex-1"}`}
+          >
             <div
-              className={`rounded-lg px-3 py-2 transition-all duration-150 ease-out ${message.role === "user" ? "bg-muted/50 text-foreground" : "bg-muted text-foreground"}`}
+              className={`rounded-lg px-3 py-2 transition-all duration-150 ease-out ${message.role === "user" ? "bg-user-bubble text-user-bubble-foreground" : "bg-muted text-foreground"}`}
               style={{
                 willChange: message.isThinking ? "contents" : "auto",
                 contain: "layout style paint",
@@ -753,7 +749,6 @@ export const MessageItem = memo(
               {/* D2 — Progress semântico durante streaming */}
               {message.role === "assistant" &&
                 (message.isThinking ||
-                  message.thinkingStartTime ||
                   (message.thinkingSteps &&
                     message.thinkingSteps.length > 0)) && (
                   <details open className="mb-3 text-xs">

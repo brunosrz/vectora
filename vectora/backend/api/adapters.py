@@ -343,8 +343,9 @@ def adapt_stream(
         tool_args_previews: dict[str, str] = {}
         import time
 
-        # Multi-bubble: rastreia o nó que gera tokens para emitir message_break
-        # quando o nó muda e já há tokens na bolha atual.
+        # Rastreia o nó emissor de tokens: emite message_break quando muda.
+        # O frontend usa message_break para strip do envelope por segmento e
+        # manter tudo numa única bolha com separação limpa.
         current_token_node: str | None = None
         token_buffer_nonempty = False
 
@@ -451,8 +452,9 @@ def adapt_stream(
                 if payload is None:
                     continue
 
-                # Multi-bubble: emite message_break quando o nó emissor de tokens muda
-                # e a bolha atual já tem conteúdo. Garante bolhas separadas por nó.
+                # Emite message_break quando o nó emissor de tokens muda e já
+                # há tokens acumulados. O frontend usa isso para aplicar
+                # stripMarkdownEnvelope por segmento antes de concatenar.
                 if isinstance(payload, TokenEvent):
                     node_name = payload.node or ""
                     if (

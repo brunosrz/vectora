@@ -29,6 +29,7 @@ import {
   updateMessageInList,
   toApiAttachments,
 } from "../../utils/chat";
+import { stripMarkdownEnvelope } from "../../utils/string/markdown-envelope";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -202,6 +203,8 @@ export function useStreamHandler({
       // Closures capturam activeId por referência — flush sempre vai para a bolha atual.
       let pendingTokenBatch = "";
       let flushScheduled = false;
+      // needsSeparator: true após message_break — próximo batch recebe "\n\n" de separação.
+      let needsSeparator = false;
 
       const scheduleTokenFlush = () => {
         if (flushScheduled) return;
@@ -214,11 +217,13 @@ export function useStreamHandler({
           const batch = pendingTokenBatch;
           pendingTokenBatch = "";
           flushScheduled = false;
+          const sep = needsSeparator ? "\n\n" : "";
+          needsSeparator = false;
           setMessages((prev) =>
-            updateMessageInList(prev, activeId, (m) => ({
-              ...m,
-              content: (typeof m.content === "string" ? m.content : "") + batch,
-            })),
+            updateMessageInList(prev, activeId, (m) => {
+              const cur = typeof m.content === "string" ? m.content : "";
+              return { ...m, content: cur + (cur && sep ? sep : "") + batch };
+            }),
           );
         });
       };
@@ -229,11 +234,13 @@ export function useStreamHandler({
         const batch = pendingTokenBatch;
         pendingTokenBatch = "";
         flushScheduled = false;
+        const sep = needsSeparator ? "\n\n" : "";
+        needsSeparator = false;
         setMessages((prev) =>
-          updateMessageInList(prev, activeId, (m) => ({
-            ...m,
-            content: (typeof m.content === "string" ? m.content : "") + batch,
-          })),
+          updateMessageInList(prev, activeId, (m) => {
+            const cur = typeof m.content === "string" ? m.content : "";
+            return { ...m, content: cur + (cur && sep ? sep : "") + batch };
+          }),
         );
       };
 
@@ -285,35 +292,18 @@ export function useStreamHandler({
             continue;
           }
 
-          // Multi-bubble: quebra de bolha — finaliza activeId e cria nova mensagem
+          // Quebra de segmento: o backend mudou de nó emissor de tokens.
+          // Strip do envelope markdown do segmento atual, seta separador para
+          // o próximo segmento. Continua na MESMA bolha — sem nova mensagem.
           if (event.type === "message_break") {
             setMessages((prev) =>
-              updateMessageInList(prev, activeId, (m) =>
-                m.isThinking
-                  ? {
-                      ...m,
-                      isThinking: false,
-                      thinkingDuration:
-                        m.thinkingStartTime !== undefined
-                          ? Date.now() - m.thinkingStartTime
-                          : undefined,
-                    }
-                  : m,
-              ),
+              updateMessageInList(prev, activeId, (m) => {
+                const current = typeof m.content === "string" ? m.content : "";
+                return { ...m, content: stripMarkdownEnvelope(current) };
+              }),
             );
-            const newId = `${Date.now()}-${Math.random()}`;
-            activeId = newId;
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: newId,
-                role: "assistant" as const,
-                content: "",
-                timestamp: new Date(),
-                isThinking: true,
-                thinkingStartTime: Date.now(),
-              },
-            ]);
+            assistantContent = stripMarkdownEnvelope(assistantContent);
+            needsSeparator = true;
             continue;
           }
 

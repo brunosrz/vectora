@@ -112,13 +112,13 @@ describe("useStreamHandler.processStream", () => {
     expect(assistant?.isThinking).toBe(false);
   });
 
-  it("message_break cria segunda bolha e acumula tokens separados por bolha", async () => {
+  it("message_break mantém bolha única e concatena segmentos com separador", async () => {
     streamChatMock.mockReturnValue(
       gen([
         { type: "thread", thread_id: "t1" },
-        { type: "token", content: "Bolha 1" },
+        { type: "token", content: "Segmento 1" },
         { type: "message_break" },
-        { type: "token", content: "Bolha 2" },
+        { type: "token", content: "Segmento 2" },
         { type: "done", thread_id: "t1", run_id: "run-2" },
       ]),
     );
@@ -126,19 +126,15 @@ describe("useStreamHandler.processStream", () => {
     const { result } = run();
     await result.current.processStream("oi", "a1");
 
-    // Deve haver pelo menos 2 mensagens do assistente
+    // Deve haver apenas UMA mensagem do assistente (single-bubble)
     const assistants = messages.filter((m) => m.role === "assistant");
-    expect(assistants.length).toBeGreaterThanOrEqual(2);
+    expect(assistants.length).toBe(1);
 
-    // Primeira bolha tem conteúdo da primeira fase
-    const first = messages.find((m) => m.id === "a1");
-    expect(first?.content).toBe("Bolha 1");
-    expect(first?.isThinking).toBe(false);
-
-    // Segunda bolha tem conteúdo da segunda fase
-    const second = assistants.find((m) => m.id !== "a1");
-    expect(second?.content).toBe("Bolha 2");
-    expect(second?.isThinking).toBe(false);
+    // A única bolha contém os dois segmentos concatenados com separador
+    const single = messages.find((m) => m.id === "a1");
+    expect(single?.content).toContain("Segmento 1");
+    expect(single?.content).toContain("Segmento 2");
+    expect(single?.isThinking).toBe(false);
   });
 
   it("race condition: assistantContent preservado mesmo com setMessages([]) externo durante stream", async () => {
@@ -229,7 +225,7 @@ describe("useStreamHandler.processStream", () => {
     expect(setMessagesMock).toHaveBeenCalledWith([]);
   });
 
-  it("message_break sem tokens anteriores não cria bolha vazia", async () => {
+  it("message_break sem tokens anteriores não adiciona separador vazio", async () => {
     streamChatMock.mockReturnValue(
       gen([
         { type: "thread", thread_id: "t1" },
@@ -242,16 +238,13 @@ describe("useStreamHandler.processStream", () => {
     const { result } = run();
     await result.current.processStream("oi", "a1");
 
-    // message_break logo no início (sem tokens antes) deve ser ignorado pelo backend,
-    // mas mesmo que chegue, a bolha inicial não deve ficar com conteúdo vazio ao lado
-    // de uma segunda com "só uma bolha"
-    const withContent = messages.filter(
-      (m) => m.role === "assistant" && m.content !== "",
-    );
-    // Deve existir exatamente uma bolha com conteúdo real
-    expect(withContent.length).toBeGreaterThanOrEqual(1);
-    const found = withContent.find((m) => m.content === "só uma bolha");
-    expect(found).toBeTruthy();
+    // Deve haver exatamente UMA mensagem do assistente
+    const assistants = messages.filter((m) => m.role === "assistant");
+    expect(assistants.length).toBe(1);
+
+    // Sem conteúdo prévio, message_break não adiciona separador "\n\n"
+    const single = messages.find((m) => m.id === "a1");
+    expect(single?.content).toBe("só uma bolha");
   });
 
   // ── model_switched (A4 — fallback de provider por quota) ─────────────────────
