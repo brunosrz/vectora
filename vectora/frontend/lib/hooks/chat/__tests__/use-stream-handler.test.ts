@@ -299,4 +299,343 @@ describe("useStreamHandler.processStream", () => {
     const out = await result.current.processStream("oi", "a1");
     expect(out.assistantContent).toBe("ok");
   });
+
+  // ── yieldToBrowser — streaming letra a letra ──────────────────────────────
+
+  it("cada token chama setMessages individualmente (streaming letra a letra)", async () => {
+    // Com yieldToBrowser, cada token faz um setMessages separado —
+    // o conteúdo cresce incrementalmente, não de uma vez.
+    const calls: string[] = [];
+    const setMsgsTracking = (u: Message[] | ((p: Message[]) => Message[])) => {
+      const next = typeof u === "function" ? u(messages) : u;
+      const a = next.find((m) => m.role === "assistant");
+      if (a && typeof a.content === "string" && a.content !== "") {
+        calls.push(a.content);
+      }
+      messages = next;
+    };
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "A" },
+        { type: "token", content: "B" },
+        { type: "token", content: "C" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages: setMsgsTracking }),
+    );
+    await result.current.processStream("oi", "a1");
+
+    // Cada token gerou um estado intermediário distinto
+    expect(calls).toContain("A");
+    expect(calls).toContain("AB");
+    expect(calls).toContain("ABC");
+    // A ordem incremental deve estar preservada
+    const aIdx = calls.indexOf("A");
+    const abIdx = calls.indexOf("AB");
+    const abcIdx = calls.indexOf("ABC");
+    expect(aIdx).toBeLessThan(abIdx);
+    expect(abIdx).toBeLessThan(abcIdx);
+  });
+
+  it("token com newline é preservado no conteúdo", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "linha1\n" },
+        { type: "token", content: "linha2" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+    expect(out.assistantContent).toBe("linha1\nlinha2");
+    expect(messages.find((m) => m.id === "a1")?.content).toBe("linha1\nlinha2");
+  });
+
+  it("token vazio não adiciona conteúdo", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "real" },
+        { type: "token", content: "" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+    expect(out.assistantContent).toBe("real");
+  });
+
+  it("done sem run_id → runId é undefined", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "x" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+    expect(out.runId).toBeUndefined();
+  });
+
+  it("erro AUTH retorna mensagem limpa localizada", async () => {
+    streamChatMock.mockReturnValue(
+      gen([{ type: "error", message: "401 auth failed", code: "AUTH" }]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isError).toBe(true);
+    expect(a?.content).toBeTruthy();
+    expect(a?.content).not.toContain("401");
+    expect(a?.content).not.toContain("auth failed");
+  });
+
+  it("erro TIMEOUT retorna mensagem limpa localizada", async () => {
+    streamChatMock.mockReturnValue(
+      gen([{ type: "error", message: "ReadTimeout", code: "TIMEOUT" }]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isError).toBe(true);
+    expect(a?.content).toBeTruthy();
+    expect(a?.content).not.toContain("ReadTimeout");
+  });
+
+  it("erro sem code (STREAM_ERROR) retorna mensagem genérica localizada", async () => {
+    streamChatMock.mockReturnValue(
+      gen([{ type: "error", message: "unexpected crash" }]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isError).toBe(true);
+    expect(a?.content).toBeTruthy();
+    expect(a?.content).not.toContain("unexpected crash");
+  });
+
+  it("AbortError encerra o thinking sem marcar isError", async () => {
+    streamChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "token", content: "parcial" } as StreamEvent;
+        const err = new Error("user abort");
+        err.name = "AbortError";
+        throw err;
+      })(),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isThinking).toBe(false);
+    expect(a?.isError).toBeFalsy();
+    // Conteúdo parcial é preservado
+    expect(a?.content).toBe("parcial");
+  });
+
+  // ── message_break — strip de envelope por segmento ───────────────────────
+
+  it("message_break strips envelope markdown do primeiro segmento", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "``````markdown\n" },
+        { type: "token", content: "Conteúdo limpo" },
+        { type: "token", content: "\n``````" },
+        { type: "message_break" },
+        { type: "token", content: " mais texto" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+    const a = messages.find((m) => m.id === "a1");
+    // O envelope não deve aparecer no conteúdo final
+    expect(a?.content).not.toContain("``````");
+    expect(a?.content).toContain("Conteúdo limpo");
+  });
+
+  it("múltiplos message_break consecutivos mantêm single-bubble", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "Seg1" },
+        { type: "message_break" },
+        { type: "token", content: "Seg2" },
+        { type: "message_break" },
+        { type: "token", content: "Seg3" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    // Ainda uma única mensagem
+    expect(messages.filter((m) => m.role === "assistant")).toHaveLength(1);
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.content).toContain("Seg1");
+    expect(a?.content).toContain("Seg2");
+    expect(a?.content).toContain("Seg3");
+  });
+
+  it("message_break adiciona '\\n\\n' entre segmentos quando há conteúdo prévio", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "Primeiro" },
+        { type: "message_break" },
+        { type: "token", content: "Segundo" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.content).toContain("\n\n");
+    expect(a?.content).toMatch(/Primeiro[\s\S]*Segundo/);
+  });
+});
+
+// ============================================================================
+// processResume
+// ============================================================================
+
+describe("useStreamHandler.processResume", () => {
+  let messages: Message[];
+  const setMessages = (u: Message[] | ((p: Message[]) => Message[])) => {
+    messages = typeof u === "function" ? u(messages) : u;
+  };
+
+  beforeEach(() => {
+    messages = [
+      {
+        id: "a1",
+        role: "assistant",
+        content: "conteúdo anterior",
+        timestamp: new Date(),
+        isThinking: false,
+      },
+    ];
+    streamChatMock.mockReset();
+    resumeChatMock.mockReset();
+  });
+
+  function run() {
+    return renderHook(() => useStreamHandler({ threadId: "t1", setMessages }));
+  }
+
+  const resumeReq = {
+    thread_id: "t1",
+    interrupt_id: "i1",
+    decision: "approve" as const,
+  };
+
+  it("acumula tokens e retorna assistantContent correto", async () => {
+    resumeChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "continuação" },
+        { type: "token", content: " da resposta" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages }),
+    );
+    const out = await result.current.processResume(resumeReq, "a1");
+    expect(out.assistantContent).toBe("continuação da resposta");
+  });
+
+  it("tokens são adicionados ao conteúdo existente da mensagem", async () => {
+    resumeChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: " nova parte" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processResume(resumeReq, "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.content).toContain("nova parte");
+  });
+
+  it("encerra o thinking ao receber done", async () => {
+    resumeChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "ok" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processResume(resumeReq, "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isThinking).toBe(false);
+  });
+
+  it("erro de aplicação vira isError na mensagem", async () => {
+    resumeChatMock.mockReturnValue(
+      gen([{ type: "error", message: "429 quota", code: "RATE_LIMIT" }]),
+    );
+    const { result } = run();
+    await result.current.processResume(resumeReq, "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isError).toBe(true);
+    expect(a?.isThinking).toBe(false);
+    expect(a?.content).not.toContain("429");
+  });
+
+  it("queda de transporte preserva conteúdo parcial já recebido", async () => {
+    resumeChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "token", content: "parcial" } as StreamEvent;
+        throw new Error("network error");
+      })(),
+    );
+    const { result } = run();
+    await result.current.processResume(resumeReq, "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isThinking).toBe(false);
+    expect(a?.content).toContain("parcial");
+  });
+
+  it("AbortError não marca isError e encerra thinking", async () => {
+    resumeChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "token", content: "interrompido" } as StreamEvent;
+        const err = new Error("abort");
+        err.name = "AbortError";
+        throw err;
+      })(),
+    );
+    const { result } = run();
+    await result.current.processResume(resumeReq, "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.isThinking).toBe(false);
+    expect(a?.isError).toBeFalsy();
+  });
+
+  it("cada token de resume chama setMessages individualmente", async () => {
+    const contentHistory: string[] = [];
+    const trackingSet = (u: Message[] | ((p: Message[]) => Message[])) => {
+      messages = typeof u === "function" ? u(messages) : u;
+      const a = messages.find((m) => m.id === "a1");
+      if (a && typeof a.content === "string") {
+        contentHistory.push(a.content);
+      }
+    };
+    resumeChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: "X" },
+        { type: "token", content: "Y" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages: trackingSet }),
+    );
+    await result.current.processResume(resumeReq, "a1");
+    // Deve haver estados intermediários com X e XY separados
+    const hasX = contentHistory.some((c) => c.endsWith("X"));
+    const hasXY = contentHistory.some((c) => c.endsWith("XY"));
+    expect(hasX).toBe(true);
+    expect(hasXY).toBe(true);
+  });
 });
