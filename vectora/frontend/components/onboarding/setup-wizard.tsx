@@ -26,9 +26,11 @@ import {
   FolderGit2,
   FolderOpen,
   FolderPlus,
+  Plus,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
 import {
   Dialog,
   DialogContent,
@@ -167,14 +169,6 @@ interface LicenseResult {
   error?: string;
 }
 
-/** Classe do botão segmentado Token | Login do StepToken. */
-const segmentClass = (active: boolean) =>
-  `flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-    active
-      ? "bg-primary/10 text-primary border border-primary"
-      : "border border-border text-muted-foreground hover:text-foreground"
-  }`;
-
 /** Badge compacto com o resultado da validação da licença. */
 function LicenseResultBadge({ result }: { result: LicenseResult }) {
   if (result.valid) {
@@ -200,7 +194,6 @@ function LicenseResultBadge({ result }: { result: LicenseResult }) {
 type OAuthState = "idle" | "pending" | "success" | "error";
 
 function StepToken(_props: StepProps) {
-  const [mode, setMode] = useState<"login" | "token">("login");
   const [config, setConfig] = useState<ConfigSummary | null>(null);
   const [result, setResult] = useState<LicenseResult | null>(null);
 
@@ -313,146 +306,57 @@ function StepToken(_props: StepProps) {
         {m.onboarding_token_body()}
       </p>
 
-      {/* Seletor: Entrar com a conta (padrão, esquerda) | Tenho um token (direita) */}
-      <div className="flex gap-1.5">
-        <button
-          type="button"
-          className={segmentClass(mode === "login")}
-          onClick={() => setMode("login")}
-        >
-          {m.onboarding_token_mode_login()}
-        </button>
-        <button
-          type="button"
-          className={segmentClass(mode === "token")}
-          onClick={() => setMode("token")}
-        >
-          {m.onboarding_token_mode_token()}
-        </button>
-      </div>
-
       {config?.vectora_token_configured && (
         <p className="text-xs text-muted-foreground font-mono">
           {m.onboarding_token_configured()}: {config.vectora_token_masked}
         </p>
       )}
 
-      {mode === "login" ? (
-        <div className="space-y-3 pt-1">
-          {oauthState === "idle" && (
-            <button
-              type="button"
-              onClick={() => void startOAuth()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 transition-all hover:bg-primary/90"
-            >
-              <Image
-                src="/vectora.svg"
-                alt=""
-                width={16}
-                height={16}
-                className="h-4 w-4 invert"
-              />
-              {m.onboarding_oauth_btn()}
-            </button>
-          )}
-
-          {oauthState === "pending" && (
-            <div className="flex flex-col items-center gap-2 py-2">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <p className="text-xs text-muted-foreground text-center">
-                {m.onboarding_oauth_waiting()}
-              </p>
-              {authUrl && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    window.open(authUrl, "_blank", "noopener,noreferrer")
-                  }
-                  className="text-xs text-primary hover:underline"
-                >
-                  {m.onboarding_oauth_open_again()}
-                </button>
-              )}
-            </div>
-          )}
-
-          {oauthState === "success" && (
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <p className="text-sm font-medium">
-                {m.onboarding_oauth_success()}
-              </p>
-            </div>
-          )}
-
-          {oauthState === "error" && (
-            <div className="space-y-2">
-              <p className="text-xs text-destructive">
-                {m.onboarding_oauth_error()}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setOAuthState("idle");
-                  setOAuthStateKey(null);
-                  setAuthUrl(null);
-                }}
-                className="text-xs text-primary hover:underline"
-              >
-                {m.onboarding_oauth_open_again()}
-              </button>
-            </div>
-          )}
+      <>
+        <div className="flex gap-1.5">
+          <Input
+            type={showToken ? "text" : "password"}
+            value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            placeholder="vct_…"
+            className="h-8 text-xs font-mono flex-1"
+            autoComplete="off"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 px-2"
+            onClick={() => setShowToken((v) => !v)}
+          >
+            {showToken ? m.onboarding_token_hide() : m.onboarding_token_show()}
+          </Button>
         </div>
-      ) : (
-        <>
-          <div className="flex gap-1.5">
-            <Input
-              type={showToken ? "text" : "password"}
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              placeholder="vct_…"
-              className="h-8 text-xs font-mono flex-1"
-              autoComplete="new-password"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2"
-              onClick={() => setShowToken((v) => !v)}
-            >
-              {showToken
-                ? m.onboarding_token_hide()
-                : m.onboarding_token_show()}
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleSave}
-              disabled={saving || !tokenInput.trim()}
-            >
-              {saving ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-              ) : null}
-              {m.onboarding_token_save()}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {m.onboarding_token_hint()}{" "}
-            <a
-              href="https://vectora.company/dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              vectora.company/dashboard
-            </a>
-          </p>
-        </>
-      )}
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSave}
+            disabled={saving || !tokenInput.trim()}
+          >
+            {saving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+            ) : null}
+            {m.onboarding_token_save()}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {m.onboarding_token_hint()}{" "}
+          <a
+            href="https://vectora.company/dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            vectora.company/dashboard
+          </a>
+        </p>
+      </>
 
       {result && <LicenseResultBadge result={result} />}
     </div>
@@ -905,6 +809,7 @@ function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
   const activeId = useWorkspacesStore((s) => s.active_id);
   const hydrate = useWorkspacesStore((s) => s.hydrate);
   const [selected, setSelected] = useState<string | null>(null);
+  const [trustOpen, setTrustOpen] = useState(false);
 
   useEffect(() => {
     void hydrate();
@@ -916,69 +821,94 @@ function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
     onWorkspaceSelect?.(id);
   }
 
+  function handleTrustOpenChange(open: boolean) {
+    setTrustOpen(open);
+    if (!open) {
+      // WorkspaceTrustDialog chama store.create() que seta active_id
+      const newId = useWorkspacesStore.getState().active_id;
+      if (newId) handleSelect(newId);
+    }
+  }
+
   return (
-    <ScrollArea className="max-h-60">
-      <div className="space-y-1 pr-3 py-2">
-        <button
-          type="button"
-          onClick={() => handleSelect(null)}
-          className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
-            selected === null
-              ? "border-border/80 bg-muted/60"
-              : "border-border hover:bg-muted/50"
-          }`}
-        >
-          <FolderPlus className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-foreground">
-              {m.new_chat_create_new()}
-            </span>
-            <span className="block text-xs text-muted-foreground mt-0.5">
-              {m.new_chat_create_new_desc()}
-            </span>
-          </span>
-          {selected === null && (
-            <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground" />
-          )}
-        </button>
-
-        {workspaces.length > 0 && (
-          <p className="px-1 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {m.new_chat_existing_label()}
-          </p>
-        )}
-
-        {workspaces.map((ws) => (
+    <>
+      <ScrollArea className="max-h-60">
+        <div className="space-y-1 pr-3 py-2">
           <button
-            key={ws.id}
             type="button"
-            onClick={() => handleSelect(ws.id)}
+            onClick={() => handleSelect(null)}
             className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
-              selected === ws.id
+              selected === null
                 ? "border-border/80 bg-muted/60"
                 : "border-border hover:bg-muted/50"
             }`}
           >
-            {ws.is_git_repo ? (
-              <FolderGit2 className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
-            ) : (
-              <FolderOpen className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
-            )}
+            <FolderPlus className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium text-foreground truncate">
-                {ws.name}
+              <span className="block text-sm font-medium text-foreground">
+                {m.new_chat_create_new()}
               </span>
-              <span className="block text-xs text-muted-foreground truncate mt-0.5">
-                {ws.cwd}
+              <span className="block text-xs text-muted-foreground mt-0.5">
+                {m.new_chat_create_new_desc()}
               </span>
             </span>
-            {selected === ws.id && (
+            {selected === null && (
               <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground" />
             )}
           </button>
-        ))}
-      </div>
-    </ScrollArea>
+
+          {workspaces.length > 0 && (
+            <p className="px-1 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              {m.new_chat_existing_label()}
+            </p>
+          )}
+
+          {workspaces.map((ws) => (
+            <button
+              key={ws.id}
+              type="button"
+              onClick={() => handleSelect(ws.id)}
+              className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
+                selected === ws.id
+                  ? "border-border/80 bg-muted/60"
+                  : "border-border hover:bg-muted/50"
+              }`}
+            >
+              {ws.is_git_repo ? (
+                <FolderGit2 className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+              ) : (
+                <FolderOpen className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-foreground truncate">
+                  {ws.name}
+                </span>
+                <span className="block text-xs text-muted-foreground truncate mt-0.5">
+                  {ws.cwd}
+                </span>
+              </span>
+              {selected === ws.id && (
+                <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground" />
+              )}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => setTrustOpen(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md transition-colors text-left mt-1"
+          >
+            <Plus className="w-4 h-4 shrink-0 text-muted-foreground" />
+            {m.workspace_add_folder()}
+          </button>
+        </div>
+      </ScrollArea>
+
+      <WorkspaceTrustDialog
+        open={trustOpen}
+        onOpenChange={handleTrustOpenChange}
+      />
+    </>
   );
 }
 

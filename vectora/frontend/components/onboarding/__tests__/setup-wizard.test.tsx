@@ -52,7 +52,7 @@ describe("isOnboardingDone", () => {
 describe("SetupWizard", () => {
   it("renderiza o contador do passo 1/7 no primeiro passo", async () => {
     render(<SetupWizard userId="u1" onComplete={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText("1 / 7")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("1 / 8")).toBeInTheDocument());
   });
 
   it("área de conteúdo tem data-testid com altura mínima fixa", async () => {
@@ -69,11 +69,11 @@ describe("SetupWizard", () => {
 
 async function renderAtStepToken() {
   render(<SetupWizard userId="u3" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 7"));
+  await waitFor(() => screen.getByText("1 / 8"));
   fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 0 → 1
-  await waitFor(() => screen.getByText("2 / 7"));
+  await waitFor(() => screen.getByText("2 / 8"));
   fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 1 → 2
-  await waitFor(() => screen.getByText("3 / 7"));
+  await waitFor(() => screen.getByText("3 / 8"));
 }
 
 describe("StepToken", () => {
@@ -89,33 +89,6 @@ describe("StepToken", () => {
     expect(input).not.toHaveAttribute("autocomplete", "new-password");
     expect(input).not.toHaveAttribute("autocomplete", "current-password");
     expect(input).not.toHaveAttribute("autocomplete", "email");
-  });
-
-  it("botão 'Sign in with account' abre vectora.company no browser externo", async () => {
-    const openSpy = vi.fn();
-    vi.stubGlobal("open", openSpy);
-    await renderAtStepToken();
-    const loginBtn = screen.getByRole("button", {
-      name: "Sign in with account",
-    });
-    fireEvent.click(loginBtn);
-    expect(openSpy).toHaveBeenCalledWith(
-      "https://vectora.company/dashboard",
-      "_blank",
-      "noopener,noreferrer",
-    );
-  });
-
-  it("erro: botão 'Sign in with account' não deve abrir URL interna ou localhost", async () => {
-    const openSpy = vi.fn();
-    vi.stubGlobal("open", openSpy);
-    await renderAtStepToken();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Sign in with account" }),
-    );
-    const url: string = openSpy.mock.calls[0]?.[0] ?? "";
-    expect(url).toMatch(/^https:\/\/vectora\.company/);
-    expect(url).not.toMatch(/localhost|127\.0\.0\.1/);
   });
 });
 
@@ -164,13 +137,13 @@ function mockStorageFetch(opts: {
 
 async function renderAtStepMode() {
   render(<SetupWizard userId="u-mode" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 7"));
+  await waitFor(() => screen.getByText("1 / 8"));
   await act(async () => {
     for (let i = 0; i < 3; i++) {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     }
   });
-  await waitFor(() => screen.getByText("4 / 7"));
+  await waitFor(() => screen.getByText("4 / 8"));
   await act(async () => {
     fireEvent.click(screen.getByText("Complete")); // modo completo → cards
   });
