@@ -20,6 +20,7 @@ Subprojetos cobertos por lint e tests:
     vectora/        Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
     relay/          TypeScript (tsc, vitest)
     company/        TypeScript (eslint, tsc, vitest)
+    electron/       TypeScript (vitest — cookie-utils e lifecycle puro)
     docs/           TypeScript (tsc) — sem testes
     update-server/  TypeScript (tsc) — sem testes
 """
@@ -403,7 +404,7 @@ def _action_tests_storage(target, source, env):
 
 
 def _run_full_suite(log, *, coverage: bool):
-    """Suíte completa: vectora (vitest + pytest) + relay (vitest) + company (vitest).
+    """Suíte completa: vectora (vitest + pytest) + relay + company + electron (vitest).
 
     docs e update-server não têm testes — cobertos só pelo lint (typecheck).
 
@@ -437,6 +438,10 @@ def _run_full_suite(log, *, coverage: bool):
     # ── company ───────────────────────────────────────────────────────────────
     _pnpm_install_if_needed("company", log)
     _run([PNPM, "--dir", "company", "run", "test"], log=log)
+
+    # ── electron (cookie-utils e lifecycle puro) ───────────────────────────
+    _pnpm_install_if_needed("vectora/electron", log)
+    _run([PNPM, "--dir", "vectora/electron", "run", "test"], log=log)
 
 
 def _action_tests(target, source, env):

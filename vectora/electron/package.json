@@ -11,13 +11,15 @@
     "dist": "pnpm build && electron-builder",
     "dist:win": "pnpm build && electron-builder --win",
     "dist:mac": "pnpm build && electron-builder --mac",
-    "dist:linux": "pnpm build && electron-builder --linux"
+    "dist:linux": "pnpm build && electron-builder --linux",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
     "electron": "^42.4.1",
     "electron-builder": "^26.15.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "@sentry/electron": "^7.13.0",

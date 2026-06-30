@@ -23,6 +23,7 @@ Subprojetos cobertos por `scons lint` e `scons tests`:
 - `vectora/` — Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
 - `relay/` — TypeScript (tsc, vitest)
 - `company/` — TypeScript (eslint, tsc, vitest)
+- `vectora/electron/` — TypeScript (vitest — funções puras: cookie-utils)
 - `docs/` — TypeScript (tsc) — sem testes
 - `update-server/` — TypeScript (tsc) — sem testes
 

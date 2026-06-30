@@ -38,6 +38,7 @@ import * as path from "path";
 import { Readable } from "stream";
 // tree-kill ships its own types — no @types/tree-kill needed.
 import treeKill = require("tree-kill");
+import { parseSetCookieHeader, buildCookieHeader } from "./cookie-utils.js";
 
 interface UpdateStatus {
   state:
@@ -132,26 +133,9 @@ const _HOP_BY_HOP = new Set([
 const _cookieStore = new Map<string, string>();
 
 async function storeSetCookie(cookieStr: string): Promise<void> {
-  const [nameValuePart, ...attrParts] = cookieStr
-    .split(";")
-    .map((s) => s.trim());
-  const eqIdx = nameValuePart.indexOf("=");
-  if (eqIdx === -1) return;
-  const name = nameValuePart.slice(0, eqIdx).trim();
-  const value = nameValuePart.slice(eqIdx + 1).trim();
-
-  let httpOnly = false;
-  const attrs: Record<string, string> = {};
-  for (const part of attrParts) {
-    if (part.toLowerCase() === "httponly") {
-      httpOnly = true;
-      continue;
-    }
-    const eq = part.indexOf("=");
-    if (eq !== -1) {
-      attrs[part.slice(0, eq).toLowerCase().trim()] = part.slice(eq + 1).trim();
-    }
-  }
+  const parsed = parseSetCookieHeader(cookieStr);
+  if (!parsed) return;
+  const { name, value, attrs, httpOnly } = parsed;
 
   // Max-Age=0 → deletar o cookie (logout / expiração forçada).
   if (attrs["max-age"] !== undefined && parseInt(attrs["max-age"], 10) <= 0) {
@@ -206,9 +190,7 @@ async function forwardToBackend(request: Request): Promise<Response> {
   // Chromium não inclui automaticamente cookies de session.defaultSession
   // nas requests interceptadas por protocol.handle para schemes customizados.
   if (_cookieStore.size > 0) {
-    headers["cookie"] = Array.from(_cookieStore.entries())
-      .map(([k, v]) => `${k}=${v}`)
-      .join("; ");
+    headers["cookie"] = buildCookieHeader(_cookieStore);
   }
 
   const body =
