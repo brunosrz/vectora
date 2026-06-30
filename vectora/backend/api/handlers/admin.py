@@ -722,7 +722,6 @@ async def patch_api_keys(request: Request, body: PatchApiKeysBody) -> dict:
 async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
     """Testa uma API key chamando o provider e retorna ok/error."""
     require_admin(_get_user(request))
-    import asyncio
     import time
 
     provider = body.provider.lower().strip()
@@ -739,28 +738,39 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
 
     async def _test_google() -> tuple[bool, str]:
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
+            import httpx
 
-            llm = ChatGoogleGenerativeAI(api_key=api_key, model="gemini-2.0-flash-lite")
-            await asyncio.wait_for(llm.ainvoke("Hi"), timeout=12)
-            return True, ""
-        except TimeoutError:
-            return False, "Timeout ao conectar ao Google AI"
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.get(
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite",
+                    headers={"x-goog-api-key": api_key},
+                )
+            if resp.status_code == 200:
+                return True, ""
+            try:
+                err_msg = resp.json().get("error", {}).get("message", "")
+            except Exception:
+                err_msg = ""
+            return False, err_msg or f"HTTP {resp.status_code}"
         except Exception as exc:
             return False, str(exc)
 
     async def _test_cohere() -> tuple[bool, str]:
         try:
-            from langchain_cohere import ChatCohere
-            from pydantic import SecretStr
+            import httpx
 
-            llm = ChatCohere(
-                cohere_api_key=SecretStr(api_key), model="command-r7b-12-2024"
-            )
-            await asyncio.wait_for(llm.ainvoke("Hi"), timeout=12)
-            return True, ""
-        except TimeoutError:
-            return False, "Timeout ao conectar ao Cohere"
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.get(
+                    "https://api.cohere.com/v2/models",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+            if resp.status_code == 200:
+                return True, ""
+            try:
+                err_msg = resp.json().get("message", "")
+            except Exception:
+                err_msg = ""
+            return False, err_msg or f"HTTP {resp.status_code}"
         except Exception as exc:
             return False, str(exc)
 
