@@ -54,6 +54,51 @@ class TestIsQuotaError:
 
 
 # ---------------------------------------------------------------------------
+# is_transient_error
+# ---------------------------------------------------------------------------
+
+
+class TestIsTransientError:
+    def test_timeout_word(self):
+        assert pf.is_transient_error(Exception("ReadTimeout: timed out")) is True
+
+    def test_timed_out(self):
+        assert pf.is_transient_error(Exception("request timed out after 30s")) is True
+
+    def test_connecttimeout(self):
+        assert (
+            pf.is_transient_error(Exception("ConnectTimeout connecting to API")) is True
+        )
+
+    def test_readtimeout(self):
+        assert pf.is_transient_error(Exception("ReadTimeout reading response")) is True
+
+    def test_connection_error(self):
+        assert (
+            pf.is_transient_error(Exception("connection error: reset by peer")) is True
+        )
+
+    def test_connection_refused(self):
+        assert pf.is_transient_error(Exception("connection refused")) is True
+
+    def test_case_insensitive(self):
+        assert pf.is_transient_error(Exception("TIMEOUT waiting for model")) is True
+
+    # erros que NÃO são transientes
+    def test_quota_not_transient(self):
+        assert pf.is_transient_error(Exception("429 quota exceeded")) is False
+
+    def test_auth_not_transient(self):
+        assert pf.is_transient_error(Exception("401 Unauthorized")) is False
+
+    def test_value_error_not_transient(self):
+        assert pf.is_transient_error(ValueError("bad input")) is False
+
+    def test_empty_not_transient(self):
+        assert pf.is_transient_error(Exception("")) is False
+
+
+# ---------------------------------------------------------------------------
 # get_fallback_chain
 # ---------------------------------------------------------------------------
 
@@ -420,6 +465,68 @@ class TestFallbackChatModel:
         assert bound is not fcm
         assert bound.primary_model_id == "openai:gpt-4o"
         assert bound.bound_tools == tools
+
+    async def test_transient_before_first_chunk_switches(self):
+        """Timeout/conexão antes de qualquer chunk deve acionar o próximo provider."""
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        pf.drain_switches()
+        primary = _FakeLLM(chunks=[], stream_error=Exception("ReadTimeout connecting"))
+        fb = _FakeLLM(chunks=["ok"])
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm",
+                _loader({"openai:gpt-4o": primary, "cohere:command-a": fb}),
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            out = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+        assert "".join(str(c.message.content) for c in out) == "ok"
+        assert pf.drain_switches() == [
+            {"from": "openai:gpt-4o", "to": "cohere:command-a"}
+        ]
+
+    async def test_transient_after_chunk_reraises(self):
+        """Timeout após o primeiro chunk ser streamado não faz fallback — resposta parcial."""
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        primary = _FakeLLM(
+            chunks=["a"], stream_error=Exception("timeout"), error_after=1
+        )
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm", _loader({"openai:gpt-4o": primary})
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            with pytest.raises(Exception, match="timeout"):
+                _ = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+
+    async def test_agenerate_transient_switches(self):
+        """Timeout em _agenerate aciona o próximo provider."""
+        from langchain_core.messages import AIMessage, HumanMessage
+
+        from backend.services.fallback_chat_model import FallbackChatModel
+
+        pf.drain_switches()
+        primary = _FakeLLM(invoke_error=Exception("ConnectTimeout"))
+        fb = _FakeLLM(invoke_result=AIMessage(content="fallback ok"))
+        fcm = FallbackChatModel(primary_model_id="openai:gpt-4o")
+        with (
+            patch(
+                "backend.services.utils.load_llm",
+                _loader({"openai:gpt-4o": primary, "cohere:command-a": fb}),
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["cohere:command-a"]),
+        ):
+            res = await fcm._agenerate([HumanMessage(content="hi")])
+        assert res.generations[0].message.content == "fallback ok"
 
     def test_bind_tools_propagates_to_inner(self):
         from backend.services.fallback_chat_model import FallbackChatModel

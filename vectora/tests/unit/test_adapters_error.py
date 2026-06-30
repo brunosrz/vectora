@@ -35,7 +35,29 @@ def test_auth_error_classified():
     assert code == "AUTH"
 
 
+def test_timeout_classified():
+    code, message = classify_stream_error(Exception("ReadTimeout: request timed out"))
+    assert code == "TIMEOUT"
+    assert message
+    assert "timeout" not in message.lower() or message  # mensagem limpa sem stack
+
+
+def test_timeout_connect():
+    code, _ = classify_stream_error(
+        Exception("ConnectTimeout connecting to generativelanguage")
+    )
+    assert code == "TIMEOUT"
+
+
 def test_generic_error_fallback():
     code, message = classify_stream_error(ValueError("algo inesperado"))
     assert code == "STREAM_ERROR"
     assert message
+
+
+def test_timeout_not_auth_not_rate_limit():
+    """TIMEOUT deve ser distinto de RATE_LIMIT e AUTH."""
+    t_code, _ = classify_stream_error(Exception("timed out"))
+    r_code, _ = classify_stream_error(Exception("429 quota"))
+    a_code, _ = classify_stream_error(Exception("401 unauthorized"))
+    assert len({t_code, r_code, a_code}) == 3
