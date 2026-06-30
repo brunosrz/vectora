@@ -17,6 +17,7 @@
  */
 
 import { spawn, ChildProcess } from "child_process";
+import * as fs from "fs";
 import {
   app,
   BrowserWindow,
@@ -69,6 +70,22 @@ const HEALTH_MAX_DELAY_MS = 2_000;
 // Últimas linhas de stdout/stderr do backend — exibidas no dialog de erro.
 const _backendLog: string[] = [];
 const _MAX_LOG_LINES = 60;
+
+// Arquivo que persiste o PID do sidecar backend entre sessões. Permite matar
+// processo órfão deixado por crash do Electron sem disparar before-quit.
+const _BACKEND_PID_FILE = path.join(os.homedir(), ".vectora", "backend.pid");
+
+async function killStaleBackend(): Promise<void> {
+  try {
+    const raw = await fs.promises.readFile(_BACKEND_PID_FILE, "utf-8");
+    const stalePid = parseInt(raw.trim(), 10);
+    if (isNaN(stalePid)) return;
+    treeKill(stalePid);
+    await new Promise((r) => setTimeout(r, 400));
+  } catch {
+    // Arquivo não existe ou processo já morreu — normal.
+  }
+}
 
 // O scheme da SPA precisa ser registrado ANTES de app.whenReady(). Habilita
 // fetch/SSE e trata a origem como segura (Secure Context: crypto.randomUUID).
@@ -317,6 +334,11 @@ async function startBackend(): Promise<void> {
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });
+  if (backend.pid) {
+    fs.promises
+      .writeFile(_BACKEND_PID_FILE, String(backend.pid), "utf-8")
+      .catch(() => {});
+  }
   backend.stdout?.on("data", (b: Buffer) => {
     const text = b.toString();
     // Lê VECTORA_IPC_PIPE=<path> do stdout para usar named pipe no Windows.
@@ -665,6 +687,7 @@ app.whenReady().then(async () => {
   // pelo unix socket (Linux/macOS) ou TCP loopback (Windows).
   protocol.handle(APP_SCHEME, (req) => forwardToBackend(req));
   try {
+    await killStaleBackend();
     await startBackend();
     await waitForBackend();
     createWindow();
@@ -693,6 +716,7 @@ app.on("before-quit", () => {
   if (backend?.pid) {
     treeKill(backend.pid);
   }
+  fs.promises.unlink(_BACKEND_PID_FILE).catch(() => {});
 });
 
 app.on("activate", () => {
