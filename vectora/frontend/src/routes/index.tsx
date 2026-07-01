@@ -13,6 +13,7 @@ import { queryClient } from "../router";
 import { listThreads } from "@/lib/api/vectora-client";
 import { EmptyStateHeader } from "@/components/chat/features/empty-state-header";
 import { NewChatDialog } from "@/components/sidebar/new-chat-dialog";
+import { Header } from "@/components/header/header";
 import { signalWorkspacePreChosen } from "@/lib/stores/new-session-signal";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
@@ -116,6 +117,7 @@ function HomeScreen() {
           />
         </div>
         <main className="flex-1 min-h-0 overflow-auto flex flex-col">
+          <Header />
           <EmptyStateHeader
             onStartChat={handleStartChat}
             onStartCode={handleStartCode}
