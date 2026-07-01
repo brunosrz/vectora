@@ -45,6 +45,7 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -58,6 +59,12 @@ function SignupPage() {
       }),
     onSuccess: (res) => {
       track("signup", { plan: plan ?? "plus" });
+      // Confirmação de email ligada → sem sessão; mostra "confirme seu email"
+      // em vez de ir pro dashboard (que sem sessão volta pro login).
+      if (res.needsConfirmation) {
+        setConfirmationSent(true);
+        return;
+      }
       navigate({ to: res.redirect as "/dashboard" });
     },
     onError: (err: Error) => {
@@ -76,6 +83,26 @@ function SignupPage() {
     password.length >= 8 &&
     turnstileToken !== null &&
     !mutation.isPending;
+
+  if (confirmationSent) {
+    return (
+      <AuthLayout heading={m.signup_confirm_heading()}>
+        <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+          <p>
+            {m.signup_confirm_desc()}{" "}
+            <strong className="text-foreground">{email}</strong>.
+          </p>
+          <p>{m.signup_confirm_hint()}</p>
+          <Link
+            to="/login"
+            className="inline-block text-primary transition-colors hover:text-primary/80"
+          >
+            {m.signup_have_account()}
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout

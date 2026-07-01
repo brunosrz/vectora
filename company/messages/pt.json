@@ -324,18 +324,19 @@
   "auth_device_error": "Falha na autorização. Tente novamente.",
   "auth_device_no_token": "Sua conta ainda não tem token. Acesse o dashboard para gerar um.",
   "auth_device_login_prompt": "Você precisa estar logado para autorizar o app.",
-
   "cookie_title": "Cookies e Privacidade",
   "cookie_desc": "Usamos cookies analíticos para entender como o site é utilizado (LGPD · GDPR · CCPA). Sem cookies de publicidade.",
   "cookie_privacy_link": "Política de Privacidade",
   "cookie_policy_link": "Política de Cookies",
   "cookie_accept": "Aceitar",
   "cookie_reject": "Rejeitar",
-
   "oauth_google": "Continuar com Google",
   "oauth_github": "Continuar com GitHub",
   "oauth_divider": "ou",
   "error_rate_limit": "Muitas tentativas. Aguarde alguns segundos e tente novamente.",
   "error_signup_disabled": "Cadastros temporariamente desativados.",
-  "error_db": "Erro interno. Tente novamente em instantes."
+  "error_db": "Erro interno. Tente novamente em instantes.",
+  "signup_confirm_heading": "Confirme seu email",
+  "signup_confirm_desc": "Enviamos um link de confirmação para",
+  "signup_confirm_hint": "Clique no link do email para ativar sua conta e entrar."
 }

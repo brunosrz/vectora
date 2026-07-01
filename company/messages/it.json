@@ -314,5 +314,8 @@
   "page_downloads_desc": "Scarica Vectora Desktop per il tuo sistema.",
   "downloads_recommended": "Consigliato",
   "downloads_cta": "Scarica",
-  "downloads_footer": "Open source · Stesso binario compilato, nessuna telemetria."
+  "downloads_footer": "Open source · Stesso binario compilato, nessuna telemetria.",
+  "signup_confirm_heading": "Conferma la tua email",
+  "signup_confirm_desc": "Abbiamo inviato un link di conferma a",
+  "signup_confirm_hint": "Clicca sul link nell'email per attivare il tuo account e accedere."
 }

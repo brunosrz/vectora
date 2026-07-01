@@ -314,5 +314,8 @@
   "page_downloads_desc": "Téléchargez Vectora Desktop pour votre système.",
   "downloads_recommended": "Recommandé",
   "downloads_cta": "Télécharger",
-  "downloads_footer": "Open source · Même binaire compilé, sans télémétrie."
+  "downloads_footer": "Open source · Même binaire compilé, sans télémétrie.",
+  "signup_confirm_heading": "Confirmez votre e-mail",
+  "signup_confirm_desc": "Nous avons envoyé un lien de confirmation à",
+  "signup_confirm_hint": "Cliquez sur le lien dans l'e-mail pour activer votre compte et vous connecter."
 }

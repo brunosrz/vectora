@@ -29,13 +29,27 @@ export const signUp = createServerFn({ method: "POST" })
     if (!turnstile.success) throw new Error("turnstile_failed");
 
     const supabase = createSupabaseServerClient();
-    const { error } = await supabase.auth.signUp({
+    const appUrl = process.env.APP_URL ?? "https://vectora.company";
+    const { data, error } = await supabase.auth.signUp({
       email: input.email,
       password: input.password,
-      options: { data: { full_name: input.name } },
+      options: {
+        data: { full_name: input.name },
+        // Após clicar no link de confirmação, o Supabase redireciona para cá
+        // com `?code=...`; a rota /auth/callback troca por sessão → /dashboard.
+        emailRedirectTo: `${appUrl}/auth/callback`,
+      },
     });
     if (error) throw new Error(error.message);
 
+    // Confirmação de email ligada → signUp NÃO retorna sessão até o usuário
+    // clicar no link. Sem isto o front ia pro /dashboard, que sem sessão volta
+    // pro login e parece que "não criou conta". O front mostra "confirme o email".
+    if (!data.session) {
+      return { needsConfirmation: true as const, email: input.email };
+    }
+
+    // Sessão imediata (confirmação desligada): manda o welcome e vai pro dashboard.
     const trialEndsAt = new Date(
       Date.now() + 30 * 24 * 60 * 60 * 1000,
     ).toLocaleDateString("pt-BR", {
@@ -58,7 +72,10 @@ export const signUp = createServerFn({ method: "POST" })
       // Non-blocking: email failure does not abort signup
     }
 
-    return { redirect: "/dashboard?welcome=true" };
+    return {
+      needsConfirmation: false as const,
+      redirect: "/dashboard?welcome=true",
+    };
   });
 
 const SignInSchema = z.object({

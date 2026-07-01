@@ -314,5 +314,8 @@
   "page_downloads_desc": "Скачайте Vectora Desktop для вашей системы.",
   "downloads_recommended": "Рекомендуется",
   "downloads_cta": "Скачать",
-  "downloads_footer": "Открытый код · Тот же скомпилированный бинарник, без телеметрии."
+  "downloads_footer": "Открытый код · Тот же скомпилированный бинарник, без телеметрии.",
+  "signup_confirm_heading": "Подтвердите почту",
+  "signup_confirm_desc": "Мы отправили ссылку для подтверждения на",
+  "signup_confirm_hint": "Нажмите на ссылку в письме, чтобы активировать аккаунт и войти."
 }
