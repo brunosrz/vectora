@@ -136,6 +136,7 @@
   "prefs_custom_color_primary": "Primária",
   "prefs_custom_color_accent": "Destaque",
   "prefs_custom_color_muted": "Suave",
+  "prefs_custom_color_sidebar": "Painel lateral",
   "prefs_history_limit": "Limite do histórico",
   "prefs_history_limit_unit": "mensagens",
   "prefs_history_limit_help": "Número máximo de mensagens exibidas por thread (padrão: 50).",

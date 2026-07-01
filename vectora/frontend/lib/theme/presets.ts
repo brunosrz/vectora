@@ -17,6 +17,7 @@ export interface BaseThemeColors {
   primary: string;
   accent: string;
   muted: string;
+  sidebar: string;
 }
 
 export interface ThemePresetDef {
@@ -47,71 +48,48 @@ const TOKEN_VAR_NAMES = [
   "--sidebar",
 ] as const;
 
-/** Presets inspirados em temas conhecidos do VS Code (paletas open-source). */
+/** Presets baseados nos temas originais do VS Code (paletas open-source). */
 export const THEME_PRESETS: ThemePresetDef[] = [
   {
-    id: "dracula",
-    label: "Dracula",
+    id: "min-dark",
+    label: "Min Dark",
     colors: {
-      background: "#282a36",
-      foreground: "#f8f8f2",
-      card: "#21222c",
-      border: "#44475a",
-      primary: "#bd93f9",
-      accent: "#ff79c6",
-      muted: "#343746",
+      background: "#1f1f1f",
+      foreground: "#d4d4d4",
+      card: "#1a1a1a",
+      border: "#2a2a2a",
+      primary: "#d4d4d4",
+      accent: "#2a2a2a",
+      muted: "#262626",
+      sidebar: "#181818",
     },
   },
   {
-    id: "monokai",
-    label: "Monokai",
+    id: "min-light",
+    label: "Min Light",
     colors: {
-      background: "#272822",
-      foreground: "#f8f8f2",
-      card: "#1e1f1c",
-      border: "#49483e",
-      primary: "#a6e22e",
-      accent: "#66d9ef",
-      muted: "#3e3d32",
+      background: "#ffffff",
+      foreground: "#2b2b2b",
+      card: "#f6f6f6",
+      border: "#d8d8d8",
+      primary: "#2b2b2b",
+      accent: "#eeeeee",
+      muted: "#f0f0f0",
+      sidebar: "#f3f3f3",
     },
   },
   {
-    id: "nord",
-    label: "Nord",
+    id: "github-dark",
+    label: "GitHub Dark",
     colors: {
-      background: "#2e3440",
-      foreground: "#d8dee9",
-      card: "#3b4252",
-      border: "#4c566a",
-      primary: "#88c0d0",
-      accent: "#81a1c1",
-      muted: "#434c5e",
-    },
-  },
-  {
-    id: "one-dark",
-    label: "One Dark Pro",
-    colors: {
-      background: "#282c34",
-      foreground: "#abb2bf",
-      card: "#21252b",
-      border: "#3a3f4b",
-      primary: "#61afef",
-      accent: "#c678dd",
-      muted: "#2c313a",
-    },
-  },
-  {
-    id: "solarized-light",
-    label: "Solarized Light",
-    colors: {
-      background: "#fdf6e3",
-      foreground: "#657b83",
-      card: "#eee8d5",
-      border: "#d3cbb7",
-      primary: "#268bd2",
-      accent: "#2aa198",
-      muted: "#eee8d5",
+      background: "#0d1117",
+      foreground: "#e6edf3",
+      card: "#161b22",
+      border: "#30363d",
+      primary: "#58a6ff",
+      accent: "#21262d",
+      muted: "#21262d",
+      sidebar: "#010409",
     },
   },
   {
@@ -123,64 +101,9 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       card: "#f6f8fa",
       border: "#d0d7de",
       primary: "#0969da",
-      accent: "#8250df",
+      accent: "#eaeef2",
       muted: "#f6f8fa",
-    },
-  },
-  {
-    id: "github-dark",
-    label: "GitHub Dark",
-    colors: {
-      background: "#0d1117",
-      foreground: "#c9d1d9",
-      card: "#161b22",
-      border: "#30363d",
-      primary: "#58a6ff",
-      accent: "#bc8cff",
-      muted: "#161b22",
-    },
-  },
-  {
-    id: "min-dark",
-    label: "Min Dark",
-    colors: {
-      background: "#1e1e1e",
-      foreground: "#d4d4d4",
-      card: "#252526",
-      border: "#2d2d2d",
-      primary: "#569cd6",
-      // `accent` é o token de hover/superfície (shadcn `hover:bg-accent`), não a
-      // cor de destaque de sintaxe — mantém o hover neutro como o tema base
-      // (`#2a2a2a`); o teal do VS Code (#4ec9b0) deixava todos os hovers verdes.
-      accent: "#2a2a2a",
-      muted: "#2a2a2a",
-    },
-  },
-  {
-    id: "min-light",
-    label: "Min Light",
-    colors: {
-      background: "#ffffff",
-      foreground: "#3b3b3b",
-      card: "#f5f5f5",
-      border: "#e5e5e5",
-      primary: "#1a73e8",
-      // Hover/superfície neutro como o tema base claro (não a cor de destaque).
-      accent: "#eeeeee",
-      muted: "#f0f0f0",
-    },
-  },
-  {
-    id: "solarized-dark",
-    label: "Solarized Dark",
-    colors: {
-      background: "#002b36",
-      foreground: "#839496",
-      card: "#073642",
-      border: "#586e75",
-      primary: "#268bd2",
-      accent: "#2aa198",
-      muted: "#073642",
+      sidebar: "#f6f8fa",
     },
   },
 ];
@@ -194,6 +117,7 @@ export const DEFAULT_CUSTOM_COLORS: BaseThemeColors = {
   primary: "#79b8ff",
   accent: "#2a2a2a",
   muted: "#262626",
+  sidebar: "#181818",
 };
 
 /** Luminância relativa aproximada (sRGB) — usada para escolher fg de contraste. */
@@ -235,7 +159,7 @@ export function buildThemeTokens(
     "--primary": base.primary,
     "--primary-foreground": contrastFg(base.primary),
     "--ring": base.primary,
-    "--sidebar": `color-mix(in srgb, ${base.background} 85%, black)`,
+    "--sidebar": base.sidebar,
   };
 }
 

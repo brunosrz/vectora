@@ -17,6 +17,7 @@ const DARK_BASE: BaseThemeColors = {
   primary: "#d4d4d4",
   accent: "#2a2a2a",
   muted: "#262626",
+  sidebar: "#181818",
 };
 
 const LIGHT_BASE: BaseThemeColors = {
@@ -27,6 +28,7 @@ const LIGHT_BASE: BaseThemeColors = {
   primary: "#2b2b2b",
   accent: "#eeeeee",
   muted: "#f0f0f0",
+  sidebar: "#f3f3f3",
 };
 
 // ── buildThemeTokens ─────────────────────────────────────────────────────────
@@ -37,30 +39,30 @@ describe("buildThemeTokens — tokens obrigatórios", () => {
     expect(t["--background"]).toBe(DARK_BASE.background);
   });
 
-  it("produz --sidebar derivado de background", () => {
+  it("produz --sidebar a partir de base.sidebar", () => {
     const t = buildThemeTokens(DARK_BASE);
-    expect(t["--sidebar"]).toBeDefined();
+    expect(t["--sidebar"]).toBe(DARK_BASE.sidebar);
   });
 
-  it("--sidebar usa color-mix para derivar do background", () => {
+  it("--sidebar é o valor direto de base.sidebar (sem color-mix)", () => {
     const t = buildThemeTokens(DARK_BASE);
-    expect(t["--sidebar"]).toContain("color-mix");
-    expect(t["--sidebar"]).toContain(DARK_BASE.background);
+    expect(t["--sidebar"]).not.toContain("color-mix");
+    expect(t["--sidebar"]).toBe(DARK_BASE.sidebar);
   });
 
-  it("--sidebar é diferente de --background (não é cópia direta)", () => {
+  it("--sidebar é diferente de --background (tokens distintos)", () => {
     const t = buildThemeTokens(DARK_BASE);
     expect(t["--sidebar"]).not.toBe(DARK_BASE.background);
   });
 
-  it("--sidebar em tema claro usa o background claro como base", () => {
+  it("--sidebar em tema claro usa o valor de base.sidebar", () => {
     const t = buildThemeTokens(LIGHT_BASE);
-    expect(t["--sidebar"]).toContain(LIGHT_BASE.background);
+    expect(t["--sidebar"]).toBe(LIGHT_BASE.sidebar);
   });
 
-  it("--sidebar muda se o background mudar", () => {
+  it("--sidebar muda se o sidebar mudar", () => {
     const t1 = buildThemeTokens(DARK_BASE);
-    const t2 = buildThemeTokens({ ...DARK_BASE, background: "#0d0d0d" });
+    const t2 = buildThemeTokens({ ...DARK_BASE, sidebar: "#0d0d0d" });
     expect(t1["--sidebar"]).not.toBe(t2["--sidebar"]);
   });
 
