@@ -111,7 +111,7 @@ export const useWindowsStore = create<WindowsState>()(
           }
           const activeTab =
             s.dockedActiveTab === path
-              ? (tabs[Math.max(0, s.dockedTabs.indexOf(path) - 1)] ?? tabs[0])
+              ? tabs[Math.max(0, s.dockedTabs.indexOf(path) - 1)] ?? tabs[0]
               : s.dockedActiveTab;
           return { dockedTabs: tabs, dockedActiveTab: activeTab };
         }),
@@ -175,7 +175,7 @@ export const useWindowsStore = create<WindowsState>()(
           }
           const activeTab =
             win.activeTab === path
-              ? (tabs[Math.max(0, win.tabs.indexOf(path) - 1)] ?? tabs[0])
+              ? tabs[Math.max(0, win.tabs.indexOf(path) - 1)] ?? tabs[0]
               : win.activeTab;
           return {
             windows: s.windows.map((w) =>

@@ -330,7 +330,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
               activeByThread: {
                 ...s.activeByThread,
                 [threadId]: wasActive
-                  ? (filtered[0]?.id ?? null)
+                  ? filtered[0]?.id ?? null
                   : s.activeByThread[threadId],
               },
             };

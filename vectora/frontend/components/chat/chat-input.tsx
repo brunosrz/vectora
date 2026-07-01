@@ -52,7 +52,7 @@ function VscodeMenu({ workspaceId }: { workspaceId: string }) {
       `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
     );
     const options: VscodeOption[] = res.ok
-      ? ((await res.json()).options ?? [])
+      ? (await res.json()).options ?? []
       : [];
     const opt =
       options.find((o) => o.strategy === "local") ?? options[0] ?? null;
