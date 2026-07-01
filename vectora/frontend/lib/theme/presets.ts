@@ -44,6 +44,7 @@ const TOKEN_VAR_NAMES = [
   "--primary",
   "--primary-foreground",
   "--ring",
+  "--sidebar",
 ] as const;
 
 /** Presets inspirados em temas conhecidos do VS Code (paletas open-source). */
@@ -234,6 +235,7 @@ export function buildThemeTokens(
     "--primary": base.primary,
     "--primary-foreground": contrastFg(base.primary),
     "--ring": base.primary,
+    "--sidebar": `color-mix(in srgb, ${base.background} 85%, black)`,
   };
 }
 

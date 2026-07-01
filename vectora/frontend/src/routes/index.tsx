@@ -12,6 +12,9 @@ import {
 import { queryClient } from "../router";
 import { listThreads } from "@/lib/api/vectora-client";
 import { EmptyStateHeader } from "@/components/chat/features/empty-state-header";
+import { NewChatDialog } from "@/components/sidebar/new-chat-dialog";
+import { signalWorkspacePreChosen } from "@/lib/stores/new-session-signal";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
 /** Largura da sidebar na tela inicial — mais larga que o normal para dar destaque. */
 const HOME_SIDEBAR_WIDTH = 360;
@@ -38,6 +41,7 @@ function HomeScreen() {
   const sidebarWidth = useSettingsStore((s) => s.sidebarWidth);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   /** Anima a sidebar encolhendo e navega após a animação terminar. */
   const go = (fn: () => void) => {
@@ -63,13 +67,23 @@ function HomeScreen() {
   const handleStartChat = () => {
     go(() => {
       setChatMode(true);
+      signalWorkspacePreChosen();
       void navigate({ to: "/session/$threadId", params: { threadId: "new" } });
     });
   };
 
+  /** Abre o seletor de workspace direto — após confirmar, navega para a sessão. */
   const handleStartCode = () => {
+    setShowDialog(true);
+  };
+
+  const handleDialogConfirm = (workspaceId: string | null) => {
+    if (workspaceId) {
+      void useWorkspacesStore.getState().setActive(workspaceId);
+    }
+    setChatMode(false);
+    signalWorkspacePreChosen();
     go(() => {
-      setChatMode(false);
       void navigate({ to: "/session/$threadId", params: { threadId: "new" } });
     });
   };
@@ -108,6 +122,12 @@ function HomeScreen() {
           />
         </main>
       </div>
+
+      <NewChatDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onConfirm={handleDialogConfirm}
+      />
     </div>
   );
 }

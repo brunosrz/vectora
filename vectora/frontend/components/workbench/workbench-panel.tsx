@@ -212,7 +212,7 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
   const selectTab = useWorkbenchStore((s) => s.selectTab);
   const { enableFeaturesBeta } = useFeatureFlags();
   return (
-    <div className="h-full w-12 shrink-0 flex flex-col items-center bg-background border-l border-border/60">
+    <div className="h-full w-12 shrink-0 flex flex-col items-center bg-sidebar border-l border-border/60">
       {/* Zona do header (h-16 + border-b): continua a linha do Header e da
           sidebar esquerda — os botões começam abaixo dela, alinhados. */}
       <div className="h-16 w-full shrink-0 border-b border-border/60" />
@@ -256,8 +256,8 @@ export function WorkbenchContent({
   useWorkspaceWatcher(wsId || undefined);
 
   return (
-    <div className="h-full flex flex-col bg-background border-l border-border/60">
-      <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-background">
+    <div className="h-full flex flex-col bg-sidebar border-l border-border/60">
+      <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-sidebar">
         <span className="flex items-center gap-2 text-sm font-medium">
           <ActiveIcon className="w-4 h-4 text-muted-foreground" />
           {mDyn(`workbench.tab.${activeTab}`)}

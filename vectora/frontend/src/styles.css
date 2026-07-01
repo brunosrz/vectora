@@ -55,6 +55,10 @@
   --user-bubble: #2563eb;
   --user-bubble-foreground: #ffffff;
 
+  /* Fundo dos painéis laterais (sidebar + workbench nav bar) — ligeiramente
+     mais escuro que --background para criar contraste visual com o chat. */
+  --sidebar: #181818;
+
   color-scheme: dark;
 }
 
@@ -97,6 +101,9 @@
   --user-bubble: #2563eb;
   --user-bubble-foreground: #ffffff;
 
+  /* Fundo dos painéis laterais no tema claro — cinza suave sobre fundo branco. */
+  --sidebar: #f3f3f3;
+
   color-scheme: light;
 }
 
@@ -136,6 +143,8 @@
 
   --color-user-bubble: var(--user-bubble);
   --color-user-bubble-foreground: var(--user-bubble-foreground);
+
+  --color-sidebar: var(--sidebar);
 
   --radius: 0.5rem;
 
