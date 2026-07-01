@@ -30,6 +30,7 @@ import {
   MonitorPlay,
   Brain,
   Radar,
+  Waypoints,
 } from "lucide-react";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
@@ -53,7 +54,7 @@ import { MemoryTab } from "./tabs/memory-tab";
 import { TasksTab } from "./tabs/tasks-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
-import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
+import { useToastStore } from "@/lib/stores/toast-store";
 
 interface WorkbenchPanelProps {
   threadId: string;
@@ -72,6 +73,7 @@ const TAB_ICON: Record<
   preview: MonitorPlay,
   storage: Brain,
   tasks: Radar,
+  context_graph: Waypoints,
 };
 
 /** Lê o cache do workbench-store e devolve o texto do chip por aba. */
@@ -104,20 +106,29 @@ function useTabBadge(
     case "preview":
     case "storage":
     case "tasks":
+    case "context_graph":
       return null;
   }
 }
 
-const BETA_TABS = new Set<WorkbenchTab>(["tasks"]);
+const COMING_SOON_TABS = new Set<WorkbenchTab>(["context_graph"]);
 
 function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
   const Icon = TAB_ICON[tab];
+  const label = mDyn(`workbench.tab.${tab}`);
+  const handleClick = () => {
+    useToastStore.getState().push({
+      level: "info",
+      title: m.workbench_tab_coming_soon(),
+      description: label,
+    });
+  };
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
-          disabled
-          className="relative flex items-center justify-center w-8 h-8 rounded-md transition-colors opacity-40 cursor-not-allowed text-muted-foreground"
+          onClick={handleClick}
+          className="relative flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground hover:bg-muted/50"
         >
           <Icon className="w-4 h-4" />
         </button>
@@ -198,8 +209,6 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const isOpen = useWorkbenchStore((s) => s.isOpen(threadId));
   const selectTab = useWorkbenchStore((s) => s.selectTab);
-  const { enableFeaturesBeta } = useFeatureFlags();
-
   return (
     <div className="h-full w-12 shrink-0 flex flex-col items-center bg-background border-l border-border/60">
       {/* Zona do header (h-16 + border-b): continua a linha do Header e da
@@ -207,7 +216,7 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
       <div className="h-16 w-full shrink-0 border-b border-border/60" />
       <div className="flex flex-col items-center gap-1 pt-2">
         {WORKBENCH_TABS.map((tab) =>
-          !enableFeaturesBeta && BETA_TABS.has(tab) ? (
+          COMING_SOON_TABS.has(tab) ? (
             <ComingSoonTabButton key={tab} tab={tab} />
           ) : (
             <NavTabButton
