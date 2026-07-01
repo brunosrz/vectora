@@ -61,10 +61,15 @@ function yieldToBrowser(): Promise<void> {
   if (typeof sched?.yield === "function") return sched.yield();
   return new Promise<void>((resolve) => {
     const { port1, port2 } = new MessageChannel();
-    port1.onmessage = () => {
-      port1.close();
-      resolve();
-    };
+    port1.addEventListener(
+      "message",
+      () => {
+        port1.close();
+        resolve();
+      },
+      { once: true },
+    );
+    port1.start();
     port2.postMessage(null);
     port2.close();
   });
