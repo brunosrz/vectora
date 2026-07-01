@@ -500,10 +500,10 @@ function SessionPage() {
           // ── Layout IDE: sidebars ao topo, Header só acima do DockedEditor ──
           <motion.div
             key="ide"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            initial={{ opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -18 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="flex flex-1 min-h-0 overflow-hidden"
           >
             {/* WorkbenchNavBar — esquerda, 48px, vai ao topo absoluto */}
@@ -608,10 +608,10 @@ function SessionPage() {
           // ── Layout Assistente/Chat (atual) ─────────────────────────────────
           <motion.div
             key="assistente"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            initial={{ opacity: 0, x: -18 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 18 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="flex flex-1 min-h-0 overflow-visible"
           >
             {/* Sidebar desktop — oculto em mobile. Largura arrastável quando

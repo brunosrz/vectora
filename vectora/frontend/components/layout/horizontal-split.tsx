@@ -24,7 +24,14 @@
  *   o tree estável (sempre 1 ou 3 filhos) não precisa de chave de remount.
  */
 
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { motion } from "motion/react";
 
 interface HorizontalSplitProps {
   left: ReactNode;
@@ -61,10 +68,12 @@ export function HorizontalSplit({
 }: HorizontalSplitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     draggingRef.current = true;
+    setIsDragging(true);
     (e.target as Element).setPointerCapture?.(e.pointerId);
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
@@ -86,6 +95,7 @@ export function HorizontalSplit({
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
+    setIsDragging(false);
     (e.target as Element).releasePointerCapture?.(e.pointerId);
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
@@ -103,6 +113,17 @@ export function HorizontalSplit({
 
   const rightWidth = Math.max(minRight, Math.min(maxRight, rightSize));
 
+  // Calcula a largura alvo: 0 quando fechado, collapsedWidth ou rightWidth quando aberto.
+  // Durante drag, `transition={{ duration: 0 }}` garante resposta imediata sem lag de spring.
+  const targetWidth = showRight
+    ? rightCollapsed
+      ? collapsedWidth
+      : rightWidth
+    : 0;
+  const springTransition = isDragging
+    ? { duration: 0 }
+    : { type: "spring" as const, damping: 26, stiffness: 260 };
+
   const handle = (
     <div
       role="separator"
@@ -114,18 +135,6 @@ export function HorizontalSplit({
       className="w-1 bg-border/40 hover:bg-border transition-colors cursor-col-resize shrink-0"
     />
   );
-  const fixedPanel = rightCollapsed ? (
-    <div
-      style={{ width: collapsedWidth }}
-      className={`shrink-0 overflow-hidden border-border/60 ${side === "left" ? "border-r" : "border-l"}`}
-    >
-      {right}
-    </div>
-  ) : (
-    <div style={{ width: rightWidth }} className="shrink-0 overflow-hidden">
-      {right}
-    </div>
-  );
 
   // overflow-visible: dropdowns do appbar (Header) não podem ser recortados
   // por este container — o conteúdo rolável já tem overflow-hidden interno.
@@ -133,19 +142,35 @@ export function HorizontalSplit({
     <div className="flex-1 min-w-0 overflow-visible">{left}</div>
   );
 
+  // Painel animado: spring suave ao abrir/fechar, sem lag durante drag.
+  const animatedPanel = (
+    <motion.div
+      animate={{ width: targetWidth }}
+      initial={false}
+      transition={springTransition}
+      className={`shrink-0 overflow-hidden ${
+        rightCollapsed && showRight
+          ? `border-border/60 ${side === "left" ? "border-r" : "border-l"}`
+          : ""
+      }`}
+    >
+      {showRight && right}
+    </motion.div>
+  );
+
   return (
     <div ref={containerRef} className={`flex h-full ${className ?? ""}`}>
-      {side === "left" && showRight && (
+      {side === "left" && (
         <>
-          {fixedPanel}
-          {!rightCollapsed && handle}
+          {animatedPanel}
+          {showRight && !rightCollapsed && handle}
         </>
       )}
       {flexPanel}
-      {side === "right" && showRight && (
+      {side === "right" && (
         <>
-          {!rightCollapsed && handle}
-          {fixedPanel}
+          {showRight && !rightCollapsed && handle}
+          {animatedPanel}
         </>
       )}
     </div>

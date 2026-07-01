@@ -32,6 +32,7 @@ import {
   Radar,
   Waypoints,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import {
@@ -181,12 +182,19 @@ function NavTabButton({
           }`}
         >
           <Icon className="w-4 h-4" />
-          {showPending && (
-            <span
-              className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
-              aria-label={m.workbench_tab_pending()}
-            />
-          )}
+          <AnimatePresence initial={false}>
+            {showPending && (
+              <motion.span
+                key="pending-dot"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: "spring", damping: 18, stiffness: 380 }}
+                className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
+                aria-label={m.workbench_tab_pending()}
+              />
+            )}
+          </AnimatePresence>
           {badge && (
             <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-mono leading-none bg-primary/15 text-primary">
               {badge}
@@ -299,17 +307,28 @@ export function WorkbenchContent({
         </Tooltip>
       </div>
 
-      {/* Body — só monta a aba ativa (poupa recurso) */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}
-        {activeTab === "files" && (
-          <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
-        )}
-        {activeTab === "diff" && <GitTab threadId={threadId} />}
-        {activeTab === "plan" && <PlanTab threadId={threadId} />}
-        {activeTab === "preview" && <PreviewTab threadId={threadId} />}
-        {activeTab === "storage" && <MemoryTab threadId={threadId} />}
-        {activeTab === "tasks" && <TasksTab threadId={threadId} />}
+      {/* Body — só monta a aba ativa (poupa recurso); troca com slide suave */}
+      <div className="flex-1 min-h-0 overflow-hidden relative">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 6 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -6 }}
+            transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute inset-0"
+          >
+            {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}
+            {activeTab === "files" && (
+              <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
+            )}
+            {activeTab === "diff" && <GitTab threadId={threadId} />}
+            {activeTab === "plan" && <PlanTab threadId={threadId} />}
+            {activeTab === "preview" && <PreviewTab threadId={threadId} />}
+            {activeTab === "storage" && <MemoryTab threadId={threadId} />}
+            {activeTab === "tasks" && <TasksTab threadId={threadId} />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
