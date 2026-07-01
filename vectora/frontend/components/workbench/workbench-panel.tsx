@@ -30,7 +30,6 @@ import {
   MonitorPlay,
   Brain,
   Radar,
-  Waypoints,
 } from "lucide-react";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
@@ -52,7 +51,6 @@ import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
 import { MemoryTab } from "./tabs/memory-tab";
 import { TasksTab } from "./tabs/tasks-tab";
-import { ContextGraphTab } from "./tabs/context-graph-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
@@ -74,7 +72,6 @@ const TAB_ICON: Record<
   preview: MonitorPlay,
   storage: Brain,
   tasks: Radar,
-  context_graph: Waypoints,
 };
 
 /** Lê o cache do workbench-store e devolve o texto do chip por aba. */
@@ -107,12 +104,11 @@ function useTabBadge(
     case "preview":
     case "storage":
     case "tasks":
-    case "context_graph":
       return null;
   }
 }
 
-const BETA_TABS = new Set<WorkbenchTab>(["tasks", "context_graph"]);
+const BETA_TABS = new Set<WorkbenchTab>(["tasks"]);
 
 function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
   const Icon = TAB_ICON[tab];
@@ -280,9 +276,6 @@ export function WorkbenchContent({
         {activeTab === "preview" && <PreviewTab threadId={threadId} />}
         {activeTab === "storage" && <MemoryTab threadId={threadId} />}
         {activeTab === "tasks" && <TasksTab threadId={threadId} />}
-        {activeTab === "context_graph" && (
-          <ContextGraphTab threadId={threadId} />
-        )}
       </div>
     </div>
   );

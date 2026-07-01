@@ -174,7 +174,7 @@ describe("isPinned", () => {
 });
 
 describe("WORKBENCH_TABS — ordem das abas", () => {
-  it("segue a ordem: files, git(diff), plan, background, preview, memory(storage), context_graph, terminal", async () => {
+  it("segue a ordem: files, git(diff), plan, background, preview, memory(storage), terminal", async () => {
     const { WORKBENCH_TABS } = await import("@/lib/stores/workbench-store");
     expect(WORKBENCH_TABS).toEqual([
       "files",
@@ -183,7 +183,6 @@ describe("WORKBENCH_TABS — ordem das abas", () => {
       "tasks",
       "preview",
       "storage",
-      "context_graph",
       "terminal",
     ]);
   });
