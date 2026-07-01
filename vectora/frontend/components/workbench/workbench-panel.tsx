@@ -54,6 +54,7 @@ import { MemoryTab } from "./tabs/memory-tab";
 import { TasksTab } from "./tabs/tasks-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { useToastStore } from "@/lib/stores/toast-store";
 
 interface WorkbenchPanelProps {
@@ -111,9 +112,9 @@ function useTabBadge(
   }
 }
 
-const COMING_SOON_TABS = new Set<WorkbenchTab>(["context_graph"]);
+const BETA_TABS = new Set<WorkbenchTab>(["context_graph"]);
 
-function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
+export function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
   const Icon = TAB_ICON[tab];
   const label = mDyn(`workbench.tab.${tab}`);
   const handleClick = () => {
@@ -209,6 +210,7 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const isOpen = useWorkbenchStore((s) => s.isOpen(threadId));
   const selectTab = useWorkbenchStore((s) => s.selectTab);
+  const { enableFeaturesBeta } = useFeatureFlags();
   return (
     <div className="h-full w-12 shrink-0 flex flex-col items-center bg-background border-l border-border/60">
       {/* Zona do header (h-16 + border-b): continua a linha do Header e da
@@ -216,7 +218,7 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
       <div className="h-16 w-full shrink-0 border-b border-border/60" />
       <div className="flex flex-col items-center gap-1 pt-2">
         {WORKBENCH_TABS.map((tab) =>
-          COMING_SOON_TABS.has(tab) ? (
+          !enableFeaturesBeta && BETA_TABS.has(tab) ? (
             <ComingSoonTabButton key={tab} tab={tab} />
           ) : (
             <NavTabButton
