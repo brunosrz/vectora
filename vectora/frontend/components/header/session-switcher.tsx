@@ -22,14 +22,14 @@ export function SessionSwitcher({
   const label = current?.metadata?.title || m.ide_session_untitled();
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0 flex-1">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={m.ide_session_switcher_label()}
         aria-expanded={open}
-        className="flex items-center gap-1 px-2 py-1 rounded text-xs text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors max-w-[200px]"
+        className="flex w-full items-center gap-1 rounded px-1.5 py-1 text-xs text-foreground/70 hover:bg-muted/50 hover:text-foreground transition-colors"
       >
-        <span className="truncate">{label}</span>
+        <span className="truncate flex-1 text-left">{label}</span>
         <ChevronDown className="w-3 h-3 shrink-0 opacity-60" />
       </button>
 
@@ -43,7 +43,7 @@ export function SessionSwitcher({
           <div
             role="listbox"
             aria-label={m.ide_session_switcher_label()}
-            className="absolute top-full left-0 mt-1 z-50 min-w-[200px] max-w-[280px] rounded-md border border-border/60 bg-popover shadow-md overflow-hidden"
+            className="absolute top-full left-0 mt-1 z-50 w-56 rounded-md border border-border/60 bg-popover shadow-md overflow-hidden"
           >
             <div className="max-h-60 overflow-y-auto">
               {threads.length === 0 ? (

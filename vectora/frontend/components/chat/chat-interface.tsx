@@ -1323,6 +1323,7 @@ export function ChatInterface({
           agentConfig={agentConfig}
           onAgentConfigChange={onAgentConfigChange}
           dropHintExpanded={isNewChat}
+          compact={compact}
         />
       </main>
     </>

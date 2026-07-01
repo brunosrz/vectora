@@ -155,7 +155,7 @@ const DEFAULTS = {
   sidebarPosition: "left" as SidebarPosition,
   chatMode: false,
   ideMode: false,
-  chatSidebarWidth: 320,
+  chatSidebarWidth: 256,
 };
 
 // ---------------------------------------------------------------------------

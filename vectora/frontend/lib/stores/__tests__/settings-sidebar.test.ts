@@ -40,8 +40,8 @@ describe("settings-store — sidebar", () => {
 });
 
 describe("settings-store — chatSidebarWidth (IDE mode)", () => {
-  it("valor padrão é 320", () => {
-    expect(useSettingsStore.getState().chatSidebarWidth).toBe(320);
+  it("valor padrão é 256", () => {
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(256);
   });
 
   it("setChatSidebarWidth atualiza o valor", () => {
@@ -64,10 +64,10 @@ describe("settings-store — chatSidebarWidth (IDE mode)", () => {
     expect(useSettingsStore.getState().chatSidebarWidth).toBe(361);
   });
 
-  it("resetSettings restaura para 320", () => {
+  it("resetSettings restaura para 256", () => {
     useSettingsStore.getState().setChatSidebarWidth(500);
     useSettingsStore.getState().resetSettings();
-    expect(useSettingsStore.getState().chatSidebarWidth).toBe(320);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(256);
   });
 
   it("valor 240 (mínimo exato) é aceito sem clamp", () => {

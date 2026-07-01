@@ -52,7 +52,7 @@ function VscodeMenu({ workspaceId }: { workspaceId: string }) {
       `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
     );
     const options: VscodeOption[] = res.ok
-      ? (await res.json()).options ?? []
+      ? ((await res.json()).options ?? [])
       : [];
     const opt =
       options.find((o) => o.strategy === "local") ?? options[0] ?? null;
@@ -121,6 +121,8 @@ interface ChatInputProps {
   dropHintExpanded?: boolean;
   /** Callback de seleção de arquivo via @mention. */
   onAtMentionSelect?: (path: string, startIdx: number, endIdx: number) => void;
+  /** IDE sidebar: usa bg-sidebar em vez de bg-background. */
+  compact?: boolean;
 }
 
 const EMPTY_QUEUED_MESSAGES: NonNullable<ChatInputProps["queuedMessages"]> = [];
@@ -162,6 +164,7 @@ export function ChatInput({
   onAgentConfigChange,
   dropHintExpanded = false,
   onAtMentionSelect,
+  compact = false,
 }: ChatInputProps) {
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   const chatMode = useSettingsStore((s) => s.chatMode);
@@ -191,7 +194,9 @@ export function ChatInput({
       {/* Enhanced visibility layer */}
       <div className="absolute inset-0 pointer-events-none" />
 
-      <div className="relative z-[50] border-t border-border/60 bg-background backdrop-blur-sm">
+      <div
+        className={`relative z-[50] border-t border-border/60 backdrop-blur-sm ${compact ? "bg-sidebar" : "bg-background"}`}
+      >
         <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-1.5">
           {/* File Previews */}
           <FilePreviewGrid files={attachedFiles} onRemove={onRemoveFile} />
@@ -257,7 +262,7 @@ export function ChatInput({
             {/* Input container — borda única, sem glow nem ring duplicado. */}
             <div className="relative">
               <div
-                className={`relative rounded-xl border bg-background transition-colors duration-200 ${isDragging ? "border-primary bg-primary/5" : "border-border/60 group-focus-within:border-primary/70"}`}
+                className={`relative rounded-xl border transition-colors duration-200 ${compact ? "bg-sidebar" : "bg-background"} ${isDragging ? "border-primary bg-primary/5" : "border-border/60 group-focus-within:border-primary/70"}`}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
