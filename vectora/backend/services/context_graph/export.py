@@ -65,7 +65,11 @@ def backup_if_protected(out_dir: Path) -> Path | None:
     if not is_semantic and not is_curated:
         return None
 
-    reason = "+".join(filter(None, ["semantic" if is_semantic else "", "curated" if is_curated else ""]))
+    reason = "+".join(
+        filter(
+            None, ["semantic" if is_semantic else "", "curated" if is_curated else ""]
+        )
+    )
     today = date.today().isoformat()
     backup_dir = out / today
     graph_src = out / "graph.json"
@@ -91,11 +95,14 @@ def backup_if_protected(out_dir: Path) -> Path | None:
                 except Exception:
                     pass
         if copied:
-            logger.debug("backed up %s graph (%d files) -> %s/", reason, copied, backup_dir.name)
+            logger.debug(
+                "backed up %s graph (%d files) -> %s/", reason, copied, backup_dir.name
+            )
         return backup_dir
     except Exception as exc:
         logger.warning("backup failed (%s) - continuing with overwrite", exc)
         return None
+
 
 def _obsidian_tag(name: str) -> str:
     """Sanitize a community name for use as an Obsidian tag.
@@ -108,6 +115,7 @@ def _obsidian_tag(name: str) -> str:
 
 def _strip_diacritics(text: str | None) -> str:
     import unicodedata
+
     if not isinstance(text, str):
         text = "" if text is None else str(text)
     nfkd = unicodedata.normalize("NFKD", text)
@@ -153,8 +161,16 @@ def _yaml_str(s: str) -> str:
 
 
 COMMUNITY_COLORS = [
-    "#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F",
-    "#EDC948", "#B07AA1", "#FF9DA7", "#9C755F", "#BAB0AC",
+    "#4E79A7",
+    "#F28E2B",
+    "#E15759",
+    "#76B7B2",
+    "#59A14F",
+    "#EDC948",
+    "#B07AA1",
+    "#FF9DA7",
+    "#9C755F",
+    "#BAB0AC",
 ]
 
 MAX_NODES_FOR_VIZ = 5_000
@@ -167,6 +183,7 @@ def _viz_node_limit() -> int:
     Set to 0 to disable HTML viz unconditionally (useful for CI runners).
     """
     import os
+
     raw = os.environ.get("GRAPH_VIZ_NODE_LIMIT")
     if raw is None or not raw.strip():
         return MAX_NODES_FOR_VIZ
@@ -478,19 +495,31 @@ def attach_hyperedges(G: nx.Graph, hyperedges: list) -> None:
 def _git_head() -> str | None:
     """Return the current git HEAD commit hash, or None if not in a git repo."""
     import subprocess as _sp
+
     try:
-        r = _sp.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=3)
+        r = _sp.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=3
+        )
         return r.stdout.strip() if r.returncode == 0 else None
     except Exception:
         return None
 
 
-def to_json(G: nx.Graph, communities: dict[int, list[str]], output_path: str, *, force: bool = False, built_at_commit: str | None = None, community_labels: dict[int, str] | None = None) -> bool:
+def to_json(
+    G: nx.Graph,
+    communities: dict[int, list[str]],
+    output_path: str,
+    *,
+    force: bool = False,
+    built_at_commit: str | None = None,
+    community_labels: dict[int, str] | None = None,
+) -> bool:
     # Safety check: refuse to silently shrink an existing graph
     existing_path = Path(output_path)
     if not force and existing_path.exists():
         try:
             from .security import check_graph_file_size_cap
+
             check_graph_file_size_cap(existing_path)
             existing_data = json.loads(existing_path.read_text(encoding="utf-8"))
             existing_n = len(existing_data.get("nodes", []))
@@ -554,7 +583,8 @@ def prune_dangling_edges(graph_data: dict) -> tuple[dict, int]:
     links_key = "links" if "links" in graph_data else "edges"
     before = len(graph_data[links_key])
     graph_data[links_key] = [
-        e for e in graph_data[links_key]
+        e
+        for e in graph_data[links_key]
         if e["source"] in node_ids and e["target"] in node_ids
     ]
     return graph_data, before - len(graph_data[links_key])
@@ -581,9 +611,9 @@ def _cypher_escape(s: str) -> str:
     s = "".join(ch for ch in s if ch >= " " or ch == "\t")
     return (
         s.replace("\\", "\\\\")
-         .replace("'", "\\'")
-         .replace("\n", "\\n")
-         .replace("\r", "\\r")
+        .replace("'", "\\'")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
     )
 
 
@@ -659,21 +689,36 @@ def to_html(
             from collections import Counter as _Counter
 
             import networkx as _nx
-            print(f"Graph has {G.number_of_nodes()} nodes (above {limit} limit). Building aggregated community view...")
-            node_to_community = {nid: cid for cid, members in communities.items() for nid in members}
+
+            print(
+                f"Graph has {G.number_of_nodes()} nodes (above {limit} limit). Building aggregated community view..."
+            )
+            node_to_community = {
+                nid: cid for cid, members in communities.items() for nid in members
+            }
             meta = _nx.Graph()
             for cid in communities:
-                meta.add_node(str(cid), label=(community_labels or {}).get(cid, f"Community {cid}"))
+                meta.add_node(
+                    str(cid),
+                    label=(community_labels or {}).get(cid, f"Community {cid}"),
+                )
             edge_counts = _Counter()
             for u, v in G.edges():
                 cu, cv = node_to_community.get(u), node_to_community.get(v)
                 if cu is not None and cv is not None and cu != cv:
                     edge_counts[(min(cu, cv), max(cu, cv))] += 1
             for (cu, cv), w in edge_counts.items():
-                meta.add_edge(str(cu), str(cv), weight=w,
-                              relation=f"{w} cross-community edges", confidence="AGGREGATED")
+                meta.add_edge(
+                    str(cu),
+                    str(cv),
+                    weight=w,
+                    relation=f"{w} cross-community edges",
+                    confidence="AGGREGATED",
+                )
             if meta.number_of_nodes() <= 1:
-                print("Single community - aggregated view not useful. Skipping graph.html.")
+                print(
+                    "Single community - aggregated view not useful. Skipping graph.html."
+                )
                 return
             meta_communities = {cid: [str(cid)] for cid in communities}
             mc = {cid: len(members) for cid, members in communities.items()}
@@ -695,15 +740,25 @@ def to_html(
                         comm_ids.append(s)
                     if len(comm_ids) < 2:
                         continue
-                    remapped.append({
-                        "id": he.get("id", ""),
-                        "label": he.get("label") or he.get("relation", "").replace("_", " "),
-                        "nodes": comm_ids,
-                    })
+                    remapped.append(
+                        {
+                            "id": he.get("id", ""),
+                            "label": he.get("label")
+                            or he.get("relation", "").replace("_", " "),
+                            "nodes": comm_ids,
+                        }
+                    )
                 meta.graph["hyperedges"] = remapped
-            to_html(meta, meta_communities, output_path,
-                    community_labels=community_labels, member_counts=mc)
-            print(f"graph.html written (aggregated: {meta.number_of_nodes()} community nodes, {meta.number_of_edges()} cross-community edges)")
+            to_html(
+                meta,
+                meta_communities,
+                output_path,
+                community_labels=community_labels,
+                member_counts=mc,
+            )
+            print(
+                f"graph.html written (aggregated: {meta.number_of_nodes()} community nodes, {meta.number_of_edges()} cross-community edges)"
+            )
             print("Tip: run with --obsidian for full node-level detail.")
             return
         raise ValueError(
@@ -732,19 +787,27 @@ def to_html(
             size = 10 + 30 * (deg / max_deg)
             # Only show label for high-degree nodes by default; others show on hover
             font_size = 12 if deg >= max_deg * 0.15 else 0
-        vis_nodes.append({
-            "id": node_id,
-            "label": label,
-            "color": {"background": color, "border": color, "highlight": {"background": "#ffffff", "border": color}},
-            "size": round(size, 1),
-            "font": {"size": font_size, "color": "#ffffff"},
-            "title": _html.escape(label),
-            "community": cid,
-            "community_name": sanitize_label((community_labels or {}).get(cid, f"Community {cid}")),
-            "source_file": sanitize_label(str(data.get("source_file") or "")),
-            "file_type": data.get("file_type", ""),
-            "degree": deg,
-        })
+        vis_nodes.append(
+            {
+                "id": node_id,
+                "label": label,
+                "color": {
+                    "background": color,
+                    "border": color,
+                    "highlight": {"background": "#ffffff", "border": color},
+                },
+                "size": round(size, 1),
+                "font": {"size": font_size, "color": "#ffffff"},
+                "title": _html.escape(label),
+                "community": cid,
+                "community_name": sanitize_label(
+                    (community_labels or {}).get(cid, f"Community {cid}")
+                ),
+                "source_file": sanitize_label(str(data.get("source_file") or "")),
+                "file_type": data.get("file_type", ""),
+                "degree": deg,
+            }
+        )
 
     # Build edges list. Restore original edge direction from _src/_tgt
     # (stashed by build.py for exactly this reason): undirected NetworkX
@@ -756,23 +819,31 @@ def to_html(
         relation = data.get("relation", "")
         true_src = data.get("_src", u)
         true_tgt = data.get("_tgt", v)
-        vis_edges.append({
-            "from": true_src,
-            "to": true_tgt,
-            "label": relation,
-            "title": _html.escape(f"{relation} [{confidence}]"),
-            "dashes": confidence != "EXTRACTED",
-            "width": 2 if confidence == "EXTRACTED" else 1,
-            "color": {"opacity": 0.7 if confidence == "EXTRACTED" else 0.35},
-            "confidence": confidence,
-        })
+        vis_edges.append(
+            {
+                "from": true_src,
+                "to": true_tgt,
+                "label": relation,
+                "title": _html.escape(f"{relation} [{confidence}]"),
+                "dashes": confidence != "EXTRACTED",
+                "width": 2 if confidence == "EXTRACTED" else 1,
+                "color": {"opacity": 0.7 if confidence == "EXTRACTED" else 0.35},
+                "confidence": confidence,
+            }
+        )
 
     # Build community legend data
     legend_data = []
     for cid in sorted((community_labels or {}).keys()):
         color = COMMUNITY_COLORS[cid % len(COMMUNITY_COLORS)]
-        lbl = _html.escape(sanitize_label((community_labels or {}).get(cid, f"Community {cid}")))
-        n = member_counts.get(cid, len(communities.get(cid, []))) if member_counts else len(communities.get(cid, []))
+        lbl = _html.escape(
+            sanitize_label((community_labels or {}).get(cid, f"Community {cid}"))
+        )
+        n = (
+            member_counts.get(cid, len(communities.get(cid, [])))
+            if member_counts
+            else len(communities.get(cid, []))
+        )
         legend_data.append({"cid": cid, "color": color, "label": lbl, "count": n})
 
     # Escape </script> sequences so embedded JSON cannot break out of the script tag
@@ -840,7 +911,9 @@ def _cap_filename(s: str, limit: int = 200) -> str:
         return s
     digest = hashlib.sha1(s.encode("utf-8")).hexdigest()[:8]  # nosec - not security
     keep = limit - 9  # "_" + 8 hex chars
-    truncated = b[:keep].decode("utf-8", "ignore")  # "ignore" drops a split trailing char
+    truncated = b[:keep].decode(
+        "utf-8", "ignore"
+    )  # "ignore" drops a split trailing char
     return f"{truncated}_{digest}"
 
 
@@ -867,7 +940,11 @@ def to_obsidian(
     # Map node_id → safe filename so wikilinks stay consistent.
     # Deduplicate: if two nodes produce the same filename, append a numeric suffix.
     def safe_name(label: str) -> str:
-        cleaned = re.sub(r'[\\/*?:"<>|#^[\]]', "", label.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")).strip()
+        cleaned = re.sub(
+            r'[\\/*?:"<>|#^[\]]',
+            "",
+            label.replace("\r\n", " ").replace("\r", " ").replace("\n", " "),
+        ).strip()
         # Strip trailing .md/.mdx/.markdown so "CLAUDE.md" doesn't become "CLAUDE.md.md"
         cleaned = re.sub(r"\.(md|mdx|qmd|markdown)$", "", cleaned, flags=re.IGNORECASE)
         # A stem of only punctuation (e.g. "@", "*", "#") survives the unsafe-char
@@ -919,7 +996,9 @@ def to_obsidian(
 
         # Build tags for this node
         ftype = data.get("file_type", "")
-        ftype_tag = _FTYPE_TAG.get(ftype, f"context graph/{ftype}" if ftype else "context graph/document")
+        ftype_tag = _FTYPE_TAG.get(
+            ftype, f"context graph/{ftype}" if ftype else "context graph/document"
+        )
         dom_conf = _dominant_confidence(node_id)
         conf_tag = f"context graph/{dom_conf}"
         comm_tag = f"community/{_obsidian_tag(community_name)}"
@@ -982,7 +1061,8 @@ def to_obsidian(
         neighbor_cids = {
             node_community[nb]
             for nb in G.neighbors(node_id)
-            if nb in node_community and node_community[nb] != node_community.get(node_id)
+            if nb in node_community
+            and node_community[nb] != node_community.get(node_id)
         }
         return len(neighbor_cids)
 
@@ -1018,8 +1098,10 @@ def to_obsidian(
         # Cohesion + member count summary
         if coh_value is not None:
             cohesion_desc = (
-                "tightly connected" if coh_value >= 0.7
-                else "moderately connected" if coh_value >= 0.4
+                "tightly connected"
+                if coh_value >= 0.7
+                else "moderately connected"
+                if coh_value >= 0.4
                 else "loosely connected"
             )
             lines.append(f"**Cohesion:** {coh_value:.2f} - {cohesion_desc}")
@@ -1062,7 +1144,9 @@ def to_obsidian(
                     else f"Community {other_cid}"
                 )
                 other_safe = safe_name(other_name)
-                lines.append(f"- {edge_count} edge{'s' if edge_count != 1 else ''} to [[_COMMUNITY_{other_safe}]]")
+                lines.append(
+                    f"- {edge_count} edge{'s' if edge_count != 1 else ''} to [[_COMMUNITY_{other_safe}]]"
+                )
             lines.append("")
 
         # Top bridge nodes - highest degree nodes that connect to other communities
@@ -1094,12 +1178,19 @@ def to_obsidian(
         "colorGroups": [
             {
                 "query": f"tag:#community/{label.replace(' ', '_')}",
-                "color": {"a": 1, "rgb": int(COMMUNITY_COLORS[cid % len(COMMUNITY_COLORS)].lstrip("#"), 16)}
+                "color": {
+                    "a": 1,
+                    "rgb": int(
+                        COMMUNITY_COLORS[cid % len(COMMUNITY_COLORS)].lstrip("#"), 16
+                    ),
+                },
             }
             for cid, label in sorted((community_labels or {}).items())
         ]
     }
-    (obsidian_dir / "graph.json").write_text(json.dumps(graph_config, indent=2), encoding="utf-8")  # nosec
+    (obsidian_dir / "graph.json").write_text(
+        json.dumps(graph_config, indent=2), encoding="utf-8"
+    )  # nosec
 
     return G.number_of_nodes() + community_notes_written
 
@@ -1118,10 +1209,21 @@ def to_canvas(
     Opens in Obsidian as an infinite canvas with community groupings visible.
     """
     # Obsidian canvas color codes (cycle through for communities)
-    CANVAS_COLORS = ["1", "2", "3", "4", "5", "6"]  # red, orange, yellow, green, cyan, purple
+    CANVAS_COLORS = [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+    ]  # red, orange, yellow, green, cyan, purple
 
     def safe_name(label: str) -> str:
-        cleaned = re.sub(r'[\\/*?:"<>|#^[\]]', "", label.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")).strip()
+        cleaned = re.sub(
+            r'[\\/*?:"<>|#^[\]]',
+            "",
+            label.replace("\r\n", " ").replace("\r", " ").replace("\n", " "),
+        ).strip()
         cleaned = re.sub(r"\.(md|mdx|qmd|markdown)$", "", cleaned, flags=re.IGNORECASE)
         # A stem of only punctuation (e.g. "@", "*", "#") survives the unsafe-char
         # strip above but is empty once a downstream tool re-slugs on word chars
@@ -1225,16 +1327,18 @@ def to_canvas(
         canvas_color = CANVAS_COLORS[idx % len(CANVAS_COLORS)]
 
         # Group node
-        canvas_nodes.append({
-            "id": f"g{cid}",
-            "type": "group",
-            "label": community_name,
-            "x": gx,
-            "y": gy,
-            "width": gw,
-            "height": gh,
-            "color": canvas_color,
-        })
+        canvas_nodes.append(
+            {
+                "id": f"g{cid}",
+                "type": "group",
+                "label": community_name,
+                "x": gx,
+                "y": gy,
+                "width": gw,
+                "height": gh,
+                "color": canvas_color,
+            }
+        )
 
         # Node cards inside the group - rows of 3
         sorted_members = sorted(members, key=lambda n: G.nodes[n].get("label", n))
@@ -1243,16 +1347,20 @@ def to_canvas(
             row = m_idx // 3
             nx_x = gx + 20 + col * (180 + 20)
             nx_y = gy + 80 + row * (60 + 20)
-            fname = node_filenames.get(node_id, safe_name(G.nodes[node_id].get("label", node_id)))
-            canvas_nodes.append({
-                "id": f"n_{node_id}",
-                "type": "file",
-                "file": f"{fname}.md",
-                "x": nx_x,
-                "y": nx_y,
-                "width": 180,
-                "height": 60,
-            })
+            fname = node_filenames.get(
+                node_id, safe_name(G.nodes[node_id].get("label", node_id))
+            )
+            canvas_nodes.append(
+                {
+                    "id": f"n_{node_id}",
+                    "type": "file",
+                    "file": f"{fname}.md",
+                    "x": nx_x,
+                    "y": nx_y,
+                    "width": 180,
+                    "height": 60,
+                }
+            )
 
     # Generate edges - only between nodes both in canvas, cap at 200 highest-weight
     all_edges_weighted: list[tuple[float, str, str, str]] = []
@@ -1266,12 +1374,14 @@ def to_canvas(
 
     all_edges_weighted.sort(key=lambda x: -x[0])
     for weight, u, v, label in all_edges_weighted[:200]:
-        canvas_edges.append({
-            "id": f"e_{u}_{v}",
-            "fromNode": f"n_{u}",
-            "toNode": f"n_{v}",
-            "label": label,
-        })
+        canvas_edges.append(
+            {
+                "id": f"e_{u}_{v}",
+                "fromNode": f"n_{u}",
+                "toNode": f"n_{v}",
+                "label": label,
+            }
+        )
 
     canvas_data = {"nodes": canvas_nodes, "edges": canvas_edges}
     Path(output_path).write_text(json.dumps(canvas_data, indent=2), encoding="utf-8")  # nosec
@@ -1294,14 +1404,17 @@ def push_to_neo4j(
     try:
         from neo4j import GraphDatabase
     except ImportError as e:
-        raise ImportError(
-            "neo4j driver not installed. Run: pip install neo4j"
-        ) from e
+        raise ImportError("neo4j driver not installed. Run: pip install neo4j") from e
 
     node_community = _node_community_map(communities) if communities else {}
 
     def _safe_rel(relation: str) -> str:
-        return re.sub(r"[^A-Z0-9_]", "_", relation.upper().replace(" ", "_").replace("-", "_")) or "RELATED_TO"
+        return (
+            re.sub(
+                r"[^A-Z0-9_]", "_", relation.upper().replace(" ", "_").replace("-", "_")
+            )
+            or "RELATED_TO"
+        )
 
     def _safe_label(label: str) -> str:
         """Sanitize a Neo4j node label to prevent Cypher injection."""
@@ -1315,7 +1428,8 @@ def push_to_neo4j(
     with driver.session() as session:
         for node_id, data in G.nodes(data=True):
             props = {
-                k: v for k, v in data.items()
+                k: v
+                for k, v in data.items()
                 if isinstance(v, (str, int, float, bool)) and not k.startswith("_")
             }
             props["id"] = node_id
@@ -1333,7 +1447,8 @@ def push_to_neo4j(
         for u, v, data in G.edges(data=True):
             rel = _safe_rel(data.get("relation", "RELATED_TO"))
             props = {
-                k: v for k, v in data.items()
+                k: v
+                for k, v in data.items()
                 if isinstance(v, (str, int, float, bool)) and not k.startswith("_")
             }
             session.run(
@@ -1389,7 +1504,12 @@ def push_to_falkordb(
     node_community = _node_community_map(communities) if communities else {}
 
     def _safe_rel(relation: str) -> str:
-        return re.sub(r"[^A-Z0-9_]", "_", relation.upper().replace(" ", "_").replace("-", "_")) or "RELATED_TO"
+        return (
+            re.sub(
+                r"[^A-Z0-9_]", "_", relation.upper().replace(" ", "_").replace("-", "_")
+            )
+            or "RELATED_TO"
+        )
 
     def _safe_label(label: str) -> str:
         """Sanitize a FalkorDB node label to prevent Cypher injection."""
@@ -1415,7 +1535,8 @@ def push_to_falkordb(
 
     for node_id, data in G.nodes(data=True):
         props = {
-            k: v for k, v in data.items()
+            k: v
+            for k, v in data.items()
             if isinstance(v, (str, int, float, bool)) and not k.startswith("_")
         }
         props["id"] = node_id
@@ -1432,7 +1553,8 @@ def push_to_falkordb(
     for u, v, data in G.edges(data=True):
         rel = _safe_rel(data.get("relation", "RELATED_TO"))
         props = {
-            k: v for k, v in data.items()
+            k: v
+            for k, v in data.items()
             if isinstance(v, (str, int, float, bool)) and not k.startswith("_")
         }
         graph.query(
@@ -1487,11 +1609,14 @@ def to_svg(
     """
     try:
         import matplotlib as mpl
+
         mpl.use("Agg")
         import matplotlib.patches as mpatches
         import matplotlib.pyplot as plt
     except ImportError as e:
-        raise ImportError("matplotlib not installed. Run: pip install matplotlib") from e
+        raise ImportError(
+            "matplotlib not installed. Run: pip install matplotlib"
+        ) from e
 
     node_community = _node_community_map(communities)
 
@@ -1504,7 +1629,10 @@ def to_svg(
     degree = dict(G.degree())
     max_deg = max(degree.values(), default=1) or 1
 
-    node_colors = [COMMUNITY_COLORS[node_community.get(n, 0) % len(COMMUNITY_COLORS)] for n in G.nodes()]
+    node_colors = [
+        COMMUNITY_COLORS[node_community.get(n, 0) % len(COMMUNITY_COLORS)]
+        for n in G.nodes()
+    ]
     node_sizes = [300 + 1200 * (degree.get(n, 1) / max_deg) for n in G.nodes()]
 
     # Draw edges - dashed for non-EXTRACTED
@@ -1514,14 +1642,27 @@ def to_svg(
         alpha = 0.6 if conf == "EXTRACTED" else 0.3
         x0, y0 = pos[u]
         x1, y1 = pos[v]
-        ax.plot([x0, x1], [y0, y1], color="#aaaaaa", linewidth=0.8,
-                linestyle=style, alpha=alpha, zorder=1)
+        ax.plot(
+            [x0, x1],
+            [y0, y1],
+            color="#aaaaaa",
+            linewidth=0.8,
+            linestyle=style,
+            alpha=alpha,
+            zorder=1,
+        )
 
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_color=node_colors,
-                           node_size=node_sizes, alpha=0.9)
-    nx.draw_networkx_labels(G, pos, ax=ax,
-                            labels={n: G.nodes[n].get("label", n) for n in G.nodes()},
-                            font_size=7, font_color="white")
+    nx.draw_networkx_nodes(
+        G, pos, ax=ax, node_color=node_colors, node_size=node_sizes, alpha=0.9
+    )
+    nx.draw_networkx_labels(
+        G,
+        pos,
+        ax=ax,
+        labels={n: G.nodes[n].get("label", n) for n in G.nodes()},
+        font_size=7,
+        font_color="white",
+    )
 
     # Legend
     if community_labels:
@@ -1532,10 +1673,17 @@ def to_svg(
             )
             for cid, label in sorted(community_labels.items())
         ]
-        ax.legend(handles=patches, loc="upper left", framealpha=0.7,
-                  facecolor="#2a2a4e", labelcolor="white", fontsize=8)
+        ax.legend(
+            handles=patches,
+            loc="upper left",
+            framealpha=0.7,
+            facecolor="#2a2a4e",
+            labelcolor="white",
+            fontsize=8,
+        )
 
     plt.tight_layout()
-    plt.savefig(output_path, format="svg", bbox_inches="tight",
-                facecolor=fig.get_facecolor())
+    plt.savefig(
+        output_path, format="svg", bbox_inches="tight", facecolor=fig.get_facecolor()
+    )
     plt.close(fig)

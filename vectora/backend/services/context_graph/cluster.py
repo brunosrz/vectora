@@ -1,4 +1,5 @@
 """Community detection on NetworkX graphs. Uses Leiden (graspologic) if available, falls back to Louvain (networkx). Splits oversized communities. Returns cohesion scores."""
+
 from __future__ import annotations
 
 import contextlib
@@ -48,6 +49,7 @@ def _partition(G: nx.Graph, resolution: float = 1.0) -> dict[str, int]:
 
     try:
         from graspologic.partition import leiden
+
         lsig = inspect.signature(leiden).parameters
         kwargs: dict = {}
         if "random_seed" in lsig:
@@ -79,10 +81,12 @@ def _partition(G: nx.Graph, resolution: float = 1.0) -> dict[str, int]:
     return {node: cid for cid, nodes in enumerate(communities) for node in nodes}
 
 
-_MAX_COMMUNITY_FRACTION = 0.25   # communities larger than 25% of graph get split
-_MIN_SPLIT_SIZE = 10             # only split if community has at least this many nodes
-_COHESION_SPLIT_THRESHOLD = 0.05 # re-split communities with cohesion below this
-_COHESION_SPLIT_MIN_SIZE = 50    # only cohesion-split if community has at least this many nodes
+_MAX_COMMUNITY_FRACTION = 0.25  # communities larger than 25% of graph get split
+_MIN_SPLIT_SIZE = 10  # only split if community has at least this many nodes
+_COHESION_SPLIT_THRESHOLD = 0.05  # re-split communities with cohesion below this
+_COHESION_SPLIT_MIN_SIZE = (
+    50  # only cohesion-split if community has at least this many nodes
+)
 
 
 def cluster(
@@ -144,7 +148,9 @@ def cluster(
 
     # Reattach excluded hubs by majority-vote neighbour community
     if hub_nodes:
-        node_community: dict[str, int] = {n: cid for cid, nodes in raw.items() for n in nodes}
+        node_community: dict[str, int] = {
+            n: cid for cid, nodes in raw.items() for n in nodes
+        }
         for hub in sorted(hub_nodes):
             votes: dict[int, int] = {}
             for nb in G.neighbors(hub):
@@ -173,7 +179,10 @@ def cluster(
     # that bridge otherwise-unrelated subsystems (e.g. CLAUDE.md connected to everything).
     second_pass: list[list[str]] = []
     for nodes in final_communities:
-        if len(nodes) >= _COHESION_SPLIT_MIN_SIZE and cohesion_score(G, nodes) < _COHESION_SPLIT_THRESHOLD:
+        if (
+            len(nodes) >= _COHESION_SPLIT_MIN_SIZE
+            and cohesion_score(G, nodes) < _COHESION_SPLIT_THRESHOLD
+        ):
             splits = _split_community(G, nodes)
             second_pass.extend(splits if len(splits) > 1 else [nodes])
         else:
@@ -186,7 +195,9 @@ def cluster(
     # partitioner's (not seed-stable) enumeration order, so their integer IDs
     # permute run-to-run - which reads as massive "community churn" in a per-node
     # cid diff even though the actual grouping is reproducible (#1090 follow-up).
-    final_communities.sort(key=lambda nodes: (-len(nodes), tuple(sorted(map(str, nodes)))))
+    final_communities.sort(
+        key=lambda nodes: (-len(nodes), tuple(sorted(map(str, nodes))))
+    )
     return {i: sorted(nodes) for i, nodes in enumerate(final_communities)}
 
 
@@ -259,7 +270,9 @@ def remap_communities_to_previous(
         matched_new_ids.add(new_cid)
 
     unmatched = [cid for cid in communities if cid not in matched_new_ids]
-    unmatched.sort(key=lambda cid: (-len(communities[cid]), tuple(sorted(communities[cid]))))
+    unmatched.sort(
+        key=lambda cid: (-len(communities[cid]), tuple(sorted(communities[cid])))
+    )
     next_id = 0
     for new_cid in unmatched:
         while next_id in used_old_ids:

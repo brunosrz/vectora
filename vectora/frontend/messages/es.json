@@ -943,5 +943,8 @@
   "rag_collections_empty": "Aún no hay colecciones.",
   "rag_collection_count": "{n} elementos",
   "rag_collection_delete": "Eliminar colección",
-  "rag_collection_delete_confirm": "¿Eliminar la colección \"{name}\"? Esto elimina todo lo indexado en ella."
+  "rag_collection_delete_confirm": "¿Eliminar la colección \"{name}\"? Esto elimina todo lo indexado en ella.",
+  "ide_session_untitled": "Sin título",
+  "ide_session_switcher_label": "Cambiar sesión",
+  "ide_session_new": "Nueva sesión"
 }

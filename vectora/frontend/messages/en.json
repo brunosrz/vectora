@@ -943,5 +943,8 @@
   "rag_collections_empty": "No collections yet.",
   "rag_collection_count": "{n} items",
   "rag_collection_delete": "Delete collection",
-  "rag_collection_delete_confirm": "Delete collection \"{name}\"? This removes everything indexed in it."
+  "rag_collection_delete_confirm": "Delete collection \"{name}\"? This removes everything indexed in it.",
+  "ide_session_untitled": "Untitled",
+  "ide_session_switcher_label": "Switch session",
+  "ide_session_new": "New session"
 }

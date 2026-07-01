@@ -138,7 +138,9 @@ def dedupe_edges(edges: list[dict]) -> list[dict]:
     return out
 
 
-def build_from_json(extraction: dict, *, directed: bool = False, root: str | Path | None = None) -> nx.Graph:
+def build_from_json(
+    extraction: dict, *, directed: bool = False, root: str | Path | None = None
+) -> nx.Graph:
     """Build a NetworkX graph from an extraction dict.
 
     directed=True produces a DiGraph that preserves edge direction (source→target).
@@ -159,7 +161,8 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
             # Count edges that reference this node so the warning is actionable
             node_id = node.get("id", "?")
             affected_edges = sum(
-                1 for e in extraction.get("edges", [])
+                1
+                for e in extraction.get("edges", [])
                 if e.get("source") == node_id or e.get("target") == node_id
             )
             print(
@@ -176,14 +179,23 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
         if node.get("file_type") in (None, ""):
             node["file_type"] = "concept"
         ft = node.get("file_type", "")
-        if ft and ft not in {"code", "document", "paper", "image", "rationale", "concept"}:
+        if ft and ft not in {
+            "code",
+            "document",
+            "paper",
+            "image",
+            "rationale",
+            "concept",
+        }:
             node["file_type"] = _FILE_TYPE_SYNONYMS.get(ft, "concept")
 
     errors = validate_extraction(extraction)
     # Dangling edges (stdlib/external imports) are expected - only warn about real schema errors.
     real_errors = [e for e in errors if "does not match any node id" not in e]
     if real_errors:
-        logger.warning("Extraction warning (%d issues): %s", len(real_errors), real_errors[0])
+        logger.warning(
+            "Extraction warning (%d issues): %s", len(real_errors), real_errors[0]
+        )
     G: nx.Graph = nx.DiGraph() if directed else nx.Graph()
     for node in extraction.get("nodes", []):
         if "source_file" in node:
@@ -198,7 +210,9 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
     # populates source_location, so those ghosts survived. Extended fix: use
     # _origin=="ast" as the canonical signal. AST nodes always win; any non-AST
     # node sharing (basename, label) with an AST node is a ghost.
-    _loc_nodes: dict[tuple[str, str], str] = {}   # (basename, label) -> canonical node id
+    _loc_nodes: dict[
+        tuple[str, str], str
+    ] = {}  # (basename, label) -> canonical node id
     _loc_collisions: set[tuple[str, str]] = set()  # keys shared by 2+ AST nodes
     _noloc_nodes: dict[tuple[str, str], str] = {}  # (basename, label) -> ghost node id
 
@@ -220,7 +234,10 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
             key = (basename, label)
             if is_ast:
                 # Two AST nodes on the same key is an ambiguous collision.
-                if key in _loc_nodes and G.nodes[_loc_nodes[key]].get("_origin") == "ast":
+                if (
+                    key in _loc_nodes
+                    and G.nodes[_loc_nodes[key]].get("_origin") == "ast"
+                ):
                     _loc_collisions.add(key)
                 # AST-origin nodes always overwrite a prior non-AST entry.
                 _loc_nodes[key] = nid
@@ -293,9 +310,7 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
         # flags and leaves query results with no file reference.
         if not attrs.get("source_file"):
             attrs["source_file"] = (
-                G.nodes[src].get("source_file")
-                or G.nodes[tgt].get("source_file")
-                or ""
+                G.nodes[src].get("source_file") or G.nodes[tgt].get("source_file") or ""
             )
         if "source_file" in attrs:
             attrs["source_file"] = _norm_source_file(attrs["source_file"], _root)
@@ -304,17 +319,38 @@ def build_from_json(extraction: dict, *, directed: bool = False, root: str | Pat
         # producing phantom edges that don't represent real call relationships.
         if attrs.get("relation") == "calls" and attrs.get("confidence") == "INFERRED":
             _LANG_FAMILY: dict[str, str] = {
-                ".py": "py", ".pyi": "py",
-                ".js": "js", ".mjs": "js", ".cjs": "js", ".jsx": "js",
-                ".ts": "js", ".tsx": "js",
-                ".go": "go", ".rs": "rs",
-                ".java": "jvm", ".kt": "jvm", ".scala": "jvm", ".groovy": "jvm",
-                ".c": "c", ".h": "c", ".cc": "cpp", ".cpp": "cpp", ".hpp": "cpp",
-                ".rb": "rb", ".php": "php", ".cs": "cs", ".swift": "swift", ".lua": "lua",
+                ".py": "py",
+                ".pyi": "py",
+                ".js": "js",
+                ".mjs": "js",
+                ".cjs": "js",
+                ".jsx": "js",
+                ".ts": "js",
+                ".tsx": "js",
+                ".go": "go",
+                ".rs": "rs",
+                ".java": "jvm",
+                ".kt": "jvm",
+                ".scala": "jvm",
+                ".groovy": "jvm",
+                ".c": "c",
+                ".h": "c",
+                ".cc": "cpp",
+                ".cpp": "cpp",
+                ".hpp": "cpp",
+                ".rb": "rb",
+                ".php": "php",
+                ".cs": "cs",
+                ".swift": "swift",
+                ".lua": "lua",
             }
             src_ext = Path(G.nodes[src].get("source_file") or "").suffix.lower()
             tgt_ext = Path(G.nodes[tgt].get("source_file") or "").suffix.lower()
-            if src_ext and tgt_ext and _LANG_FAMILY.get(src_ext) != _LANG_FAMILY.get(tgt_ext):
+            if (
+                src_ext
+                and tgt_ext
+                and _LANG_FAMILY.get(src_ext) != _LANG_FAMILY.get(tgt_ext)
+            ):
                 continue
         # Preserve original edge direction - undirected graphs lose it otherwise,
         # causing display functions to show edges backwards.
@@ -369,7 +405,14 @@ def build(
     reverse the order if you prefer AST source_location precision to win.
     """
     from .dedup import deduplicate_entities
-    combined: dict = {"nodes": [], "edges": [], "hyperedges": [], "input_tokens": 0, "output_tokens": 0}
+
+    combined: dict = {
+        "nodes": [],
+        "edges": [],
+        "hyperedges": [],
+        "input_tokens": 0,
+        "output_tokens": 0,
+    }
     for ext in extractions:
         combined["nodes"].extend(ext.get("nodes", []))
         combined["edges"].extend(ext.get("edges", []))
@@ -378,7 +421,9 @@ def build(
         combined["output_tokens"] += ext.get("output_tokens", 0)
     if dedup and combined["nodes"]:
         combined["nodes"], combined["edges"] = deduplicate_entities(
-            combined["nodes"], combined["edges"], communities={},
+            combined["nodes"],
+            combined["edges"],
+            communities={},
             dedup_llm_backend=dedup_llm_backend,
         )
     return build_from_json(combined, directed=directed, root=root)
@@ -392,7 +437,9 @@ def _norm_label(label: str | None) -> str:
     return re.sub(r"[\W_ ]+", " ", label.casefold(), flags=re.UNICODE).strip()
 
 
-def deduplicate_by_label(nodes: list[dict], edges: list[dict]) -> tuple[list[dict], list[dict]]:
+def deduplicate_by_label(
+    nodes: list[dict], edges: list[dict]
+) -> tuple[list[dict], list[dict]]:
     """Merge nodes that share a normalised label, rewriting edge references.
 
     Prefers IDs without chunk suffixes (_c\\d+) and shorter IDs when tied.
@@ -400,7 +447,7 @@ def deduplicate_by_label(nodes: list[dict], edges: list[dict]) -> tuple[list[dic
     """
     _CHUNK_SUFFIX = re.compile(r"_c\d+$")
     canonical: dict[str, dict] = {}  # norm_label -> surviving node
-    remap: dict[str, str] = {}       # old_id -> surviving_id
+    remap: dict[str, str] = {}  # old_id -> surviving_id
 
     for node in nodes:
         key = _norm_label(node.get("label", node.get("id", "")))
@@ -414,7 +461,9 @@ def deduplicate_by_label(nodes: list[dict], edges: list[dict]) -> tuple[list[dic
             existing_has_suffix = bool(_CHUNK_SUFFIX.search(existing["id"]))
             if has_suffix and not existing_has_suffix:
                 remap[node["id"]] = existing["id"]
-            elif (existing_has_suffix and not has_suffix) or len(node["id"]) < len(existing["id"]):
+            elif (existing_has_suffix and not has_suffix) or len(node["id"]) < len(
+                existing["id"]
+            ):
                 remap[existing["id"]] = node["id"]
                 canonical[key] = node
             else:
@@ -464,6 +513,7 @@ def build_merge(
         # attrs are popped before saving in export.py, so going through the
         # NetworkX round-trip loses direction permanently.
         from .security import check_graph_file_size_cap
+
         check_graph_file_size_cap(graph_path)
         data = json.loads(graph_path.read_text(encoding="utf-8"))
         links_key = "links" if "links" in data else "edges"
@@ -496,16 +546,27 @@ def build_merge(
             if norm:
                 new_sources.add(norm)
     if new_sources:
+
         def _kept(item: dict) -> bool:
             sf = item.get("source_file")
-            return sf not in new_sources and _norm_source_file(sf, _replace_root) not in new_sources
+            return (
+                sf not in new_sources
+                and _norm_source_file(sf, _replace_root) not in new_sources
+            )
+
         existing_nodes = [n for n in existing_nodes if _kept(n)]
         existing_edges = [e for e in existing_edges if _kept(e)]
 
     base = [{"nodes": existing_nodes, "edges": existing_edges}] if had_graph else []
 
     all_chunks = base + list(new_chunks)
-    G = build(all_chunks, directed=directed, dedup=dedup, dedup_llm_backend=dedup_llm_backend, root=root)
+    G = build(
+        all_chunks,
+        directed=directed,
+        dedup=dedup,
+        dedup_llm_backend=dedup_llm_backend,
+        root=root,
+    )
 
     # Prune nodes and edges from deleted source files
     if prune_sources:
@@ -525,22 +586,26 @@ def build_merge(
             if norm:
                 prune_set.add(norm)
         to_remove = [
-            n for n, d in G.nodes(data=True)
-            if d.get("source_file") in prune_set
+            n for n, d in G.nodes(data=True) if d.get("source_file") in prune_set
         ]
         G.remove_nodes_from(to_remove)
         n_files = len(prune_sources)
         n_nodes = len(to_remove)
         if n_nodes:
-            logger.debug("Pruned %d node(s) from %d deleted source file(s).", n_nodes, n_files)
+            logger.debug(
+                "Pruned %d node(s) from %d deleted source file(s).", n_nodes, n_files
+            )
 
         edges_to_remove = [
-            (u, v) for u, v, d in G.edges(data=True)
+            (u, v)
+            for u, v, d in G.edges(data=True)
             if d.get("source_file") in prune_set
         ]
         if edges_to_remove:
             G.remove_edges_from(edges_to_remove)
-            logger.debug("Pruned %d edge(s) from deleted source file(s).", len(edges_to_remove))
+            logger.debug(
+                "Pruned %d edge(s) from deleted source file(s).", len(edges_to_remove)
+            )
 
         if not n_nodes and not edges_to_remove:
             logger.debug(

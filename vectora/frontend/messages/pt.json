@@ -943,5 +943,8 @@
   "rag_collections_empty": "Nenhuma coleção ainda.",
   "rag_collection_count": "{n} itens",
   "rag_collection_delete": "Apagar coleção",
-  "rag_collection_delete_confirm": "Apagar a coleção \"{name}\"? Isso remove tudo o que foi indexado nela."
+  "rag_collection_delete_confirm": "Apagar a coleção \"{name}\"? Isso remove tudo o que foi indexado nela.",
+  "ide_session_untitled": "Sem título",
+  "ide_session_switcher_label": "Trocar sessão",
+  "ide_session_new": "Nova sessão"
 }

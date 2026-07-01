@@ -4,6 +4,7 @@ Fonte única de verdade para query/explain/path/affected — usado tanto pelas
 tools do agente (tools/context_graph.py) quanto pelos handlers REST
 (api/handlers/context_graph.py), eliminando duplicação de lógica.
 """
+
 from __future__ import annotations
 
 import json
@@ -85,7 +86,8 @@ def query_nodes(
 
     matched_ids = {n.get("id") for n in seed_nodes}
     neighborhood_edges = [
-        e for e in edges
+        e
+        for e in edges
         if e.get("source") in matched_ids or e.get("target") in matched_ids
     ]
     return seed_nodes, neighborhood_edges
@@ -131,7 +133,8 @@ def explain_node(
 
     neighbor_ids = visited - {actual_id}
     connected_edges = [
-        e for e in edges
+        e
+        for e in edges
         if (e.get("source") in visited and e.get("target") in visited)
         and (e.get("source") == actual_id or e.get("target") == actual_id)
     ]
@@ -171,7 +174,8 @@ def path_between(
     path_id_set = set(path_ids)
     path_nodes = [n for n in nodes if n.get("id") in path_id_set]
     path_edges = [
-        e for e in edges
+        e
+        for e in edges
         if e.get("source") in path_id_set and e.get("target") in path_id_set
     ]
     return path_nodes, path_edges

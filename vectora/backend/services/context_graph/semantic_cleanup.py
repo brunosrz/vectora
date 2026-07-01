@@ -4,6 +4,7 @@ Porta de context graph/semantic_cleanup.py (MIT, Safi Shamsi). Remove nós-prosa
 LLM (rationale/concept sentence-like) antes de entrar no grafo. Chamado em
 semantic.py após _parse_llm_json para garantir qualidade do grafo.
 """
+
 from __future__ import annotations
 
 import json
@@ -41,7 +42,9 @@ def validate_semantic_fragment(fragment: object) -> list[str]:
         return [f"fragment is not JSON-serializable: {exc}"]
 
     if len(payload) > MAX_SEMANTIC_FRAGMENT_BYTES:
-        errors.append(f"payload is {len(payload)} bytes; max is {MAX_SEMANTIC_FRAGMENT_BYTES}")
+        errors.append(
+            f"payload is {len(payload)} bytes; max is {MAX_SEMANTIC_FRAGMENT_BYTES}"
+        )
 
     nodes = fragment.get("nodes", [])
     edges = fragment.get("edges", [])
@@ -49,13 +52,17 @@ def validate_semantic_fragment(fragment: object) -> list[str]:
         errors.append("nodes must be a list")
         nodes = []
     elif len(nodes) > MAX_SEMANTIC_FRAGMENT_NODES:
-        errors.append(f"nodes has {len(nodes)} entries; max is {MAX_SEMANTIC_FRAGMENT_NODES}")
+        errors.append(
+            f"nodes has {len(nodes)} entries; max is {MAX_SEMANTIC_FRAGMENT_NODES}"
+        )
 
     if not isinstance(edges, list):
         errors.append("edges must be a list")
         edges = []
     elif len(edges) > MAX_SEMANTIC_FRAGMENT_EDGES:
-        errors.append(f"edges has {len(edges)} entries; max is {MAX_SEMANTIC_FRAGMENT_EDGES}")
+        errors.append(
+            f"edges has {len(edges)} entries; max is {MAX_SEMANTIC_FRAGMENT_EDGES}"
+        )
 
     for i, node in enumerate(nodes):
         if not isinstance(node, dict):
@@ -223,7 +230,9 @@ def sanitize_semantic_fragment(fragment: dict) -> dict:
         he_nodes = he.get("nodes")
         if not isinstance(he_nodes, list):
             continue
-        filtered = [ref for ref in he_nodes if isinstance(ref, str) and ref in surviving_ids]
+        filtered = [
+            ref for ref in he_nodes if isinstance(ref, str) and ref in surviving_ids
+        ]
         if len(filtered) < 2:
             continue
         if len(filtered) != len(he_nodes):

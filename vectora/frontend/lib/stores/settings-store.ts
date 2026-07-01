@@ -104,6 +104,8 @@ export interface SettingsState {
   chatMode: boolean;
   /** Sub-modo IDE dentro do Dev: layout VS Code com editor docked. */
   ideMode: boolean;
+  /** Largura do painel de chat lateral no modo IDE (px). */
+  chatSidebarWidth: number;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -123,6 +125,7 @@ export interface SettingsState {
   setSidebarPosition: (v: SidebarPosition) => void;
   setChatMode: (v: boolean) => void;
   setIdeMode: (v: boolean) => void;
+  setChatSidebarWidth: (v: number) => void;
   resetSettings: () => void;
 }
 
@@ -152,6 +155,7 @@ const DEFAULTS = {
   sidebarPosition: "left" as SidebarPosition,
   chatMode: false,
   ideMode: false,
+  chatSidebarWidth: 320,
 };
 
 // ---------------------------------------------------------------------------
@@ -210,6 +214,8 @@ export const useSettingsStore = create<SettingsState>()(
       setSidebarPosition: (v) => set({ sidebarPosition: v }),
       setChatMode: (v) => set({ chatMode: v }),
       setIdeMode: (v) => set({ ideMode: v }),
+      setChatSidebarWidth: (v) =>
+        set({ chatSidebarWidth: Math.max(240, Math.min(800, Math.round(v))) }),
       resetSettings: () => set({ ...DEFAULTS, language: detectLanguage() }),
     }),
     {
@@ -240,6 +246,7 @@ export const useSettingsStore = create<SettingsState>()(
         sidebarWidth: state.sidebarWidth,
         chatMode: state.chatMode,
         ideMode: state.ideMode,
+        chatSidebarWidth: state.chatSidebarWidth,
       }),
     },
   ),

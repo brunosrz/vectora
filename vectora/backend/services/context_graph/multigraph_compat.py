@@ -75,7 +75,9 @@ def _build_probe_graph() -> nx.MultiDiGraph:
     graph.add_node("a", label="A")
     graph.add_node("b", label="B")
     graph.add_edge("a", "b", key="calls:a.py:L1", relation="calls", source_file="a.py")
-    graph.add_edge("a", "b", key="imports:a.py:L2", relation="imports", source_file="a.py")
+    graph.add_edge(
+        "a", "b", key="imports:a.py:L2", relation="imports", source_file="a.py"
+    )
     return graph
 
 
@@ -155,7 +157,9 @@ def _probe_reserved_key_attr_rejected() -> bool | str:
         graph.add_edge("a", "b", key="schema-key", **attrs)
     except TypeError:
         return True
-    return "add_edge accepted duplicate key keyword and attr; loader must not rely on this"
+    return (
+        "add_edge accepted duplicate key keyword and attr; loader must not rely on this"
+    )
 
 
 def _probe_remove_edges_from_two_tuple_semantics() -> bool | str:
@@ -185,7 +189,10 @@ def probe_multigraph_capabilities() -> MultigraphCapabilityResult:
     checks = (
         _check("keyed_parallel_edges", _probe_keyed_parallel_edges),
         _check("node_link_edges_links_round_trip", _probe_node_link_round_trip),
-        _check("duplicate_key_overwrite_semantics", _probe_duplicate_key_overwrite_semantics),
+        _check(
+            "duplicate_key_overwrite_semantics",
+            _probe_duplicate_key_overwrite_semantics,
+        ),
         _check("reserved_key_attr_rejected", _probe_reserved_key_attr_rejected),
         _check(
             "remove_edges_from_two_tuple_semantics",
