@@ -11,6 +11,10 @@ interface EmptyStateHeaderProps {
   onSelect?: (prompt: string) => void;
   /** Workspace ativo, se houver — usado para detectar a stack e adaptar as sugestões. */
   workspaceId?: string;
+  /** Quando presente, exibe CTAs de seleção de modo (home screen). */
+  onStartChat?: () => void;
+  /** Quando presente, exibe CTAs de seleção de modo (home screen). */
+  onStartCode?: () => void;
 }
 
 /** Stacks conhecidas com 3 sugestões cada. "unknown" é o fallback. */
@@ -32,6 +36,8 @@ function isKnownStack(s: string): s is KnownStack {
 export function EmptyStateHeader({
   onSelect,
   workspaceId,
+  onStartChat,
+  onStartCode,
 }: EmptyStateHeaderProps) {
   // Busca o stack hint apenas quando há workspace ativo.
   const { data: hintData } = useQuery({
@@ -75,6 +81,37 @@ export function EmptyStateHeader({
         >
           {m.welcome_title()}
         </h2>
+
+        {(onStartChat || onStartCode) && (
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+            {onStartChat && (
+              <button
+                onClick={onStartChat}
+                className="flex flex-col items-start px-5 py-4 rounded-xl border border-border/60 bg-muted/30 hover:bg-muted/60 transition-colors sm:flex-1 sm:max-w-[200px] text-left group"
+              >
+                <span className="text-base font-semibold text-foreground mb-0.5 group-hover:text-primary transition-colors">
+                  {m.welcome_start_chat()}
+                </span>
+                <span className="text-xs text-foreground/60">
+                  {m.welcome_start_chat_desc()}
+                </span>
+              </button>
+            )}
+            {onStartCode && (
+              <button
+                onClick={onStartCode}
+                className="flex flex-col items-start px-5 py-4 rounded-xl border border-border/60 bg-muted/30 hover:bg-muted/60 transition-colors sm:flex-1 sm:max-w-[200px] text-left group"
+              >
+                <span className="text-base font-semibold text-foreground mb-0.5 group-hover:text-primary transition-colors">
+                  {m.welcome_start_code()}
+                </span>
+                <span className="text-xs text-foreground/60">
+                  {m.welcome_start_code_desc()}
+                </span>
+              </button>
+            )}
+          </div>
+        )}
 
         {onSelect && (
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

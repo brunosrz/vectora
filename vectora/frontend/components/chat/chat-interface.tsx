@@ -111,6 +111,10 @@ interface ChatInterfaceProps {
   inputLocked?: boolean;
   /** Localized reason shown when the input is locked. */
   inputLockedReason?: string;
+  /** Home screen: switch to chat mode immediately (no workspace needed). */
+  onStartChat?: () => void;
+  /** Home screen: open workspace picker to start a code session. */
+  onStartCode?: () => void;
 }
 
 interface QueuedMessage {
@@ -132,6 +136,8 @@ export function ChatInterface({
   autoSend = false,
   onInitialMessageSent,
   inputLocked = false,
+  onStartChat,
+  onStartCode,
 }: ChatInterfaceProps) {
   // ============================================================================
   // State Management
@@ -1253,6 +1259,8 @@ export function ChatInterface({
           <EmptyStateHeader
             onSelect={(prompt) => setInput(prompt)}
             workspaceId={activeWorkspaceId}
+            onStartChat={onStartChat}
+            onStartCode={onStartCode}
           />
         ) : (
           <MessageList

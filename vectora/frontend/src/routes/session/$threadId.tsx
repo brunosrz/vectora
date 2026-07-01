@@ -239,23 +239,6 @@ function SessionPage() {
     [goTo, threads, setChatMode],
   );
 
-  // Sessão nova em Code mode → abre o seletor de workspace automaticamente, em
-  // vez de herdar silenciosamente o workspace global persistido (ou cair numa
-  // sessão "sem workspace"). A escolha precisa ser explícita por sessão. Não
-  // reabre se o usuário já escolheu o workspace desta thread (evita loop, já que
-  // confirmar gera um id novo e marcado). Chat mode não tem workspace → não abre.
-  useEffect(() => {
-    if (
-      hydrated &&
-      isNew(threadId) &&
-      !chatMode &&
-      !isWorkspaceChosen(threadId) &&
-      !showOnboarding
-    ) {
-      setShowNewChatDialog(true);
-    }
-  }, [hydrated, threadId, chatMode, showOnboarding]);
-
   const handleNewChat = useCallback(() => {
     // Chat: cria sessão direto (sem workspace/folders). Dev: dialog de workspace.
     // Reset do fundo: fecha janelas de arquivo da sessão anterior para a nova
@@ -268,6 +251,11 @@ function SessionPage() {
     }
     setShowNewChatDialog(true);
   }, [chatMode, navigate]);
+
+  const handleStartChatFromWelcome = useCallback(() => {
+    setChatMode(true);
+    markWorkspaceChosen(threadId);
+  }, [threadId, setChatMode]);
 
   const handleConfirmNewChat = useCallback(
     (workspaceId: string | null) => {
@@ -490,6 +478,22 @@ function SessionPage() {
                     onThreadNotFound={handleThreadNotFound}
                     inputLocked={inputLocked}
                     isNewThread={isNew(threadId)}
+                    onStartChat={
+                      hydrated &&
+                      isNewRoute &&
+                      !isWorkspaceChosen(threadId) &&
+                      !showOnboarding
+                        ? handleStartChatFromWelcome
+                        : undefined
+                    }
+                    onStartCode={
+                      hydrated &&
+                      isNewRoute &&
+                      !isWorkspaceChosen(threadId) &&
+                      !showOnboarding
+                        ? () => setShowNewChatDialog(true)
+                        : undefined
+                    }
                   />
                 </div>
               </div>
