@@ -1,40 +1,73 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Sidebar } from "@/components/sidebar/sidebar";
+import { LicenseBanner } from "@/components/layout/license-banner";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
+import {
+  useThreadsQuery,
+  useDeleteThread,
+  threadsQueryKey,
+} from "@/lib/queries/threads";
 import { queryClient } from "../router";
-import { threadsQueryKey } from "@/lib/queries/threads";
 import { listThreads } from "@/lib/api/vectora-client";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    // Prefetch da lista de threads para o beforeLoad abaixo.
     await queryClient.ensureQueryData({
       queryKey: threadsQueryKey,
       queryFn: () => listThreads(1),
       staleTime: 30_000,
     });
   },
-  beforeLoad: async () => {
-    const data = queryClient.getQueryData<{ threads: { id: string }[] }>(
-      threadsQueryKey,
-    );
-    const threads = data?.threads ?? [];
-
-    if (threads.length > 0) {
-      throw redirect({
-        to: "/session/$threadId",
-        params: { threadId: threads[0].id },
-      } as unknown as Parameters<typeof redirect>[0]);
-    }
-
-    // Nenhuma thread — redireciona para /session/new; o ID só é gerado
-    // e aparece na URL quando a primeira mensagem for enviada.
-    throw redirect({
-      to: "/session/$threadId",
-      params: { threadId: "new" },
-    } as unknown as Parameters<typeof redirect>[0]);
-  },
-  component: () => (
-    <main className="flex-1 flex items-center justify-center p-8">
-      <div className="text-sm text-muted-foreground">Carregando...</div>
-    </main>
-  ),
+  component: HomeScreen,
 });
+
+function HomeScreen() {
+  const navigate = useNavigate();
+  const userId = useAuthStore((s) => s.user?.id);
+  const { data: threads = [], isLoading } = useThreadsQuery(userId);
+  const deleteThread = useDeleteThread();
+  const setChatMode = useSettingsStore((s) => s.setChatMode);
+  const sidebarWidth = useSettingsStore((s) => s.sidebarWidth);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleSelectThread = (id: string) => {
+    const t = threads.find((th) => th.thread_id === id);
+    if (t) setChatMode((t.mode ?? "dev") === "chat");
+    void navigate({ to: "/session/$threadId", params: { threadId: id } });
+  };
+
+  const handleNewChat = () => {
+    void navigate({ to: "/session/$threadId", params: { threadId: "new" } });
+  };
+
+  const handleDeleteThread = async (id: string) => {
+    await deleteThread.mutateAsync(id);
+  };
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden bg-background">
+      <LicenseBanner fullWidth />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div
+          className="hidden md:flex shrink-0"
+          style={isCollapsed ? undefined : { width: sidebarWidth }}
+        >
+          <Sidebar
+            isCollapsed={isCollapsed}
+            onToggle={() => setIsCollapsed((v) => !v)}
+            threads={threads}
+            currentThreadId=""
+            onSelectThread={handleSelectThread}
+            onDeleteThread={handleDeleteThread}
+            onNewChat={handleNewChat}
+            isLoading={isLoading}
+            isNewSession={false}
+          />
+        </div>
+        <main className="flex-1 min-w-0" />
+      </div>
+    </div>
+  );
+}
