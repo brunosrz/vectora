@@ -11,7 +11,13 @@ const s = () => useWindowsStore.getState();
 const winOf = (id: string) => s().windows.find((w) => w.id === id);
 
 beforeEach(() => {
-  useWindowsStore.setState({ windows: [], topZ: BASE_Z });
+  useWindowsStore.setState({
+    windows: [],
+    topZ: BASE_Z,
+    dockedWorkspaceId: null,
+    dockedTabs: [],
+    dockedActiveTab: null,
+  });
   if (typeof localStorage !== "undefined") localStorage.clear();
 });
 
@@ -322,5 +328,83 @@ describe("windows-store — closeAll (reset de nova conversa / delete)", () => {
     expect(s().windows).toHaveLength(0);
     s().closeAll();
     expect(s().windows).toHaveLength(0);
+  });
+});
+
+describe("windows-store — docked editor (IDE mode)", () => {
+  it("openDocked — workspace novo: inicializa com workspace + tab", () => {
+    s().openDocked("ws1", "src/main.ts");
+    expect(s().dockedWorkspaceId).toBe("ws1");
+    expect(s().dockedTabs).toEqual(["src/main.ts"]);
+    expect(s().dockedActiveTab).toBe("src/main.ts");
+  });
+
+  it("openDocked — mesmo workspace, path novo: adiciona tab e ativa", () => {
+    s().openDocked("ws1", "src/main.ts");
+    s().openDocked("ws1", "src/utils.ts");
+    expect(s().dockedTabs).toEqual(["src/main.ts", "src/utils.ts"]);
+    expect(s().dockedActiveTab).toBe("src/utils.ts");
+  });
+
+  it("openDocked — mesmo workspace, path já aberto: só ativa sem duplicar", () => {
+    s().openDocked("ws1", "src/main.ts");
+    s().openDocked("ws1", "src/utils.ts");
+    s().openDocked("ws1", "src/main.ts");
+    expect(s().dockedTabs).toEqual(["src/main.ts", "src/utils.ts"]);
+    expect(s().dockedActiveTab).toBe("src/main.ts");
+  });
+
+  it("openDocked — workspace diferente: reseta tabs para o novo workspace", () => {
+    s().openDocked("ws1", "src/main.ts");
+    s().openDocked("ws2", "src/app.ts");
+    expect(s().dockedWorkspaceId).toBe("ws2");
+    expect(s().dockedTabs).toEqual(["src/app.ts"]);
+    expect(s().dockedActiveTab).toBe("src/app.ts");
+  });
+
+  it("setDockedActiveTab — ativa tab existente", () => {
+    s().openDocked("ws1", "src/main.ts");
+    s().openDocked("ws1", "src/utils.ts");
+    s().setDockedActiveTab("src/main.ts");
+    expect(s().dockedActiveTab).toBe("src/main.ts");
+  });
+
+  it("setDockedActiveTab — path inexistente é no-op", () => {
+    s().openDocked("ws1", "src/main.ts");
+    s().setDockedActiveTab("nao-existe.ts");
+    expect(s().dockedActiveTab).toBe("src/main.ts");
+  });
+
+  it("closeDockedTab — última tab: zera workspaceId, tabs e activeTab", () => {
+    s().openDocked("ws1", "src/main.ts");
+    s().closeDockedTab("src/main.ts");
+    expect(s().dockedWorkspaceId).toBeNull();
+    expect(s().dockedTabs).toEqual([]);
+    expect(s().dockedActiveTab).toBeNull();
+  });
+
+  it("closeDockedTab — aba ativa removida: ativa a anterior", () => {
+    s().openDocked("ws1", "a.ts");
+    s().openDocked("ws1", "b.ts");
+    s().openDocked("ws1", "c.ts");
+    s().closeDockedTab("c.ts");
+    expect(s().dockedTabs).toEqual(["a.ts", "b.ts"]);
+    expect(s().dockedActiveTab).toBe("b.ts");
+  });
+
+  it("closeDockedTab — primeira aba ativa removida: ativa a próxima", () => {
+    s().openDocked("ws1", "a.ts");
+    s().openDocked("ws1", "b.ts");
+    s().setDockedActiveTab("a.ts");
+    s().closeDockedTab("a.ts");
+    expect(s().dockedActiveTab).toBe("b.ts");
+  });
+
+  it("closeDockedTab — aba não-ativa removida: ativa permanece inalterada", () => {
+    s().openDocked("ws1", "a.ts");
+    s().openDocked("ws1", "b.ts");
+    s().closeDockedTab("a.ts");
+    expect(s().dockedActiveTab).toBe("b.ts");
+    expect(s().dockedTabs).toEqual(["b.ts"]);
   });
 });

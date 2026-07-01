@@ -74,7 +74,7 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
-import { WorkbenchNavBar } from "../workbench-panel";
+import { WorkbenchNavBar, WorkbenchContent } from "../workbench-panel";
 
 afterEach(() => {
   cleanup();
@@ -181,5 +181,89 @@ describe("ComingSoonTabButton — em isolamento via WorkbenchNavBar", () => {
         description: expect.any(String),
       }),
     );
+  });
+});
+
+describe("WorkbenchNavBar — prop side (layout IDE vs Assistente)", () => {
+  it('side="left" aplica border-r na raiz (IDE: workbench à esquerda do editor)', () => {
+    const { container } = render(<WorkbenchNavBar threadId="t1" side="left" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toContain("border-r");
+    expect(root.className).not.toContain("border-l");
+  });
+
+  it('side="right" (padrão) aplica border-l na raiz (Assistente: workbench à direita)', () => {
+    const { container } = render(
+      <WorkbenchNavBar threadId="t1" side="right" />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toContain("border-l");
+    expect(root.className).not.toContain("border-r");
+  });
+
+  it("sem prop side usa border-l por padrão", () => {
+    const { container } = render(<WorkbenchNavBar threadId="t1" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toContain("border-l");
+  });
+
+  it('side="right" renderiza spacer h-16 (alinha com o Header no layout Assistente)', () => {
+    const { container } = render(
+      <WorkbenchNavBar threadId="t1" side="right" />,
+    );
+    expect(container.querySelector(".h-16")).not.toBeNull();
+  });
+
+  it('side="left" não renderiza spacer h-16 (Header já está no topo no layout IDE)', () => {
+    const { container } = render(<WorkbenchNavBar threadId="t1" side="left" />);
+    expect(container.querySelector(".h-16")).toBeNull();
+  });
+});
+
+vi.mock("@/components/workbench/terminal/terminal-panel", () => ({
+  TerminalPanel: () => null,
+}));
+vi.mock("@/components/workbench/files/files-tab", () => ({
+  FilesTab: () => null,
+}));
+vi.mock("@/components/workbench/git/git-tab", () => ({
+  GitTab: () => null,
+}));
+vi.mock("@/components/workbench/tabs/plan-tab", () => ({
+  PlanTab: () => null,
+}));
+vi.mock("@/components/workbench/tabs/preview-tab", () => ({
+  PreviewTab: () => null,
+}));
+vi.mock("@/components/workbench/tabs/memory-tab", () => ({
+  MemoryTab: () => null,
+}));
+vi.mock("@/components/workbench/tabs/tasks-tab", () => ({
+  TasksTab: () => null,
+}));
+
+describe("WorkbenchContent — prop side (layout IDE vs Assistente)", () => {
+  it('side="left" aplica border-r na raiz', () => {
+    const { container } = render(
+      <WorkbenchContent threadId="t1" side="left" />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toContain("border-r");
+    expect(root.className).not.toContain("border-l");
+  });
+
+  it('side="right" (padrão) aplica border-l na raiz', () => {
+    const { container } = render(
+      <WorkbenchContent threadId="t1" side="right" />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toContain("border-l");
+    expect(root.className).not.toContain("border-r");
+  });
+
+  it("sem prop side usa border-l por padrão", () => {
+    const { container } = render(<WorkbenchContent threadId="t1" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toContain("border-l");
   });
 });

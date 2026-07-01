@@ -7,6 +7,7 @@ import {
   type FileEntry,
 } from "@/lib/stores/workbench-store";
 import { useWindowsStore } from "@/lib/stores/windows-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 
 import { GitBadge } from "./git-badge";
@@ -38,6 +39,8 @@ export function FileItem({
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
   const openPath = useWorkbenchStore((s) => s.getFiles(workspaceId).openPath);
   const openWindow = useWindowsStore((s) => s.open);
+  const openDocked = useWindowsStore((s) => s.openDocked);
+  const ideMode = useSettingsStore((s) => s.ideMode);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(entry.name);
 
@@ -86,7 +89,11 @@ export function FileItem({
       ) : (
         <button
           onClick={() => {
-            openWindow(workspaceId, entry.path);
+            if (ideMode) {
+              openDocked(workspaceId, entry.path);
+            } else {
+              openWindow(workspaceId, entry.path);
+            }
             void fetch(
               `/workspaces/${encodeURIComponent(workspaceId)}/context/active`,
               {

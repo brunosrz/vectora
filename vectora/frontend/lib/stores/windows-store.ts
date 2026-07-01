@@ -33,6 +33,11 @@ interface WindowsState {
   /** Maior zIndex já atribuído (cresce ao focar). */
   topZ: number;
 
+  /** Estado do editor docked (modo IDE). */
+  dockedWorkspaceId: string | null;
+  dockedTabs: string[];
+  dockedActiveTab: string | null;
+
   /** Abre path na janela do workspace. Cria a janela se não existir, ou
    * adiciona uma aba se a janela já existir. */
   open: (workspaceId: string, path: string) => void;
@@ -51,6 +56,12 @@ interface WindowsState {
     id: string,
     bounds: Partial<Pick<FileWindowState, "x" | "y" | "w" | "h">>,
   ) => void;
+
+  /** Abre path no editor docked (modo IDE). Reseta tabs ao trocar workspace. */
+  openDocked: (workspaceId: string, path: string) => void;
+  setDockedActiveTab: (path: string) => void;
+  /** Fecha uma tab docked; última tab → zera tudo. */
+  closeDockedTab: (path: string) => void;
 }
 
 const BASE_Z = 100;
@@ -64,6 +75,46 @@ export const useWindowsStore = create<WindowsState>()(
     (set, get) => ({
       windows: [],
       topZ: BASE_Z,
+      dockedWorkspaceId: null,
+      dockedTabs: [],
+      dockedActiveTab: null,
+
+      openDocked: (workspaceId, path) =>
+        set((s) => {
+          if (s.dockedWorkspaceId !== workspaceId) {
+            return {
+              dockedWorkspaceId: workspaceId,
+              dockedTabs: [path],
+              dockedActiveTab: path,
+            };
+          }
+          const tabs = s.dockedTabs.includes(path)
+            ? s.dockedTabs
+            : [...s.dockedTabs, path];
+          return { dockedTabs: tabs, dockedActiveTab: path };
+        }),
+
+      setDockedActiveTab: (path) =>
+        set((s) =>
+          s.dockedTabs.includes(path) ? { dockedActiveTab: path } : s,
+        ),
+
+      closeDockedTab: (path) =>
+        set((s) => {
+          const tabs = s.dockedTabs.filter((t) => t !== path);
+          if (tabs.length === 0) {
+            return {
+              dockedWorkspaceId: null,
+              dockedTabs: [],
+              dockedActiveTab: null,
+            };
+          }
+          const activeTab =
+            s.dockedActiveTab === path
+              ? (tabs[Math.max(0, s.dockedTabs.indexOf(path) - 1)] ?? tabs[0])
+              : s.dockedActiveTab;
+          return { dockedTabs: tabs, dockedActiveTab: activeTab };
+        }),
 
       open: (workspaceId, path) =>
         set((s) => {

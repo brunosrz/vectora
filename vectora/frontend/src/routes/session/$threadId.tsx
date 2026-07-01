@@ -18,6 +18,7 @@ import {
 import { NewChatDialog } from "@/components/sidebar/new-chat-dialog";
 import { WindowLayer } from "@/components/workbench/windows/window-layer";
 import { WindowDock } from "@/components/workbench/windows/window-dock";
+import { DockedEditor } from "@/components/workbench/windows/docked-editor";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { useWebhookWorkbench } from "@/lib/hooks/use-webhook-workbench";
@@ -128,6 +129,7 @@ function SessionPage() {
   const sidebarOnRight = sidebarPosition === "right";
   const chatMode = useSettingsStore((s) => s.chatMode);
   const setChatMode = useSettingsStore((s) => s.setChatMode);
+  const ideMode = useSettingsStore((s) => s.ideMode);
   const sidebarWrapRef = useRef<HTMLDivElement>(null);
   const draggingSidebar = useRef(false);
 
@@ -415,134 +417,202 @@ function SessionPage() {
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
-      <div className="flex flex-1 min-h-0 overflow-visible">
-        {/* Sidebar desktop — oculto em mobile. Largura arrastável quando
-            expandida; colapsada usa a largura própria (w-16) do componente. */}
-        <div
-          ref={sidebarWrapRef}
-          className={`hidden md:flex shrink-0 relative ${sidebarOnRight ? "order-last" : ""}`}
-          style={
-            isSidebarCollapsed
-              ? undefined
-              : { width: hydrated ? sidebarWidth : 224 }
-          }
-        >
-          {sidebar}
-          {!isSidebarCollapsed && (
+      {ideMode && !chatMode ? (
+        // ── Layout IDE: Header top-full, sem thread sidebar ─────────────────
+        <>
+          <Header
+            showToolCalls={showToolCalls}
+            onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+            onShowShortcuts={() => setShowShortcutsDialog(true)}
+            onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+          />
+          <div className="flex flex-1 min-h-0">
+            <div className="shrink-0">
+              <WorkbenchNavBar threadId={threadId} side="left" />
+            </div>
+            {hydrated && workbenchOpen && (
+              <div style={{ width: splitSize }} className="shrink-0">
+                <WorkbenchContent
+                  threadId={threadId}
+                  side="left"
+                  onAddToContext={pushMention}
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <DockedEditor />
+            </div>
             <div
-              role="separator"
-              aria-orientation="vertical"
-              onPointerDown={onSidebarResizeDown}
-              onPointerMove={onSidebarResizeMove}
-              onPointerUp={onSidebarResizeUp}
-              onPointerCancel={onSidebarResizeUp}
-              className={`absolute top-0 ${sidebarOnRight ? "left-0" : "right-0"} z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors`}
+              className="shrink-0 flex flex-col border-l border-border/60"
+              style={{ width: hydrated ? sidebarWidth : 320 }}
+            >
+              <div className="flex-1 min-h-0">
+                <ChatInterface
+                  threadId={threadId}
+                  showToolCalls={showToolCalls}
+                  agentConfig={agentConfig}
+                  onAgentConfigChange={setAgentConfig}
+                  onThreadUpdate={handleThreadUpdate}
+                  onThreadNotFound={handleThreadNotFound}
+                  inputLocked={inputLocked}
+                  isNewThread={isNew(threadId)}
+                />
+              </div>
+            </div>
+          </div>
+          <KeyboardShortcutsDialog
+            open={showShortcutsDialog}
+            onOpenChange={setShowShortcutsDialog}
+          />
+          <CommandPalette
+            open={showCommandPalette}
+            onOpenChange={setShowCommandPalette}
+            commands={paletteCommands}
+          />
+          <NewChatDialog
+            open={showNewChatDialog}
+            onOpenChange={setShowNewChatDialog}
+            onConfirm={(workspaceId) => void handleConfirmNewChat(workspaceId)}
+          />
+        </>
+      ) : (
+        // ── Layout Assistente/Chat (atual) ───────────────────────────────────
+        <>
+          <div className="flex flex-1 min-h-0 overflow-visible">
+            {/* Sidebar desktop — oculto em mobile. Largura arrastável quando
+                expandida; colapsada usa a largura própria (w-16) do componente. */}
+            <div
+              ref={sidebarWrapRef}
+              className={`hidden md:flex shrink-0 relative ${sidebarOnRight ? "order-last" : ""}`}
+              style={
+                isSidebarCollapsed
+                  ? undefined
+                  : { width: hydrated ? sidebarWidth : 224 }
+              }
+            >
+              {sidebar}
+              {!isSidebarCollapsed && (
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  onPointerDown={onSidebarResizeDown}
+                  onPointerMove={onSidebarResizeMove}
+                  onPointerUp={onSidebarResizeUp}
+                  onPointerCancel={onSidebarResizeUp}
+                  className={`absolute top-0 ${sidebarOnRight ? "left-0" : "right-0"} z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors`}
+                />
+              )}
+            </div>
+
+            {/* Sidebar mobile como Sheet overlay */}
+            <Sheet
+              open={isMobileSidebarOpen}
+              onOpenChange={setIsMobileSidebarOpen}
+            >
+              <SheetContent side="left" className="p-0 w-72 border-r">
+                {sidebar}
+              </SheetContent>
+            </Sheet>
+
+            {/* Área principal — split ocupa altura total para que o painel do
+                workbench (right) vá do topo ao rodapé, como a sidebar; o Header
+                fica restrito à coluna do chat (left). A nav-bar do workbench
+                (faixa de 48px, sempre visível) fica fora do split, à direita —
+                não é redimensionável; só o painel de conteúdo é. */}
+            <div className="flex-1 min-w-0 flex h-full">
+              <HorizontalSplit
+                className="flex-1 min-w-0"
+                side={sidebarOnRight ? "left" : "right"}
+                showRight={hydrated && workbenchOpen && !chatMode}
+                rightSize={splitSize}
+                onResize={setSplitSize}
+                left={
+                  <div className="flex flex-col h-full min-w-0 overflow-visible">
+                    <Header
+                      showToolCalls={showToolCalls}
+                      onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+                      onShowShortcuts={() => setShowShortcutsDialog(true)}
+                      onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+                    />
+                    <div className="flex-1 min-h-0">
+                      <ChatInterface
+                        threadId={threadId}
+                        showToolCalls={showToolCalls}
+                        agentConfig={agentConfig}
+                        onAgentConfigChange={setAgentConfig}
+                        onThreadUpdate={handleThreadUpdate}
+                        onThreadNotFound={handleThreadNotFound}
+                        inputLocked={inputLocked}
+                        isNewThread={isNew(threadId)}
+                        onStartChat={
+                          hydrated &&
+                          isNewRoute &&
+                          !isWorkspaceChosen(threadId) &&
+                          !showOnboarding
+                            ? handleStartChatFromWelcome
+                            : undefined
+                        }
+                        onStartCode={
+                          hydrated &&
+                          isNewRoute &&
+                          !isWorkspaceChosen(threadId) &&
+                          !showOnboarding
+                            ? () => setShowNewChatDialog(true)
+                            : undefined
+                        }
+                      />
+                    </div>
+                  </div>
+                }
+                right={
+                  <WorkbenchContent
+                    threadId={threadId}
+                    onAddToContext={pushMention}
+                  />
+                }
+              />
+              {!chatMode && (
+                <div
+                  className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}
+                >
+                  <WorkbenchNavBar threadId={threadId} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Wizard de primeiro acesso — aparece uma vez por usuário */}
+          {showOnboarding && userId && (
+            <SetupWizard
+              userId={userId}
+              onComplete={(workspaceId) => {
+                setShowOnboarding(false);
+                if (!chatMode) void handleConfirmNewChat(workspaceId);
+              }}
             />
           )}
-        </div>
 
-        {/* Sidebar mobile como Sheet overlay */}
-        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-          <SheetContent side="left" className="p-0 w-72 border-r">
-            {sidebar}
-          </SheetContent>
-        </Sheet>
-
-        {/* Área principal — split ocupa altura total para que o painel do
-            workbench (right) vá do topo ao rodapé, como a sidebar; o Header
-            fica restrito à coluna do chat (left). A nav-bar do workbench
-            (faixa de 48px, sempre visível) fica fora do split, à direita —
-            não é redimensionável; só o painel de conteúdo é. */}
-        <div className="flex-1 min-w-0 flex h-full">
-          <HorizontalSplit
-            className="flex-1 min-w-0"
-            side={sidebarOnRight ? "left" : "right"}
-            showRight={hydrated && workbenchOpen && !chatMode}
-            rightSize={splitSize}
-            onResize={setSplitSize}
-            left={
-              <div className="flex flex-col h-full min-w-0 overflow-visible">
-                <Header
-                  showToolCalls={showToolCalls}
-                  onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-                  onShowShortcuts={() => setShowShortcutsDialog(true)}
-                  onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-                />
-                <div className="flex-1 min-h-0">
-                  <ChatInterface
-                    threadId={threadId}
-                    showToolCalls={showToolCalls}
-                    agentConfig={agentConfig}
-                    onAgentConfigChange={setAgentConfig}
-                    onThreadUpdate={handleThreadUpdate}
-                    onThreadNotFound={handleThreadNotFound}
-                    inputLocked={inputLocked}
-                    isNewThread={isNew(threadId)}
-                    onStartChat={
-                      hydrated &&
-                      isNewRoute &&
-                      !isWorkspaceChosen(threadId) &&
-                      !showOnboarding
-                        ? handleStartChatFromWelcome
-                        : undefined
-                    }
-                    onStartCode={
-                      hydrated &&
-                      isNewRoute &&
-                      !isWorkspaceChosen(threadId) &&
-                      !showOnboarding
-                        ? () => setShowNewChatDialog(true)
-                        : undefined
-                    }
-                  />
-                </div>
-              </div>
-            }
-            right={
-              <WorkbenchContent
-                threadId={threadId}
-                onAddToContext={pushMention}
-              />
-            }
+          {/* Dialogs globais */}
+          <KeyboardShortcutsDialog
+            open={showShortcutsDialog}
+            onOpenChange={setShowShortcutsDialog}
           />
-          {!chatMode && (
-            <div className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}>
-              <WorkbenchNavBar threadId={threadId} />
-            </div>
-          )}
-        </div>
-      </div>
+          <CommandPalette
+            open={showCommandPalette}
+            onOpenChange={setShowCommandPalette}
+            commands={paletteCommands}
+          />
+          <NewChatDialog
+            open={showNewChatDialog}
+            onOpenChange={setShowNewChatDialog}
+            onConfirm={(workspaceId) => void handleConfirmNewChat(workspaceId)}
+          />
 
-      {/* Wizard de primeiro acesso — aparece uma vez por usuário */}
-      {showOnboarding && userId && (
-        <SetupWizard
-          userId={userId}
-          onComplete={(workspaceId) => {
-            setShowOnboarding(false);
-            if (!chatMode) void handleConfirmNewChat(workspaceId);
-          }}
-        />
+          {/* Workstation: janelas flutuantes de arquivos + dock de minimizadas */}
+          <WindowLayer />
+          <WindowDock />
+        </>
       )}
-
-      {/* Dialogs globais */}
-      <KeyboardShortcutsDialog
-        open={showShortcutsDialog}
-        onOpenChange={setShowShortcutsDialog}
-      />
-      <CommandPalette
-        open={showCommandPalette}
-        onOpenChange={setShowCommandPalette}
-        commands={paletteCommands}
-      />
-      <NewChatDialog
-        open={showNewChatDialog}
-        onOpenChange={setShowNewChatDialog}
-        onConfirm={(workspaceId) => void handleConfirmNewChat(workspaceId)}
-      />
-
-      {/* Workstation: janelas flutuantes de arquivos + dock de minimizadas */}
-      <WindowLayer />
-      <WindowDock />
     </div>
   );
 }

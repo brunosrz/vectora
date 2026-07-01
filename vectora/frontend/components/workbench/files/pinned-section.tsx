@@ -2,6 +2,7 @@ import { AtSign, Pin, PinOff } from "lucide-react";
 
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useWindowsStore } from "@/lib/stores/windows-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 
 const EMPTY_PINNED: string[] = [];
@@ -21,6 +22,8 @@ export function PinnedSection({
   );
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
   const openWindow = useWindowsStore((s) => s.open);
+  const openDocked = useWindowsStore((s) => s.openDocked);
+  const ideMode = useSettingsStore((s) => s.ideMode);
 
   if (pinned.length === 0) return null;
 
@@ -38,7 +41,11 @@ export function PinnedSection({
           >
             <Pin className="w-3 h-3 shrink-0 text-primary" />
             <button
-              onClick={() => openWindow(workspaceId, path)}
+              onClick={() =>
+                ideMode
+                  ? openDocked(workspaceId, path)
+                  : openWindow(workspaceId, path)
+              }
               className="flex-1 text-left truncate text-foreground/80 hover:text-foreground"
               title={path}
             >

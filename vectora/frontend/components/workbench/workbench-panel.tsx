@@ -202,8 +202,17 @@ function NavTabButton({
 /**
  * Faixa estreita (48px), sempre visível, com os ícones de cada aba —
  * equivalente à Activity Bar do VS Code. Não é redimensionável.
+ *
+ * `side="right"` (padrão): layout Assistente, borda esquerda, spacer h-16.
+ * `side="left"`: layout IDE, borda direita, sem spacer (Header já está no topo).
  */
-export function WorkbenchNavBar({ threadId }: { threadId: string }) {
+export function WorkbenchNavBar({
+  threadId,
+  side = "right",
+}: {
+  threadId: string;
+  side?: "left" | "right";
+}) {
   const hydrated = useHydrated();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
@@ -212,10 +221,16 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
   const selectTab = useWorkbenchStore((s) => s.selectTab);
   const { enableFeaturesBeta } = useFeatureFlags();
   return (
-    <div className="h-full w-12 shrink-0 flex flex-col items-center bg-sidebar border-l border-border/60">
-      {/* Zona do header (h-16 + border-b): continua a linha do Header e da
-          sidebar esquerda — os botões começam abaixo dela, alinhados. */}
-      <div className="h-16 w-full shrink-0 border-b border-border/60" />
+    <div
+      className={`h-full w-12 shrink-0 flex flex-col items-center bg-sidebar ${
+        side === "left" ? "border-r" : "border-l"
+      } border-border/60`}
+    >
+      {/* Spacer h-16: alinha com o Header quando a NavBar está à direita (layout
+          Assistente). No layout IDE o Header já está no topo — sem spacer. */}
+      {side === "right" && (
+        <div className="h-16 w-full shrink-0 border-b border-border/60" />
+      )}
       <div className="flex flex-col items-center gap-1 pt-2">
         {WORKBENCH_TABS.map((tab) =>
           !enableFeaturesBeta && BETA_TABS.has(tab) ? (
@@ -241,11 +256,15 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
  * Conteúdo da aba ativa — redimensionável, montado apenas quando o painel
  * está aberto (`isOpen`). Vive ao lado (à esquerda, na ordem visual) da
  * `WorkbenchNavBar`.
+ *
+ * `side="right"` (padrão): layout Assistente, borda esquerda.
+ * `side="left"`: layout IDE, borda direita (editor fica à direita do painel).
  */
 export function WorkbenchContent({
   threadId,
   onAddToContext,
-}: WorkbenchPanelProps) {
+  side = "right",
+}: WorkbenchPanelProps & { side?: "left" | "right" }) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
@@ -256,7 +275,11 @@ export function WorkbenchContent({
   useWorkspaceWatcher(wsId || undefined);
 
   return (
-    <div className="h-full flex flex-col bg-sidebar border-l border-border/60">
+    <div
+      className={`h-full flex flex-col bg-sidebar ${
+        side === "left" ? "border-r" : "border-l"
+      } border-border/60`}
+    >
       <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-sidebar">
         <span className="flex items-center gap-2 text-sm font-medium">
           <ActiveIcon className="w-4 h-4 text-muted-foreground" />

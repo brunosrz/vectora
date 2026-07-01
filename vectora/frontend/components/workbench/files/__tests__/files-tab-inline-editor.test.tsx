@@ -126,9 +126,17 @@ vi.mock("@/lib/stores/workspaces-store", () => ({
     }),
 }));
 
+const mockFilesTabSettings = { ideMode: false };
+
+vi.mock("@/lib/stores/settings-store", () => ({
+  useSettingsStore: (sel: (s: typeof mockFilesTabSettings) => unknown) =>
+    sel(mockFilesTabSettings),
+}));
+
 vi.mock("@/lib/stores/windows-store", () => ({
-  useWindowsStore: (sel: (s: { open: () => void }) => unknown) =>
-    sel({ open: vi.fn() }),
+  useWindowsStore: (
+    sel: (s: { open: () => void; openDocked: () => void }) => unknown,
+  ) => sel({ open: vi.fn(), openDocked: vi.fn() }),
 }));
 
 vi.mock("@/lib/stores/toast-store", () => ({
@@ -184,6 +192,30 @@ async function renderFilesTab() {
     </TooltipProvider>,
   );
 }
+
+afterEach(() => {
+  mockFilesTabSettings.ideMode = false;
+});
+
+describe("FilesTab — botão abrir como janela e ideMode", () => {
+  it("ideMode=false: botão 'abrir como janela' está no DOM quando há arquivo aberto", async () => {
+    mockFilesTabSettings.ideMode = false;
+    await act(async () => {
+      await renderFilesTab();
+    });
+    const btn = document.querySelector("[aria-label='window_open_as_window']");
+    expect(btn).not.toBeNull();
+  });
+
+  it("ideMode=true: botão 'abrir como janela' não está no DOM", async () => {
+    mockFilesTabSettings.ideMode = true;
+    await act(async () => {
+      await renderFilesTab();
+    });
+    const btn = document.querySelector("[aria-label='window_open_as_window']");
+    expect(btn).toBeNull();
+  });
+});
 
 describe("FilesTab inline editor (FS-1)", () => {
   it("botão Pencil com data-editing=false está presente no viewer", async () => {
