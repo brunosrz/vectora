@@ -562,6 +562,7 @@ function SessionPage() {
                 onToggleToolCalls={() => setShowToolCalls((v) => !v)}
                 onShowShortcuts={() => setShowShortcutsDialog(true)}
                 onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+                showModeSwitch={!chatMode}
               />
               <div className="flex items-center px-3 py-1 border-b border-border/40 bg-sidebar/50 shrink-0">
                 <SessionSwitcher
@@ -666,6 +667,7 @@ function SessionPage() {
                       onToggleToolCalls={() => setShowToolCalls((v) => !v)}
                       onShowShortcuts={() => setShowShortcutsDialog(true)}
                       onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+                      showModeSwitch={!chatMode}
                     />
                     <div className="flex-1 min-h-0">
                       <ChatInterface

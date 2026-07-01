@@ -1,15 +1,18 @@
 "use client";
 
-import { MessageSquare, Code2 } from "lucide-react";
+import { Bot, Code2 } from "lucide-react";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 
-export function IdeModeSwitch() {
-  const chatMode = useSettingsStore((s) => s.chatMode);
+interface IdeModeProps {
+  show?: boolean;
+}
+
+export function IdeModeSwitch({ show = false }: IdeModeProps) {
   const ideMode = useSettingsStore((s) => s.ideMode);
   const setIdeMode = useSettingsStore((s) => s.setIdeMode);
 
-  if (chatMode) return null;
+  if (!show) return null;
 
   return (
     <div
@@ -29,7 +32,7 @@ export function IdeModeSwitch() {
             : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
         }`}
       >
-        <MessageSquare className="w-3.5 h-3.5" />
+        <Bot className="w-3.5 h-3.5" />
         {m.ide_mode_assistente()}
       </button>
       <div className="w-px bg-border/40 self-stretch" />
