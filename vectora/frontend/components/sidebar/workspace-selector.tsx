@@ -28,7 +28,6 @@ import {
   Music,
   Plus,
   Server,
-  ShieldCheck,
   Video,
   type LucideIcon,
 } from "lucide-react";
@@ -102,7 +101,6 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
   const error = useWorkspacesStore((s) => s.error);
   const hydrate = useWorkspacesStore((s) => s.hydrate);
   const setActive = useWorkspacesStore((s) => s.setActive);
-  const trust = useWorkspacesStore((s) => s.trust);
 
   const [open, setOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
@@ -223,37 +221,6 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
                       {w.cwd}
                     </span>
                   </span>
-                  {w.trusted ? (
-                    <span
-                      className="flex items-center gap-1 text-xs text-green-500 shrink-0"
-                      title={m.workspace_trusted()}
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                    </span>
-                  ) : (
-                    <span
-                      role="button"
-                      tabIndex={offline ? -1 : 0}
-                      aria-disabled={offline}
-                      className={`text-xs px-2 py-0.5 rounded-md text-primary border border-primary/30 shrink-0 ${
-                        offline
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-primary/10"
-                      }`}
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        if (offline) return;
-                        await trust(w.id);
-                      }}
-                      title={
-                        offline
-                          ? m.network_disabled_offline()
-                          : m.workspace_trust_confirm()
-                      }
-                    >
-                      {m.workspace_trust_confirm()}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
