@@ -9,10 +9,10 @@
 
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
-import { useTheme } from "next-themes";
 import { MarkdownView } from "@/components/workbench/markdown-view";
 import { useToastStore } from "@/lib/stores/toast-store";
 import { m } from "@/lib/paraglide/messages";
+import { useIsDark } from "@/lib/hooks/use-is-dark";
 
 // Monaco depende de `window` — carregado sob demanda (lazy) para não entrar no
 // grafo de import estático do viewer (quebraria testes/SSR sem DOM).
@@ -199,8 +199,7 @@ export function FileViewer({
   path: string;
 }) {
   const media = getMediaKind(path);
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme !== "light";
+  const isDark = useIsDark();
   const [text, setText] = useState<RawText | null>(null);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);

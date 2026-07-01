@@ -11,10 +11,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
-import { useTheme } from "next-themes";
 import { Loader2, Save } from "lucide-react";
 
 import { languageFromPath } from "@/lib/monaco/setup";
+import { useIsDark } from "@/lib/hooks/use-is-dark";
 import { fetchFile, apiUpdateFile } from "@/lib/api/fs-files";
 import type { FileContent } from "@/lib/stores/workbench-store";
 import { useToastStore } from "@/lib/stores/toast-store";
@@ -28,8 +28,7 @@ export function FileEditor({
   workspaceId: string;
   path: string;
 }) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme !== "light";
+  const isDark = useIsDark();
   const media = getMediaKind(path);
 
   const [file, setFile] = useState<FileContent | null>(null);

@@ -74,7 +74,7 @@ export function SettingsMenu() {
 
         {/* Dropdown */}
         {open && (
-          <div className="absolute right-0 top-10 z-50 w-64 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-top-2">
+          <div className="absolute right-0 top-10 z-[80] w-64 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-top-2">
             {/* Info do usuário */}
             <div className="px-4 py-3 border-b border-border/60">
               <div className="flex items-center gap-2">
