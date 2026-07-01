@@ -17,6 +17,7 @@ import {
   AtSign,
   FilePlus,
   Filter,
+  FolderOpen,
   FolderPlus,
   History,
   Loader2,
@@ -58,6 +59,7 @@ import { MarkdownView } from "@/components/workbench/markdown-view";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { usePins } from "@/lib/hooks/use-pins";
 import { m } from "@/lib/paraglide/messages";
+import { WorkspaceSelector } from "@/components/sidebar/workspace-selector";
 import { norm } from "./files-utils";
 import {
   fetchDiffSummary,
@@ -173,7 +175,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     async (force = false) => {
       if (!wsId || !openPath) return;
       setSaving(true);
-      const sha = force ? null : openContent?.sha256 ?? null;
+      const sha = force ? null : (openContent?.sha256 ?? null);
       const result = await apiUpdateFile(wsId, openPath, editContent, sha);
       setSaving(false);
       if (result.ok) {
@@ -484,8 +486,12 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
 
   if (!workspace) {
     return (
-      <div className="h-full flex items-center justify-center text-xs text-muted-foreground p-4 text-center">
-        {m.workbench_files_no_workspace()}
+      <div className="h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
+        <FolderOpen className="w-8 h-8 text-muted-foreground/50" />
+        <p className="text-xs text-muted-foreground">
+          {m.workbench_files_no_workspace()}
+        </p>
+        <WorkspaceSelector />
       </div>
     );
   }
