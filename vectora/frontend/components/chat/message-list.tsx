@@ -58,6 +58,8 @@ interface MessageListProps {
   threadId?: string;
   /** A.2d — rewind: id do workspace ativo */
   workspaceId?: string;
+  /** IDE sidebar: passa para MessageItem ocultar avatar e compactar. */
+  compact?: boolean;
 }
 
 export const MessageList = memo(function MessageList({
@@ -80,6 +82,7 @@ export const MessageList = memo(function MessageList({
   onRetry,
   threadId,
   workspaceId,
+  compact = false,
 }: MessageListProps) {
   // D4 — dev mode detectado uma vez por render de lista
   const searchParams = useSearchParams();
@@ -383,6 +386,7 @@ export const MessageList = memo(function MessageList({
     threadId,
     onRetry,
     workspaceId,
+    compact,
   };
 
   // ──────────────────────────────────────────────────────────────────────────

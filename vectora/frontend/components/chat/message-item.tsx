@@ -453,6 +453,8 @@ interface MessageItemProps {
   humanMessageIndex?: number;
   /** C.29 — modelo ativo da sessão, para cálculo do badge de custo. */
   modelId?: string;
+  /** IDE sidebar: oculta avatar e reduz gap entre mensagens. */
+  compact?: boolean;
 }
 
 export const MessageItem = memo(
@@ -479,6 +481,7 @@ export const MessageItem = memo(
     workspaceId,
     humanMessageIndex,
     modelId,
+    compact = false,
   }: MessageItemProps) {
     const uiLang = useSettingsStore((s) => s.language);
     const { resolvedTheme } = useTheme();
@@ -710,9 +713,9 @@ export const MessageItem = memo(
           }
         `}</style>
         <div
-          className={`flex gap-3 sm:gap-4 items-start group/message ${message.role === "user" ? "justify-end" : ""}`}
+          className={`flex items-start group/message ${compact ? "gap-2" : "gap-3 sm:gap-4"} ${message.role === "user" ? "justify-end" : ""}`}
         >
-          {message.role === "assistant" && (
+          {message.role === "assistant" && !compact && (
             <div
               className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${message.isThinking ? "dance-wrapper" : ""}`}
             >
@@ -728,7 +731,7 @@ export const MessageItem = memo(
             </div>
           )}
           <div
-            className={`min-w-0 space-y-2 ${message.role === "user" ? "max-w-[85%]" : "flex-1"}`}
+            className={`min-w-0 space-y-2 ${message.role === "user" ? (compact ? "max-w-[90%]" : "max-w-[85%]") : "flex-1"}`}
           >
             <div
               className={`rounded-lg px-3 py-2 transition-all duration-150 ease-out ${message.role === "user" ? "bg-user-bubble text-user-bubble-foreground" : "bg-muted text-foreground"}`}

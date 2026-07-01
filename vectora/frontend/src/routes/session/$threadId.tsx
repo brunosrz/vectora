@@ -497,94 +497,101 @@ function SessionPage() {
 
       <AnimatePresence mode="wait" initial={false}>
         {ideMode && !chatMode ? (
-          // ── Layout IDE: sidebars vão ao topo, Header dentro do chat panel ──
+          // ── Layout IDE: Header full-width no topo, sidebars até o topo ──
           <motion.div
             key="ide"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="flex flex-1 min-h-0 overflow-hidden"
+            className="flex flex-col flex-1 min-h-0 overflow-hidden"
           >
-            {/* WorkbenchNavBar — esquerda, 48px fixo, sem spacer h-16 */}
-            <WorkbenchNavBar threadId={threadId} side="left" />
+            {/* Header full-width acima dos 4 painéis */}
+            <Header
+              showToolCalls={showToolCalls}
+              onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+              onShowShortcuts={() => setShowShortcutsDialog(true)}
+              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+              showModeSwitch={!chatMode}
+            />
 
-            {/* WorkbenchContent — esquerda, redimensionável */}
-            {hydrated && workbenchOpen && (
+            {/* Faixa dos 4 painéis abaixo do header */}
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              {/* WorkbenchNavBar — esquerda, 48px fixo, sem spacer h-16 */}
+              <WorkbenchNavBar threadId={threadId} side="left" />
+
+              {/* WorkbenchContent — esquerda, redimensionável */}
+              {hydrated && workbenchOpen && (
+                <div
+                  ref={workbenchResizeRef}
+                  className="relative shrink-0"
+                  style={{ width: splitSize }}
+                >
+                  <WorkbenchContent
+                    threadId={threadId}
+                    side="left"
+                    onAddToContext={pushMention}
+                  />
+                  {/* Handle de resize — borda direita */}
+                  <div
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label="Redimensionar workbench"
+                    onPointerDown={onWorkbenchResizeDown}
+                    onPointerMove={onWorkbenchResizeMove}
+                    onPointerUp={onWorkbenchResizeUp}
+                    onPointerCancel={onWorkbenchResizeUp}
+                    className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
+                  />
+                </div>
+              )}
+
+              {/* DockedEditor — centro, flex-1 */}
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <DockedEditor />
+              </div>
+
+              {/* Chat sidebar — direita, redimensionável, fundo sidebar */}
               <div
-                ref={workbenchResizeRef}
-                className="relative shrink-0"
-                style={{ width: splitSize }}
+                ref={chatSidebarRef}
+                className="relative shrink-0 flex flex-col border-l border-border/60 bg-sidebar"
+                style={{ width: hydrated ? chatSidebarWidth : 320 }}
               >
-                <WorkbenchContent
-                  threadId={threadId}
-                  side="left"
-                  onAddToContext={pushMention}
-                />
-                {/* Handle de resize — borda direita */}
+                {/* Handle de resize — borda esquerda */}
                 <div
                   role="separator"
                   aria-orientation="vertical"
-                  aria-label="Redimensionar workbench"
-                  onPointerDown={onWorkbenchResizeDown}
-                  onPointerMove={onWorkbenchResizeMove}
-                  onPointerUp={onWorkbenchResizeUp}
-                  onPointerCancel={onWorkbenchResizeUp}
-                  className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
+                  aria-label="Redimensionar chat"
+                  onPointerDown={onChatSidebarResizeDown}
+                  onPointerMove={onChatSidebarResizeMove}
+                  onPointerUp={onChatSidebarResizeUp}
+                  onPointerCancel={onChatSidebarResizeUp}
+                  className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
                 />
-              </div>
-            )}
-
-            {/* DockedEditor — centro, flex-1 */}
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <DockedEditor />
-            </div>
-
-            {/* Chat sidebar — direita, redimensionável, Header + SessionSwitcher dentro */}
-            <div
-              ref={chatSidebarRef}
-              className="relative shrink-0 flex flex-col border-l border-border/60"
-              style={{ width: hydrated ? chatSidebarWidth : 320 }}
-            >
-              {/* Handle de resize — borda esquerda */}
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-label="Redimensionar chat"
-                onPointerDown={onChatSidebarResizeDown}
-                onPointerMove={onChatSidebarResizeMove}
-                onPointerUp={onChatSidebarResizeUp}
-                onPointerCancel={onChatSidebarResizeUp}
-                className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
-              />
-              <Header
-                showToolCalls={showToolCalls}
-                onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-                onShowShortcuts={() => setShowShortcutsDialog(true)}
-                onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-                showModeSwitch={!chatMode}
-              />
-              <div className="flex items-center px-3 py-1 border-b border-border/40 bg-sidebar/50 shrink-0">
-                <SessionSwitcher
-                  threads={wsThreads}
-                  currentThreadId={threadId}
-                  onSelectThread={handleSelectThread}
-                  onNewSession={handleNewChat}
-                />
-              </div>
-              <div className="flex-1 min-h-0">
-                <ChatInterface
-                  threadId={threadId}
-                  showToolCalls={showToolCalls}
-                  agentConfig={agentConfig}
-                  onAgentConfigChange={setAgentConfig}
-                  onThreadUpdate={handleThreadUpdate}
-                  onThreadNotFound={handleThreadNotFound}
-                  inputLocked={inputLocked}
-                  isNewThread={isNew(threadId)}
-                />
+                <div className="flex items-center px-3 py-2 border-b border-border/40 shrink-0">
+                  <SessionSwitcher
+                    threads={wsThreads}
+                    currentThreadId={threadId}
+                    onSelectThread={handleSelectThread}
+                    onNewSession={handleNewChat}
+                  />
+                </div>
+                <div className="flex-1 min-h-0">
+                  <ChatInterface
+                    threadId={threadId}
+                    showToolCalls={showToolCalls}
+                    agentConfig={agentConfig}
+                    onAgentConfigChange={setAgentConfig}
+                    onThreadUpdate={handleThreadUpdate}
+                    onThreadNotFound={handleThreadNotFound}
+                    inputLocked={inputLocked}
+                    isNewThread={isNew(threadId)}
+                    compact
+                  />
+                </div>
               </div>
             </div>
+            {/* fim faixa 4 painéis */}
 
             <KeyboardShortcutsDialog
               open={showShortcutsDialog}
