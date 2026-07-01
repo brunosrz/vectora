@@ -18,6 +18,7 @@ const DARK_BASE: BaseThemeColors = {
   accent: "#2a2a2a",
   muted: "#262626",
   sidebar: "#181818",
+  userBubble: "#2563eb",
 };
 
 const LIGHT_BASE: BaseThemeColors = {
@@ -29,6 +30,7 @@ const LIGHT_BASE: BaseThemeColors = {
   accent: "#eeeeee",
   muted: "#f0f0f0",
   sidebar: "#f3f3f3",
+  userBubble: "#2563eb",
 };
 
 // ── buildThemeTokens ─────────────────────────────────────────────────────────
@@ -77,6 +79,8 @@ describe("buildThemeTokens — tokens obrigatórios", () => {
       "--primary",
       "--ring",
       "--sidebar",
+      "--user-bubble",
+      "--user-bubble-foreground",
     ];
     for (const k of required) {
       expect(t[k], `faltando ${k}`).toBeDefined();
@@ -84,7 +88,27 @@ describe("buildThemeTokens — tokens obrigatórios", () => {
   });
 });
 
-// ── applyThemeTokens — gerencia --sidebar no DOM ─────────────────────────────
+// ── --user-bubble ─────────────────────────────────────────────────────────────
+
+describe("buildThemeTokens — --user-bubble", () => {
+  it("produz --user-bubble a partir de base.userBubble", () => {
+    const t = buildThemeTokens(DARK_BASE);
+    expect(t["--user-bubble"]).toBe(DARK_BASE.userBubble);
+  });
+
+  it("produz --user-bubble-foreground com contraste automático", () => {
+    const t = buildThemeTokens(DARK_BASE);
+    expect(t["--user-bubble-foreground"]).toMatch(/^#[0-9a-f]{6}$/i);
+  });
+
+  it("--user-bubble muda se userBubble mudar", () => {
+    const t1 = buildThemeTokens(DARK_BASE);
+    const t2 = buildThemeTokens({ ...DARK_BASE, userBubble: "#0d9488" });
+    expect(t1["--user-bubble"]).not.toBe(t2["--user-bubble"]);
+  });
+});
+
+// ── applyThemeTokens — gerencia --sidebar e --user-bubble no DOM ──────────────
 
 describe("applyThemeTokens — --sidebar no DOM", () => {
   let applyThemeTokens: (tokens: Record<string, string> | null) => void;

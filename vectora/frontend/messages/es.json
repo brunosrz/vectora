@@ -137,6 +137,7 @@
   "prefs_custom_color_accent": "Acento",
   "prefs_custom_color_muted": "Atenuado",
   "prefs_custom_color_sidebar": "Panel lateral",
+  "prefs_custom_color_user_bubble": "Burbuja del usuario",
   "prefs_history_limit": "Límite de historial",
   "prefs_history_limit_unit": "mensajes",
   "prefs_history_limit_help": "Número máximo de mensajes por conversación (predeterminado: 50).",

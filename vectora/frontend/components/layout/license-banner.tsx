@@ -118,15 +118,15 @@ const SEVERITY_COLORS: Record<
 > = {
   warning: {
     bg: "bg-amber-500/15 border-amber-500/30",
-    icon: "text-amber-600 dark:text-amber-300",
+    icon: "text-amber-500",
   },
   danger: {
     bg: "bg-orange-500/15 border-orange-500/30",
-    icon: "text-orange-600 dark:text-orange-300",
+    icon: "text-orange-500",
   },
   critical: {
     bg: "bg-red-500/15 border-red-500/30",
-    icon: "text-red-600 dark:text-red-300",
+    icon: "text-red-500",
   },
 };
 

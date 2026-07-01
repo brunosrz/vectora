@@ -18,6 +18,7 @@ export interface BaseThemeColors {
   accent: string;
   muted: string;
   sidebar: string;
+  userBubble: string;
 }
 
 export interface ThemePresetDef {
@@ -46,6 +47,8 @@ const TOKEN_VAR_NAMES = [
   "--primary-foreground",
   "--ring",
   "--sidebar",
+  "--user-bubble",
+  "--user-bubble-foreground",
 ] as const;
 
 /** Presets baseados nos temas originais do VS Code (paletas open-source). */
@@ -62,6 +65,7 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       accent: "#2a2a2a",
       muted: "#262626",
       sidebar: "#181818",
+      userBubble: "#2563eb",
     },
   },
   {
@@ -76,6 +80,7 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       accent: "#eeeeee",
       muted: "#f0f0f0",
       sidebar: "#f3f3f3",
+      userBubble: "#2563eb",
     },
   },
   {
@@ -90,6 +95,7 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       accent: "#21262d",
       muted: "#21262d",
       sidebar: "#010409",
+      userBubble: "#1f6feb",
     },
   },
   {
@@ -104,6 +110,7 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       accent: "#eaeef2",
       muted: "#f6f8fa",
       sidebar: "#f6f8fa",
+      userBubble: "#0969da",
     },
   },
 ];
@@ -118,6 +125,7 @@ export const DEFAULT_CUSTOM_COLORS: BaseThemeColors = {
   accent: "#2a2a2a",
   muted: "#262626",
   sidebar: "#181818",
+  userBubble: "#2563eb",
 };
 
 /** Luminância relativa aproximada (sRGB) — usada para escolher fg de contraste. */
@@ -160,6 +168,8 @@ export function buildThemeTokens(
     "--primary-foreground": contrastFg(base.primary),
     "--ring": base.primary,
     "--sidebar": base.sidebar,
+    "--user-bubble": base.userBubble,
+    "--user-bubble-foreground": contrastFg(base.userBubble),
   };
 }
 

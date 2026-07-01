@@ -56,6 +56,7 @@ const CUSTOM_COLOR_FIELDS: { key: keyof BaseThemeColors; labelKey: string }[] =
     { key: "accent", labelKey: "prefs.custom_color.accent" },
     { key: "muted", labelKey: "prefs.custom_color.muted" },
     { key: "sidebar", labelKey: "prefs.custom_color.sidebar" },
+    { key: "userBubble", labelKey: "prefs.custom_color.user_bubble" },
   ];
 
 async function fetchFallbackOrder(): Promise<string[]> {

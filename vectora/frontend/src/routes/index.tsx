@@ -18,7 +18,7 @@ import { signalWorkspacePreChosen } from "@/lib/stores/new-session-signal";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
 /** Largura da sidebar na tela inicial — mais larga que o normal para dar destaque. */
-const HOME_SIDEBAR_WIDTH = 360;
+const HOME_SIDEBAR_WIDTH = 280;
 /** Duração da animação de encolhimento em ms, sincronizada com o CSS. */
 const LEAVE_DURATION_MS = 280;
 
