@@ -1,5 +1,5 @@
 /**
- * Regressão de legibilidade dos temas claro e escuro ("Min Light" / "Min Dark")
+ * Regressão de legibilidade dos temas claro e escuro ("Light" / "Dark")
  * e contraste estrutural da variável --sidebar.
  *
  * Parseia o styles.css real para travar os requisitos diretamente nos valores
@@ -54,7 +54,7 @@ function contrastRatio(fg: string, bg: string): number {
 
 // ── Tema claro ───────────────────────────────────────────────────────────────
 
-describe("tema claro — legibilidade (Min Light)", () => {
+describe("tema claro — legibilidade (Light)", () => {
   it("background do tema claro é branco", () => {
     expect(lightToken("background").toLowerCase()).toBe("#ffffff");
   });
@@ -104,7 +104,7 @@ describe("tema claro — legibilidade (Min Light)", () => {
 
 // ── Tema escuro ──────────────────────────────────────────────────────────────
 
-describe("tema escuro — legibilidade (Min Dark)", () => {
+describe("tema escuro — legibilidade (Dark)", () => {
   it("background do tema escuro é definido", () => {
     expect(() => darkToken("background")).not.toThrow();
   });

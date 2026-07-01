@@ -126,7 +126,7 @@
   "prefs_theme_light": "Claro",
   "prefs_theme_dark": "Oscuro",
   "prefs_theme_palette": "Paleta de colores",
-  "prefs_theme_palette_default": "Min (predeterminado)",
+  "prefs_theme_palette_default": "Dark (predeterminado)",
   "prefs_theme_palette_custom": "Personalizada",
   "prefs_theme_palette_help": "Elige una paleta lista o crea tus propios colores personalizados abajo.",
   "prefs_custom_color_background": "Fondo",

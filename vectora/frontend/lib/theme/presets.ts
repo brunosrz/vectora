@@ -54,8 +54,8 @@ const TOKEN_VAR_NAMES = [
 /** Presets baseados nos temas originais do VS Code (paletas open-source). */
 export const THEME_PRESETS: ThemePresetDef[] = [
   {
-    id: "min-dark",
-    label: "Min Dark",
+    id: "dark",
+    label: "Dark",
     colors: {
       background: "#1f1f1f",
       foreground: "#d4d4d4",
@@ -69,8 +69,8 @@ export const THEME_PRESETS: ThemePresetDef[] = [
     },
   },
   {
-    id: "min-light",
-    label: "Min Light",
+    id: "light",
+    label: "Light",
     colors: {
       background: "#ffffff",
       foreground: "#2b2b2b",
@@ -115,7 +115,7 @@ export const THEME_PRESETS: ThemePresetDef[] = [
   },
 ];
 
-/** Cor de fallback para customização — espelha o tema escuro padrão (Min Dark). */
+/** Cor de fallback para customização — espelha o tema escuro padrão (Dark). */
 export const DEFAULT_CUSTOM_COLORS: BaseThemeColors = {
   background: "#1f1f1f",
   foreground: "#d4d4d4",

@@ -12,7 +12,7 @@
      @theme inline → publica os vars como tokens Tailwind reativos
    ============================================================================= */
 
-/* ── Tema escuro (padrão) — paleta "Min Dark" (miguelsolorio.min-theme) ────── */
+/* ── Tema escuro (padrão) — "Dark" (baseado em miguelsolorio.min-theme, adaptado) ── */
 :root {
   --background: #1f1f1f;
   --foreground: #d4d4d4;
@@ -35,7 +35,7 @@
   --border: #2a2a2a;
   --input: #2a2a2a;
 
-  /* CTA neutro do Min Dark — sem acento colorido. */
+  /* CTA neutro do tema Dark — sem acento colorido. */
   --primary: #d4d4d4;
   --primary-foreground: #1a1a1a;
   --ring: #d4d4d4;
@@ -62,7 +62,7 @@
   color-scheme: dark;
 }
 
-/* ── Tema claro — paleta "Min Light" (miguelsolorio.min-theme) ─────────────── */
+/* ── Tema claro — "Light" (baseado em miguelsolorio.min-theme, adaptado) ─────── */
 .light {
   --background: #ffffff;
   --foreground: #2b2b2b;
@@ -85,7 +85,7 @@
   --border: #d8d8d8;
   --input: #d8d8d8;
 
-  /* CTA neutro do Min Light — sem acento colorido. */
+  /* CTA neutro do tema Light — sem acento colorido. */
   --primary: #2b2b2b;
   --primary-foreground: #ffffff;
   --ring: #2b2b2b;

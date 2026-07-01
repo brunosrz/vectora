@@ -126,7 +126,7 @@
   "prefs_theme_light": "Light",
   "prefs_theme_dark": "Dark",
   "prefs_theme_palette": "Color palette",
-  "prefs_theme_palette_default": "Min (default)",
+  "prefs_theme_palette_default": "Dark (default)",
   "prefs_theme_palette_custom": "Custom",
   "prefs_theme_palette_help": "Choose a ready-made palette or build your own custom colors below.",
   "prefs_custom_color_background": "Background",

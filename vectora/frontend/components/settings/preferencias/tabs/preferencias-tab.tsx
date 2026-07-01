@@ -43,7 +43,7 @@ import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 /** Deriva o `Theme` (claro/escuro) a partir do id de um preset. */
 function themeForPreset(id: string): Theme {
-  return id.endsWith("-light") ? "light" : "dark";
+  return id === "light" || id.endsWith("-light") ? "light" : "dark";
 }
 
 const CUSTOM_COLOR_FIELDS: { key: keyof BaseThemeColors; labelKey: string }[] =
