@@ -1,7 +1,9 @@
 /**
- * Regressão de legibilidade do tema claro ("Min Light"): garante que os tokens
- * de texto têm contraste WCAG suficiente sobre o background branco. Parseia o
- * styles.css real para travar o requisito ("tema claro pouco legível").
+ * Regressão de legibilidade dos temas claro e escuro ("Min Light" / "Min Dark")
+ * e contraste estrutural da variável --sidebar.
+ *
+ * Parseia o styles.css real para travar os requisitos diretamente nos valores
+ * publicados — se alguém mudar uma cor sem passar no teste, o CI bloqueia.
  */
 
 import { readFileSync } from "node:fs";
@@ -14,14 +16,24 @@ const css = readFileSync(
   "utf-8",
 );
 
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
 /** Extrai o valor hex de um token dentro do bloco `.light`. */
 function lightToken(name: string): string {
-  // Começa na REGRA `.light {` (não no comentário que cita ".light"); limita ao
-  // bloco até o `}` de fechamento para não casar tokens de outros temas.
   const start = css.indexOf(".light {");
   const block = css.slice(start, css.indexOf("}", start));
   const m = block.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`));
   if (!m) throw new Error(`token --${name} não encontrado no bloco .light`);
+  return m[1];
+}
+
+/** Extrai o valor hex de um token dentro do bloco `:root` (tema escuro). */
+function darkToken(name: string): string {
+  const start = css.indexOf(":root {");
+  const end = css.indexOf("}", start);
+  const block = css.slice(start, end);
+  const m = block.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`));
+  if (!m) throw new Error(`token --${name} não encontrado no bloco :root`);
   return m[1];
 }
 
@@ -33,12 +45,14 @@ function luminance(hex: string): number {
   return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
 }
 
-function contrast(fg: string, bg: string): number {
+function contrastRatio(fg: string, bg: string): number {
   const l1 = luminance(fg);
   const l2 = luminance(bg);
   const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
   return (hi + 0.05) / (lo + 0.05);
 }
+
+// ── Tema claro ───────────────────────────────────────────────────────────────
 
 describe("tema claro — legibilidade (Min Light)", () => {
   it("background do tema claro é branco", () => {
@@ -46,12 +60,12 @@ describe("tema claro — legibilidade (Min Light)", () => {
   });
 
   it("foreground tem contraste AAA (>=7) sobre o background", () => {
-    const c = contrast(lightToken("foreground"), lightToken("background"));
+    const c = contrastRatio(lightToken("foreground"), lightToken("background"));
     expect(c).toBeGreaterThanOrEqual(7);
   });
 
   it("muted-foreground passa o mínimo AA (>=4.5)", () => {
-    const c = contrast(
+    const c = contrastRatio(
       lightToken("muted-foreground"),
       lightToken("background"),
     );
@@ -59,7 +73,7 @@ describe("tema claro — legibilidade (Min Light)", () => {
   });
 
   it("muted-foreground foi reforçado para >=6 (legibilidade)", () => {
-    const c = contrast(
+    const c = contrastRatio(
       lightToken("muted-foreground"),
       lightToken("background"),
     );
@@ -67,12 +81,12 @@ describe("tema claro — legibilidade (Min Light)", () => {
   });
 
   it("card-foreground tem contraste AAA sobre o card", () => {
-    const c = contrast(lightToken("card-foreground"), lightToken("card"));
+    const c = contrastRatio(lightToken("card-foreground"), lightToken("card"));
     expect(c).toBeGreaterThanOrEqual(7);
   });
 
   it("destructive-foreground é legível sobre destructive", () => {
-    const c = contrast(
+    const c = contrastRatio(
       lightToken("destructive-foreground"),
       lightToken("destructive"),
     );
@@ -80,7 +94,101 @@ describe("tema claro — legibilidade (Min Light)", () => {
   });
 
   it("primary-foreground é legível sobre primary (CTA)", () => {
-    const c = contrast(lightToken("primary-foreground"), lightToken("primary"));
+    const c = contrastRatio(
+      lightToken("primary-foreground"),
+      lightToken("primary"),
+    );
     expect(c).toBeGreaterThanOrEqual(7);
+  });
+});
+
+// ── Tema escuro ──────────────────────────────────────────────────────────────
+
+describe("tema escuro — legibilidade (Min Dark)", () => {
+  it("background do tema escuro é definido", () => {
+    expect(() => darkToken("background")).not.toThrow();
+  });
+
+  it("foreground tem contraste AAA (>=7) sobre o background", () => {
+    const c = contrastRatio(darkToken("foreground"), darkToken("background"));
+    expect(c).toBeGreaterThanOrEqual(7);
+  });
+
+  it("muted-foreground passa o mínimo AA (>=4.5)", () => {
+    const c = contrastRatio(
+      darkToken("muted-foreground"),
+      darkToken("background"),
+    );
+    expect(c).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("card-foreground tem contraste AAA sobre o card", () => {
+    const c = contrastRatio(darkToken("card-foreground"), darkToken("card"));
+    expect(c).toBeGreaterThanOrEqual(7);
+  });
+
+  it("destructive-foreground é legível sobre destructive", () => {
+    const c = contrastRatio(
+      darkToken("destructive-foreground"),
+      darkToken("destructive"),
+    );
+    expect(c).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("primary-foreground é legível sobre primary (CTA)", () => {
+    const c = contrastRatio(
+      darkToken("primary-foreground"),
+      darkToken("primary"),
+    );
+    expect(c).toBeGreaterThanOrEqual(7);
+  });
+});
+
+// ── --sidebar — contraste estrutural vs --background ────────────────────────
+//
+// --sidebar não é texto sobre fundo — é a cor de um painel inteiro.
+// O requisito não é contraste WCAG de texto (>=4.5), mas sim diferença
+// perceptível suficiente para criar a hierarquia visual sidebar/editor.
+// Um ratio >=1.05 já é detectável pelo olho humano numa tela calibrada.
+
+describe("--sidebar — contraste estrutural com --background", () => {
+  it("dark: --sidebar está definido no bloco :root", () => {
+    expect(() => darkToken("sidebar")).not.toThrow();
+  });
+
+  it("dark: --sidebar é mais escuro que --background", () => {
+    const sidebarL = luminance(darkToken("sidebar"));
+    const bgL = luminance(darkToken("background"));
+    expect(sidebarL).toBeLessThan(bgL);
+  });
+
+  it("dark: --sidebar tem diferença perceptível vs --background (ratio >=1.05)", () => {
+    const c = contrastRatio(darkToken("sidebar"), darkToken("background"));
+    expect(c).toBeGreaterThanOrEqual(1.05);
+  });
+
+  it("dark: --sidebar não é idêntico ao --card (mantém tokens distintos)", () => {
+    expect(darkToken("sidebar").toLowerCase()).not.toBe(
+      darkToken("card").toLowerCase(),
+    );
+  });
+
+  it("light: --sidebar está definido no bloco .light", () => {
+    expect(() => lightToken("sidebar")).not.toThrow();
+  });
+
+  it("light: --sidebar é mais escuro que --background", () => {
+    const sidebarL = luminance(lightToken("sidebar"));
+    const bgL = luminance(lightToken("background"));
+    expect(sidebarL).toBeLessThan(bgL);
+  });
+
+  it("light: --sidebar tem diferença perceptível vs --background (ratio >=1.05)", () => {
+    const c = contrastRatio(lightToken("sidebar"), lightToken("background"));
+    expect(c).toBeGreaterThanOrEqual(1.05);
+  });
+
+  it("light: --sidebar não é branco puro (deve ter contraste real)", () => {
+    expect(lightToken("sidebar").toLowerCase()).not.toBe("#ffffff");
   });
 });
