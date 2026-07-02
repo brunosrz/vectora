@@ -55,14 +55,6 @@ export default function Header() {
           className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 text-sm md:flex"
           aria-label="Navegação principal"
         >
-          <Link
-            to="/"
-            hash="pricing"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
-          >
-            {m.nav_pricing()}
-          </Link>
           <a
             href="https://docs.vectora.company"
             target="_blank"
@@ -73,15 +65,13 @@ export default function Header() {
           </a>
           <Link
             to="/faq"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
+            className="text-muted-foreground transition-colors hover:text-foreground data-[status=active]:text-foreground"
           >
             {m.nav_faq()}
           </Link>
           <Link
             to="/downloads"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
+            className="text-muted-foreground transition-colors hover:text-foreground data-[status=active]:text-foreground"
           >
             {m.nav_downloads()}
           </Link>
@@ -185,14 +175,6 @@ export default function Header() {
           aria-label="Menu mobile"
         >
           <div className="flex flex-col gap-0.5 text-sm">
-            <Link
-              to="/"
-              hash="pricing"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
-            >
-              {m.nav_pricing()}
-            </Link>
             <a
               href="https://docs.vectora.company"
               target="_blank"
@@ -205,14 +187,14 @@ export default function Header() {
             <Link
               to="/faq"
               onClick={() => setMobileOpen(false)}
-              className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground data-[status=active]:bg-muted data-[status=active]:text-foreground"
             >
               {m.nav_faq()}
             </Link>
             <Link
               to="/downloads"
               onClick={() => setMobileOpen(false)}
-              className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground data-[status=active]:bg-muted data-[status=active]:text-foreground"
             >
               {m.nav_downloads()}
             </Link>
