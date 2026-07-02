@@ -5,7 +5,6 @@ import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import AuthLayout from "#/components/shared/AuthLayout";
-import OAuthButtons from "#/components/shared/OAuthButtons";
 import Turnstile from "#/components/shared/Turnstile";
 import { getSession, signUp } from "#/server/fns/auth";
 import { track } from "#/lib/analytics/plausible";
@@ -192,18 +191,6 @@ function SignupPage() {
           {mutation.isPending ? m.form_submitting() : m.signup_cta()}
         </button>
       </form>
-
-      <div className="mt-6 flex items-center gap-3">
-        <hr className="flex-1 border-border" />
-        <span className="text-xs text-muted-foreground">
-          {m.oauth_divider()}
-        </span>
-        <hr className="flex-1 border-border" />
-      </div>
-
-      <div className="mt-4">
-        <OAuthButtons />
-      </div>
 
       <div className="mt-6 flex justify-between text-sm text-muted-foreground">
         <Link

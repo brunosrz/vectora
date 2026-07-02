@@ -317,5 +317,6 @@
   "downloads_footer": "Open source · Stesso binario compilato, nessuna telemetria.",
   "signup_confirm_heading": "Conferma la tua email",
   "signup_confirm_desc": "Abbiamo inviato un link di conferma a",
-  "signup_confirm_hint": "Clicca sul link nell'email per attivare il tuo account e accedere."
+  "signup_confirm_hint": "Clicca sul link nell'email per attivare il tuo account e accedere.",
+  "nav_back": "Indietro"
 }

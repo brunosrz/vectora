@@ -338,5 +338,6 @@
   "error_db": "Erro interno. Tente novamente em instantes.",
   "signup_confirm_heading": "Confirme seu email",
   "signup_confirm_desc": "Enviamos um link de confirmação para",
-  "signup_confirm_hint": "Clique no link do email para ativar sua conta e entrar."
+  "signup_confirm_hint": "Clique no link do email para ativar sua conta e entrar.",
+  "nav_back": "Voltar"
 }
