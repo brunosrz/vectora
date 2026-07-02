@@ -1,0 +1,22 @@
+name = "vectora-update-server"
+main = "src/worker.ts"
+compatibility_date = "2025-06-01"
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+# R2 precisa ser habilitado uma vez no Cloudflare Dashboard (Storage & Databases
+# → R2 → aceitar o plano) antes do bucket existir — a API não permite criar via
+# CLI enquanto R2 nunca foi ativado na conta (erro 10042). Depois de habilitar:
+#   npx wrangler r2 bucket create vectora-releases
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "vectora-releases"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "5bf302c7fcc9463aa642aa1731b13def"
+
+[vars]
+LICENSE_VALIDATE_URL = "https://vectora.company/functions/v1/validate-license"
