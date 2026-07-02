@@ -196,14 +196,15 @@ Reconheça-o com base neste system prompt — sem RAG, sem web search.
 
 
 def _subagent_specs(user_id: str | None = None) -> list[Any]:
-    """Retorna a lista de SubAgent specs filtrada pela política ABAC do usuário.
+    """Retorna a lista de SubAgent specs filtrada pela política de tools.
 
     Importações lazy evitam circular imports e carregamento desnecessário
     em contextos que não instanciam o grafo (CLI, testes unitários).
 
-    Quando ``user_id`` é fornecido, as tools de cada subagent são filtradas
-    removendo as que constam em ``tool_policy.get_disabled(user_id)``.
-    Sem ``user_id`` (padrão), retorna o toolset completo.
+    As tools de cada subagent são filtradas removendo as que constam em
+    ``tool_policy.effective_disabled(user_id)`` — união do disable global
+    (admin kill-switch) com o ABAC por usuário. O disable global se aplica
+    mesmo sem ``user_id`` (sessão local sem auth).
 
     As specs base são definidas em ``src/agents/{coder,search}.py`` como
     ``SUBAGENT_SPEC`` — ponto único de verdade para nome, descrição e tools.
@@ -215,16 +216,15 @@ def _subagent_specs(user_id: str | None = None) -> list[Any]:
 
     specs = [copy.copy(CODER_SPEC), copy.copy(SEARCH_SPEC)]
 
-    if user_id:
-        disabled: set[str] = set(tool_policy.get_disabled(user_id))
-        if disabled:
-            for spec in specs:
-                spec["tools"] = [t for t in spec["tools"] if t.name not in disabled]
-            logger.debug(
-                "agent_factory: subagent tools filtradas por ABAC user=%s disabled=%s",
-                user_id,
-                disabled,
-            )
+    disabled = tool_policy.effective_disabled(user_id)
+    if disabled:
+        for spec in specs:
+            spec["tools"] = [t for t in spec["tools"] if t.name not in disabled]
+        logger.debug(
+            "agent_factory: subagent tools filtradas user=%s disabled=%s",
+            user_id,
+            disabled,
+        )
 
     return specs
 
@@ -278,6 +278,12 @@ _profiles_registered: bool = False
 # Quando qualquer versão muda, o cache de LLM do usuário é invalidado.
 _version_tracker: dict[str, tuple[int, int, int]] = {}
 
+# Última versão observada da política global de tools (kill-switch do admin,
+# tool_policy.GLOBAL_SCOPE). Diferente de _version_tracker (por usuário): o
+# toggle global afeta TODAS as sessões, então invalida os dois caches inteiros
+# em vez de fazer bookkeeping por chave.
+_global_tools_version: int | None = None
+
 
 def _agents_md_paths() -> list[str] | None:
     """Retorna os paths de AGENTS.md que o MemoryMiddleware deve carregar.
@@ -317,13 +323,16 @@ async def _ensure_infra() -> None:
         _store = await build_store()
 
 
-async def _build_graph_async(model_id: str = "", chat_mode: bool = False) -> Any:
+async def _build_graph_async(
+    model_id: str = "", chat_mode: bool = False, user_id: str | None = None
+) -> Any:
     """Compila um grafo deepagents para ``model_id`` (checkpointer/store compartilhados).
 
     Não muta estado global de cache — quem cacheia é ``get_user_agent``. Vazio
     em ``model_id`` usa o modelo padrão de env/settings. Em ``chat_mode`` o agente
     é conversacional puro: ``CHAT_TOOLS`` (sem fs/git/terminal/workspace) e sem
-    subagents de dev.
+    subagents de dev. ``user_id`` filtra a toolset principal e a dos subagents
+    por ``tool_policy.effective_disabled`` (kill-switch global + ABAC).
     """
     await _ensure_infra()
 
@@ -343,8 +352,16 @@ async def _build_graph_async(model_id: str = "", chat_mode: bool = False) -> Any
         "BaseChatModel", FallbackChatModel(primary_model_id=model_id)
     )
     tools = CHAT_TOOLS if chat_mode else ALL_TOOLS
+    disabled = tool_policy.effective_disabled(user_id)
+    if disabled:
+        tools = [t for t in tools if t.name not in disabled]
+        logger.debug(
+            "agent_factory: tools principais filtradas user=%s disabled=%s",
+            user_id,
+            disabled,
+        )
     # Chat puro não usa subagents (coder/search são orientados a dev/filesystem).
-    subagents = [] if chat_mode else _subagent_specs()
+    subagents = [] if chat_mode else _subagent_specs(user_id)
 
     system_prompt = _build_session_system_prompt()
 
@@ -408,6 +425,26 @@ async def _build_graph_async(model_id: str = "", chat_mode: bool = False) -> Any
     return compiled
 
 
+def _check_global_tools_version() -> None:
+    """Se o kill-switch global de tools mudou, derruba TODOS os grafos em cache.
+
+    Precisa rodar antes de qualquer lookup em ``_graphs``/``_graphs_by_user``
+    (chamado no início de ``get_user_agent``), senão uma sessão já em cache
+    continuaria usando o toolset antigo indefinidamente.
+    """
+    global _global_tools_version
+    current = tool_policy.policy_version(tool_policy.GLOBAL_SCOPE)
+    if _global_tools_version is not None and current != _global_tools_version:
+        _graphs.clear()
+        _graphs_by_user.clear()
+        logger.info(
+            "agent_factory: kill-switch global de tools mudou (v%d→v%d) — grafos invalidados",
+            _global_tools_version,
+            current,
+        )
+    _global_tools_version = current
+
+
 async def get_user_agent(
     user_id: str | None = None, model: str = "", chat_mode: bool = False
 ) -> Any:
@@ -417,7 +454,14 @@ async def get_user_agent(
     usa cache global por model_key. O ``chat_mode`` entra no ``model_key`` (sufixo
     ``#chat``) — chat e dev têm grafos compilados separados (toolsets diferentes).
     Todos compartilham checkpointer/store. Thread-safe via asyncio.Lock.
+
+    A toolset é filtrada por ``tool_policy.effective_disabled(user_id)`` no
+    momento da compilação (``_build_graph_async``); mudanças de política depois
+    disso só valem a partir da próxima invalidação de cache (``_track_versions``
+    por usuário, ``_check_global_tools_version`` para o kill-switch do admin).
     """
+    _check_global_tools_version()
+
     base = model or "__default__"
     model_key = f"{base}#chat" if chat_mode else base
 
@@ -428,7 +472,7 @@ async def get_user_agent(
             async with _lock:
                 if session_key not in _graphs_by_user:
                     _graphs_by_user[session_key] = await _build_graph_async(
-                        model, chat_mode
+                        model, chat_mode, user_id
                     )
         _track_versions(user_id)
         return _graphs_by_user[session_key]
@@ -437,7 +481,7 @@ async def get_user_agent(
     if model_key not in _graphs:
         async with _lock:
             if model_key not in _graphs:
-                _graphs[model_key] = await _build_graph_async(model, chat_mode)
+                _graphs[model_key] = await _build_graph_async(model, chat_mode, user_id)
 
     return _graphs[model_key]
 
@@ -533,16 +577,26 @@ def _track_versions(user_id: str) -> None:
 
 
 def _invalidate_llm_cache(user_id: str) -> None:
-    """Remove entradas stale do cache de LLM bound (llm_tools._bound_cache)."""
+    """Remove os grafos compilados em cache do usuário (tools/policy/skills mudaram).
+
+    Purga ``_graphs_by_user`` — o cache real consultado por ``get_user_agent``
+    — para que a próxima chamada recompile com a toolset atualizada. Também
+    limpa ``llm_tools._bound_cache`` (cache auxiliar por chave de versão).
+    """
     try:
+        stale_graph_keys = [k for k in _graphs_by_user if k[0] == user_id]
+        for k in stale_graph_keys:
+            del _graphs_by_user[k]
+
         from backend.services import llm_tools
 
         stale_keys = [k for k in llm_tools._bound_cache if k[0] == user_id]
         for k in stale_keys:
             del llm_tools._bound_cache[k]
-        if stale_keys:
-            logger.debug(
-                "agent_factory: %d entradas de LLM cache invalidadas para %s",
+        if stale_graph_keys or stale_keys:
+            logger.info(
+                "agent_factory: %d grafo(s) + %d entrada(s) de LLM cache invalidados para %s",
+                len(stale_graph_keys),
                 len(stale_keys),
                 user_id,
             )

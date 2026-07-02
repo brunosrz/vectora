@@ -361,13 +361,20 @@ async def revoke_invite(request: Request, token_hash: str) -> dict:
 
 @router.get("/tools")
 async def list_tools_admin(request: Request) -> dict:
-    """Lista todas as tools com status de habilitação global."""
+    """Lista todas as tools com status de habilitação global.
+
+    "enabled" reflete ``tool_policy.GLOBAL_SCOPE`` — o mesmo kill-switch
+    aplicado na compilação do grafo do agente (``agent_factory._build_graph_async``),
+    não um valor decorativo.
+    """
     user = _get_user(request)
     require_admin(user)
 
     try:
         from backend.nodes.tools import ALL_TOOLS
+        from backend.services import tool_policy
 
+        disabled_global = set(tool_policy.get_disabled(tool_policy.GLOBAL_SCOPE))
         tools = [
             {
                 "name": t.name,
@@ -378,7 +385,7 @@ async def list_tools_admin(request: Request) -> dict:
                 "destructive": bool(
                     (getattr(t, "metadata", None) or {}).get("destructive", False)
                 ),
-                "enabled": True,  # TODO: persistir overrides por tool em config.toml
+                "enabled": t.name not in disabled_global,
             }
             for t in ALL_TOOLS
         ]
@@ -390,12 +397,31 @@ async def list_tools_admin(request: Request) -> dict:
 
 @router.post("/tools/{tool_name}/toggle")
 async def toggle_tool(request: Request, tool_name: str, body: ToolToggleBody) -> dict:
-    """Habilita ou desabilita uma tool globalmente."""
+    """Habilita ou desabilita uma tool globalmente (kill-switch, todas as sessões).
+
+    Persiste em ``tool_policy.GLOBAL_SCOPE`` — o próximo ``get_user_agent()``
+    (qualquer usuário) recompila o grafo sem a tool, via invalidação de cache
+    em ``agent_factory._check_global_tools_version``.
+    """
     user = _get_user(request)
     require_admin(user)
-    # TODO: persistir em config.toml quando o gerenciamento de config for implementado
+
+    from backend.nodes.tools import ALL_TOOLS
+    from backend.services import tool_policy
+
+    valid = {t.name for t in ALL_TOOLS}
+    if tool_name not in valid:
+        raise HTTPException(status_code=404, detail=f"Tool desconhecida: {tool_name}")
+
+    disabled = set(tool_policy.get_disabled(tool_policy.GLOBAL_SCOPE))
+    if body.enabled:
+        disabled.discard(tool_name)
+    else:
+        disabled.add(tool_name)
+    tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, sorted(disabled))
+
     logger.info(
-        "admin: tool '%s' %s por user_id=%s",
+        "admin: tool '%s' %s globalmente por user_id=%s",
         tool_name,
         "habilitada" if body.enabled else "desabilitada",
         user.id,

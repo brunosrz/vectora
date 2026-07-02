@@ -4,6 +4,12 @@ Cada usuário tem uma lista de tools desabilitadas, persistida em
 ``~/.vectora/tools/<user_id>.json``. Por padrão, todas as tools são permitidas
 (allow-all). Admin/root e o próprio usuário podem desabilitar tools; a resolução
 de toolset (``tool_resolver``) consulta esta política a cada request.
+
+``GLOBAL_SCOPE`` é um "usuário" virtual: o kill-switch do admin
+(``POST /admin/tools/{name}/toggle``) grava nele, reaproveitando o mesmo
+arquivo/versionamento/pubsub — não é um usuário real e nunca aparece em
+``/admin/users``. ``is_allowed`` nega se a tool estiver desabilitada
+globalmente OU para o usuário específico.
 """
 
 from __future__ import annotations
@@ -13,6 +19,10 @@ import logging
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+#: "Usuário" virtual para o disable global (admin kill-switch), aplicado a
+#: todas as sessões independente de user_id — ver módulo docstring.
+GLOBAL_SCOPE = "__global__"
 
 #: Contador de versão por usuário — bumpado em set_disabled, invalida o cache
 #: do LLM bindado sem reiniciar.
@@ -74,5 +84,15 @@ def apply_remote_version(user_id: str, version: int) -> None:
 
 
 def is_allowed(user_id: str, tool_name: str) -> bool:
-    """True se a tool está permitida para o usuário (allow-all por padrão)."""
+    """True se a tool está permitida (nem globalmente, nem para o usuário)."""
+    if tool_name in set(get_disabled(GLOBAL_SCOPE)):
+        return False
     return tool_name not in set(get_disabled(user_id))
+
+
+def effective_disabled(user_id: str | None) -> set[str]:
+    """União do disable global (admin) com o do usuário (ABAC), se houver."""
+    disabled = set(get_disabled(GLOBAL_SCOPE))
+    if user_id:
+        disabled |= set(get_disabled(user_id))
+    return disabled
