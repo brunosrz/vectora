@@ -301,7 +301,7 @@
   "page_downloads_desc": "Download Vectora Desktop for your system.",
   "downloads_recommended": "Recommended",
   "downloads_cta": "Download",
-  "downloads_footer": "Open source · Same compiled binary, no telemetry.",
+  "downloads_footer": "Same signed binary, built for each platform. Your data never leaves your server.",
   "auth_device_title": "Authorize Vectora",
   "auth_device_desc": "Click Authorize to connect your Vectora.company account to the desktop app.",
   "auth_device_btn": "Authorize",
@@ -338,5 +338,9 @@
   "pricing_feat_invites_unlimited": "Unlimited member invites",
   "pricing_feat_storage_scalable": "Scalable storage (Postgres/Qdrant/Redis)",
   "pricing_feat_rest_api_higher": "REST API with higher rate limit",
-  "showcase_preview_soon": "Preview coming soon"
+  "showcase_preview_soon": "Preview coming soon",
+  "downloads_other_variants": "Other versions",
+  "downloads_install_windows": "Run the .exe and follow the installer. If Windows SmartScreen warns you, click \"More info\" → \"Run anyway\" (common for new apps until the certificate builds reputation). Prefer silent install? Use Vectora-Setup.exe /S. The .msi integrates with Apps & Features — useful for IT-managed rollouts.",
+  "downloads_install_macos": "Drag Vectora.app into the Applications folder. If Gatekeeper blocks it from opening, run xattr -cr /Applications/Vectora.app once in Terminal.",
+  "downloads_install_linux": "AppImage: chmod +x Vectora-*.AppImage && ./Vectora-*.AppImage. Or install the native package: sudo dpkg -i vectora_*.deb (Debian/Ubuntu) or sudo rpm -i vectora-*.rpm (Fedora/RHEL)."
 }

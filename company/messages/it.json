@@ -300,7 +300,7 @@
   "page_downloads_desc": "Scarica Vectora Desktop per il tuo sistema.",
   "downloads_recommended": "Consigliato",
   "downloads_cta": "Scarica",
-  "downloads_footer": "Open source · Stesso binario compilato, nessuna telemetria.",
+  "downloads_footer": "Stesso binario firmato, compilato per ogni piattaforma. I tuoi dati non lasciano mai il tuo server.",
   "signup_confirm_heading": "Conferma la tua email",
   "signup_confirm_desc": "Abbiamo inviato un link di conferma a",
   "signup_confirm_hint": "Clicca sul link nell'email per attivare il tuo account e accedere.",
@@ -317,5 +317,9 @@
   "pricing_feat_invites_unlimited": "Inviti membri illimitati",
   "pricing_feat_storage_scalable": "Storage scalabile (Postgres/Qdrant/Redis)",
   "pricing_feat_rest_api_higher": "REST API con rate limit più alto",
-  "showcase_preview_soon": "Anteprima in arrivo"
+  "showcase_preview_soon": "Anteprima in arrivo",
+  "downloads_other_variants": "Altre versioni",
+  "downloads_install_windows": "Esegui il .exe e segui il programma di installazione. Se SmartScreen di Windows avvisa, clicca su \"Ulteriori informazioni\" → \"Esegui comunque\" (comune per le app nuove, finché il certificato non guadagna reputazione). Preferisci l'installazione silenziosa? Usa Vectora-Setup.exe /S. Il .msi si integra con App e funzionalità.",
+  "downloads_install_macos": "Trascina Vectora.app nella cartella Applicazioni. Se Gatekeeper blocca l'apertura, esegui una volta xattr -cr /Applications/Vectora.app nel Terminale.",
+  "downloads_install_linux": "AppImage: chmod +x Vectora-*.AppImage && ./Vectora-*.AppImage. Oppure installa il pacchetto nativo: sudo dpkg -i vectora_*.deb (Debian/Ubuntu) o sudo rpm -i vectora-*.rpm (Fedora/RHEL)."
 }

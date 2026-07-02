@@ -5,42 +5,73 @@ import { m } from "#/paraglide/messages";
 import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
 
-// Base das releases. Ajuste os nomes dos assets conforme o que o build do
-// Electron publica (electron-builder). Mantido num único ponto para edição.
-const RELEASE_BASE =
-  "https://github.com/vectora-company/vectora/releases/latest/download";
+// update-server (Cloudflare Worker + R2) — não GitHub Releases: o repo é
+// privado (Vectora é vendido, não open source) e o Free precisa baixar sem
+// conta. Rota pública sem token: GET /download/:channel/:os/:arch/:ext
+// (update-server/src/worker.ts).
+const UPDATE_SERVER = "https://update.vectora.company";
+const CHANNEL = "latest";
 
 type OS = "windows" | "macos" | "linux";
 
+interface Variant {
+  arch: string;
+  ext: string;
+  label: string;
+}
+
 interface Platform {
   os: OS;
+  osToken: string;
   label: string;
   emoji: string;
-  sub: string;
-  href: string;
+  primary: Variant;
+  others: Variant[];
+  install: () => string;
+}
+
+function href(osToken: string, arch: string, ext: string): string {
+  return `${UPDATE_SERVER}/download/${CHANNEL}/${osToken}/${arch}/${ext}`;
 }
 
 const PLATFORMS: Platform[] = [
   {
     os: "windows",
+    osToken: "win",
     label: "Windows",
     emoji: "🪟",
-    sub: ".exe · Windows 10/11 (x64)",
-    href: `${RELEASE_BASE}/Vectora-Setup.exe`,
+    primary: { arch: "x64", ext: "exe", label: ".exe (x64)" },
+    others: [
+      { arch: "arm64", ext: "exe", label: ".exe (ARM64)" },
+      { arch: "x64", ext: "msi", label: ".msi (x64)" },
+    ],
+    install: m.downloads_install_windows,
   },
   {
     os: "macos",
+    osToken: "mac",
     label: "macOS",
     emoji: "🍎",
-    sub: ".dmg · Apple Silicon & Intel",
-    href: `${RELEASE_BASE}/Vectora.dmg`,
+    primary: { arch: "universal", ext: "dmg", label: ".dmg (universal)" },
+    others: [
+      { arch: "arm64", ext: "dmg", label: ".dmg (Apple Silicon)" },
+      { arch: "x64", ext: "dmg", label: ".dmg (Intel)" },
+    ],
+    install: m.downloads_install_macos,
   },
   {
     os: "linux",
+    osToken: "linux",
     label: "Linux",
     emoji: "🐧",
-    sub: ".AppImage · x86_64",
-    href: `${RELEASE_BASE}/Vectora.AppImage`,
+    primary: { arch: "x64", ext: "AppImage", label: ".AppImage (x64)" },
+    others: [
+      { arch: "arm64", ext: "AppImage", label: ".AppImage (ARM64)" },
+      { arch: "x64", ext: "deb", label: ".deb (x64)" },
+      { arch: "arm64", ext: "deb", label: ".deb (ARM64)" },
+      { arch: "x64", ext: "rpm", label: ".rpm (x64)" },
+    ],
+    install: m.downloads_install_linux,
   },
 ];
 
@@ -83,30 +114,59 @@ function DownloadsPage() {
         {ordered.map((p) => {
           const recommended = p.os === userOS;
           return (
-            <a
+            <div
               key={p.os}
-              href={p.href}
-              className={`flex flex-col items-center gap-3 rounded-2xl border p-6 text-center transition-all ${
+              className={`flex flex-col gap-4 rounded-2xl border p-6 transition-all ${
                 recommended
                   ? "border-primary bg-primary/5"
-                  : "border-border bg-card/30 hover:border-primary/50"
+                  : "border-border bg-card/30"
               }`}
             >
-              <span className="h-5 text-[11px] font-semibold uppercase tracking-wide text-primary">
-                {recommended ? m.downloads_recommended() : ""}
-              </span>
-              <span className="text-4xl leading-none" aria-hidden>
-                {p.emoji}
-              </span>
-              <div>
-                <p className="font-semibold text-foreground">{p.label}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{p.sub}</p>
+              <div className="flex flex-col items-center gap-3 text-center">
+                <span className="h-5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                  {recommended ? m.downloads_recommended() : ""}
+                </span>
+                <span className="text-4xl leading-none" aria-hidden>
+                  {p.emoji}
+                </span>
+                <div>
+                  <p className="font-semibold text-foreground">{p.label}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {p.primary.label}
+                  </p>
+                </div>
+                <a
+                  href={href(p.osToken, p.primary.arch, p.primary.ext)}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  {m.downloads_cta()}
+                </a>
               </div>
-              <span className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-                <Download className="h-4 w-4" />
-                {m.downloads_cta()}
-              </span>
-            </a>
+
+              {p.others.length > 0 && (
+                <div className="border-t border-border pt-3">
+                  <p className="mb-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {m.downloads_other_variants()}
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                    {p.others.map((v) => (
+                      <a
+                        key={`${v.arch}-${v.ext}`}
+                        href={href(p.osToken, v.arch, v.ext)}
+                        className="text-xs text-muted-foreground underline decoration-dotted hover:text-primary"
+                      >
+                        {v.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
+                {p.install()}
+              </p>
+            </div>
           );
         })}
       </div>

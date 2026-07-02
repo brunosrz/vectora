@@ -300,7 +300,7 @@
   "page_downloads_desc": "Скачайте Vectora Desktop для вашей системы.",
   "downloads_recommended": "Рекомендуется",
   "downloads_cta": "Скачать",
-  "downloads_footer": "Открытый код · Тот же скомпилированный бинарник, без телеметрии.",
+  "downloads_footer": "Тот же подписанный бинарник, собранный под каждую платформу. Ваши данные никогда не покидают ваш сервер.",
   "signup_confirm_heading": "Подтвердите почту",
   "signup_confirm_desc": "Мы отправили ссылку для подтверждения на",
   "signup_confirm_hint": "Нажмите на ссылку в письме, чтобы активировать аккаунт и войти.",
@@ -317,5 +317,9 @@
   "pricing_feat_invites_unlimited": "Неограниченные приглашения участников",
   "pricing_feat_storage_scalable": "Масштабируемое хранилище (Postgres/Qdrant/Redis)",
   "pricing_feat_rest_api_higher": "REST API с более высоким rate limit",
-  "showcase_preview_soon": "Превью скоро появится"
+  "showcase_preview_soon": "Превью скоро появится",
+  "downloads_other_variants": "Другие версии",
+  "downloads_install_windows": "Запустите .exe и следуйте инструкциям установщика. Если Windows SmartScreen выдаст предупреждение, нажмите «Подробнее» → «Выполнить в любом случае» (обычное дело для новых приложений, пока сертификат не наберёт репутацию). Нужна тихая установка? Используйте Vectora-Setup.exe /S. Файл .msi интегрируется с «Приложения и возможности».",
+  "downloads_install_macos": "Перетащите Vectora.app в папку Applications. Если Gatekeeper блокирует запуск, один раз выполните xattr -cr /Applications/Vectora.app в Терминале.",
+  "downloads_install_linux": "AppImage: chmod +x Vectora-*.AppImage && ./Vectora-*.AppImage. Либо установите нативный пакет: sudo dpkg -i vectora_*.deb (Debian/Ubuntu) или sudo rpm -i vectora-*.rpm (Fedora/RHEL)."
 }
