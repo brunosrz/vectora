@@ -35,7 +35,7 @@ app.get("/health", (c) =>
 );
 
 /** Hash determinístico estável → bucket [0..99] para rollout faseado. */
-function rolloutBucket(token: string): number {
+export function rolloutBucket(token: string): number {
   let h = 0;
   for (const ch of token) {
     h = (h * 31 + ch.charCodeAt(0)) | 0;
@@ -52,7 +52,7 @@ async function getConfig(kv: KVNamespace): Promise<RuntimeConfig> {
 }
 
 /** Decide qual versão servir para o client baseado em rollout. */
-function resolveVersion(
+export function resolveVersion(
   config: RuntimeConfig,
   channel: string,
   token: string,
