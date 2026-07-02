@@ -200,7 +200,8 @@ def _action_build_nuitka(target, source, env):
     # build-hybrid.py já valida cada fase, mas reconferimos o artefato final:
     # sem ele, o release empacotaria um instalador sem o executável.
     binary_name = "vectora.exe" if sys.platform == "win32" else "vectora"
-    binary = os.path.join(ROOT, "dist", binary_name)
+    # --onedir: o executável fica em dist/vectora/ (pasta com _internal/).
+    binary = os.path.join(ROOT, "dist", "vectora", binary_name)
     if not os.path.isfile(binary):
         raise SystemExit(
             f"ERRO: build-hybrid.py não gerou {binary}. "
@@ -299,7 +300,7 @@ def _action_package(target, source, env, platform=""):
         dev_env = _get_dev_cert_env() if sys.platform == "win32" else None
         if dev_env:
             build_env.update(dev_env)
-            nuitka_bin = os.path.join(ROOT, "dist", "vectora.exe")
+            nuitka_bin = os.path.join(ROOT, "dist", "vectora", "vectora.exe")
             if os.path.isfile(nuitka_bin):
                 print(">> assinando binário híbrido (extraResource) com dev-cert.pfx...")
                 _sign_binary(nuitka_bin)

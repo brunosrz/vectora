@@ -42,13 +42,14 @@ files:
   - package.json
   - "!node_modules/**/{CHANGELOG.md,README.md,*.d.ts,test,tests}"
 
-# Binário híbrido (PyInstaller onefile) como sidecar. O executável final fica em
-# dist/ na raiz do monorepo (gerado por build-hybrid.py Fase 2). O app spawna
-# resources/vectora-core/vectora.exe (electron/src/main.ts).
+# Backend híbrido (PyInstaller --onedir) como sidecar. build-hybrid.py Fase 2 gera
+# a PASTA dist/vectora/ (vectora.exe + _internal/); copiamos ela inteira para
+# resources/vectora-core/. onedir (sem compressão) é o que habilita o delta do
+# electron-updater: arquivos não-alterados ficam byte-idênticos entre versões.
+# O app spawna resources/vectora-core/vectora.exe (electron/src/main.ts).
 extraResources:
-  - from: ../../dist
+  - from: ../../dist/vectora
     to: vectora-core
-    filter: ["vectora", "vectora.exe"]
   - from: ../frontend/public/favicon-32x32.png
     to: tray-icon.png
   - from: ../frontend/public/vectora.ico

@@ -110,7 +110,12 @@ def main() -> None:
             "python",
             "-m",
             "PyInstaller",
-            "--onefile",
+            # --onedir (pasta) em vez de --onefile: os arquivos ficam soltos e
+            # SEM compressão, então entre versões as libs/DLLs não-alteradas ficam
+            # byte-idênticas → o blockmap do electron-updater baixa só o que mudou
+            # (delta real de poucos MB, não 1.5GB). Não muda a segurança: backend.pyd
+            # continua C, libs continuam Python bytecode.
+            "--onedir",
             "--name=vectora",
             f"--distpath={ROOT / 'dist'}",
             f"--workpath={ROOT / 'build' / 'pyinstaller'}",
@@ -132,10 +137,16 @@ def main() -> None:
         # em ficheiros de backports que o PyInstaller importa durante a análise).
         env={"PYTHONWARNINGS": "ignore::SyntaxWarning"},
     )
-    exe = ROOT / "dist" / ("vectora.exe" if sys.platform == "win32" else "vectora")
+    # --onedir gera a pasta dist/vectora/ com vectora[.exe] + _internal/.
+    exe_name = "vectora.exe" if sys.platform == "win32" else "vectora"
+    exe = ROOT / "dist" / "vectora" / exe_name
     if not exe.exists():
         sys.exit(f"{exe} não gerado")
-    print(f"\nBUILD OK — {exe}  ({exe.stat().st_size / 1048576:.1f} MB)")
+    dist_dir = ROOT / "dist" / "vectora"
+    total_mb = (
+        sum(f.stat().st_size for f in dist_dir.rglob("*") if f.is_file()) / 1048576
+    )
+    print(f"\nBUILD OK — {dist_dir}  ({total_mb:.1f} MB na pasta)")
 
 
 if __name__ == "__main__":
