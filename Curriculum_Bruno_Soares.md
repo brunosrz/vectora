@@ -10,7 +10,7 @@ Engenheiro de software full stack com 6 anos de experiência em arquitetura de s
 
 **STACK TÉCNICO**
 
-- **Python —** FastAPI, LangChain, LangGraph, FastMCP, Deep Agents, RAG (Cohere embeddings \+ reranking), Textual. Orquestração de agentes, pipelines de recuperação semântica e APIs de alta performance.
+- **Python —** FastAPI, LangChain, LangGraph, FastMCP, Deep Agents, RAG (Cohere embeddings \+ reranking). Orquestração de agentes, pipelines de recuperação semântica e APIs de alta performance.
 
 - **TypeScript / Bun —** Hono, Next.js, React 19, Vite, TanStack (Query, Router), Tailwind CSS. Microsserviços, SPAs e dashboards de produção.
 
@@ -26,21 +26,25 @@ Engenheiro de software full stack com 6 anos de experiência em arquitetura de s
 
 **Vectora** _| Produto de IA proprietário (marca registrada) — Founder & Engenheiro_
 
-Copiloto de produtividade e engine de IA multi-agent, construído e mantido inteiramente sozinho — da arquitetura ao deploy. Vectora não é uma aplicação isolada, mas um ecossistema completo composto por: aplicativo desktop (Electron \+ Nuitka), site institucional com criação de conta e assinatura, portal de documentação (uso do produto e da API REST pública, que expõe o Vectora como engine/núcleo para projetos de terceiros) e dois serviços de borda publicados na Cloudflare via Durable Objects — um servidor de atualização (update server) e um relay que viabiliza OAuth local, permitindo integrações completas com GitHub e outros provedores.
+Copiloto de produtividade e engine de IA multi-agent, construído e mantido inteiramente sozinho — da arquitetura ao deploy. Vectora não é uma aplicação isolada, mas um ecossistema completo composto por: aplicativo desktop (Electron \+ Nuitka), site institucional com criação de conta, assinatura e cobrança recorrente (7 idiomas), portal de documentação (uso do produto e da API REST pública /v1, que expõe o Vectora como engine/núcleo para projetos de terceiros) e dois serviços de borda publicados na Cloudflare — um relay stateful (Durable Objects) que viabiliza OAuth local com GitHub e outros provedores, e um servidor de atualização (update server) para distribuição de releases do app desktop.
 
 - **Arquitetura de produto:** projetei e implementei o ecossistema completo (app \+ site \+ docs \+ 2 serviços cloud) sozinho, tomando todas as decisões técnicas — da escolha de stack à infraestrutura distribuída.
 
-- **Pipeline de IA:** orquestração multi-agent via Context Engine, com recuperação semântica (RAG) usando embeddings e reranking Cohere para maximizar a precisão do contexto entregue aos agentes.
+- **Arquitetura de agente:** motor multi-agent construído sobre o padrão deep-agent (LangGraph) — subagents especializados, middleware human-in-the-loop para ações sensíveis e checkpointer para persistência de estado de conversa, com RAG híbrido (dense \+ BM25 sparse) e reranking Cohere para maximizar a precisão do contexto entregue aos agentes.
 
 - **Context Graph:** motor complementar ao RAG baseado em análise estática (parsing AST via tree-sitter, múltiplas linguagens) para mapear dependências e propagação de informação no código-fonte.
 
-- **Workbenches integrados:** arquivos, git, planos, tarefas em segundo plano, preview, memória (visualização do RAG), context graph e terminal — um ambiente de desenvolvimento assistido por IA completo, não apenas um chat.
+- **Modelo de negócio e billing:** projetei e implementei o enforcement de assinatura de ponta a ponta — tiers free/pro reais gated no backend (HTTP 402 Payment Required), rate limiting diferenciado por tier, e cobrança dual-provider (Stripe internacional, Asaas Brasil/Pix) com reconciliação de estado via webhooks assinados.
 
-- **Infraestrutura distribuída:** dois backends externos stateless-first na Cloudflare (Durable Objects) para update delivery e relay de autenticação, desacoplados do core local-first do produto.
+- **Workbenches integrados:** arquivos, git, planos, tarefas em segundo plano, preview, memória (visualização do RAG), context graph e terminal (xterm) com editor Monaco — um ambiente de desenvolvimento assistido por IA completo, não apenas um chat.
+
+- **Infraestrutura distribuída:** dois serviços de borda na Cloudflare desacoplados do core local-first do produto — relay stateful via Durable Objects e update server via Worker.
+
+- **Qualidade e testes:** ~2.400 testes automatizados no backend Python \+ suíte dedicada no frontend, com TDD como prática obrigatória (bug vira teste antes do fix; feature vira teste antes da implementação).
 
 - **Execução:** produto desenvolvido 100% individualmente, incluindo definição de escopo, arquitetura, implementação e operação — trabalho equivalente ao de uma equipe multidisciplinar (backend, frontend, infra, produto).
 
-**Tecnologias:** Python (FastAPI, LangChain, LangGraph, Deep Agents, Textual), TypeScript (React, Vite, TanStack Query/Router, Tailwind), PostgreSQL, Redis, LanceDB, Cohere, tree-sitter, MCP, ACP, Electron, Nuitka, Cloudflare Workers/Durable Objects, Docker, GitHub Actions
+**Tecnologias:** Python (FastAPI, LangChain, LangGraph, Deep Agents), TypeScript (React, Vite, TanStack Query/Router, Tailwind), PostgreSQL, Redis, LanceDB, Cohere, tree-sitter, MCP, Stripe, Electron, Nuitka, Cloudflare Workers/Durable Objects, Docker, GitHub Actions
 
 **Ability System** _| Framework open source para Godot 4.x — Autor_
 
