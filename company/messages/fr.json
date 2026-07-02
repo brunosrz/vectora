@@ -316,5 +316,6 @@
   "pricing_feat_chat_web": "Chat web multi-utilisateur",
   "pricing_feat_invites_unlimited": "Invitations de membres illimitées",
   "pricing_feat_storage_scalable": "Stockage évolutif (Postgres/Qdrant/Redis)",
-  "pricing_feat_rest_api_higher": "REST API avec une limite de débit plus élevée"
+  "pricing_feat_rest_api_higher": "REST API avec une limite de débit plus élevée",
+  "showcase_preview_soon": "Aperçu bientôt disponible"
 }

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Clock } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import { track } from "#/lib/analytics/plausible";
 
@@ -9,20 +11,30 @@ interface ShowcaseCardProps {
 }
 
 function ShowcaseCard({ gif, alt, title, desc }: ShowcaseCardProps) {
+  const [failed, setFailed] = useState(false);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
       <div
         style={{ aspectRatio: "496 / 232" }}
         onMouseEnter={() => track("gif_viewed", { gif })}
       >
-        <img
-          src={gif}
-          alt={alt}
-          loading="lazy"
-          decoding="async"
-          className="h-full w-full object-cover gif-skeleton"
-          onLoad={(e) => (e.currentTarget.style.background = "none")}
-        />
+        {failed ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-card/60 text-muted-foreground">
+            <Clock className="h-6 w-6" />
+            <span className="text-[13px]">{m.showcase_preview_soon()}</span>
+          </div>
+        ) : (
+          <img
+            src={gif}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover gif-skeleton"
+            onLoad={(e) => (e.currentTarget.style.background = "none")}
+            onError={() => setFailed(true)}
+          />
+        )}
       </div>
       <div className="p-4">
         <p className="text-base font-semibold leading-6 text-foreground">

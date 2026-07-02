@@ -316,5 +316,6 @@
   "pricing_feat_chat_web": "Многопользовательский веб-чат",
   "pricing_feat_invites_unlimited": "Неограниченные приглашения участников",
   "pricing_feat_storage_scalable": "Масштабируемое хранилище (Postgres/Qdrant/Redis)",
-  "pricing_feat_rest_api_higher": "REST API с более высоким rate limit"
+  "pricing_feat_rest_api_higher": "REST API с более высоким rate limit",
+  "showcase_preview_soon": "Превью скоро появится"
 }

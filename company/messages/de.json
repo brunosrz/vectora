@@ -316,5 +316,6 @@
   "pricing_feat_chat_web": "Multi-User-Web-Chat",
   "pricing_feat_invites_unlimited": "Unbegrenzte Mitgliedereinladungen",
   "pricing_feat_storage_scalable": "Skalierbarer Speicher (Postgres/Qdrant/Redis)",
-  "pricing_feat_rest_api_higher": "REST API mit höherem Rate-Limit"
+  "pricing_feat_rest_api_higher": "REST API mit höherem Rate-Limit",
+  "showcase_preview_soon": "Vorschau folgt in Kürze"
 }

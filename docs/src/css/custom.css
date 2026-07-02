@@ -37,8 +37,8 @@
   --ifm-sidebar-width: 268px;
 
   --ifm-font-family-base: "Inter", "Segoe UI", system-ui, sans-serif;
-  --ifm-font-family-monospace:
-    "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --ifm-font-family-monospace: "JetBrains Mono", "Fira Code", ui-monospace,
+    monospace;
   --ifm-font-size-base: 15px;
   --ifm-line-height-base: 1.7;
   --ifm-code-font-size: 13px;
