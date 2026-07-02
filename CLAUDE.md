@@ -25,7 +25,7 @@ Subprojetos cobertos por `scons lint` e `scons tests`:
 - `company/` — TypeScript (eslint, tsc, vitest)
 - `vectora/electron/` — TypeScript (vitest — funções puras: cookie-utils)
 - `docs/` — TypeScript (tsc) — sem testes
-- `update-server/` — TypeScript (tsc) — sem testes
+- `update-server/` — TypeScript (tsc, vitest)
 
 Rodar teste específico (Python — a partir da raiz):
 

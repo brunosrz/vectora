@@ -9,7 +9,11 @@
 # - macOS: APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID.
 # - Linux: nada (não assinamos AppImage).
 #
-# Publish: GitHub Releases privadas (T.12.3). Token via env GH_TOKEN.
+# Publish: update-server (Cloudflare Worker + R2), não GitHub Releases — o
+# repo é privado (Vectora é vendido, não open source) e o Free precisa baixar
+# e atualizar sem conta. `${os}`/`${arch}` resolvem por build (mesmo macro do
+# artifactName), então cada instalador aponta pro seu próprio
+# /updates/latest/<os>/<arch>/latest.yml no worker (update-server/src/worker.ts).
 
 appId: company.vectora.desktop
 productName: Vectora
@@ -55,13 +59,13 @@ extraResources:
   - from: ../frontend/public/vectora.ico
     to: vectora.ico
 
-# Janela de update aponta para o canal privado.
+# Janela de update aponta pro update-server público (sem token — Free não
+# tem conta). ${os}/${arch} resolvem por build, batendo com a rota
+# GET /updates/:channel/:os/:arch/latest.yml do worker.
 publish:
-  - provider: github
-    owner: brunosrz
-    repo: vectora-releases
-    private: true
-    releaseType: release
+  - provider: generic
+    url: https://update.vectora.company/updates/latest/${os}/${arch}
+    channel: latest
 
 win:
   target:
