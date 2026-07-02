@@ -33,6 +33,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from backend.api.middleware.rate_limit import limiter, tier_rate_limit
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -70,7 +72,8 @@ class ExtractResponse(BaseModel):
 
 
 @router.post("/v1/extract", response_model=ExtractResponse)
-async def extract(request: ExtractRequest, http_request: Request) -> ExtractResponse:
+@limiter.limit(tier_rate_limit)
+async def extract(request: Request, extract_request: ExtractRequest) -> ExtractResponse:
     """Extrai dados estruturados de texto usando o LLM ativo.
 
     Auto-detecta a estratégia:
@@ -85,7 +88,9 @@ async def extract(request: ExtractRequest, http_request: Request) -> ExtractResp
     from backend.services.utils import load_llm
 
     # Converte JSON Schema para Pydantic model dinamicamente
-    schema_type = _json_schema_to_pydantic(request.schema_, name="ExtractOutput")
+    schema_type = _json_schema_to_pydantic(
+        extract_request.schema_, name="ExtractOutput"
+    )
 
     # Detecção de estratégia: tenta ProviderStrategy primeiro
     strategy_name, response_format = _detect_strategy(schema_type)
@@ -111,7 +116,7 @@ async def extract(request: ExtractRequest, http_request: Request) -> ExtractResp
         )
 
         result = await agent.ainvoke(
-            {"messages": [HumanMessage(content=request.text)]},
+            {"messages": [HumanMessage(content=extract_request.text)]},
             config={"configurable": {}},
         )
 

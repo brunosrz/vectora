@@ -225,3 +225,64 @@ class TestApiKeysEndpoints:
         assert result["status"] == "updated"
         assert "GOOGLE_API_KEY" in result["updated"]
         assert mock_upsert.called
+
+
+class TestCreateInviteRequiresPro:
+    """Convidar membro adicional é feature de time — exige plano Pro.
+
+    O 1º usuário (root) nasce direto no signup, sem passar por /admin/invites
+    (backend/services/auth.py::signup) — este endpoint gateia só convites de
+    membros extras (2º+ usuário).
+    """
+
+    @pytest.mark.asyncio
+    async def test_create_invite_raises_402_on_free(self, tmp_path, monkeypatch):
+        from unittest.mock import MagicMock
+
+        from backend.api.handlers.admin import CreateInviteBody, create_invite
+        from backend.services import license as lic
+
+        monkeypatch.setattr(lic, "CACHE_PATH", tmp_path / "license_cache.json")
+
+        request = MagicMock()
+        request.state.user = MagicMock(role="admin", id="u1")
+        body = CreateInviteBody(role="member", email="novo@example.com")
+
+        with pytest.raises(Exception) as exc:
+            await create_invite(request, body)
+        assert exc.value.status_code == 402  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+
+    @pytest.mark.asyncio
+    async def test_create_invite_passes_gate_on_pro(self, tmp_path, monkeypatch):
+        """Com plano pro, o gate libera (segue para require_admin / lógica normal)."""
+        import json
+        from datetime import UTC, datetime
+        from unittest.mock import MagicMock
+
+        from backend.api.handlers.admin import CreateInviteBody, create_invite
+        from backend.services import license as lic
+
+        cache_path = tmp_path / "license_cache.json"
+        cache_path.write_text(
+            json.dumps(
+                {
+                    "tier": "pro",
+                    "status": "active",
+                    "days_remaining": 30,
+                    "expires_at": "2027-01-01",
+                    "validated_at": datetime.now(UTC).isoformat(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(lic, "CACHE_PATH", cache_path)
+
+        # Sem role admin/root → passa pelo gate de pro e falha depois no
+        # require_admin (403), não no gate de tier (402) — confirma a ordem.
+        request = MagicMock()
+        request.state.user = MagicMock(role="member", id="u1")
+        body = CreateInviteBody(role="member", email="novo@example.com")
+
+        with pytest.raises(Exception) as exc:
+            await create_invite(request, body)
+        assert exc.value.status_code == 403  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]

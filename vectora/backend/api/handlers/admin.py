@@ -281,8 +281,17 @@ async def set_user_tools(
 
 @router.post("/invites")
 async def create_invite(request: Request, body: CreateInviteBody) -> dict:
-    """Gera um link de convite de signup com token expirável."""
+    """Gera um link de convite de signup com token expirável.
+
+    Convidar membro adicional (2º+ usuário) é feature de time — exige plano
+    Pro. O primeiro usuário (root) não passa por aqui: nasce direto no
+    signup inicial (``backend/services/auth.py::signup``), sempre livre.
+    """
     import os
+
+    from backend.services.subscription import require_pro
+
+    require_pro()
 
     user = _get_user(request)
     require_admin(user)

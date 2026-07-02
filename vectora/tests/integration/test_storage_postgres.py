@@ -146,6 +146,8 @@ class TestPostgresPool:
         import backend.settings as _s
         import backend.storage.factory as _fac
 
+        # Postgres é feature Pro (backend/services/subscription.py::require_pro).
+        monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
         _fac._reset_singletons()
         monkeypatch.setattr(_s.settings, "postgres_dsn", pg_dsn)
 
@@ -162,15 +164,43 @@ class TestPostgresPool:
     @pytest.mark.asyncio
     @pytest.mark.storage
     async def test_get_pg_pool_raises_without_dsn(self, monkeypatch):
-        """get_pg_pool() levanta RuntimeError quando nenhum DSN está configurado."""
+        """get_pg_pool() levanta RuntimeError quando nenhum DSN está configurado
+        (com plano Pro — sem isso o gate de tier dispara antes do check de DSN,
+        ver test_get_pg_pool_free_tier_raises_402_before_dsn_check abaixo)."""
         import backend.settings as _s
         import backend.storage.factory as _fac
 
+        monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
         _fac._reset_singletons()
         monkeypatch.setattr(_s.settings, "postgres_dsn", None)
         monkeypatch.setattr(_s.settings, "storage_mode", "complete")
 
         with pytest.raises(RuntimeError, match="postgres_dsn"):
             await _fac.get_pg_pool()
+
+        _fac._reset_singletons()
+
+    @pytest.mark.asyncio
+    @pytest.mark.storage
+    async def test_get_pg_pool_free_tier_raises_402_before_dsn_check(
+        self, monkeypatch, tmp_path
+    ) -> None:
+        """Sem plano Pro, get_pg_pool() nega ANTES de checar o DSN — Postgres é
+        feature de time (backend/services/subscription.py::require_pro), não
+        disponível no tier free mesmo com DSN configurado."""
+        import backend.settings as _s
+        import backend.storage.factory as _fac
+        from backend.services import license as lic
+
+        monkeypatch.delenv("VECTORA_LICENSE_BYPASS", raising=False)
+        monkeypatch.setattr(lic, "CACHE_PATH", tmp_path / "license_cache.json")
+        _fac._reset_singletons()
+        monkeypatch.setattr(_s.settings, "postgres_dsn", "postgresql://x/y")
+
+        from fastapi import HTTPException
+
+        with pytest.raises(HTTPException) as exc:
+            await _fac.get_pg_pool()
+        assert exc.value.status_code == 402
 
         _fac._reset_singletons()

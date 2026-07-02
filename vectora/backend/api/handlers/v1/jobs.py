@@ -19,10 +19,11 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from backend.api.middleware.rate_limit import limiter, tier_rate_limit
 from backend.services.jobs import (
     publish_event,
     register_job,
@@ -61,7 +62,8 @@ register_job("echo", _echo_handler)
 
 
 @router.post("/v1/jobs", response_model=SubmitJobResponse)
-async def submit(req: SubmitJobRequest) -> SubmitJobResponse:
+@limiter.limit(tier_rate_limit)
+async def submit(request: Request, req: SubmitJobRequest) -> SubmitJobResponse:
     """Enfileira um job e devolve o ``request_id`` para acompanhamento."""
     if req.kind not in registered_kinds():
         raise HTTPException(
