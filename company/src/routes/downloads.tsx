@@ -45,7 +45,7 @@ const PLATFORMS: Platform[] = [
 ];
 
 /** Detecta o SO pelo userAgent (client-only — SSR retorna null). */
-function detectOS(): OS | null {
+export function detectOS(): OS | null {
   if (typeof navigator === "undefined") return null;
   const ua = navigator.userAgent.toLowerCase();
   if (ua.includes("win")) return "windows";
