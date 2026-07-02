@@ -71,14 +71,17 @@ def _get_user(request: Request) -> Any:
 def _build_system_info() -> dict[str, Any]:
     """Constrói o dicionário de informações do sistema."""
     try:
-        from backend.version import __version__
+        from backend.version import __version__, get_build_version
 
         version = __version__
+        build_version = get_build_version()
     except Exception:
         version = "unknown"
+        build_version = "unknown"
 
     return {
         "version": version,
+        "build_version": build_version,
         "python_version": sys.version,
         "platform": platform.platform(),
         "architecture": platform.machine(),

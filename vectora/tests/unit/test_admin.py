@@ -8,6 +8,8 @@ Verifica:
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 
@@ -103,8 +105,25 @@ class TestAdminSystemInfo:
 
         info = _build_system_info()
         assert "version" in info
+        assert "build_version" in info
         assert "python_version" in info
         assert "platform" in info
+
+    def test_build_version_falls_back_to_version_without_env(self, monkeypatch):
+        """Sem VECTORA_BUILD_VERSION (dev local, sem build oficial), cai pra semver puro."""
+        from backend.api.handlers.admin import _build_system_info
+
+        monkeypatch.delenv("VECTORA_BUILD_VERSION", raising=False)
+        info = _build_system_info()
+        assert info["build_version"] == info["version"]
+
+    def test_build_version_reads_env_when_set(self, monkeypatch):
+        """Com VECTORA_BUILD_VERSION setado (pipeline de release), usa o valor com hash."""
+        from backend.api.handlers.admin import _build_system_info
+
+        monkeypatch.setenv("VECTORA_BUILD_VERSION", "0.1.1.11325")
+        info = _build_system_info()
+        assert info["build_version"] == "0.1.1.11325"
 
 
 class TestApiKeysMaskKey:
@@ -304,7 +323,7 @@ class TestToggleToolGlobal:
         monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tools")
 
     @staticmethod
-    def _admin_request():
+    def _admin_request() -> Any:
         from unittest.mock import MagicMock
 
         request = MagicMock()
