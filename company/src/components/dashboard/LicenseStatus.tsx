@@ -39,7 +39,12 @@ function daysRemaining(dateStr: string | null) {
   return Math.max(0, Math.ceil(diff / 86_400_000));
 }
 
-function maskIp(ip: string) {
+function isSubStatus(value: string): value is SubStatus {
+  return value in STATUS_CONFIG;
+}
+
+function maskIp(ip: string | null) {
+  if (!ip) return "—";
   const parts = ip.split(".");
   if (parts.length === 4) return `${parts[0]}.${parts[1]}.*.*`;
   return ip.slice(0, 8) + "...";
@@ -53,7 +58,7 @@ export function LicenseStatus() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: (plan: "plus" | "pro") => createCheckout({ data: { plan } }),
+    mutationFn: () => createCheckout(),
     onSuccess: (res) => {
       window.location.href = res.url;
     },
@@ -74,11 +79,17 @@ export function LicenseStatus() {
 
   if (!sub) return null;
 
+  // `status`/`tier` vêm do banco como `string` genérico (o gerador de types
+  // não produz union literal pra CHECK constraints alterados via migration
+  // posterior à criação da tabela) — fallback seguro se vier um valor
+  // inesperado.
   const status = sub.status;
-  const config = STATUS_CONFIG[status];
+  const config = isSubStatus(status)
+    ? STATUS_CONFIG[status]
+    : STATUS_CONFIG.expired;
   const days = daysRemaining(sub.trial_ends_at);
   const isPro = sub.tier === "pro";
-  const isActive = status === "active" || status === "trialing";
+  const isPastDue = status === "past_due";
   const isPortalBusy = portalMutation.isPending;
   const isCheckoutBusy = checkoutMutation.isPending;
 
@@ -101,14 +112,14 @@ export function LicenseStatus() {
           </span>
         </div>
 
-        {sub.current_period_start && (
+        {sub.started_at && (
           <div className="mt-4 flex flex-wrap gap-4 text-sm">
             <div>
               <p className="text-xs text-muted-foreground">
                 {m.license_started()}
               </p>
               <p className="text-foreground/90">
-                {new Date(sub.current_period_start).toLocaleDateString()}
+                {new Date(sub.started_at).toLocaleDateString()}
               </p>
             </div>
             {sub.trial_ends_at && (
@@ -129,30 +140,20 @@ export function LicenseStatus() {
           </div>
         )}
 
-        {/* CTAs */}
+        {/* CTAs — free é sempre utilizável (sem trial/expiração); só existe
+            um upgrade possível (Pro). Portal só faz sentido pra quem já é
+            pro (nada a gerenciar no free). */}
         <div className="mt-5 flex flex-wrap gap-2">
-          {(status === "trialing" ||
-            status === "canceled" ||
-            status === "expired") &&
-            !isPro && (
-              <button
-                onClick={() => checkoutMutation.mutate("plus")}
-                disabled={isCheckoutBusy}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all"
-              >
-                {m.license_cta_subscribe_plus()}
-              </button>
-            )}
-          {!isPro && isActive && (
+          {!isPro && (
             <button
-              onClick={() => checkoutMutation.mutate("pro")}
+              onClick={() => checkoutMutation.mutate()}
               disabled={isCheckoutBusy}
-              className="rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50 transition-all"
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all"
             >
               {m.license_cta_upgrade_pro()}
             </button>
           )}
-          {isActive && (
+          {isPro && !isPastDue && (
             <button
               onClick={() => portalMutation.mutate()}
               disabled={isPortalBusy}
@@ -161,7 +162,7 @@ export function LicenseStatus() {
               {isPortalBusy ? m.form_submitting() : m.license_cta_manage()}
             </button>
           )}
-          {status === "past_due" && (
+          {isPro && isPastDue && (
             <button
               onClick={() => portalMutation.mutate()}
               disabled={isPortalBusy}
@@ -221,7 +222,7 @@ export function LicenseHistory() {
                 checked_at: string;
                 vectora_version: string;
                 result: string;
-                ip: string;
+                ip: string | null;
               },
               i: number,
             ) => (

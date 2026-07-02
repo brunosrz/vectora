@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import AuthLayout from "#/components/shared/AuthLayout";
@@ -10,10 +9,7 @@ import { getSession, signUp } from "#/server/fns/auth";
 import { track } from "#/lib/analytics/plausible";
 import { toast } from "sonner";
 
-const SearchSchema = z.object({ plan: z.enum(["plus", "pro"]).optional() });
-
 export const Route = createFileRoute("/signup")({
-  validateSearch: SearchSchema,
   beforeLoad: async () => {
     const user = await getSession();
     if (user) throw { redirect: { to: "/dashboard" } };
@@ -37,7 +33,6 @@ const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { plan } = Route.useSearch();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -57,7 +52,7 @@ function SignupPage() {
         },
       }),
     onSuccess: (res) => {
-      track("signup", { plan: plan ?? "plus" });
+      track("signup", { plan: "pro" });
       // Confirmação de email ligada → sem sessão; mostra "confirme seu email"
       // em vez de ir pro dashboard (que sem sessão volta pro login).
       if (res.needsConfirmation) {
@@ -104,16 +99,7 @@ function SignupPage() {
   }
 
   return (
-    <AuthLayout
-      heading={m.signup_heading()}
-      subheading={
-        plan && (
-          <p className="mt-1 text-sm text-primary">
-            Plano {plan === "pro" ? "Pro" : "Plus"} selecionado
-          </p>
-        )
-      }
-    >
+    <AuthLayout heading={m.signup_heading()}>
       <form
         onSubmit={(e) => {
           e.preventDefault();

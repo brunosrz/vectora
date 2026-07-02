@@ -52,12 +52,12 @@ const CHANNELS = [
   {
     icon: Mail,
     title: "Email",
-    desc: "Resposta em até 48h (Plus) ou 24h (Pro)",
+    desc: "Resposta em até 48h (Free) ou 24h (Pro)",
     action: {
       label: "support@vectora.company",
       href: "mailto:support@vectora.company",
     },
-    sla: { plus: "48h", pro: "24h", trial: "Community" },
+    sla: { free: "48h", pro: "24h" },
     badge: null as string | null,
   },
   {
@@ -164,10 +164,7 @@ function SupportPage() {
                 {ch.sla && (
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     <span className="rounded border border-border bg-background px-2 py-0.5 text-muted-foreground">
-                      Teste: {ch.sla.trial}
-                    </span>
-                    <span className="rounded border border-border bg-background px-2 py-0.5 text-muted-foreground">
-                      Plus: {ch.sla.plus}
+                      Free: {ch.sla.free}
                     </span>
                     <span className="rounded border border-primary/30 bg-primary/10 px-2 py-0.5 text-primary">
                       Pro: {ch.sla.pro}

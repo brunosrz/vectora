@@ -41,9 +41,13 @@ describe("verifyTurnstile", () => {
   it("em produção valida o token contra o siteverify (sucesso)", async () => {
     vi.stubEnv("DEV", false);
     process.env.TURNSTILE_SECRET_KEY = "sekret";
-    const fetchMock = vi.fn(async () => ({
-      json: async () => ({ success: true }),
-    }));
+    // Assinatura explícita (input, init) — sem isso o TS infere `calls[0]`
+    // como tupla vazia `[]` e `calls[0][1]` (o RequestInit) não tipa.
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) => ({
+        json: async () => ({ success: true }),
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const res = await verifyTurnstile("token-valido", "1.2.3.4");

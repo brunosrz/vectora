@@ -42,13 +42,22 @@ export const submitIssue = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const ISSUE_CATEGORIES = ["bug", "feedback", "feature"] as const;
+type IssueCategory = (typeof ISSUE_CATEGORIES)[number];
+
 export type IssueListItem = {
   id: string;
   title: string;
-  category: "bug" | "feedback" | "feature";
+  category: IssueCategory;
   description: string | null;
   created_at: string;
 };
+
+function toIssueCategory(value: string): IssueCategory {
+  return (ISSUE_CATEGORIES as readonly string[]).includes(value)
+    ? (value as IssueCategory)
+    : "feedback";
+}
 
 // Lista pública das issues abertas. NUNCA seleciona `email` (privacidade do
 // reporter). RLS nega acesso de cliente, então usa o admin client server-side.
@@ -61,7 +70,13 @@ export const listOpenIssues = createServerFn({ method: "GET" }).handler(
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
-    return data;
+    // `category` vem como string genérico do client Supabase (mesmo com o
+    // CHECK constraint no banco garantindo bug/feedback/feature) — narrow
+    // explícito em vez de assertar o array inteiro.
+    return data.map((row) => ({
+      ...row,
+      category: toIssueCategory(row.category),
+    }));
   },
 );
 

@@ -34,9 +34,10 @@ Deno.serve(async (req) => {
       status: 401,
     });
 
-  const body = await req.json();
-  const plan: "plus" | "pro" = body.plan;
-  const country: "BR" | "INTL" = body.country ?? "INTL";
+  // Free não passa por checkout (sem conta, sem cobrança) — este endpoint só
+  // existe pra assinar Pro.
+  const country: "BR" | "INTL" = (await req.json()).country ?? "INTL";
+  const plan = "pro" as const;
 
   const admin = createClient(supabaseUrl, serviceKey);
 
@@ -46,10 +47,7 @@ Deno.serve(async (req) => {
       apiVersion: "2024-12-18.acacia",
     });
 
-    const priceId =
-      plan === "pro"
-        ? Deno.env.get("STRIPE_PRICE_PRO_USD")!
-        : Deno.env.get("STRIPE_PRICE_PLUS_USD")!;
+    const priceId = Deno.env.get("STRIPE_PRICE_PRO_USD")!;
 
     const { data: sub } = await admin
       .from("subscriptions")
@@ -88,7 +86,7 @@ Deno.serve(async (req) => {
   const asaasKey = Deno.env.get("ASAAS_API_KEY")!;
   const asaasBase = Deno.env.get("ASAAS_API_URL") ?? "https://api.asaas.com/v3";
 
-  const amount = plan === "pro" ? 55.0 : 20.0;
+  const amount = 24.0;
 
   const paymentRes = await fetch(`${asaasBase}/payments`, {
     method: "POST",
@@ -98,7 +96,7 @@ Deno.serve(async (req) => {
       billingType: "UNDEFINED",
       value: amount,
       dueDate: new Date(Date.now() + 86_400_000).toISOString().split("T")[0],
-      description: `Vectora ${plan.toUpperCase()} — 1 mês`,
+      description: "Vectora Pro — 1 mês",
       externalReference: `${user.id}:${plan}`,
     }),
   });
