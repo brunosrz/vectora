@@ -1,9 +1,28 @@
 import { env } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import { license } from "../../src/license/routes";
 import { sha256Hex } from "../../src/auth/session";
 import { hashPassword } from "../../src/auth/password";
 import { createSession } from "../../src/auth/session";
+
+/** Mock de fetch por prefixo de URL — cada rota externa (Stripe/Asaas) responde com o JSON dado. */
+function mockFetch(routes: Record<string, unknown>) {
+  return vi.fn(async (input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : input.toString();
+    const match = Object.entries(routes).find(([prefix]) =>
+      url.includes(prefix),
+    );
+    if (!match) throw new Error(`unmocked fetch: ${url}`);
+    return new Response(JSON.stringify(match[1]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 async function makeUserWithToken(
   opts: { tier?: string; status?: string } = {},
@@ -261,6 +280,102 @@ describe("POST /agent-login", () => {
       env,
     );
     expect(noToken.status).toBe(404);
+  });
+});
+
+describe("POST /portal", () => {
+  it("returns the Stripe portal URL for a USD subscriber with a customer_id", async () => {
+    const { userId, rawToken } = await makeUserWithToken();
+    await env.DB.prepare(
+      "UPDATE subscriptions SET customer_id = ? WHERE user_id = ?",
+    )
+      .bind("cus_test_123", userId)
+      .run();
+    vi.stubGlobal(
+      "fetch",
+      mockFetch({
+        "api.stripe.com/v1/billing_portal/sessions": {
+          url: "https://billing.stripe.test/1",
+        },
+      }),
+    );
+
+    const res = await license.request(
+      "/portal",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: rawToken }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json<{ url: string }>();
+    expect(json.url).toBe("https://billing.stripe.test/1");
+  });
+
+  it("returns the Asaas billingInfoUrl for a BRL subscriber", async () => {
+    const { userId, rawToken } = await makeUserWithToken();
+    await env.DB.prepare(
+      "UPDATE subscriptions SET currency = 'BRL', customer_id = ? WHERE user_id = ?",
+    )
+      .bind("cus_asaas_123", userId)
+      .run();
+    vi.stubGlobal(
+      "fetch",
+      mockFetch({
+        "api.asaas.com": { billingInfoUrl: "https://asaas.test/billing/1" },
+      }),
+    );
+
+    const res = await license.request(
+      "/portal",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: rawToken }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json<{ url: string }>();
+    expect(json.url).toBe("https://asaas.test/billing/1");
+  });
+
+  it("rejects a missing token, an unknown token, and 404s with no customer_id", async () => {
+    const missingBody = await license.request(
+      "/portal",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      },
+      env,
+    );
+    expect(missingBody.status).toBe(400);
+
+    const unknownToken = await license.request(
+      "/portal",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: "never-issued" }),
+      },
+      env,
+    );
+    expect(unknownToken.status).toBe(401);
+
+    const { rawToken: noCustomerToken } = await makeUserWithToken();
+    const noCustomer = await license.request(
+      "/portal",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: noCustomerToken }),
+      },
+      env,
+    );
+    expect(noCustomer.status).toBe(404);
   });
 });
 

@@ -1,18 +1,32 @@
 /**
  * license/ — porta company/supabase/functions/{validate-license,agent-login,
- * rotate-token}/index.ts + a parte de token de company/src/server/fns/token.ts.
+ * rotate-token,create-portal}/index.ts + a parte de token de
+ * company/src/server/fns/token.ts.
  *
- * /validate e /agent-login são públicos (o desktop/CLI ainda não tem sessão
- * web — validate-license nem tem conceito de "usuário logado", é só o
- * VECTORA_TOKEN; agent-login troca email+senha por esse token).
+ * /validate, /agent-login e /portal são autenticados por VECTORA_TOKEN, não
+ * por sessão web — o desktop/CLI Python nunca tem cookie de sessão, só o
+ * token de licença. /portal duplica a lógica de billing/routes.ts (troca só
+ * a autenticação: sessão → token) porque o backend Python chama esta rota
+ * diretamente com o VECTORA_TOKEN salvo em config.toml.
  */
 import { Hono } from "hono";
 import type { Env } from "../relay/types";
 import { requireUserId } from "../auth/routes";
 import { verifyPassword } from "../auth/password";
 import { sha256Hex } from "../auth/session";
+import { stripeClient } from "../billing/routes";
 
 export const license = new Hono<{ Bindings: Env }>();
+
+async function userIdForToken(env: Env, token: string): Promise<string | null> {
+  const tokenHash = await sha256Hex(token);
+  const row = await env.DB.prepare(
+    "SELECT user_id FROM tokens WHERE token_hash = ?",
+  )
+    .bind(tokenHash)
+    .first<{ user_id: string }>();
+  return row?.user_id ?? null;
+}
 
 function randomHex(bytes: number): string {
   const arr = crypto.getRandomValues(new Uint8Array(bytes));
@@ -154,6 +168,47 @@ license.post("/agent-login", async (c) => {
     tier: sub?.tier ?? null,
     status: sub?.status ?? null,
   });
+});
+
+interface PortalSubRow {
+  currency: string;
+  customer_id: string | null;
+}
+
+license.post("/portal", async (c) => {
+  const body = await c.req.json<{ token?: string }>();
+  if (!body.token) return c.json({ error: "token_required" }, 400);
+
+  const userId = await userIdForToken(c.env, body.token);
+  if (!userId) return c.json({ error: "invalid_token" }, 401);
+
+  const sub = await c.env.DB.prepare(
+    "SELECT currency, customer_id FROM subscriptions WHERE user_id = ?",
+  )
+    .bind(userId)
+    .first<PortalSubRow>();
+  if (!sub?.customer_id) return c.json({ error: "no_customer_found" }, 404);
+
+  const appUrl = c.env.APP_URL;
+
+  if (sub.currency === "BRL") {
+    const asaasBase = c.env.ASAAS_API_URL || "https://api.asaas.com/v3";
+    const customerRes = await fetch(
+      `${asaasBase}/customers/${sub.customer_id}`,
+      { headers: { access_token: c.env.ASAAS_API_KEY } },
+    );
+    const customer = await customerRes.json<{ billingInfoUrl?: string }>();
+    return c.json({
+      url: customer.billingInfoUrl ?? `${appUrl}/dashboard/billing`,
+    });
+  }
+
+  const stripe = stripeClient(c.env);
+  const portal = await stripe.billingPortal.sessions.create({
+    customer: sub.customer_id,
+    return_url: `${appUrl}/dashboard/billing`,
+  });
+  return c.json({ url: portal.url });
 });
 
 license.post("/rotate", async (c) => {

@@ -7,13 +7,15 @@ Endpoints:
 - ``POST /license/validate`` — força revalidação remota do token atual e
   devolve o status fresco. Usado pelo setup wizard após salvar token.
 - ``POST /license/connect`` — root only. Login com a conta vectora.company
-  (email + senha): a edge function ``agent-login`` autentica e devolve um
-  VECTORA_TOKEN, que é persistido e validado — conecta tudo em um passo.
-- ``POST /license/portal`` — autenticado, chama a edge function Supabase
-  ``create-portal`` (Stripe Customer Portal para INTL ou Asaas dashboard
-  para BR) e retorna a URL pra abrir externamente.
+  (email + senha): ``services.vectora.company/license/agent-login`` autentica
+  e devolve um VECTORA_TOKEN, que é persistido e validado — conecta tudo em
+  um passo.
+- ``POST /license/portal`` — autenticado, chama
+  ``services.vectora.company/license/portal`` (Stripe Customer Portal para
+  INTL ou Asaas dashboard para BR) e retorna a URL pra abrir externamente.
 
-Roteamento BR vs INTL fica na edge function — o backend só repassa o token.
+Roteamento BR vs INTL fica em services, por moeda da assinatura — o backend
+só repassa o token.
 """
 
 from __future__ import annotations
@@ -45,8 +47,8 @@ _oauth_states: dict[str, float] = {}  # state → expires_at (monotonic)
 _OAUTH_TTL = 300.0  # segundos
 _RELAY_URL = os.getenv("VECTORA_RELAY_URL", "https://relay.vectora.chat")
 
-DEFAULT_PORTAL_URL = "https://vectora.company/functions/v1/create-portal"
-DEFAULT_CONNECT_URL = "https://vectora.company/functions/v1/agent-login"
+DEFAULT_PORTAL_URL = "https://services.vectora.company/license/portal"
+DEFAULT_CONNECT_URL = "https://services.vectora.company/license/agent-login"
 HTTP_TIMEOUT = 10.0
 
 
@@ -118,10 +120,10 @@ def _connect_url() -> str:
 async def license_connect(body: ConnectBody, request: Request) -> dict:
     """Login com a conta vectora.company → obtém e ativa o VECTORA_TOKEN.
 
-    Chama a edge function ``agent-login`` (email + senha). Em caso de sucesso
-    ela devolve ``{token, tier, status}``; o token é persistido em
-    ``config.toml [license]`` e validado imediatamente (popula o cache que o
-    banner e o /license/status leem).
+    Chama ``services.vectora.company/license/agent-login`` (email + senha).
+    Em caso de sucesso ela devolve ``{token, tier, status}``; o token é
+    persistido em ``config.toml [license]`` e validado imediatamente (popula
+    o cache que o banner e o /license/status leem).
     """
     _require_root(request)
     email = body.email.strip()
@@ -265,10 +267,10 @@ def _vectora_token() -> str:
 async def license_portal(request: Request) -> dict:
     """Cria sessão de Customer Portal (Stripe INTL ou Asaas BR).
 
-    Repassa o ``VECTORA_TOKEN`` para a edge function `create-portal` que
-    decide o provedor pelo país do usuário (`profiles.country`). Retorna
-    ``{url: str}`` para o desktop abrir via ``shell.openExternal()`` ou o
-    web abrir em nova aba.
+    Repassa o ``VECTORA_TOKEN`` para ``services.vectora.company/license/portal``,
+    que decide o provedor pela moeda da assinatura. Retorna ``{url: str}``
+    para o desktop abrir via ``shell.openExternal()`` ou o web abrir em nova
+    aba.
     """
     try:
         token = _vectora_token()

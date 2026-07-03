@@ -1,8 +1,9 @@
 # vectora-services
 
-Worker único no Cloudflare que substitui os antigos `relay/` e
-`update-server/` (unificados nesta fase — ver `documents/` ou o histórico de
-commits pra contexto da decisão). Domínios não mudam:
+Worker único no Cloudflare que unifica os antigos `relay/` e
+`update-server/` com auth/billing/license/GDPR/api-keys/issues/rag-library/
+registry — que antes dependiam do Supabase da `company/` (ver
+`documents/plan.md` Bloco K para o histórico da migração). Domínios:
 
 - `relay.vectora.chat` + `{token}.vectora.chat` — proxy WebSocket
   bidirecional de OAuth/webhooks pro app desktop (`src/relay/`). O cliente
@@ -10,6 +11,8 @@ commits pra contexto da decisão). Domínios não mudam:
   os dois lados.
 - `update.vectora.company` — distribuição de releases pro `electron-updater`
   e download público de primeira instalação (`src/updates/`).
+- `services.vectora.company` — auth/billing/license/GDPR/api-keys/issues/
+  rag-library/registry, todos montados em `src/index.ts`.
 
 Dispatch por hostname em `src/index.ts`.
 
@@ -40,14 +43,39 @@ conectado, ou enfileirados (TTL 10min) se offline.
 - `POST /telemetry/update-result` — conta sucesso/falha de update;
   quarentena automática após 3 falhas em 1h.
 
+**services** (`services.vectora.company`) — Hono, um router por
+responsabilidade, tudo sobre D1 (sem RLS — autorização é código, em cada
+handler):
+
+- `/auth/*` — signup, login, logout, refresh, verificação de email.
+- `/profile/*` — dados de perfil da conta.
+- `/billing/*` — checkout/portal/webhooks (Stripe INTL + Asaas BR), sessão
+  web autenticada por cookie.
+- `/license/*` — validação/rotação de `VECTORA_TOKEN`, `agent-login`
+  (email+senha → token, usado pelo backend Python), `portal` (mesma lógica
+  de `/billing/portal`, mas autenticado pelo token em vez de sessão — é a
+  rota que o backend Python chama).
+- `/oauth/*` — device flow que conecta a conta vectora.company ao relay.
+- `/gdpr/*` — soft-delete + Cron Trigger diário de hard-delete.
+- `/api-keys/*`, `/issues/*` — gestão de chaves e tickets de suporte.
+- `/rag-library/*` — placeholder (catálogo + download de bancos RAG
+  pré-indexados; fora de escopo até depois do lançamento do Vectora).
+- `/registry/*` — placeholder do MCP registry centralizado.
+
 ## Bindings (`wrangler.toml`)
 
 - Durable Object `RELAY_SESSION` (classe `RelaySession`).
 - KV `RELAY_METRICS` — estado de OAuth device flow do relay.
 - R2 `R2` (bucket `vectora-releases`) — instaladores + manifestos.
 - KV `KV` — config de canais/rollout/quarentena do updates.
+- D1 `DB` (`vectora-db`) — users/sessions/tokens/subscriptions/license_checks/
+  payment_events/email_verifications/rag_packages (`migrations/`).
+- Cron Trigger diário (`[triggers]`) — GDPR hard-delete.
 - Secrets (via `wrangler secret put`, não no `.toml`): `VECTORA_JWT_SECRET`,
-  `RELAY_HMAC_SECRET`, `VECTORA_OAUTH_SECRET`.
+  `RELAY_HMAC_SECRET`, `VECTORA_OAUTH_SECRET` (relay); `RESEND_API_KEY`
+  (email transacional); `TURNSTILE_SECRET_KEY` (anti-bot); `STRIPE_SECRET_KEY`,
+  `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_USD` (billing INTL);
+  `ASAAS_API_KEY`, `ASAAS_API_URL` (billing BR).
 
 ## Publicar um release
 
