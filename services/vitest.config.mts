@@ -37,20 +37,32 @@ export default defineConfig({
   // miniflare (WebSocket não fecha, "close timed out"). Cada projeto usa o
   // runtime certo pro que está testando.
   test: {
+    // Istanbul, não V8 — o coverage nativo do vitest não instrumenta workerd.
+    // `relay-session.ts` fica perto de 0% quando rodado no Windows: os testes
+    // que tocam o Durable Object (itDO em relay-session.test.ts) são pulados
+    // aqui pelo mesmo motivo do skip seletivo (SQLite do DO trava o cleanup do
+    // isolated storage no Windows) — em CI (Linux) esses testes rodam e a
+    // cobertura reflete o arquivo inteiro.
+    coverage: {
+      provider: "istanbul",
+      reporter: ["text", "html"],
+      include: ["src/**/*.ts"],
+    },
     projects: [
       {
         plugins: [cloudflareTest(workerOptions)],
         test: {
           name: "workers",
-          include: ["src/**/*.test.ts"],
-          setupFiles: ["./src/test-setup.ts"],
+          include: ["tests/**/*.test.ts"],
+          exclude: ["tests/scripts/**"],
+          setupFiles: ["./tests/test-setup.ts"],
           pool: cloudflarePool(workerOptions),
         },
       },
       {
         test: {
           name: "node",
-          include: ["scripts/**/*.test.ts"],
+          include: ["tests/scripts/**/*.test.ts"],
         },
       },
     ],

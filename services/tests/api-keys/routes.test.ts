@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { apiKeys } from "./routes";
-import { createSession } from "../auth/session";
+import { apiKeys } from "../../src/api-keys/routes";
+import { createSession } from "../../src/auth/session";
 
 async function makeUserWithSession() {
   const userId = crypto.randomUUID();
@@ -70,5 +70,47 @@ describe("api-keys", () => {
   it("rejects unauthenticated requests", async () => {
     const res = await apiKeys.request("/", {}, env);
     expect(res.status).toBe(401);
+  });
+
+  it("rejects an empty name and reports a conflict for a duplicate name", async () => {
+    const { token } = await makeUserWithSession();
+    const auth = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    const emptyName = await apiKeys.request(
+      "/",
+      {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ name: "", scopes: ["read"] }),
+      },
+      env,
+    );
+    expect(emptyName.status).toBe(400);
+
+    const first = await apiKeys.request(
+      "/",
+      {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ name: "dup", scopes: ["read"] }),
+      },
+      env,
+    );
+    expect(first.status).toBe(200);
+
+    const duplicate = await apiKeys.request(
+      "/",
+      {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ name: "dup", scopes: ["read"] }),
+      },
+      env,
+    );
+    expect(duplicate.status).toBe(409);
+    expect(await duplicate.json()).toEqual({ error: "name_taken" });
   });
 });

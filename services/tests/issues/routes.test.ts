@@ -1,9 +1,19 @@
 import { env } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
-import { issues } from "./routes";
+import { describe, expect, it, vi, afterEach } from "vitest";
+import { issues } from "../../src/issues/routes";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+function mockResendFetch() {
+  return vi.fn(async () => new Response(JSON.stringify({})));
+}
 
 describe("POST /issues", () => {
   it("creates an issue and lists it publicly without exposing the reporter email", async () => {
+    vi.stubGlobal("fetch", mockResendFetch());
+
     const res = await issues.request(
       "/",
       {
@@ -66,10 +76,35 @@ describe("POST /issues", () => {
     );
     expect(noTurnstile.status).toBe(400);
   });
+
+  it("rejects a failed turnstile verification", async () => {
+    const customEnv = { ...env, TURNSTILE_SECRET_KEY: "test-secret" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ success: false }))),
+    );
+
+    const res = await issues.request(
+      "/",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Valid title",
+          category: "bug",
+          turnstileToken: "bad-token",
+        }),
+      },
+      customEnv as never,
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "turnstile_failed" });
+  });
 });
 
 describe("POST /issues/waitlist", () => {
   it("is idempotent for a duplicate email", async () => {
+    vi.stubGlobal("fetch", mockResendFetch());
     const emailAddr = `${crypto.randomUUID()}@example.com`;
     const body = { email: emailAddr, turnstileToken: "test-token" };
     const first = await issues.request(
@@ -102,7 +137,7 @@ describe("POST /issues/waitlist", () => {
     expect(row?.count).toBe(1);
   });
 
-  it("rejects an invalid email", async () => {
+  it("rejects an invalid email and a missing turnstile token", async () => {
     const res = await issues.request(
       "/waitlist",
       {
@@ -116,5 +151,36 @@ describe("POST /issues/waitlist", () => {
       env,
     );
     expect(res.status).toBe(400);
+
+    const noTurnstile = await issues.request(
+      "/waitlist",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "a@b.com" }),
+      },
+      env,
+    );
+    expect(noTurnstile.status).toBe(400);
+  });
+
+  it("rejects a failed turnstile verification", async () => {
+    const customEnv = { ...env, TURNSTILE_SECRET_KEY: "test-secret" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ success: false }))),
+    );
+
+    const res = await issues.request(
+      "/waitlist",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "a@b.com", turnstileToken: "bad" }),
+      },
+      customEnv as never,
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "turnstile_failed" });
   });
 });

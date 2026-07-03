@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parseArgs, extOf, INSTALLER_RE, MANIFEST_OS } from "./release";
+import {
+  parseArgs,
+  extOf,
+  INSTALLER_RE,
+  MANIFEST_OS,
+} from "../../scripts/release";
 
 describe("parseArgs", () => {
   it("channel default é 'latest'", () => {

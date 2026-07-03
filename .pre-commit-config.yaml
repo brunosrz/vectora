@@ -163,6 +163,18 @@ repos:
         pass_filenames: false
 
   # ==========================================
+  # Type Checking — TypeScript (services, Cloudflare Worker)
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: tsc-services
+        name: Type Check — TypeScript (services)
+        entry: pnpm --dir services exec tsc --noEmit
+        language: system
+        files: ^services/.*\.ts$
+        pass_filenames: false
+
+  # ==========================================
   # GitHub Actions Workflow Lint (actionlint)
   # ==========================================
   - repo: https://github.com/rhysd/actionlint

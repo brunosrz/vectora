@@ -3,7 +3,7 @@ import app, {
   rolloutBucket,
   resolveVersion,
   installerFilename,
-} from "./worker";
+} from "../../src/updates/worker";
 
 describe("rolloutBucket", () => {
   it("é determinístico — mesmo token, mesmo bucket", () => {
@@ -196,5 +196,178 @@ describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
       env as never,
     );
     expect(res.status).toBe(200);
+  });
+
+  it("sem config nenhuma no KV — trata como canais vazios → 404", async () => {
+    const env = {
+      KV: { get: async () => null, put: async () => {} },
+      R2: { get: async () => null },
+      LICENSE_VALIDATE_URL: "",
+    };
+    const res = await app.request(
+      "/updates/latest/win/x64/latest.yml",
+      {},
+      env as never,
+    );
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe("no version available");
+  });
+
+  it("canal existe mas o manifesto não está no R2 → 404", async () => {
+    const env = {
+      KV: {
+        get: async () =>
+          JSON.stringify({
+            channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+            quarantined: [],
+          }),
+        put: async () => {},
+      },
+      R2: { get: async () => null },
+      LICENSE_VALIDATE_URL: "",
+    };
+    const res = await app.request(
+      "/updates/latest/win/x64/latest.yml",
+      {},
+      env as never,
+    );
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe("manifest missing");
+  });
+});
+
+describe("GET /updates/:channel/:os/:arch/:version/:filename", () => {
+  it("serve o arquivo do R2 com content-type/etag, 404 se ausente", async () => {
+    const found = {
+      KV: { get: async () => null, put: async () => {} },
+      R2: {
+        get: async () => ({
+          body: "asset-fake",
+          httpMetadata: { contentType: "application/octet-stream" },
+          httpEtag: '"etag-1"',
+        }),
+      },
+      LICENSE_VALIDATE_URL: "",
+    };
+    const res = await app.request(
+      "/updates/latest/win/x64/1.2.0/latest.yml.blockmap",
+      {},
+      found as never,
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("ETag")).toBe('"etag-1"');
+
+    const missing = {
+      KV: { get: async () => null, put: async () => {} },
+      R2: { get: async () => null },
+      LICENSE_VALIDATE_URL: "",
+    };
+    const missingRes = await app.request(
+      "/updates/latest/win/x64/1.2.0/latest.yml.blockmap",
+      {},
+      missing as never,
+    );
+    expect(missingRes.status).toBe(404);
+  });
+});
+
+describe("GET /health", () => {
+  it("returns ok", async () => {
+    const env = {
+      KV: { get: async () => null, put: async () => {} },
+      R2: { get: async () => null },
+      LICENSE_VALIDATE_URL: "",
+    };
+    const res = await app.request("/health", {}, env as never);
+    expect(res.status).toBe(200);
+    const body = await res.json<{ ok: boolean; server: string }>();
+    expect(body).toMatchObject({
+      ok: true,
+      server: "vectora-services/updates",
+    });
+  });
+});
+
+describe("POST /telemetry/update-result", () => {
+  function fakeKv(initial: Record<string, string> = {}) {
+    const store = new Map(Object.entries(initial));
+    return {
+      get: async (key: string) => store.get(key) ?? null,
+      put: async (key: string, value: string) => {
+        store.set(key, value);
+      },
+      _store: store,
+    };
+  }
+
+  it("increments the failure counter and does not quarantine before the 3rd failure", async () => {
+    const KV = fakeKv();
+    const env = { KV, R2: { get: async () => null }, LICENSE_VALIDATE_URL: "" };
+
+    for (let i = 0; i < 2; i++) {
+      const res = await app.request(
+        "/telemetry/update-result",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            state: "failed",
+            version: "1.2.0",
+            os: "win",
+            arch: "x64",
+          }),
+        },
+        env as never,
+      );
+      expect(res.status).toBe(200);
+    }
+    expect(KV._store.get("config")).toBeUndefined();
+  });
+
+  it("quarantines the version automatically on the 3rd failure within the window", async () => {
+    const KV = fakeKv({ "telem:1.2.0:failed": "2" });
+    const env = { KV, R2: { get: async () => null }, LICENSE_VALIDATE_URL: "" };
+
+    const res = await app.request(
+      "/telemetry/update-result",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          state: "failed",
+          version: "1.2.0",
+          os: "win",
+          arch: "x64",
+        }),
+      },
+      env as never,
+    );
+    expect(res.status).toBe(200);
+
+    const config = JSON.parse(KV._store.get("config")!);
+    expect(config.quarantined).toContain("1.2.0");
+  });
+
+  it("is idempotent — does not duplicate an already-quarantined version", async () => {
+    const KV = fakeKv({
+      "telem:1.2.0:failed": "5",
+      config: JSON.stringify({ channels: {}, quarantined: ["1.2.0"] }),
+    });
+    const env = { KV, R2: { get: async () => null }, LICENSE_VALIDATE_URL: "" };
+
+    await app.request(
+      "/telemetry/update-result",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          state: "failed",
+          version: "1.2.0",
+          os: "win",
+          arch: "x64",
+        }),
+      },
+      env as never,
+    );
+
+    const config = JSON.parse(KV._store.get("config")!);
+    expect(config.quarantined).toEqual(["1.2.0"]);
   });
 });

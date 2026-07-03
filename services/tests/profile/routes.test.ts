@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { profile } from "./routes";
-import { createSession } from "../auth/session";
+import { profile } from "../../src/profile/routes";
+import { createSession } from "../../src/auth/session";
 
 async function makeUserWithSession() {
   const userId = crypto.randomUUID();
@@ -81,5 +81,42 @@ describe("POST /profile/update", () => {
       env,
     );
     expect(badCountry.status).toBe(400);
+
+    const badLanguage = await profile.request(
+      "/update",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ language: "x" }),
+      },
+      env,
+    );
+    expect(badLanguage.status).toBe(400);
+  });
+
+  it("accepts a valid country update", async () => {
+    const { userId, token } = await makeUserWithSession();
+
+    const res = await profile.request(
+      "/update",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ country: "BR" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    const row = await env.DB.prepare("SELECT country FROM users WHERE id = ?")
+      .bind(userId)
+      .first<{ country: string }>();
+    expect(row?.country).toBe("BR");
   });
 });

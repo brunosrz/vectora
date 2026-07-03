@@ -6,7 +6,7 @@ import {
   resolveSession,
   revokeSession,
   sha256Hex,
-} from "./session";
+} from "../../src/auth/session";
 
 async function makeUser(): Promise<string> {
   const id = crypto.randomUUID();

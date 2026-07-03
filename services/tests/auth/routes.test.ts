@@ -1,7 +1,11 @@
 import { env } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
-import { auth } from "./routes";
-import { sha256Hex } from "./session";
+import { describe, expect, it, vi, afterEach } from "vitest";
+import { auth } from "../../src/auth/routes";
+import { sha256Hex } from "../../src/auth/session";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function signupBody(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -66,7 +70,8 @@ describe("POST /signup", () => {
     expect(await dup.json()).toEqual({ error: "email_taken" });
   });
 
-  it("rejects invalid email, short password, and missing turnstile token in the same request shape", async () => {
+  it("rejects a missing/short name, invalid email, short password, and missing turnstile token in the same request shape", async () => {
+    expect((await post("/signup", signupBody({ name: "A" }))).status).toBe(400);
     expect(
       (await post("/signup", signupBody({ email: "not-an-email" }))).status,
     ).toBe(400);
@@ -79,6 +84,32 @@ describe("POST /signup", () => {
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "turnstile_required" });
+  });
+});
+
+describe("POST /signup — country BR", () => {
+  it("creates a BR user with a BRL subscription", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({}))),
+    );
+    const body = signupBody({ country: "BR" });
+    const res = await post("/signup", body);
+    expect(res.status).toBe(200);
+
+    const user = await env.DB.prepare(
+      "SELECT id, country FROM users WHERE email = ?",
+    )
+      .bind(body.email)
+      .first<{ id: string; country: string }>();
+    expect(user?.country).toBe("BR");
+
+    const sub = await env.DB.prepare(
+      "SELECT currency FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(user!.id)
+      .first<{ currency: string }>();
+    expect(sub?.currency).toBe("BRL");
   });
 });
 
@@ -193,5 +224,79 @@ describe("POST /login and GET /me", () => {
     });
     expect(res.status).toBe(403);
     expect(await res.json()).toEqual({ error: "email_not_verified" });
+  });
+
+  it("rejects a login request missing email or password", async () => {
+    const res = await post("/login", { email: "a@b.com" });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      error: "email_and_password_required",
+    });
+  });
+});
+
+describe("POST /logout", () => {
+  it("revokes the session so it stops resolving, and is a no-op without a token", async () => {
+    const body = signupBody();
+    await post("/signup", body);
+    const userRow = await env.DB.prepare("SELECT id FROM users WHERE email = ?")
+      .bind(body.email)
+      .first<{ id: string }>();
+    await env.DB.prepare("UPDATE users SET email_verified = 1 WHERE id = ?")
+      .bind(userRow!.id)
+      .run();
+    const login = await post("/login", {
+      email: body.email,
+      password: body.password,
+    });
+    const { session_token: sessionToken } = await login.json<{
+      session_token: string;
+    }>();
+
+    const noToken = await auth.request("/logout", { method: "POST" }, env);
+    expect(noToken.status).toBe(200);
+
+    const logout = await auth.request(
+      "/logout",
+      { method: "POST", headers: { Authorization: `Bearer ${sessionToken}` } },
+      env,
+    );
+    expect(logout.status).toBe(200);
+
+    const me = await auth.request(
+      "/me",
+      { headers: { Authorization: `Bearer ${sessionToken}` } },
+      env,
+    );
+    expect(me.status).toBe(401);
+  });
+});
+
+describe("POST /magic-link", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("sends an email and never reveals whether the address exists", async () => {
+    const body = signupBody();
+    await post("/signup", body);
+
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({})));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const known = await post("/magic-link", { email: body.email });
+    expect(known.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    fetchMock.mockClear();
+    const unknown = await post("/magic-link", { email: "nobody@example.com" });
+    expect(unknown.status).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("requires an email", async () => {
+    const res = await post("/magic-link", {});
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "email_required" });
   });
 });

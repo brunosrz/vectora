@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { ragLibrary } from "./routes";
+import { ragLibrary } from "../../src/rag-library/routes";
 
 describe("GET /rag-library", () => {
   it("lists the catalog and redirects a known package to its storage URL, 404 for unknown", async () => {

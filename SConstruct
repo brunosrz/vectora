@@ -442,7 +442,10 @@ def _run_full_suite(log, *, coverage: bool):
 
     # ── services (relay + updates unificados; worker.ts + scripts/release.ts) ─
     _pnpm_install_if_needed("services", log)
-    _run([PNPM, "--dir", "services", "run", "test"], log=log)
+    services_test_cmd = [PNPM, "--dir", "services", "exec", "vitest", "run"]
+    if coverage:
+        services_test_cmd.append("--coverage")
+    _run(services_test_cmd, log=log)
 
 
 def _action_tests(target, source, env):
@@ -455,7 +458,10 @@ def _action_coverage(target, source, env):
     with _open_log("coverage") as log:
         _run_full_suite(log, coverage=True)
     print("\n>> log completo (limpo) em .scons-logs/coverage.txt")
-    print(">> cobertura HTML: vectora/frontend/coverage/index.html e vectora/htmlcov/index.html")
+    print(
+        ">> cobertura HTML: vectora/frontend/coverage/index.html, "
+        "vectora/htmlcov/index.html e services/coverage/index.html"
+    )
 
 
 # ── Docker ────────────────────────────────────────────────────────────────────

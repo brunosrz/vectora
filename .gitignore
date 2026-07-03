@@ -358,5 +358,4 @@ env.gha
 /.agents
 *.xml
 /docs/.docusaurus
-/relay/.wrangler
-relay/.dev.vars
+*.zip

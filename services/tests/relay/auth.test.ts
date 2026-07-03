@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { verifyJwt, generateRelayToken } from "./auth";
+import { verifyJwt, generateRelayToken } from "../../src/relay/auth";
 
 const JWT_SECRET = "test-jwt-secret-32-chars-minimum!";
 const HMAC_SECRET = "test-hmac-secret-32-chars-minimum";

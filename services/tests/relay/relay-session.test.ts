@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { env, SELF } from "cloudflare:test";
-import type { Env } from "./types";
-
-declare module "cloudflare:test" {
-  interface ProvidedEnv extends Env {}
-}
 
 const now = Math.floor(Date.now() / 1000);
 
@@ -84,6 +79,15 @@ describe("POST /register", () => {
     });
     expect(res.status).toBe(400);
   });
+
+  it("retorna 400 quando falta jwt ou fingerprint", async () => {
+    const res = await SELF.fetch("https://relay.vectora.chat/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jwt: "only-jwt" }),
+    });
+    expect(res.status).toBe(400);
+  });
 });
 
 // Verificação de payload é feita no Worker antes de criar o DO — sem SQLite.
@@ -94,6 +98,99 @@ describe("webhook — verificação de payload (Worker-level)", () => {
       headers: { "content-length": String(5 * 1024 * 1024 + 1) },
     });
     expect(res.status).toBe(413);
+  });
+});
+
+// Guard clauses antes de tocar o Durable Object (sem SQLite, roda em todos OS).
+describe("guard clauses (Worker-level, antes do DO)", () => {
+  it("GET /ws/ sem token → 400", async () => {
+    const res = await SELF.fetch("https://relay.vectora.chat/ws/");
+    expect(res.status).toBe(400);
+  });
+
+  it("GET /ws/{token} sem Upgrade: websocket → 426", async () => {
+    const res = await SELF.fetch("https://relay.vectora.chat/ws/abc123");
+    expect(res.status).toBe(426);
+  });
+
+  it("GET /health/ sem token → 400", async () => {
+    const res = await SELF.fetch("https://relay.vectora.chat/health/");
+    expect(res.status).toBe(400);
+  });
+
+  it("DELETE /relay/session/ sem token → 400", async () => {
+    const res = await SELF.fetch("https://relay.vectora.chat/relay/session/", {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("rota desconhecida → 404", async () => {
+    const res = await SELF.fetch("https://relay.vectora.chat/nope");
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /oauth/token (device flow store)", () => {
+  it("rejeita sem o secret certo, body malformado, e campos faltando", async () => {
+    const unauthorized = await SELF.fetch(
+      "https://relay.vectora.chat/oauth/token",
+      { method: "POST", body: "{}" },
+    );
+    expect(unauthorized.status).toBe(401);
+
+    const badJson = await SELF.fetch("https://relay.vectora.chat/oauth/token", {
+      method: "POST",
+      headers: { Authorization: "Bearer test-oauth-secret" },
+      body: "not-json",
+    });
+    expect(badJson.status).toBe(400);
+
+    const missingFields = await SELF.fetch(
+      "https://relay.vectora.chat/oauth/token",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer test-oauth-secret",
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      },
+    );
+    expect(missingFields.status).toBe(400);
+  });
+
+  it("armazena o token e o poll subsequente encontra e consome (uso único)", async () => {
+    const store = await SELF.fetch("https://relay.vectora.chat/oauth/token", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer test-oauth-secret",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ state: "state-1", token: "device-token" }),
+    });
+    expect(store.status).toBe(200);
+
+    const poll = await SELF.fetch(
+      "https://relay.vectora.chat/oauth/token/state-1",
+      { headers: { Authorization: "Bearer test-oauth-secret" } },
+    );
+    expect(poll.status).toBe(200);
+    expect(await poll.json()).toEqual({ token: "device-token" });
+
+    // Consumido — segunda consulta não encontra mais (202 pending).
+    const pollAgain = await SELF.fetch(
+      "https://relay.vectora.chat/oauth/token/state-1",
+      { headers: { Authorization: "Bearer test-oauth-secret" } },
+    );
+    expect(pollAgain.status).toBe(202);
+  });
+
+  it("poll rejeita sem o secret certo", async () => {
+    const res = await SELF.fetch(
+      "https://relay.vectora.chat/oauth/token/never-stored",
+    );
+    expect(res.status).toBe(401);
   });
 });
 

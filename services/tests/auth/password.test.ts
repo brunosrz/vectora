@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hashPassword, verifyPassword } from "./password";
+import { hashPassword, verifyPassword } from "../../src/auth/password";
 
 describe("hashPassword/verifyPassword", () => {
   it("hashes in the self-describing pbkdf2$iter$salt$hash format and verifies the same password", async () => {
@@ -28,5 +28,22 @@ describe("hashPassword/verifyPassword", () => {
     const a = await hashPassword("same-password");
     const b = await hashPassword("same-password");
     expect(a).not.toBe(b);
+  });
+
+  it("rejects non-positive/non-numeric iterations and a hash of the wrong byte length", async () => {
+    expect(await verifyPassword("x", "pbkdf2$0$c2FsdA==$aGFzaA==")).toBe(false);
+    expect(await verifyPassword("x", "pbkdf2$abc$c2FsdA==$aGFzaA==")).toBe(
+      false,
+    );
+
+    const real = await hashPassword("correct horse battery staple");
+    const [, iterations, salt] = real.split("$");
+    const shortHash = btoa("short");
+    expect(
+      await verifyPassword(
+        "correct horse battery staple",
+        `pbkdf2$${iterations}$${salt}$${shortHash}`,
+      ),
+    ).toBe(false);
   });
 });
