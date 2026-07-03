@@ -1,7 +1,9 @@
-name: Update Server (Cloudflare Worker)
+name: Services (Cloudflare Worker)
 
-# Servidor de updates (Hono em Cloudflare Workers). Reusable: disparado só pelo
-# runner ci.yml, que faz o path-gating (update-server/**).
+# vectora-services (Hono em Cloudflare Workers) — relay + updates unificados
+# (era relay/ + update-server/, ver Fase A do plano de unificação em
+# documents/ ou o histórico de commits). Reusable: disparado só pelo runner
+# ci.yml, que faz o path-gating (services/**).
 on:
   workflow_call:
 
@@ -10,14 +12,14 @@ permissions:
 
 defaults:
   run:
-    working-directory: update-server
+    working-directory: services
 
 env:
   NODE_VERSION: "24"
   PNPM_VERSION: "11.5.0"
 
 jobs:
-  # ── 1. Verify (install + typecheck) ──────────────────────────────────────
+  # ── 1. Verify (install + typecheck + tests) ──────────────────────────────
   verify:
     name: Verify
     runs-on: ubuntu-latest
@@ -31,27 +33,23 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-          cache-dependency-path: update-server/pnpm-lock.yaml
+          cache-dependency-path: services/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Type check (se houver tsconfig)
-        run: |
-          if [ -f tsconfig.json ]; then
-            pnpm exec tsc --noEmit
-          else
-            echo "Sem tsconfig.json — typecheck pulado (worker ainda em setup)."
-          fi
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+      - name: Test
+        run: pnpm test
 
   # ── 2. Deploy (Cloudflare Workers) ───────────────────────────────────────
   # Só em push para master e quando CLOUDFLARE_API_TOKEN está configurado.
-  # Requer wrangler.toml no update-server/ (ver update-server/README.md).
   deploy:
     name: Deploy (wrangler)
     runs-on: ubuntu-latest
     needs: verify
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     environment:
-      name: update-server-production
+      name: services-production
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -64,7 +62,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-          cache-dependency-path: update-server/pnpm-lock.yaml
+          cache-dependency-path: services/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Deploy to Cloudflare

@@ -4,17 +4,17 @@ import type { Env, RegisterRequest, RegisterResponse } from "./types";
 
 export { RelaySession };
 
-const RELAY_HOST = "relay.vectora.chat";
-const BASE_DOMAIN = "vectora.chat";
+export const RELAY_HOST = "relay.vectora.chat";
+export const RELAY_BASE_DOMAIN = "vectora.chat";
 
-export default {
+const relayHandler = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const host = url.hostname;
 
     // Subdomínio de sessão: {token}.vectora.chat
-    if (host !== RELAY_HOST && host.endsWith(`.${BASE_DOMAIN}`)) {
-      const token = host.slice(0, -`.${BASE_DOMAIN}`.length);
+    if (host !== RELAY_HOST && host.endsWith(`.${RELAY_BASE_DOMAIN}`)) {
+      const token = host.slice(0, -`.${RELAY_BASE_DOMAIN}`.length);
       return routeToSession(request, token, env, url);
     }
 
@@ -71,6 +71,8 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
+export default relayHandler;
+
 async function handleRegister(request: Request, env: Env): Promise<Response> {
   let body: RegisterRequest;
   try {
@@ -102,7 +104,7 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
   );
   const response: RegisterResponse = {
     token,
-    subdomain: `${token}.${BASE_DOMAIN}`,
+    subdomain: `${token}.${RELAY_BASE_DOMAIN}`,
     websocket_url: `wss://${RELAY_HOST}/ws/${token}`,
   };
 

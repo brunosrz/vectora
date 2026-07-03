@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { env, SELF } from "cloudflare:test";
-import type { Env } from "../src/types";
+import type { Env } from "./types";
 
 declare module "cloudflare:test" {
   interface ProvidedEnv extends Env {}

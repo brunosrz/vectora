@@ -1,4 +1,4 @@
-# Config do pnpm 11 para o update-server (Cloudflare Worker).
+# Config do pnpm 11 para o vectora-services (Cloudflare Worker).
 # allowBuilds: decisão explícita por pacote com build script (pnpm bloqueia os
 # não listados com strictDepBuilds, abortando o install).
 allowBuilds:

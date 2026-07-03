@@ -1,21 +1,16 @@
 /**
- * vectora-update-server — Cloudflare Worker.
+ * updates/ — distribuição de releases do desktop Vectora (dentro do vectora-services).
  *
  * Serve manifestos ``latest*.yml`` para o ``electron-updater`` do desktop
- * Vectora, com rollout faseado e quarantine automática por crash report.
+ * Vectora, com rollout faseado e quarantine automática por crash report, e a
+ * rota pública de primeira instalação (`/download/...`, sem token).
  *
- * Implementação inicial: skeleton com health-check + manifest stub.
- * `release.ts` (scripts/) publica os binários assinados no R2 e
- * regenera `config.yml` em KV.
+ * `scripts/release.ts` publica os binários assinados no R2 e regenera
+ * `config` no KV.
  */
 
 import { Hono } from "hono";
-
-interface Bindings {
-  R2: R2Bucket;
-  KV: KVNamespace;
-  LICENSE_VALIDATE_URL: string;
-}
+import type { Env } from "../relay/types";
 
 interface ChannelConfig {
   version: string;
@@ -28,10 +23,14 @@ interface RuntimeConfig {
   quarantined: string[];
 }
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new Hono<{ Bindings: Env }>();
 
 app.get("/health", (c) =>
-  c.json({ ok: true, server: "vectora-update-server", timestamp: Date.now() }),
+  c.json({
+    ok: true,
+    server: "vectora-services/updates",
+    timestamp: Date.now(),
+  }),
 );
 
 /** Hash determinístico estável → bucket [0..99] para rollout faseado. */
@@ -109,7 +108,7 @@ app.get("/updates/:channel/:os/:arch/:version/:filename", async (c) => {
   });
 });
 
-/** Nome do instalador conforme o artifactName do electron-builder (T.12.6). */
+/** Nome do instalador conforme o artifactName do electron-builder. */
 export function installerFilename(
   version: string,
   os: string,

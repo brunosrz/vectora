@@ -66,4 +66,5 @@ Lista de tags: `docker image ls ghcr.io/brunosrz/vectora`.
 
 **Removido nesta revisão:** jobs de deploy via SSH/VPS, publicação no PyPI e no
 NPM. A distribuição agora é **imagem Docker (GHCR) + instaladores nativos**.
-Atualizações do desktop são geridas pelo [`update-server`](../update-server/).
+Atualizações do desktop são geridas pelo [`services`](../services/) (era
+`update-server/`, unificado com o `relay/` nesta fase).

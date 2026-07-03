@@ -7,6 +7,10 @@ export interface Env {
   MAX_PAYLOAD_BYTES: string;
   QUEUE_TTL_MS: string;
   TEST_IS_WINDOWS?: string;
+  // updates/
+  R2: R2Bucket;
+  KV: KVNamespace;
+  LICENSE_VALIDATE_URL: string;
 }
 
 export interface JwtPayload {

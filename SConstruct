@@ -19,11 +19,12 @@ Instalar SCons: pip install scons (ou uv add --dev scons)
 
 Subprojetos cobertos por lint e tests:
     vectora/        Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
-    relay/          TypeScript (tsc, vitest)
     company/        TypeScript (eslint, tsc, vitest)
     electron/       TypeScript (vitest — cookie-utils e lifecycle puro)
     docs/           TypeScript (tsc) — sem testes
-    update-server/  TypeScript (tsc, vitest)
+    services/       TypeScript (tsc, vitest) — relay + updates unificados
+                    (era relay/ + update-server/, ver Fase A do plano de
+                    unificação)
 """
 
 import base64
@@ -41,11 +42,10 @@ import tempfile
 ROOT = Dir(".").abspath
 
 # Subprojetos
-VECTORA = os.path.join(ROOT, "vectora")
-RELAY   = os.path.join(ROOT, "relay")
-COMPANY = os.path.join(ROOT, "company")
-DOCS    = os.path.join(ROOT, "docs")
-UPDATE  = os.path.join(ROOT, "update-server")
+VECTORA  = os.path.join(ROOT, "vectora")
+COMPANY  = os.path.join(ROOT, "company")
+DOCS     = os.path.join(ROOT, "docs")
+SERVICES = os.path.join(ROOT, "services")
 
 _ANSI_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
@@ -369,9 +369,6 @@ def _action_lint(target, source, env):
         # `typecheck` = i18n:compile (paraglide) + tsr generate + tsc --noEmit
         _run([PNPM, "--dir", "vectora/frontend", "run", "typecheck"], log=log)
         _run([PNPM, "--dir", "vectora/frontend", "exec", "oxlint"], log=log)
-        # ── relay ─────────────────────────────────────────────────────────────
-        _pnpm_install_if_needed("relay", log)
-        _run([PNPM, "--dir", "relay", "run", "typecheck"], log=log)
         # ── company ───────────────────────────────────────────────────────────
         _pnpm_install_if_needed("company", log)
         _run([PNPM, "--dir", "company", "run", "lint"], log=log)
@@ -379,9 +376,9 @@ def _action_lint(target, source, env):
         # ── docs ──────────────────────────────────────────────────────────────
         _pnpm_install_if_needed("docs", log)
         _run([PNPM, "--dir", "docs", "run", "typecheck"], log=log)
-        # ── update-server ─────────────────────────────────────────────────────
-        _pnpm_install_if_needed("update-server", log)
-        _run([PNPM, "--dir", "update-server", "exec", "tsc", "--noEmit"], log=log)
+        # ── services (relay + updates unificados) ──────────────────────────────
+        _pnpm_install_if_needed("services", log)
+        _run([PNPM, "--dir", "services", "exec", "tsc", "--noEmit"], log=log)
     print("\n>> log completo (limpo) em .scons-logs/lint.txt")
 
 
@@ -407,8 +404,8 @@ def _action_tests_storage(target, source, env):
 
 
 def _run_full_suite(log, *, coverage: bool):
-    """Suíte completa: vectora (vitest + pytest) + relay + company + electron
-    + update-server (vitest).
+    """Suíte completa: vectora (vitest + pytest) + company + electron
+    + services (vitest — relay + updates unificados).
 
     docs não tem testes — coberto só pelo lint (typecheck).
 
@@ -435,10 +432,6 @@ def _run_full_suite(log, *, coverage: bool):
         ]
     _run(pytest_cmd, log=log, cwd=VECTORA)
 
-    # ── relay ─────────────────────────────────────────────────────────────────
-    _pnpm_install_if_needed("relay", log)
-    _run([PNPM, "--dir", "relay", "run", "test"], log=log)
-
     # ── company ───────────────────────────────────────────────────────────────
     _pnpm_install_if_needed("company", log)
     _run([PNPM, "--dir", "company", "run", "test"], log=log)
@@ -447,9 +440,9 @@ def _run_full_suite(log, *, coverage: bool):
     _pnpm_install_if_needed("vectora/electron", log)
     _run([PNPM, "--dir", "vectora/electron", "run", "test"], log=log)
 
-    # ── update-server (worker.ts + scripts/release.ts) ─────────────────────
-    _pnpm_install_if_needed("update-server", log)
-    _run([PNPM, "--dir", "update-server", "run", "test"], log=log)
+    # ── services (relay + updates unificados; worker.ts + scripts/release.ts) ─
+    _pnpm_install_if_needed("services", log)
+    _run([PNPM, "--dir", "services", "run", "test"], log=log)
 
 
 def _action_tests(target, source, env):
@@ -538,7 +531,7 @@ def _action_clean(target, source, env):
 # ── Up-version ────────────────────────────────────────────────────────────────
 # `scons up-version [bump=patch|minor|major]` — sobe o semver em pyproject.toml
 # (fonte única — backend/version.py lê de lá via importlib.metadata) e propaga
-# pro package.json do electron/relay/update-server. NÃO grava hash nenhum
+# pro package.json do electron/services. NÃO grava hash nenhum
 # nesses arquivos: o `buildVersion` (semver + hash numérico do commit, pro
 # recurso de versão do .exe/.msi) é só impresso aqui — quem usa é
 # `scons release-<os>` na hora do build. company/ fica de fora (não tem
@@ -603,8 +596,7 @@ def _action_up_version(target, source, env):
     pyproject_path = os.path.join(VECTORA, "pyproject.toml")
     package_json_paths = [
         os.path.join(VECTORA, "electron", "package.json"),
-        os.path.join(RELAY, "package.json"),
-        os.path.join(UPDATE, "package.json"),
+        os.path.join(SERVICES, "package.json"),
     ]
 
     old_version = _read_pyproject_version(pyproject_path)
@@ -635,7 +627,7 @@ def _action_up_version(target, source, env):
     print(">> Próximos passos:")
     print(f">>   scons release-<os>")
     print(
-        f">>   pnpm --dir update-server run release -- --version={new_version_str}"
+        f">>   pnpm --dir services run release -- --version={new_version_str}"
     )
 
 
@@ -659,11 +651,11 @@ def _action_help(target, source, env):
     scons docker           sobe infraestrutura (PostgreSQL, Redis, Qdrant)
 
   Qualidade — cobrem todos os subprojetos
-    scons tests            suíte completa: vectora + relay + company (sem cobertura)
+    scons tests            suíte completa: vectora + services + company (sem cobertura)
     scons coverage         a mesma suíte COM relatório de cobertura
     scons tests-storage    só testes de storage (Postgres, Redis, Qdrant, SQLite, LanceDB)
-    scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + relay (tsc)
-                           + company (eslint+tsc) + docs (tsc) + update-server (tsc)
+    scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + company (eslint+tsc)
+                           + docs (tsc) + services (tsc)
     scons clean            remove todos os outputs de build
 """)
     sys.stdout.flush()

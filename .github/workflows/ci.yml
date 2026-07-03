@@ -1,7 +1,7 @@
 name: CI
 
 # Orquestrador único do monorepo. É o ÚNICO workflow com gatilhos de push/PR —
-# os demais (vectora, company, docs, update-server) são reusable
+# os demais (vectora, company, docs, services) são reusable
 # (`on: workflow_call`) e só rodam quando este runner os chama.
 #
 # Path-gating centralizado: `dorny/paths-filter` detecta o que mudou e cada
@@ -25,7 +25,7 @@ jobs:
       vectora: ${{ steps.filter.outputs.vectora }}
       company: ${{ steps.filter.outputs.company }}
       docs: ${{ steps.filter.outputs.docs }}
-      update_server: ${{ steps.filter.outputs.update_server }}
+      services: ${{ steps.filter.outputs.services }}
     steps:
       - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v4
@@ -42,9 +42,9 @@ jobs:
             docs:
               - 'docs/**'
               - '.github/workflows/docs.yml'
-            update_server:
-              - 'update-server/**'
-              - '.github/workflows/update-server.yml'
+            services:
+              - 'services/**'
+              - '.github/workflows/services.yml'
 
   # ── Workflows de projeto (reusable, gated pelo runner) ───────────────────
   # vectora é o app principal: roda SEMPRE (não path-gated), pra validar o core
@@ -65,8 +65,8 @@ jobs:
     uses: ./.github/workflows/docs.yml
     secrets: inherit
 
-  update-server:
+  services:
     needs: changes
-    if: ${{ needs.changes.outputs.update_server == 'true' || github.event_name == 'workflow_dispatch' }}
-    uses: ./.github/workflows/update-server.yml
+    if: ${{ needs.changes.outputs.services == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/services.yml
     secrets: inherit

@@ -2,14 +2,14 @@
  * Publica os instaladores de `vectora/electron/dist-electron/` no R2 e atualiza
  * o canal de release no KV (`channels.<channel>.version`).
  *
- * Uso (depois de `scons release-<os>`, a partir de update-server/):
+ * Uso (depois de `scons release-<os>`, a partir de services/):
  *   pnpm release -- --channel=latest --version=0.1.1 [--dist=<path>]
  *
  * Sobe pra key `<channel>/<os>/<arch>/<version>/<filename>` (mesmo padrão que
- * `worker.ts` já lê em GET /updates/... e GET /download/...). O manifesto
- * `latest*.yml` que o electron-builder gera junto vai pro mesmo lugar, com o
- * nome fixo `latest.yml` (é o que `GET /updates/:channel/:os/:arch/latest.yml`
- * espera).
+ * `updates/worker.ts` já lê em GET /updates/... e GET /download/...). O
+ * manifesto `latest*.yml` que o electron-builder gera junto vai pro mesmo
+ * lugar, com o nome fixo `latest.yml` (é o que
+ * `GET /updates/:channel/:os/:arch/latest.yml` espera).
  */
 import { execFileSync } from "node:child_process";
 import { readdirSync } from "node:fs";
