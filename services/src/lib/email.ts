@@ -12,29 +12,27 @@ export async function sendEmail(
   apiKey: string,
   params: { to: string; subject: string; html: string; from?: string },
 ): Promise<void> {
-  // Falha de email (rede, timeout, erro HTTP) nunca deve derrubar o fluxo
-  // principal (signup, webhook de pagamento) — só loga. Mesmo princípio já
-  // usado nas edge functions originais (try/catch silencioso ao redor do
-  // resend.emails.send).
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: params.from ?? FROM_EMAIL,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
-      }),
-    });
-    if (!res.ok) {
-      console.error("sendEmail failed", res.status, await res.text());
-    }
-  } catch (err) {
-    console.error("sendEmail failed", err);
+  // Único chamador é o consumer da fila `vectora-email` (queue-consumer.ts)
+  // — nenhum handler HTTP chama isso direto (todos enfileiram via
+  // enqueueEmail). Por isso lança em erro em vez de só logar: quem decide
+  // retry/dead-letter agora é a fila, não esta função.
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: params.from ?? FROM_EMAIL,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    console.error("sendEmail failed", res.status, body);
+    throw new Error(`sendEmail failed: ${res.status} ${body}`);
   }
 }
 

@@ -37,7 +37,7 @@ describe("sendEmail", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it("loga e não lança quando o Resend responde não-ok", async () => {
+  it("loga e lança quando o Resend responde não-ok — o consumer da fila decide o retry", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response("bad request", { status: 400 })),
@@ -46,28 +46,22 @@ describe("sendEmail", () => {
 
     await expect(
       sendEmail("api-key", { to: "a@b.com", subject: "s", html: "h" }),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow("sendEmail failed: 400");
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
 
-  it("loga e não lança quando o fetch falha (rede/timeout)", async () => {
+  it("propaga o erro quando o fetch falha (rede/timeout)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
         throw new Error("network down");
       }),
     );
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     await expect(
       sendEmail("api-key", { to: "a@b.com", subject: "s", html: "h" }),
-    ).resolves.toBeUndefined();
-    expect(errorSpy).toHaveBeenCalledWith(
-      "sendEmail failed",
-      expect.any(Error),
-    );
-    errorSpy.mockRestore();
+    ).rejects.toThrow("network down");
   });
 });
 

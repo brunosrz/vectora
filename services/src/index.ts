@@ -7,7 +7,10 @@
  *   no cliente Python, domínio não muda).
  * - `update.vectora.company` → updates (electron-updater + download público).
  * - Qualquer outro host (`services.vectora.company`) → auth/profile/billing/
- *   license/gdpr/api-keys/issues/rag-library/registry.
+ *   license/gdpr/api-keys/issues/rag-library/registry/telemetry.
+ *
+ * `queue()` processa as duas filas do Worker (`vectora-email`, `vectora-jobs`
+ * — ver src/queue-consumer.ts e wrangler.toml).
  */
 
 import { Hono } from "hono";
@@ -22,11 +25,13 @@ import { profile } from "./profile/routes";
 import { billing } from "./billing/routes";
 import { license } from "./license/routes";
 import { oauth } from "./oauth/routes";
-import { gdpr, hardDeleteExpiredUsers } from "./gdpr/routes";
+import { gdpr, enqueueExpiredUserDeletions } from "./gdpr/routes";
 import { apiKeys } from "./api-keys/routes";
 import { issues } from "./issues/routes";
 import { ragLibrary } from "./rag-library/routes";
 import { registry } from "./registry/routes";
+import { telemetry } from "./telemetry/routes";
+import { handleQueue } from "./queue-consumer";
 import type { Env } from "./relay/types";
 
 export { RelaySession };
@@ -46,6 +51,7 @@ servicesApp.route("/api-keys", apiKeys);
 servicesApp.route("/issues", issues);
 servicesApp.route("/rag-library", ragLibrary);
 servicesApp.route("/registry", registry);
+servicesApp.route("/telemetry", telemetry);
 servicesApp.get("/health", (c) =>
   c.json({ ok: true, server: "vectora-services" }),
 );
@@ -71,6 +77,10 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<void> {
-    ctx.waitUntil(hardDeleteExpiredUsers(env).then(() => undefined));
+    ctx.waitUntil(enqueueExpiredUserDeletions(env).then(() => undefined));
+  },
+
+  async queue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
+    await handleQueue(batch, env);
   },
 } satisfies ExportedHandler<Env>;

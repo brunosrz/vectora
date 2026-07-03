@@ -4,7 +4,7 @@ import {
   env,
   waitOnExecutionContext,
 } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import worker from "../src/index";
 
 const itDO = env.TEST_IS_WINDOWS === "1" ? it.skip : it;
@@ -59,7 +59,7 @@ describe("fetch dispatch by hostname", () => {
 });
 
 describe("scheduled()", () => {
-  it("runs hardDeleteExpiredUsers via waitUntil", async () => {
+  it("enqueues a gdpr_delete_user job via waitUntil for each expired user", async () => {
     const userId = crypto.randomUUID();
     await env.DB.prepare(
       "INSERT INTO users (id, email, password_hash, soft_delete_at) VALUES (?, ?, ?, ?)",
@@ -72,13 +72,21 @@ describe("scheduled()", () => {
       )
       .run();
 
+    const sendSpy = vi.spyOn(env.JOBS_QUEUE, "send");
     const ctx = createExecutionContext();
     await worker.scheduled!(createScheduledController(), env, ctx);
     await waitOnExecutionContext(ctx);
 
-    const gone = await env.DB.prepare("SELECT id FROM users WHERE id = ?")
+    expect(sendSpy).toHaveBeenCalledWith({
+      type: "gdpr_delete_user",
+      userId,
+    });
+
+    // scheduled() só enfileira — o usuário continua no D1 até o consumer
+    // da fila chamar hardDeleteOneUser.
+    const stillThere = await env.DB.prepare("SELECT id FROM users WHERE id = ?")
       .bind(userId)
       .first();
-    expect(gone).toBeNull();
+    expect(stillThere).not.toBeNull();
   });
 });

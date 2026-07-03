@@ -20,7 +20,8 @@ import {
   sha256Hex,
 } from "./session";
 import { verifyTurnstile } from "../lib/turnstile";
-import { sendEmail, verifyEmailHtml, magicLinkHtml } from "../lib/email";
+import { verifyEmailHtml, magicLinkHtml } from "../lib/email";
+import { enqueueEmail } from "../lib/queue";
 
 export const auth = new Hono<{ Bindings: Env }>();
 
@@ -132,7 +133,7 @@ auth.post("/signup", async (c) => {
     VERIFY_TTL_MS,
   );
   const verifyUrl = `${c.env.APP_URL}/auth/verify?token=${verifyToken}`;
-  await sendEmail(c.env.RESEND_API_KEY, {
+  await enqueueEmail(c.env, {
     to: email,
     subject: "Confirme seu email — Vectora",
     html: verifyEmailHtml(body.name, verifyUrl),
@@ -236,7 +237,7 @@ auth.post("/magic-link", async (c) => {
       MAGIC_LINK_TTL_MS,
     );
     const loginUrl = `${c.env.APP_URL}/auth/verify?token=${token}`;
-    await sendEmail(c.env.RESEND_API_KEY, {
+    await enqueueEmail(c.env, {
       to: body.email,
       subject: "Seu link de acesso — Vectora",
       html: magicLinkHtml(loginUrl),

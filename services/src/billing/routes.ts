@@ -10,7 +10,8 @@ import { Hono } from "hono";
 import Stripe from "stripe";
 import type { Env } from "../relay/types";
 import { requireUserId } from "../auth/routes";
-import { sendEmail, invoicePaidHtml, invoiceFailedHtml } from "../lib/email";
+import { invoicePaidHtml, invoiceFailedHtml } from "../lib/email";
+import { enqueueEmail } from "../lib/queue";
 
 export const billing = new Hono<{ Bindings: Env }>();
 
@@ -251,7 +252,7 @@ async function handleStripeWebhook(c: {
         style: "currency",
         currency: inv.currency.toUpperCase(),
       });
-      await sendEmail(c.env.RESEND_API_KEY, {
+      await enqueueEmail(c.env, {
         to: email,
         subject: "Pagamento confirmado — Vectora",
         html: invoicePaidHtml(email, amount, plan, periodEnd),
@@ -273,7 +274,7 @@ async function handleStripeWebhook(c: {
         style: "currency",
         currency: inv.currency.toUpperCase(),
       });
-      await sendEmail(c.env.RESEND_API_KEY, {
+      await enqueueEmail(c.env, {
         to: email,
         subject: "Falha no pagamento — Vectora",
         html: invoiceFailedHtml(email, amount),
@@ -336,7 +337,7 @@ async function handleAsaasWebhook(c: {
         month: "long",
         year: "numeric",
       });
-      await sendEmail(c.env.RESEND_API_KEY, {
+      await enqueueEmail(c.env, {
         to: email,
         subject: "Pagamento confirmado — Vectora",
         html: invoicePaidHtml(email, amount, plan ?? "Pro", periodEnd),
@@ -354,7 +355,7 @@ async function handleAsaasWebhook(c: {
     const email = await getUserEmail(c.env.DB, uid);
     if (email) {
       const amount = `R$${((body.payment?.value ?? 0) as number).toFixed(2).replace(".", ",")}`;
-      await sendEmail(c.env.RESEND_API_KEY, {
+      await enqueueEmail(c.env, {
         to: email,
         subject: "Falha no pagamento — Vectora",
         html: invoiceFailedHtml(email, amount),

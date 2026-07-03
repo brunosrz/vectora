@@ -9,3 +9,19 @@ describe("GET /registry/mcp", () => {
     expect(await res.json()).toEqual({ entries: [] });
   });
 });
+
+describe("GET /registry/skills", () => {
+  it("returns an empty entries array (no aggregator yet)", async () => {
+    const res = await registry.request("/skills", {}, env);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ entries: [] });
+  });
+});
+
+describe("GET /registry/extensions", () => {
+  it("returns an empty entries array (no aggregator yet)", async () => {
+    const res = await registry.request("/extensions", {}, env);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ entries: [] });
+  });
+});

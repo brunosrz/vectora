@@ -1,3 +1,5 @@
+import type { EmailMessage, JobMessage } from "../lib/queue-types";
+
 export interface Env {
   RELAY_SESSION: DurableObjectNamespace;
   RELAY_METRICS: KVNamespace;
@@ -11,7 +13,6 @@ export interface Env {
   // updates/
   R2: R2Bucket;
   KV: KVNamespace;
-  LICENSE_VALIDATE_URL: string;
   // auth/billing/license/gdpr/api-keys/issues (Fase B/C)
   DB: D1Database;
   APP_URL: string;
@@ -22,6 +23,9 @@ export interface Env {
   STRIPE_PRICE_PRO_USD: string;
   ASAAS_API_KEY: string;
   ASAAS_API_URL: string;
+  // queues
+  EMAIL_QUEUE: Queue<EmailMessage>;
+  JOBS_QUEUE: Queue<JobMessage>;
 }
 
 export interface JwtPayload {

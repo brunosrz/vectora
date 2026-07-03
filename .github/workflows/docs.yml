@@ -40,11 +40,13 @@ jobs:
         run: pnpm run build
 
   # ── 2. Deploy to Vercel (docs.vectora.company) ───────────────────────────
+  # ci.yml só dispara via workflow_dispatch (Jenkins assume o CI contínuo) —
+  # o disparo aqui é sempre manual; a checagem é só a branch, não o evento.
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: verify
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
     environment:
       name: docs-production
       url: https://docs.vectora.company

@@ -24,17 +24,17 @@ new_sqlite_classes = ["RelaySession"]
 
 [[kv_namespaces]]
 binding = "RELAY_METRICS"
-id = "ae857e96bdf94823a10629562fb28184"
+id = "f38a1de6901643c89d02a69cd5b529e2"
 
 # updates/ (Fase A) — distribuição de releases (electron-updater + download
 # público de primeira instalação). Domínio update.vectora.company.
 [[r2_buckets]]
 binding = "R2"
-bucket_name = "vectora-releases"
+bucket_name = "vectora-r2"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "5bf302c7fcc9463aa642aa1731b13def"
+id = "0bed7e9f6db54ff3bb8d04c015c7a0e2"
 
 # auth/billing/license/gdpr/api-keys/issues/rag-library (Fase B/C) — substitui
 # o Postgres do Supabase. Sem RLS: autorização é feita em código, em cada
@@ -43,17 +43,44 @@ id = "5bf302c7fcc9463aa642aa1731b13def"
 [[d1_databases]]
 binding = "DB"
 database_name = "vectora-db"
-database_id = "REPLACE_WITH_WRANGLER_D1_CREATE_OUTPUT"
+database_id = "fe18c73c-4af6-4200-ab5e-657fdfa423e9"
 migrations_dir = "migrations"
 
 # GDPR hard-delete (soft-delete → 30 dias → apagado de vez). Roda 1x/dia.
 [triggers]
 crons = ["0 3 * * *"]
 
+# vectora-email: desacopla o envio de verdade (Resend) do request/response —
+# 9 pontos no código faziam `await sendEmail(...)` síncrono antes disso.
+[[queues.producers]]
+binding = "EMAIL_QUEUE"
+queue = "vectora-email"
+
+[[queues.consumers]]
+queue = "vectora-email"
+max_batch_size = 10
+max_retries = 3
+dead_letter_queue = "vectora-email-dlq"
+
+# vectora-jobs: GDPR hard-delete (1 job por usuário, não tudo numa invocação
+# de cron só), telemetria de update (fim do read-modify-write racy em KV) e
+# ingestão de telemetria/reindex de RAG library. max_concurrency = 1 é
+# proposital: serializa o consumer inteiro, o que elimina a race condition
+# da telemetria de update sem precisar de lock nenhum.
+[[queues.producers]]
+binding = "JOBS_QUEUE"
+queue = "vectora-jobs"
+
+[[queues.consumers]]
+queue = "vectora-jobs"
+max_batch_size = 10
+max_retries = 3
+max_concurrency = 1
+dead_letter_queue = "vectora-jobs-dlq"
+
 [vars]
 MAX_PAYLOAD_BYTES = "5242880"
 QUEUE_TTL_MS = "600000"
-LICENSE_VALIDATE_URL = "https://vectora.company/functions/v1/validate-license"
 APP_URL = "https://vectora.company"
 RELAY_URL = "https://relay.vectora.chat"
 

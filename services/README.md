@@ -40,8 +40,9 @@ conectado, ou enfileirados (TTL 10min) se offline.
 - `GET /updates/:channel/:os/:arch/:version/:filename` — binário/blockmap.
 - `GET /download/:channel/:os/:arch/:ext` — download de primeira instalação
   (sem token, sem rollout — sempre a versão estável do canal).
-- `POST /telemetry/update-result` — conta sucesso/falha de update;
-  quarentena automática após 3 falhas em 1h.
+- `POST /telemetry/update-result` — só enfileira (job `update_telemetry`); a
+  contagem de sucesso/falha e a quarentena automática após 3 falhas em 1h
+  rodam no consumer da fila `vectora-jobs` (`processUpdateTelemetry`).
 
 **services** (`services.vectora.company`) — Hono, um router por
 responsabilidade, tudo sobre D1 (sem RLS — autorização é código, em cada
@@ -56,11 +57,20 @@ handler):
   de `/billing/portal`, mas autenticado pelo token em vez de sessão — é a
   rota que o backend Python chama).
 - `/oauth/*` — device flow que conecta a conta vectora.company ao relay.
-- `/gdpr/*` — soft-delete + Cron Trigger diário de hard-delete.
+- `/gdpr/*` — soft-delete + Cron Trigger diário que só enfileira 1 job
+  `gdpr_delete_user` por usuário expirado (hard-delete de verdade acontece
+  no consumer, `hardDeleteOneUser`).
 - `/api-keys/*`, `/issues/*` — gestão de chaves e tickets de suporte.
-- `/rag-library/*` — placeholder (catálogo + download de bancos RAG
-  pré-indexados; fora de escopo até depois do lançamento do Vectora).
-- `/registry/*` — placeholder do MCP registry centralizado.
+- `/rag-library/*` — catálogo + download de bancos RAG pré-indexados (Fase E
+  segue fora de escopo — nenhum pacote real ainda). `POST /:id/reindex`
+  enfileira de verdade (`rag_reindex`), mas o consumer sempre marca
+  `status='failed'`: não existe provedor de storage externo configurado.
+- `/registry/*` — `mcp`, `skills`, `extensions` — "um registry, três
+  catálogos" (`documents/extensibility-roadmap.md` §5), todos placeholder
+  (`{entries: []}`) até existir curadoria de verdade.
+- `/telemetry/ingest` — ingestão genérica de eventos do backend Python local
+  (sem auth — Free não tem conta); só enfileira (`telemetry_ingest`), grava
+  em `telemetry_events` no consumer.
 
 ## Bindings (`wrangler.toml`)
 
@@ -69,8 +79,17 @@ handler):
 - R2 `R2` (bucket `vectora-releases`) — instaladores + manifestos.
 - KV `KV` — config de canais/rollout/quarentena do updates.
 - D1 `DB` (`vectora-db`) — users/sessions/tokens/subscriptions/license_checks/
-  payment_events/email_verifications/rag_packages (`migrations/`).
-- Cron Trigger diário (`[triggers]`) — GDPR hard-delete.
+  payment_events/email_verifications/rag_packages/telemetry_events
+  (`migrations/`).
+- Cron Trigger diário (`[triggers]`) — GDPR (enfileira, não deleta direto).
+- Queue `vectora-email` (producer `EMAIL_QUEUE`) — todo `sendEmail` real
+  passa por aqui; consumer em `src/queue-consumer.ts`, DLQ
+  `vectora-email-dlq`.
+- Queue `vectora-jobs` (producer `JOBS_QUEUE`, `max_concurrency = 1`,
+  proposital — serializa a telemetria de update, matando a race condition
+  que existia no read-modify-write direto em KV) — jobs `gdpr_delete_user`,
+  `update_telemetry`, `telemetry_ingest`, `rag_reindex`; DLQ
+  `vectora-jobs-dlq`.
 - Secrets (via `wrangler secret put`, não no `.toml`): `VECTORA_JWT_SECRET`,
   `RELAY_HMAC_SECRET`, `VECTORA_OAUTH_SECRET` (relay); `RESEND_API_KEY`
   (email transacional); `TURNSTILE_SECRET_KEY` (anti-bot); `STRIPE_SECRET_KEY`,

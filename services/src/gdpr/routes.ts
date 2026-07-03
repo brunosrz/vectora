@@ -12,7 +12,8 @@ import Stripe from "stripe";
 import type { Env } from "../relay/types";
 import { requireUserId } from "../auth/routes";
 import { bearerToken, revokeSession } from "../auth/session";
-import { sendEmail, accountDeletedHtml } from "../lib/email";
+import { accountDeletedHtml } from "../lib/email";
+import { enqueueEmail, enqueueJob } from "../lib/queue";
 
 export const gdpr = new Hono<{ Bindings: Env }>();
 
@@ -96,7 +97,7 @@ gdpr.post("/delete", async (c) => {
     year: "numeric",
   });
 
-  await sendEmail(c.env.RESEND_API_KEY, {
+  await enqueueEmail(c.env, {
     to: user.email,
     subject: "Conta Vectora agendada para exclusão",
     html: accountDeletedHtml(user.full_name || user.email, deletionDate),
@@ -112,8 +113,47 @@ gdpr.post("/delete", async (c) => {
   return c.json({ ok: true });
 });
 
-/** Chamado pelo Cron Trigger em src/index.ts (scheduled()), não por HTTP. */
-export async function hardDeleteExpiredUsers(env: Env): Promise<number> {
+/**
+ * Deleta um único usuário expirado (cancela billing externo + apaga do D1).
+ * Lança em vez de só logar — quem decide retry agora é o consumer da fila
+ * `vectora-jobs` (job `gdpr_delete_user`), não este loop.
+ */
+export async function hardDeleteOneUser(env: Env, uid: string): Promise<void> {
+  const sub = await env.DB.prepare(
+    "SELECT provider, customer_id, provider_id FROM subscriptions WHERE user_id = ?",
+  )
+    .bind(uid)
+    .first<{
+      provider: string | null;
+      customer_id: string | null;
+      provider_id: string | null;
+    }>();
+
+  if (sub?.provider === "stripe" && sub.provider_id) {
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-12-18.acacia" as never,
+      httpClient: Stripe.createFetchHttpClient(),
+    });
+    await stripe.subscriptions.cancel(sub.provider_id).catch(() => null);
+  }
+  if (sub?.provider === "asaas" && sub.customer_id) {
+    const asaasBase = env.ASAAS_API_URL || "https://api.asaas.com/v3";
+    await fetch(`${asaasBase}/customers/${sub.customer_id}`, {
+      method: "DELETE",
+      headers: { access_token: env.ASAAS_API_KEY },
+    }).catch(() => null);
+  }
+
+  // ON DELETE CASCADE cuida de sessions/tokens/subscriptions/etc.
+  await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(uid).run();
+}
+
+/**
+ * Chamado pelo Cron Trigger em src/index.ts (scheduled()) — enfileira 1 job
+ * `gdpr_delete_user` por usuário expirado em vez de deletar tudo numa
+ * invocação de cron só (cada usuário ganha retry independente na fila).
+ */
+export async function enqueueExpiredUserDeletions(env: Env): Promise<number> {
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { results } = await env.DB.prepare(
     "SELECT id FROM users WHERE soft_delete_at IS NOT NULL AND soft_delete_at < ?",
@@ -121,42 +161,8 @@ export async function hardDeleteExpiredUsers(env: Env): Promise<number> {
     .bind(cutoff)
     .all<{ id: string }>();
 
-  if (!results.length) return 0;
-
-  let deleted = 0;
-  for (const { id: uid } of results) {
-    try {
-      const sub = await env.DB.prepare(
-        "SELECT provider, customer_id, provider_id FROM subscriptions WHERE user_id = ?",
-      )
-        .bind(uid)
-        .first<{
-          provider: string | null;
-          customer_id: string | null;
-          provider_id: string | null;
-        }>();
-
-      if (sub?.provider === "stripe" && sub.provider_id) {
-        const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-          apiVersion: "2024-12-18.acacia" as never,
-          httpClient: Stripe.createFetchHttpClient(),
-        });
-        await stripe.subscriptions.cancel(sub.provider_id).catch(() => null);
-      }
-      if (sub?.provider === "asaas" && sub.customer_id) {
-        const asaasBase = env.ASAAS_API_URL || "https://api.asaas.com/v3";
-        await fetch(`${asaasBase}/customers/${sub.customer_id}`, {
-          method: "DELETE",
-          headers: { access_token: env.ASAAS_API_KEY },
-        }).catch(() => null);
-      }
-
-      // ON DELETE CASCADE cuida de sessions/tokens/subscriptions/etc.
-      await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(uid).run();
-      deleted++;
-    } catch (err) {
-      console.error(`hardDeleteExpiredUsers: falha ao deletar ${uid}`, err);
-    }
+  for (const { id: userId } of results) {
+    await enqueueJob(env, { type: "gdpr_delete_user", userId });
   }
-  return deleted;
+  return results.length;
 }

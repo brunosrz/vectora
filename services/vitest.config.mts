@@ -8,7 +8,6 @@ const workerOptions = {
       VECTORA_JWT_SECRET: "test-jwt-secret-32-chars-minimum!",
       RELAY_HMAC_SECRET: "test-hmac-secret-32-chars-minimum",
       VECTORA_OAUTH_SECRET: "test-oauth-secret",
-      LICENSE_VALIDATE_URL: "https://vectora.company/functions/v1/validate-license",
       APP_URL: "https://vectora.company",
       RELAY_URL: "https://relay.vectora.chat",
       RESEND_API_KEY: "test-resend-key",
@@ -27,6 +26,11 @@ const workerOptions = {
     durableObjects: {
       RELAY_SESSION: "RelaySession",
     },
+    queueProducers: {
+      EMAIL_QUEUE: "vectora-email",
+      JOBS_QUEUE: "vectora-jobs",
+    },
+    queueConsumers: ["vectora-email", "vectora-jobs"],
   },
 };
 

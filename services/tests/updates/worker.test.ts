@@ -1,8 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import app, {
   rolloutBucket,
   resolveVersion,
   installerFilename,
+  processUpdateTelemetry,
 } from "../../src/updates/worker";
 
 describe("rolloutBucket", () => {
@@ -98,7 +99,7 @@ describe("GET /download/:channel/:os/:arch/:ext", () => {
         };
       },
     };
-    return { KV, R2, LICENSE_VALIDATE_URL: "" };
+    return { KV, R2 };
   }
 
   it("sem token nenhum — 200 direto (Free não tem conta)", async () => {
@@ -188,7 +189,7 @@ describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
         httpEtag: '"etag"',
       }),
     };
-    const env = { KV, R2, LICENSE_VALIDATE_URL: "" };
+    const env = { KV, R2 };
 
     const res = await app.request(
       "/updates/latest/win/x64/latest.yml",
@@ -202,7 +203,6 @@ describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
     const env = {
       KV: { get: async () => null, put: async () => {} },
       R2: { get: async () => null },
-      LICENSE_VALIDATE_URL: "",
     };
     const res = await app.request(
       "/updates/latest/win/x64/latest.yml",
@@ -224,7 +224,6 @@ describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
         put: async () => {},
       },
       R2: { get: async () => null },
-      LICENSE_VALIDATE_URL: "",
     };
     const res = await app.request(
       "/updates/latest/win/x64/latest.yml",
@@ -247,7 +246,6 @@ describe("GET /updates/:channel/:os/:arch/:version/:filename", () => {
           httpEtag: '"etag-1"',
         }),
       },
-      LICENSE_VALIDATE_URL: "",
     };
     const res = await app.request(
       "/updates/latest/win/x64/1.2.0/latest.yml.blockmap",
@@ -260,7 +258,6 @@ describe("GET /updates/:channel/:os/:arch/:version/:filename", () => {
     const missing = {
       KV: { get: async () => null, put: async () => {} },
       R2: { get: async () => null },
-      LICENSE_VALIDATE_URL: "",
     };
     const missingRes = await app.request(
       "/updates/latest/win/x64/1.2.0/latest.yml.blockmap",
@@ -276,7 +273,6 @@ describe("GET /health", () => {
     const env = {
       KV: { get: async () => null, put: async () => {} },
       R2: { get: async () => null },
-      LICENSE_VALIDATE_URL: "",
     };
     const res = await app.request("/health", {}, env as never);
     expect(res.status).toBe(200);
@@ -289,43 +285,9 @@ describe("GET /health", () => {
 });
 
 describe("POST /telemetry/update-result", () => {
-  function fakeKv(initial: Record<string, string> = {}) {
-    const store = new Map(Object.entries(initial));
-    return {
-      get: async (key: string) => store.get(key) ?? null,
-      put: async (key: string, value: string) => {
-        store.set(key, value);
-      },
-      _store: store,
-    };
-  }
-
-  it("increments the failure counter and does not quarantine before the 3rd failure", async () => {
-    const KV = fakeKv();
-    const env = { KV, R2: { get: async () => null }, LICENSE_VALIDATE_URL: "" };
-
-    for (let i = 0; i < 2; i++) {
-      const res = await app.request(
-        "/telemetry/update-result",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            state: "failed",
-            version: "1.2.0",
-            os: "win",
-            arch: "x64",
-          }),
-        },
-        env as never,
-      );
-      expect(res.status).toBe(200);
-    }
-    expect(KV._store.get("config")).toBeUndefined();
-  });
-
-  it("quarantines the version automatically on the 3rd failure within the window", async () => {
-    const KV = fakeKv({ "telem:1.2.0:failed": "2" });
-    const env = { KV, R2: { get: async () => null }, LICENSE_VALIDATE_URL: "" };
+  it("só enfileira um job update_telemetry, não toca no KV direto", async () => {
+    const jobsSend = vi.fn(async () => undefined);
+    const env = { JOBS_QUEUE: { send: jobsSend } };
 
     const res = await app.request(
       "/telemetry/update-result",
@@ -341,6 +303,53 @@ describe("POST /telemetry/update-result", () => {
       env as never,
     );
     expect(res.status).toBe(200);
+    expect(jobsSend).toHaveBeenCalledExactlyOnceWith({
+      type: "update_telemetry",
+      state: "failed",
+      version: "1.2.0",
+      os: "win",
+      arch: "x64",
+    });
+  });
+});
+
+describe("processUpdateTelemetry", () => {
+  function fakeKv(initial: Record<string, string> = {}) {
+    const store = new Map(Object.entries(initial));
+    return {
+      get: async (key: string) => store.get(key) ?? null,
+      put: async (key: string, value: string) => {
+        store.set(key, value);
+      },
+      _store: store,
+    };
+  }
+
+  it("increments the failure counter and does not quarantine before the 3rd failure", async () => {
+    const KV = fakeKv();
+    const env = { KV } as never;
+
+    for (let i = 0; i < 2; i++) {
+      await processUpdateTelemetry(env, {
+        state: "failed",
+        version: "1.2.0",
+        os: "win",
+        arch: "x64",
+      });
+    }
+    expect(KV._store.get("config")).toBeUndefined();
+  });
+
+  it("quarantines the version automatically on the 3rd failure within the window", async () => {
+    const KV = fakeKv({ "telem:1.2.0:failed": "2" });
+    const env = { KV } as never;
+
+    await processUpdateTelemetry(env, {
+      state: "failed",
+      version: "1.2.0",
+      os: "win",
+      arch: "x64",
+    });
 
     const config = JSON.parse(KV._store.get("config")!);
     expect(config.quarantined).toContain("1.2.0");
@@ -351,23 +360,30 @@ describe("POST /telemetry/update-result", () => {
       "telem:1.2.0:failed": "5",
       config: JSON.stringify({ channels: {}, quarantined: ["1.2.0"] }),
     });
-    const env = { KV, R2: { get: async () => null }, LICENSE_VALIDATE_URL: "" };
+    const env = { KV } as never;
 
-    await app.request(
-      "/telemetry/update-result",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          state: "failed",
-          version: "1.2.0",
-          os: "win",
-          arch: "x64",
-        }),
-      },
-      env as never,
-    );
+    await processUpdateTelemetry(env, {
+      state: "failed",
+      version: "1.2.0",
+      os: "win",
+      arch: "x64",
+    });
 
     const config = JSON.parse(KV._store.get("config")!);
     expect(config.quarantined).toEqual(["1.2.0"]);
+  });
+
+  it("does not quarantine on a success or started state", async () => {
+    const KV = fakeKv({ "telem:1.2.0:failed": "10" });
+    const env = { KV } as never;
+
+    await processUpdateTelemetry(env, {
+      state: "completed",
+      version: "1.2.0",
+      os: "win",
+      arch: "x64",
+    });
+
+    expect(KV._store.get("config")).toBeUndefined();
   });
 });

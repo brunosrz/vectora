@@ -1,6 +1,10 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { gdpr, hardDeleteExpiredUsers } from "../../src/gdpr/routes";
+import {
+  gdpr,
+  enqueueExpiredUserDeletions,
+  hardDeleteOneUser,
+} from "../../src/gdpr/routes";
 import { auth } from "../../src/auth/routes";
 import { createSession } from "../../src/auth/session";
 
@@ -92,8 +96,8 @@ describe("POST /gdpr/export", () => {
   });
 });
 
-describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
-  it("soft-deletes now and hard-deletes only once the retention window has passed", async () => {
+describe("POST /gdpr/delete + enqueueExpiredUserDeletions", () => {
+  it("soft-deletes now and only enqueues a deletion job once the retention window has passed", async () => {
     const { userId, token } = await makeUserWithSession();
 
     const res = await gdpr.request(
@@ -117,8 +121,11 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
     );
     expect(meAfterDelete.status).toBe(401);
 
-    const deletedNow = await hardDeleteExpiredUsers(env);
-    expect(deletedNow).toBe(0);
+    const sendSpy = vi.spyOn(env.JOBS_QUEUE, "send");
+
+    const enqueuedNow = await enqueueExpiredUserDeletions(env);
+    expect(enqueuedNow).toBe(0);
+    expect(sendSpy).not.toHaveBeenCalled();
 
     await env.DB.prepare("UPDATE users SET soft_delete_at = ? WHERE id = ?")
       .bind(
@@ -127,15 +134,46 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
       )
       .run();
 
-    const deletedExpired = await hardDeleteExpiredUsers(env);
-    expect(deletedExpired).toBe(1);
+    const enqueuedExpired = await enqueueExpiredUserDeletions(env);
+    expect(enqueuedExpired).toBe(1);
+    expect(sendSpy).toHaveBeenCalledExactlyOnceWith({
+      type: "gdpr_delete_user",
+      userId,
+    });
 
-    const gone = await env.DB.prepare("SELECT id FROM users WHERE id = ?")
+    // enqueueExpiredUserDeletions só enfileira — o usuário continua no D1
+    // até o consumer da fila chamar hardDeleteOneUser.
+    const stillThere = await env.DB.prepare("SELECT id FROM users WHERE id = ?")
       .bind(userId)
       .first();
-    expect(gone).toBeNull();
+    expect(stillThere).not.toBeNull();
+
+    // Fecha o ciclo (e evita vazar esse usuário expirado pros próximos
+    // testes do describe): é o que o consumer real faria ao processar o
+    // job enfileirado acima.
+    await hardDeleteOneUser(env, userId);
   });
 
+  it("enqueues one job per expired user when there are several", async () => {
+    const first = await makeExpiredUser();
+    const second = await makeExpiredUser();
+
+    const sendSpy = vi.spyOn(env.JOBS_QUEUE, "send");
+    const enqueued = await enqueueExpiredUserDeletions(env);
+
+    expect(enqueued).toBe(2);
+    expect(sendSpy).toHaveBeenCalledWith({
+      type: "gdpr_delete_user",
+      userId: first,
+    });
+    expect(sendSpy).toHaveBeenCalledWith({
+      type: "gdpr_delete_user",
+      userId: second,
+    });
+  });
+});
+
+describe("hardDeleteOneUser", () => {
   it("cancels the stripe subscription before deleting a stripe user", async () => {
     const userId = await makeExpiredUser({
       provider: "stripe",
@@ -146,8 +184,7 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const deleted = await hardDeleteExpiredUsers(env);
-    expect(deleted).toBe(1);
+    await hardDeleteOneUser(env, userId);
     expect(fetchMock).toHaveBeenCalled();
 
     const gone = await env.DB.prepare("SELECT id FROM users WHERE id = ?")
@@ -164,8 +201,7 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({})));
     vi.stubGlobal("fetch", fetchMock);
 
-    const deleted = await hardDeleteExpiredUsers(env);
-    expect(deleted).toBe(1);
+    await hardDeleteOneUser(env, userId);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/customers/cus_br_1"),
       expect.objectContaining({ method: "DELETE" }),
@@ -189,8 +225,7 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
       }),
     );
 
-    const deleted = await hardDeleteExpiredUsers(env);
-    expect(deleted).toBe(1);
+    await hardDeleteOneUser(env, userId);
 
     const gone = await env.DB.prepare("SELECT id FROM users WHERE id = ?")
       .bind(userId)
@@ -198,9 +233,8 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
     expect(gone).toBeNull();
   });
 
-  it("logs and continues when deleting one user throws, without counting it as deleted", async () => {
-    await makeExpiredUser();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("throws instead of swallowing the error when the delete itself fails — the queue decides retry", async () => {
+    const userId = await makeExpiredUser();
     const originalPrepare = env.DB.prepare.bind(env.DB);
     const prepareSpy = vi
       .spyOn(env.DB, "prepare")
@@ -211,11 +245,8 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
         return originalPrepare(query);
       });
 
-    const deleted = await hardDeleteExpiredUsers(env);
-    expect(deleted).toBe(0);
-    expect(errorSpy).toHaveBeenCalled();
+    await expect(hardDeleteOneUser(env, userId)).rejects.toThrow("boom");
 
     prepareSpy.mockRestore();
-    errorSpy.mockRestore();
   });
 });

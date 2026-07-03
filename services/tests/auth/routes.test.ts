@@ -277,21 +277,22 @@ describe("POST /magic-link", () => {
     vi.unstubAllGlobals();
   });
 
-  it("sends an email and never reveals whether the address exists", async () => {
+  it("enqueues an email and never reveals whether the address exists", async () => {
     const body = signupBody();
     await post("/signup", body);
 
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({})));
-    vi.stubGlobal("fetch", fetchMock);
+    const sendSpy = vi.spyOn(env.EMAIL_QUEUE, "send");
 
     const known = await post("/magic-link", { email: body.email });
     expect(known.status).toBe(200);
-    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(sendSpy).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ to: body.email }),
+    );
 
-    fetchMock.mockClear();
+    sendSpy.mockClear();
     const unknown = await post("/magic-link", { email: "nobody@example.com" });
     expect(unknown.status).toBe(200);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(sendSpy).not.toHaveBeenCalled();
   });
 
   it("requires an email", async () => {

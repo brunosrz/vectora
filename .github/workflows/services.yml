@@ -42,12 +42,14 @@ jobs:
         run: pnpm test
 
   # ── 2. Deploy (Cloudflare Workers) ───────────────────────────────────────
-  # Só em push para master e quando CLOUDFLARE_API_TOKEN está configurado.
+  # ci.yml só dispara via workflow_dispatch (Jenkins assume o CI contínuo) —
+  # então o disparo aqui é sempre manual; a única checagem que faz sentido é
+  # a branch, não o tipo de evento (nunca vai ser "push").
   deploy:
     name: Deploy (wrangler)
     runs-on: ubuntu-latest
     needs: verify
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
     environment:
       name: services-production
     env:

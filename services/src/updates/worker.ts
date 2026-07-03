@@ -11,6 +11,7 @@
 
 import { Hono } from "hono";
 import type { Env } from "../relay/types";
+import { enqueueJob } from "../lib/queue";
 
 interface ChannelConfig {
   version: string;
@@ -128,7 +129,7 @@ app.get("/download/:channel/:os/:arch/:ext", async (c) => {
   const ch = config.channels[channel];
   if (!ch) return c.text("unknown channel", 404);
   const version = config.quarantined.includes(ch.version)
-    ? ch.previous_stable ?? null
+    ? (ch.previous_stable ?? null)
     : ch.version;
   if (!version) return c.text("no version available", 404);
 
@@ -154,20 +155,35 @@ interface TelemetryBody {
   arch: string;
 }
 
-app.post("/telemetry/update-result", async (c) => {
-  const body = await c.req.json<TelemetryBody>();
+/**
+ * Lógica de verdade da telemetria de update (contagem + quarentena
+ * automática) — roda dentro do consumer da fila `vectora-jobs`
+ * (`max_concurrency = 1`, ver wrangler.toml), nunca direto na rota HTTP.
+ * Antes era um read-modify-write direto em KV na própria rota: duas
+ * instalações reportando ao mesmo tempo podiam se pisar na contagem. Rodando
+ * serializado no consumer, essa race não existe mais.
+ */
+export async function processUpdateTelemetry(
+  env: Env,
+  body: TelemetryBody,
+): Promise<void> {
   const bucket = `telem:${body.version}:${body.state}`;
-  const current = parseInt((await c.env.KV.get(bucket)) ?? "0", 10);
-  await c.env.KV.put(bucket, String(current + 1), { expirationTtl: 3600 });
+  const current = parseInt((await env.KV.get(bucket)) ?? "0", 10);
+  await env.KV.put(bucket, String(current + 1), { expirationTtl: 3600 });
 
   if (body.state === "failed" && current + 1 >= 3) {
     // 3+ falhas na mesma versão dentro de 1h → quarentina automática.
-    const config = await getConfig(c.env.KV);
+    const config = await getConfig(env.KV);
     if (!config.quarantined.includes(body.version)) {
       config.quarantined.push(body.version);
-      await c.env.KV.put("config", JSON.stringify(config));
+      await env.KV.put("config", JSON.stringify(config));
     }
   }
+}
+
+app.post("/telemetry/update-result", async (c) => {
+  const body = await c.req.json<TelemetryBody>();
+  await enqueueJob(c.env, { type: "update_telemetry", ...body });
   return c.json({ ok: true });
 });
 

@@ -2,7 +2,8 @@
 import { Hono } from "hono";
 import type { Env } from "../relay/types";
 import { verifyTurnstile } from "../lib/turnstile";
-import { sendEmail, SUPPORT_EMAIL, waitlistJoinedHtml } from "../lib/email";
+import { SUPPORT_EMAIL, waitlistJoinedHtml } from "../lib/email";
+import { enqueueEmail } from "../lib/queue";
 
 export const issues = new Hono<{ Bindings: Env }>();
 
@@ -44,7 +45,7 @@ issues.post("/", async (c) => {
     )
     .run();
 
-  await sendEmail(c.env.RESEND_API_KEY, {
+  await enqueueEmail(c.env, {
     to: SUPPORT_EMAIL,
     subject: `[${body.category.toUpperCase()}] ${body.title}`,
     html: `
@@ -93,7 +94,7 @@ issues.post("/waitlist", async (c) => {
       .bind(crypto.randomUUID(), body.email.toLowerCase(), body.source ?? null)
       .run();
 
-    await sendEmail(c.env.RESEND_API_KEY, {
+    await enqueueEmail(c.env, {
       to: body.email,
       subject: "Você está na lista — Vectora",
       html: waitlistJoinedHtml(),
