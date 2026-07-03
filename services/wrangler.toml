@@ -36,12 +36,34 @@ bucket_name = "vectora-releases"
 binding = "KV"
 id = "5bf302c7fcc9463aa642aa1731b13def"
 
+# auth/billing/license/gdpr/api-keys/issues/rag-library (Fase B/C) — substitui
+# o Postgres do Supabase. Sem RLS: autorização é feita em código, em cada
+# handler (CLAUDE.md regra 7). Provisionar com `wrangler d1 create vectora-db`
+# e colar o `database_id` gerado abaixo.
+[[d1_databases]]
+binding = "DB"
+database_name = "vectora-db"
+database_id = "REPLACE_WITH_WRANGLER_D1_CREATE_OUTPUT"
+migrations_dir = "migrations"
+
+# GDPR hard-delete (soft-delete → 30 dias → apagado de vez). Roda 1x/dia.
+[triggers]
+crons = ["0 3 * * *"]
+
 [vars]
 MAX_PAYLOAD_BYTES = "5242880"
 QUEUE_TTL_MS = "600000"
 LICENSE_VALIDATE_URL = "https://vectora.company/functions/v1/validate-license"
+APP_URL = "https://vectora.company"
 
 # Secrets (não vão neste arquivo — `wrangler secret put <nome>`):
 #   VECTORA_JWT_SECRET     — relay: verifica JWT assinado pelo backend Python
 #   RELAY_HMAC_SECRET      — relay: assina o token de 6 chars por user+fingerprint
 #   VECTORA_OAUTH_SECRET   — relay: Bearer auth nos endpoints /oauth/token
+#   RESEND_API_KEY         — auth/billing/gdpr/issues: envio de email transacional
+#   TURNSTILE_SECRET_KEY   — auth/issues: verificação anti-bot (opcional em dev)
+#   STRIPE_SECRET_KEY      — billing: API Stripe (clientes INTL)
+#   STRIPE_WEBHOOK_SECRET  — billing: valida assinatura do webhook Stripe
+#   STRIPE_PRICE_PRO_USD   — billing: price id do plano Pro em USD
+#   ASAAS_API_KEY          — billing: API Asaas (clientes BR)
+#   ASAAS_API_URL          — billing: default https://api.asaas.com/v3

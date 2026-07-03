@@ -11,6 +11,16 @@ export interface Env {
   R2: R2Bucket;
   KV: KVNamespace;
   LICENSE_VALIDATE_URL: string;
+  // auth/billing/license/gdpr/api-keys/issues (Fase B/C)
+  DB: D1Database;
+  APP_URL: string;
+  RESEND_API_KEY: string;
+  TURNSTILE_SECRET_KEY?: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
+  STRIPE_PRICE_PRO_USD: string;
+  ASAAS_API_KEY: string;
+  ASAAS_API_URL: string;
 }
 
 export interface JwtPayload {

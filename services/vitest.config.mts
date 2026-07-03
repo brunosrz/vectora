@@ -9,12 +9,20 @@ const workerOptions = {
       RELAY_HMAC_SECRET: "test-hmac-secret-32-chars-minimum",
       VECTORA_OAUTH_SECRET: "test-oauth-secret",
       LICENSE_VALIDATE_URL: "https://vectora.company/functions/v1/validate-license",
+      APP_URL: "https://vectora.company",
+      RESEND_API_KEY: "test-resend-key",
+      STRIPE_SECRET_KEY: "sk_test_fake",
+      STRIPE_WEBHOOK_SECRET: "whsec_test_fake",
+      STRIPE_PRICE_PRO_USD: "price_test_fake",
+      ASAAS_API_KEY: "test-asaas-key",
+      ASAAS_API_URL: "https://api.asaas.com/v3",
       // workerd SQLite permanece bloqueado no Windows após o fetch ao DO,
       // impedindo o cleanup do isolated storage. Marca para skip seletivo.
       TEST_IS_WINDOWS: process.platform === "win32" ? "1" : "0",
     },
     kvNamespaces: ["RELAY_METRICS", "KV"],
     r2Buckets: ["R2"],
+    d1Databases: ["DB"],
     durableObjects: {
       RELAY_SESSION: "RelaySession",
     },
@@ -34,6 +42,7 @@ export default defineConfig({
         test: {
           name: "workers",
           include: ["src/**/*.test.ts"],
+          setupFiles: ["./src/test-setup.ts"],
           pool: cloudflarePool(workerOptions),
         },
       },
