@@ -65,7 +65,7 @@ export function SearchTab() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col">
       {/* Search input */}
       <div className="border-b border-border/60 p-3">
         <div className="relative flex items-center">
@@ -138,7 +138,7 @@ function SearchResultItem({ result }: { result: SearchResult }) {
       </button>
 
       {isExpanded && (
-        <div className="px-4 py-1 bg-background/50 space-y-1">
+        <div className="px-4 py-1 space-y-1">
           {result.hits.slice(0, 3).map((hit, idx) => (
             <div
               key={idx}

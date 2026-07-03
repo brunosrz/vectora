@@ -5,9 +5,8 @@ import { m } from "#/paraglide/messages";
 import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
 
-// update-server (Cloudflare Worker + R2) — não GitHub Releases: o repo é
-// privado (Vectora é vendido, não open source) e o Free precisa baixar sem
-// conta. Rota pública sem token: GET /download/:channel/:os/:arch/:ext
+// update-server (Cloudflare Worker + R2)
+// Rota pública sem token: GET /download/:channel/:os/:arch/:ext
 // (update-server/src/worker.ts).
 const UPDATE_SERVER = "https://update.vectora.company";
 const CHANNEL = "latest";
