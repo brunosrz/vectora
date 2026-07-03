@@ -10,6 +10,7 @@ const workerOptions = {
       VECTORA_OAUTH_SECRET: "test-oauth-secret",
       LICENSE_VALIDATE_URL: "https://vectora.company/functions/v1/validate-license",
       APP_URL: "https://vectora.company",
+      RELAY_URL: "https://relay.vectora.chat",
       RESEND_API_KEY: "test-resend-key",
       STRIPE_SECRET_KEY: "sk_test_fake",
       STRIPE_WEBHOOK_SECRET: "whsec_test_fake",

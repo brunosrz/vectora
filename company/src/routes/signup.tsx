@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
@@ -19,21 +19,14 @@ export const Route = createFileRoute("/signup")({
 });
 
 const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
-  "User already registered": m.error_email_taken,
-  "Email already in use": m.error_email_taken,
-  "Password should be at least 6 characters": m.error_password_weak,
-  "Password should be at least 8 characters": m.error_password_weak,
+  email_taken: m.error_email_taken,
+  password_too_short: m.error_password_weak,
   turnstile_failed: m.error_turnstile,
-  "Email rate limit exceeded": m.error_rate_limit,
-  "For security purposes, you can only request this after": m.error_rate_limit,
-  "signup is disabled": m.error_signup_disabled,
-  "Signups not allowed for this instance": m.error_signup_disabled,
-  "Database error saving new user": m.error_db,
+  name_required: m.error_generic,
+  invalid_email: m.error_generic,
 };
 
 function SignupPage() {
-  const navigate = useNavigate();
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,15 +44,9 @@ function SignupPage() {
           turnstileToken: turnstileToken!,
         },
       }),
-    onSuccess: (res) => {
+    onSuccess: () => {
       track("signup", { plan: "pro" });
-      // Confirmação de email ligada → sem sessão; mostra "confirme seu email"
-      // em vez de ir pro dashboard (que sem sessão volta pro login).
-      if (res.needsConfirmation) {
-        setConfirmationSent(true);
-        return;
-      }
-      navigate({ to: res.redirect as "/dashboard" });
+      setConfirmationSent(true);
     },
     onError: (err: Error) => {
       const msgFn =

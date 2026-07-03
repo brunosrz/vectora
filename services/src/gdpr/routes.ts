@@ -11,6 +11,7 @@ import { Hono } from "hono";
 import Stripe from "stripe";
 import type { Env } from "../relay/types";
 import { requireUserId } from "../auth/routes";
+import { bearerToken, revokeSession } from "../auth/session";
 import { sendEmail, accountDeletedHtml } from "../lib/email";
 
 export const gdpr = new Hono<{ Bindings: Env }>();
@@ -104,6 +105,9 @@ gdpr.post("/delete", async (c) => {
   await c.env.DB.prepare("UPDATE users SET soft_delete_at = ? WHERE id = ?")
     .bind(new Date().toISOString(), userId)
     .run();
+
+  const token = bearerToken(c.req.raw);
+  if (token) await revokeSession(c.env.DB, token);
 
   return c.json({ ok: true });
 });

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { m } from "#/paraglide/messages";
-import { useAuthStore } from "#/store/auth";
+import type { SessionUser } from "#/server/fns/auth";
 import { getLocale, locales, setLocale } from "#/paraglide/runtime";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
@@ -21,8 +21,7 @@ const LOCALE_LABELS: Record<string, string> = {
 const pill =
   "flex items-center justify-center bg-card rounded-2xl shadow-[0px_1px_3px_rgba(24,25,28,0.3),0px_1px_2px_-1px_rgba(24,25,28,0.3)]";
 
-export default function Header() {
-  const session = useAuthStore((s) => s.session);
+export default function Header({ session }: { session: SessionUser | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [localeOpen, setLocaleOpen] = useState(false);
   const localeRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { gdpr, hardDeleteExpiredUsers } from "./routes";
+import { auth } from "../auth/routes";
 import { createSession } from "../auth/session";
 
 async function makeUserWithSession() {
@@ -72,6 +73,13 @@ describe("POST /gdpr/delete + hardDeleteExpiredUsers", () => {
       .bind(userId)
       .first<{ soft_delete_at: string | null }>();
     expect(softDeleted?.soft_delete_at).not.toBeNull();
+
+    const meAfterDelete = await auth.request(
+      "/me",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(meAfterDelete.status).toBe(401);
 
     const deletedNow = await hardDeleteExpiredUsers(env);
     expect(deletedNow).toBe(0);

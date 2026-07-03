@@ -14,6 +14,19 @@ import { sendEmail, invoicePaidHtml, invoiceFailedHtml } from "../lib/email";
 
 export const billing = new Hono<{ Bindings: Env }>();
 
+billing.get("/subscription", async (c) => {
+  const userId = await requireUserId(c);
+  if (!userId) return c.json({ error: "unauthorized" }, 401);
+
+  const sub = await c.env.DB.prepare(
+    "SELECT * FROM subscriptions WHERE user_id = ?",
+  )
+    .bind(userId)
+    .first();
+  if (!sub) return c.json({ error: "not_found" }, 404);
+  return c.json(sub);
+});
+
 function stripeClient(env: Env): Stripe {
   return new Stripe(env.STRIPE_SECRET_KEY, {
     apiVersion: "2024-12-18.acacia" as never,

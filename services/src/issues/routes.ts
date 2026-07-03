@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import type { Env } from "../relay/types";
 import { verifyTurnstile } from "../lib/turnstile";
-import { sendEmail, SUPPORT_EMAIL } from "../lib/email";
+import { sendEmail, SUPPORT_EMAIL, waitlistJoinedHtml } from "../lib/email";
 
 export const issues = new Hono<{ Bindings: Env }>();
 
@@ -92,6 +92,12 @@ issues.post("/waitlist", async (c) => {
     )
       .bind(crypto.randomUUID(), body.email.toLowerCase(), body.source ?? null)
       .run();
+
+    await sendEmail(c.env.RESEND_API_KEY, {
+      to: body.email,
+      subject: "Você está na lista — Vectora",
+      html: waitlistJoinedHtml(),
+    });
   } catch {
     // já cadastrado (email UNIQUE) — idempotente do ponto de vista do
     // usuário, não é erro visível.

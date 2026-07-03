@@ -29,8 +29,8 @@ import { Route as DashboardLicenseRouteImport } from './routes/dashboard/license
 import { Route as DashboardBillingRouteImport } from './routes/dashboard/billing'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard/api-keys'
 import { Route as DashboardAccountRouteImport } from './routes/dashboard/account'
+import { Route as AuthVerifyRouteImport } from './routes/auth/verify'
 import { Route as AuthDeviceRouteImport } from './routes/auth/device'
-import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ApiOgRouteImport } from './routes/api/og'
 
 const TermsRoute = TermsRouteImport.update({
@@ -133,14 +133,14 @@ const DashboardAccountRoute = DashboardAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const AuthVerifyRoute = AuthVerifyRouteImport.update({
+  id: '/auth/verify',
+  path: '/auth/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthDeviceRoute = AuthDeviceRouteImport.update({
   id: '/auth/device',
   path: '/auth/device',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOgRoute = ApiOgRouteImport.update({
@@ -166,8 +166,8 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/auth/device': typeof AuthDeviceRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
@@ -190,8 +190,8 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/auth/device': typeof AuthDeviceRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
@@ -216,8 +216,8 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/og': typeof ApiOgRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/auth/device': typeof AuthDeviceRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
@@ -243,8 +243,8 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
-    | '/auth/callback'
     | '/auth/device'
+    | '/auth/verify'
     | '/dashboard/account'
     | '/dashboard/api-keys'
     | '/dashboard/billing'
@@ -267,8 +267,8 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
-    | '/auth/callback'
     | '/auth/device'
+    | '/auth/verify'
     | '/dashboard/account'
     | '/dashboard/api-keys'
     | '/dashboard/billing'
@@ -292,8 +292,8 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/api/og'
-    | '/auth/callback'
     | '/auth/device'
+    | '/auth/verify'
     | '/dashboard/account'
     | '/dashboard/api-keys'
     | '/dashboard/billing'
@@ -318,8 +318,8 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   ApiOgRoute: typeof ApiOgRoute
-  AuthCallbackRoute: typeof AuthCallbackRoute
   AuthDeviceRoute: typeof AuthDeviceRoute
+  AuthVerifyRoute: typeof AuthVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -464,18 +464,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/auth/verify': {
+      id: '/auth/verify'
+      path: '/auth/verify'
+      fullPath: '/auth/verify'
+      preLoaderRoute: typeof AuthVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/device': {
       id: '/auth/device'
       path: '/auth/device'
       fullPath: '/auth/device'
       preLoaderRoute: typeof AuthDeviceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/og': {
@@ -525,8 +525,8 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   ApiOgRoute: ApiOgRoute,
-  AuthCallbackRoute: AuthCallbackRoute,
   AuthDeviceRoute: AuthDeviceRoute,
+  AuthVerifyRoute: AuthVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

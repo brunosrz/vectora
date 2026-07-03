@@ -70,7 +70,7 @@ const FAQ_DATA = {
     {
       question: "Como funciona a autenticação?",
       answer:
-        "No Free, uso local sem login. Para o Pro (conta obrigatória), Supabase Auth com suporte a email/senha, magic link e SSO/SAML.",
+        "No Free, uso local sem login. Para o Pro (conta obrigatória), autenticação própria da Vectora com suporte a email/senha e magic link.",
     },
   ],
   Técnico: [

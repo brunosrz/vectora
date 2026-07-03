@@ -6,6 +6,7 @@ import {
   createCheckout,
   createPortal,
 } from "#/server/fns/subscription";
+import type { LicenseCheck } from "#/server/fns/subscription";
 import { toast } from "sonner";
 
 type SubStatus = "trialing" | "active" | "past_due" | "canceled" | "expired";
@@ -215,44 +216,33 @@ export function LicenseHistory() {
           </tr>
         </thead>
         <tbody>
-          {data.map(
-            (
-              row: {
-                id: string;
-                checked_at: string;
-                vectora_version: string;
-                result: string;
-                ip: string | null;
-              },
-              i: number,
-            ) => (
-              <tr
-                key={row.id}
-                className={`border-b border-border ${i % 2 === 0 ? "" : "bg-background/20"}`}
-              >
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {new Date(row.checked_at).toLocaleString()}
-                </td>
-                <td className="px-4 py-2.5 font-mono text-muted-foreground">
-                  {row.vectora_version}
-                </td>
-                <td className="px-4 py-2.5">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      row.result === "valid"
-                        ? "bg-accent-green/10 text-accent-green"
-                        : "bg-accent-red/10 text-accent-red"
-                    }`}
-                  >
-                    {row.result}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 font-mono text-muted-foreground">
-                  {maskIp(row.ip)}
-                </td>
-              </tr>
-            ),
-          )}
+          {data.map((row: LicenseCheck, i: number) => (
+            <tr
+              key={row.id}
+              className={`border-b border-border ${i % 2 === 0 ? "" : "bg-background/20"}`}
+            >
+              <td className="px-4 py-2.5 text-muted-foreground">
+                {new Date(row.checked_at).toLocaleString()}
+              </td>
+              <td className="px-4 py-2.5 font-mono text-muted-foreground">
+                {row.vectora_version}
+              </td>
+              <td className="px-4 py-2.5">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    row.result === "valid"
+                      ? "bg-accent-green/10 text-accent-green"
+                      : "bg-accent-red/10 text-accent-red"
+                  }`}
+                >
+                  {row.result}
+                </span>
+              </td>
+              <td className="px-4 py-2.5 font-mono text-muted-foreground">
+                {maskIp(row.ip)}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

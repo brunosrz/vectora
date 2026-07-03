@@ -76,6 +76,22 @@ describe("POST /billing/webhooks", () => {
   });
 });
 
+describe("GET /billing/subscription", () => {
+  it("returns the caller's own subscription, 401/404 otherwise", async () => {
+    const { token } = await makeUserWithSession("USD");
+    const res = await billing.request(
+      "/subscription",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json<{ tier: string; currency: string }>();
+    expect(body).toMatchObject({ tier: "free", currency: "USD" });
+
+    expect((await billing.request("/subscription", {}, env)).status).toBe(401);
+  });
+});
+
 describe("POST /billing/checkout and /portal", () => {
   it("rejects unauthenticated checkout/portal requests", async () => {
     expect(

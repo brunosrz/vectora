@@ -80,6 +80,13 @@ export function invoiceFailedHtml(name: string, amount: string): string {
   `);
 }
 
+export function waitlistJoinedHtml(): string {
+  return shell(`
+    <p style="color:#94a3b8;font-size:14px">Você entrou na lista de espera do Vectora. Avisaremos quando o acesso estiver disponível.</p>
+    <p style="color:#94a3b8;font-size:14px">Enquanto isso, acesse <a href="https://docs.vectora.company" style="color:#4ade80">a documentação</a> para saber mais.</p>
+  `);
+}
+
 export function accountDeletedHtml(name: string, deletionDate: string): string {
   return shell(`
     <p style="color:#f87171;font-size:14px;font-weight:600">Conta agendada para exclusão</p>

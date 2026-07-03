@@ -5,9 +5,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
 import { sendMagicLink } from "#/server/fns/auth";
+import type { SessionUser } from "#/server/fns/auth";
 import { exportData, requestAccountDeletion } from "#/server/fns/gdpr";
 import { updateProfile } from "#/server/fns/profile";
-import { useAuthStore } from "#/store/auth";
 import { toast } from "sonner";
 import { Download, Trash2, Save } from "lucide-react";
 
@@ -21,17 +21,12 @@ const LANGUAGES = [
   { value: "ru", label: "Русский" },
 ];
 
-export default function AccountSection() {
+export default function AccountSection({ user }: { user: SessionUser }) {
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.session);
 
-  const [name, setName] = useState(user?.user_metadata.full_name ?? "");
-  const [country, setCountry] = useState<"BR" | "INTL">(
-    (user?.user_metadata.country as "BR" | "INTL" | undefined) ?? "INTL",
-  );
-  const [language, setLanguage] = useState<string>(
-    (user?.user_metadata.language as string | undefined) ?? "pt",
-  );
+  const [name, setName] = useState(user.full_name);
+  const [country, setCountry] = useState<"BR" | "INTL">(user.country);
+  const [language, setLanguage] = useState<string>(user.language);
 
   const [confirmEmail, setConfirmEmail] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -44,7 +39,7 @@ export default function AccountSection() {
   });
 
   const magicLinkMutation = useMutation({
-    mutationFn: () => sendMagicLink({ data: { email: user?.email ?? "" } }),
+    mutationFn: () => sendMagicLink({ data: { email: user.email } }),
     onSuccess: () => toast.success(m.login_magic_sent()),
     onError: () => toast.error(m.error_generic()),
   });
@@ -66,7 +61,7 @@ export default function AccountSection() {
     onError: () => toast.error(m.error_generic()),
   });
 
-  const canDelete = confirmEmail === user?.email && !deleteMutation.isPending;
+  const canDelete = confirmEmail === user.email && !deleteMutation.isPending;
   const canSave = name.length >= 2 && !profileMutation.isPending;
 
   return (
@@ -95,7 +90,7 @@ export default function AccountSection() {
               {m.form_email()}
             </label>
             <p className="rounded-xl border border-border bg-card/20 px-4 py-2.5 text-sm text-muted-foreground">
-              {user?.email}
+              {user.email}
             </p>
           </div>
 
@@ -159,7 +154,7 @@ export default function AccountSection() {
         </p>
         <button
           onClick={() => magicLinkMutation.mutate()}
-          disabled={magicLinkMutation.isPending || !user?.email}
+          disabled={magicLinkMutation.isPending || !user.email}
           className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground/90 hover:border-primary hover:text-foreground disabled:opacity-50 transition-all"
         >
           {magicLinkMutation.isPending
@@ -213,7 +208,7 @@ export default function AccountSection() {
                 type="email"
                 value={confirmEmail}
                 onChange={(e) => setConfirmEmail(e.target.value)}
-                placeholder={user?.email}
+                placeholder={user.email}
                 className="w-full rounded-xl border border-accent-red/30 bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-destructive transition-colors"
               />
               <div className="flex gap-2">

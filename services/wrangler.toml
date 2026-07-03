@@ -55,6 +55,7 @@ MAX_PAYLOAD_BYTES = "5242880"
 QUEUE_TTL_MS = "600000"
 LICENSE_VALIDATE_URL = "https://vectora.company/functions/v1/validate-license"
 APP_URL = "https://vectora.company"
+RELAY_URL = "https://relay.vectora.chat"
 
 # Secrets (não vão neste arquivo — `wrangler secret put <nome>`):
 #   VECTORA_JWT_SECRET     — relay: verifica JWT assinado pelo backend Python
