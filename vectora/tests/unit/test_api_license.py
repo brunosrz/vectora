@@ -218,13 +218,13 @@ def test_connect_sucesso_persiste_e_valida(monkeypatch: pytest.MonkeyPatch) -> N
         monkeypatch,
         responses={
             "agent-login": (
-                {"token": "tok_novo", "tier": "plus", "status": "trialing"},
+                {"token": "tok_novo", "tier": "free", "status": "trialing"},
                 200,
             ),
             "validate-license": (
                 {
                     "valid": True,
-                    "tier": "plus",
+                    "tier": "free",
                     "status": "trial",
                     "days_remaining": 30,
                 },

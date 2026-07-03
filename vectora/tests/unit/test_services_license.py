@@ -36,16 +36,31 @@ def test_bypass_returns_active_pro(monkeypatch: pytest.MonkeyPatch) -> None:
     assert info.days_remaining > 300
 
 
-def test_missing_token_raises() -> None:
-    with pytest.raises(lic.LicenseError, match="VECTORA_TOKEN"):
-        lic.validate_license_sync()
+def test_missing_token_returns_free_tier() -> None:
+    """Sem VECTORA_TOKEN → tier free direto (uso local, sem conta), não erro."""
+    info = lic.validate_license_sync()
+    assert info.tier == "free"
+    assert info.status == "active"
+    assert info.cached is False
+
+
+def test_missing_token_writes_cache() -> None:
+    """O status free é escrito no cache — sem isso, get_current_tier()/GET
+    /license/status veriam tier=None (não free) até a 1ª validação com token,
+    quebrando o gating de subscription logo após o boot (par de erro)."""
+    assert not lic.CACHE_PATH.exists()
+    lic.validate_license_sync()
+    assert lic.CACHE_PATH.exists()
+    cached = lic.read_cached_status()
+    assert cached is not None
+    assert cached.tier == "free"
 
 
 def test_cache_fresh_returns_cached(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("VECTORA_TOKEN", "tok_abc")
     _write_cache_fixture(
         {
-            "tier": "plus",
+            "tier": "free",
             "status": "active",
             "days_remaining": 25,
             "expires_at": "2027-01-01",
@@ -54,7 +69,7 @@ def test_cache_fresh_returns_cached(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     info = lic.validate_license_sync()
     assert info.cached is True
-    assert info.tier == "plus"
+    assert info.tier == "free"
     assert info.days_remaining == 25
 
 
@@ -65,7 +80,7 @@ def test_cache_stale_offline_within_48h(monkeypatch: pytest.MonkeyPatch) -> None
     stale = (datetime.now(UTC) - timedelta(hours=10)).isoformat()
     _write_cache_fixture(
         {
-            "tier": "plus",
+            "tier": "free",
             "status": "active",
             "days_remaining": 25,
             "expires_at": "2027-01-01",
@@ -151,7 +166,7 @@ def test_force_skips_fresh_cache(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("VECTORA_TOKEN", "tok_abc")
     _write_cache_fixture(
         {
-            "tier": "plus",
+            "tier": "free",
             "status": "active",
             "days_remaining": 25,
             "expires_at": "2027-01-01",
@@ -161,7 +176,7 @@ def test_force_skips_fresh_cache(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_remote(monkeypatch, {"valid": True, "tier": "pro", "status": "active"})
     info = asyncio.run(lic.validate_license_async(force=True))
     assert info.cached is False
-    assert info.tier == "pro"  # veio do remoto, não do cache "plus"
+    assert info.tier == "pro"  # veio do remoto, não do cache "free"
 
 
 def test_get_token_falls_back_to_config() -> None:

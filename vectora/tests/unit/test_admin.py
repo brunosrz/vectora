@@ -8,6 +8,8 @@ Verifica:
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 
@@ -103,8 +105,25 @@ class TestAdminSystemInfo:
 
         info = _build_system_info()
         assert "version" in info
+        assert "build_version" in info
         assert "python_version" in info
         assert "platform" in info
+
+    def test_build_version_falls_back_to_version_without_env(self, monkeypatch):
+        """Sem VECTORA_BUILD_VERSION (dev local, sem build oficial), cai pra semver puro."""
+        from backend.api.handlers.admin import _build_system_info
+
+        monkeypatch.delenv("VECTORA_BUILD_VERSION", raising=False)
+        info = _build_system_info()
+        assert info["build_version"] == info["version"]
+
+    def test_build_version_reads_env_when_set(self, monkeypatch):
+        """Com VECTORA_BUILD_VERSION setado (pipeline de release), usa o valor com hash."""
+        from backend.api.handlers.admin import _build_system_info
+
+        monkeypatch.setenv("VECTORA_BUILD_VERSION", "0.1.1.11325")
+        info = _build_system_info()
+        assert info["build_version"] == "0.1.1.11325"
 
 
 class TestApiKeysMaskKey:
@@ -225,3 +244,171 @@ class TestApiKeysEndpoints:
         assert result["status"] == "updated"
         assert "GOOGLE_API_KEY" in result["updated"]
         assert mock_upsert.called
+
+
+class TestCreateInviteRequiresPro:
+    """Convidar membro adicional é feature de time — exige plano Pro.
+
+    O 1º usuário (root) nasce direto no signup, sem passar por /admin/invites
+    (backend/services/auth.py::signup) — este endpoint gateia só convites de
+    membros extras (2º+ usuário).
+    """
+
+    @pytest.mark.asyncio
+    async def test_create_invite_raises_402_on_free(self, tmp_path, monkeypatch):
+        from unittest.mock import MagicMock
+
+        from backend.api.handlers.admin import CreateInviteBody, create_invite
+        from backend.services import license as lic
+
+        monkeypatch.setattr(lic, "CACHE_PATH", tmp_path / "license_cache.json")
+
+        request = MagicMock()
+        request.state.user = MagicMock(role="admin", id="u1")
+        body = CreateInviteBody(role="member", email="novo@example.com")
+
+        with pytest.raises(Exception) as exc:
+            await create_invite(request, body)
+        assert exc.value.status_code == 402  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+
+    @pytest.mark.asyncio
+    async def test_create_invite_passes_gate_on_pro(self, tmp_path, monkeypatch):
+        """Com plano pro, o gate libera (segue para require_admin / lógica normal)."""
+        import json
+        from datetime import UTC, datetime
+        from unittest.mock import MagicMock
+
+        from backend.api.handlers.admin import CreateInviteBody, create_invite
+        from backend.services import license as lic
+
+        cache_path = tmp_path / "license_cache.json"
+        cache_path.write_text(
+            json.dumps(
+                {
+                    "tier": "pro",
+                    "status": "active",
+                    "days_remaining": 30,
+                    "expires_at": "2027-01-01",
+                    "validated_at": datetime.now(UTC).isoformat(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(lic, "CACHE_PATH", cache_path)
+
+        # Sem role admin/root → passa pelo gate de pro e falha depois no
+        # require_admin (403), não no gate de tier (402) — confirma a ordem.
+        request = MagicMock()
+        request.state.user = MagicMock(role="member", id="u1")
+        body = CreateInviteBody(role="member", email="novo@example.com")
+
+        with pytest.raises(Exception) as exc:
+            await create_invite(request, body)
+        assert exc.value.status_code == 403  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+
+
+class TestToggleToolGlobal:
+    """Kill-switch global de tools (/admin/tools, /admin/tools/{name}/toggle).
+
+    Antes, o toggle não persistia nada (TODO em código) e list_tools_admin
+    sempre devolvia enabled=True — um admin podia desligar uma tool
+    "destructive" e ela continuar ativa pro agente. Estes testes cobrem a
+    persistência real via tool_policy.GLOBAL_SCOPE e a leitura de volta.
+    """
+
+    @pytest.fixture(autouse=True)
+    def iso_dir(self, tmp_path, monkeypatch):
+        from backend.services import tool_policy
+
+        monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tools")
+
+    @staticmethod
+    def _admin_request() -> Any:
+        from unittest.mock import MagicMock
+
+        request = MagicMock()
+        request.state.user = MagicMock(role="admin", id="admin-1")
+        return request
+
+    @pytest.mark.asyncio
+    async def test_list_tools_all_enabled_by_default(self):
+        from backend.api.handlers.admin import list_tools_admin
+
+        result = await list_tools_admin(self._admin_request())
+        assert result["total"] > 0
+        assert all(t["enabled"] for t in result["tools"])
+
+    @pytest.mark.asyncio
+    async def test_toggle_off_persists_and_reflects_in_list(self):
+        from backend.api.handlers.admin import (
+            ToolToggleBody,
+            list_tools_admin,
+            toggle_tool,
+        )
+        from backend.nodes.tools import ALL_TOOLS
+
+        target = ALL_TOOLS[0].name
+
+        res = await toggle_tool(
+            self._admin_request(), target, ToolToggleBody(enabled=False)
+        )
+        assert res == {"status": "ok", "tool": target, "enabled": False}
+
+        listing = await list_tools_admin(self._admin_request())
+        entry = next(t for t in listing["tools"] if t["name"] == target)
+        assert entry["enabled"] is False
+
+    @pytest.mark.asyncio
+    async def test_toggle_persists_via_tool_policy_global_scope(self):
+        """A persistência real é tool_policy — não um dict/atributo local do handler."""
+        from backend.api.handlers.admin import ToolToggleBody, toggle_tool
+        from backend.nodes.tools import ALL_TOOLS
+        from backend.services import tool_policy
+
+        target = ALL_TOOLS[0].name
+        await toggle_tool(self._admin_request(), target, ToolToggleBody(enabled=False))
+
+        assert target in tool_policy.get_disabled(tool_policy.GLOBAL_SCOPE)
+        assert tool_policy.is_allowed("qualquer-usuario", target) is False
+
+    @pytest.mark.asyncio
+    async def test_toggle_back_on_reenables(self):
+        from backend.api.handlers.admin import ToolToggleBody, toggle_tool
+        from backend.nodes.tools import ALL_TOOLS
+        from backend.services import tool_policy
+
+        target = ALL_TOOLS[0].name
+        await toggle_tool(self._admin_request(), target, ToolToggleBody(enabled=False))
+        await toggle_tool(self._admin_request(), target, ToolToggleBody(enabled=True))
+
+        assert tool_policy.is_allowed("qualquer-usuario", target) is True
+
+    @pytest.mark.asyncio
+    async def test_toggle_unknown_tool_404(self):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.admin import ToolToggleBody, toggle_tool
+
+        with pytest.raises(HTTPException) as exc:
+            await toggle_tool(
+                self._admin_request(),
+                "ferramenta-que-nao-existe",
+                ToolToggleBody(enabled=False),
+            )
+        assert exc.value.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_toggle_requires_admin_role(self):
+        from unittest.mock import MagicMock
+
+        from fastapi import HTTPException
+
+        from backend.api.handlers.admin import ToolToggleBody, toggle_tool
+        from backend.nodes.tools import ALL_TOOLS
+
+        request = MagicMock()
+        request.state.user = MagicMock(role="member", id="u1")
+
+        with pytest.raises(HTTPException) as exc:
+            await toggle_tool(request, ALL_TOOLS[0].name, ToolToggleBody(enabled=False))
+        assert exc.value.status_code == 403

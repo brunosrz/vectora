@@ -24,6 +24,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from backend.api.middleware.rate_limit import limiter, tier_rate_limit
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -90,7 +92,10 @@ class _MultiClassification(BaseModel):
 
 
 @router.post("/v1/classify", response_model=ClassifyResponse)
-async def classify(request: ClassifyRequest, http_request: Request) -> ClassifyResponse:
+@limiter.limit(tier_rate_limit)
+async def classify(
+    request: Request, classify_request: ClassifyRequest
+) -> ClassifyResponse:
     """Classifica texto em uma das labels fornecidas.
 
     Usa structured output (ProviderStrategy/ToolStrategy) via deepagents
@@ -101,18 +106,18 @@ async def classify(request: ClassifyRequest, http_request: Request) -> ClassifyR
     from backend.services.utils import load_llm
 
     response_format = (
-        _MultiClassification if request.multi_label else _SingleClassification
+        _MultiClassification if classify_request.multi_label else _SingleClassification
     )
 
-    labels_str = "\n".join(f"- {label}" for label in request.labels)
+    labels_str = "\n".join(f"- {label}" for label in classify_request.labels)
     system_prompt = (
         "Você é um classificador de texto. "
         f"Classifique o texto fornecido em UMA das seguintes categorias:\n{labels_str}\n\n"
         "Escolha a categoria mais adequada e forneça um score de confiança entre 0 e 1. "
-        f"{'Pode retornar múltiplas categorias se aplicável.' if request.multi_label else 'Retorne apenas UMA categoria.'}"
+        f"{'Pode retornar múltiplas categorias se aplicável.' if classify_request.multi_label else 'Retorne apenas UMA categoria.'}"
     )
-    if request.description:
-        system_prompt += f"\n\nContexto adicional: {request.description}"
+    if classify_request.description:
+        system_prompt += f"\n\nContexto adicional: {classify_request.description}"
 
     try:
         from typing import cast as _cast
@@ -130,21 +135,23 @@ async def classify(request: ClassifyRequest, http_request: Request) -> ClassifyR
         )
 
         result = await agent.ainvoke(
-            {"messages": [HumanMessage(content=request.text)]},
+            {"messages": [HumanMessage(content=classify_request.text)]},
             config={"configurable": {}},
         )
 
         output = result.get("structured_response") or result.get("messages", [{}])[-1]
         if isinstance(output, _SingleClassification):
             return ClassifyResponse(
-                label=_validate_label(output.label, request.labels),
+                label=_validate_label(output.label, classify_request.labels),
                 confidence=output.confidence,
                 reasoning=output.reasoning,
                 strategy="auto",
             )
         if isinstance(output, _MultiClassification):
-            valid_labels = [lbl for lbl in output.labels if lbl in request.labels]
-            primary = valid_labels[0] if valid_labels else request.labels[0]
+            valid_labels = [
+                lbl for lbl in output.labels if lbl in classify_request.labels
+            ]
+            primary = valid_labels[0] if valid_labels else classify_request.labels[0]
             return ClassifyResponse(
                 label=primary,
                 confidence=output.confidence,
@@ -156,7 +163,8 @@ async def classify(request: ClassifyRequest, http_request: Request) -> ClassifyR
         data: dict[str, Any] = output if isinstance(output, dict) else {}
         return ClassifyResponse(
             label=_validate_label(
-                str(data.get("label", request.labels[0])), request.labels
+                str(data.get("label", classify_request.labels[0])),
+                classify_request.labels,
             ),
             confidence=float(data.get("confidence", 0.5)),
             reasoning=data.get("reasoning"),

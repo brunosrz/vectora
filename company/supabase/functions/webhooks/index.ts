@@ -71,7 +71,7 @@ async function handleStripe(req: Request): Promise<Response> {
     const inv = event.data.object as Stripe.Invoice;
     const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
     const plan =
-      sub.metadata?.plan ?? sub.items.data[0]?.price?.metadata?.plan ?? "plus";
+      sub.metadata?.plan ?? sub.items.data[0]?.price?.metadata?.plan ?? "pro";
     const periodEnd = new Date(
       sub.current_period_end * 1000,
     ).toLocaleDateString("pt-BR", {
@@ -130,10 +130,14 @@ async function handleStripe(req: Request): Promise<Response> {
   }
 
   if (event.type === "customer.subscription.deleted" && uid) {
+    // tier volta pra "free" — sem isso o gate de subscription (backend
+    // require_pro()) continuaria liberando features pro pra sempre, já que
+    // ele checa tier, não status.
     await admin
       .from("subscriptions")
       .update({
         status: "canceled",
+        tier: "free",
         canceled_at: new Date().toISOString(),
       })
       .eq("user_id", uid);
@@ -157,11 +161,13 @@ async function handleAsaas(req: Request): Promise<Response> {
   });
 
   if ((event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") && uid) {
+    // Só existe checkout de Pro (create-checkout) — pagamento confirmado
+    // sempre vira tier "pro".
     await admin
       .from("subscriptions")
       .update({
         status: "active",
-        tier: (plan as "plus" | "pro") ?? "plus",
+        tier: "pro",
         provider: "asaas",
         provider_id: body.payment?.id,
       })
@@ -184,7 +190,7 @@ async function handleAsaas(req: Request): Promise<Response> {
         html: invoicePaidHtml(
           email,
           amount,
-          (plan as string) ?? "Plus",
+          (plan as string) ?? "Pro",
           periodEnd,
         ),
       });
@@ -210,9 +216,10 @@ async function handleAsaas(req: Request): Promise<Response> {
   }
 
   if (event === "PAYMENT_DELETED" || event === "PAYMENT_REFUNDED") {
+    // Mesmo motivo do Stripe: tier volta pra "free" no cancelamento/estorno.
     await admin
       .from("subscriptions")
-      .update({ status: "canceled" })
+      .update({ status: "canceled", tier: "free" })
       .eq("user_id", uid);
   }
 

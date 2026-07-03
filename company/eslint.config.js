@@ -26,6 +26,10 @@ export default [
       "supabase/functions/**",
       "emails/**",
       "src/paraglide/**",
+      // Gerado por `supabase gen types typescript` — a convenção de nomes dos
+      // type params (TableName, EnumName, ...) vem do codegen do Supabase,
+      // não é editável e se repete a cada regeneração.
+      "src/lib/supabase/types.ts",
     ],
   },
 ];

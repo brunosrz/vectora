@@ -10,14 +10,15 @@ Modelo de validação:
 1. Lê ``VECTORA_TOKEN`` do env (override por ``--token`` no Launcher).
 2. POSTa em ``${VECTORA_LICENSE_URL}`` (default: edge function Supabase
    ``validate-license``) com ``{token, vectora_version}``.
-3. Resposta esperada: ``{tier: "plus"|"pro", status: "active"|"trial"|...,
+3. Resposta esperada: ``{tier: "free"|"pro", status: "active"|"trial"|...,
    days_remaining: int, expires_at: str}``.
 4. Sucesso → cacheia em ``~/.vectora/license_cache.json`` (TTL 6h online,
    48h em modo offline graceful). Falha → tenta cache; se cache expirou,
    ``LicenseError``.
 
-Sem network e sem cache → ``LicenseError``. Sem ``VECTORA_TOKEN`` configurado
-→ ``LicenseError`` com link para ``https://vectora.company/pricing``.
+Sem ``VECTORA_TOKEN`` configurado → tier ``free`` direto (uso local solo, sem
+conta) — **não é erro**. ``LicenseError`` só ocorre quando HÁ um token mas ele
+é inválido/expirado/revogado, ou a validação remota falha sem cache utilizável.
 
 **Auditoria**: cada validação grava em ``license_checks`` no Supabase (B1).
 Sem logging local — alinhado com "self-hosted no dado, centralizado na
@@ -43,7 +44,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-LicenseTier = Literal["plus", "pro"]
+LicenseTier = Literal["free", "pro"]
 LicenseStatus = Literal["active", "trial", "expired", "revoked", "unknown"]
 
 DEFAULT_LICENSE_URL = "https://vectora.company/functions/v1/validate-license"
@@ -205,7 +206,7 @@ async def _validate_remote(token: str) -> LicenseStatusInfo:
         # Compat com a resposta enxuta {valid, reason, tier}.
         status = "trial" if data.get("reason") == "trialing" else "active"
     return LicenseStatusInfo(
-        tier=data.get("tier") or "plus",
+        tier=data.get("tier") or "free",
         status=status,
         days_remaining=int(data.get("days_remaining", 0)),
         expires_at=data.get("expires_at", "") or "",
@@ -233,6 +234,11 @@ async def validate_license_async(*, force: bool = False) -> LicenseStatusInfo:
     salvar um token novo (setup wizard) e pelo loop periódico de 6h.
 
     ``VECTORA_LICENSE_BYPASS=1`` pula a validação inteira (modo dev).
+
+    Sem ``VECTORA_TOKEN`` configurado, o Vectora roda no tier ``free``
+    (uso local solo, sem conta) — não é mais erro. Só levanta
+    ``LicenseError`` quando HÁ um token mas ele é inválido/expirado/
+    revogado, ou quando a validação remota falha sem cache utilizável.
     """
     if os.getenv("VECTORA_LICENSE_BYPASS", "").strip() == "1":
         logger.info("license: bypass via VECTORA_LICENSE_BYPASS=1")
@@ -247,10 +253,21 @@ async def validate_license_async(*, force: bool = False) -> LicenseStatusInfo:
 
     token = _get_token()
     if not token:
-        raise LicenseError(
-            "VECTORA_TOKEN não configurado. Obtenha um token em "
-            "https://vectora.company/dashboard."
+        # Escreve no cache mesmo sem token: `get_current_tier()` (usado nos
+        # gates de subscription) e `GET /license/status` leem via
+        # `read_cached_status()` — sem isto, um usuário free que nunca
+        # configurou token veria `tier=None` em vez de `free` até a primeira
+        # tentativa de validação, quebrando o gating antes do primeiro boot.
+        info = LicenseStatusInfo(
+            tier="free",
+            status="active",
+            days_remaining=0,
+            expires_at="",
+            validated_at=datetime.now(UTC).isoformat(),
+            cached=False,
         )
+        _write_cache(info)
+        return info
 
     cache = _read_cache()
     cache_fresh = (
@@ -259,7 +276,7 @@ async def validate_license_async(*, force: bool = False) -> LicenseStatusInfo:
 
     if cache_fresh and cache is not None:
         return LicenseStatusInfo(
-            tier=cache.get("tier", "plus"),
+            tier=cache.get("tier", "free"),
             status=cache.get("status", "active"),
             days_remaining=int(cache.get("days_remaining", 0)),
             expires_at=cache.get("expires_at", ""),
@@ -279,7 +296,7 @@ async def validate_license_async(*, force: bool = False) -> LicenseStatusInfo:
         if cache is not None and _cache_is_fresh(cache, CACHE_TTL_OFFLINE):
             logger.info("license: usando cache offline (TTL 48h).")
             return LicenseStatusInfo(
-                tier=cache.get("tier", "plus"),
+                tier=cache.get("tier", "free"),
                 status=cache.get("status", "active"),
                 days_remaining=int(cache.get("days_remaining", 0)),
                 expires_at=cache.get("expires_at", ""),
@@ -378,7 +395,7 @@ def read_cached_status() -> LicenseStatusInfo | None:
     if cache is None:
         return None
     return LicenseStatusInfo(
-        tier=cache.get("tier", "plus"),
+        tier=cache.get("tier", "free"),
         status=cache.get("status", "active"),
         days_remaining=int(cache.get("days_remaining", 0)),
         expires_at=cache.get("expires_at", ""),

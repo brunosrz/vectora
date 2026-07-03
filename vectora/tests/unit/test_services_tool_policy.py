@@ -48,3 +48,44 @@ def test_persists_across_reads():
     tool_policy.set_disabled("u1", ["grep"])
     # Releitura vai ao disco
     assert tool_policy.get_disabled("u1") == ["grep"]
+
+
+# ---------------------------------------------------------------------------
+# GLOBAL_SCOPE — kill-switch do admin (aplica a todas as sessões, mesmo local)
+# ---------------------------------------------------------------------------
+
+
+def test_global_disable_blocks_any_user():
+    tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, ["terminal"])
+    assert tool_policy.is_allowed("u1", "terminal") is False
+    assert tool_policy.is_allowed("u2", "terminal") is False
+    assert tool_policy.is_allowed("local", "terminal") is False
+
+
+def test_global_disable_does_not_block_other_tools():
+    tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, ["terminal"])
+    assert tool_policy.is_allowed("u1", "file_read") is True
+
+
+def test_global_reenable_by_setting_empty():
+    tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, ["terminal"])
+    tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, [])
+    assert tool_policy.is_allowed("u1", "terminal") is True
+
+
+def test_effective_disabled_unions_global_and_user():
+    tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, ["terminal"])
+    tool_policy.set_disabled("u1", ["grep"])
+    assert tool_policy.effective_disabled("u1") == {"terminal", "grep"}
+    # Outro usuário não herda o disable pessoal de u1, só o global.
+    assert tool_policy.effective_disabled("u2") == {"terminal"}
+
+
+def test_effective_disabled_without_user_id_is_global_only():
+    tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, ["terminal"])
+    assert tool_policy.effective_disabled(None) == {"terminal"}
+
+
+def test_effective_disabled_empty_by_default():
+    assert tool_policy.effective_disabled("u1") == set()
+    assert tool_policy.effective_disabled(None) == set()

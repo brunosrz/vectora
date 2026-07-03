@@ -3,52 +3,44 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
-import { Check, Minus } from "lucide-react";
+import { Check } from "lucide-react";
 import { track } from "#/lib/analytics/plausible";
 
 type Currency = "BRL" | "USD";
 
-const PLUS = {
-  brl: "R$20",
-  usd: "$7",
-  badge: m.pricing_plus_badge,
+const FREE = {
+  brl: "R$0",
+  usd: "$0",
+  badge: m.pricing_free_badge,
   features: [
-    { text: m.pricing_feat_workspace5, ok: true },
-    { text: m.pricing_feat_members5, ok: true },
-    { text: m.pricing_feat_rag_unlimited, ok: true },
-    { text: m.pricing_feat_mcp, ok: true },
-    { text: m.pricing_feat_sdks, ok: true },
-    { text: m.pricing_feat_mcp_acp, ok: true },
-    { text: m.pricing_feat_support_sla, ok: true },
-    { text: m.pricing_feat_sso, ok: true },
+    m.pricing_feat_local_tools,
+    m.pricing_feat_rag_unlimited,
+    m.pricing_feat_no_account,
+    m.pricing_feat_sdk_standard,
   ],
 };
 
 const PRO = {
-  brl: "R$55",
-  usd: "$20",
+  brl: "R$24",
+  usd: "$9",
   badge: m.pricing_pro_badge,
   features: [
-    { text: m.pricing_feat_everything_plus, ok: true },
-    { text: m.pricing_feat_workspaces_unlimited, ok: true },
-    { text: m.pricing_feat_members_unlimited, ok: true },
-    { text: m.pricing_feat_rest_api, ok: true },
-    { text: m.pricing_feat_webhooks, ok: true },
-    { text: m.pricing_feat_priority_sla, ok: true },
+    m.pricing_feat_everything_free,
+    m.pricing_feat_chat_web,
+    m.pricing_feat_invites_unlimited,
+    m.pricing_feat_sso,
+    m.pricing_feat_storage_scalable,
+    m.pricing_feat_webhooks,
+    m.pricing_feat_rest_api_higher,
+    m.pricing_feat_priority_sla,
   ],
 };
 
-function FeatureRow({ text, ok }: { text: () => string; ok: boolean }) {
+function FeatureRow({ text }: { text: () => string }) {
   return (
     <li className="flex items-center gap-2 text-[14px]">
-      {ok ? (
-        <Check className="h-4 w-4 shrink-0 text-primary" />
-      ) : (
-        <Minus className="h-4 w-4 shrink-0 text-muted-foreground/80" />
-      )}
-      <span className={ok ? "text-foreground/90" : "text-muted-foreground/80"}>
-        {text()}
-      </span>
+      <Check className="h-4 w-4 shrink-0 text-primary" />
+      <span className="text-foreground/90">{text()}</span>
     </li>
   );
 }
@@ -98,41 +90,37 @@ export default function PricingSection() {
 
         {/* Cards */}
         <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Plus */}
+          {/* Free */}
           <div className="flex flex-col justify-between rounded-3xl border border-border bg-card/30 p-7">
             <div className="flex flex-col gap-6">
               {/* Badge */}
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
                 <span className="text-[12px] font-medium text-muted-foreground">
-                  {PLUS.badge()}
+                  {FREE.badge()}
                 </span>
               </div>
 
               {/* Price */}
               <div className="flex items-baseline gap-1">
                 <span className="text-[30px] font-medium leading-[36px] text-foreground">
-                  {currency === "BRL" ? PLUS.brl : PLUS.usd}
-                </span>
-                <span className="text-muted-foreground">
-                  {m.pricing_per_month()}
+                  {currency === "BRL" ? FREE.brl : FREE.usd}
                 </span>
               </div>
 
               {/* Features */}
               <ul className="flex flex-col gap-1.5">
-                {PLUS.features.map((f) => (
-                  <FeatureRow key={f.text()} {...f} />
+                {FREE.features.map((text) => (
+                  <FeatureRow key={text()} text={text} />
                 ))}
               </ul>
             </div>
 
             <Link
-              to="/signup"
-              search={{ plan: "plus" }}
+              to="/downloads"
               className="mt-8 block w-full rounded-2xl bg-[#18191C] py-3 text-center text-[14px] font-semibold text-primary shadow-[0px_1px_3px_rgba(24,25,28,0.3),0px_1px_2px_-1px_rgba(24,25,28,0.3)] transition-opacity hover:opacity-90"
             >
-              {m.pricing_cta_trial()}
+              {m.pricing_cta_download()}
             </Link>
           </div>
 
@@ -159,18 +147,17 @@ export default function PricingSection() {
 
               {/* Features */}
               <ul className="flex flex-col gap-1.5">
-                {PRO.features.map((f) => (
-                  <FeatureRow key={f.text()} {...f} />
+                {PRO.features.map((text) => (
+                  <FeatureRow key={text()} text={text} />
                 ))}
               </ul>
             </div>
 
             <Link
               to="/signup"
-              search={{ plan: "pro" }}
               className="mt-8 block w-full rounded-2xl bg-primary py-3 text-center text-[14px] font-semibold text-[#18191C] shadow-[0px_1px_3px_rgba(121,184,255,0.3),0px_1px_2px_-1px_rgba(121,184,255,0.3)] transition-opacity hover:opacity-90"
             >
-              {m.pricing_cta_trial()}
+              {m.pricing_cta_subscribe_pro()}
             </Link>
           </div>
         </div>

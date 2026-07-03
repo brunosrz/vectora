@@ -313,6 +313,10 @@ def _build_qdrant_vs(
     from langchain_qdrant import QdrantVectorStore, RetrievalMode
     from qdrant_client import QdrantClient
 
+    from backend.services.subscription import require_pro
+
+    require_pro()
+
     client = QdrantClient(
         url=settings.qdrant_url or "http://localhost:6333",
         api_key=settings.qdrant_api_key,
@@ -383,7 +387,10 @@ async def get_pg_pool(dsn: str | None = None) -> Any:
 
     import asyncpg
 
+    from backend.services.subscription import require_pro
     from backend.settings import settings as _s
+
+    require_pro()
 
     effective_dsn = dsn or _s.postgres_dsn
     if not effective_dsn:

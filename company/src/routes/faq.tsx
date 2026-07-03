@@ -41,18 +41,19 @@ const FAQ_DATA = {
   ],
   Planos: [
     {
-      question: "Qual a diferença entre Plus e Pro?",
+      question: "Qual a diferença entre Free e Pro?",
       answer:
-        "Pro inclui workspaces ilimitados, membros ilimitados, webhooks, ACP server e SLA de suporte de 24h.",
+        "Free é grátis pra sempre e não exige conta: CLI, MCP, Desktop e RAG local ilimitado, tudo rodando na sua máquina. Pro (R$24/mês) exige conta e adiciona o que só faz sentido em time: chat web multi-usuário, convites de membro ilimitados, SSO/SAML, storage escalável (Postgres/Qdrant/Redis), webhooks, rate limit maior na REST API e suporte prioritário.",
     },
     {
-      question: "O trial requer cartão?",
-      answer: "Não. 30 dias de trial grátis sem cartão de crédito.",
+      question: "Preciso criar conta para usar o Vectora?",
+      answer:
+        "Não, se for uso local/solo. O plano Free funciona 100% sem login. Conta só é necessária para os recursos de time do Pro.",
     },
     {
       question: "Posso cancelar a qualquer momento?",
       answer:
-        "Sim. Sem fidelidade mínima. Cancele pelo painel a qualquer momento.",
+        "Sim. Sem fidelidade mínima. Cancele pelo painel a qualquer momento — sua conta volta para o plano Free automaticamente.",
     },
   ],
   Segurança: [
@@ -69,7 +70,7 @@ const FAQ_DATA = {
     {
       question: "Como funciona a autenticação?",
       answer:
-        "Supabase Auth com suporte a email/senha, magic link e SSO/SAML (Pro).",
+        "No Free, uso local sem login. Para o Pro (conta obrigatória), Supabase Auth com suporte a email/senha, magic link e SSO/SAML.",
     },
   ],
   Técnico: [
@@ -86,7 +87,7 @@ const FAQ_DATA = {
     {
       question: "Existe API pública?",
       answer:
-        "Sim. REST API /v1 com limites por plano (60 req/min no Plus, 600 req/min no Pro). Docs em docs.vectora.company.",
+        "Sim. REST API /v1 com limites por plano (10 req/min no Free, 100 req/min no Pro). Docs em docs.vectora.company.",
     },
   ],
 };

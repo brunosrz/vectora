@@ -168,7 +168,9 @@ function FileRow({
             {!hunks && (
               <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
             )}
-            {hunks?.map((h, i) => <HunkView key={i} hunk={h} />)}
+            {hunks?.map((h, i) => (
+              <HunkView key={i} hunk={h} />
+            ))}
           </div>
         )}
       </div>
@@ -319,7 +321,7 @@ export function ChangesView({
   return (
     <div className="h-full flex flex-col">
       {menu.element}
-      <div className="px-2 py-1.5 border-b border-border/60 flex items-center justify-between bg-background">
+      <div className="px-2 py-1.5 border-b border-border/60 flex items-center justify-between">
         <span className="text-xs text-muted-foreground">
           {m.workbench_diff_files_badge({ n: summary.files.length })}
         </span>

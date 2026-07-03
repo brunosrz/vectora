@@ -27,7 +27,7 @@ export function useLicenseHistory() {
 
 export function useCreateCheckout() {
   return useMutation({
-    mutationFn: (plan: "plus" | "pro") => createCheckout({ data: { plan } }),
+    mutationFn: () => createCheckout(),
     onSuccess: ({ url }) => {
       window.location.href = url;
     },

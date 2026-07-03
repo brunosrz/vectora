@@ -35,7 +35,7 @@ app.get("/health", (c) =>
 );
 
 /** Hash determinístico estável → bucket [0..99] para rollout faseado. */
-function rolloutBucket(token: string): number {
+export function rolloutBucket(token: string): number {
   let h = 0;
   for (const ch of token) {
     h = (h * 31 + ch.charCodeAt(0)) | 0;
@@ -52,7 +52,7 @@ async function getConfig(kv: KVNamespace): Promise<RuntimeConfig> {
 }
 
 /** Decide qual versão servir para o client baseado em rollout. */
-function resolveVersion(
+export function resolveVersion(
   config: RuntimeConfig,
   channel: string,
   token: string,
@@ -69,11 +69,11 @@ function resolveVersion(
   return ch.previous_stable ?? null;
 }
 
+// Sem token: Free não tem conta, checar/baixar atualização não pode depender
+// de estar logado. Rollout/quarentena continuam controlando QUAL versão é
+// servida — isso é sobre segurança de release, não sobre autenticação.
 app.get("/updates/:channel/:os/:arch/latest.yml", async (c) => {
   const token = c.req.query("token") ?? c.req.header("X-Vectora-Token") ?? "";
-  if (!token) {
-    return c.text("missing token", 401);
-  }
   const { channel, os, arch } = c.req.param();
   const config = await getConfig(c.env.KV);
   const version = resolveVersion(config, channel, token);
@@ -95,8 +95,6 @@ app.get("/updates/:channel/:os/:arch/latest.yml", async (c) => {
 });
 
 app.get("/updates/:channel/:os/:arch/:version/:filename", async (c) => {
-  const token = c.req.query("token") ?? c.req.header("X-Vectora-Token") ?? "";
-  if (!token) return c.text("missing token", 401);
   const { channel, os, arch, version, filename } = c.req.param();
   const key = `${channel}/${os}/${arch}/${version}/${filename}`;
   const obj = await c.env.R2.get(key);
@@ -107,6 +105,45 @@ app.get("/updates/:channel/:os/:arch/:version/:filename", async (c) => {
         obj.httpMetadata?.contentType ?? "application/octet-stream",
       "Cache-Control": "public, max-age=3600",
       ETag: obj.httpEtag,
+    },
+  });
+});
+
+/** Nome do instalador conforme o artifactName do electron-builder (T.12.6). */
+export function installerFilename(
+  version: string,
+  os: string,
+  arch: string,
+  ext: string,
+): string {
+  return `Vectora-${version}-${os}-${arch}.${ext}`;
+}
+
+// Download de primeira instalação — sem token (o visitante do site ainda não
+// tem app nem conta) e sem participar do rollout gradual (esse é só pra quem
+// já tem o app e está checando update; quem baixa pela primeira vez recebe a
+// versão estável do canal direto, ignorando quarentena/rollout_percent).
+app.get("/download/:channel/:os/:arch/:ext", async (c) => {
+  const { channel, os, arch, ext } = c.req.param();
+  const config = await getConfig(c.env.KV);
+  const ch = config.channels[channel];
+  if (!ch) return c.text("unknown channel", 404);
+  const version = config.quarantined.includes(ch.version)
+    ? (ch.previous_stable ?? null)
+    : ch.version;
+  if (!version) return c.text("no version available", 404);
+
+  const filename = installerFilename(version, os, arch, ext);
+  const key = `${channel}/${os}/${arch}/${version}/${filename}`;
+  const obj = await c.env.R2.get(key);
+  if (!obj) return c.text("not found", 404);
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type":
+        obj.httpMetadata?.contentType ?? "application/octet-stream",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "public, max-age=300",
+      "X-Vectora-Version": version,
     },
   });
 });

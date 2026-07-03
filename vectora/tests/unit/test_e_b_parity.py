@@ -389,6 +389,48 @@ class TestSubagentSpecs:
         assert "file_write" not in tool_names
         assert "terminal" in tool_names
 
+    def test_subagent_specs_global_disable_applies_without_user_id(
+        self, tmp_path, monkeypatch
+    ):
+        """Kill-switch global (admin) filtra subagents mesmo sem user_id (sessão local)."""
+        from backend.services import tool_policy
+        from backend.services.agent_factory import _subagent_specs
+
+        monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tools")
+        tool_policy.set_disabled(tool_policy.GLOBAL_SCOPE, ["file_write"])
+
+        fake_tool = MagicMock()
+        fake_tool.name = "file_write"
+        fake_tool2 = MagicMock()
+        fake_tool2.name = "terminal"
+
+        with (
+            patch(
+                "backend.agents.coder.SUBAGENT_SPEC",
+                {
+                    "name": "coder",
+                    "description": "d",
+                    "system_prompt": "s",
+                    "tools": [fake_tool, fake_tool2],
+                },
+            ),
+            patch(
+                "backend.agents.search.SUBAGENT_SPEC",
+                {
+                    "name": "search",
+                    "description": "d",
+                    "system_prompt": "s",
+                    "tools": [],
+                },
+            ),
+        ):
+            specs = _subagent_specs()  # sem user_id — sessão local
+
+        coder_spec = next(s for s in specs if s["name"] == "coder")
+        tool_names = [t.name for t in coder_spec["tools"]]
+        assert "file_write" not in tool_names
+        assert "terminal" in tool_names
+
 
 # ---------------------------------------------------------------------------
 # E.B-11 — _agents_md_paths

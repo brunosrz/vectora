@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { createSupabaseServerClient } from "#/lib/supabase/server";
 import { createSupabaseAdminClient } from "#/lib/supabase/admin";
 import type { Tables } from "#/lib/supabase/types";
@@ -24,21 +23,23 @@ export const getSubscription = createServerFn({ method: "GET" }).handler(
   },
 );
 
-export const createCheckout = createServerFn({ method: "POST" })
-  .validator(z.object({ plan: z.enum(["plus", "pro"]) }))
-  .handler(async ({ data: input }) => {
+export const createCheckout = createServerFn({ method: "POST" }).handler(
+  async () => {
     const uid = await getUid();
     const admin = createSupabaseAdminClient();
 
+    // Só existe checkout de Pro — Free não passa por aqui (sem conta, sem
+    // cobrança).
     const sub = await getSubscription();
     const country = sub?.currency === "BRL" ? "BR" : "INTL";
 
     const { data, error } = await admin.functions.invoke("create-checkout", {
-      body: { plan: input.plan, country, user_id: uid },
+      body: { country, user_id: uid },
     });
     if (error) throw new Error(error.message);
     return data as { url: string };
-  });
+  },
+);
 
 export const createPortal = createServerFn({ method: "POST" }).handler(
   async () => {

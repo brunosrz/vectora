@@ -7,6 +7,7 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons release-win   → instalador Windows (.msi + .exe NSIS)
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
+    scons up-version [bump=patch|minor|major] → bump de versão + tag git
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
     scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint+eslint
@@ -22,11 +23,12 @@ Subprojetos cobertos por lint e tests:
     company/        TypeScript (eslint, tsc, vitest)
     electron/       TypeScript (vitest — cookie-utils e lifecycle puro)
     docs/           TypeScript (tsc) — sem testes
-    update-server/  TypeScript (tsc) — sem testes
+    update-server/  TypeScript (tsc, vitest)
 """
 
 import base64
 import glob
+import json
 import os
 import re
 import shutil
@@ -200,7 +202,8 @@ def _action_build_nuitka(target, source, env):
     # build-hybrid.py já valida cada fase, mas reconferimos o artefato final:
     # sem ele, o release empacotaria um instalador sem o executável.
     binary_name = "vectora.exe" if sys.platform == "win32" else "vectora"
-    binary = os.path.join(ROOT, "dist", binary_name)
+    # --onedir: o executável fica em dist/vectora/ (pasta com _internal/).
+    binary = os.path.join(ROOT, "dist", "vectora", binary_name)
     if not os.path.isfile(binary):
         raise SystemExit(
             f"ERRO: build-hybrid.py não gerou {binary}. "
@@ -299,7 +302,7 @@ def _action_package(target, source, env, platform=""):
         dev_env = _get_dev_cert_env() if sys.platform == "win32" else None
         if dev_env:
             build_env.update(dev_env)
-            nuitka_bin = os.path.join(ROOT, "dist", "vectora.exe")
+            nuitka_bin = os.path.join(ROOT, "dist", "vectora", "vectora.exe")
             if os.path.isfile(nuitka_bin):
                 print(">> assinando binário híbrido (extraResource) com dev-cert.pfx...")
                 _sign_binary(nuitka_bin)
@@ -404,9 +407,10 @@ def _action_tests_storage(target, source, env):
 
 
 def _run_full_suite(log, *, coverage: bool):
-    """Suíte completa: vectora (vitest + pytest) + relay + company + electron (vitest).
+    """Suíte completa: vectora (vitest + pytest) + relay + company + electron
+    + update-server (vitest).
 
-    docs e update-server não têm testes — cobertos só pelo lint (typecheck).
+    docs não tem testes — coberto só pelo lint (typecheck).
 
     Com ``coverage=True``, ativa --coverage no vitest e --cov no pytest
     (relatórios em vectora/frontend/coverage/ e vectora/htmlcov/).
@@ -442,6 +446,10 @@ def _run_full_suite(log, *, coverage: bool):
     # ── electron (cookie-utils e lifecycle puro) ───────────────────────────
     _pnpm_install_if_needed("vectora/electron", log)
     _run([PNPM, "--dir", "vectora/electron", "run", "test"], log=log)
+
+    # ── update-server (worker.ts + scripts/release.ts) ─────────────────────
+    _pnpm_install_if_needed("update-server", log)
+    _run([PNPM, "--dir", "update-server", "run", "test"], log=log)
 
 
 def _action_tests(target, source, env):
@@ -527,6 +535,110 @@ def _action_clean(target, source, env):
             print(f">> removido: {path}")
 
 
+# ── Up-version ────────────────────────────────────────────────────────────────
+# `scons up-version [bump=patch|minor|major]` — sobe o semver em pyproject.toml
+# (fonte única — backend/version.py lê de lá via importlib.metadata) e propaga
+# pro package.json do electron/relay/update-server. NÃO grava hash nenhum
+# nesses arquivos: o `buildVersion` (semver + hash numérico do commit, pro
+# recurso de versão do .exe/.msi) é só impresso aqui — quem usa é
+# `scons release-<os>` na hora do build. company/ fica de fora (não tem
+# version própria, é site separado do app).
+
+def _read_pyproject_version(path: str) -> tuple[int, int, int]:
+    text = open(path, encoding="utf-8").read()
+    m = re.search(r'(?m)^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"', text)
+    if not m:
+        raise RuntimeError(f"version não encontrada em {path}")
+    return int(m.group(1)), int(m.group(2)), int(m.group(3))
+
+
+def _write_pyproject_version(path: str, new_version: str) -> None:
+    text = open(path, encoding="utf-8").read()
+    new_text = re.sub(
+        r'(?m)^version\s*=\s*"\d+\.\d+\.\d+"',
+        f'version = "{new_version}"',
+        text,
+        count=1,
+    )
+    open(path, "w", encoding="utf-8").write(new_text)
+
+
+def _write_package_json_version(path: str, new_version: str) -> None:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    data["version"] = new_version
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
+def _bump_semver(version: tuple[int, int, int], kind: str) -> tuple[int, int, int]:
+    major, minor, patch = version
+    if kind == "major":
+        return (major + 1, 0, 0)
+    if kind == "minor":
+        return (major, minor + 1, 0)
+    return (major, minor, patch + 1)
+
+
+def _git_short_hash() -> str:
+    return subprocess.check_output(
+        ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+
+
+def _numeric_build_hash(short_hash: str) -> int:
+    # Windows limita o 4º campo de versão de arquivo (FileVersion/ProductVersion)
+    # a 16 bits — mod 65536 garante que o .msi/.exe nunca recebam um valor
+    # inválido, mesmo assim determinístico por commit.
+    return int(short_hash, 16) % 65536
+
+
+def _action_up_version(target, source, env):
+    bump_kind = ARGUMENTS.get("bump", "patch")
+    if bump_kind not in ("major", "minor", "patch"):
+        print(f">> bump inválido: {bump_kind!r} — use bump=major|minor|patch")
+        return 1
+
+    pyproject_path = os.path.join(VECTORA, "pyproject.toml")
+    package_json_paths = [
+        os.path.join(VECTORA, "electron", "package.json"),
+        os.path.join(RELAY, "package.json"),
+        os.path.join(UPDATE, "package.json"),
+    ]
+
+    old_version = _read_pyproject_version(pyproject_path)
+    new_version = _bump_semver(old_version, bump_kind)
+    new_version_str = ".".join(str(p) for p in new_version)
+
+    _write_pyproject_version(pyproject_path, new_version_str)
+    for pkg_path in package_json_paths:
+        _write_package_json_version(pkg_path, new_version_str)
+
+    subprocess.run(
+        ["git", "add", pyproject_path, *package_json_paths], cwd=ROOT, check=True
+    )
+    subprocess.run(
+        ["git", "commit", "-m", f"chore: bump version to v{new_version_str}"],
+        cwd=ROOT,
+        check=True,
+    )
+    subprocess.run(["git", "tag", f"v{new_version_str}"], cwd=ROOT, check=True)
+
+    short_hash = _git_short_hash()
+    hash_num = _numeric_build_hash(short_hash)
+    build_version = f"{new_version_str}.{hash_num}"
+
+    print(f">> versão {'.'.join(str(p) for p in old_version)} → {new_version_str}")
+    print(f">> commit + tag v{new_version_str} criados (sem push — manual)")
+    print(f">> buildVersion (p/ electron-builder --config.buildVersion=...): {build_version}")
+    print(">> Próximos passos:")
+    print(f">>   scons release-<os>")
+    print(
+        f">>   pnpm --dir update-server run release -- --version={new_version_str}"
+    )
+
+
 # ── Help ──────────────────────────────────────────────────────────────────────
 
 
@@ -539,6 +651,8 @@ def _action_help(target, source, env):
     scons release-win      instalador Windows (.msi + .exe NSIS)
     scons release-mac      instalador macOS (.dmg universal)
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
+    scons up-version [bump=patch|minor|major]
+                           bump de versão (pyproject.toml + package.json) + tag git
 
   Build
     scons frontend         só o build do frontend (vectora/frontend/dist/)
@@ -587,6 +701,8 @@ _cmd("release-win",   lambda target, source, env: _action_package(target, source
 _cmd("release-mac",   lambda target, source, env: _action_package(target, source, env, "mac"),   deps=_FULL_DEPS)
 _cmd("release-linux", lambda target, source, env: _action_package(target, source, env, "linux"), deps=_FULL_DEPS)
 _cmd("release",       lambda target, source, env: _action_package(target, source, env),          deps=_FULL_DEPS)
+
+_cmd("up-version",    _action_up_version)
 
 _cmd("tests",         _action_tests)
 _cmd("coverage",      _action_coverage)

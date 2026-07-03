@@ -24,10 +24,7 @@ function SlaPage() {
       <p>Os tempos de resposta de suporte variam por plano:</p>
       <ul>
         <li>
-          <strong>Trial</strong> — Comunidade (GitHub Issues, sem SLA)
-        </li>
-        <li>
-          <strong>Plus</strong> — Email em até 48 horas úteis
+          <strong>Free</strong> — Email em até 48 horas úteis
         </li>
         <li>
           <strong>Pro</strong> — Email prioritário em até 24 horas úteis

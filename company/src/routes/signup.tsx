@@ -1,20 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import AuthLayout from "#/components/shared/AuthLayout";
-import OAuthButtons from "#/components/shared/OAuthButtons";
 import Turnstile from "#/components/shared/Turnstile";
 import { getSession, signUp } from "#/server/fns/auth";
 import { track } from "#/lib/analytics/plausible";
 import { toast } from "sonner";
 
-const SearchSchema = z.object({ plan: z.enum(["plus", "pro"]).optional() });
-
 export const Route = createFileRoute("/signup")({
-  validateSearch: SearchSchema,
   beforeLoad: async () => {
     const user = await getSession();
     if (user) throw { redirect: { to: "/dashboard" } };
@@ -38,13 +33,13 @@ const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { plan } = Route.useSearch();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -57,7 +52,13 @@ function SignupPage() {
         },
       }),
     onSuccess: (res) => {
-      track("signup", { plan: plan ?? "plus" });
+      track("signup", { plan: "pro" });
+      // Confirmação de email ligada → sem sessão; mostra "confirme seu email"
+      // em vez de ir pro dashboard (que sem sessão volta pro login).
+      if (res.needsConfirmation) {
+        setConfirmationSent(true);
+        return;
+      }
       navigate({ to: res.redirect as "/dashboard" });
     },
     onError: (err: Error) => {
@@ -77,17 +78,28 @@ function SignupPage() {
     turnstileToken !== null &&
     !mutation.isPending;
 
-  return (
-    <AuthLayout
-      heading={m.signup_heading()}
-      subheading={
-        plan && (
-          <p className="mt-1 text-sm text-primary">
-            Plano {plan === "pro" ? "Pro" : "Plus"} selecionado
+  if (confirmationSent) {
+    return (
+      <AuthLayout heading={m.signup_confirm_heading()}>
+        <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+          <p>
+            {m.signup_confirm_desc()}{" "}
+            <strong className="text-foreground">{email}</strong>.
           </p>
-        )
-      }
-    >
+          <p>{m.signup_confirm_hint()}</p>
+          <Link
+            to="/login"
+            className="inline-block text-primary transition-colors hover:text-primary/80"
+          >
+            {m.signup_have_account()}
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout heading={m.signup_heading()}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -165,18 +177,6 @@ function SignupPage() {
           {mutation.isPending ? m.form_submitting() : m.signup_cta()}
         </button>
       </form>
-
-      <div className="mt-6 flex items-center gap-3">
-        <hr className="flex-1 border-border" />
-        <span className="text-xs text-muted-foreground">
-          {m.oauth_divider()}
-        </span>
-        <hr className="flex-1 border-border" />
-      </div>
-
-      <div className="mt-4">
-        <OAuthButtons />
-      </div>
 
       <div className="mt-6 flex justify-between text-sm text-muted-foreground">
         <Link
