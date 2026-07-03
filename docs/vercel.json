@@ -1,5 +1,9 @@
 {
-  "installCommand": "npx --yes pnpm@11 install --frozen-lockfile=false",
-  "buildCommand": "pnpm build",
-  "outputDirectory": "build"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "hugo --gc --minify",
+  "outputDirectory": "public",
+  "installCommand": "true",
+  "env": {
+    "HUGO_VERSION": "0.163.3"
+  }
 }

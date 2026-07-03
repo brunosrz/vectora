@@ -14,14 +14,15 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons docker        → sobe PostgreSQL + Redis + Qdrant via docker compose
     scons clean         → remove outputs de build
 
-Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock)
+Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock), Hugo (extended) no PATH
 Instalar SCons: pip install scons (ou uv add --dev scons)
 
 Subprojetos cobertos por lint e tests:
     vectora/        Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
     company/        TypeScript (eslint, tsc, vitest)
     electron/       TypeScript (vitest — cookie-utils e lifecycle puro)
-    docs/           TypeScript (tsc) — sem testes
+    docs/           Hugo + Hextra (build check via `hugo --gc --minify`) — sem
+                    testes; era Docusaurus, migrado pra Hugo
     services/       TypeScript (tsc, vitest) — relay + updates unificados
                     (era relay/ + update-server/, ver Fase A do plano de
                     unificação)
@@ -60,6 +61,28 @@ def _find_pnpm() -> str:
 
 
 PNPM = _find_pnpm()
+
+
+def _find_hugo() -> str:
+    found = shutil.which("hugo") or shutil.which("hugo.exe")
+    if found:
+        return found
+    # winget instala fora do PATH da sessão atual até reiniciar o shell —
+    # cai no caminho padrão do pacote Hugo.Hugo.Extended no Windows.
+    if sys.platform == "win32":
+        packages = os.path.join(
+            os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WinGet", "Packages"
+        )
+        if os.path.isdir(packages):
+            for name in os.listdir(packages):
+                if name.startswith("Hugo.Hugo.Extended_"):
+                    candidate = os.path.join(packages, name, "hugo.exe")
+                    if os.path.isfile(candidate):
+                        return candidate
+    return "hugo"
+
+
+HUGO = _find_hugo()
 
 
 def _run(
@@ -373,9 +396,11 @@ def _action_lint(target, source, env):
         _pnpm_install_if_needed("company", log)
         _run([PNPM, "--dir", "company", "run", "lint"], log=log)
         _run([PNPM, "--dir", "company", "run", "typecheck"], log=log)
-        # ── docs ──────────────────────────────────────────────────────────────
-        _pnpm_install_if_needed("docs", log)
-        _run([PNPM, "--dir", "docs", "run", "typecheck"], log=log)
+        # ── docs (Hugo + Hextra) ─────────────────────────────────────────────
+        # Sem typecheck TS aqui — o gate é o próprio build do site. `hugo build`
+        # já resolve o módulo Hextra pinado em go.mod sozinho — não rodar
+        # `hugo mod get` aqui, que faz upgrade do pin como side-effect.
+        _run([HUGO, "--gc", "--minify", "--destination", "public"], log=log, cwd=DOCS)
         # ── services (relay + updates unificados) ──────────────────────────────
         _pnpm_install_if_needed("services", log)
         _run([PNPM, "--dir", "services", "exec", "tsc", "--noEmit"], log=log)
@@ -526,6 +551,8 @@ def _action_clean(target, source, env):
         "vectora/frontend/out",
         "vectora/electron/dist",
         "vectora/electron/dist-electron",
+        "docs/public",
+        "docs/resources",
     ]
     for path in paths:
         full = os.path.join(ROOT, path.replace("/", os.sep))

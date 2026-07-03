@@ -1,0 +1,340 @@
+baseURL = 'https://docs.vectora.company/'
+defaultContentLanguage = 'pt'
+defaultContentLanguageInSubdir = true
+title = 'Vectora Docs'
+enableEmoji = false
+disableKinds = ["taxonomy", "term"]
+
+[outputs]
+  home = ['HTML', 'RSS']
+  section = ['HTML', 'RSS']
+
+[module]
+  [[module.imports]]
+    path = "github.com/imfing/hextra"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.highlight]
+    noClasses = false
+
+[languages]
+  [languages.pt]
+    label = "Português"
+    locale = "pt-BR"
+    weight = 1
+    title = "Vectora Docs"
+    [languages.pt.params]
+      description = "Vectora — agente de IA self-hosted com RAG híbrido, Context Graph nativo, servidor MCP sempre-ativo e chat web multi-usuário."
+    [[languages.pt.menu.main]]
+      name = "Docs"
+      pageRef = "/docs"
+      weight = 1
+    [[languages.pt.menu.main]]
+      identifier = "vectora.company"
+      name = "vectora.company"
+      url = "https://vectora.company"
+      weight = 2
+    [[languages.pt.menu.main]]
+      identifier = "signup"
+      name = "Começar trial grátis"
+      url = "https://vectora.company/signup"
+      weight = 3
+      [languages.pt.menu.main.params]
+        type = "button"
+    [[languages.pt.menu.main]]
+      identifier = "github"
+      weight = 4
+      url = "https://github.com/vectora-company/vectora"
+      [languages.pt.menu.main.params]
+        icon = "github"
+    [[languages.pt.menu.main]]
+      identifier = "search"
+      weight = 5
+      [languages.pt.menu.main.params]
+        type = "search"
+    [[languages.pt.menu.main]]
+      identifier = "theme-toggle"
+      weight = 6
+      [languages.pt.menu.main.params]
+        type = "theme-toggle"
+
+  [languages.en]
+    label = "English"
+    locale = "en"
+    weight = 2
+    title = "Vectora Docs"
+    [languages.en.params]
+      description = "Vectora — a self-hosted AI agent with hybrid RAG, a native Context Graph, an always-on MCP server, and a multi-user web chat."
+    [[languages.en.menu.main]]
+      name = "Docs"
+      pageRef = "/docs"
+      weight = 1
+    [[languages.en.menu.main]]
+      identifier = "vectora.company"
+      name = "vectora.company"
+      url = "https://vectora.company"
+      weight = 2
+    [[languages.en.menu.main]]
+      identifier = "signup"
+      name = "Start free trial"
+      url = "https://vectora.company/signup"
+      weight = 3
+      [languages.en.menu.main.params]
+        type = "button"
+    [[languages.en.menu.main]]
+      identifier = "github"
+      weight = 4
+      url = "https://github.com/vectora-company/vectora"
+      [languages.en.menu.main.params]
+        icon = "github"
+    [[languages.en.menu.main]]
+      identifier = "search"
+      weight = 5
+      [languages.en.menu.main.params]
+        type = "search"
+    [[languages.en.menu.main]]
+      identifier = "theme-toggle"
+      weight = 6
+      [languages.en.menu.main.params]
+        type = "theme-toggle"
+
+  [languages.es]
+    label = "Español"
+    locale = "es"
+    weight = 3
+    title = "Vectora Docs"
+    [languages.es.params]
+      description = "Vectora — un agente de IA autoalojado con RAG híbrido, un Context Graph nativo, un servidor MCP siempre activo y un chat web multiusuario."
+    [[languages.es.menu.main]]
+      name = "Docs"
+      pageRef = "/docs"
+      weight = 1
+    [[languages.es.menu.main]]
+      identifier = "vectora.company"
+      name = "vectora.company"
+      url = "https://vectora.company"
+      weight = 2
+    [[languages.es.menu.main]]
+      identifier = "signup"
+      name = "Iniciar prueba gratis"
+      url = "https://vectora.company/signup"
+      weight = 3
+      [languages.es.menu.main.params]
+        type = "button"
+    [[languages.es.menu.main]]
+      identifier = "github"
+      weight = 4
+      url = "https://github.com/vectora-company/vectora"
+      [languages.es.menu.main.params]
+        icon = "github"
+    [[languages.es.menu.main]]
+      identifier = "search"
+      weight = 5
+      [languages.es.menu.main.params]
+        type = "search"
+    [[languages.es.menu.main]]
+      identifier = "theme-toggle"
+      weight = 6
+      [languages.es.menu.main.params]
+        type = "theme-toggle"
+
+  [languages.fr]
+    label = "Français"
+    locale = "fr"
+    weight = 4
+    title = "Vectora Docs"
+    [languages.fr.params]
+      description = "Vectora — un agent d'IA autohébergé avec RAG hybride, un Context Graph natif, un serveur MCP toujours actif et un chat web multi-utilisateur."
+    [[languages.fr.menu.main]]
+      name = "Docs"
+      pageRef = "/docs"
+      weight = 1
+    [[languages.fr.menu.main]]
+      identifier = "vectora.company"
+      name = "vectora.company"
+      url = "https://vectora.company"
+      weight = 2
+    [[languages.fr.menu.main]]
+      identifier = "signup"
+      name = "Essai gratuit"
+      url = "https://vectora.company/signup"
+      weight = 3
+      [languages.fr.menu.main.params]
+        type = "button"
+    [[languages.fr.menu.main]]
+      identifier = "github"
+      weight = 4
+      url = "https://github.com/vectora-company/vectora"
+      [languages.fr.menu.main.params]
+        icon = "github"
+    [[languages.fr.menu.main]]
+      identifier = "search"
+      weight = 5
+      [languages.fr.menu.main.params]
+        type = "search"
+    [[languages.fr.menu.main]]
+      identifier = "theme-toggle"
+      weight = 6
+      [languages.fr.menu.main.params]
+        type = "theme-toggle"
+
+  [languages.it]
+    label = "Italiano"
+    locale = "it"
+    weight = 5
+    title = "Vectora Docs"
+    [languages.it.params]
+      description = "Vectora — un agente IA self-hosted con RAG ibrido, un Context Graph nativo, un server MCP sempre attivo e una chat web multi-utente."
+    [[languages.it.menu.main]]
+      name = "Docs"
+      pageRef = "/docs"
+      weight = 1
+    [[languages.it.menu.main]]
+      identifier = "vectora.company"
+      name = "vectora.company"
+      url = "https://vectora.company"
+      weight = 2
+    [[languages.it.menu.main]]
+      identifier = "signup"
+      name = "Prova gratuita"
+      url = "https://vectora.company/signup"
+      weight = 3
+      [languages.it.menu.main.params]
+        type = "button"
+    [[languages.it.menu.main]]
+      identifier = "github"
+      weight = 4
+      url = "https://github.com/vectora-company/vectora"
+      [languages.it.menu.main.params]
+        icon = "github"
+    [[languages.it.menu.main]]
+      identifier = "search"
+      weight = 5
+      [languages.it.menu.main.params]
+        type = "search"
+    [[languages.it.menu.main]]
+      identifier = "theme-toggle"
+      weight = 6
+      [languages.it.menu.main.params]
+        type = "theme-toggle"
+
+  [languages.de]
+    label = "Deutsch"
+    locale = "de"
+    weight = 6
+    title = "Vectora Docs"
+    [languages.de.params]
+      description = "Vectora — ein selbst gehosteter KI-Agent mit hybridem RAG, einem nativen Context Graph, einem stets aktiven MCP-Server und einem Multi-User-Webchat."
+    [[languages.de.menu.main]]
+      name = "Docs"
+      pageRef = "/docs"
+      weight = 1
+    [[languages.de.menu.main]]
+      identifier = "vectora.company"
+      name = "vectora.company"
+      url = "https://vectora.company"
+      weight = 2
+    [[languages.de.menu.main]]
+      identifier = "signup"
+      name = "Kostenlos testen"
+      url = "https://vectora.company/signup"
+      weight = 3
+      [languages.de.menu.main.params]
+        type = "button"
+    [[languages.de.menu.main]]
+      identifier = "github"
+      weight = 4
+      url = "https://github.com/vectora-company/vectora"
+      [languages.de.menu.main.params]
+        icon = "github"
+    [[languages.de.menu.main]]
+      identifier = "search"
+      weight = 5
+      [languages.de.menu.main.params]
+        type = "search"
+    [[languages.de.menu.main]]
+      identifier = "theme-toggle"
+      weight = 6
+      [languages.de.menu.main.params]
+        type = "theme-toggle"
+
+  [languages.ru]
+    label = "Русский"
+    locale = "ru"
+    weight = 7
+    title = "Vectora Docs"
+    [languages.ru.params]
+      description = "Vectora — self-hosted ИИ-агент с гибридным RAG, нативным Context Graph, постоянно работающим сервером MCP и многопользовательским веб-чатом."
+    [[languages.ru.menu.main]]
+      name = "Docs"
+      pageRef = "/docs"
+      weight = 1
+    [[languages.ru.menu.main]]
+      identifier = "vectora.company"
+      name = "vectora.company"
+      url = "https://vectora.company"
+      weight = 2
+    [[languages.ru.menu.main]]
+      identifier = "signup"
+      name = "Бесплатный пробный период"
+      url = "https://vectora.company/signup"
+      weight = 3
+      [languages.ru.menu.main.params]
+        type = "button"
+    [[languages.ru.menu.main]]
+      identifier = "github"
+      weight = 4
+      url = "https://github.com/vectora-company/vectora"
+      [languages.ru.menu.main.params]
+        icon = "github"
+    [[languages.ru.menu.main]]
+      identifier = "search"
+      weight = 5
+      [languages.ru.menu.main.params]
+        type = "search"
+    [[languages.ru.menu.main]]
+      identifier = "theme-toggle"
+      weight = 6
+      [languages.ru.menu.main.params]
+        type = "theme-toggle"
+
+[params]
+  [params.navbar]
+    displayTitle = true
+    displayLogo = true
+    [params.navbar.logo]
+      path = "img/vectora-logo.svg"
+      link = "/"
+
+  [params.page]
+    width = "normal"
+    [params.page.contextMenu]
+      enable = true
+      display = true
+
+  [params.toc]
+    displayToc = true
+
+  [params.footer]
+    displayCopyright = true
+    displayPoweredBy = true
+
+  [params.theme]
+    default = 'dark'
+    displayToggle = true
+
+  favicon = "favicon-32x32.png"
+
+  [params.author]
+    name = 'Vectora'
+
+  [params.opengraph]
+    image = '/img/vectora-logo.svg'
+    locale = 'pt_BR'
+
+  [params.seo]
+    keywords = 'Vectora, self-hosted AI agent, RAG, Context Graph, MCP, LangGraph, deep agent'
+    robots = 'index, follow'
