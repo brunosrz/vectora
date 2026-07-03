@@ -128,7 +128,7 @@ app.get("/download/:channel/:os/:arch/:ext", async (c) => {
   const ch = config.channels[channel];
   if (!ch) return c.text("unknown channel", 404);
   const version = config.quarantined.includes(ch.version)
-    ? (ch.previous_stable ?? null)
+    ? ch.previous_stable ?? null
     : ch.version;
   if (!version) return c.text("no version available", 404);
 

@@ -1,7 +1,7 @@
 /**
  * registry/ (Fase F) — placeholder mínimo do MCP registry centralizado.
  *
- * Schema por entrada (documents/mcp-library.md): id, name, description,
+ * Schema por entrada (documents/extensibility-roadmap.md): id, name, description,
  * homepage, repo, transport, install_command, tools, permissions,
  * signature, vectora_verified, community_score, last_updated.
  *

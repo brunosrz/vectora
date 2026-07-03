@@ -5,28 +5,28 @@
 
 ## Sumário (TOC)
 
-| Bloco                 | Tema                                                                                                                                                                                                    | Status                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| **A**                 | UX & Chat Foundation — base do chat, polish, reasoning/HITL, file handling, i18n, mobile                                                                                                                | ✅ Concluído                                       |
-| **B**                 | Security & Workflow — auth/RBAC, workspaces+git, slash commands, conversation, admin, OAuth                                                                                                             | ✅ Concluído                                       |
-| **C**                 | Power Features — plugins MCP, skills, terminal/workbench, memória, settings, workspaces remotos, license gate, OXC                                                                                      | ✅ Concluído                                       |
-| **D**                 | Distribuição Comercial — Vite SPA + Electron + FastAPI + Nuitka + instaladores assinados + auto-update                                                                                                  | ✅ Concluído                                       |
-| **E**                 | Deep Agents — refactor para `create_deep_agent` + TUI textual                                                                                                                                           | ✅ Concluído (pendência: E.B-3 HITL)               |
-| **System Experience** | Filesystem + Git no painel (FS-1..19) + UX cardinal (UX-1..65) + TUI textual modular (SX-TUI-1..11) + transparência do agente — fontes `docs/fs-git.md`, `docs/ux.md` + Plano de Atualização junho/2026 | ✅ Concluído                                       |
-| **F**                 | Storage Infrastructure — hardening lite + schema versioning + langgraph.{checkpoint,store} + LanceDB/Qdrant/Postgres + BaaS                                                                             | 🟡 Parcial (Lite OK; Postgres/Qdrant pendentes)    |
-| **G**                 | Cache Distribuído — Redis (KV + LLM bind invalidation + usage + rate-limit + langchain-redis)                                                                                                           | 🟡 Parcial (deps OK; caches in-memory)             |
-| **H**                 | Deep Agents 1 — skills nativas, AGENTS.md, prompt cache, compressão, 6 web tools full                                                                                                                   | ✅ Concluído (pendências: H3 prompt cache, Tavily) |
-| **I**                 | Deep Agents 2 — sandbox + worktree, interpreters, async subagents, ACP, remote backends                                                                                                                 | ❌ Não iniciado                                    |
-| **J**                 | REST API v1 + Segurança Hardening — OAuth2 + OpenAI-compat + ACP + SQLCipher at-rest + Ed25519 JWKS + TOTP MFA + audit imutável + GDPR                                                                  | 🟡 Parcial (só /v1/classify e /v1/extract)         |
-| **K**                 | Billing & License Infra — Supabase + Stripe + Asaas (PIX/boleto) + tier enforcement + banners                                                                                                           | ✅ Concluído (licença + edge functions)            |
-| **L**                 | SDKs & API Ecosystem — Python/TS SDKs, webhooks, GitHub Actions, OpenAPI polish                                                                                                                         | ❌ Não iniciado (depende de J)                     |
-| **M**                 | Observability & Reliability — OpenTelemetry, Sentry, health probes, SLOs, backup/DR                                                                                                                     | 🟡 Parcial (logging OK; OTel/Sentry pendentes)     |
-| **N**                 | Distribution Hardening & IDE Integrations — signing pipeline, auto-update, Docker, distros, VS Code/JetBrains/Zed/Neovim, n8n                                                                           | 🟡 Parcial (N3/N4 OK; N5–N9 pendentes)             |
-| **O**                 | Vectora Company: Identidade & Legal — CNPJ/MEI, marca, domínios, termos, emails                                                                                                                         | ✅ Concluído (ops externas à parte)                |
-| **P**                 | Vectora Company: Site `vectora.company` — landing, signup, dashboard, pricing, FAQ                                                                                                                      | ✅ Concluído                                       |
-| **Q**                 | Vectora Company: Docs `docs.vectora.company` — guides, reference, self-hosting, changelog                                                                                                               | ✅ Concluído (i18n/Algolia no deploy)              |
-| **R**                 | Vectora Company: Suporte & Comunidade — WhatsApp, email, GitHub Issues, status page, beta                                                                                                               | 🟡 Parcial (ops externas pendentes)                |
-| **S**                 | Vectora Company: Marketing & Lançamento — PyPI 1.0 + Docker oficial + kit influencers + canais + cronograma                                                                                             | 🟡 Parcial (pipelines OK; launch pendente)         |
+| Bloco                 | Tema                                                                                                                                                                                                                 | Status                                             |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **A**                 | UX & Chat Foundation — base do chat, polish, reasoning/HITL, file handling, i18n, mobile                                                                                                                             | ✅ Concluído                                       |
+| **B**                 | Security & Workflow — auth/RBAC, workspaces+git, slash commands, conversation, admin, OAuth                                                                                                                          | ✅ Concluído                                       |
+| **C**                 | Power Features — plugins MCP, skills, terminal/workbench, memória, settings, workspaces remotos, license gate, OXC                                                                                                   | ✅ Concluído                                       |
+| **D**                 | Distribuição Comercial — Vite SPA + Electron + FastAPI + Nuitka + instaladores assinados + auto-update                                                                                                               | ✅ Concluído                                       |
+| **E**                 | Deep Agents — refactor para `create_deep_agent` + TUI textual                                                                                                                                                        | ✅ Concluído (pendência: E.B-3 HITL)               |
+| **System Experience** | Filesystem + Git no painel (FS-1..19) + UX cardinal (UX-1..65) + TUI textual modular (SX-TUI-1..11) + transparência do agente — fontes `docs/fs-git.md`, `documents/ux-roadmap.md` + Plano de Atualização junho/2026 | ✅ Concluído                                       |
+| **F**                 | Storage Infrastructure — hardening lite + schema versioning + langgraph.{checkpoint,store} + LanceDB/Qdrant/Postgres + BaaS                                                                                          | 🟡 Parcial (Lite OK; Postgres/Qdrant pendentes)    |
+| **G**                 | Cache Distribuído — Redis (KV + LLM bind invalidation + usage + rate-limit + langchain-redis)                                                                                                                        | 🟡 Parcial (deps OK; caches in-memory)             |
+| **H**                 | Deep Agents 1 — skills nativas, AGENTS.md, prompt cache, compressão, 6 web tools full                                                                                                                                | ✅ Concluído (pendências: H3 prompt cache, Tavily) |
+| **I**                 | Deep Agents 2 — sandbox + worktree, interpreters, async subagents, ACP, remote backends                                                                                                                              | ❌ Não iniciado                                    |
+| **J**                 | REST API v1 + Segurança Hardening — OAuth2 + OpenAI-compat + ACP + SQLCipher at-rest + Ed25519 JWKS + TOTP MFA + audit imutável + GDPR                                                                               | 🟡 Parcial (só /v1/classify e /v1/extract)         |
+| **K**                 | Billing & License Infra — Worker `services` (D1) + Stripe + Asaas (PIX/boleto) + tier enforcement + banners                                                                                                          | ✅ Concluído                                       |
+| **L**                 | SDKs & API Ecosystem — Python/TS SDKs, webhooks, GitHub Actions, OpenAPI polish                                                                                                                                      | ❌ Não iniciado (depende de J)                     |
+| **M**                 | Observability & Reliability — OpenTelemetry, Sentry, health probes, SLOs, backup/DR                                                                                                                                  | 🟡 Parcial (logging OK; OTel/Sentry pendentes)     |
+| **N**                 | Distribution Hardening & IDE Integrations — signing pipeline, auto-update, Docker, distros, VS Code/JetBrains/Zed/Neovim, n8n                                                                                        | 🟡 Parcial (N3/N4 OK; N5–N9 pendentes)             |
+| **O**                 | Vectora Company: Identidade & Legal — CNPJ/MEI, marca, domínios, termos, emails                                                                                                                                      | ✅ Concluído (ops externas à parte)                |
+| **P**                 | Vectora Company: Site `vectora.company` — landing, signup, dashboard, pricing, FAQ                                                                                                                                   | ✅ Concluído                                       |
+| **Q**                 | Vectora Company: Docs `docs.vectora.company` — guides, reference, self-hosting, changelog                                                                                                                            | ✅ Concluído (i18n/Algolia no deploy)              |
+| **R**                 | Vectora Company: Suporte & Comunidade — WhatsApp, email, GitHub Issues, status page, beta                                                                                                                            | 🟡 Parcial (ops externas pendentes)                |
+| **S**                 | Vectora Company: Marketing & Lançamento — PyPI 1.0 + Docker oficial + kit influencers + canais + cronograma                                                                                                          | 🟡 Parcial (pipelines OK; launch pendente)         |
 
 ## Padrões de Engenharia (vinculantes)
 
@@ -1001,11 +1001,11 @@ do nome, com tooltip mostrando `remote_host`/`codespace_name`.
 Mesma lógica no dropdown (substitui `FolderGit2`/`FolderOpen` quando
 non-local). i18n `workspace.transport.ssh` + `.codespace`.
 
-### C7 — License Gate (Plus/Pro) + Status Endpoint (T.12.1+T.12.7)
+### C7 — License Gate (Free/Pro) + Status Endpoint (T.12.1+T.12.7)
 
 `src/services/license.py`: validação de `VECTORA_TOKEN` contra
-edge function Supabase (configurável via `VECTORA_LICENSE_URL`,
-default `https://vectora.company/functions/v1/validate-license`).
+`POST services.vectora.company/license/validate` (configurável via
+`VECTORA_LICENSE_URL`).
 
 - `validate_license_async/sync(token, version) -> LicenseStatusInfo`
 - `LicenseStatusInfo` (frozen dataclass): `tier`, `status`,
@@ -1508,8 +1508,8 @@ Sem pip, sem npm, sem Node.js. Vectora abre e funciona.
 - **Settings → Conta → "Gerenciar assinatura"** (`chat/src/components/
 layout/settings-dialog/tabs/conta-tab.tsx`):
   - Botão chama `POST /license/portal` (rota nova em
-    `src/api/handlers/license.py`) → backend chama edge function
-    Supabase `create-portal` (Bloco K) → retorna URL.
+    `src/api/handlers/license.py`) → backend chama
+    `services.vectora.company/billing/portal` (Bloco K) → retorna URL.
   - Frontend abre URL via `window.vectora?.openExternal(url) ??
 window.open(url, '_blank')` — desktop abre navegador externo,
     web abre nova aba.
@@ -1778,7 +1778,7 @@ Files\Vectora\` e shortcut do menu iniciar.
 > preview, virtualização ausente em threads longas, sem command
 > palette, sem citações no RAG, sem skeleton screens).
 >
-> Os pseudo-planos `docs/fs-git.md` e `docs/ux.md` mapeiam cada lacuna
+> Os pseudo-planos `docs/fs-git.md` e `documents/ux-roadmap.md` mapeiam cada lacuna
 > com correção e arquivos críticos. Este bloco absorve ambos como
 > sub-blocos `SX-FS-*` e `SX-UX-*`, mantendo a numeração original
 > (FS-1 a FS-19, UX-1 a UX-65) para referência cruzada com os
@@ -2041,11 +2041,11 @@ descriptors).
   SX-FS-19     file watcher real (watchdog)
 ```
 
-### SX-UX — UX Cardinal (fonte: `docs/ux.md`)
+### SX-UX — UX Cardinal (fonte: `documents/ux-roadmap.md`)
 
 > A UX vai além do visual. Toda lacuna abaixo é causa raiz de
 > percepção "produto inacabado". Numeração `UX-N` preserva
-> referência cruzada com `docs/ux.md`.
+> referência cruzada com `documents/ux-roadmap.md`.
 
 #### SX-UX cluster 1 — ✅ Estado, dados e cache (UX-1..6)
 
@@ -2328,7 +2328,7 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
 
 ### SX-UX — Itens adicionais implementados (C.32..C.42)
 
-> Estes itens não constavam no SX original (`docs/ux.md`) mas foram
+> Estes itens não constavam no SX original (`documents/ux-roadmap.md`) mas foram
 > implementados durante a execução do bloco. Todos ✅.
 
 #### C.32 — ✅ Painéis laterais redimensionáveis
@@ -2908,7 +2908,7 @@ thread_id)` em `services/workspace_locks.py`. Escrita de
   (`POST /v1/audio/transcribe`, `GET /v1/web/preview`) — alinhar
   formato com a REST pública de J.
 
-> **Referência completa.** `docs/fs-git.md` e `docs/ux.md`
+> **Referência completa.** `docs/fs-git.md` e `documents/ux-roadmap.md`
 > permanecem como pseudo-planos detalhados com snippets de
 > backend, fluxos de UI screenshots-equivalent, e tabelas de
 > priorização originais. Este bloco resume e prioriza; quando
@@ -3327,7 +3327,7 @@ def on_click(self, event: events.Click) -> None:
 > que o `deepagents` faz nativamente. Antes de adicionar features novas
 > (H, I, J), refatoramos o core para usar as primitivas canônicas.
 > Reaproveita 100% do que B/C entregaram — só troca a camada de
-> orquestração. Veja `docs/deep-engine.md` para auditoria completa.
+> orquestração. Veja `documents/agent-core-roadmap.md` para auditoria completa.
 
 #### E.B-1 — `agent_factory` usa `create_deep_agent`
 
@@ -3898,7 +3898,7 @@ Diferenças bloqueantes: ordem de tool calls, texto da resposta final
   fallback.
 - **Concorrência**: integra `busy_timeout` + retries com backoff
   nos 3 bancos (`vectora.db`, `embedding_queue.db`, `traces.db`).
-- **Documentação** `docs/storage-lite.md`: VACUUM, WAL checkpoint
+- **Documentação** `documents/storage-architecture.md`: VACUUM, WAL checkpoint
   manual, backup hot/cold.
 
 ### F2 — Schema versioning (substitui `ALTER … suppress(Exception)`)
@@ -4138,7 +4138,7 @@ legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
 
 | Sub | Arquivos                                                                                                                                                                                                                                                                                  |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1  | `storage/sqlite/pool.py` (novo), `storage/lancedb/{connection,index,optimize}.py` (novos), `docs/storage-lite.md`                                                                                                                                                                         |
+| F1  | `storage/sqlite/pool.py` (novo), `storage/lancedb/{connection,index,optimize}.py` (novos), `documents/storage-architecture.md`                                                                                                                                                            |
 | F2  | `storage/migrations/{0001_*,…}.sql` (novos), `storage/migrations/runner.py` (novo), `src/main.py` (subcomando)                                                                                                                                                                            |
 | F3  | `storage/{protocols,factory}.py` (novos); wraps finos em `storage/{sqlite,lancedb}/*`                                                                                                                                                                                                     |
 | F4  | `storage/{sqlite,postgres}/checkpoint.py`; `src/services/checkpoint.py` (factory wrapper)                                                                                                                                                                                                 |
@@ -4628,7 +4628,7 @@ habilita features prontas:
 >
 > Não dá pra proteger conteúdo **durante** o RAG (LLM precisa do texto
 > cru para chamar o modelo) — esse é o trade-off honesto do
-> self-hosted, documentado em `docs/tech.md` §13. Mas **em repouso**
+> self-hosted, documentado em `documents/agent-core-roadmap.md` §13. Mas **em repouso**
 > precisamos do estado da arte: SQLCipher AES-256 para todos os SQLite
 >
 > - field-level encryption para colunas hyper-sensíveis + audit log
@@ -5361,200 +5361,89 @@ stream=True)` e recebe streaming compatível.
   Sem identity/passphrase, `tar -xzf` falha. Com `vectora backup
 restore`, restaura corretamente.
 
-## BLOCO K — Billing & License Infra: Supabase + Stripe + Asaas + Tier Enforcement [CONCLUÍDO — validação/conexão de licença + edge functions no company; tier enforcement básico]
+## BLOCO K — Billing & License Infra: `services` (Cloudflare Worker) + Stripe + Asaas + Tier Enforcement [CONCLUÍDO]
 
-> **Contexto.** O license gate (C7) valida `VECTORA_TOKEN` contra uma
-> edge function. Falta construir a infra completa que emite tokens,
-> processa pagamentos, gerencia subscriptions e expõe métricas. O
-> público-alvo é misto (Brasil + internacional) — Stripe não cobre
-> PIX/boleto bem em recorrência via Customer Portal, então Asaas
-> entra como provedor BR-first, mantendo Stripe para USD/cartão
-> internacional.
+> **Contexto.** O license gate (C7) valida `VECTORA_TOKEN` contra um
+> endpoint próprio. A infra completa — emissão de token, pagamentos,
+> subscriptions, GDPR — roda no Worker `services` (`services.vectora.company`),
+> não em Supabase (migração feita depois deste bloco ter sido escrito
+> originalmente contra Supabase — ver `documents/business-model.md` para o
+> porquê). D1 (SQLite) substitui Postgres+RLS; autorização vira código em
+> cada handler. Público-alvo misto (Brasil + internacional) — Stripe não
+> cobre PIX/boleto bem em recorrência via Customer Portal, então Asaas
+> entra como provedor BR-first, Stripe cobre USD/cartão internacional.
+> Tiers reais são **Free/Pro** (não Plus/Pro como no desenho original).
 
-### K1 — Supabase schema + RLS (Backend SaaS)
+### K1 — Schema D1 (`services/migrations/0001_init.sql`)
 
-Migrations em `vectora-company/supabase/migrations/`:
+`users` (substitui `auth.users` + `profiles` combinados — D1 não tem
+sistema de auth embutido, o próprio `services` é o auth), `sessions`
+(token opaco de sessão, não JWT — ver K7), `email_verifications`
+(verificação de email / magic link, uso único), `tokens` (VECTORA_TOKEN
+show-once: `token` vira `NULL` após a primeira revelação, só
+`token_hash` permanece), `subscriptions` (`tier` CHECK IN ('free','pro'),
+`status`, `currency`, `provider`, `trial_ends_at` NULL permanente pra
+free), `license_checks` (auditoria), `payment_events` (dedup de
+webhook), `api_keys`, `waitlist`, `issues`. Sem RLS — cada handler
+confere `user_id` da sessão contra o dono da linha antes de
+retornar/mutar.
 
-**`profiles`** (estende `auth.users`):
+### K2 — Rotas Hono (`services/src/{auth,billing,license,gdpr,api-keys,issues}/routes.ts`)
 
-```sql
-id uuid PK REFERENCES auth.users(id)
-full_name text
-company text
-country text CHECK (country IN ('BR', 'INTL'))  -- routing K5
-created_at timestamptz DEFAULT now()
-```
+- **`auth/routes.ts`**: `POST /signup` (valida, cria user + token
+  show-once + subscription free, envia email de verificação),
+  `POST /verify` (token de verificação → marca `email_verified`, cria
+  sessão), `POST /login`, `POST /logout`, `POST /magic-link` (nunca
+  revela se o email existe), `GET /me`.
+- **`billing/routes.ts`**: `POST /checkout` (Stripe pra INTL, Asaas pra
+  BR conforme `subscriptions.currency`), `POST /portal`, `GET
+/subscription` (lê a própria assinatura), `POST /webhooks?provider=stripe|asaas`
+  — Stripe: `invoice.paid` (ativa + busca plano/período via
+  `subscriptions.retrieve`), `invoice.payment_failed` (`past_due`),
+  `customer.subscription.deleted` (**tier volta pra `free`**, não só
+  status — sem isso o gate de tier do agente liberaria pra sempre).
+  Asaas: `PAYMENT_RECEIVED`/`PAYMENT_CONFIRMED` (ativa tier pro),
+  `PAYMENT_OVERDUE` (`past_due`), `PAYMENT_DELETED`/`PAYMENT_REFUNDED`
+  (volta pra free). Dedup via `payment_events`.
+- **`license/routes.ts`**: `POST /validate` (público — token hash →
+  status/tier/dias restantes, audita em `license_checks`),
+  `POST /agent-login` (email+senha → token show-once/rotate + tier),
+  `POST /rotate`, `GET /token-status`, `POST /token/reveal`,
+  `GET /history`.
+- **`gdpr/routes.ts`**: `POST /export` (JSON pro R2, prefixo
+  `exports/`), `GET /export/*` (dono só), `POST /delete` (soft-delete +
+  revoga sessão atual), `hardDeleteExpiredUsers` — Cloudflare Cron
+  Trigger nativo (não `pg_cron`), cancela Stripe/Asaas antes de apagar.
+- **`api-keys/routes.ts`**, **`issues/routes.ts`** (+ waitlist).
 
-**`tokens`** (VECTORA_TOKEN por usuário):
+### K3 — Stripe (INTL)
 
-```sql
-id uuid PK DEFAULT gen_random_uuid()
-user_id uuid REFERENCES profiles(id) ON DELETE CASCADE
-token text NULL              -- raw, exibido UMA vez e apagado
-token_hash text UNIQUE NOT NULL  -- SHA-256
-created_at timestamptz DEFAULT now()
-rotated_at timestamptz
-```
-
-**`subscriptions`**:
-
-```sql
-id uuid PK
-user_id uuid REFERENCES profiles(id) ON DELETE CASCADE
-tier text NOT NULL  -- 'plus' | 'pro'
-status text NOT NULL  -- 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
-trial_ends_at timestamptz
-current_period_start timestamptz NOT NULL
-current_period_end timestamptz NOT NULL
-provider text NOT NULL  -- 'stripe' | 'asaas' | 'manual'
-provider_sub_id text     -- Stripe sub / Asaas subscription ID
-currency text NOT NULL   -- 'BRL' | 'USD'
-amount_cents integer NOT NULL
-created_at/updated_at timestamptz
-```
-
-**`license_checks`** (auditoria):
-
-```sql
-id uuid PK
-user_id uuid REFERENCES profiles(id)
-token_hash text NOT NULL
-result text NOT NULL  -- 'valid' | 'invalid' | 'expired' | 'trial'
-tier text
-ip text
-vectora_version text
-checked_at timestamptz DEFAULT now()
-```
-
-**`payment_events`** (webhook log dedup):
-
-```sql
-id uuid PK
-provider text NOT NULL
-provider_event_id text UNIQUE NOT NULL  -- evita reprocess
-event_type text NOT NULL
-subscription_id uuid REFERENCES subscriptions(id)
-payload jsonb NOT NULL
-processed_at timestamptz DEFAULT now()
-```
-
-**RLS**: `profiles`, `tokens`, `subscriptions` com policy `own_*`
-(auth.uid() = user_id). `license_checks` e `payment_events` sem
-policy pública (apenas `service_role` via edge functions).
-
-### K2 — Edge functions (`supabase/functions/`)
-
-- **`on-signup`** (trigger `auth.users INSERT`):
-
-  1. Cria `profiles`.
-  2. Gera token `vct_` + 96 hex chars via
-     `crypto.getRandomValues(new Uint8Array(48))`. SHA-256 do raw.
-  3. Insere em `tokens` (raw para exibição única + hash).
-  4. Cria `subscriptions` trial 30 dias Plus.
-
-- **`validate-license`** (chamada pelo Vectora Agent):
-
-  - `POST {token, vectora_version}` → busca por hash, checa
-    subscription, computa `days_remaining`, audita em
-    `license_checks`.
-  - 401 token inválido, 402 expirado, 200 ok com payload completo.
-  - Rate limit: 20 validações/hora por token (cache local 6h no
-    Agent cobre o caso geral).
-
-- **`get-token`** (reveal único, auth Supabase JWT):
-
-  - `GET` → retorna `token` raw + apaga do banco (apenas hash
-    permanece). Segunda chamada → `revealed: false`.
-
-- **`rotate-token`**: invalida anterior + gera novo + apaga após
-  reveal.
-
-- **`create-checkout`**: cria sessão Stripe Checkout para INTL ou
-  Asaas Checkout para BR. Detecta país via `Accept-Language` + IP.
-  Currency `usd` (INTL) ou `brl` (BR).
-
-- **`stripe-webhook`**: processa eventos:
-
-  - `checkout.session.completed` → `status='active'`, atualiza
-    tier.
-  - `invoice.payment_succeeded` → renova `current_period_end`.
-  - `customer.subscription.updated` → atualiza tier (upgrade/
-    downgrade).
-  - `customer.subscription.deleted` → `status='canceled'`.
-  - Dedup via `provider_event_id` em `payment_events`.
-
-- **`asaas-webhook`**: processa eventos
-  ([docs.asaas.com](https://docs.asaas.com/docs/payment-events)):
-
-  - `PAYMENT_CREATED` → cobrança nova (nova fatura da subscription).
-  - `PAYMENT_CONFIRMED` → pagamento feito, saldo não disponível.
-  - `PAYMENT_RECEIVED` → recebido (saldo liberado), renova
-    `current_period_end`.
-  - `PAYMENT_OVERDUE` → `status='past_due'`, banner amarelo no chat.
-  - `SUBSCRIPTION_DELETED` → `status='canceled'`.
-  - Dedup via `provider_event_id`.
-
-- **`create-portal`**: roteia para Stripe Customer Portal (INTL) ou
-  Asaas dashboard endpoint equivalente (BR — Asaas suporta
-  cancelamento e atualização via API, frontend embutido no site).
-
-### K3 — Stripe products & subscriptions (INTL)
-
-- **Produtos**:
-  - `vectora_plus_monthly` — $7 USD
-  - `vectora_pro_monthly` — $20 USD
-- Stripe Checkout aceita `currency: "usd"`, métodos card + Apple
-  Pay + Google Pay + Link.
-- **Proration automática** em upgrade Plus → Pro (Stripe aplica
-  crédito proporcional).
-- **Customer Portal** para cancelar/upgrade self-service. Habilitar
-  via Stripe Dashboard → "Customer portal".
+- Único produto pago: **Pro** (`STRIPE_PRICE_PRO_USD`). Free nunca
+  cobra — não passa por checkout.
+- `Stripe.createFetchHttpClient()` (modo HTTP fetch, compatível com o
+  runtime Workers — sem Node `http`).
+- Customer criado on-demand no primeiro checkout; `customer_id`
+  persistido em `subscriptions`.
+- Customer Portal para cancelar/gerenciar self-service.
 
 ### K4 — Asaas integration (BR: PIX + Boleto + Cartão recorrente)
 
-> Asaas é o provedor BR-first. Cobertura: PIX (instantâneo + Pix
-> Automático recorrente regulado pelo Banco Central — exigência
-> 5M BRL net equity para participantes desde 2026-01-01), Boleto
-> (mín R$5, máx R$49.999,99), Cartão (recurring nativo).
+> Asaas é o provedor BR-first. Cobertura: PIX, Boleto, Cartão
+> recorrente nativo.
 
-**API base**: `https://api.asaas.com/v3/` (produção) ou
-`https://sandbox.asaas.com/api/v3/` (sandbox). Auth: header
-`access_token: $ASAAS_API_KEY`.
-
-**Fluxo subscription** (`docs.asaas.com/docs/creating-a-subscription`):
-
-1. **Customer**: `POST /v3/customers` com `name`, `cpfCnpj`,
-   `email` → retorna `id`.
-2. **Subscription**: `POST /v3/subscriptions` com `customer`,
-   `billingType` (`PIX` | `BOLETO` | `CREDIT_CARD` | `UNDEFINED`
-   que deixa user escolher por cobrança), `value`, `nextDueDate`,
-   `cycle: "MONTHLY"`, `description: "Vectora Plus"`,
-   `externalReference: <user_id>`.
-3. **Webhook**: configurar URL via `POST /v3/webhooks` apontando
-   para `supabase.co/functions/v1/asaas-webhook` com auth token
-   `ASAAS_WEBHOOK_TOKEN`. Eventos: `PAYMENT_CREATED`,
-   `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`,
-   `SUBSCRIPTION_*`.
-
-**Produtos BR**:
-
-- `vectora_plus_monthly_brl` — R$20
-- `vectora_pro_monthly_brl` — R$55
-
-**Cupons** (early adopter): cupons criados no Asaas + Stripe
-manualmente (`VECTORA25` 25% off Plus 100 redemptions; `PROEARLY`
-~18% off Pro 50 redemptions; ambos `duration: "forever"`).
+**API base**: `https://api.asaas.com/v3/` (ou `ASAAS_API_URL` custom —
+sandbox). Auth: header `access_token: $ASAAS_API_KEY`. Fluxo:
+`POST /payments` com `customer` (email), `billingType: "UNDEFINED"`
+(deixa o pagador escolher), `value`, `dueDate`, `externalReference:
+"<user_id>:pro"` (o `:pro` no `externalReference` é como o webhook
+resolve o plano sem round-trip extra). Webhook do Asaas configurado
+apontando pra `services.vectora.company/billing/webhooks?provider=asaas`.
 
 ### K5 — Payment routing (BR via Asaas, INTL via Stripe)
 
-Edge function `create-checkout` decide provider:
-
-- `profiles.country = 'BR'` ou `Accept-Language` contém `pt-BR` ou
-  IP geolocate Brasil → **Asaas** (PIX + boleto + cartão BR).
-- Caso contrário → **Stripe** (cartão internacional).
-
-Usuário sempre pode override no dashboard ("Pagar via Stripe
-internacional" como link secundário em BR).
+Decidido por `subscriptions.currency` (`'BRL'` → Asaas, senão Stripe) —
+`currency` é setada no signup a partir do `country` informado
+(`'BR'` → `BRL`, senão `USD`).
 
 ### K6 — Tier enforcement no Vectora Agent (hooks por backend)
 
@@ -5564,7 +5453,7 @@ Camada storage (F) e cache (G) consultam `VECTORA_TIER`:
 # storage/factory.py
 def get_checkpointer():
     backend = settings.checkpointer_backend
-    if backend == "postgres" and os.environ["VECTORA_TIER"] == "plus":
+    if backend == "postgres" and os.environ["VECTORA_TIER"] == "free":
         raise LicenseError(
             "Postgres checkpointer requer plano Pro. "
             "Upgrade em https://vectora.company/pricing."
@@ -5578,7 +5467,7 @@ Qdrant/pgvector vector store (F6), Postgres queue (F8), Redis cache
 worker exige Pro).
 
 Frontend admin storage panel (F10): opções Pro desabilitadas com
-badge "Pro only" quando `tier=plus`. Link "Fazer upgrade" abre
+badge "Pro only" quando `tier=free`. Link "Fazer upgrade" abre
 Customer Portal via `window.vectora.openExternal()` (D8).
 
 ### K7 — License banners frontend (consumindo `/license/status`)
@@ -5596,8 +5485,8 @@ vectora.company/dashboard.`
 - **Licença expirada** (vermelho, bloqueia input): `❌ Licença
 expirada.` Botão "Renovar".
 
-Consome `GET /license/status` direto (sem proxy Hono — D1 removeu
-essa camada). SWR 5min + after-login + on-focus.
+Consome `POST services.vectora.company/license/validate` direto (sem
+proxy Hono). SWR 5min + after-login + on-focus.
 
 ### K8 — Onboarding wizard pós-root (no chat web)
 
@@ -5621,41 +5510,44 @@ reabrir.
   Asaas token bearer): garantir que payload modificado é rejeitado.
 - **Webhook idempotency**: dispatch mesmo `provider_event_id` 2x
   → segunda chamada vira no-op (dedup via `payment_events`).
-- **Mock providers**: testes unitários sem chamada real à Stripe/
-  Asaas — `tests/mocks/stripe.py`, `tests/mocks/asaas.py`.
+- **Mock de rede**: `vi.stubGlobal("fetch", ...)` dentro do pool
+  workerd do vitest para simular respostas Stripe/Asaas sem rede real
+  (funciona mesmo com Durable Objects no mesmo processo — descoberta
+  desta migração).
 - **Tier enforcement**: tentar montar Postgres checkpointer com
-  `VECTORA_TIER=plus` → `LicenseError`.
+  `VECTORA_TIER=free` → `LicenseError`.
 
 ### Arquivos críticos (Bloco K)
 
-| Sub | Arquivos chat                                                              | Arquivos vectora                                            | Arquivos vectora-company                                                                                                                                     |
-| --- | -------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| K1  | —                                                                          | —                                                           | `vectora-company/supabase/migrations/00{1..5}_*.sql` (novos)                                                                                                 |
-| K2  | —                                                                          | —                                                           | `vectora-company/supabase/functions/{on-signup,validate-license,get-token,rotate-token,create-checkout,stripe-webhook,asaas-webhook,create-portal}/index.ts` |
-| K3  | —                                                                          | —                                                           | docs Stripe products no `vectora-company/docs/stripe.md`                                                                                                     |
-| K4  | —                                                                          | —                                                           | `vectora-company/supabase/functions/_shared/asaas.ts` (cliente Asaas)                                                                                        |
-| K5  | —                                                                          | —                                                           | logic no `create-checkout`                                                                                                                                   |
-| K6  | F10 storage panel (badge "Pro only")                                       | `storage/factory.py` (gate), `src/services/cache.py` (gate) | —                                                                                                                                                            |
-| K7  | `chat/src/components/layout/license-banner.tsx` (D8 — já implementado)     | `src/api/handlers/license.py` (+`POST /portal`)             | —                                                                                                                                                            |
-| K8  | `chat/src/components/onboarding/setup-wizard.tsx` (novo, multi-step modal) | —                                                           | —                                                                                                                                                            |
-| K9  | —                                                                          | `tests/unit/test_license_tier_gate.py` (novo)               | `vectora-company/supabase/functions/__tests__/`                                                                                                              |
+| Sub | Arquivos `services/`                                                 | Arquivos `vectora`                                          | Arquivos `company`                                                                                               |
+| --- | -------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| K1  | `services/migrations/0001_init.sql`                                  | —                                                           | —                                                                                                                |
+| K2  | `services/src/{auth,billing,license,gdpr,api-keys,issues}/routes.ts` | —                                                           | `company/src/server/fns/{auth,subscription,token,gdpr,api-keys,profile,issues}.ts` (chamam `services` via fetch) |
+| K3  | `services/src/billing/routes.ts` (checkout/portal Stripe)            | —                                                           | —                                                                                                                |
+| K4  | `services/src/billing/routes.ts` (checkout/webhook Asaas)            | —                                                           | —                                                                                                                |
+| K5  | lógica em `services/src/billing/routes.ts::checkout`                 | —                                                           | —                                                                                                                |
+| K6  | —                                                                    | `storage/factory.py` (gate), `src/services/cache.py` (gate) | F10 storage panel (badge "Pro only")                                                                             |
+| K7  | `services/src/auth/routes.ts::/me`, `services/src/license/routes.ts` | —                                                           | `chat/src/components/layout/license-banner.tsx` (D8)                                                             |
+| K8  | —                                                                    | —                                                           | `chat/src/components/onboarding/setup-wizard.tsx` (novo, multi-step modal)                                       |
+| K9  | `services/tests/{billing,license,gdpr}/routes.test.ts`               | `tests/unit/test_license_tier_gate.py` (novo)               | —                                                                                                                |
 
 ### Verificação (Bloco K)
 
-- Signup no site (Supabase Auth) → trigger `on-signup` cria
-  `profiles + tokens + subscriptions(trialing 30d)`. Dashboard
-  mostra token revelável uma vez.
-- `validate-license` com token válido → `{valid:true, tier:"plus",
-status:"trialing", days_remaining:30}`.
-- BR: signup com `country='BR'` → `create-checkout` retorna
-  Asaas Checkout (PIX + Boleto + Cartão). Pagar PIX → webhook
-  `PAYMENT_RECEIVED` → `status='active'`.
-- INTL: signup com `country='INTL'` → `create-checkout` retorna
-  Stripe Checkout → pagar cartão → `checkout.session.completed`
-  → `status='active'`.
-- Upgrade Plus → Pro: Stripe proration automática; Asaas:
-  cancela subscription Plus + cria Pro.
-- Tier=plus tenta montar Postgres → `LicenseError` com link de
+- Signup em `services.vectora.company/auth/signup` → cria
+  `users + tokens + subscriptions(free, trial_ends_at=NULL)`. Email
+  de verificação com link show-once; dashboard mostra token revelável
+  uma vez.
+- `POST /license/validate` com token válido → `{valid:true,
+tier:"pro", status:"active", days_remaining:N}`.
+- BR: `subscriptions.currency='BRL'` → `/billing/checkout` retorna
+  invoice Asaas (PIX + Boleto + Cartão). Pagar → webhook
+  `PAYMENT_RECEIVED` → tier vira `pro`.
+- INTL: `subscriptions.currency='USD'` → `/billing/checkout` retorna
+  Stripe Checkout → pagar cartão → `invoice.paid` → tier vira `pro`.
+- Cancelamento (Stripe `customer.subscription.deleted` ou Asaas
+  `PAYMENT_DELETED`/`PAYMENT_REFUNDED`): tier volta pra `free`, não só
+  o status.
+- Tier=free tenta montar Postgres → `LicenseError` com link de
   upgrade. Tier=pro aceita.
 - Trial banner muda cor conforme dias; expirado bloqueia input.
 - Onboarding wizard aparece no 1º login root, não reabre depois.
@@ -6353,7 +6245,17 @@ mês por caixa).
 - WhatsApp Business com perfil completo + auto-resposta
   configurada.
 
-## BLOCO P — Vectora Company: Site `vectora.company` [CONCLUÍDO — rotas, dashboard, edge functions, emails e tema Min entregues; novo: P3.1 Auth avançada PENDENTE]
+## BLOCO P — Vectora Company: Site `vectora.company` [CONCLUÍDO — rotas, dashboard e emails entregues; novo: P3.1 Auth avançada PENDENTE]
+
+> **Nota de atualização.** Esta seção descreve o desenho original do site
+> contra **Supabase** (Auth SSR, edge functions, `oauth-token`). Isso foi
+> migrado para o Worker `services` (D1, sessão por token opaco, rotas Hono
+> em `services/src/{auth,billing,license,gdpr}/`) — ver
+> `documents/business-model.md` para a arquitetura atual e o porquê da
+> migração. As referências a "edge function", "Supabase Auth" e "Plus"
+> abaixo são históricas (como o site foi desenhado originalmente),
+> não o estado atual do backend. UI/rotas do site (`/dashboard`,
+> `/pricing`, etc.) continuam válidas — só o backend por trás mudou.
 
 > **P3.1 — Auth avançada (planejado, spec completa em `company/plan.md` § P3.1)**:
 > TOTP via authenticator app (MFA nativo Supabase + recovery codes),

@@ -1,6 +1,6 @@
-# Vectora — Plano de Experiência do Usuário (UX)
+# Vectora — Roadmap de Experiência do Usuário (UX)
 
-> Pseudo-plano de referência — não editar o `docs/plan.md` principal.
+> Documento vivo de roadmap — nada aqui está implementado ainda (confirmado por auditoria). Não editar `plan.md` diretamente com este conteúdo.
 > Foco: tudo que impacta como o usuário **percebe, confia e usa** o Vectora,
 > muito além de "UI bonita". Inclui estado, dados, feedback, resiliência,
 > teclado, auth, streaming, acessibilidade e performance percebida.
@@ -46,7 +46,7 @@ componentes.
 - Substituir `loading: boolean` por máquina de estado `status:
 "idle" | "loading" | "success" | "error"` (ver UX-11 + nota arquitetural
   §12). Derivar `hasLoaded = fetchedAt !== null`.
-- **Reusar** `chat/lib/hooks/use-hydrated.ts` (já existe) para gatear
+- **Reusar** `vectora/frontend/lib/hooks/use-hydrated.ts` (já existe) para gatear
   qualquer leitura de store com `persist` durante o primeiro render do
   client e evitar mismatch SSR. Não criar um `hydrated` paralelo no
   workspaces-store — `workspaces-store` não é persistido, então o gate
@@ -70,13 +70,13 @@ persist, sem revalidação em foco) e idem para `safeRoots` no mesmo
 workspaces-store (carrega uma vez, jamais revalida).
 
 **Comparação**: `workbench-store` tem `WORKBENCH_STALE_MS = 30_000` + o
-hook `useWorkbenchSWR` (`chat/lib/hooks/workbench/use-swr.ts`, já
+hook `useWorkbenchSWR` (`vectora/frontend/lib/hooks/workbench/use-swr.ts`, já
 implementado, com dedup por chave). Os outros stores ignoram esse padrão.
 
 **Correção** (não reinventar — aplicar o hook que já existe):
 
 - `useWorkbenchSWR` é genérico o suficiente para qualquer store. Apenas
-  renomear o arquivo para `chat/lib/hooks/use-swr.ts` e adotar nos
+  renomear o arquivo para `vectora/frontend/lib/hooks/use-swr.ts` e adotar nos
   componentes consumidores de `workspaces-store`, `threads-store`,
   `auth-store` (`hydrate`), `useLicenseStatus`.
 - Constantes de staleness por domínio:
@@ -124,7 +124,7 @@ stream (UX-5).
 
 ### UX-4 — `new-thread-registry` leak
 
-**Problema**: `chat/lib/stores/new-thread-registry.ts` é um `Set` global
+**Problema**: `vectora/frontend/lib/stores/new-thread-registry.ts` é um `Set` global
 de módulo. A API já expõe `clearNew(threadId)` — mas **ninguém chama
 após a thread ser persistida**. Em sessões longas (dias), acumula IDs
 que não correspondem mais a threads novas.
@@ -157,7 +157,7 @@ Qualquer `state.someArray.push(...)` dentro de um selector ou action
 **Correção**:
 
 ```bash
-pnpm --dir chat add immer
+pnpm --dir vectora/frontend add immer
 ```
 
 ```typescript
@@ -229,7 +229,7 @@ silenciosamente se o workspace não existe.
 **Implementação sugerida**:
 
 ```typescript
-// chat/lib/stores/toast-store.ts
+// vectora/frontend/lib/stores/toast-store.ts
 interface Toast {
   id: string;
   type: "success" | "error" | "warning" | "info";
@@ -412,7 +412,7 @@ exibir um `<ErrorBanner onRetry={...}>` com botão de retry.
 **Implementação**:
 
 ```typescript
-// chat/lib/hooks/use-global-shortcuts.ts
+// vectora/frontend/lib/hooks/use-global-shortcuts.ts
 // Centralizar TODOS os atalhos globais aqui (não dispersos em useEffect)
 useEffect(() => {
   const handler = (e: KeyboardEvent) => {
@@ -480,7 +480,7 @@ automaticamente (back-off padrão), mas o chat UI não reflete isso.
 **Correção**:
 
 ```typescript
-// chat/lib/hooks/use-stream-handler.ts
+// vectora/frontend/lib/hooks/use-stream-handler.ts
 // Escutar eventos do EventSource:
 eventSource.onerror = () => {
   setConnectionStatus("reconnecting"); // toast ou badge
@@ -506,7 +506,7 @@ silenciam o erro (`return null`). Não há feedback "você está offline".
 **Correção mínima**:
 
 ```typescript
-// chat/lib/hooks/use-network-status.ts
+// vectora/frontend/lib/hooks/use-network-status.ts
 export function useNetworkStatus() {
   const [online, setOnline] = useState(navigator.onLine);
   useEffect(() => {
@@ -839,7 +839,7 @@ com teclado virtual e ajustar o bottom padding dinamicamente.
 
 ## 10. Multimodal input (áudio, paste, drop, captura)
 
-> Já existe `chat/lib/hooks/files/use-voice-input.ts` (Web Speech API
+> Já existe `vectora/frontend/lib/hooks/files/use-voice-input.ts` (Web Speech API
 > com push-to-talk não-contínuo, `interimResults`, mapping de erros
 > em pt-BR-friendly, idioma via `lang` prop). Esta seção mapeia o que
 > falta integrar e estender.
@@ -862,7 +862,7 @@ self-hosted onde o user não quer enviar áudio para servidor da Google
   `pt-BR`, `en-US`, `es-ES`). Não hardcoded `en-US` no caller.
 - **Fallback remoto** quando `isSupported === false`:
   - Provider primário: gravação local via `MediaRecorder` → upload para
-    `POST /v1/audio/transcribe` (endpoint novo no Bloco J) → backend
+    `POST /v1/audio/transcribe` (endpoint novo) → backend
     chama Cohere/OpenAI Whisper conforme `effective_env` do user.
   - Indicação clara "modo nuvem" vs "modo browser local" no tooltip.
 - **Push-to-talk vs continuous**: toggle em Settings → Preferências →
@@ -891,7 +891,7 @@ mensagem (autodetect via primeiros chars ou metadata da resposta).
 ### UX-34 — Smart paste
 
 **Hoje**: paste de texto grande vira `pasted-<ts>.txt` (já implementado,
-Bloco A4). Falta inteligência por tipo de conteúdo:
+já implementado). Falta inteligência por tipo de conteúdo:
 
 - **URL**: detecta padrão; opcionalmente busca `<title>` + OG image via
   `GET /v1/web/preview?url=...` e renderiza card ao invés do bare URL.
@@ -908,7 +908,7 @@ auto` ou heurística simples (regex de `def `, `function `, `class `,
 
 ### UX-35 — Drop zone rico
 
-**Hoje**: drag-and-drop existe no input (Bloco A4) com indicação
+**Hoje**: drag-and-drop já existe no input, com indicação
 visual. Faltam previews ricos:
 
 - **Imagem**: thumbnail 80×80 no input chip antes de enviar; dimensões
@@ -945,7 +945,7 @@ aparece é "Crie sua primeira conversa" — sem token, sem provider, sem
 RAG configurado. Mensagem inicial falha com erro críptico ("nenhum
 modelo disponível").
 
-**Wizard proposto** (Bloco K8 do `plan.md` — formalizar aqui o fluxo
+**Wizard proposto** (formalizar aqui o fluxo
 visual):
 
 ```
@@ -1040,7 +1040,7 @@ modal pergunta:
 - Lista visual do que será importado (workspaces, threads, memory items,
   envs, plugins, skills).
 
-Conecta com `vectora backup create/restore` do Bloco M6.
+Conecta com `vectora backup create/restore`.
 
 ---
 
@@ -1058,7 +1058,7 @@ arquivo). Click no item → scroll para a mensagem que o originou.
 
 **Backend**: `GET /threads/{id}/activity` retorna lista de
 `{tool_name, args_summary, status, duration_ms, timestamp,
-message_id}`. Reusa o tracer SQLite (`VectoraTracer` do Bloco A8).
+message_id}`. Reusa o tracer SQLite (`VectoraTracer`).
 
 ### UX-42 — RAG provenance (citações [1][2])
 
@@ -1110,7 +1110,7 @@ Cores: cinza (lido), azul (editado), vermelho (deletado), verde
 
 ### UX-45 — Memory loaded chip + "esquecer isso"
 
-**Hoje** (Bloco C1): badge "🧠 N memórias carregadas" por mensagem.
+**Hoje** (já existente): badge "🧠 N memórias carregadas" por mensagem.
 Falta:
 
 - Click no badge → popover lista as memórias específicas que entraram
@@ -1132,7 +1132,7 @@ User escolhe `gpt-5.5-pro` por curiosidade e queima orçamento.
 - Estimativa para a mensagem atual: `~ $0.04 com este modelo` baseado
   em tokens já no contexto + estimativa de resposta.
 - Cor verde (barato), amarelo (médio), vermelho (caro) por badge.
-- Fonte de preços: tabela estática versionada (`chat/lib/config/model-
+- Fonte de preços: tabela estática versionada (`vectora/frontend/lib/config/model-
 prices.ts`), atualizada manualmente — preços de LLM mudam ~trimestral.
 
 ### UX-47 — Tool palette descoberta
@@ -1154,7 +1154,7 @@ descoberta empírica.
 
 ### UX-48 — Command palette global `⌘K`
 
-**Problema**: slash commands (`/rag`, `/clone`, etc — Bloco B4)
+**Problema**: slash commands (`/rag`, `/clone`, etc)
 funcionam só no chat. Navegação entre threads, abertura de Settings,
 troca de workspace exigem cliques.
 
@@ -1195,7 +1195,7 @@ Reduz a fricção de "preciso abrir outra aba para saber como funciona".
 
 ### UX-51 — Quota gauge visível
 
-**Hoje**: usage popover existe (Bloco A7, 5h + semanal + contexto).
+**Hoje**: usage popover existe (5h + semanal + contexto).
 Falta:
 
 - Gauge no header — não só popover. Cor fade verde → amarelo (60%)
@@ -1228,7 +1228,7 @@ Insights`) com resumo:
 - "Modelo mais usado: gemini-2.5-flash (78% das mensagens)".
 - "Custo estimado: $4.30" (Pro).
 
-Email via Resend (Bloco O4) ou só in-app card.
+Email via Resend ou só in-app card.
 
 ---
 
@@ -1257,7 +1257,7 @@ ingest) demoram 1–5 min. O user troca de tab, esquece, volta tarde.
   compartilhada).
 - Settings → Admin: badge vermelho se há updates de licença /
   storage health / users pendentes.
-- Tray icon (Electron, Bloco D4): badge se há notificação pendente.
+- Tray icon (Electron): badge se há notificação pendente.
 
 ### UX-56 — Quiet hours
 
@@ -1278,7 +1278,7 @@ workbench, etc.
 
 **Solução**:
 
-- Script `pnpm --dir chat lint:i18n` que faz grep em `.tsx`/`.ts` por
+- Script `pnpm --dir vectora/frontend lint:i18n` que faz grep em `.tsx`/`.ts` por
   string literals em JSX text nodes, `aria-label`, `placeholder`,
   `title` props que **não** vêm de `useT()`. Allow-list para nomes
   técnicos (`MCP`, `RAG`, `⌃⇧F`).
@@ -1348,7 +1348,7 @@ Falta `env(safe-area-inset-top)` / `bottom` nos paddings do app shell.
   upload (web).
 - Inclui automaticamente: versão, browser/OS, último erro do console,
   thread_id ativa.
-- Enviado para `vectora-company/issues` via webhook (Bloco P6) ou
+- Enviado para `vectora-company/issues` via webhook ou
   email `support@`.
 
 ### UX-65 — Resume conversation entre devices (Pro)
@@ -1595,7 +1595,7 @@ padrão de status de conexão.
 
 ### Hooks já existentes — não reinventar
 
-Antes de criar hook novo, verificar `chat/lib/hooks/`:
+Antes de criar hook novo, verificar `vectora/frontend/lib/hooks/`:
 
 | Hook                                         | O que faz                                |
 | -------------------------------------------- | ---------------------------------------- |
@@ -1604,9 +1604,9 @@ Antes de criar hook novo, verificar `chat/lib/hooks/`:
 | `files/use-voice-input.ts` (`useVoiceInput`) | STT Web Speech API                       |
 | `auth/use-user-id.ts`                        | ID do user autenticado                   |
 | `auth/use-client-profile.ts`                 | Perfil do user                           |
-| `chat/use-stream-handler.ts`                 | Roteador de eventos SSE                  |
-| `chat/use-feedback.ts`                       | Submissão de feedback                    |
-| `chat/use-thread-messages.ts`                | Loader de histórico                      |
+| `vectora/frontend/use-stream-handler.ts`     | Roteador de eventos SSE                  |
+| `vectora/frontend/use-feedback.ts`           | Submissão de feedback                    |
+| `vectora/frontend/use-thread-messages.ts`    | Loader de histórico                      |
 | `threads/use-threads.ts`                     | Lista de threads                         |
 | `files/use-file-upload.ts`                   | Upload de anexos                         |
 | `use-license-status.ts`                      | Status de licença                        |

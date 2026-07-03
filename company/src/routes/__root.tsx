@@ -33,7 +33,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => {
     const plausibleDomain =
       typeof import.meta !== "undefined"
-        ? (import.meta.env.VITE_PLAUSIBLE_DOMAIN ?? "vectora.company")
+        ? import.meta.env.VITE_PLAUSIBLE_DOMAIN ?? "vectora.company"
         : "vectora.company";
 
     return {

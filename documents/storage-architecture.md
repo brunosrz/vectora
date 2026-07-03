@@ -2,11 +2,13 @@
 
 O modo **lite** é o default do Vectora. Usa SQLite para dados relacionais e
 LanceDB para busca vetorial — sem dependências externas (zero Docker, zero
-servidor).
+servidor). O modo **complete** (Postgres + Qdrant + Redis) é a alternativa
+para quem já tem essa infra; usuários/auth/settings ficam sempre em SQLite,
+independente do modo.
 
 ---
 
-## SQLite — Pool de conexões (`src/storage/sqlite/pool.py`)
+## SQLite — Pool de conexões (`backend/storage/sqlite/pool.py`)
 
 ### Motivação
 
@@ -30,7 +32,7 @@ de hardening sejam aplicados de forma consistente.
 ### Uso
 
 ```python
-from src.storage.sqlite.pool import AsyncConnectionPool
+from backend.storage.sqlite.pool import AsyncConnectionPool
 
 # Pool reutilizável no ciclo de vida da aplicação
 pool = AsyncConnectionPool("data/vectora.db", min_size=1, max_size=8)
@@ -66,12 +68,12 @@ processo-local elimina esse overhead.
 
 ### Módulos
 
-#### `src/storage/lancedb/connection.py` — `LanceDBConnectionCache`
+#### `backend/storage/lancedb/connection.py` — `LanceDBConnectionCache`
 
 Cache singleton de objetos `AsyncConnection`. Uma conexão por path.
 
 ```python
-from src.storage.lancedb.connection import get_lancedb
+from backend.storage.lancedb.connection import get_lancedb
 
 db = await get_lancedb()                      # usa settings.lancedb_dir
 db = await get_lancedb("/data/my-lancedb")    # path explícito
@@ -80,12 +82,12 @@ table = await db.open_table("articles")
 results = await table.search(query_vec).limit(10).to_list()
 ```
 
-#### `src/storage/lancedb/index.py` — `create_ivf_index`, `create_fts_index`
+#### `backend/storage/lancedb/index.py` — `create_ivf_index`, `create_fts_index`
 
 Criação on-demand de índices IVF_PQ e FTS (Full-Text Search).
 
 ```python
-from src.storage.lancedb.index import create_ivf_index, create_fts_index
+from backend.storage.lancedb.index import create_ivf_index, create_fts_index
 
 table = await db.open_table("articles")
 
@@ -104,12 +106,12 @@ await create_fts_index(table, text_column="text")
 | `num_sub_vectors` | 16      | Sub-vetores PQ — controla qualidade vs. memória |
 | `min_rows`        | 10 000  | Mínimo de linhas para criar o índice            |
 
-#### `src/storage/lancedb/optimize.py` — `optimize_table`, `schedule_optimize`
+#### `backend/storage/lancedb/optimize.py` — `optimize_table`, `schedule_optimize`
 
 Compactação de fragmentos e remoção de versões antigas.
 
 ```python
-from src.storage.lancedb.optimize import optimize_table, schedule_optimize
+from backend.storage.lancedb.optimize import optimize_table, schedule_optimize
 
 # Otimização única
 await optimize_table(table)
@@ -134,10 +136,10 @@ task.cancel()
 
 ---
 
-## Próximos passos (F2+)
+## Roadmap de storage ainda em aberto
 
-- **F2** — Schema versioning com `storage/migrations/` e `runner.py`
-- **F3** — Protocols tipados e factories unificadas
-- **F4** — Integração do `AsyncConnectionPool` com `AsyncSqliteSaver`
-- **F5** — `SqliteStore` para LangGraph BaseStore (memórias do agente)
-- **F6** — `LanceDB` como `VectorStore` do LangChain
+- Schema versioning com `storage/migrations/` e um runner de migrations
+- Protocols tipados e factories unificadas para os dois modos (lite/complete)
+- Integração do `AsyncConnectionPool` com `AsyncSqliteSaver`
+- `SqliteStore` para o `BaseStore` do LangGraph (memória do agente)
+- `LanceDB` como `VectorStore` nativo do LangChain
