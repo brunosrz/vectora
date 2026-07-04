@@ -84,6 +84,67 @@ async function makeUserWithTokenNoSubscription() {
   return { userId, email, password, rawToken };
 }
 
+describe("POST /validate rate limiting", () => {
+  it("blocks with 429 after exceeding the per-IP limit, keyed independently per IP", async () => {
+    const { rawToken } = await makeUserWithToken();
+    const ip = `203.0.113.${Math.floor(Math.random() * 254) + 1}`;
+    const requestWithIp = () =>
+      license.request(
+        "/validate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "cf-connecting-ip": ip,
+          },
+          body: JSON.stringify({ token: rawToken, version: "1.0.0" }),
+        },
+        env,
+      );
+
+    // O limite configurado é 30/60s — 31 chamadas do mesmo IP garantem
+    // estourar. Todas antes da 31ª devem passar (200); alguma a partir
+    // dela deve virar 429 com o corpo padronizado de rate limit.
+    const results: number[] = [];
+    for (let i = 0; i < 31; i++) {
+      const res = await requestWithIp();
+      results.push(res.status);
+    }
+    expect(results.filter((s) => s === 429).length).toBeGreaterThan(0);
+
+    const limited = await requestWithIp();
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({
+      valid: false,
+      reason: "rate_limited",
+    });
+  });
+
+  it("does not rate-limit a different IP independently of an exhausted one", async () => {
+    const { rawToken } = await makeUserWithToken();
+    const busyIp = `198.51.100.${Math.floor(Math.random() * 254) + 1}`;
+    const freshIp = `198.51.100.${Math.floor(Math.random() * 254) + 1}`;
+    const requestWithIp = (ip: string) =>
+      license.request(
+        "/validate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "cf-connecting-ip": ip,
+          },
+          body: JSON.stringify({ token: rawToken, version: "1.0.0" }),
+        },
+        env,
+      );
+
+    for (let i = 0; i < 31; i++) await requestWithIp(busyIp);
+
+    const res = await requestWithIp(freshIp);
+    expect(res.status).toBe(200);
+  });
+});
+
 describe("POST /validate", () => {
   it("reports tier null when the token has no subscription row at all", async () => {
     const { rawToken } = await makeUserWithTokenNoSubscription();

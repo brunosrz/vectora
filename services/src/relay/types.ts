@@ -26,6 +26,8 @@ export interface Env {
   // queues
   EMAIL_QUEUE: Queue<EmailMessage>;
   JOBS_QUEUE: Queue<JobMessage>;
+  // license
+  LICENSE_VALIDATE_LIMITER: RateLimit;
 }
 
 export interface JwtPayload {

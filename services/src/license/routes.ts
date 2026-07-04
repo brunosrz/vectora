@@ -43,6 +43,18 @@ interface SubStatusRow {
 }
 
 license.post("/validate", async (c) => {
+  // Endpoint público (autenticado só pelo token no corpo, sem sessão) —
+  // 30 req/min por IP. O espaço do token (256 bits) já torna força bruta
+  // inviável, isso é defesa em profundidade. Um 429 aqui vira fallback
+  // gracioso pro cache local no backend Python (validate_license_async já
+  // trata qualquer falha de rede/HTTP caindo pro cache de até 48h) — nunca
+  // derruba a validação de quem está usando normal.
+  const ip = c.req.header("cf-connecting-ip") ?? "unknown";
+  const { success } = await c.env.LICENSE_VALIDATE_LIMITER.limit({ key: ip });
+  if (!success) {
+    return c.json({ valid: false, reason: "rate_limited" }, 429);
+  }
+
   const body = await c.req.json<{ token?: string; version?: string }>();
   const version = body.version ?? "unknown";
   if (!body.token)
@@ -99,7 +111,6 @@ license.post("/validate", async (c) => {
     }
   }
 
-  const ip = c.req.header("cf-connecting-ip") ?? "";
   await c.env.DB.prepare(
     "INSERT INTO license_checks (id, user_id, vectora_version, result, ip) VALUES (?, ?, ?, ?, ?)",
   )

@@ -50,6 +50,15 @@ migrations_dir = "migrations"
 [triggers]
 crons = ["0 3 * * *"]
 
+# POST /license/validate é público (qualquer app Vectora chama passando só um
+# token) — sem isso não tinha nenhuma defesa contra automação/scanning por IP.
+# O espaço do token (256 bits aleatórios) já torna força bruta inviável na
+# prática, isso aqui é defesa em profundidade, não a proteção primária.
+[[ratelimits]]
+name = "LICENSE_VALIDATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+
 # vectora-email: desacopla o envio de verdade (Resend) do request/response —
 # 9 pontos no código faziam `await sendEmail(...)` síncrono antes disso.
 [[queues.producers]]
