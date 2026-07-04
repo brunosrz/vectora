@@ -3,6 +3,7 @@
 Porta de context graph/affected.py (MIT, Safi Shamsi) adaptada para o namespace
 do Vectora: sem dependência de GRAPH_OUT, sem CLI, sem context graph.*.
 """
+
 from __future__ import annotations
 
 import unicodedata

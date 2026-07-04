@@ -7,6 +7,7 @@ expansão de vizinhança em vez de substring simples (GraphRAG completo).
 Fallback silencioso: se LanceDB ou embeddings não estiverem disponíveis,
 as funções retornam 0/[] sem quebrar o pipeline.
 """
+
 from __future__ import annotations
 
 import json
@@ -51,9 +52,7 @@ async def _embed_texts(texts: list[str]) -> list[list[float]]:
     all_vectors: list[list[float]] = []
     for i in range(0, len(texts), _EMBED_BATCH):
         batch = texts[i : i + _EMBED_BATCH]
-        vectors = await asyncio.to_thread(
-            embeddings_model.embed_documents, batch
-        )
+        vectors = await asyncio.to_thread(embeddings_model.embed_documents, batch)
         all_vectors.extend(vectors)
     return all_vectors
 
@@ -100,12 +99,14 @@ async def index_graph_nodes(
                 "id": str(n.get("id", "")),
                 "vector": v,
                 "text": t,
-                "metadata": json.dumps({
-                    "node_id": n.get("id", ""),
-                    "workspace_id": workspace_id,
-                    "source_file": n.get("source_file", ""),
-                    "file_type": n.get("file_type", ""),
-                }),
+                "metadata": json.dumps(
+                    {
+                        "node_id": n.get("id", ""),
+                        "workspace_id": workspace_id,
+                        "source_file": n.get("source_file", ""),
+                        "file_type": n.get("file_type", ""),
+                    }
+                ),
             }
             for n, v, t in zip(nodes, vectors, texts, strict=True)
             if n.get("id")
@@ -202,7 +203,9 @@ async def purge_graph_index(
             return
 
         table = await db.open_table(collection)
-        await table.delete(f"json_extract(metadata, '$.workspace_id') = '{workspace_id}'")
+        await table.delete(
+            f"json_extract(metadata, '$.workspace_id') = '{workspace_id}'"
+        )
 
         logger.info(
             "context_graph: índice purgado para workspace %s",

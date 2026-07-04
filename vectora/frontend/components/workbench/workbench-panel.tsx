@@ -32,6 +32,7 @@ import {
   Radar,
   Waypoints,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import {
@@ -181,12 +182,19 @@ function NavTabButton({
           }`}
         >
           <Icon className="w-4 h-4" />
-          {showPending && (
-            <span
-              className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
-              aria-label={m.workbench_tab_pending()}
-            />
-          )}
+          <AnimatePresence initial={false}>
+            {showPending && (
+              <motion.span
+                key="pending-dot"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: "spring", damping: 18, stiffness: 380 }}
+                className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
+                aria-label={m.workbench_tab_pending()}
+              />
+            )}
+          </AnimatePresence>
           {badge && (
             <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-mono leading-none bg-primary/15 text-primary">
               {badge}
@@ -202,8 +210,17 @@ function NavTabButton({
 /**
  * Faixa estreita (48px), sempre visível, com os ícones de cada aba —
  * equivalente à Activity Bar do VS Code. Não é redimensionável.
+ *
+ * `side="right"` (padrão): layout Assistente, borda esquerda, spacer h-16.
+ * `side="left"`: layout IDE, borda direita, sem spacer (Header já está no topo).
  */
-export function WorkbenchNavBar({ threadId }: { threadId: string }) {
+export function WorkbenchNavBar({
+  threadId,
+  side = "right",
+}: {
+  threadId: string;
+  side?: "left" | "right";
+}) {
   const hydrated = useHydrated();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
@@ -212,10 +229,16 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
   const selectTab = useWorkbenchStore((s) => s.selectTab);
   const { enableFeaturesBeta } = useFeatureFlags();
   return (
-    <div className="h-full w-12 shrink-0 flex flex-col items-center bg-sidebar border-l border-border/60">
-      {/* Zona do header (h-16 + border-b): continua a linha do Header e da
-          sidebar esquerda — os botões começam abaixo dela, alinhados. */}
-      <div className="h-16 w-full shrink-0 border-b border-border/60" />
+    <div
+      className={`h-full w-12 shrink-0 flex flex-col items-center bg-sidebar ${
+        side === "left" ? "border-r" : "border-l"
+      } border-border/60`}
+    >
+      {/* Spacer h-16: alinha com o Header quando a NavBar está à direita (layout
+          Assistente). No layout IDE o Header já está no topo — sem spacer. */}
+      {side === "right" && (
+        <div className="h-16 w-full shrink-0 border-b border-border/60" />
+      )}
       <div className="flex flex-col items-center gap-1 pt-2">
         {WORKBENCH_TABS.map((tab) =>
           !enableFeaturesBeta && BETA_TABS.has(tab) ? (
@@ -241,11 +264,15 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
  * Conteúdo da aba ativa — redimensionável, montado apenas quando o painel
  * está aberto (`isOpen`). Vive ao lado (à esquerda, na ordem visual) da
  * `WorkbenchNavBar`.
+ *
+ * `side="right"` (padrão): layout Assistente, borda esquerda.
+ * `side="left"`: layout IDE, borda direita (editor fica à direita do painel).
  */
 export function WorkbenchContent({
   threadId,
   onAddToContext,
-}: WorkbenchPanelProps) {
+  side = "right",
+}: WorkbenchPanelProps & { side?: "left" | "right" }) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
@@ -256,7 +283,11 @@ export function WorkbenchContent({
   useWorkspaceWatcher(wsId || undefined);
 
   return (
-    <div className="h-full flex flex-col bg-sidebar border-l border-border/60">
+    <div
+      className={`h-full flex flex-col bg-sidebar ${
+        side === "left" ? "border-r" : "border-l"
+      } border-border/60`}
+    >
       <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-sidebar">
         <span className="flex items-center gap-2 text-sm font-medium">
           <ActiveIcon className="w-4 h-4 text-muted-foreground" />
@@ -276,17 +307,28 @@ export function WorkbenchContent({
         </Tooltip>
       </div>
 
-      {/* Body — só monta a aba ativa (poupa recurso) */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}
-        {activeTab === "files" && (
-          <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
-        )}
-        {activeTab === "diff" && <GitTab threadId={threadId} />}
-        {activeTab === "plan" && <PlanTab threadId={threadId} />}
-        {activeTab === "preview" && <PreviewTab threadId={threadId} />}
-        {activeTab === "storage" && <MemoryTab threadId={threadId} />}
-        {activeTab === "tasks" && <TasksTab threadId={threadId} />}
+      {/* Body — só monta a aba ativa (poupa recurso); troca com slide suave */}
+      <div className="flex-1 min-h-0 overflow-hidden relative">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 6 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -6 }}
+            transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute inset-0"
+          >
+            {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}
+            {activeTab === "files" && (
+              <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
+            )}
+            {activeTab === "diff" && <GitTab threadId={threadId} />}
+            {activeTab === "plan" && <PlanTab threadId={threadId} />}
+            {activeTab === "preview" && <PreviewTab threadId={threadId} />}
+            {activeTab === "storage" && <MemoryTab threadId={threadId} />}
+            {activeTab === "tasks" && <TasksTab threadId={threadId} />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

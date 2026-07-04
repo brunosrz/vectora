@@ -52,6 +52,7 @@ import {
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useWindowsStore } from "@/lib/stores/windows-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { fetchFile, apiUpdateFile } from "@/lib/api/fs-files";
 import { VerticalSplit } from "@/components/layout/vertical-split";
 import { getMediaKind, MediaView } from "@/components/workbench/file-viewer";
@@ -107,6 +108,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const viewerHeight = useWorkbenchStore((s) => s.viewerHeight);
   const setViewerHeight = useWorkbenchStore((s) => s.setViewerHeight);
   const openWindow = useWindowsStore((s) => s.open);
+  const ideMode = useSettingsStore((s) => s.ideMode);
 
   // aria-busy: verdadeiro enquanto a raiz ainda não chegou do servidor.
   const rootEntriesLoaded = useWorkbenchStore(
@@ -819,7 +821,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                       <Pencil className="w-3 h-3" />
                     </button>
                   )}
-                {openPath && (
+                {!ideMode && openPath && (
                   <button
                     onClick={() => openWindow(wsId, openPath)}
                     className="p-0.5 rounded text-muted-foreground hover:text-foreground"

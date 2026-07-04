@@ -614,6 +614,11 @@
   "window_minimize": "Minimizar",
   "window_close": "Cerrar",
   "window_restore": "Restaurar",
+  "ide_mode_assistente": "Asistente",
+  "ide_mode_ide": "IDE",
+  "ide_mode_switcher_label": "Modo de diseño",
+  "docked_editor_empty": "Abre un archivo en el panel de archivos",
+  "docked_editor_empty_hint": "Usa el panel Archivos a la izquierda para abrir un archivo",
   "workbench_files_read_only_truncated": "Archivo demasiado grande para editar — vista de solo lectura.",
   "workbench_files_save": "Guardar",
   "workbench_preview_md_title": "Vista previa de Markdown",
@@ -938,5 +943,8 @@
   "rag_collections_empty": "Aún no hay colecciones.",
   "rag_collection_count": "{n} elementos",
   "rag_collection_delete": "Eliminar colección",
-  "rag_collection_delete_confirm": "¿Eliminar la colección \"{name}\"? Esto elimina todo lo indexado en ella."
+  "rag_collection_delete_confirm": "¿Eliminar la colección \"{name}\"? Esto elimina todo lo indexado en ella.",
+  "ide_session_untitled": "Sin título",
+  "ide_session_switcher_label": "Cambiar sesión",
+  "ide_session_new": "Nueva sesión"
 }

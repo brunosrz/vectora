@@ -3,6 +3,7 @@
 Pipeline: exact normalization → entropy gate → MinHash/LSH blocking →
 Jaro-Winkler verification → same-community boost → union-find merge.
 """
+
 from __future__ import annotations
 
 import logging
@@ -18,6 +19,7 @@ from rapidfuzz.distance import Jaro, JaroWinkler
 from ._minhash import MinHash, MinHashLSH
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _norm(label: str | None) -> str:
     """Lowercase + collapse non-alphanumeric runs to space (Unicode-aware)."""
@@ -86,9 +88,12 @@ def _short_label_blocked(a: str, b: str, jw_score: float) -> bool:
     if max(len(a), len(b)) >= 12:
         return False
     from rapidfuzz.distance import DamerauLevenshtein
+
     # Allow only same-length single-char substitutions (true typos like "Extractor"/"Extractar").
     # Block length-differing pairs regardless of score.
-    return not (jw_score >= 97.0 and len(a) == len(b) and DamerauLevenshtein.distance(a, b) <= 1)
+    return not (
+        jw_score >= 97.0 and len(a) == len(b) and DamerauLevenshtein.distance(a, b) <= 1
+    )
 
 
 _DIGIT_RUN = re.compile(r"\d+")
@@ -110,8 +115,9 @@ def _numeric_tokens_differ(a: str, b: str) -> bool:
     """
     if a == b:
         return False
-    return sorted(t.lstrip("0") or "0" for t in _DIGIT_RUN.findall(a)) != \
-        sorted(t.lstrip("0") or "0" for t in _DIGIT_RUN.findall(b))
+    return sorted(t.lstrip("0") or "0" for t in _DIGIT_RUN.findall(a)) != sorted(
+        t.lstrip("0") or "0" for t in _DIGIT_RUN.findall(b)
+    )
 
 
 # file_type values whose identity is anchored to their source location, not
@@ -131,13 +137,16 @@ def _crossfile_fileanchored_blocked(node: dict, neighbor: dict) -> bool:
     apps.<name>. No business logic here...") that differs by one word and sails
     past the JW threshold. Same-file duplicates of these types may still merge.
     """
-    if (node.get("file_type") not in _FILE_ANCHORED_NONCODE
-            and neighbor.get("file_type") not in _FILE_ANCHORED_NONCODE):
+    if (
+        node.get("file_type") not in _FILE_ANCHORED_NONCODE
+        and neighbor.get("file_type") not in _FILE_ANCHORED_NONCODE
+    ):
         return False
     return (node.get("source_file") or "") != (neighbor.get("source_file") or "")
 
 
 # ── union-find ────────────────────────────────────────────────────────────────
+
 
 class _UF:
     def __init__(self) -> None:
@@ -168,8 +177,8 @@ class _UF:
 
 _ENTROPY_THRESHOLD = 2.5
 _LSH_THRESHOLD = 0.7
-_MERGE_THRESHOLD = 92.0     # rapidfuzz normalized_similarity * 100
-_COMMUNITY_BOOST = 5.0      # score bonus when both nodes share community
+_MERGE_THRESHOLD = 92.0  # rapidfuzz normalized_similarity * 100
+_COMMUNITY_BOOST = 5.0  # score bonus when both nodes share community
 _NUM_PERM = 128
 _CHUNK_SUFFIX = re.compile(r"_c\d+$")
 
@@ -188,6 +197,7 @@ def _is_code(node: dict) -> bool:
 
 
 # ── main entry point ──────────────────────────────────────────────────────────
+
 
 def deduplicate_entities(
     nodes: list[dict],
@@ -316,7 +326,9 @@ def deduplicate_entities(
                 if neighbor is None:
                     continue
 
-                neighbor_norm = norm_cache.get(neighbor_id) or _norm(neighbor.get("label", neighbor.get("id", "")))
+                neighbor_norm = norm_cache.get(neighbor_id) or _norm(
+                    neighbor.get("label", neighbor.get("id", ""))
+                )
                 # Cross-file long labels score on plain Jaro (no prefix bonus).
                 # Jaro-Winkler's leading-prefix bonus lifts pairs that share a
                 # prefix but diverge in a distinguishing token ("testing-library
@@ -326,11 +338,16 @@ def deduplicate_entities(
                 # near-duplicates keep Jaro-Winkler (low-risk, and a mid-string
                 # stopword insertion needs the prefix bonus to merge); short labels
                 # keep Jaro-Winkler too (gated by _short_label_blocked).
-                _xfile = (node.get("source_file") or "") != (neighbor.get("source_file") or "")
+                _xfile = (node.get("source_file") or "") != (
+                    neighbor.get("source_file") or ""
+                )
                 if _xfile and max(len(norm_label), len(neighbor_norm)) >= 12:
                     score = Jaro.normalized_similarity(norm_label, neighbor_norm) * 100
                 else:
-                    score = JaroWinkler.normalized_similarity(norm_label, neighbor_norm) * 100
+                    score = (
+                        JaroWinkler.normalized_similarity(norm_label, neighbor_norm)
+                        * 100
+                    )
 
                 if _is_variant_pair(norm_label, neighbor_norm):
                     continue
@@ -353,8 +370,12 @@ def deduplicate_entities(
 
                 c1 = communities.get(node_id)
                 c2 = communities.get(neighbor_id)
-                if (c1 is not None and c2 is not None and c1 == c2
-                        and min(len(norm_label), len(neighbor_norm)) >= 12):
+                if (
+                    c1 is not None
+                    and c2 is not None
+                    and c1 == c2
+                    and min(len(norm_label), len(neighbor_norm)) >= 12
+                ):
                     score += _COMMUNITY_BOOST
 
                 if score >= _MERGE_THRESHOLD:
@@ -400,7 +421,12 @@ def deduplicate_entities(
 
     total = len(remap)
     if exact_merges and fuzzy_merges:
-        logger.debug("Deduplicated %d node(s) (%d exact, %d fuzzy).", total, exact_merges, fuzzy_merges)
+        logger.debug(
+            "Deduplicated %d node(s) (%d exact, %d fuzzy).",
+            total,
+            exact_merges,
+            fuzzy_merges,
+        )
     elif exact_merges:
         logger.debug("Deduplicated %d node(s) (%d exact).", total, exact_merges)
     else:
@@ -467,7 +493,9 @@ def _llm_tiebreak(
             if uf.find(node["id"]) == uf.find(neighbor["id"]):
                 continue
             norm_j = _norm(neighbor.get("label", neighbor.get("id", "")))
-            _xfile = (node.get("source_file") or "") != (neighbor.get("source_file") or "")
+            _xfile = (node.get("source_file") or "") != (
+                neighbor.get("source_file") or ""
+            )
             if _xfile and max(len(norm_i), len(norm_j)) >= 12:
                 score = Jaro.normalized_similarity(norm_i, norm_j) * 100
             else:
@@ -485,8 +513,12 @@ def _llm_tiebreak(
                 continue
             c1 = communities.get(node["id"])
             c2 = communities.get(neighbor["id"])
-            if (c1 is not None and c2 is not None and c1 == c2
-                    and min(len(norm_i), len(norm_j)) >= 12):
+            if (
+                c1 is not None
+                and c2 is not None
+                and c1 == c2
+                and min(len(norm_i), len(norm_j)) >= 12
+            ):
                 score += _COMMUNITY_BOOST
             if low <= score < high:
                 ambiguous.append((node, neighbor, score))
@@ -503,7 +535,7 @@ def _llm_tiebreak(
     for batch_start in range(0, len(ambiguous), batch_size):
         batch = ambiguous[batch_start : batch_start + batch_size]
         pairs_text = "\n".join(
-            f'{i+1}. "{a["label"]}" vs "{b["label"]}"'
+            f'{i + 1}. "{a["label"]}" vs "{b["label"]}"'
             for i, (a, b, _) in enumerate(batch)
         )
         prompt = (
@@ -513,10 +545,12 @@ def _llm_tiebreak(
         )
         try:
             response = asyncio.get_event_loop().run_until_complete(
-                llm.ainvoke([
-                    SystemMessage(content="You are a deduplication assistant."),
-                    HumanMessage(content=prompt),
-                ])
+                llm.ainvoke(
+                    [
+                        SystemMessage(content="You are a deduplication assistant."),
+                        HumanMessage(content=prompt),
+                    ]
+                )
             )
             lines = (response.content or "").strip().splitlines()
             for line in lines:

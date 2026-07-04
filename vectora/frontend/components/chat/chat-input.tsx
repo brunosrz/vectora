@@ -121,6 +121,8 @@ interface ChatInputProps {
   dropHintExpanded?: boolean;
   /** Callback de seleção de arquivo via @mention. */
   onAtMentionSelect?: (path: string, startIdx: number, endIdx: number) => void;
+  /** IDE sidebar: usa bg-sidebar em vez de bg-background. */
+  compact?: boolean;
 }
 
 const EMPTY_QUEUED_MESSAGES: NonNullable<ChatInputProps["queuedMessages"]> = [];
@@ -162,9 +164,11 @@ export function ChatInput({
   onAgentConfigChange,
   dropHintExpanded = false,
   onAtMentionSelect,
+  compact = false,
 }: ChatInputProps) {
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   const chatMode = useSettingsStore((s) => s.chatMode);
+  const ideMode = useSettingsStore((s) => s.ideMode);
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
@@ -190,7 +194,9 @@ export function ChatInput({
       {/* Enhanced visibility layer */}
       <div className="absolute inset-0 pointer-events-none" />
 
-      <div className="relative z-[50] border-t border-border/60 bg-background backdrop-blur-sm">
+      <div
+        className={`relative z-[50] border-t border-border/60 backdrop-blur-sm ${compact ? "bg-sidebar" : "bg-background"}`}
+      >
         <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-1.5">
           {/* File Previews */}
           <FilePreviewGrid files={attachedFiles} onRemove={onRemoveFile} />
@@ -256,7 +262,7 @@ export function ChatInput({
             {/* Input container — borda única, sem glow nem ring duplicado. */}
             <div className="relative">
               <div
-                className={`relative rounded-xl border bg-background transition-colors duration-200 ${isDragging ? "border-primary bg-primary/5" : "border-border/60 group-focus-within:border-primary/70"}`}
+                className={`relative rounded-xl border transition-colors duration-200 ${compact ? "bg-sidebar" : "bg-background"} ${isDragging ? "border-primary bg-primary/5" : "border-border/60 group-focus-within:border-primary/70"}`}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
@@ -387,7 +393,7 @@ export function ChatInput({
               <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
               {/* O workspace é escolhido só no modal de nova conversa e é imutável
                   depois disso — por isso não há seletor de workspace na appbar. */}
-              {!chatMode && wsId && (
+              {!chatMode && !ideMode && wsId && (
                 <>
                   <VscodeMenu workspaceId={wsId} />
                   <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />

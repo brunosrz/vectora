@@ -9,7 +9,11 @@ import networkx as nx
 
 def _safe_community_name(label: str) -> str:
     """Mirrors export.safe_name so community hub filenames and report wikilinks always agree."""
-    cleaned = re.sub(r'[\\/*?:"<>|#^[\]]', "", label.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")).strip()
+    cleaned = re.sub(
+        r'[\\/*?:"<>|#^[\]]',
+        "",
+        label.replace("\r\n", " ").replace("\r", " ").replace("\n", " "),
+    ).strip()
     cleaned = re.sub(r"\.(md|mdx|markdown)$", "", cleaned, flags=re.IGNORECASE)
     return cleaned or "unnamed"
 
@@ -32,7 +36,9 @@ def generate(
 
     # JSON deserialization produces string keys; normalize to int so .get(cid) works.
     if community_labels:
-        community_labels = {int(k) if isinstance(k, str) else k: v for k, v in community_labels.items()}
+        community_labels = {
+            int(k) if isinstance(k, str) else k: v for k, v in community_labels.items()
+        }
 
     confidences = [d.get("confidence", "EXTRACTED") for _, _, d in G.edges(data=True)]
     total = len(confidences) or 1
@@ -40,7 +46,9 @@ def generate(
     inf_pct = round(confidences.count("INFERRED") / total * 100)
     amb_pct = round(confidences.count("AMBIGUOUS") / total * 100)
 
-    inf_edges = [(u, v, d) for u, v, d in G.edges(data=True) if d.get("confidence") == "INFERRED"]
+    inf_edges = [
+        (u, v, d) for u, v, d in G.edges(data=True) if d.get("confidence") == "INFERRED"
+    ]
     inf_scores = [d.get("confidence_score", 0.5) for _, _, d in inf_edges]
     inf_avg = round(sum(inf_scores) / len(inf_scores), 2) if inf_scores else None
 
@@ -58,10 +66,15 @@ def generate(
         ]
 
     from .analyze import _is_file_node as _ifn
-    non_empty = {cid: nodes for cid, nodes in communities.items()
-                 if any(not _ifn(G, n) for n in nodes)}
+
+    non_empty = {
+        cid: nodes
+        for cid, nodes in communities.items()
+        if any(not _ifn(G, n) for n in nodes)
+    }
     thin_count_summary = sum(
-        1 for nodes in communities.values()
+        1
+        for nodes in communities.values()
         if 0 < sum(1 for n in nodes if not _ifn(G, n)) < min_community_size
     )
     shown_count = len(communities) - thin_count_summary
@@ -70,9 +83,17 @@ def generate(
         "",
         "## Summary",
         f"- {G.number_of_nodes()} nodes · {G.number_of_edges()} edges · {len(communities)} communities"
-        + (f" ({shown_count} shown, {thin_count_summary} thin omitted)" if thin_count_summary else ""),
+        + (
+            f" ({shown_count} shown, {thin_count_summary} thin omitted)"
+            if thin_count_summary
+            else ""
+        ),
         f"- Extraction: {ext_pct}% EXTRACTED · {inf_pct}% INFERRED · {amb_pct}% AMBIGUOUS"
-        + (f" · INFERRED: {len(inf_edges)} edges (avg confidence: {inf_avg})" if inf_avg is not None else ""),
+        + (
+            f" · INFERRED: {len(inf_edges)} edges (avg confidence: {inf_avg})"
+            if inf_avg is not None
+            else ""
+        ),
         f"- Token cost: {token_cost.get('input', 0):,} input · {token_cost.get('output', 0):,} output",
     ]
 
@@ -113,16 +134,23 @@ def generate(
                 conf_tag = f"INFERRED {cscore:.2f}"
             else:
                 conf_tag = conf
-            sem_tag = " [semantically similar]" if relation == "semantically_similar_to" else ""
+            sem_tag = (
+                " [semantically similar]"
+                if relation == "semantically_similar_to"
+                else ""
+            )
             lines += [
                 f"- `{s['source']}` --{relation}--> `{s['target']}`  [{conf_tag}]{sem_tag}",
                 f"  {files[0]} → {files[1]}" + (f"  _{note}_" if note else ""),
             ]
     else:
-        lines.append("- None detected - all connections are within the same source files.")
+        lines.append(
+            "- None detected - all connections are within the same source files."
+        )
 
     # Circular imports surfaced from file-level dependency graph.
     from .analyze import find_import_cycles
+
     cycles = find_import_cycles(G)
     lines += ["", "## Import Cycles"]
     if cycles:
@@ -144,9 +172,14 @@ def generate(
             conf = h.get("confidence", "INFERRED")
             cscore = h.get("confidence_score")
             conf_tag = f"{conf} {cscore:.2f}" if cscore is not None else conf
-            lines.append(f"- **{h.get('label', h.get('id', ''))}** — {node_labels} [{conf_tag}]")
+            lines.append(
+                f"- **{h.get('label', h.get('id', ''))}** — {node_labels} [{conf_tag}]"
+            )
 
-    lines += ["", f"## Communities ({len(communities)} total, {thin_count_summary} thin omitted)"]
+    lines += [
+        "",
+        f"## Communities ({len(communities)} total, {thin_count_summary} thin omitted)",
+    ]
     for cid, nodes in communities.items():
         label = community_labels.get(cid, f"Community {cid}")
         score = cohesion_scores.get(cid, 0.0)
@@ -157,7 +190,7 @@ def generate(
         if len(real_nodes) < min_community_size:
             continue
         display = [G.nodes[n].get("label", n) for n in real_nodes[:8]]
-        suffix = f" (+{len(real_nodes)-8} more)" if len(real_nodes) > 8 else ""
+        suffix = f" (+{len(real_nodes) - 8} more)" if len(real_nodes) > 8 else ""
         lines += [
             "",
             f'### Community {cid} - "{label}"',
@@ -165,7 +198,11 @@ def generate(
             f"Nodes ({len(real_nodes)}): {', '.join(display)}{suffix}",
         ]
 
-    ambiguous = [(u, v, d) for u, v, d in G.edges(data=True) if d.get("confidence") == "AMBIGUOUS"]
+    ambiguous = [
+        (u, v, d)
+        for u, v, d in G.edges(data=True)
+        if d.get("confidence") == "AMBIGUOUS"
+    ]
     if ambiguous:
         lines += ["", "## Ambiguous Edges - Review These"]
         for u, v, d in ambiguous:
@@ -180,14 +217,16 @@ def generate(
     from .analyze import _is_concept_node, _is_file_node
 
     isolated = [
-        n for n in G.nodes()
+        n
+        for n in G.nodes()
         if G.degree(n) <= 1
         and not _is_file_node(G, n)
         and not _is_concept_node(G, n)
         and G.nodes[n].get("file_type") != "rationale"
     ]
     thin_communities = {
-        cid: nodes for cid, nodes in communities.items()
+        cid: nodes
+        for cid, nodes in communities.items()
         if 0 < sum(1 for n in nodes if not _is_file_node(G, n)) < 3
     }
     gap_count = len(isolated) + len(thin_communities)
@@ -196,17 +235,28 @@ def generate(
         lines += ["", "## Knowledge Gaps"]
         if isolated:
             isolated_labels = [G.nodes[n].get("label", n) for n in isolated[:5]]
-            suffix = f" (+{len(isolated)-5} more)" if len(isolated) > 5 else ""
-            lines.append(f"- **{len(isolated)} isolated node(s):** {', '.join(f'`{l}`' for l in isolated_labels)}{suffix}")
-            lines.append("  These have ≤1 connection - possible missing edges or undocumented components.")
+            suffix = f" (+{len(isolated) - 5} more)" if len(isolated) > 5 else ""
+            lines.append(
+                f"- **{len(isolated)} isolated node(s):** {', '.join(f'`{l}`' for l in isolated_labels)}{suffix}"
+            )
+            lines.append(
+                "  These have ≤1 connection - possible missing edges or undocumented components."
+            )
         if thin_communities:
-            lines.append(f"- **{len(thin_communities)} thin communities (<{min_community_size} nodes) omitted from report** — run `context graph query` to explore isolated nodes.")
+            lines.append(
+                f"- **{len(thin_communities)} thin communities (<{min_community_size} nodes) omitted from report** — run `context graph query` to explore isolated nodes."
+            )
         if amb_pct > 20:
-            lines.append(f"- **High ambiguity: {amb_pct}% of edges are AMBIGUOUS.** Review the Ambiguous Edges section above.")
+            lines.append(
+                f"- **High ambiguity: {amb_pct}% of edges are AMBIGUOUS.** Review the Ambiguous Edges section above."
+            )
 
     if suggested_questions:
         lines += ["", "## Suggested Questions"]
-        no_signal = len(suggested_questions) == 1 and suggested_questions[0].get("type") == "no_signal"
+        no_signal = (
+            len(suggested_questions) == 1
+            and suggested_questions[0].get("type") == "no_signal"
+        )
         if no_signal:
             lines.append(f"_{suggested_questions[0]['why']}_")
         else:

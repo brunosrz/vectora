@@ -176,7 +176,9 @@ def _node_source_stem(node: dict[str, Any]) -> str:
     return Path(source_file).stem
 
 
-def build_python_symbol_index(nodes: list[dict[str, Any]]) -> dict[tuple[str, str], list[str]]:
+def build_python_symbol_index(
+    nodes: list[dict[str, Any]],
+) -> dict[tuple[str, str], list[str]]:
     """Build ``(module_stem, normalized_symbol_name) -> node_ids``.
 
     This index is stricter than the global label index. It uses both the module
@@ -207,7 +209,9 @@ def find_unique_python_symbol(
 ) -> str | None:
     """Resolve one imported symbol to exactly one Context Graph node id."""
 
-    candidates = symbol_index.get((imported.module_stem, imported.imported_name.lower()), [])
+    candidates = symbol_index.get(
+        (imported.module_stem, imported.imported_name.lower()), []
+    )
     if len(candidates) == 1:
         return candidates[0]
     return None
@@ -243,7 +247,9 @@ def resolve_python_import_guided_calls(
         if path.suffix != ".py":
             continue
         slot: Any = per_file[index] if index < len(per_file) else None
-        result_by_file[str(path)] = slot if isinstance(slot, dict) else {"nodes": [], "edges": []}
+        result_by_file[str(path)] = (
+            slot if isinstance(slot, dict) else {"nodes": [], "edges": []}
+        )
     resolved_edges: list[dict[str, Any]] = []
 
     for path in paths:
@@ -287,15 +293,18 @@ def resolve_python_import_guided_calls(
                     "confidence": "EXTRACTED",
                     "confidence_score": 1.0,
                     "source_file": raw_call.get("source_file", source_file),
-                    "source_location": raw_call.get("source_location") or imported.source_location,
+                    "source_location": raw_call.get("source_location")
+                    or imported.source_location,
                     "weight": 1.0,
-                    "metadata": sanitize_metadata({
-                        "resolver": "python_import_guided",
-                        "local_name": imported.local_name,
-                        "imported_name": imported.imported_name,
-                        "module_stem": imported.module_stem,
-                        "import_source_location": imported.source_location,
-                    }),
+                    "metadata": sanitize_metadata(
+                        {
+                            "resolver": "python_import_guided",
+                            "local_name": imported.local_name,
+                            "imported_name": imported.imported_name,
+                            "module_stem": imported.module_stem,
+                            "import_source_location": imported.source_location,
+                        }
+                    ),
                 }
             )
 
@@ -381,7 +390,9 @@ def _file_node_id_for_path(path: Path, root: Path) -> str:
     try:
         rel = path.resolve().relative_to(root.resolve())
     except ValueError:
-        return _bash_make_id(str(path))  # path outside root: hash absolute path as fallback
+        return _bash_make_id(
+            str(path)
+        )  # path outside root: hash absolute path as fallback
     return _bash_make_id(_bash_file_stem(rel))
 
 
@@ -412,7 +423,9 @@ def resolve_bash_source_edges(
           Anything else is silently skipped.
     """
     path_by_index = [Path(p).resolve() for p in paths]
-    file_nid_by_path = {p: _file_node_id_for_path(p, root) for p in path_by_index}  # resolved paths only
+    file_nid_by_path = {
+        p: _file_node_id_for_path(p, root) for p in path_by_index
+    }  # resolved paths only
 
     functions_by_file: dict[str, dict[str, str]] = {}
     for result, path in zip(per_file, path_by_index, strict=False):

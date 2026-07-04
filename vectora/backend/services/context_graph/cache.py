@@ -13,7 +13,7 @@ from pathlib import Path
 # Output directory name — override with GRAPH_OUT env var for worktrees or
 # shared-output setups. Accepts a relative name (".vectora/context-graph-feature") or an
 # absolute path ("/shared/.vectora/context-graph"). Single source of truth in paths
-#; re-exported here as _GRAPH_OUT for the existing call sites.
+# ; re-exported here as _GRAPH_OUT for the existing call sites.
 from .paths import GRAPH_OUT as _GRAPH_OUT
 
 # AST cache entries are the output of the engine's own extractor code, so they
@@ -76,7 +76,7 @@ def _body_content(content: bytes) -> bytes:
     # Slice right after the closing `---` (not after its line) so the output
     # stays byte-identical with the historical implementation for well-formed
     # frontmatter -- existing semantic-cache hashes must not churn.
-    return text[closer.start() + 3:].encode()
+    return text[closer.start() + 3 :].encode()
 
 
 # Stat-based index: maps absolute path → {size, mtime_ns, hash}.
@@ -137,6 +137,7 @@ def _flush_stat_index() -> None:
 def _normalize_path(path: Path) -> Path:
     """Normalize path for consistent cache keys across Windows path spellings."""
     import sys
+
     if sys.platform != "win32":
         return path
     s = str(path)
@@ -170,9 +171,11 @@ def file_hash(path: Path, root: Path = Path()) -> str:
     try:
         st = p.stat()
         entry = _stat_index.get(abs_key)
-        if (entry
-                and entry.get("size") == st.st_size
-                and entry.get("mtime_ns") == st.st_mtime_ns):
+        if (
+            entry
+            and entry.get("size") == st.st_size
+            and entry.get("mtime_ns") == st.st_mtime_ns
+        ):
             return entry["hash"]
     except OSError:
         pass
@@ -190,7 +193,11 @@ def file_hash(path: Path, root: Path = Path()) -> str:
     digest = h.hexdigest()
 
     if st is not None:
-        _stat_index[abs_key] = {"size": st.st_size, "mtime_ns": st.st_mtime_ns, "hash": digest}
+        _stat_index[abs_key] = {
+            "size": st.st_size,
+            "mtime_ns": st.st_mtime_ns,
+            "hash": digest,
+        }
         _stat_index_dirty = True
 
     return digest
@@ -306,14 +313,16 @@ def load_cached(path: Path, root: Path = Path(), kind: str = "ast") -> dict | No
             return None
         # Re-anchor relative source_file fields so callers see the same
         # absolute-path shape that a fresh in-process extraction produces
-        #. Legacy entries with absolute source_file pass through.
+        # . Legacy entries with absolute source_file pass through.
         if isinstance(result, dict):
             _absolutize_source_files_in(result, root)
         return result
     return None
 
 
-def save_cached(path: Path, result: dict, root: Path = Path(), kind: str = "ast") -> None:
+def save_cached(
+    path: Path, result: dict, root: Path = Path(), kind: str = "ast"
+) -> None:
     """Save extraction result for this file.
 
     Stores as .vectora/context-graph/cache/{kind}/{hash}.json where hash = SHA256 of current file contents.
@@ -337,8 +346,11 @@ def save_cached(path: Path, result: dict, root: Path = Path(), kind: str = "ast"
     # source_file field's original absolute form. Mutating the input here would
     # silently break those remaps on the first extraction pass.
     on_disk = result
-    if isinstance(result, dict) and any(result.get(k) for k in ("nodes", "edges", "hyperedges")):
+    if isinstance(result, dict) and any(
+        result.get(k) for k in ("nodes", "edges", "hyperedges")
+    ):
         import copy as _copy
+
         on_disk = _copy.deepcopy(result)
         _relativize_source_files_in(on_disk, root)
     h = file_hash(p, root)
@@ -354,6 +366,7 @@ def save_cached(path: Path, result: dict, root: Path = Path(), kind: str = "ast"
             # Windows: os.replace can fail with WinError 5 if the target is
             # briefly locked. Fall back to copy-then-delete.
             import shutil
+
             shutil.copy2(tmp_path, entry)
             os.unlink(tmp_path)
     except Exception:
@@ -438,7 +451,9 @@ def save_semantic_cache(
     """
     from collections import defaultdict
 
-    by_file: dict[str, dict] = defaultdict(lambda: {"nodes": [], "edges": [], "hyperedges": []})
+    by_file: dict[str, dict] = defaultdict(
+        lambda: {"nodes": [], "edges": [], "hyperedges": []}
+    )
     for n in nodes:
         src = n.get("source_file", "")
         if src:
@@ -447,7 +462,7 @@ def save_semantic_cache(
         src = e.get("source_file", "")
         if src:
             by_file[src]["edges"].append(e)
-    for h in (hyperedges or []):
+    for h in hyperedges or []:
         src = h.get("source_file", "")
         if src:
             by_file[src]["hyperedges"].append(h)

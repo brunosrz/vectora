@@ -5,15 +5,21 @@ import { Menu } from "lucide-react";
 
 import { ContextualHelp } from "./contextual-help";
 import { SettingsMenu } from "./settings-menu";
+import { IdeModeSwitch } from "./ide-mode-switcher";
 import { m } from "@/lib/paraglide/messages";
 interface HeaderProps {
   showToolCalls?: boolean;
   onToggleToolCalls?: () => void;
   onShowShortcuts?: () => void;
   onOpenSidebar?: () => void;
+  showModeSwitch?: boolean;
 }
 
-export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
+export function Header({
+  onShowShortcuts,
+  onOpenSidebar,
+  showModeSwitch = false,
+}: HeaderProps) {
   return (
     <header className="border-b border-border/60 bg-background h-16 flex items-center">
       <div className="flex items-center justify-between w-full px-4 sm:px-6">
@@ -44,6 +50,8 @@ export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
             Vectora
           </span>
         </div>
+
+        <IdeModeSwitch show={showModeSwitch} />
 
         <div className="flex items-center gap-3">
           <ContextualHelp onShowShortcuts={onShowShortcuts} />

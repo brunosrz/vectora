@@ -157,6 +157,23 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     rolldownOptions: {
       checks: { pluginTimings: false },
+      output: {
+        // Split vendor chunks so the Rolldown/Oxc WASM parser processes
+        // smaller files and stays within its WebAssembly memory limit.
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("monaco-editor") || id.includes("@monaco-editor"))
+            return "monaco";
+          if (id.includes("/motion/") || id.includes("/framer-motion/"))
+            return "motion";
+          if (id.includes("react") || id.includes("react-dom"))
+            return "react-vendor";
+          if (id.includes("@tanstack")) return "tanstack";
+          if (id.includes("@radix-ui")) return "radix";
+          if (id.includes("lucide-react")) return "lucide";
+          return "vendor";
+        },
+      },
     },
   },
 });

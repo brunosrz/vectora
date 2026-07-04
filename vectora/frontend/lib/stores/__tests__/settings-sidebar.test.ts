@@ -38,3 +38,45 @@ describe("settings-store — sidebar", () => {
     expect(useSettingsStore.getState().sidebarPosition).toBe("left");
   });
 });
+
+describe("settings-store — chatSidebarWidth (IDE mode)", () => {
+  it("valor padrão é 256", () => {
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(256);
+  });
+
+  it("setChatSidebarWidth atualiza o valor", () => {
+    useSettingsStore.getState().setChatSidebarWidth(400);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(400);
+  });
+
+  it("setChatSidebarWidth respeita mínimo (240)", () => {
+    useSettingsStore.getState().setChatSidebarWidth(100);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(240);
+  });
+
+  it("setChatSidebarWidth respeita máximo (800)", () => {
+    useSettingsStore.getState().setChatSidebarWidth(9999);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(800);
+  });
+
+  it("setChatSidebarWidth arredonda valores fracionários", () => {
+    useSettingsStore.getState().setChatSidebarWidth(360.6);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(361);
+  });
+
+  it("resetSettings restaura para 256", () => {
+    useSettingsStore.getState().setChatSidebarWidth(500);
+    useSettingsStore.getState().resetSettings();
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(256);
+  });
+
+  it("valor 240 (mínimo exato) é aceito sem clamp", () => {
+    useSettingsStore.getState().setChatSidebarWidth(240);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(240);
+  });
+
+  it("valor 800 (máximo exato) é aceito sem clamp", () => {
+    useSettingsStore.getState().setChatSidebarWidth(800);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(800);
+  });
+});

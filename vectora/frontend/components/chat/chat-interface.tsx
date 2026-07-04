@@ -115,6 +115,8 @@ interface ChatInterfaceProps {
   onStartChat?: () => void;
   /** Home screen: open workspace picker to start a code session. */
   onStartCode?: () => void;
+  /** IDE sidebar: oculta avatar do assistente e usa espaçamento compacto. */
+  compact?: boolean;
 }
 
 interface QueuedMessage {
@@ -138,6 +140,7 @@ export function ChatInterface({
   inputLocked = false,
   onStartChat,
   onStartCode,
+  compact = false,
 }: ChatInterfaceProps) {
   // ============================================================================
   // State Management
@@ -1277,6 +1280,7 @@ export function ChatInterface({
             onFeedback={handleFeedback}
             onSubmitComment={handleSubmitComment}
             onCancelComment={handleCancelComment}
+            compact={compact}
             onToggleComment={handleToggleComment}
             setFeedbackComment={setFeedbackComment}
             onHitlDecision={handleHitlDecision}
@@ -1319,6 +1323,7 @@ export function ChatInterface({
           agentConfig={agentConfig}
           onAgentConfigChange={onAgentConfigChange}
           dropHintExpanded={isNewChat}
+          compact={compact}
         />
       </main>
     </>

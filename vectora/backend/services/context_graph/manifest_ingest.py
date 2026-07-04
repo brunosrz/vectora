@@ -7,6 +7,7 @@ dependency reference, so it splits into duplicate nodes. This module parses
 manifests deterministically and emits ONE canonical package node per package,
 keyed by NAME, plus depends_on edges.
 """
+
 from __future__ import annotations
 
 import re
@@ -16,7 +17,11 @@ from typing import Any
 
 from .ids import make_id
 
-__all__ = ["PACKAGE_MANIFEST_NAMES", "extract_package_manifest", "is_package_manifest_path"]
+__all__ = [
+    "PACKAGE_MANIFEST_NAMES",
+    "extract_package_manifest",
+    "is_package_manifest_path",
+]
 
 PACKAGE_MANIFEST_NAMES: dict[str, str] = {
     "apm.yml": "apm",
@@ -78,17 +83,19 @@ def extract_package_manifest(path: Path) -> dict[str, Any]:
         if dep_nid == pkg_nid or dep_nid in seen:
             continue
         seen.add(dep_nid)
-        edges.append({
-            "source": pkg_nid,
-            "target": dep_nid,
-            "relation": "depends_on",
-            "context": "dependency",
-            "confidence": "EXTRACTED",
-            "confidence_score": 1.0,
-            "source_file": str_path,
-            "source_location": "L1",
-            "weight": 1.0,
-        })
+        edges.append(
+            {
+                "source": pkg_nid,
+                "target": dep_nid,
+                "relation": "depends_on",
+                "context": "dependency",
+                "confidence": "EXTRACTED",
+                "confidence_score": 1.0,
+                "source_file": str_path,
+                "source_location": "L1",
+                "weight": 1.0,
+            }
+        )
     return {"nodes": nodes, "edges": edges}
 
 
@@ -135,8 +142,9 @@ def _parse_apm_fallback(text: str) -> dict | None:
             in_deps = True
             continue
         if in_deps:
-            dm = (re.match(r'^\s*-\s*["\']?([^"\'\s#:]+)', line)
-                  or re.match(r"^\s{2,}([A-Za-z0-9._/@-]+)\s*:", line))
+            dm = re.match(r'^\s*-\s*["\']?([^"\'\s#:]+)', line) or re.match(
+                r"^\s{2,}([A-Za-z0-9._/@-]+)\s*:", line
+            )
             if dm:
                 deps.append(dm.group(1))
             elif re.match(r"^\S", line):
@@ -158,18 +166,27 @@ def _parse_pyproject(text: str) -> dict | None:
             return None
     data = _toml.loads(text)
     proj = data.get("project", {}) if isinstance(data.get("project"), dict) else {}
-    poetry = (data.get("tool", {}) or {}).get("poetry", {}) if isinstance(data.get("tool"), dict) else {}
-    name = proj.get("name") or (poetry.get("name") if isinstance(poetry, dict) else None)
+    poetry = (
+        (data.get("tool", {}) or {}).get("poetry", {})
+        if isinstance(data.get("tool"), dict)
+        else {}
+    )
+    name = proj.get("name") or (
+        poetry.get("name") if isinstance(poetry, dict) else None
+    )
     if not name:
         return None
-    deps: list[str] = [_pep508_name(s) for s in (proj.get("dependencies") or []) if isinstance(s, str)]
+    deps: list[str] = [
+        _pep508_name(s) for s in (proj.get("dependencies") or []) if isinstance(s, str)
+    ]
     if isinstance(poetry, dict):
-        for dep in (poetry.get("dependencies") or {}):
+        for dep in poetry.get("dependencies") or {}:
             if str(dep).lower() != "python":
                 deps.append(str(dep))
     return {
         "name": name,
-        "version": proj.get("version") or (poetry.get("version") if isinstance(poetry, dict) else None),
+        "version": proj.get("version")
+        or (poetry.get("version") if isinstance(poetry, dict) else None),
         "deps": deps,
     }
 

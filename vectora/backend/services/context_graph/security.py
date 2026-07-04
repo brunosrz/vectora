@@ -17,10 +17,10 @@ from typing import Any
 from .paths import GRAPH_OUT, GRAPH_OUT_NAME
 
 _ALLOWED_SCHEMES = {"http", "https"}
-_MAX_FETCH_BYTES = 52_428_800   # 50 MB hard cap for binary downloads
-_MAX_TEXT_BYTES  = 10_485_760   # 10 MB hard cap for HTML / text
+_MAX_FETCH_BYTES = 52_428_800  # 50 MB hard cap for binary downloads
+_MAX_TEXT_BYTES = 10_485_760  # 10 MB hard cap for HTML / text
 
-_MAX_GRAPH_FILE_BYTES = 512 * 1024 * 1024   # 512 MiB
+_MAX_GRAPH_FILE_BYTES = 512 * 1024 * 1024  # 512 MiB
 
 
 def _max_graph_file_bytes() -> int:
@@ -75,7 +75,9 @@ def validate_url(url: str) -> str:
                 f"Blocked cloud metadata endpoint '{hostname}'. Got: {url!r}"
             )
         try:
-            infos = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            infos = socket.getaddrinfo(
+                hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM
+            )
             for info in infos:
                 addr = info[4][0]
                 ip = ipaddress.ip_address(addr)
@@ -111,7 +113,9 @@ class _SSRFGuardedHTTPConnection(http.client.HTTPConnection):
     def connect(self) -> None:
         _family, ip = _resolve_and_validate(self.host, self.port)
         self.sock = socket.create_connection(
-            (ip, self.port), self.timeout, self.source_address,
+            (ip, self.port),
+            self.timeout,
+            self.source_address,
         )
         if self._tunnel_host:
             self._tunnel()
@@ -121,7 +125,9 @@ class _SSRFGuardedHTTPSConnection(http.client.HTTPSConnection):
     def connect(self) -> None:
         _family, ip = _resolve_and_validate(self.host, self.port)
         sock = socket.create_connection(
-            (ip, self.port), self.timeout, self.source_address,
+            (ip, self.port),
+            self.timeout,
+            self.source_address,
         )
         if self._tunnel_host:
             self.sock = sock
@@ -178,7 +184,9 @@ def safe_fetch(url: str, max_bytes: int = _MAX_FETCH_BYTES, timeout: int = 30) -
     return b"".join(chunks)
 
 
-def safe_fetch_text(url: str, max_bytes: int = _MAX_TEXT_BYTES, timeout: int = 15) -> str:
+def safe_fetch_text(
+    url: str, max_bytes: int = _MAX_TEXT_BYTES, timeout: int = 15
+) -> str:
     raw = safe_fetch(url, max_bytes=max_bytes, timeout=timeout)
     return raw.decode("utf-8", errors="replace")
 
@@ -258,7 +266,9 @@ def _sanitize_metadata_value(value: object) -> object:
     if isinstance(value, dict):
         return sanitize_metadata(value)
     if isinstance(value, (list, tuple)):
-        return [_sanitize_metadata_value(item) for item in value[:_METADATA_MAX_LIST_ITEMS]]
+        return [
+            _sanitize_metadata_value(item) for item in value[:_METADATA_MAX_LIST_ITEMS]
+        ]
     if isinstance(value, (int, float)) or value is None:
         return value
     return _sanitize_metadata_string(value)

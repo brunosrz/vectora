@@ -1,17 +1,7 @@
 "use client";
 
-/**
- * Renderiza a fila do `toast-store`. Montado uma vez em `__root.tsx` no
- * topo da árvore. Lê o store, renderiza cards no canto superior-direito
- * (mobile: topo full-width) e dispara `dismiss(id)` quando `duration`
- * expira (se setado) ou quando o usuário clica em `×`.
- *
- * Acessibilidade:
- *   - `role="status"` + `aria-live="polite"` para success/info
- *   - `role="alert"` + `aria-live="assertive"` para warning/error
- */
-
 import { useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -32,8 +22,6 @@ const ICONS: Record<ToastLevel, typeof CheckCircle2> = {
   info: Info,
 };
 
-// Texto escuro no tema claro / claro no tema escuro — texto fixo claro
-// (ex.: `text-emerald-100`) ficava ilegível sobre o fundo claro de `.light`.
 const LEVEL_STYLES: Record<ToastLevel, { wrapper: string; icon: string }> = {
   success: {
     wrapper:
@@ -71,7 +59,12 @@ function ToastCard({ toast }: { toast: Toast }) {
   }, [toast.duration, toast.id, dismiss]);
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ x: "110%", opacity: 0, scale: 0.96 }}
+      animate={{ x: 0, opacity: 1, scale: 1 }}
+      exit={{ x: "110%", opacity: 0, scale: 0.96 }}
+      transition={{ type: "spring", damping: 22, stiffness: 300, mass: 0.8 }}
       role={role}
       aria-live={live}
       data-toast-level={toast.level}
@@ -112,23 +105,23 @@ function ToastCard({ toast }: { toast: Toast }) {
           <X className="h-3 w-3" aria-hidden />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function Toaster() {
   const toasts = useToastStore((s) => s.toasts);
 
-  if (toasts.length === 0) return null;
-
   return (
     <div
       aria-label="Notificações"
       className="pointer-events-none fixed inset-x-0 top-4 z-[60] flex flex-col items-center gap-2 px-4 sm:right-4 sm:left-auto sm:items-end"
     >
-      {toasts.map((t) => (
-        <ToastCard key={t.id} toast={t} />
-      ))}
+      <AnimatePresence initial={false} mode="sync">
+        {toasts.map((t) => (
+          <ToastCard key={t.id} toast={t} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

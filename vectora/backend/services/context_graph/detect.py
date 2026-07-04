@@ -35,25 +35,125 @@ class FileType(StrEnum):
 
 _MANIFEST_PATH = str(out_path("manifest.json"))
 
-CODE_EXTENSIONS = {".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".ejs", ".ets", ".go", ".rs", ".java", ".groovy", ".gradle", ".cpp", ".cc", ".cxx", ".c", ".h", ".hpp", ".cu", ".cuh", ".rb", ".swift", ".kt", ".kts", ".cs", ".scala", ".php", ".lua", ".luau", ".toc", ".zig", ".ps1", ".psm1", ".psd1", ".ex", ".exs", ".m", ".mm", ".jl", ".vue", ".svelte", ".astro", ".dart", ".v", ".sv", ".svh", ".sql", ".r", ".f", ".F", ".f90", ".F90", ".f95", ".F95", ".f03", ".F03", ".f08", ".F08", ".pas", ".pp", ".dpr", ".dpk", ".lpr", ".inc", ".dfm", ".lfm", ".lpk", ".sh", ".bash", ".json", ".tf", ".tfvars", ".hcl", ".dm", ".dme", ".dmi", ".dmm", ".dmf", ".sln", ".slnx", ".csproj", ".fsproj", ".vbproj", ".razor", ".cshtml", ".cls", ".trigger"}
+CODE_EXTENSIONS = {
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".ejs",
+    ".ets",
+    ".go",
+    ".rs",
+    ".java",
+    ".groovy",
+    ".gradle",
+    ".cpp",
+    ".cc",
+    ".cxx",
+    ".c",
+    ".h",
+    ".hpp",
+    ".cu",
+    ".cuh",
+    ".rb",
+    ".swift",
+    ".kt",
+    ".kts",
+    ".cs",
+    ".scala",
+    ".php",
+    ".lua",
+    ".luau",
+    ".toc",
+    ".zig",
+    ".ps1",
+    ".psm1",
+    ".psd1",
+    ".ex",
+    ".exs",
+    ".m",
+    ".mm",
+    ".jl",
+    ".vue",
+    ".svelte",
+    ".astro",
+    ".dart",
+    ".v",
+    ".sv",
+    ".svh",
+    ".sql",
+    ".r",
+    ".f",
+    ".F",
+    ".f90",
+    ".F90",
+    ".f95",
+    ".F95",
+    ".f03",
+    ".F03",
+    ".f08",
+    ".F08",
+    ".pas",
+    ".pp",
+    ".dpr",
+    ".dpk",
+    ".lpr",
+    ".inc",
+    ".dfm",
+    ".lfm",
+    ".lpk",
+    ".sh",
+    ".bash",
+    ".json",
+    ".tf",
+    ".tfvars",
+    ".hcl",
+    ".dm",
+    ".dme",
+    ".dmi",
+    ".dmm",
+    ".dmf",
+    ".sln",
+    ".slnx",
+    ".csproj",
+    ".fsproj",
+    ".vbproj",
+    ".razor",
+    ".cshtml",
+    ".cls",
+    ".trigger",
+}
 DOC_EXTENSIONS = {".md", ".mdx", ".qmd", ".txt", ".rst", ".html", ".yaml", ".yml"}
 PAPER_EXTENSIONS = {".pdf"}
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 OFFICE_EXTENSIONS = {".docx", ".xlsx"}
-VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v", ".mp3", ".wav", ".m4a", ".ogg"}
+VIDEO_EXTENSIONS = {
+    ".mp4",
+    ".mov",
+    ".webm",
+    ".mkv",
+    ".avi",
+    ".m4v",
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".ogg",
+}
 
-CORPUS_WARN_THRESHOLD = 50_000    # words - below this, warn "you may not need a graph"
+CORPUS_WARN_THRESHOLD = 50_000  # words - below this, warn "you may not need a graph"
 CORPUS_UPPER_THRESHOLD = 500_000  # words - above this, warn about token cost
-FILE_COUNT_UPPER = 500             # files - above this, warn about token cost
+FILE_COUNT_UPPER = 500  # files - above this, warn about token cost
 
 # Resource caps for parsing untrusted office/PDF files (F2). A corpus is
 # attacker-controllable (context graph runs on cloned/shared folders), and .docx/.xlsx
 # are zip+XML containers: a few-KB zip-bomb can decompress to gigabytes and
 # OOM-kill the process at load_workbook/Document time. Screen the file before any
 # parser touches it.
-_OFFICE_MAX_RAW_BYTES = 50 * 1024 * 1024            # 50 MiB on-disk
+_OFFICE_MAX_RAW_BYTES = 50 * 1024 * 1024  # 50 MiB on-disk
 _OFFICE_MAX_DECOMPRESSED_BYTES = 512 * 1024 * 1024  # 512 MiB total uncompressed
-_OFFICE_MAX_COMPRESSION_RATIO = 200                 # uncompressed : compressed
+_OFFICE_MAX_COMPRESSION_RATIO = 200  # uncompressed : compressed
 
 
 def _file_within_size_cap(path: Path, cap: int = _OFFICE_MAX_RAW_BYTES) -> bool:
@@ -76,6 +176,7 @@ def _zip_within_caps(path: Path) -> bool:
        and bounded, so checking a bomb never materializes more than the ceiling.
     """
     import zipfile
+
     if not _file_within_size_cap(path):
         return False
     try:
@@ -101,12 +202,21 @@ def _zip_within_caps(path: Path) -> bool:
         return False
     return True
 
+
 # Parent directories whose contents are always sensitive.
 # Checked against path.parts[:-1] (parents only) so a root-level file named
 # "credentials" or "secrets" is not falsely flagged by this stage.
-_SENSITIVE_DIRS = frozenset({
-    ".ssh", ".gnupg", ".aws", ".gcloud", "secrets", ".secrets", "credentials",
-})
+_SENSITIVE_DIRS = frozenset(
+    {
+        ".ssh",
+        ".gnupg",
+        ".aws",
+        ".gcloud",
+        "secrets",
+        ".secrets",
+        "credentials",
+    }
+)
 
 # Files that may contain secrets - skip silently. These patterns are specific
 # (extensions, exact credential-store names) and always apply.
@@ -129,7 +239,10 @@ _SENSITIVE_PATTERNS = [
 # `token` is kept separate because its longer suffix "izer"/"ize" is the only
 # common false-positive; other keywords have no such well-known derivatives.
 _GENERIC_KEYWORD_PATTERNS = [
-    re.compile(r"(?<![a-zA-Z0-9])(credential|secret|passwd|password|private_key)s?(?![a-zA-Z])", re.IGNORECASE),
+    re.compile(
+        r"(?<![a-zA-Z0-9])(credential|secret|passwd|password|private_key)s?(?![a-zA-Z])",
+        re.IGNORECASE,
+    ),
     re.compile(r"(?<![a-zA-Z0-9])tokens?(?![a-zA-Z])", re.IGNORECASE),
 ]
 
@@ -162,6 +275,7 @@ def _generic_keyword_hit(name: str) -> bool:
             return True  # short name like token_config.yaml / secret_handler.txt
     return False
 
+
 # Signals that a .md/.txt file is actually a converted academic paper
 _PAPER_SIGNALS = [
     re.compile(r"\barxiv\b", re.IGNORECASE),
@@ -170,13 +284,15 @@ _PAPER_SIGNALS = [
     re.compile(r"\bproceedings\b", re.IGNORECASE),
     re.compile(r"\bjournal\b", re.IGNORECASE),
     re.compile(r"\bpreprint\b", re.IGNORECASE),
-    re.compile(r"\\cite\{"),          # LaTeX citation
-    re.compile(r"\[\d+\]"),           # Numbered citation [1], [23] (inline)
-    re.compile(r"\[\n\d+\n\]"),       # Numbered citation spread across lines (markdown conversion)
+    re.compile(r"\\cite\{"),  # LaTeX citation
+    re.compile(r"\[\d+\]"),  # Numbered citation [1], [23] (inline)
+    re.compile(
+        r"\[\n\d+\n\]"
+    ),  # Numbered citation spread across lines (markdown conversion)
     re.compile(r"eq\.\s*\d+|equation\s+\d+", re.IGNORECASE),
-    re.compile(r"\d{4}\.\d{4,5}"),   # arXiv ID like 1706.03762
-    re.compile(r"\bwe propose\b", re.IGNORECASE),   # common academic phrasing
-    re.compile(r"\bliterature\b", re.IGNORECASE),   # "from the literature"
+    re.compile(r"\d{4}\.\d{4,5}"),  # arXiv ID like 1706.03762
+    re.compile(r"\bwe propose\b", re.IGNORECASE),  # common academic phrasing
+    re.compile(r"\bliterature\b", re.IGNORECASE),  # "from the literature"
 ]
 _PAPER_SIGNAL_THRESHOLD = 3  # need at least this many signals to call it a paper
 
@@ -207,14 +323,34 @@ def _looks_like_paper(path: Path) -> bool:
         return False
 
 
-_ASSET_DIR_MARKERS = {".imageset", ".xcassets", ".appiconset", ".colorset", ".launchimage"}
+_ASSET_DIR_MARKERS = {
+    ".imageset",
+    ".xcassets",
+    ".appiconset",
+    ".colorset",
+    ".launchimage",
+}
 
 
 _SHEBANG_CODE_INTERPRETERS = {
-    "python", "python3", "python2",
-    "ruby", "perl", "node", "nodejs",
-    "bash", "sh", "dash", "zsh", "fish", "ksh", "tcsh",
-    "lua", "php", "julia", "Rscript",
+    "python",
+    "python3",
+    "python2",
+    "ruby",
+    "perl",
+    "node",
+    "nodejs",
+    "bash",
+    "sh",
+    "dash",
+    "zsh",
+    "fish",
+    "ksh",
+    "tcsh",
+    "lua",
+    "php",
+    "julia",
+    "Rscript",
 }
 
 
@@ -257,7 +393,7 @@ def _env_command_args(args: list[str], *, allow_split: bool = True) -> list[str]
         arg = args[i]
 
         if arg == "--":
-            return args[i + 1:]
+            return args[i + 1 :]
 
         # Split-string forms: tokenize the packed payload, then re-parse it
         # as env args (so leading assignments/flags inside the payload are
@@ -267,36 +403,36 @@ def _env_command_args(args: list[str], *, allow_split: bool = True) -> list[str]
                 if i + 1 >= len(args):
                     return []
                 return _env_command_args(
-                    _split_env_s(" ".join(args[i + 1:]), []),
+                    _split_env_s(" ".join(args[i + 1 :]), []),
                     allow_split=False,
                 )
             if arg.startswith("-S") and len(arg) > 2:
                 return _env_command_args(
-                    _split_env_s(arg[2:], args[i + 1:]),
+                    _split_env_s(arg[2:], args[i + 1 :]),
                     allow_split=False,
                 )
             if arg == "-vS":
                 if i + 1 >= len(args):
                     return []
                 return _env_command_args(
-                    _split_env_s(" ".join(args[i + 1:]), []),
+                    _split_env_s(" ".join(args[i + 1 :]), []),
                     allow_split=False,
                 )
             if arg.startswith("-vS") and len(arg) > 3:
                 return _env_command_args(
-                    _split_env_s(arg[3:], args[i + 1:]),
+                    _split_env_s(arg[3:], args[i + 1 :]),
                     allow_split=False,
                 )
             if arg.startswith("--split-string="):
                 return _env_command_args(
-                    _split_env_s(arg.split("=", 1)[1], args[i + 1:]),
+                    _split_env_s(arg.split("=", 1)[1], args[i + 1 :]),
                     allow_split=False,
                 )
             if arg == "--split-string":
                 if i + 1 >= len(args):
                     return []
                 return _env_command_args(
-                    _split_env_s(args[i + 1], args[i + 2:]),
+                    _split_env_s(args[i + 1], args[i + 2 :]),
                     allow_split=False,
                 )
 
@@ -322,8 +458,16 @@ def _env_command_args(args: list[str], *, allow_split: bool = True) -> list[str]
             continue
 
         # No-operand flags
-        if arg in {"-", "-i", "-0", "-v", "--ignore-environment", "--null",
-                   "--debug", "--list-signal-handling"}:
+        if arg in {
+            "-",
+            "-i",
+            "-0",
+            "-v",
+            "--ignore-environment",
+            "--null",
+            "--debug",
+            "--list-signal-handling",
+        }:
             i += 1
             continue
 
@@ -397,6 +541,7 @@ def classify_file(path: Path) -> FileType | None:
     # document path — otherwise apm.yml (a .yml "document") would be LLM-extracted
     # and a package would split into duplicate file-anchored nodes.
     from .manifest_ingest import is_package_manifest_path
+
     if is_package_manifest_path(path):
         return FileType.CODE
     # Compound extensions must be checked before simple suffix lookup
@@ -434,6 +579,7 @@ def extract_pdf_text(path: Path) -> str:
         return ""
     try:
         from pypdf import PdfReader
+
         reader = PdfReader(str(path))
         pages = []
         for page in reader.pages:
@@ -452,6 +598,7 @@ def docx_to_markdown(path: Path) -> str:
     try:
         from docx import Document
         from docx.oxml.ns import qn
+
         doc = Document(str(path))
         lines = []
         for para in doc.paragraphs:
@@ -493,6 +640,7 @@ def xlsx_to_markdown(path: Path) -> str:
         return ""
     try:
         import openpyxl
+
         wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
         sections = []
         for sheet_name in wb.sheetnames:
@@ -525,6 +673,7 @@ def xlsx_extract_structure(path: Path) -> dict:
     Returns a nodes/edges dict compatible with the context graph extract pipeline.
     Used in addition to xlsx_to_markdown so Claude sees both structure and content.
     """
+
     def _nid(*parts: str) -> str:
         return re.sub(r"[^a-z0-9_]", "_", "_".join(p.lower() for p in parts).strip("_"))
 
@@ -546,21 +695,43 @@ def xlsx_extract_structure(path: Path) -> dict:
     stem = re.sub(r"[^a-z0-9]", "_", path.stem.lower())
     str_path = str(path)
     file_nid = _nid(str_path)
-    nodes: list[dict] = [{"id": file_nid, "label": path.name, "file_type": "document",
-                           "source_file": str_path, "source_location": None}]
+    nodes: list[dict] = [
+        {
+            "id": file_nid,
+            "label": path.name,
+            "file_type": "document",
+            "source_file": str_path,
+            "source_location": None,
+        }
+    ]
     edges: list[dict] = []
     seen: set[str] = {file_nid}
 
     def _add(nid: str, label: str) -> None:
         if nid not in seen:
             seen.add(nid)
-            nodes.append({"id": nid, "label": label, "file_type": "document",
-                           "source_file": str_path, "source_location": None})
+            nodes.append(
+                {
+                    "id": nid,
+                    "label": label,
+                    "file_type": "document",
+                    "source_file": str_path,
+                    "source_location": None,
+                }
+            )
 
     def _edge(src: str, tgt: str, relation: str) -> None:
-        edges.append({"source": src, "target": tgt, "relation": relation,
-                       "confidence": "EXTRACTED", "source_file": str_path,
-                       "source_location": None, "weight": 1.0})
+        edges.append(
+            {
+                "source": src,
+                "target": tgt,
+                "relation": relation,
+                "confidence": "EXTRACTED",
+                "source_file": str_path,
+                "source_location": None,
+                "weight": 1.0,
+            }
+        )
 
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
@@ -579,10 +750,17 @@ def xlsx_extract_structure(path: Path) -> dict:
                 if ref:
                     try:
                         from openpyxl.utils import range_boundaries
+
                         min_col, min_row, max_col, _ = range_boundaries(ref)
-                        header_row = list(ws.iter_rows(min_row=min_row, max_row=min_row,
-                                                       min_col=min_col, max_col=max_col,
-                                                       values_only=True))
+                        header_row = list(
+                            ws.iter_rows(
+                                min_row=min_row,
+                                max_row=min_row,
+                                min_col=min_col,
+                                max_col=max_col,
+                                values_only=True,
+                            )
+                        )
                         if header_row:
                             for col_name in header_row[0]:
                                 if col_name:
@@ -633,6 +811,7 @@ def convert_office_file(path: Path, out_dir: Path) -> Path | None:
     # to treat every Office file as new and re-extract it.
     import hashlib
     import unicodedata
+
     normalized_path = unicodedata.normalize("NFC", str(path.resolve()))
     name_hash = hashlib.sha256(normalized_path.encode()).hexdigest()[:8]
     out_path = out_dir / f"{path.stem}_{name_hash}.md"
@@ -664,32 +843,64 @@ def count_words(path: Path) -> int:
 
 # Directory names to always skip - venvs, caches, build artifacts, deps
 _SKIP_DIRS = {
-    "venv", ".venv", "env", ".env",
-    "node_modules", "__pycache__", ".git",
-    "dist", "build", "target", "out",
-    "site-packages", "lib64",
-    ".pytest_cache", ".mypy_cache", ".ruff_cache",
-    ".tox", ".eggs", "*.egg-info",
-    ".vectora/context-graph", GRAPH_OUT_NAME,  # never treat own output as source input; honour GRAPH_OUT
+    "venv",
+    ".venv",
+    "env",
+    ".env",
+    "node_modules",
+    "__pycache__",
+    ".git",
+    "dist",
+    "build",
+    "target",
+    "out",
+    "site-packages",
+    "lib64",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".tox",
+    ".eggs",
+    "*.egg-info",
+    ".vectora/context-graph",
+    GRAPH_OUT_NAME,  # never treat own output as source input; honour GRAPH_OUT
     # Coverage/test-artefact dirs — generated, never architecturally meaningful
-    "coverage", "lcov-report",              # Vitest/Istanbul/nyc HTML reports
-    "visual-tests", "visual-test",          # Playwright/visual-regression bundles
-    "__snapshots__", "snapshots",           # Jest/Vitest snapshot dirs
-    "storybook-static",                     # Storybook production build output
-    "dist-protected",                       # Protected dist variants (same noise as dist)
+    "coverage",
+    "lcov-report",  # Vitest/Istanbul/nyc HTML reports
+    "visual-tests",
+    "visual-test",  # Playwright/visual-regression bundles
+    "__snapshots__",
+    "snapshots",  # Jest/Vitest snapshot dirs
+    "storybook-static",  # Storybook production build output
+    "dist-protected",  # Protected dist variants (same noise as dist)
     # Framework cache/build dirs — generated, never architecturally meaningful
-    ".next", ".nuxt", ".turbo", ".angular",
-    ".idea", ".cache", ".parcel-cache", ".svelte-kit", ".terraform", ".serverless",
+    ".next",
+    ".nuxt",
+    ".turbo",
+    ".angular",
+    ".idea",
+    ".cache",
+    ".parcel-cache",
+    ".svelte-kit",
+    ".terraform",
+    ".serverless",
     ".vectora",  # the engine's own extraction cache — never index self-generated data
     ".worktrees",  # git worktree convention — sibling checkouts, always redundant
 }
 
 # Large generated files that are never useful to extract
 _SKIP_FILES = {
-    "package-lock.json", "yarn.lock", "pnpm-lock.yaml",
-    "Cargo.lock", "poetry.lock", "Gemfile.lock",
-    "composer.lock", "go.sum", "go.work.sum",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "Cargo.lock",
+    "poetry.lock",
+    "Gemfile.lock",
+    "composer.lock",
+    "go.sum",
+    "go.work.sum",
 }
+
 
 def _is_noise_dir(part: str, parent: Path | None = None) -> bool:
     """Return True if this directory name looks like a venv, cache, or dep dir."""
@@ -701,7 +912,9 @@ def _is_noise_dir(part: str, parent: Path | None = None) -> bool:
     if part.endswith(".egg-info"):
         return True
     # worktrees/ nested inside a dotted dir (e.g. .claude/worktrees/, .git/worktrees/)
-    return bool(part == "worktrees" and parent is not None and parent.name.startswith("."))
+    return bool(
+        part == "worktrees" and parent is not None and parent.name.startswith(".")
+    )
 
 
 _VCS_MARKERS = (".git", ".hg", ".svn", "_darcs", ".fossil")
@@ -781,7 +994,9 @@ def _load_ignore_patterns(root: Path) -> list[tuple[Path, str]]:
         for fname in (".gitignore", ".vectoraignore"):
             ignore_file = d / fname
             if ignore_file.exists():
-                for raw in ignore_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+                for raw in ignore_file.read_text(
+                    encoding="utf-8", errors="ignore"
+                ).splitlines():
                     line = _parse_gitignore_line(raw)
                     if line:
                         patterns.append((d, line))
@@ -815,6 +1030,7 @@ def _is_ignored(
         """Apply last-match-wins to a single target path."""
         if _cache is not None and target in _cache:
             return _cache[target]
+
         def _matches(rel: str, p: str, anchored: bool) -> bool:
             if anchored:
                 return fnmatch.fnmatch(rel, p)
@@ -826,7 +1042,7 @@ def _is_ignored(
             for i, part in enumerate(parts):
                 if fnmatch.fnmatch(part, p):
                     return True
-                if fnmatch.fnmatch("/".join(parts[:i + 1]), p):
+                if fnmatch.fnmatch("/".join(parts[: i + 1]), p):
                     return True
             return False
 
@@ -854,7 +1070,9 @@ def _is_ignored(
                     pass
                 if not matched and anchor != root:
                     try:
-                        rel_anchor = str(target.relative_to(anchor)).replace(os.sep, "/")
+                        rel_anchor = str(target.relative_to(anchor)).replace(
+                            os.sep, "/"
+                        )
                         matched = _matches(rel_anchor, p, anchored=False)
                     except ValueError:
                         pass
@@ -905,7 +1123,9 @@ def _load_include_patterns(root: Path) -> list[tuple[Path, str]]:
     for d in dirs:
         include_file = d / ".vectorainclude"
         if include_file.exists():
-            for raw in include_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+            for raw in include_file.read_text(
+                encoding="utf-8", errors="ignore"
+            ).splitlines():
                 line = _parse_gitignore_line(raw)
                 if line:
                     patterns.append((d, line))
@@ -928,7 +1148,7 @@ def _is_included(path: Path, root: Path, patterns: list[tuple[Path, str]]) -> bo
         for i, part in enumerate(parts):
             if fnmatch.fnmatch(part, p):
                 return True
-            if fnmatch.fnmatch("/".join(parts[:i + 1]), p):
+            if fnmatch.fnmatch("/".join(parts[: i + 1]), p):
                 return True
         return False
 
@@ -961,7 +1181,9 @@ def _is_included(path: Path, root: Path, patterns: list[tuple[Path, str]]) -> bo
     return False
 
 
-def _could_contain_included_path(path: Path, root: Path, patterns: list[tuple[Path, str]]) -> bool:
+def _could_contain_included_path(
+    path: Path, root: Path, patterns: list[tuple[Path, str]]
+) -> bool:
     """Return True if a directory may contain files matched by .vectorainclude."""
     if not patterns:
         return False
@@ -1008,11 +1230,19 @@ def _auto_follow_symlinks(root: Path) -> bool:
     return False
 
 
-def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace: bool | None = None, extra_excludes: list[str] | None = None) -> dict:
+def detect(
+    root: Path,
+    *,
+    follow_symlinks: bool | None = None,
+    google_workspace: bool | None = None,
+    extra_excludes: list[str] | None = None,
+) -> dict:
     root = root.resolve()
     if follow_symlinks is None:
         follow_symlinks = _auto_follow_symlinks(root)
-    google_workspace = google_workspace_enabled() if google_workspace is None else google_workspace
+    google_workspace = (
+        google_workspace_enabled() if google_workspace is None else google_workspace
+    )
     files: dict[FileType, list[str]] = {
         FileType.CODE: [],
         FileType.DOCUMENT: [],
@@ -1024,7 +1254,9 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
 
     skipped_sensitive: list[str] = []
     ignore_patterns = _load_ignore_patterns(root)
-    ignore_cache: dict[Path, bool] = {}  # shared across all _is_ignored calls in this scan
+    ignore_cache: dict[
+        Path, bool
+    ] = {}  # shared across all _is_ignored calls in this scan
     # CLI --exclude patterns are anchored at the scan root and appended last
     # so they win over any .vectoraignore/.gitignore rules.
     if extra_excludes:
@@ -1044,8 +1276,12 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
     all_files: list[Path] = []
 
     for scan_root in scan_paths:
-        in_memory_tree = memory_dir.exists() and str(scan_root).startswith(str(memory_dir))
-        for dirpath, dirnames, filenames in os.walk(scan_root, followlinks=follow_symlinks):
+        in_memory_tree = memory_dir.exists() and str(scan_root).startswith(
+            str(memory_dir)
+        )
+        for dirpath, dirnames, filenames in os.walk(
+            scan_root, followlinks=follow_symlinks
+        ):
             dp = Path(dirpath)
             if follow_symlinks and os.path.islink(dirpath):
                 real = os.path.realpath(dirpath)
@@ -1067,9 +1303,12 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
                 # bin/, obj/, wwwroot/, generated/, … : a pathological slowdown on large
                 # repos for no correctness gain.
                 dirnames[:] = [
-                    d for d in dirnames
+                    d
+                    for d in dirnames
                     if not _is_noise_dir(d, dp)
-                    and not _is_ignored(dp / d, root, ignore_patterns, _cache=ignore_cache)
+                    and not _is_ignored(
+                        dp / d, root, ignore_patterns, _cache=ignore_cache
+                    )
                 ]
             for fname in filenames:
                 if fname in _SKIP_FILES:
@@ -1106,9 +1345,13 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
                     )
                     continue
                 try:
-                    md_path = convert_google_workspace_file(p, converted_dir, xlsx_to_markdown=xlsx_to_markdown)
+                    md_path = convert_google_workspace_file(
+                        p, converted_dir, xlsx_to_markdown=xlsx_to_markdown
+                    )
                 except Exception as exc:
-                    skipped_sensitive.append(str(p) + f" [Google Workspace export failed: {exc}]")
+                    skipped_sensitive.append(
+                        str(p) + f" [Google Workspace export failed: {exc}]"
+                    )
                     continue
                 if md_path:
                     if _is_ignored(md_path, root, ignore_patterns, _cache=ignore_cache):
@@ -1116,7 +1359,9 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
                     files[ftype].append(str(md_path))
                     total_words += count_words(md_path)
                 else:
-                    skipped_sensitive.append(str(p) + " [Google Workspace export produced no readable text]")
+                    skipped_sensitive.append(
+                        str(p) + " [Google Workspace export produced no readable text]"
+                    )
                 continue
             # Office files: convert to markdown sidecar so subagents can read them
             if p.suffix.lower() in OFFICE_EXTENSIONS:
@@ -1128,7 +1373,10 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
                     total_words += count_words(md_path)
                 else:
                     # Conversion failed (library not installed) - skip with note
-                    skipped_sensitive.append(str(p) + " [office conversion failed - pip install context_graph[office]]")
+                    skipped_sensitive.append(
+                        str(p)
+                        + " [office conversion failed - pip install context_graph[office]]"
+                    )
                 continue
             files[ftype].append(str(p))
             if ftype != FileType.VIDEO:
@@ -1169,6 +1417,7 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
 def _md5_file(path: Path) -> str:
     """MD5 of file contents streamed in 64KB chunks — for change detection only."""
     import hashlib as _hl
+
     h = _hl.md5(usedforsecurity=False)
     try:
         with path.open("rb") as f:
@@ -1283,7 +1532,11 @@ def save_manifest(
         if isinstance(entry, (int, float)):
             return {"mtime": entry, "ast_hash": "", "semantic_hash": ""}
         if isinstance(entry, dict) and "hash" in entry and "ast_hash" not in entry:
-            return {"mtime": entry.get("mtime", 0), "ast_hash": entry["hash"], "semantic_hash": ""}
+            return {
+                "mtime": entry.get("mtime", 0),
+                "ast_hash": entry["hash"],
+                "semantic_hash": "",
+            }
         if isinstance(entry, dict):
             return entry
         return None
@@ -1324,7 +1577,9 @@ def save_manifest(
             entry["semantic_hash"] = h
         else:
             # Preserve semantic_hash only when content is unchanged
-            entry["semantic_hash"] = prev.get("semantic_hash", "") if h == prev.get("ast_hash", "") else ""
+            entry["semantic_hash"] = (
+                prev.get("semantic_hash", "") if h == prev.get("ast_hash", "") else ""
+            )
         manifest[f] = entry
     if root is not None:
         # Persist in portable form: forward-slash relative paths. Keys outside
@@ -1368,7 +1623,12 @@ def detect_incremental(
     incremental runs. ``None`` (default) means auto-detect: ``True`` when ``root``
     contains at least one direct symlinked child, ``False`` otherwise.
     """
-    full = detect(root, follow_symlinks=follow_symlinks, google_workspace=google_workspace, extra_excludes=extra_excludes)
+    full = detect(
+        root,
+        follow_symlinks=follow_symlinks,
+        google_workspace=google_workspace,
+        extra_excludes=extra_excludes,
+    )
     # Pass ``root`` so a manifest written with relative keys (post-#777) is
     # re-anchored to the absolute form the rest of this function compares
     # against. Legacy absolute-keyed manifests pass through unchanged.
@@ -1399,7 +1659,11 @@ def detect_incremental(
             elif isinstance(stored, dict):
                 # Normalise legacy {mtime, hash} to new schema
                 if "hash" in stored and "ast_hash" not in stored:
-                    stored = {"mtime": stored.get("mtime", 0), "ast_hash": stored["hash"], "semantic_hash": ""}
+                    stored = {
+                        "mtime": stored.get("mtime", 0),
+                        "ast_hash": stored["hash"],
+                        "semantic_hash": "",
+                    }
                 hash_key = "semantic_hash" if kind == "semantic" else "ast_hash"
                 stored_hash = stored.get(hash_key, "")
                 # Missing semantic_hash means update ran but extract hasn't — always re-extract

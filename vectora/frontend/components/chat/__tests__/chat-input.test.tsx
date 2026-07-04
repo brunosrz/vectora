@@ -20,6 +20,8 @@ import { m } from "@/lib/paraglide/messages";
 const mockSettings = {
   chatMode: false,
   setChatMode: vi.fn(),
+  ideMode: false,
+  setIdeMode: vi.fn(),
   verbosity: "normal" as const,
   reasoningEffort: "medium" as const,
   fastMode: false,
@@ -229,5 +231,18 @@ describe("ChatInput", () => {
   it("enviar fica desabilitado sem userId", () => {
     render(<ChatInput {...baseProps({ input: "oi", userId: null })} />);
     expect(sendButton().disabled).toBe(true);
+  });
+
+  it("botão VS Code NÃO aparece em ideMode mesmo com workspace ativo", () => {
+    mockSettings.chatMode = false;
+    mockSettings.ideMode = true;
+    mockWsState.getActive = () => ({ id: "ws1" }) as never;
+    try {
+      render(<ChatInput {...baseProps()} />);
+      expect(screen.queryByLabelText(m.workbench_open_vscode())).toBeNull();
+    } finally {
+      mockWsState.getActive = () => null;
+      mockSettings.ideMode = false;
+    }
   });
 });

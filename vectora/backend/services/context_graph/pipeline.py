@@ -6,6 +6,7 @@ dentro do workspace.
 
 Defensivo (§11): cada passo tem try/except com logging estruturado.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -79,7 +80,8 @@ async def build_workspace_graph(
     update: bool = False,
     resume: bool = False,
     file_types: list[str] | None = None,
-    on_progress: Callable[[int, int, str, int, int, list[str] | None], None] | None = None,
+    on_progress: Callable[[int, int, str, int, int, list[str] | None], None]
+    | None = None,
 ) -> GraphResult:
     """Constrói (ou atualiza) o grafo de contexto de um workspace.
 
@@ -127,7 +129,13 @@ async def build_workspace_graph(
 
     _files_total: int = 0
 
-    def _progress(step: int, label: str, files_done: int = 0, *, files_list: list[str] | None = None) -> None:
+    def _progress(
+        step: int,
+        label: str,
+        files_done: int = 0,
+        *,
+        files_list: list[str] | None = None,
+    ) -> None:
         if on_progress is not None:
             on_progress(step, 9, label, files_done, _files_total, files_list)
 
@@ -170,7 +178,9 @@ async def build_workspace_graph(
         short_files: list[str] = []
         for f in all_files[:200]:
             try:
-                short_files.append(str(Path(f).relative_to(workspace_path)).replace("\\", "/"))
+                short_files.append(
+                    str(Path(f).relative_to(workspace_path)).replace("\\", "/")
+                )
             except ValueError:
                 short_files.append(Path(f).name)
 
@@ -189,7 +199,10 @@ async def build_workspace_graph(
             # Retoma de um build pausado: reusa o AST já computado, pula direto
             # para a semântica (passo onde a quota costuma estourar).
             ast_results = cached_ast
-            logger.info("context_graph: retomando do checkpoint AST", extra={"workspace_id": workspace_id})
+            logger.info(
+                "context_graph: retomando do checkpoint AST",
+                extra={"workspace_id": workspace_id},
+            )
         else:
             try:
                 ast_results = await asyncio.to_thread(
@@ -200,11 +213,20 @@ async def build_workspace_graph(
                 )
                 _write_ast_checkpoint(out_dir, ast_results)
             except Exception:
-                logger.exception("context_graph: falha na extração AST", extra={"workspace_id": workspace_id})
+                logger.exception(
+                    "context_graph: falha na extração AST",
+                    extra={"workspace_id": workspace_id},
+                )
 
         # ── Passo 3: extração semântica (async LLM) ───────────────────────────
         _progress(3, "Análise semântica...", _files_total)
-        semantic_results: dict[str, Any] = {"nodes": [], "edges": [], "hyperedges": [], "input_tokens": 0, "output_tokens": 0}
+        semantic_results: dict[str, Any] = {
+            "nodes": [],
+            "edges": [],
+            "hyperedges": [],
+            "input_tokens": 0,
+            "output_tokens": 0,
+        }
         if mode == "semantic":
             from .semantic import extract_semantic
 
@@ -234,7 +256,10 @@ async def build_workspace_graph(
                     )
                     raise
                 except Exception:
-                    logger.exception("context_graph: falha na extração semântica", extra={"workspace_id": workspace_id})
+                    logger.exception(
+                        "context_graph: falha na extração semântica",
+                        extra={"workspace_id": workspace_id},
+                    )
 
         # ── Passo 4: build (funde AST + semântico → grafo NetworkX) ──────────
         _progress(4, "Construindo grafo...", _files_total)
@@ -247,7 +272,10 @@ async def build_workspace_graph(
                 root=workspace_path,
             )
         except Exception:
-            logger.exception("context_graph: falha no build do grafo", extra={"workspace_id": workspace_id})
+            logger.exception(
+                "context_graph: falha no build do grafo",
+                extra={"workspace_id": workspace_id},
+            )
             return result
 
         result.node_count = graph.number_of_nodes()
@@ -263,7 +291,10 @@ async def build_workspace_graph(
             communities = await asyncio.to_thread(cluster, graph)
             cohesion = await asyncio.to_thread(score_all, graph, communities)
         except Exception:
-            logger.exception("context_graph: falha no clustering", extra={"workspace_id": workspace_id})
+            logger.exception(
+                "context_graph: falha no clustering",
+                extra={"workspace_id": workspace_id},
+            )
 
         # ── Passo 6: analyze (god nodes, conexões surpreendentes, perguntas) ──
         _progress(6, "Analisando padrões...", _files_total)
@@ -276,12 +307,20 @@ async def build_workspace_graph(
 
         try:
             god_node_list = await asyncio.to_thread(god_nodes, graph)
-            surprise_list = await asyncio.to_thread(surprising_connections, graph, communities)
-            questions = await asyncio.to_thread(suggest_questions, graph, communities, community_labels)
-            result.god_nodes = [n.get("label", n.get("id", "")) for n in god_node_list[:5]]
+            surprise_list = await asyncio.to_thread(
+                surprising_connections, graph, communities
+            )
+            questions = await asyncio.to_thread(
+                suggest_questions, graph, communities, community_labels
+            )
+            result.god_nodes = [
+                n.get("label", n.get("id", "")) for n in god_node_list[:5]
+            ]
             result.suggested_questions = [q.get("question", "") for q in questions[:5]]
         except Exception:
-            logger.exception("context_graph: falha na análise", extra={"workspace_id": workspace_id})
+            logger.exception(
+                "context_graph: falha na análise", extra={"workspace_id": workspace_id}
+            )
 
         # ── Passo 7: relatório ────────────────────────────────────────────────
         _progress(7, "Gerando relatório...", _files_total)
@@ -306,19 +345,28 @@ async def build_workspace_graph(
             )
             report_md.write_text(report_text, encoding="utf-8")
         except Exception:
-            logger.exception("context_graph: falha ao gerar relatório", extra={"workspace_id": workspace_id})
+            logger.exception(
+                "context_graph: falha ao gerar relatório",
+                extra={"workspace_id": workspace_id},
+            )
 
         # ── Passo 8: exportar grafo + manifesto ───────────────────────────────
         _progress(8, "Exportando...", _files_total)
         try:
             await asyncio.to_thread(to_json, graph, communities, str(graph_json))
         except Exception:
-            logger.exception("context_graph: falha ao exportar graph.json", extra={"workspace_id": workspace_id})
+            logger.exception(
+                "context_graph: falha ao exportar graph.json",
+                extra={"workspace_id": workspace_id},
+            )
 
         try:
             await asyncio.to_thread(to_html, graph, communities, str(graph_html))
         except Exception:
-            logger.exception("context_graph: falha ao exportar graph.html", extra={"workspace_id": workspace_id})
+            logger.exception(
+                "context_graph: falha ao exportar graph.html",
+                extra={"workspace_id": workspace_id},
+            )
 
         try:
             await asyncio.to_thread(
@@ -329,7 +377,10 @@ async def build_workspace_graph(
                 root=workspace_path,
             )
         except Exception:
-            logger.exception("context_graph: falha ao salvar manifesto", extra={"workspace_id": workspace_id})
+            logger.exception(
+                "context_graph: falha ao salvar manifesto",
+                extra={"workspace_id": workspace_id},
+            )
 
         # ── Passo 9: indexar nós do grafo no LanceDB (GraphRAG) ──────────────
         _progress(9, "Indexando...", _files_total)
@@ -348,7 +399,8 @@ async def build_workspace_graph(
 
         logger.info(
             "context_graph: build completo — %d nós, %d arestas, %d tokens",
-            result.node_count, result.edge_count,
+            result.node_count,
+            result.edge_count,
             result.input_tokens + result.output_tokens,
             extra={"workspace_id": workspace_id},
         )
@@ -359,7 +411,10 @@ async def build_workspace_graph(
         # checkpoint AST preservado permite retomar (resume=True).
         raise
     except Exception:
-        logger.exception("context_graph: falha catastrófica no pipeline", extra={"workspace_id": workspace_id})
+        logger.exception(
+            "context_graph: falha catastrófica no pipeline",
+            extra={"workspace_id": workspace_id},
+        )
         result.error = "Falha no pipeline do context graph — veja os logs."
         return result
 
