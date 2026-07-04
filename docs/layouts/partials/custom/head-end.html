@@ -81,4 +81,17 @@
   a[href="https://vectora.company/signup"]:hover {
     opacity: 0.85;
   }
+
+  /* Link "vectora.company" na navbar — mesmo problema do botão de signup
+     acima (sem tipo nativo pra parecer um atalho de verdade), mas em estilo
+     secundário (outline) pra não competir com o CTA primário. */
+  a[href="https://vectora.company"] {
+    border: 1px solid currentColor;
+    border-radius: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    opacity: 0.75;
+  }
+  a[href="https://vectora.company"]:hover {
+    opacity: 1;
+  }
 </style>

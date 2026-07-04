@@ -41,6 +41,11 @@ disableKinds = ["taxonomy", "term"]
       [languages.pt.menu.main.params]
         type = "button"
     [[languages.pt.menu.main]]
+      identifier = "language-switch"
+      weight = 4
+      [languages.pt.menu.main.params]
+        type = "language-switch"
+    [[languages.pt.menu.main]]
       identifier = "search"
       weight = 5
       [languages.pt.menu.main.params]
@@ -70,6 +75,11 @@ disableKinds = ["taxonomy", "term"]
       weight = 3
       [languages.en.menu.main.params]
         type = "button"
+    [[languages.en.menu.main]]
+      identifier = "language-switch"
+      weight = 4
+      [languages.en.menu.main.params]
+        type = "language-switch"
     [[languages.en.menu.main]]
       identifier = "search"
       weight = 5
@@ -101,6 +111,11 @@ disableKinds = ["taxonomy", "term"]
       [languages.es.menu.main.params]
         type = "button"
     [[languages.es.menu.main]]
+      identifier = "language-switch"
+      weight = 4
+      [languages.es.menu.main.params]
+        type = "language-switch"
+    [[languages.es.menu.main]]
       identifier = "search"
       weight = 5
       [languages.es.menu.main.params]
@@ -130,6 +145,11 @@ disableKinds = ["taxonomy", "term"]
       weight = 3
       [languages.fr.menu.main.params]
         type = "button"
+    [[languages.fr.menu.main]]
+      identifier = "language-switch"
+      weight = 4
+      [languages.fr.menu.main.params]
+        type = "language-switch"
     [[languages.fr.menu.main]]
       identifier = "search"
       weight = 5
@@ -161,6 +181,11 @@ disableKinds = ["taxonomy", "term"]
       [languages.it.menu.main.params]
         type = "button"
     [[languages.it.menu.main]]
+      identifier = "language-switch"
+      weight = 4
+      [languages.it.menu.main.params]
+        type = "language-switch"
+    [[languages.it.menu.main]]
       identifier = "search"
       weight = 5
       [languages.it.menu.main.params]
@@ -191,6 +216,11 @@ disableKinds = ["taxonomy", "term"]
       [languages.de.menu.main.params]
         type = "button"
     [[languages.de.menu.main]]
+      identifier = "language-switch"
+      weight = 4
+      [languages.de.menu.main.params]
+        type = "language-switch"
+    [[languages.de.menu.main]]
       identifier = "search"
       weight = 5
       [languages.de.menu.main.params]
@@ -220,6 +250,11 @@ disableKinds = ["taxonomy", "term"]
       weight = 3
       [languages.ru.menu.main.params]
         type = "button"
+    [[languages.ru.menu.main]]
+      identifier = "language-switch"
+      weight = 4
+      [languages.ru.menu.main.params]
+        type = "language-switch"
     [[languages.ru.menu.main]]
       identifier = "search"
       weight = 5
