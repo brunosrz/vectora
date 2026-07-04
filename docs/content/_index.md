@@ -1,30 +1,34 @@
 ---
-title: Vectora Docs
-layout: hextra-home
+title: Documentação
+type: docs
+cascade:
+  type: docs
+sidebar:
+  open: true
 ---
 
-{{< hextra/hero-badge >}}
-<span>Self-hosted AI agent</span>
-{{< /hextra/hero-badge >}}
+Vectora é um **agente de IA self-hosted** — roda inteiramente no seu próprio servidor, integra como sub-agente em qualquer orquestrador compatível com MCP (Claude Code, Claude Desktop, extensões VS Code) e vem com um chat web multi-usuário completo.
 
-{{< hextra/hero-headline >}}
-Vectora
-{{< /hextra/hero-headline >}}
+No seu núcleo, o Vectora fecha o **abismo de conhecimento** entre um LLM e sua base de código, documentação e stack atual: um pipeline de **RAG** híbrido (BM25 + vetores densos + reranker) para recuperação por similaridade, e um **Context Graph** nativo (workspace analisado via tree-sitter + extração por LLM) para contexto estrutural.
 
-{{< hextra/hero-subtitle >}}
-Um agente de IA self-hosted com RAG híbrido, Context Graph nativo,
-servidor MCP sempre-ativo e chat web multi-usuário — tudo rodando no seu próprio servidor.
-{{< /hextra/hero-subtitle >}}
+## Por onde começar
 
-{{< hextra/hero-button text="Começar" link="docs/getting-started/introduction" >}}
+| Eu quero...                              | Ir para                                        |
+| ---------------------------------------- | ---------------------------------------------- |
+| Instalar o Vectora                       | [Instalação](./getting-started/installation)   |
+| Rodar em 5 minutos                       | [Início rápido](./getting-started/quick-start) |
+| Entender o pipeline de RAG               | [RAG & Context Graph](./concepts/rag)          |
+| Conectar um cliente MCP (Claude Code...) | [Servidor MCP](./reference/mcp-server)         |
+| Ver todos os comandos da CLI             | [Referência de CLI](./reference/cli)           |
+| Fazer deploy em um servidor              | [Requisitos](./deployment/requirements)        |
+| Entender auth, secrets e BYOK            | [Segurança](./security/authentication)         |
+| Usar a API REST                          | [Referência de API](./api-reference/overview)  |
 
-<div class="hx-mt-6"></div>
+## O que o Vectora é (e não é)
 
-{{< hextra/feature-grid >}}
-{{< hextra/feature-card title="RAG híbrido" subtitle="BM25 + busca vetorial densa + reranker (Cohere/VoyageAI) em cada recuperação, sintetizado de volta pelo orchestrator." >}}
-{{< hextra/feature-card title="Context Graph nativo" subtitle="Analisa o workspace com tree-sitter (Python/JS/TS/Go/Rust/Java/C/C++) + extração por LLM, gerando um grafo de conhecimento navegável — não só embeddings." >}}
-{{< hextra/feature-card title="Arquitetura deep-agent" subtitle="Construído sobre create_deep_agent (LangGraph + deepagents) — um supervisor delegando para os subagentes coder e search, com middleware HITL para ações destrutivas." >}}
-{{< hextra/feature-card title="MCP sempre-ativo" subtitle="O servidor MCP é montado em /mcp no mesmo processo FastAPI — sem processo separado, sem porta separada. Conecte Claude Code, Claude Desktop ou qualquer cliente MCP." >}}
-{{< hextra/feature-card title="Zero infra por padrão" subtitle="O modo lite roda em SQLite + LanceDB — sem Docker, sem Postgres. O modo complete (Postgres + Qdrant + Redis) existe quando você precisar escalar." >}}
-{{< hextra/feature-card title="Multi-LLM, sem lock-in" subtitle="Google Gemini, OpenAI, Anthropic, Cohere, ou Ollama totalmente local. O seletor de modelo só lista providers com chave de API configurada." >}}
-{{< /hextra/feature-grid >}}
+Vectora é **software comercial, código fechado** — não é open source. Você roda na sua própria infraestrutura (seu servidor, sua VPS, seu desktop), mas o código-fonte pertence à Vectora Company. É o mesmo modelo do Cursor, Linear ou Notion: a infra é sua, o código é do fornecedor.
+
+- **Free** roda 100% local, sem conta necessária. Você traz suas próprias chaves de API.
+- **Pro** é opcional e cobre trial/billing/licenciamento via `services.vectora.company`, um Worker Cloudflare pequeno — não é um "Vectora Cloud" que hospeda ou executa sua instância por você. Fazer upgrade muda quais recursos ficam disponíveis (stack de storage de alto desempenho, chat web multi-usuário, webhooks, API REST), nunca onde o agente roda.
+
+Veja a [página de preços](https://vectora.company/#pricing) para os planos atuais.

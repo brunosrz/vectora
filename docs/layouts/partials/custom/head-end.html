@@ -65,4 +65,20 @@
     src: url("/fonts/aeonikmono-semibold.otf") format("opentype");
     font-weight: 600;
   }
+
+  /* Botão de CTA na navbar ("Começar trial grátis") — o Hextra v0.12.2 não
+     tem um tipo "button" nativo pra menu.main (só link/search/theme-toggle/
+     language-switch), então o item vira um <a> comum sem estilo. Targeteado
+     pelo href porque o partial de navbar não expõe o identifier no DOM. */
+  a[href="https://vectora.company/signup"] {
+    background-color: hsl(var(--primary-hue) var(--primary-saturation) var(--primary-lightness));
+    color: #fff !important;
+    padding: 0.4rem 0.9rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+  }
+  a[href="https://vectora.company/signup"]:hover {
+    opacity: 0.85;
+  }
 </style>
