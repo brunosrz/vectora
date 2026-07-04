@@ -29,9 +29,9 @@ jobs:
         with:
           hugo-version: ${{ env.HUGO_VERSION }}
           extended: true
-      # `hugo build` resolve sozinho o módulo Hextra pinado em go.mod (usa o
-      # toolchain Go, já instalado nos runners ubuntu-latest do GitHub) — não
-      # rodar `hugo mod get` aqui, que faz upgrade do pin como side-effect.
+      # Módulo Hextra vendorizado em docs/_vendor/ — build não precisa de rede
+      # nem do toolchain Go. Não rodar `hugo mod get` aqui, que faz upgrade do
+      # pin em go.mod como side-effect.
       - name: Build
         run: hugo --gc --minify
 

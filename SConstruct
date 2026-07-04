@@ -8,6 +8,7 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
     scons up-version [bump=patch|minor|major] → bump de versão + tag git
+    scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
     scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint+eslint
@@ -60,6 +61,15 @@ def _find_pnpm() -> str:
     return shutil.which("pnpm") or "pnpm"
 
 
+def _find_bin(name: str) -> str:
+    if sys.platform == "win32":
+        for candidate in (f"{name}.cmd", f"{name}.exe", name):
+            found = shutil.which(candidate)
+            if found:
+                return found
+    return shutil.which(name) or name
+
+
 PNPM = _find_pnpm()
 
 
@@ -82,7 +92,9 @@ def _find_hugo() -> str:
     return "hugo"
 
 
-HUGO = _find_hugo()
+HUGO     = _find_hugo()
+VERCEL   = _find_bin("vercel")
+WRANGLER = _find_bin("wrangler")
 
 
 def _run(
@@ -664,6 +676,31 @@ def _action_up_version(target, source, env):
     )
 
 
+# ── Prod (deploy) ─────────────────────────────────────────────────────────────
+# `scons prod` — deploy de produção da borda web/edge do monorepo: docs
+# (Vercel, docs.vectora.company), company (Vercel, vectora.company) e services
+# (Cloudflare Worker único: relay + updates). NÃO cobre o app desktop — isso é
+# `scons release-<os>` + `pnpm --dir services run release -- --version=X.Y.Z`
+# (publica os instaladores no R2 e atualiza o canal no KV), que é um fluxo
+# separado disparado manualmente depois de um `scons up-version`.
+#
+# Requer `vercel` e `wrangler` autenticados localmente (ambos já usados nesta
+# máquina) e os projetos docs/company já linkados via `vercel link`
+# (`.vercel/project.json` — gitignored, um link por máquina de dev).
+
+
+def _action_prod(target, source, env):
+    with _open_log("prod") as log:
+        _run([VERCEL, "--prod", "--yes"], log=log, cwd=DOCS)
+        _run([VERCEL, "--prod", "--yes"], log=log, cwd=COMPANY)
+        _run([WRANGLER, "deploy"], log=log, cwd=SERVICES)
+    print(
+        "\n>> deploy de produção concluído: "
+        "docs.vectora.company + vectora.company + services (Cloudflare Worker)"
+    )
+    print(">> log completo em .scons-logs/prod.txt")
+
+
 # ── Help ──────────────────────────────────────────────────────────────────────
 
 
@@ -678,6 +715,7 @@ def _action_help(target, source, env):
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
     scons up-version [bump=patch|minor|major]
                            bump de versão (pyproject.toml + package.json) + tag git
+    scons prod             deploy de produção: docs + company (Vercel) + services (Worker)
 
   Build
     scons frontend         só o build do frontend (vectora/frontend/dist/)
@@ -728,6 +766,7 @@ _cmd("release-linux", lambda target, source, env: _action_package(target, source
 _cmd("release",       lambda target, source, env: _action_package(target, source, env),          deps=_FULL_DEPS)
 
 _cmd("up-version",    _action_up_version)
+_cmd("prod",           _action_prod)
 
 _cmd("tests",         _action_tests)
 _cmd("coverage",      _action_coverage)
