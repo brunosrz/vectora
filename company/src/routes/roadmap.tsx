@@ -19,36 +19,37 @@ export const Route = createFileRoute("/roadmap")({
 });
 
 const SHIPPED = [
+  { label: "Desktop app — Windows, macOS, Linux (Electron + backend Nuitka)" },
+  {
+    label: "Agente principal — arquitetura deep-agent (LangGraph + deepagents)",
+  },
+  { label: "Coder Agent + Search Agent — arquivos, terminal, git, web, RAG" },
+  { label: "RAG híbrido — Cohere Embed + LanceDB + BM25/denso + reranker" },
+  { label: "Context Graph nativo — tree-sitter + extração por LLM" },
+  { label: "MCP server sempre-ativo — Claude Code, Claude Desktop e outros" },
+  { label: "Chat web multi-usuário (plano Pro)" },
+  { label: "docs.vectora.company — documentação completa" },
   { label: "vectora.company — site institucional e dashboard de licença" },
   { label: "Autenticação + billing (Stripe INTL + Asaas BR)" },
-  { label: "VECTORA_TOKEN — sistema de licença com show-once e rotação" },
-  { label: "REST API /v1 — API keys com escopos (read/write/admin)" },
+  { label: "VECTORA_TOKEN — recuperável a qualquer momento, com rotação" },
+  { label: "REST API /v1 — classify, extract, jobs + API keys com escopos" },
   { label: "Suporte multi-idioma — 7 locales (pt, en, es, fr, it, de, ru)" },
   { label: "Sistema de issues e feedback pelo site" },
   { label: "Webhooks de billing com Stripe e Asaas" },
   { label: "GDPR — exportação de dados e exclusão de conta em 30 dias" },
-  {
-    label: "Edge Functions — validate-license, rotate-token, cron-hard-delete",
-  },
 ];
 
 const BUILDING = [
-  { label: "Vectora CLI — agente principal Python com LangGraph" },
-  { label: "RAG pipeline — Cohere Embed + LanceDB + hybrid search + reranker" },
-  { label: "Chat web multi-usuário — workspace com projetos e histórico" },
-  { label: "MCP server — integração com Claude Desktop e outros clientes MCP" },
-  { label: "Coder Agent — arquivos, terminal, git, geração de código" },
   {
-    label: "Search Agent — web em tempo real + curação da base de conhecimento",
+    label:
+      "REST API pública completa — auth, threads/chat, workspaces, git, terminal, RAG, tasks, webhooks e settings via API (hoje só classify/extract/jobs são públicos)",
   },
   { label: "VS Code extension (beta)" },
-  { label: "docs.vectora.company — documentação de API e uso diário" },
 ];
 
 const PLANNED = [
-  { label: "Desktop app — Windows, macOS, Linux (Electron + Nuitka)" },
-  { label: "SDK Python — pacote PyPI oficial" },
-  { label: "SDK TypeScript/Node — pacote NPM oficial" },
+  { label: "SDK Python — pacote PyPI oficial (plugins/extensões do Vectora)" },
+  { label: "SDK TypeScript/Node — pacote NPM oficial (plugins/extensões)" },
   { label: "GitHub Actions integration — run Vectora directly from CI" },
   { label: "n8n workflow nodes" },
   { label: "Kubernetes helm chart" },
@@ -142,7 +143,7 @@ function RoadmapPage() {
       </div>
 
       <p className="mt-10 text-center text-xs text-muted-foreground/80">
-        Última atualização: junho 2025 · Roadmap sujeito a alterações
+        Última atualização: julho 2026 · Roadmap sujeito a alterações
       </p>
     </Container>
   );

@@ -56,7 +56,6 @@ describe("LicenseStatus", () => {
       tier: "free",
       status: "active",
       started_at: "2026-01-01T00:00:00.000Z",
-      trial_ends_at: null,
     });
     renderWithClient(<LicenseStatus />);
 
@@ -70,7 +69,6 @@ describe("LicenseStatus", () => {
       tier: "pro",
       status: "active",
       started_at: "2026-01-01T00:00:00.000Z",
-      trial_ends_at: null,
     });
     renderWithClient(<LicenseStatus />);
 
@@ -84,7 +82,6 @@ describe("LicenseStatus", () => {
       tier: "pro",
       status: "past_due",
       started_at: "2026-01-01T00:00:00.000Z",
-      trial_ends_at: null,
     });
     renderWithClient(<LicenseStatus />);
 
@@ -95,32 +92,16 @@ describe("LicenseStatus", () => {
     );
   });
 
-  it("cai no badge 'expired' para um status desconhecido do banco (edge — CHECK constraint solto)", async () => {
-    mockGetSubscription.mockResolvedValue({
-      tier: "free",
-      status: "something_new_from_a_migration",
-      started_at: "2026-01-01T00:00:00.000Z",
-      trial_ends_at: null,
-    });
-    renderWithClient(<LicenseStatus />);
-
-    await waitFor(() => expect(screen.getByText("free")).toBeInTheDocument());
-    expect(screen.getByText("Expirado")).toBeInTheDocument();
-  });
-
-  it("mostra os dias restantes de trial quando há trial_ends_at", async () => {
-    const inTenDays = new Date(Date.now() + 10 * 86_400_000).toISOString();
+  it("cai no badge 'expired' para um status desconhecido do banco (edge — CHECK constraint solto, ex. 'trialing' de contas legadas do modelo antigo)", async () => {
     mockGetSubscription.mockResolvedValue({
       tier: "free",
       status: "trialing",
       started_at: "2026-01-01T00:00:00.000Z",
-      trial_ends_at: inTenDays,
     });
     renderWithClient(<LicenseStatus />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/restantes/)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText("free")).toBeInTheDocument());
+    expect(screen.getByText("license_status_expired")).toBeInTheDocument();
   });
 
   it("renderiza null quando não há assinatura (edge)", async () => {

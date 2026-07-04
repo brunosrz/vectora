@@ -61,14 +61,6 @@ export default function Footer() {
             <Link to="/issues" className={linkClass}>
               Issues
             </Link>
-            <a
-              href="https://github.com/vectora-company"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={linkClass}
-            >
-              GitHub
-            </a>
           </div>
         </div>
 

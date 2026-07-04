@@ -2,7 +2,7 @@
 
 > Auto-generated i18n message functions. Import `messages.js` to use translated strings.
 
-Compiled from: `C:\Users\Machi\Desktop\vectora\company\project.inlang`
+Compiled from: `./project.inlang`
 
 
 ## What is this folder?

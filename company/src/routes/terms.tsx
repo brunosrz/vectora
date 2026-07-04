@@ -7,7 +7,7 @@ export const Route = createFileRoute("/terms")({
       { title: "Termos de Uso — Vectora" },
       {
         property: "og:image",
-        content: `/api/og?title=${encodeURIComponent("Termos de Uso")}&desc=${encodeURIComponent("Licença de uso, cancelamento, trial e limitações do Vectora.")}`,
+        content: `/api/og?title=${encodeURIComponent("Termos de Uso")}&desc=${encodeURIComponent("Licença de uso, planos, cancelamento e limitações do Vectora.")}`,
       },
     ],
   }),
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/terms")({
 
 function TermsPage() {
   return (
-    <LegalPage title="Termos de Uso" lastUpdated="2025-01-01">
+    <LegalPage title="Termos de Uso" lastUpdated="2026-07-04">
       <h2>1. Aceitação</h2>
       <p>
         Ao criar uma conta ou usar o Vectora, você concorda com estes Termos de
@@ -42,9 +42,11 @@ function TermsPage() {
 
       <h2>4. Pagamentos e cancelamento</h2>
       <p>
-        O trial de 30 dias é gratuito e não exige cartão. Após o trial, é
-        necessário assinar um plano para continuar usando. O cancelamento pode
-        ser feito a qualquer momento pelo painel.
+        O plano Free é gratuito e permanente, sem necessidade de cartão de
+        crédito. Recursos do plano Pro (chat web multi-usuário, storage
+        escalável, webhooks, API REST com limite maior) exigem assinatura paga.
+        O cancelamento pode ser feito a qualquer momento pelo painel — a conta
+        volta ao plano Free, sem perda de dados locais.
       </p>
 
       <h2>5. Limitação de responsabilidade</h2>

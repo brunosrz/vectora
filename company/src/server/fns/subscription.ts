@@ -11,7 +11,6 @@ export interface Subscription {
   provider_id: string | null;
   customer_id: string | null;
   started_at: string;
-  trial_ends_at: string | null;
   current_period_end: string | null;
   canceled_at: string | null;
 }

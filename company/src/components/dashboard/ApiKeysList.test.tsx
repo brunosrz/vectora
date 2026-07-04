@@ -129,10 +129,10 @@ describe("ApiKeysList", () => {
     renderWithClient(<ApiKeysList />);
     await waitFor(() => screen.getByText("Deploy CI"));
 
-    fireEvent.click(screen.getByTitle("Revogar"));
+    fireEvent.click(screen.getByTitle("apikeys_revoke_title"));
     expect(mockRevokeApiKey).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByText("Confirmar"));
+    fireEvent.click(screen.getByText("apikeys_revoke_confirm_cta"));
 
     await waitFor(() =>
       expect(mockRevokeApiKey).toHaveBeenCalledWith({ data: { id: "k1" } }),
@@ -152,10 +152,10 @@ describe("ApiKeysList", () => {
     renderWithClient(<ApiKeysList />);
     await waitFor(() => screen.getByText("Deploy CI"));
 
-    fireEvent.click(screen.getByTitle("Revogar"));
-    fireEvent.click(screen.getByText("Cancelar"));
+    fireEvent.click(screen.getByTitle("apikeys_revoke_title"));
+    fireEvent.click(screen.getByText("form_cancel"));
 
     expect(mockRevokeApiKey).not.toHaveBeenCalled();
-    expect(screen.getByTitle("Revogar")).toBeInTheDocument();
+    expect(screen.getByTitle("apikeys_revoke_title")).toBeInTheDocument();
   });
 });

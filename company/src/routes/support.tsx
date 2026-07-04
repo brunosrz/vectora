@@ -1,13 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
-import {
-  Mail,
-  Bug,
-  BookOpen,
-  Users,
-  MessageCircle,
-  FileText,
-} from "lucide-react";
+import { Mail, BookOpen, Users, MessageCircle, FileText } from "lucide-react";
 import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
 
@@ -17,7 +10,7 @@ export const Route = createFileRoute("/support")({
       { title: m.page_support_title() },
       {
         property: "og:image",
-        content: `/api/og?title=${encodeURIComponent(m.page_support_title())}&desc=${encodeURIComponent("Email, GitHub Issues e documentação. Suporte rápido para seu Vectora.")}`,
+        content: `/api/og?title=${encodeURIComponent(m.page_support_title())}&desc=${encodeURIComponent("Email, issues pelo site e documentação. Suporte rápido para seu Vectora.")}`,
       },
     ],
     scripts: [
@@ -75,17 +68,6 @@ const CHANNELS = [
     action: { label: "+55 35 91017-9164", href: "https://wa.me/5535910179164" },
     sla: null,
     badge: "WhatsApp only",
-  },
-  {
-    icon: Bug,
-    title: "GitHub Issues",
-    desc: "Bugs, feature requests e discussões técnicas abertas",
-    action: {
-      label: "github.com/vectora-company/vectora",
-      href: "https://github.com/vectora-company/vectora/issues",
-    },
-    sla: null,
-    badge: null,
   },
   {
     icon: BookOpen,
