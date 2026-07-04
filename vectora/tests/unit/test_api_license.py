@@ -1,7 +1,8 @@
 """Testes dos endpoints de licença — /license/{status,validate,connect}.
 
 Cobrem o fluxo do setup wizard: validação forçada do token e login com a
-conta vectora.company (edge function ``agent-login`` mockada via httpx).
+conta vectora.company (``services.vectora.company/license/agent-login``
+mockada via httpx).
 """
 
 from __future__ import annotations
@@ -124,7 +125,7 @@ def test_validate_token_valido(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_http(
         monkeypatch,
         {
-            "validate-license": (
+            "license/validate": (
                 {
                     "valid": True,
                     "tier": "pro",
@@ -144,7 +145,7 @@ def test_validate_token_invalido_vai_inline(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setenv("VECTORA_TOKEN", "tok_ruim")
     _patch_http(
         monkeypatch,
-        {"validate-license": ({"valid": False, "reason": "not_found"}, 200)},
+        {"license/validate": ({"valid": False, "reason": "not_found"}, 200)},
     )
     result = asyncio.run(handler.license_validate())
     # Falha de licença NUNCA vira HTTP 4xx aqui — o wizard lê {valid, error}.
@@ -221,7 +222,7 @@ def test_connect_sucesso_persiste_e_valida(monkeypatch: pytest.MonkeyPatch) -> N
                 {"token": "tok_novo", "tier": "free", "status": "trialing"},
                 200,
             ),
-            "validate-license": (
+            "license/validate": (
                 {
                     "valid": True,
                     "tier": "free",
@@ -240,5 +241,5 @@ def test_connect_sucesso_persiste_e_valida(monkeypatch: pytest.MonkeyPatch) -> N
     assert os.environ["VECTORA_TOKEN"] == "tok_novo"
     assert 'token = "tok_novo"' in lic.CONFIG_PATH.read_text(encoding="utf-8")
     # E a validação remota foi de fato chamada com o token novo.
-    validate_calls = [c for c in calls if "validate-license" in c[0]]
+    validate_calls = [c for c in calls if "license/validate" in c[0]]
     assert validate_calls and validate_calls[0][1]["token"] == "tok_novo"

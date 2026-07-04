@@ -1,9 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { getSession } from "#/server/fns/auth";
-import { getSupabaseBrowserClient } from "#/lib/supabase/client";
-import { useAuthStore } from "#/store/auth";
 import Sidebar from "#/components/dashboard/Sidebar";
 
 export const Route = createFileRoute("/dashboard")({
@@ -21,35 +17,6 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardLayout() {
-  const qc = useQueryClient();
-  const uid = useAuthStore((s) => s.session?.id);
-
-  useEffect(() => {
-    if (!uid) return;
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-
-    const channel = supabase
-      .channel("license_status")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "subscriptions",
-          filter: `user_id=eq.${uid}`,
-        },
-        () => {
-          qc.invalidateQueries({ queryKey: ["subscription"] });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [uid, qc]);
-
   return (
     <div className="flex min-h-screen">
       <Sidebar />

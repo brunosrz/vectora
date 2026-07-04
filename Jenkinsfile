@@ -8,7 +8,8 @@
 //   2. Release (job parametrizado, disparo MANUAL): scons up-version, build
 //      dos instaladores por SO (precisa de um agente por SO — Windows/macOS/
 //      Linux não cross-compilam entre si no electron-builder) e publish no
-//      update-server (R2 + KV via update-server/scripts/release.ts).
+//      vectora-services (R2 + KV via services/scripts/release.ts — era
+//      update-server/, unificado com o relay na Fase A do plano de services).
 //
 // Pré-requisito de infra (fora deste arquivo): controller Jenkins rodando +
 // pelo menos 1 agente por SO com label windows/macos/linux, uv/pnpm/scons
@@ -92,10 +93,10 @@ pipeline {
             }
         }
 
-        stage('Release: publicar no update-server (R2 + KV)') {
+        stage('Release: publicar no vectora-services (R2 + KV)') {
             when { expression { params.RELEASE } }
             steps {
-                dir('update-server') {
+                dir('services') {
                     sh 'pnpm install --frozen-lockfile'
                     sh "pnpm run release -- --version=\${VECTORA_VERSION}"
                 }

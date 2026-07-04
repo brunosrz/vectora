@@ -6,41 +6,45 @@ import {
   createCheckout,
   createPortal,
 } from "#/server/fns/subscription";
+import type { LicenseCheck } from "#/server/fns/subscription";
 import { toast } from "sonner";
 
-type SubStatus = "trialing" | "active" | "past_due" | "canceled" | "expired";
+// "trialing" existe no CHECK constraint da coluna (schema legado do modelo
+// antigo de trial de 30 dias do Plus) mas nunca é gravado por nenhum fluxo
+// atual — signup sempre grava "active" (Free permanente) e os webhooks de
+// billing só transitam entre active/past_due/canceled. Não modelado aqui de
+// propósito: não há UI pra um estado que o backend nunca produz.
+type SubStatus = "active" | "past_due" | "canceled" | "expired";
 
-const STATUS_CONFIG: Record<SubStatus, { label: string; color: string }> = {
-  trialing: {
-    label: "Trial ativo",
-    color: "text-accent-green bg-accent-green/10 border-accent-green/30",
-  },
-  active: {
-    label: "Ativo",
-    color: "text-accent-green bg-accent-green/10 border-accent-green/30",
-  },
-  past_due: {
-    label: "Pagamento pendente",
-    color: "text-accent-amber bg-accent-amber/10 border-accent-amber/30",
-  },
-  canceled: {
-    label: "Cancelado",
-    color: "text-accent-red bg-accent-red/10 border-accent-red/30",
-  },
-  expired: {
-    label: "Expirado",
-    color: "text-muted-foreground bg-muted border-border",
-  },
-};
-
-function daysRemaining(dateStr: string | null) {
-  if (!dateStr) return null;
-  const diff = new Date(dateStr).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / 86_400_000));
+function useStatusConfig(): Record<
+  SubStatus,
+  { label: string; color: string }
+> {
+  return {
+    active: {
+      label: m.license_status_active(),
+      color: "text-accent-green bg-accent-green/10 border-accent-green/30",
+    },
+    past_due: {
+      label: m.license_status_past_due(),
+      color: "text-accent-amber bg-accent-amber/10 border-accent-amber/30",
+    },
+    canceled: {
+      label: m.license_status_canceled(),
+      color: "text-accent-red bg-accent-red/10 border-accent-red/30",
+    },
+    expired: {
+      label: m.license_status_expired(),
+      color: "text-muted-foreground bg-muted border-border",
+    },
+  };
 }
 
-function isSubStatus(value: string): value is SubStatus {
-  return value in STATUS_CONFIG;
+function isSubStatus(
+  value: string,
+  config: Record<string, unknown>,
+): value is SubStatus {
+  return value in config;
 }
 
 function maskIp(ip: string | null) {
@@ -83,11 +87,11 @@ export function LicenseStatus() {
   // não produz union literal pra CHECK constraints alterados via migration
   // posterior à criação da tabela) — fallback seguro se vier um valor
   // inesperado.
+  const statusConfig = useStatusConfig();
   const status = sub.status;
-  const config = isSubStatus(status)
-    ? STATUS_CONFIG[status]
-    : STATUS_CONFIG.expired;
-  const days = daysRemaining(sub.trial_ends_at);
+  const config = isSubStatus(status, statusConfig)
+    ? statusConfig[status]
+    : statusConfig.expired;
   const isPro = sub.tier === "pro";
   const isPastDue = status === "past_due";
   const isPortalBusy = portalMutation.isPending;
@@ -122,21 +126,6 @@ export function LicenseStatus() {
                 {new Date(sub.started_at).toLocaleDateString()}
               </p>
             </div>
-            {sub.trial_ends_at && (
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {m.license_trial_ends()}
-                </p>
-                <p className="text-foreground/90">
-                  {new Date(sub.trial_ends_at).toLocaleDateString()}
-                  {days !== null && (
-                    <span className="ml-1.5 text-xs text-primary">
-                      ({days}d restantes)
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
           </div>
         )}
 
@@ -210,49 +199,38 @@ export function LicenseHistory() {
               {m.license_col_result()}
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
-              IP
+              {m.license_col_ip()}
             </th>
           </tr>
         </thead>
         <tbody>
-          {data.map(
-            (
-              row: {
-                id: string;
-                checked_at: string;
-                vectora_version: string;
-                result: string;
-                ip: string | null;
-              },
-              i: number,
-            ) => (
-              <tr
-                key={row.id}
-                className={`border-b border-border ${i % 2 === 0 ? "" : "bg-background/20"}`}
-              >
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {new Date(row.checked_at).toLocaleString()}
-                </td>
-                <td className="px-4 py-2.5 font-mono text-muted-foreground">
-                  {row.vectora_version}
-                </td>
-                <td className="px-4 py-2.5">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      row.result === "valid"
-                        ? "bg-accent-green/10 text-accent-green"
-                        : "bg-accent-red/10 text-accent-red"
-                    }`}
-                  >
-                    {row.result}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 font-mono text-muted-foreground">
-                  {maskIp(row.ip)}
-                </td>
-              </tr>
-            ),
-          )}
+          {data.map((row: LicenseCheck, i: number) => (
+            <tr
+              key={row.id}
+              className={`border-b border-border ${i % 2 === 0 ? "" : "bg-background/20"}`}
+            >
+              <td className="px-4 py-2.5 text-muted-foreground">
+                {new Date(row.checked_at).toLocaleString()}
+              </td>
+              <td className="px-4 py-2.5 font-mono text-muted-foreground">
+                {row.vectora_version}
+              </td>
+              <td className="px-4 py-2.5">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    row.result === "valid"
+                      ? "bg-accent-green/10 text-accent-green"
+                      : "bg-accent-red/10 text-accent-red"
+                  }`}
+                >
+                  {row.result}
+                </span>
+              </td>
+              <td className="px-4 py-2.5 font-mono text-muted-foreground">
+                {maskIp(row.ip)}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

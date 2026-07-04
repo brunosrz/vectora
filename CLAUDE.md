@@ -21,11 +21,10 @@ scons clean          # remove outputs de build
 Subprojetos cobertos por `scons lint` e `scons tests`:
 
 - `vectora/` — Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
-- `relay/` — TypeScript (tsc, vitest)
+- `services/` — TypeScript (tsc, vitest) — relay + updates unificados
 - `company/` — TypeScript (eslint, tsc, vitest)
 - `vectora/electron/` — TypeScript (vitest — funções puras: cookie-utils)
 - `docs/` — TypeScript (tsc) — sem testes
-- `update-server/` — TypeScript (tsc, vitest)
 
 Rodar teste específico (Python — a partir da raiz):
 
@@ -88,9 +87,10 @@ vectora/          ← produto principal (Python backend + React frontend)
   docker-compose.yml
 SConstruct        ← build orchestrator (SCons) — raiz do monorepo
 company/          ← site/dashboard externo (Nuxt/TanStack Start) — separado
-relay/            ← Cloudflare Workers relay (TypeScript)
 docs/             ← Docusaurus docs
-update-server/    ← Cloudflare Workers update manifest server
+services/         ← Cloudflare Worker único: relay (OAuth/webhooks pro
+                    desktop) + updates (distribuição de releases) — era
+                    relay/ + update-server/, unificados
 ```
 
 ### Backend (`vectora/backend/`)

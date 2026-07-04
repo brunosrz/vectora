@@ -17,6 +17,7 @@ exclude: |
     \.venv/.*|
     graphify.*|
     vectora/backend/services/context_graph/.*|
+    docs/_vendor/.*|
      \.mjs.*
   )$
 
@@ -160,6 +161,18 @@ repos:
         entry: pnpm --dir vectora/frontend run typecheck
         language: system
         files: ^vectora/frontend/.*\.(ts|tsx)$
+        pass_filenames: false
+
+  # ==========================================
+  # Type Checking — TypeScript (services, Cloudflare Worker)
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: tsc-services
+        name: Type Check — TypeScript (services)
+        entry: pnpm --dir services exec tsc --noEmit
+        language: system
+        files: ^services/.*\.ts$
         pass_filenames: false
 
   # ==========================================

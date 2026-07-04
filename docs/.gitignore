@@ -1,4 +1,10 @@
+# Hugo
+public/
+resources/
+.hugo_build.lock
+
+# Vercel
 .vercel
+
+# Ambiente local
 .env.local
-.docusaurus/
-build/

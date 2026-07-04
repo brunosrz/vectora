@@ -11,19 +11,19 @@ export const Route = createFileRoute("/dashboard/")({
   validateSearch: SearchSchema,
   loader: async () => {
     const status = await getTokenStatus();
-    return { revealed: status.revealed };
+    return { available: status.available };
   },
   component: DashboardIndexPage,
 });
 
 function DashboardIndexPage() {
-  const { revealed } = Route.useLoaderData();
+  const { available } = Route.useLoaderData();
   const { welcome } = Route.useSearch();
 
   return (
     <div>
       <DashboardHeading title={m.nav_token()} />
-      <TokenReveal initialRevealed={revealed} welcome={welcome} />
+      <TokenReveal initialAvailable={available} welcome={welcome} />
     </div>
   );
 }

@@ -8,10 +8,11 @@ export const Route = createFileRoute("/dashboard/account")({
 });
 
 function AccountPage() {
+  const { user } = Route.useRouteContext();
   return (
     <div>
       <DashboardHeading title={m.nav_account()} />
-      <AccountSection />
+      <AccountSection user={user} />
     </div>
   );
 }

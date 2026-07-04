@@ -48,13 +48,13 @@ jobs:
         run: pnpm run test
 
   # ── 2. Deploy to Vercel (vectora.company) ────────────────────────────────
-  # Só em push para master (não em PR). A Vercel buildam via vercel.json
-  # (buildCommand/installCommand); aqui controlamos QUANDO deployar (por path).
+  # ci.yml só dispara via workflow_dispatch (Jenkins assume o CI contínuo) —
+  # o disparo aqui é sempre manual; a checagem é só a branch, não o evento.
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: verify
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
     environment:
       name: company-production
       url: https://vectora.company

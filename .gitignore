@@ -358,3 +358,4 @@ env.gha
 /.agents
 *.xml
 /docs/.docusaurus
+*.zip

@@ -45,7 +45,7 @@ function CreateKeyModal({ onClose }: { onClose: () => void }) {
               {m.apikeys_modal_secret_heading()}
             </h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              {m.token_show_once_warning()}
+              {m.apikey_secret_warning()}
             </p>
             <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-4 py-3">
               <code className="flex-1 break-all font-mono text-sm text-primary">
@@ -235,20 +235,20 @@ export default function ApiKeysList() {
                             disabled={revokeMutation.isPending}
                             className="text-xs text-accent-red hover:text-destructive font-medium"
                           >
-                            Confirmar
+                            {m.apikeys_revoke_confirm_cta()}
                           </button>
                           <button
                             onClick={() => setRevokeId(null)}
                             className="text-xs text-muted-foreground hover:text-foreground/90"
                           >
-                            Cancelar
+                            {m.form_cancel()}
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setRevokeId(key.id)}
                           className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent-red/10 hover:text-accent-red transition-colors"
-                          title="Revogar"
+                          title={m.apikeys_revoke_title()}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

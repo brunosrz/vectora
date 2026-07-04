@@ -1,0 +1,74 @@
+name: Services (Cloudflare Worker)
+
+# vectora-services (Hono em Cloudflare Workers) — relay + updates unificados
+# (era relay/ + update-server/, ver Fase A do plano de unificação em
+# documents/ ou o histórico de commits). Reusable: disparado só pelo runner
+# ci.yml, que faz o path-gating (services/**).
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: services
+
+env:
+  NODE_VERSION: "24"
+  PNPM_VERSION: "11.5.0"
+
+jobs:
+  # ── 1. Verify (install + typecheck + tests) ──────────────────────────────
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: services/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+      - name: Test
+        run: pnpm test
+
+  # ── 2. Deploy (Cloudflare Workers) ───────────────────────────────────────
+  # ci.yml só dispara via workflow_dispatch (Jenkins assume o CI contínuo) —
+  # então o disparo aqui é sempre manual; a única checagem que faz sentido é
+  # a branch, não o tipo de evento (nunca vai ser "push").
+  deploy:
+    name: Deploy (wrangler)
+    runs-on: ubuntu-latest
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/master' }}
+    environment:
+      name: services-production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: services/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Deploy to Cloudflare
+        # Só roda se o token estiver presente (worker pode ainda não estar
+        # provisionado). Sem token, o job passa sem deployar.
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        run: pnpm exec wrangler deploy

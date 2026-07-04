@@ -49,8 +49,8 @@ function DpaPage() {
       <h2>4. Subprocessadores</h2>
       <ul>
         <li>
-          <strong>Supabase</strong> — Autenticação e banco de dados de licença
-          (dados de conta)
+          <strong>Cloudflare</strong> — Autenticação e banco de dados de licença
+          (dados de conta), infraestrutura própria da Vectora
         </li>
         <li>
           <strong>Stripe / Asaas</strong> — Processamento de pagamentos
