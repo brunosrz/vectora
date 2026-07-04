@@ -7,7 +7,7 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons release-win   → instalador Windows (.msi + .exe NSIS)
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
-    scons up-version [bump=patch|minor|major] → bump de versão + tag git
+    scons up-version [bump=patch|minor|major] → bump + build do instalador + publica no update
     scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
@@ -576,11 +576,12 @@ def _action_clean(target, source, env):
 # ── Up-version ────────────────────────────────────────────────────────────────
 # `scons up-version [bump=patch|minor|major]` — sobe o semver em pyproject.toml
 # (fonte única — backend/version.py lê de lá via importlib.metadata) e propaga
-# pro package.json do electron/services. NÃO grava hash nenhum
-# nesses arquivos: o `buildVersion` (semver + hash numérico do commit, pro
-# recurso de versão do .exe/.msi) é só impresso aqui — quem usa é
-# `scons release-<os>` na hora do build. company/ fica de fora (não tem
-# version própria, é site separado do app).
+# pro package.json do electron/services, sincroniza o venv (`uv sync` — sem
+# isso o importlib.metadata ficaria com a versão antiga em cache), builda o
+# instalador do SO atual e publica no canal de update (R2 + KV) que
+# `services/src/updates/worker.ts` serve. É esse o propósito do comando: sair
+# de "versão bumped" pra "versão publicada" numa única chamada. company/ fica
+# de fora (não tem version própria, é site separado do app).
 
 def _read_pyproject_version(path: str) -> tuple[int, int, int]:
     text = open(path, encoding="utf-8").read()
@@ -652,6 +653,11 @@ def _action_up_version(target, source, env):
     for pkg_path in package_json_paths:
         _write_package_json_version(pkg_path, new_version_str)
 
+    # `get_vectora_version()` (backend/version.py) lê via importlib.metadata —
+    # sem re-sincronizar o venv, o dist-info instalado ficaria com a versão
+    # antiga em cache e o build empacotaria o número errado.
+    _run(["uv", "sync"], cwd=VECTORA)
+
     subprocess.run(
         ["git", "add", pyproject_path, *package_json_paths], cwd=ROOT, check=True
     )
@@ -665,24 +671,35 @@ def _action_up_version(target, source, env):
     short_hash = _git_short_hash()
     hash_num = _numeric_build_hash(short_hash)
     build_version = f"{new_version_str}.{hash_num}"
+    os.environ["VECTORA_BUILD_VERSION"] = build_version
 
     print(f">> versão {'.'.join(str(p) for p in old_version)} → {new_version_str}")
     print(f">> commit + tag v{new_version_str} criados (sem push — manual)")
-    print(f">> buildVersion (p/ electron-builder --config.buildVersion=...): {build_version}")
-    print(">> Próximos passos:")
-    print(f">>   scons release-<os>")
-    print(
-        f">>   pnpm --dir services run release -- --version={new_version_str}"
-    )
+    print(f">> buildVersion: {build_version}")
+
+    platform = {"win32": "win", "darwin": "mac"}.get(sys.platform, "linux")
+    print(f">> buildando instalador ({platform}) para publicar no canal de update...")
+    _action_build_chat(target, source, env)
+    _action_build_nuitka(target, source, env)
+    _action_install_desktop(target, source, env)
+    _action_build_desktop(target, source, env)
+    _action_package(target, source, env, platform)
+
+    with _open_log("up-version-publish") as log:
+        _pnpm_install_if_needed("services", log)
+        _run(
+            [PNPM, "--dir", "services", "run", "release", "--", f"--version={new_version_str}"],
+            log=log,
+        )
+    print(f">> publicado no canal de update: v{new_version_str} ({platform})")
 
 
 # ── Prod (deploy) ─────────────────────────────────────────────────────────────
 # `scons prod` — deploy de produção da borda web/edge do monorepo: docs
 # (Vercel, docs.vectora.company), company (Vercel, vectora.company) e services
 # (Cloudflare Worker único: relay + updates). NÃO cobre o app desktop — isso é
-# `scons release-<os>` + `pnpm --dir services run release -- --version=X.Y.Z`
-# (publica os instaladores no R2 e atualiza o canal no KV), que é um fluxo
-# separado disparado manualmente depois de um `scons up-version`.
+# `scons up-version`, que já builda o instalador do SO atual e publica no
+# canal de update (R2 + KV) como parte do próprio bump de versão.
 #
 # Requer `vercel` e `wrangler` autenticados localmente (ambos já usados nesta
 # máquina) e os projetos docs/company já linkados via `vercel link`
@@ -714,7 +731,8 @@ def _action_help(target, source, env):
     scons release-mac      instalador macOS (.dmg universal)
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
     scons up-version [bump=patch|minor|major]
-                           bump de versão (pyproject.toml + package.json) + tag git
+                           bump de versão + build do instalador do SO atual +
+                           publica no canal de update (R2 + KV)
     scons prod             deploy de produção: docs + company (Vercel) + services (Worker)
 
   Build
