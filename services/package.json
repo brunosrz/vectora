@@ -1,0 +1,33 @@
+{
+  "name": "vectora-services",
+  "version": "0.1.2",
+  "private": true,
+  "description": "Cloudflare Worker único: relay (OAuth/webhooks pro desktop) + updates (distribuição de releases) + auth/billing/license/gdpr/rag-library/registry (próximas fases).",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "release": "tsx scripts/release.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.0",
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@vitest/coverage-istanbul": "^4.1.9",
+    "tsx": "^4.22.5",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "wrangler": "^4.107.0"
+  },
+  "dependencies": {
+    "@react-email/render": "^2.0.9",
+    "hono": "^4.12.27",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "stripe": "^22.3.0",
+    "yaml": "^2.9.0"
+  }
+}

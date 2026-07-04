@@ -21,8 +21,7 @@ function CookiesPage() {
       <p>O Vectora utiliza apenas cookies estritamente necessários:</p>
       <ul>
         <li>
-          <strong>sb-access-token / sb-refresh-token</strong> — Autenticação
-          Supabase. HTTPOnly, Secure.
+          <strong>vsession</strong> — Autenticação Vectora. HTTPOnly, Secure.
         </li>
         <li>
           <strong>cf_clearance</strong> — Verificação Cloudflare Turnstile

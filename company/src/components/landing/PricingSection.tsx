@@ -16,7 +16,6 @@ const FREE = {
     m.pricing_feat_local_tools,
     m.pricing_feat_rag_unlimited,
     m.pricing_feat_no_account,
-    m.pricing_feat_sdk_standard,
   ],
 };
 

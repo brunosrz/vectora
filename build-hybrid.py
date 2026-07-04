@@ -116,6 +116,7 @@ def main() -> None:
             # (delta real de poucos MB, não 1.5GB). Não muda a segurança: backend.pyd
             # continua C, libs continuam Python bytecode.
             "--onedir",
+            "--noconfirm",
             "--name=vectora",
             f"--distpath={ROOT / 'dist'}",
             f"--workpath={ROOT / 'build' / 'pyinstaller'}",

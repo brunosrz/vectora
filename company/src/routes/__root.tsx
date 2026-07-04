@@ -4,13 +4,12 @@ import {
   createRootRouteWithContext,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { Toaster } from "sonner";
 import Devtools from "#/components/shared/Devtools";
 import { getLocale } from "#/paraglide/runtime";
 import { m } from "#/paraglide/messages";
 import { GA4_ID } from "#/lib/analytics/ga4";
-import { initAuthListener } from "#/store/auth";
+import { getSession } from "#/server/fns/auth";
 import { THEME_INIT_SCRIPT } from "#/lib/theme";
 import Header from "#/components/shared/Header";
 import Footer from "#/components/shared/Footer";
@@ -27,6 +26,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("lang", getLocale());
     }
+    const session = await getSession();
+    return { session };
   },
 
   head: () => {
@@ -99,11 +100,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const cleanup = initAuthListener();
-    return cleanup;
-  }, []);
-
+  const { session } = Route.useRouteContext();
   const { location } = useRouterState();
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isAuth =
@@ -119,7 +116,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {!isDashboard && !isAuth && <Header />}
+        {!isDashboard && !isAuth && <Header session={session} />}
         {children}
         {!isDashboard && !isAuth && <Footer />}
         <CookieConsent />

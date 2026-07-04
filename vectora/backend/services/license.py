@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 LicenseTier = Literal["free", "pro"]
 LicenseStatus = Literal["active", "trial", "expired", "revoked", "unknown"]
 
-DEFAULT_LICENSE_URL = "https://vectora.company/functions/v1/validate-license"
+DEFAULT_LICENSE_URL = "https://services.vectora.company/license/validate"
 CACHE_PATH = Path.home() / ".vectora" / "license_cache.json"
 CONFIG_PATH = Path.home() / ".vectora" / "config.toml"
 

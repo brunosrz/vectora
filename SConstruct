@@ -7,23 +7,26 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons release-win   → instalador Windows (.msi + .exe NSIS)
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
-    scons up-version [bump=patch|minor|major] → bump de versão + tag git
+    scons up-version [bump=patch|minor|major] → bump + build do instalador + publica no update
+    scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
     scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint+eslint
     scons docker        → sobe PostgreSQL + Redis + Qdrant via docker compose
     scons clean         → remove outputs de build
 
-Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock)
+Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock), Hugo (extended) no PATH
 Instalar SCons: pip install scons (ou uv add --dev scons)
 
 Subprojetos cobertos por lint e tests:
     vectora/        Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
-    relay/          TypeScript (tsc, vitest)
     company/        TypeScript (eslint, tsc, vitest)
     electron/       TypeScript (vitest — cookie-utils e lifecycle puro)
-    docs/           TypeScript (tsc) — sem testes
-    update-server/  TypeScript (tsc, vitest)
+    docs/           Hugo + Hextra (build check via `hugo --gc --minify`) — sem
+                    testes; era Docusaurus, migrado pra Hugo
+    services/       TypeScript (tsc, vitest) — relay + updates unificados
+                    (era relay/ + update-server/, ver Fase A do plano de
+                    unificação)
 """
 
 import base64
@@ -41,11 +44,10 @@ import tempfile
 ROOT = Dir(".").abspath
 
 # Subprojetos
-VECTORA = os.path.join(ROOT, "vectora")
-RELAY   = os.path.join(ROOT, "relay")
-COMPANY = os.path.join(ROOT, "company")
-DOCS    = os.path.join(ROOT, "docs")
-UPDATE  = os.path.join(ROOT, "update-server")
+VECTORA  = os.path.join(ROOT, "vectora")
+COMPANY  = os.path.join(ROOT, "company")
+DOCS     = os.path.join(ROOT, "docs")
+SERVICES = os.path.join(ROOT, "services")
 
 _ANSI_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
@@ -59,7 +61,40 @@ def _find_pnpm() -> str:
     return shutil.which("pnpm") or "pnpm"
 
 
+def _find_bin(name: str) -> str:
+    if sys.platform == "win32":
+        for candidate in (f"{name}.cmd", f"{name}.exe", name):
+            found = shutil.which(candidate)
+            if found:
+                return found
+    return shutil.which(name) or name
+
+
 PNPM = _find_pnpm()
+
+
+def _find_hugo() -> str:
+    found = shutil.which("hugo") or shutil.which("hugo.exe")
+    if found:
+        return found
+    # winget instala fora do PATH da sessão atual até reiniciar o shell —
+    # cai no caminho padrão do pacote Hugo.Hugo.Extended no Windows.
+    if sys.platform == "win32":
+        packages = os.path.join(
+            os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WinGet", "Packages"
+        )
+        if os.path.isdir(packages):
+            for name in os.listdir(packages):
+                if name.startswith("Hugo.Hugo.Extended_"):
+                    candidate = os.path.join(packages, name, "hugo.exe")
+                    if os.path.isfile(candidate):
+                        return candidate
+    return "hugo"
+
+
+HUGO     = _find_hugo()
+VERCEL   = _find_bin("vercel")
+WRANGLER = _find_bin("wrangler")
 
 
 def _run(
@@ -369,19 +404,18 @@ def _action_lint(target, source, env):
         # `typecheck` = i18n:compile (paraglide) + tsr generate + tsc --noEmit
         _run([PNPM, "--dir", "vectora/frontend", "run", "typecheck"], log=log)
         _run([PNPM, "--dir", "vectora/frontend", "exec", "oxlint"], log=log)
-        # ── relay ─────────────────────────────────────────────────────────────
-        _pnpm_install_if_needed("relay", log)
-        _run([PNPM, "--dir", "relay", "run", "typecheck"], log=log)
         # ── company ───────────────────────────────────────────────────────────
         _pnpm_install_if_needed("company", log)
         _run([PNPM, "--dir", "company", "run", "lint"], log=log)
         _run([PNPM, "--dir", "company", "run", "typecheck"], log=log)
-        # ── docs ──────────────────────────────────────────────────────────────
-        _pnpm_install_if_needed("docs", log)
-        _run([PNPM, "--dir", "docs", "run", "typecheck"], log=log)
-        # ── update-server ─────────────────────────────────────────────────────
-        _pnpm_install_if_needed("update-server", log)
-        _run([PNPM, "--dir", "update-server", "exec", "tsc", "--noEmit"], log=log)
+        # ── docs (Hugo + Hextra) ─────────────────────────────────────────────
+        # Sem typecheck TS aqui — o gate é o próprio build do site. `hugo build`
+        # já resolve o módulo Hextra pinado em go.mod sozinho — não rodar
+        # `hugo mod get` aqui, que faz upgrade do pin como side-effect.
+        _run([HUGO, "--gc", "--minify", "--destination", "public"], log=log, cwd=DOCS)
+        # ── services (relay + updates unificados) ──────────────────────────────
+        _pnpm_install_if_needed("services", log)
+        _run([PNPM, "--dir", "services", "exec", "tsc", "--noEmit"], log=log)
     print("\n>> log completo (limpo) em .scons-logs/lint.txt")
 
 
@@ -407,8 +441,8 @@ def _action_tests_storage(target, source, env):
 
 
 def _run_full_suite(log, *, coverage: bool):
-    """Suíte completa: vectora (vitest + pytest) + relay + company + electron
-    + update-server (vitest).
+    """Suíte completa: vectora (vitest + pytest) + company + electron
+    + services (vitest — relay + updates unificados).
 
     docs não tem testes — coberto só pelo lint (typecheck).
 
@@ -435,10 +469,6 @@ def _run_full_suite(log, *, coverage: bool):
         ]
     _run(pytest_cmd, log=log, cwd=VECTORA)
 
-    # ── relay ─────────────────────────────────────────────────────────────────
-    _pnpm_install_if_needed("relay", log)
-    _run([PNPM, "--dir", "relay", "run", "test"], log=log)
-
     # ── company ───────────────────────────────────────────────────────────────
     _pnpm_install_if_needed("company", log)
     _run([PNPM, "--dir", "company", "run", "test"], log=log)
@@ -447,9 +477,12 @@ def _run_full_suite(log, *, coverage: bool):
     _pnpm_install_if_needed("vectora/electron", log)
     _run([PNPM, "--dir", "vectora/electron", "run", "test"], log=log)
 
-    # ── update-server (worker.ts + scripts/release.ts) ─────────────────────
-    _pnpm_install_if_needed("update-server", log)
-    _run([PNPM, "--dir", "update-server", "run", "test"], log=log)
+    # ── services (relay + updates unificados; worker.ts + scripts/release.ts) ─
+    _pnpm_install_if_needed("services", log)
+    services_test_cmd = [PNPM, "--dir", "services", "exec", "vitest", "run"]
+    if coverage:
+        services_test_cmd.append("--coverage")
+    _run(services_test_cmd, log=log)
 
 
 def _action_tests(target, source, env):
@@ -462,7 +495,10 @@ def _action_coverage(target, source, env):
     with _open_log("coverage") as log:
         _run_full_suite(log, coverage=True)
     print("\n>> log completo (limpo) em .scons-logs/coverage.txt")
-    print(">> cobertura HTML: vectora/frontend/coverage/index.html e vectora/htmlcov/index.html")
+    print(
+        ">> cobertura HTML: vectora/frontend/coverage/index.html, "
+        "vectora/htmlcov/index.html e services/coverage/index.html"
+    )
 
 
 # ── Docker ────────────────────────────────────────────────────────────────────
@@ -527,22 +563,28 @@ def _action_clean(target, source, env):
         "vectora/frontend/out",
         "vectora/electron/dist",
         "vectora/electron/dist-electron",
+        "docs/public",
+        "docs/resources",
     ]
     for path in paths:
         full = os.path.join(ROOT, path.replace("/", os.sep))
-        if os.path.exists(full):
+        if os.path.isdir(full):
             shutil.rmtree(full)
+            print(f">> removido: {path}")
+        elif os.path.isfile(full):
+            os.remove(full)
             print(f">> removido: {path}")
 
 
 # ── Up-version ────────────────────────────────────────────────────────────────
 # `scons up-version [bump=patch|minor|major]` — sobe o semver em pyproject.toml
 # (fonte única — backend/version.py lê de lá via importlib.metadata) e propaga
-# pro package.json do electron/relay/update-server. NÃO grava hash nenhum
-# nesses arquivos: o `buildVersion` (semver + hash numérico do commit, pro
-# recurso de versão do .exe/.msi) é só impresso aqui — quem usa é
-# `scons release-<os>` na hora do build. company/ fica de fora (não tem
-# version própria, é site separado do app).
+# pro package.json do electron/services, sincroniza o venv (`uv sync` — sem
+# isso o importlib.metadata ficaria com a versão antiga em cache), builda o
+# instalador do SO atual e publica no canal de update (R2 + KV) que
+# `services/src/updates/worker.ts` serve. É esse o propósito do comando: sair
+# de "versão bumped" pra "versão publicada" numa única chamada. company/ fica
+# de fora (não tem version própria, é site separado do app).
 
 def _read_pyproject_version(path: str) -> tuple[int, int, int]:
     text = open(path, encoding="utf-8").read()
@@ -603,8 +645,7 @@ def _action_up_version(target, source, env):
     pyproject_path = os.path.join(VECTORA, "pyproject.toml")
     package_json_paths = [
         os.path.join(VECTORA, "electron", "package.json"),
-        os.path.join(RELAY, "package.json"),
-        os.path.join(UPDATE, "package.json"),
+        os.path.join(SERVICES, "package.json"),
     ]
 
     old_version = _read_pyproject_version(pyproject_path)
@@ -614,6 +655,11 @@ def _action_up_version(target, source, env):
     _write_pyproject_version(pyproject_path, new_version_str)
     for pkg_path in package_json_paths:
         _write_package_json_version(pkg_path, new_version_str)
+
+    # `get_vectora_version()` (backend/version.py) lê via importlib.metadata —
+    # sem re-sincronizar o venv, o dist-info instalado ficaria com a versão
+    # antiga em cache e o build empacotaria o número errado.
+    _run(["uv", "sync"], cwd=VECTORA)
 
     subprocess.run(
         ["git", "add", pyproject_path, *package_json_paths], cwd=ROOT, check=True
@@ -628,15 +674,51 @@ def _action_up_version(target, source, env):
     short_hash = _git_short_hash()
     hash_num = _numeric_build_hash(short_hash)
     build_version = f"{new_version_str}.{hash_num}"
+    os.environ["VECTORA_BUILD_VERSION"] = build_version
 
     print(f">> versão {'.'.join(str(p) for p in old_version)} → {new_version_str}")
     print(f">> commit + tag v{new_version_str} criados (sem push — manual)")
-    print(f">> buildVersion (p/ electron-builder --config.buildVersion=...): {build_version}")
-    print(">> Próximos passos:")
-    print(f">>   scons release-<os>")
+    print(f">> buildVersion: {build_version}")
+
+    platform = {"win32": "win", "darwin": "mac"}.get(sys.platform, "linux")
+    print(f">> buildando instalador ({platform}) para publicar no canal de update...")
+    _action_build_chat(target, source, env)
+    _action_build_nuitka(target, source, env)
+    _action_install_desktop(target, source, env)
+    _action_build_desktop(target, source, env)
+    _action_package(target, source, env, platform)
+
+    with _open_log("up-version-publish") as log:
+        _pnpm_install_if_needed("services", log)
+        _run(
+            [PNPM, "--dir", "services", "run", "release", "--", f"--version={new_version_str}"],
+            log=log,
+        )
+    print(f">> publicado no canal de update: v{new_version_str} ({platform})")
+
+
+# ── Prod (deploy) ─────────────────────────────────────────────────────────────
+# `scons prod` — deploy de produção da borda web/edge do monorepo: docs
+# (Vercel, docs.vectora.company), company (Vercel, vectora.company) e services
+# (Cloudflare Worker único: relay + updates). NÃO cobre o app desktop — isso é
+# `scons up-version`, que já builda o instalador do SO atual e publica no
+# canal de update (R2 + KV) como parte do próprio bump de versão.
+#
+# Requer `vercel` e `wrangler` autenticados localmente (ambos já usados nesta
+# máquina) e os projetos docs/company já linkados via `vercel link`
+# (`.vercel/project.json` — gitignored, um link por máquina de dev).
+
+
+def _action_prod(target, source, env):
+    with _open_log("prod") as log:
+        _run([VERCEL, "--prod", "--yes"], log=log, cwd=DOCS)
+        _run([VERCEL, "--prod", "--yes"], log=log, cwd=COMPANY)
+        _run([WRANGLER, "deploy"], log=log, cwd=SERVICES)
     print(
-        f">>   pnpm --dir update-server run release -- --version={new_version_str}"
+        "\n>> deploy de produção concluído: "
+        "docs.vectora.company + vectora.company + services (Cloudflare Worker)"
     )
+    print(">> log completo em .scons-logs/prod.txt")
 
 
 # ── Help ──────────────────────────────────────────────────────────────────────
@@ -652,18 +734,20 @@ def _action_help(target, source, env):
     scons release-mac      instalador macOS (.dmg universal)
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
     scons up-version [bump=patch|minor|major]
-                           bump de versão (pyproject.toml + package.json) + tag git
+                           bump de versão + build do instalador do SO atual +
+                           publica no canal de update (R2 + KV)
+    scons prod             deploy de produção: docs + company (Vercel) + services (Worker)
 
   Build
     scons frontend         só o build do frontend (vectora/frontend/dist/)
     scons docker           sobe infraestrutura (PostgreSQL, Redis, Qdrant)
 
   Qualidade — cobrem todos os subprojetos
-    scons tests            suíte completa: vectora + relay + company (sem cobertura)
+    scons tests            suíte completa: vectora + services + company (sem cobertura)
     scons coverage         a mesma suíte COM relatório de cobertura
     scons tests-storage    só testes de storage (Postgres, Redis, Qdrant, SQLite, LanceDB)
-    scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + relay (tsc)
-                           + company (eslint+tsc) + docs (tsc) + update-server (tsc)
+    scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + company (eslint+tsc)
+                           + docs (tsc) + services (tsc)
     scons clean            remove todos os outputs de build
 """)
     sys.stdout.flush()
@@ -703,6 +787,7 @@ _cmd("release-linux", lambda target, source, env: _action_package(target, source
 _cmd("release",       lambda target, source, env: _action_package(target, source, env),          deps=_FULL_DEPS)
 
 _cmd("up-version",    _action_up_version)
+_cmd("prod",           _action_prod)
 
 _cmd("tests",         _action_tests)
 _cmd("coverage",      _action_coverage)

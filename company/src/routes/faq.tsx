@@ -10,33 +10,34 @@ const FAQ_DATA = {
     {
       question: "O que é o Vectora?",
       answer:
-        "Vectora é uma plataforma self-hosted de agentes de IA com RAG avançado para times de engenharia.",
+        "Vectora é um agente de IA self-hosted com RAG híbrido, Context Graph nativo e chat web multi-usuário — roda no seu próprio computador ou servidor, nunca numa nuvem da Vectora.",
     },
     {
       question: "Como funciona o self-hosting?",
       answer:
-        "Você instala o Vectora no seu próprio servidor com um único comando Docker. Seus dados nunca saem da sua infra.",
+        "Você baixa e instala o Vectora (Windows, macOS ou Linux) — é um app nativo, não uma imagem Docker. Times que precisam do chat web compartilhado normalmente rodam a versão Linux num VPS próprio; Docker só entra pra subir a infraestrutura opcional do modo de storage 'complete' (Postgres+Qdrant+Redis), nunca pro Vectora em si.",
     },
     {
       question: "Preciso de GPU para rodar?",
       answer:
-        "Não. Vectora usa a API Cohere para embeddings e LLMs externos. Uma VPS com 2 vCPUs e 4 GB RAM é suficiente.",
+        "Não. O Vectora usa LLMs e embeddings via API (Anthropic, OpenAI, Google, Cohere) ou Ollama local. Pra uso individual, qualquer notebook recente roda bem; num VPS de time, 2 vCPUs e 4 GB RAM já são suficientes.",
     },
   ],
   Instalação: [
     {
       question: "Quais sistemas operacionais são suportados?",
-      answer: "Qualquer VPS Linux com Docker. Ubuntu 22.04+ é recomendado.",
+      answer:
+        "Windows 10+, macOS 12+ e Linux (Ubuntu 20.04+/Debian 11+/Fedora 35+) — instaladores nativos pros três, com atualização automática embutida.",
     },
     {
-      question: "Quais provedores de cloud funcionam?",
+      question: "Como faço deploy num servidor para o time?",
       answer:
-        "AWS, GCP, Hetzner, DigitalOcean, Linode ou qualquer servidor com Docker e acesso à internet.",
+        "Qualquer VPS Linux com 2+ vCPUs e 4+ GB RAM — AWS, GCP, Hetzner, DigitalOcean ou seu provedor preferido. É o mesmo instalador Linux (.AppImage/.deb/.rpm), só que rodando num servidor em vez do seu desktop.",
     },
     {
       question: "Quanto tempo leva a instalação?",
       answer:
-        "Menos de 5 minutos. Um único arquivo docker-compose.yml sobe toda a stack.",
+        "Menos de 5 minutos: baixe o instalador do seu sistema, abra o app e crie sua conta root na primeira execução. O modo de storage 'complete' (opcional, pra quem quer escalar além do SQLite+LanceDB padrão) sobe via um docker-compose separado — isso sim leva alguns minutos a mais.",
     },
   ],
   Planos: [
@@ -70,7 +71,7 @@ const FAQ_DATA = {
     {
       question: "Como funciona a autenticação?",
       answer:
-        "No Free, uso local sem login. Para o Pro (conta obrigatória), Supabase Auth com suporte a email/senha, magic link e SSO/SAML.",
+        "No Free, uso local sem login. Para o Pro (conta obrigatória), autenticação própria da Vectora com suporte a email/senha e magic link.",
     },
   ],
   Técnico: [

@@ -21,8 +21,8 @@ export const Route = createFileRoute("/login")({
 });
 
 const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
-  "Invalid login credentials": m.error_invalid_credentials,
-  "Email not confirmed": m.error_email_not_confirmed,
+  invalid_credentials: m.error_invalid_credentials,
+  email_not_verified: m.error_email_not_confirmed,
 };
 
 function LoginPage() {
@@ -41,7 +41,7 @@ function LoginPage() {
     onError: (err: Error) => {
       const msgFn = AUTH_ERROR_MAP[err.message];
       toast.error(msgFn ? msgFn() : m.error_generic());
-      if (err.message === "Invalid login credentials") setShowSignupHint(true);
+      if (err.message === "invalid_credentials") setShowSignupHint(true);
     },
   });
 

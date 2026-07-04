@@ -16,7 +16,7 @@ export const Route = createFileRoute("/privacy")({
 
 function PrivacyPage() {
   return (
-    <LegalPage title="Política de Privacidade" lastUpdated="2025-01-01">
+    <LegalPage title="Política de Privacidade" lastUpdated="2026-07-04">
       <h2>1. Coleta de dados</h2>
       <p>
         O Vectora é uma plataforma self-hosted. Todos os dados — conversas,
@@ -34,7 +34,9 @@ function PrivacyPage() {
       <p>Usamos os dados para:</p>
       <ul>
         <li>Autenticação e gerenciamento de licença</li>
-        <li>Comunicações sobre a conta (faturas, alertas de trial, suporte)</li>
+        <li>
+          Comunicações sobre a conta (faturas, status de pagamento, suporte)
+        </li>
         <li>Análise de uso agregada e anônima via Plausible (self-hosted)</li>
       </ul>
 
