@@ -98,27 +98,29 @@ function getButtons(container: HTMLElement) {
 
 describe("WorkbenchNavBar — BETA_TABS e ComingSoonTabButton", () => {
   describe("com enableFeaturesBeta = false (comportamento de produção)", () => {
-    it("renderiza botão para context_graph que é clicável (não disabled)", () => {
+    it("renderiza botão para context_graph marcado como aria-disabled", () => {
       const { container } = renderNav(false);
       const btns = getButtons(container);
       // 3 tabs no mock: files (0), context_graph (1), terminal (2)
-      expect(btns[1]).not.toBeDisabled();
+      expect(btns[1].getAttribute("aria-disabled")).toBe("true");
     });
 
-    it("clicar em context_graph despacha toast info com 'em breve'", () => {
+    it("context_graph fica fora da ordem de tab (tabIndex=-1)", () => {
       const { container } = renderNav(false);
-      const btns = getButtons(container);
-      fireEvent.click(btns[1]);
-      expect(mockPush).toHaveBeenCalledOnce();
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.objectContaining({ level: "info" }),
-      );
+      expect(getButtons(container)[1].tabIndex).toBe(-1);
     });
 
-    it("clicar em context_graph NÃO chama selectTab", () => {
+    it("hover em context_graph mostra tooltip 'em breve'", () => {
+      const { container } = renderNav(false);
+      const tooltips = container.querySelectorAll("[data-tooltip]");
+      expect(tooltips[1]?.textContent).toBe("workbench_tab_coming_soon");
+    });
+
+    it("clicar em context_graph NÃO chama selectTab nem despacha toast", () => {
       const { container } = renderNav(false);
       fireEvent.click(getButtons(container)[1]);
       expect(mockSelectTab).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
     });
 
     it("clicar em tab normal (files) chama selectTab e NÃO despacha toast", () => {
@@ -136,10 +138,11 @@ describe("WorkbenchNavBar — BETA_TABS e ComingSoonTabButton", () => {
       expect(mockSelectTab).toHaveBeenCalledWith("t1", "context_graph");
     });
 
-    it("clicar em context_graph NÃO despacha toast (feature habilitada)", () => {
+    it("botão de context_graph não fica aria-disabled quando a flag está ligada", () => {
       const { container } = renderNav(true);
-      fireEvent.click(getButtons(container)[1]);
-      expect(mockPush).not.toHaveBeenCalled();
+      expect(getButtons(container)[1].hasAttribute("aria-disabled")).toBe(
+        false,
+      );
     });
   });
 
@@ -151,12 +154,13 @@ describe("WorkbenchNavBar — BETA_TABS e ComingSoonTabButton", () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it("toast despacha apenas uma vez por clique (sem duplicação)", () => {
+    it("múltiplos cliques em context_graph continuam sem efeito (sem toast nem selectTab)", () => {
       const { container } = renderNav(false);
       const btn = getButtons(container)[1];
       fireEvent.click(btn);
       fireEvent.click(btn);
-      expect(mockPush).toHaveBeenCalledTimes(2);
+      expect(mockSelectTab).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
     });
   });
 });
@@ -166,21 +170,16 @@ describe("ComingSoonTabButton — em isolamento via WorkbenchNavBar", () => {
     featuresBeta = false;
   });
 
-  it("botão não tem atributo disabled (é clicável)", () => {
+  it("botão tem aria-disabled=true (não interativo)", () => {
     const { container } = render(<WorkbenchNavBar threadId="t2" />);
     const btns = getButtons(container);
-    expect(btns[1].hasAttribute("disabled")).toBe(false);
+    expect(btns[1].getAttribute("aria-disabled")).toBe("true");
   });
 
-  it("toast payload inclui description com o nome do tab", () => {
+  it("clicar não dispara nenhum efeito colateral (sem toast)", () => {
     const { container } = render(<WorkbenchNavBar threadId="t3" />);
     fireEvent.click(getButtons(container)[1]);
-    expect(mockPush).toHaveBeenCalledWith(
-      expect.objectContaining({
-        level: "info",
-        description: expect.any(String),
-      }),
-    );
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });
 

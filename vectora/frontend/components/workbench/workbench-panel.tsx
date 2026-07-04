@@ -56,7 +56,6 @@ import { TasksTab } from "./tabs/tasks-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
-import { useToastStore } from "@/lib/stores/toast-store";
 
 interface WorkbenchPanelProps {
   threadId: string;
@@ -117,20 +116,14 @@ const BETA_TABS = new Set<WorkbenchTab>(["context_graph"]);
 
 export function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
   const Icon = TAB_ICON[tab];
-  const label = mDyn(`workbench.tab.${tab}`);
-  const handleClick = () => {
-    useToastStore.getState().push({
-      level: "info",
-      title: m.workbench_tab_coming_soon(),
-      description: label,
-    });
-  };
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
-          onClick={handleClick}
-          className="relative flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          type="button"
+          aria-disabled="true"
+          tabIndex={-1}
+          className="relative flex items-center justify-center w-8 h-8 rounded-md cursor-default text-muted-foreground/40"
         >
           <Icon className="w-4 h-4" />
         </button>

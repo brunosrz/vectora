@@ -243,3 +243,110 @@ def test_connect_sucesso_persiste_e_valida(monkeypatch: pytest.MonkeyPatch) -> N
     # E a validação remota foi de fato chamada com o token novo.
     validate_calls = [c for c in calls if "license/validate" in c[0]]
     assert validate_calls and validate_calls[0][1]["token"] == "tok_novo"
+
+
+# ---------------------------------------------------------------------------
+# POST /license/validate-token — wizard de onboarding (pré-conta, gate VPS)
+# ---------------------------------------------------------------------------
+
+
+def test_validate_token_endpoint_exige_ausencia_de_usuarios(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from fastapi import HTTPException
+
+    monkeypatch.setattr("backend.services.auth.has_users", _async_true, raising=False)
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(
+            handler.license_validate_token(handler.ValidateTokenBody(token="tok"))
+        )
+    assert exc.value.status_code == 409
+
+
+def _async_true() -> Any:
+    async def _inner() -> bool:
+        return True
+
+    return _inner()
+
+
+def _async_false() -> Any:
+    async def _inner() -> bool:
+        return False
+
+    return _inner()
+
+
+def test_validate_token_endpoint_token_vazio(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    result = asyncio.run(
+        handler.license_validate_token(handler.ValidateTokenBody(token="  "))
+    )
+    assert result == {"valid": False, "error": "token_required"}
+
+
+def test_validate_token_endpoint_pro_persiste(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    _patch_http(
+        monkeypatch,
+        {
+            "license/validate": (
+                {
+                    "valid": True,
+                    "tier": "pro",
+                    "status": "active",
+                    "days_remaining": 30,
+                },
+                200,
+            )
+        },
+    )
+    result = asyncio.run(
+        handler.license_validate_token(handler.ValidateTokenBody(token="tok_pro"))
+    )
+    import os
+
+    assert result["valid"] is True
+    assert result["tier"] == "pro"
+    assert os.environ["VECTORA_TOKEN"] == "tok_pro"
+    # Token Pro válido é persistido — o /auth/signup seguinte já herda ele.
+    assert 'token = "tok_pro"' in lic.CONFIG_PATH.read_text(encoding="utf-8")
+
+
+def test_validate_token_endpoint_free_nao_persiste(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    _patch_http(
+        monkeypatch,
+        {
+            "license/validate": (
+                {
+                    "valid": True,
+                    "tier": "free",
+                    "status": "active",
+                    "days_remaining": 0,
+                },
+                200,
+            )
+        },
+    )
+    result = asyncio.run(
+        handler.license_validate_token(handler.ValidateTokenBody(token="tok_free"))
+    )
+    assert result["valid"] is False
+    assert result["error"] == "not_pro_tier"
+    assert not lic.CONFIG_PATH.is_file()
+
+
+def test_validate_token_endpoint_invalido(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    _patch_http(
+        monkeypatch,
+        {"license/validate": ({"valid": False, "reason": "not_found"}, 200)},
+    )
+    result = asyncio.run(
+        handler.license_validate_token(handler.ValidateTokenBody(token="tok_ruim"))
+    )
+    assert result["valid"] is False
+    assert not lic.CONFIG_PATH.is_file()

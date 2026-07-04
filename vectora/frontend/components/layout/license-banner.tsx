@@ -144,13 +144,11 @@ function computeSpec(
   if (!status || status.status === "offline") {
     return { severity: null, icon: AlertTriangle, message: "", cta: null };
   }
+  // Token deixou de ser obrigatório (é feature Pro/VPS, não requisito de uso
+  // local) — sem token configurado não é mais um estado de alerta, é o
+  // padrão esperado pra quem roda local/Free.
   if (!status.configured) {
-    return {
-      severity: "danger",
-      icon: AlertTriangle,
-      message: m.license_banner_unconfigured(),
-      cta: { label: m.license_banner_configure(), action: "configure" },
-    };
+    return { severity: null, icon: AlertTriangle, message: "", cta: null };
   }
   if (status.status === "expired" || status.status === "revoked") {
     return {

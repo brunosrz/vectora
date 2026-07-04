@@ -13,6 +13,7 @@ const NAME_MAX = 100;
 
 const searchSchema = z.object({
   invite: z.string().optional(),
+  name: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth/signup")({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/auth/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const { invite: inviteFromUrl } = Route.useSearch();
+  const { invite: inviteFromUrl, name: nameFromUrl } = Route.useSearch();
   const setUser = useAuthStore((s) => s.setUser);
 
   const schema = useMemo(
@@ -47,7 +48,7 @@ function SignUpPage() {
     [],
   );
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(nameFromUrl ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");

@@ -266,9 +266,15 @@ class Settings(BaseSettings):
     enable_mcp: bool = False
     """Enable MCP (Model Context Protocol) server integration."""
 
-    enable_features_beta: bool = True
+    enable_features_beta: bool = False
     """Habilita features em desenvolvimento (OAuth, Context Graph, Background Tasks).
     False = oculta features ainda não prontas para produção."""
+
+    local_user_name: str = ""
+    """Nome do usuário local (modo sem login, preenchido no wizard)."""
+
+    local_user_company: str = ""
+    """Empresa do usuário local (opcional, preenchida no wizard)."""
 
     max_context_tokens: int = 8000
     """Maximum tokens to keep in message history (sliding window)."""

@@ -23,6 +23,7 @@ import { DockedEditor } from "@/components/workbench/windows/docked-editor";
 import { SessionSwitcher } from "@/components/header/session-switcher";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { useWebhookWorkbench } from "@/lib/hooks/use-webhook-workbench";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
@@ -132,6 +133,7 @@ function SessionPage() {
   const chatMode = useSettingsStore((s) => s.chatMode);
   const setChatMode = useSettingsStore((s) => s.setChatMode);
   const ideMode = useSettingsStore((s) => s.ideMode);
+  const { enableFeaturesBeta } = useFeatureFlags();
   const chatSidebarWidth = useSettingsStore((s) => s.chatSidebarWidth);
   const setChatSidebarWidth = useSettingsStore((s) => s.setChatSidebarWidth);
   const sidebarWrapRef = useRef<HTMLDivElement>(null);
@@ -361,8 +363,14 @@ function SessionPage() {
       if (chatMode) {
         void navigate({ to: "/" });
       } else {
-        // Code: não herda uma sessão; reabre o modal de seleção de workspace
+        // Code: não herda uma sessão; navega pra /session/new (sem isso a
+        // rota continuava apontando pra thread já deletada, deixando o chat
+        // antigo renderizado atrás do modal) e reabre o seletor de workspace
         // (mesmo fluxo da "Nova conversa"), em vez de cair numa sessão herdada.
+        void navigate({
+          to: "/session/$threadId",
+          params: { threadId: "new" },
+        });
         setShowNewChatDialog(true);
       }
     },
@@ -496,7 +504,7 @@ function SessionPage() {
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
       <AnimatePresence mode="wait" initial={false}>
-        {ideMode && !chatMode ? (
+        {ideMode && !chatMode && enableFeaturesBeta ? (
           // ── Layout IDE: sidebars ao topo, Header só acima do DockedEditor ──
           <motion.div
             key="ide"
@@ -541,7 +549,7 @@ function SessionPage() {
                 onToggleToolCalls={() => setShowToolCalls((v) => !v)}
                 onShowShortcuts={() => setShowShortcutsDialog(true)}
                 onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-                showModeSwitch={!chatMode}
+                showModeSwitch={!chatMode && enableFeaturesBeta}
               />
               <div className="flex-1 min-h-0 overflow-hidden">
                 <DockedEditor />
@@ -668,7 +676,7 @@ function SessionPage() {
                       onToggleToolCalls={() => setShowToolCalls((v) => !v)}
                       onShowShortcuts={() => setShowShortcutsDialog(true)}
                       onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-                      showModeSwitch={!chatMode}
+                      showModeSwitch={!chatMode && enableFeaturesBeta}
                     />
                     <div className="flex-1 min-h-0">
                       <ChatInterface

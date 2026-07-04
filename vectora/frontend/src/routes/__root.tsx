@@ -17,7 +17,7 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
 
-const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/"];
+const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/", "/onboarding"];
 
 // UX-19 — `Lang` é de granularidade de idioma ("pt" cobre pt-BR/pt-PT…),
 // mas o atributo `lang` do HTML quer um código BCP-47 específico. O Vectora
@@ -60,8 +60,24 @@ function redirectToSignin(currentPath: string): never {
  * chamadas via `credentials: "include"`. O auth-store NUNCA é a fonte
  * de verdade — sempre validamos contra o backend.
  */
+/** Lê `auth_required` do backend em runtime — decidido pelo wizard
+ * (`POST /auth/setup-local`), não fixado em build-time. Sem resposta (rede
+ * offline/backend não subiu ainda), cai no `AUTH_REQUIRED` estático como
+ * fallback seguro (mesmo comportamento de antes desta mudança). */
+async function isAuthRequired(): Promise<boolean> {
+  try {
+    const res = await fetch("/settings/flags");
+    if (!res.ok) return AUTH_REQUIRED;
+    const data = (await res.json()) as { auth_required?: boolean };
+    return data.auth_required ?? AUTH_REQUIRED;
+  } catch {
+    return AUTH_REQUIRED;
+  }
+}
+
 async function ensureAuthenticated(currentPath: string): Promise<void> {
-  if (!AUTH_REQUIRED || isPublicPath(currentPath)) return;
+  if (isPublicPath(currentPath)) return;
+  if (!(await isAuthRequired())) return;
 
   // Aguarda o rehydrate do persist antes de inspecionar o store: o
   // contrato do `persist` em Zustand é assíncrono e ler o estado vazio
@@ -87,7 +103,9 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
 
   const store = useAuthStore.getState();
 
-  // Setup wizard: backend sem usuários → manda para signup.
+  // Primeiro acesso (backend sem usuários) → wizard de identidade/modo
+  // (local vs VPS), não mais direto pro signup — só quem escolhe VPS chega
+  // no signup de verdade, a partir do próprio wizard.
   try {
     const hasUsersRes = await fetch("/auth/has-users", {
       credentials: "include",
@@ -96,7 +114,7 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
       const data = (await hasUsersRes.json()) as { exists?: boolean };
       if (data.exists === false) {
         store.clearUser();
-        throw redirect({ to: "/auth/signup" });
+        throw redirect({ to: "/onboarding" });
       }
     }
   } catch (err) {

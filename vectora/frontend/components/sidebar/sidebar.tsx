@@ -4,6 +4,7 @@ import { useState, useMemo, memo, useCallback } from "react";
 import type { Thread } from "@/lib/hooks/threads";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import { groupThreads, groupThreadsByWorkspace } from "./sidebar-utils";
 import { CollapsedSidebar } from "./collapsed-sidebar";
 import { SidebarHeader } from "./sidebar-header";
@@ -12,6 +13,8 @@ import { SessionSearch } from "./session-search";
 import { SidebarModeToggle } from "./sidebar-mode-toggle";
 import { ThreadList } from "./thread-list";
 import { SidebarFooter } from "./sidebar-footer";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { m } from "@/lib/paraglide/messages";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -41,9 +44,11 @@ export const Sidebar = memo(function Sidebar({
   const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(
     () => new Set(),
   );
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const chatMode = useSettingsStore((s) => s.chatMode);
+  const ragJobs = useRagJobsStore((s) => s.jobs);
 
   // Chat e Dev são pools separados: a sidebar mostra só as sessões do modo ativo.
   // Sessões legadas sem modo são tratadas como "dev".
@@ -74,10 +79,33 @@ export const Sidebar = memo(function Sidebar({
   const handleDeleteThread = useCallback(
     (threadId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      onDeleteThread(threadId);
+      setPendingDeleteId(threadId);
     },
-    [onDeleteThread],
+    [],
   );
+
+  const pendingThread = useMemo(
+    () => threads.find((t) => t.thread_id === pendingDeleteId) ?? null,
+    [threads, pendingDeleteId],
+  );
+
+  // RAG rodando pro workspace da sessão a apagar — mostra aviso extra.
+  const pendingHasActiveRag = useMemo(() => {
+    const wsId = pendingThread?.workspace_id;
+    if (!wsId) return false;
+    return Object.values(ragJobs).some(
+      (job) =>
+        job.workspaceId === wsId &&
+        (job.status === "indexing" || job.status === "starting"),
+    );
+  }, [pendingThread, ragJobs]);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (pendingDeleteId) onDeleteThread(pendingDeleteId);
+    setPendingDeleteId(null);
+  }, [pendingDeleteId, onDeleteThread]);
+
+  const handleCancelDelete = useCallback(() => setPendingDeleteId(null), []);
 
   const handleClearSearch = useCallback(() => setSearchQuery(""), []);
 
@@ -141,6 +169,21 @@ export const Sidebar = memo(function Sidebar({
 
         <SidebarFooter />
       </aside>
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title={m.session_delete_confirm_title()}
+        description={
+          pendingHasActiveRag
+            ? `${m.session_delete_confirm_desc()} ${m.session_delete_confirm_rag_warning()}`
+            : m.session_delete_confirm_desc()
+        }
+        confirmLabel={m.session_delete_confirm()}
+        cancelLabel={m.session_delete_cancel()}
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </>
   );
 });

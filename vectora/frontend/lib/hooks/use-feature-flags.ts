@@ -6,7 +6,7 @@ interface FeatureFlags {
   enableFeaturesBeta: boolean;
 }
 
-const DEFAULT_FLAGS: FeatureFlags = { enableFeaturesBeta: true };
+const DEFAULT_FLAGS: FeatureFlags = { enableFeaturesBeta: false };
 
 let flagsCache: FeatureFlags | null = null;
 let flagsRequest: Promise<FeatureFlags> | null = null;

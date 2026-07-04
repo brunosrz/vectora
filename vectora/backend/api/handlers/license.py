@@ -105,6 +105,47 @@ async def license_validate() -> dict:
     return {"valid": True, "configured": True, **info.to_dict()}
 
 
+class ValidateTokenBody(BaseModel):
+    token: str
+
+
+@router.post("/validate-token")
+async def license_validate_token(body: ValidateTokenBody) -> dict:
+    """Valida um VECTORA_TOKEN ad-hoc, antes de existir qualquer conta.
+
+    Usado pelo wizard de onboarding pra checar o token Pro no passo VPS
+    ANTES do signup de verdade acontecer. Só permitido no primeiro acesso
+    (instância ainda sem nenhum usuário) — mesma guarda de
+    ``/auth/setup-local``. Se válido e ``tier == "pro"``, persiste (o
+    ``/auth/signup`` seguinte já herda o token configurado); se inválido ou
+    Free, não persiste em disco (só fica no ambiente do processo atual).
+    """
+    from backend.services.auth import has_users
+
+    if await has_users():
+        raise HTTPException(
+            status_code=409,
+            detail="Instância já configurada — validação avulsa só vale no primeiro acesso.",
+        )
+
+    token = body.token.strip()
+    if not token:
+        return {"valid": False, "error": "token_required"}
+
+    os.environ["VECTORA_TOKEN"] = token
+    clear_license_cache()
+    try:
+        info = await validate_license_async(force=True)
+    except LicenseError as exc:
+        return {"valid": False, "error": str(exc)}
+
+    if info.tier != "pro":
+        return {"valid": False, "error": "not_pro_tier", **info.to_dict()}
+
+    write_token_to_config(token)
+    return {"valid": True, **info.to_dict()}
+
+
 class ConnectBody(BaseModel):
     """Credenciais da conta vectora.company para conectar a licença."""
 
@@ -264,7 +305,7 @@ def _vectora_token() -> str:
 
 
 @router.post("/portal")
-async def license_portal(request: Request) -> dict:
+async def license_portal() -> dict:
     """Cria sessão de Customer Portal (Stripe INTL ou Asaas BR).
 
     Repassa o ``VECTORA_TOKEN`` para ``services.vectora.company/license/portal``,

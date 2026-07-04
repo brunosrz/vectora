@@ -509,6 +509,15 @@ class HasUsersResponse(BaseModel):
     exists: bool
 
 
+class SetupLocalRequest(BaseModel):
+    name: str
+    company: str = ""
+
+
+class SetupLocalResponse(BaseModel):
+    ok: bool
+
+
 class UserListResponse(BaseModel):
     users: list[UserResponse]
 

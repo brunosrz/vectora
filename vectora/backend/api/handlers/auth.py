@@ -19,6 +19,8 @@ Endpoints:
 from __future__ import annotations
 
 import logging
+import os
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
@@ -29,6 +31,8 @@ from backend.api.schemas import (
     HasUsersResponse,
     InviteValidationResponse,
     RefreshRequest,
+    SetupLocalRequest,
+    SetupLocalResponse,
     SigninRequest,
     SignoutRequest,
     SignupRequest,
@@ -131,6 +135,60 @@ async def has_users_endpoint() -> HasUsersResponse:
     return HasUsersResponse(exists=await has_users())
 
 
+def _env_file() -> Path:
+    p = Path.home() / ".vectora" / ".env"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+@router.post("/setup-local", response_model=SetupLocalResponse)
+async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
+    """Configura a instância pra modo local (uso no próprio PC, sem conta).
+
+    Só permitido no primeiro acesso (instância ainda sem nenhum usuário) —
+    evita que a rota pública sirva de vetor pra desligar auth numa instância
+    multi-usuário já configurada. Persiste ``VECTORA_AUTH_REQUIRED=false`` em
+    ``~/.vectora/.env`` (mesmo mecanismo de `admin.py::patch_api_keys`) e o
+    nome/empresa do usuário local, sem criar linha na tabela `users` — daqui
+    pra frente o `AuthMiddleware` libera todas as rotas e os handlers usam o
+    fallback `"local"` (ver `chat.py::_user_id_from_request`) como user_id.
+    """
+    from backend.cli.keys import upsert_env_key
+    from backend.services.auth import has_users
+
+    if await has_users():
+        raise HTTPException(
+            status_code=409,
+            detail="Instância já configurada — modo local só vale no primeiro acesso.",
+        )
+
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Nome é obrigatório.")
+    company = body.company.strip()
+
+    env_file = _env_file()
+    upsert_env_key(env_file, "VECTORA_AUTH_REQUIRED", "false")
+    upsert_env_key(env_file, "VECTORA_LOCAL_USER_NAME", name)
+    if company:
+        upsert_env_key(env_file, "VECTORA_LOCAL_USER_COMPANY", company)
+
+    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+    os.environ["VECTORA_LOCAL_USER_NAME"] = name
+    if company:
+        os.environ["VECTORA_LOCAL_USER_COMPANY"] = company
+
+    from backend.settings import settings as settings_singleton
+
+    object.__setattr__(settings_singleton, "local_user_name", name)
+    object.__setattr__(settings_singleton, "local_user_company", company)
+
+    logger.info(
+        "auth/setup-local: instância configurada em modo local (auth desabilitado)"
+    )
+    return SetupLocalResponse(ok=True)
+
+
 @router.get("/invite/{token}", response_model=InviteValidationResponse)
 async def validate_invite_endpoint(token: str) -> InviteValidationResponse:
     """Valida um token de convite para a página de signup pré-verificar."""
@@ -145,7 +203,6 @@ async def validate_invite_endpoint(token: str) -> InviteValidationResponse:
 @router.post("/signup", response_model=TokenResponse)
 async def signup_endpoint(
     body: SignupRequest,
-    request: Request,
     response: Response,
 ) -> TokenResponse:
     """Cria conta.
