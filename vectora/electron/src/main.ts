@@ -27,7 +27,7 @@ import {
   ipcMain,
   nativeImage,
   protocol,
-  session,
+  safeStorage,
   shell,
 } from "electron";
 import { autoUpdater } from "electron-updater";
@@ -132,46 +132,57 @@ const _HOP_BY_HOP = new Set([
 // session.defaultSession no Cookie header para schemes customizados (vectora-app://).
 const _cookieStore = new Map<string, string>();
 
+// Persistência entre reinicializações do app: session.defaultSession.cookies
+// NÃO funciona para schemes customizados — Chromium recusa com
+// "EXCLUDE_NONCOOKIEABLE_SCHEME" (cookies só são aceitos para schemes padrão
+// http/https/ws/wss, mesmo com registerSchemesAsPrivileged). Sem persistência
+// nenhuma, o login era perdido a cada restart do app. Grava um arquivo local
+// (criptografado via safeStorage — DPAPI no Windows/Keychain no macOS — quando
+// disponível) em vez de depender do cookie jar do Chromium.
+const _SESSION_STORE_FILE = path.join(os.homedir(), ".vectora", "session.dat");
+
+function persistCookieStore(): void {
+  try {
+    const json = JSON.stringify(Object.fromEntries(_cookieStore));
+    const data = safeStorage.isEncryptionAvailable()
+      ? safeStorage.encryptString(json)
+      : Buffer.from(json, "utf-8");
+    fs.mkdirSync(path.dirname(_SESSION_STORE_FILE), { recursive: true });
+    fs.writeFileSync(_SESSION_STORE_FILE, data);
+  } catch (err) {
+    console.error("[auth] falha ao persistir sessão:", err);
+  }
+}
+
+function loadPersistedCookieStore(): void {
+  try {
+    if (!fs.existsSync(_SESSION_STORE_FILE)) return;
+    const raw = fs.readFileSync(_SESSION_STORE_FILE);
+    const json = safeStorage.isEncryptionAvailable()
+      ? safeStorage.decryptString(raw)
+      : raw.toString("utf-8");
+    const obj = JSON.parse(json) as Record<string, string>;
+    for (const [name, value] of Object.entries(obj))
+      _cookieStore.set(name, value);
+  } catch (err) {
+    console.error("[auth] falha ao carregar sessão persistida:", err);
+  }
+}
+
 async function storeSetCookie(cookieStr: string): Promise<void> {
   const parsed = parseSetCookieHeader(cookieStr);
   if (!parsed) return;
-  const { name, value, attrs, httpOnly } = parsed;
+  const { name, attrs, value } = parsed;
 
   // Max-Age=0 → deletar o cookie (logout / expiração forçada).
   if (attrs["max-age"] !== undefined && parseInt(attrs["max-age"], 10) <= 0) {
     _cookieStore.delete(name);
-    try {
-      await session.defaultSession.cookies.remove(`${APP_SCHEME}://app`, name);
-    } catch {}
+    persistCookieStore();
     return;
   }
 
   _cookieStore.set(name, value);
-
-  const details: Electron.CookiesSetDetails = {
-    url: `${APP_SCHEME}://app`,
-    name,
-    value,
-    httpOnly,
-    secure: false,
-    path: attrs["path"] ?? "/",
-    sameSite:
-      attrs["samesite"] === "strict"
-        ? "strict"
-        : attrs["samesite"] === "none"
-          ? "no_restriction"
-          : "lax",
-  };
-  if (attrs["max-age"] !== undefined) {
-    details.expirationDate =
-      Math.floor(Date.now() / 1000) + parseInt(attrs["max-age"], 10);
-  }
-
-  try {
-    await session.defaultSession.cookies.set(details);
-  } catch (err) {
-    console.error(`[auth] falha ao armazenar cookie "${name}":`, err);
-  }
+  persistCookieStore();
 }
 
 /**
@@ -672,15 +683,10 @@ app.whenReady().then(async () => {
   // pelo unix socket (Linux/macOS) ou TCP loopback (Windows).
   protocol.handle(APP_SCHEME, (req) => forwardToBackend(req));
 
-  // Restaura cookies persistidos pelo Electron (session.defaultSession) do
+  // Restaura a sessão persistida (arquivo local, ver persistCookieStore) do
   // boot anterior para o _cookieStore in-memory. Sem isso a sessão de login
   // é perdida a cada reinicialização do app.
-  const persisted = await session.defaultSession.cookies.get({
-    url: `${APP_SCHEME}://app`,
-  });
-  for (const c of persisted) {
-    _cookieStore.set(c.name, c.value);
-  }
+  loadPersistedCookieStore();
 
   try {
     await killStaleBackend();

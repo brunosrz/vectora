@@ -33,6 +33,11 @@ COLLECT_ALL = [
     "lancedb",
     "aiosqlite",
     "httpx",
+    # sqlite_vec expõe só um .dll de dados (vec0.dll), sem import Python que o
+    # PyInstaller rastreie — sem --collect-all aqui, o binário nunca entra no
+    # bundle e langgraph.store.sqlite.aio explode com "OperationalError: Não
+    # foi possível encontrar o módulo especificado" ao tentar carregá-lo.
+    "sqlite_vec",
     # tiktoken usa um sistema de plugins via namespace package: o registry faz
     # pkgutil.iter_modules(tiktoken_ext.__path__) para descobrir os encoders.
     # PyInstaller não vê esse import dentro do backend.pyd compilado.
