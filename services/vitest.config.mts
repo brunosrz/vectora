@@ -41,6 +41,7 @@ export default defineConfig({
   // miniflare (WebSocket não fecha, "close timed out"). Cada projeto usa o
   // runtime certo pro que está testando.
   test: {
+    reporters: ["dot"],
     // Istanbul, não V8 — o coverage nativo do vitest não instrumenta workerd.
     // `relay-session.ts` fica perto de 0% quando rodado no Windows: os testes
     // que tocam o Durable Object (itDO em relay-session.test.ts) são pulados

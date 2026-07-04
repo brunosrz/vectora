@@ -568,8 +568,11 @@ def _action_clean(target, source, env):
     ]
     for path in paths:
         full = os.path.join(ROOT, path.replace("/", os.sep))
-        if os.path.exists(full):
+        if os.path.isdir(full):
             shutil.rmtree(full)
+            print(f">> removido: {path}")
+        elif os.path.isfile(full):
+            os.remove(full)
             print(f">> removido: {path}")
 
 
