@@ -9,12 +9,51 @@
  *    handler com `{ data }`. Isso deixa toda a lógica de negócio dos arquivos
  *    em `src/server/fns/*.ts` testável por chamada direta
  *    (`await signIn({ data: {...} })`) sem precisar de um servidor de verdade.
+ * 3. Substitui `globalThis.localStorage` por uma implementação em memória: o
+ *    Node recente expõe seu próprio `localStorage` nativo (experimental, exige
+ *    `--localstorage-file`), que sobrepõe o do jsdom e lança em qualquer
+ *    acesso sem esse flag — `localStorage.clear()` explodia em todo teste que
+ *    tocasse o storage, mesmo rodando em ambiente jsdom.
  */
 
 import { afterEach, vi } from "vitest";
 
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
+
+class MemoryStorage implements Storage {
+  private store = new Map<string, string>();
+
+  get length(): number {
+    return this.store.size;
+  }
+
+  clear(): void {
+    this.store.clear();
+  }
+
+  getItem(key: string): string | null {
+    return this.store.has(key) ? (this.store.get(key) as string) : null;
+  }
+
+  key(index: number): string | null {
+    return Array.from(this.store.keys())[index] ?? null;
+  }
+
+  removeItem(key: string): void {
+    this.store.delete(key);
+  }
+
+  setItem(key: string, value: string): void {
+    this.store.set(key, String(value));
+  }
+}
+
+Object.defineProperty(globalThis, "localStorage", {
+  value: new MemoryStorage(),
+  writable: true,
+  configurable: true,
+});
 
 interface ServerFnChain {
   validator: (schema: { parse: (input: unknown) => unknown }) => ServerFnChain;
