@@ -4,7 +4,7 @@ import { hashPassword, verifyPassword } from "../../src/auth/password";
 describe("hashPassword/verifyPassword", () => {
   it("hashes in the self-describing pbkdf2$iter$salt$hash format and verifies the same password", async () => {
     const hash = await hashPassword("correct horse battery staple");
-    expect(hash).toMatch(/^pbkdf2\$210000\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/);
+    expect(hash).toMatch(/^pbkdf2\$100000\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/);
     expect(await verifyPassword("correct horse battery staple", hash)).toBe(
       true,
     );

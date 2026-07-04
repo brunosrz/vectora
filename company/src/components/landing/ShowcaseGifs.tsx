@@ -8,10 +8,11 @@ interface ShowcaseCardProps {
   alt: string;
   title: string;
   desc: string;
+  ready: boolean;
 }
 
-function ShowcaseCard({ gif, alt, title, desc }: ShowcaseCardProps) {
-  const [failed, setFailed] = useState(false);
+function ShowcaseCard({ gif, alt, title, desc, ready }: ShowcaseCardProps) {
+  const [failed, setFailed] = useState(!ready);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
@@ -55,24 +56,28 @@ export default function ShowcaseGifs() {
       alt: m.showcase_chat_alt(),
       title: m.showcase_chat_title(),
       desc: m.showcase_chat_desc(),
+      ready: false,
     },
     {
       gif: "/gifs/showcase-rag.gif",
       alt: m.showcase_rag_alt(),
       title: m.showcase_rag_title(),
       desc: m.showcase_rag_desc(),
+      ready: false,
     },
     {
       gif: "/gifs/showcase-code.gif",
       alt: m.showcase_code_alt(),
       title: m.showcase_code_title(),
       desc: m.showcase_code_desc(),
+      ready: false,
     },
     {
       gif: "/gifs/showcase-plan.gif",
       alt: m.showcase_plan_alt(),
       title: m.showcase_plan_title(),
       desc: m.showcase_plan_desc(),
+      ready: false,
     },
   ];
 

@@ -1,14 +1,17 @@
 /**
  * Hash de senha via WebCrypto PBKDF2 — nativo no runtime do Workers, sem
- * dependência externa (bcrypt/argon2 não rodam em workerd). 210_000
- * iterações é a recomendação OWASP 2023 para PBKDF2-SHA256.
+ * dependência externa (bcrypt/argon2 não rodam em workerd). A recomendação
+ * OWASP 2023 pra PBKDF2-SHA256 é 210_000, mas o workerd (runtime real dos
+ * Workers, diferente do wrangler dev local) rejeita qualquer valor acima de
+ * 100_000 com `NotSupportedError` — por isso 100_000 aqui, o teto real da
+ * plataforma, não escolha de segurança.
  *
  * Formato armazenado: `pbkdf2$<iterations>$<saltB64>$<hashB64>` —
  * self-describing, permite subir iterations no futuro sem invalidar hashes
  * antigos (verifyPassword lê o número gravado, não uma constante).
  */
 
-const ITERATIONS = 210_000;
+const ITERATIONS = 100_000;
 const KEY_LENGTH_BITS = 256;
 
 function toBase64(bytes: Uint8Array): string {
