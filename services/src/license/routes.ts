@@ -233,6 +233,12 @@ license.post("/rotate", async (c) => {
   return c.json({ token: raw });
 });
 
+// O VECTORA_TOKEN é recuperável: `token` (plaintext) fica gravado na tabela
+// indefinidamente, não só até o primeiro reveal. É o mesmo modelo de uma
+// license key que o usuário pode voltar a ver em "minha conta" a qualquer
+// momento — perder acesso ao próprio token de licença é pior UX do que o
+// ganho marginal de segurança de um show-once. Rotacionar continua sendo a
+// forma de invalidar o token atual (ex.: suspeita de vazamento).
 license.get("/token-status", async (c) => {
   const userId = await requireUserId(c);
   if (!userId) return c.json({ error: "unauthorized" }, 401);
@@ -242,7 +248,7 @@ license.get("/token-status", async (c) => {
   )
     .bind(userId)
     .first<{ token: string | null }>();
-  return c.json({ revealed: row?.token === null });
+  return c.json({ available: row?.token != null });
 });
 
 license.post("/token/reveal", async (c) => {
@@ -255,13 +261,9 @@ license.post("/token/reveal", async (c) => {
     .bind(userId)
     .first<{ token: string | null }>();
   if (!row || row.token === null)
-    return c.json({ revealed: true, token: null });
+    return c.json({ error: "token_not_found" }, 404);
 
-  await c.env.DB.prepare("UPDATE tokens SET token = NULL WHERE user_id = ?")
-    .bind(userId)
-    .run();
-
-  return c.json({ revealed: false, token: row.token });
+  return c.json({ token: row.token });
 });
 
 license.get("/history", async (c) => {

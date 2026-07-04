@@ -423,7 +423,7 @@ describe("POST /rotate", () => {
 });
 
 describe("GET /token-status and POST /token/reveal", () => {
-  it("reports not-revealed then revealed after the first reveal, and null on repeat reveal", async () => {
+  it("reports the token as available and returns the same value on repeat reveals (recoverable, not show-once)", async () => {
     const { userId, rawToken } = await makeUserWithToken();
     const session = await createSession(env.DB, userId);
     const auth = { Authorization: `Bearer ${session.token}` };
@@ -433,35 +433,54 @@ describe("GET /token-status and POST /token/reveal", () => {
       { headers: auth },
       env,
     );
-    expect(await before.json()).toEqual({ revealed: false });
+    expect(await before.json()).toEqual({ available: true });
 
     const reveal = await license.request(
       "/token/reveal",
       { method: "POST", headers: auth },
       env,
     );
-    expect(await reveal.json()).toEqual({ revealed: false, token: rawToken });
+    expect(await reveal.json()).toEqual({ token: rawToken });
 
     const after = await license.request(
       "/token-status",
       { headers: auth },
       env,
     );
-    expect(await after.json()).toEqual({ revealed: true });
+    expect(await after.json()).toEqual({ available: true });
 
     const revealAgain = await license.request(
       "/token/reveal",
       { method: "POST", headers: auth },
       env,
     );
-    expect(await revealAgain.json()).toEqual({ revealed: true, token: null });
+    expect(await revealAgain.json()).toEqual({ token: rawToken });
   });
 
-  it("rejects unauthenticated requests", async () => {
+  it("404s a reveal when the user has no recoverable token, and rejects unauthenticated requests", async () => {
     expect((await license.request("/token-status", {}, env)).status).toBe(401);
     expect(
       (await license.request("/token/reveal", { method: "POST" }, env)).status,
     ).toBe(401);
+
+    const userId = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)",
+    )
+      .bind(userId, `${userId}@example.com`, "pbkdf2$1$AA==$AA==")
+      .run();
+    await env.DB.prepare(
+      "INSERT INTO tokens (id, user_id, token, token_hash) VALUES (?, ?, NULL, ?)",
+    )
+      .bind(crypto.randomUUID(), userId, "deadbeef")
+      .run();
+    const session = await createSession(env.DB, userId);
+    const res = await license.request(
+      "/token/reveal",
+      { method: "POST", headers: { Authorization: `Bearer ${session.token}` } },
+      env,
+    );
+    expect(res.status).toBe(404);
   });
 });
 

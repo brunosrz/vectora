@@ -45,7 +45,7 @@ function CreateKeyModal({ onClose }: { onClose: () => void }) {
               {m.apikeys_modal_secret_heading()}
             </h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              {m.token_show_once_warning()}
+              {m.apikey_secret_warning()}
             </p>
             <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-4 py-3">
               <code className="flex-1 break-all font-mono text-sm text-primary">

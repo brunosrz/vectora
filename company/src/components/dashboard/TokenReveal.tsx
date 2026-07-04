@@ -8,31 +8,23 @@ import { Copy, Eye, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
-  initialRevealed: boolean;
+  initialAvailable: boolean;
   welcome?: boolean;
 }
 
-const QUICKSTART = [
-  "Revele e copie seu VECTORA_TOKEN abaixo",
-  "pip install vectora",
-  "vectora setup  (cole o token quando solicitado)",
-  "vectora chat",
-];
-
-export default function TokenReveal({ initialRevealed, welcome }: Props) {
-  const [revealed, setRevealed] = useState(initialRevealed);
+export default function TokenReveal({ initialAvailable, welcome }: Props) {
+  const QUICKSTART = [
+    m.token_quickstart_step1(),
+    m.token_quickstart_step2(),
+    m.token_quickstart_step3(),
+    m.token_quickstart_step4(),
+  ];
+  const [available, setAvailable] = useState(initialAvailable);
   const [token, setToken] = useState<string | null>(null);
 
   const revealMutation = useMutation({
     mutationFn: () => getToken(),
-    onSuccess: (res) => {
-      if (res.revealed) {
-        setRevealed(true);
-      } else {
-        setToken(res.token);
-        setRevealed(false);
-      }
-    },
+    onSuccess: (res) => setToken(res.token),
     onError: () => toast.error(m.error_generic()),
   });
 
@@ -40,7 +32,7 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
     mutationFn: () => rotateToken(),
     onSuccess: (res) => {
       setToken(res.token);
-      setRevealed(false);
+      setAvailable(true);
       toast.success(m.token_rotated());
     },
     onError: () => toast.error(m.error_generic()),
@@ -50,7 +42,6 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
     if (!token) return;
     navigator.clipboard.writeText(token);
     toast.success(m.token_copied());
-    setToken(null);
   };
 
   return (
@@ -82,8 +73,33 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
         </h2>
         <p className="mb-5 text-sm text-muted-foreground">{m.token_desc()}</p>
 
-        {/* State A: not yet revealed */}
-        {!revealed && token === null && (
+        {/* Sem token recuperável ainda (conta legada) — precisa rotacionar
+            uma vez pra ter um token recuperável daqui pra frente. */}
+        {!available && token === null && (
+          <div className="space-y-4">
+            <div className="flex items-start gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 px-3 py-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent-amber" />
+              <p className="text-sm text-accent-amber">
+                {m.token_not_available()}
+              </p>
+            </div>
+            <button
+              onClick={() => rotateMutation.mutate()}
+              disabled={rotateMutation.isPending}
+              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 hover:bg-primary/90 disabled:opacity-50 transition-all"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${rotateMutation.isPending ? "animate-spin" : ""}`}
+              />
+              {rotateMutation.isPending
+                ? m.form_submitting()
+                : m.token_rotate_cta()}
+            </button>
+          </div>
+        )}
+
+        {/* Token disponível mas ainda não buscado nesta sessão */}
+        {available && token === null && (
           <button
             onClick={() => revealMutation.mutate()}
             disabled={revealMutation.isPending}
@@ -96,7 +112,7 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
           </button>
         )}
 
-        {/* Token shown once */}
+        {/* Token revelado — recuperável a qualquer momento, não é show-once */}
         {token !== null && (
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-4 py-3">
@@ -114,28 +130,16 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
             <div className="flex items-start gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 px-3 py-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent-amber" />
               <p className="text-xs text-accent-amber">
-                {m.token_show_once_warning()}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* State B: already revealed */}
-        {revealed && token === null && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 px-3 py-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent-amber" />
-              <p className="text-sm text-accent-amber">
-                {m.token_already_revealed()}
+                {m.token_keep_secret_warning()}
               </p>
             </div>
             <button
               onClick={() => rotateMutation.mutate()}
               disabled={rotateMutation.isPending}
-              className="flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-foreground/90 hover:border-primary hover:text-foreground disabled:opacity-50 transition-all"
+              className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
             >
               <RefreshCw
-                className={`h-4 w-4 ${rotateMutation.isPending ? "animate-spin" : ""}`}
+                className={`h-3.5 w-3.5 ${rotateMutation.isPending ? "animate-spin" : ""}`}
               />
               {rotateMutation.isPending
                 ? m.form_submitting()

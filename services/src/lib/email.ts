@@ -5,7 +5,12 @@
  * os HTML inline que viviam nas edge functions (webhooks/index.ts).
  */
 
-export const FROM_EMAIL = "noreply@vectora.company";
+// Nome de exibição no header "From" — sem isso o Gmail/Outlook mostram só o
+// endereço cru na caixa de entrada, sem nome nem identidade visual (o
+// avatar da mensagem em si depende de BIMI, que exige registro de marca
+// verificado junto ao Google — fora de escopo por ora, o nome já resolve a
+// parte que dá pra controlar via header).
+export const FROM_EMAIL = "Vectora <noreply@vectora.company>";
 export const SUPPORT_EMAIL = "support@vectora.company";
 
 export async function sendEmail(
@@ -40,21 +45,26 @@ function shell(bodyHtml: string): string {
   return `<div style="background:#0a0e1a;font-family:monospace;padding:32px 24px;max-width:560px;margin:0 auto">
     <h1 style="color:#fff;font-size:22px;font-weight:700">Vectora</h1>
     ${bodyHtml}
-    <hr style="border-color:#1e293b;margin:24px 0"><p style="color:#475569;font-size:12px">Vectora · vectora.company</p>
+    <hr style="border-color:#1e293b;margin:24px 0"><p style="color:#475569;font-size:12px">Vectora</p>
   </div>`;
 }
+
+// #2563eb é o azul de marca (mesmo accent do produto e do site) — os
+// CTAs de email usavam um verde (#4ade80) sem relação com a identidade
+// visual do resto do Vectora.
+const BRAND_BLUE = "#2563eb";
 
 export function verifyEmailHtml(name: string, verifyUrl: string): string {
   return shell(`
     <p style="color:#94a3b8;font-size:14px">Olá, ${name}! Confirme seu email pra ativar sua conta Vectora.</p>
-    <a href="${verifyUrl}" style="display:inline-block;background:#4ade80;color:#0a0e1a;padding:12px 24px;border-radius:12px;text-decoration:none;font-size:14px;font-weight:600;margin:16px 0">Confirmar email →</a>
+    <a href="${verifyUrl}" style="display:inline-block;background:${BRAND_BLUE};color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-size:14px;font-weight:600;margin:16px 0">Confirmar email →</a>
   `);
 }
 
 export function magicLinkHtml(loginUrl: string): string {
   return shell(`
     <p style="color:#94a3b8;font-size:14px">Clique no link abaixo para entrar no Vectora. Expira em 15 minutos.</p>
-    <a href="${loginUrl}" style="display:inline-block;background:#4ade80;color:#0a0e1a;padding:12px 24px;border-radius:12px;text-decoration:none;font-size:14px;font-weight:600;margin:16px 0">Entrar →</a>
+    <a href="${loginUrl}" style="display:inline-block;background:${BRAND_BLUE};color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-size:14px;font-weight:600;margin:16px 0">Entrar →</a>
   `);
 }
 

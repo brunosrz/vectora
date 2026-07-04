@@ -3,15 +3,14 @@ import { servicesFetch } from "#/lib/services/client";
 
 export const getTokenStatus = createServerFn({ method: "GET" }).handler(
   async () => {
-    return servicesFetch<{ revealed: boolean }>("/license/token-status");
+    return servicesFetch<{ available: boolean }>("/license/token-status");
   },
 );
 
 export const getToken = createServerFn({ method: "POST" }).handler(async () => {
-  return servicesFetch<{ revealed: boolean; token: string | null }>(
-    "/license/token/reveal",
-    { method: "POST" },
-  );
+  return servicesFetch<{ token: string }>("/license/token/reveal", {
+    method: "POST",
+  });
 });
 
 export const rotateToken = createServerFn({ method: "POST" }).handler(

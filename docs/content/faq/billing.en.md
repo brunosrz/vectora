@@ -13,7 +13,7 @@ Free is 100% local, no account. Pro unlocks multi-user web chat, complete storag
 No. Your data stays on **your** server — canceling the subscription only downgrades the tier back to Free (Pro features stop working), it doesn't delete anything locally.
 
 **Where do I see my `VECTORA_TOKEN`?**
-In the [dashboard](https://vectora.company/dashboard), Token section — revealed only once for security; use "Rotate" if you lose it.
+In the [dashboard](https://vectora.company/dashboard), Token section — you can reveal it again anytime you need. Use "Rotate" only if you suspect it leaked (invalidates the current token and generates a new one).
 
 **Is there a free trial?**
 Yes — check current duration and terms on the [pricing page](https://vectora.company/#pricing).

@@ -15,36 +15,24 @@ beforeEach(() => {
 });
 
 describe("getTokenStatus", () => {
-  it("retorna revealed=true quando já foi revelado antes", async () => {
-    mockServicesFetch.mockResolvedValue({ revealed: true });
-    await expect(getTokenStatus()).resolves.toEqual({ revealed: true });
+  it("retorna available=true quando há um token recuperável", async () => {
+    mockServicesFetch.mockResolvedValue({ available: true });
+    await expect(getTokenStatus()).resolves.toEqual({ available: true });
   });
 
-  it("retorna revealed=false na primeira visita (edge)", async () => {
-    mockServicesFetch.mockResolvedValue({ revealed: false });
-    await expect(getTokenStatus()).resolves.toEqual({ revealed: false });
+  it("retorna available=false quando a conta não tem token recuperável (edge)", async () => {
+    mockServicesFetch.mockResolvedValue({ available: false });
+    await expect(getTokenStatus()).resolves.toEqual({ available: false });
   });
 });
 
 describe("getToken", () => {
-  it("retorna o token em texto plano na primeira revelação", async () => {
-    mockServicesFetch.mockResolvedValue({
-      revealed: false,
-      token: "vct_abc123",
-    });
+  it("retorna o token em texto plano — recuperável, não show-once", async () => {
+    mockServicesFetch.mockResolvedValue({ token: "vct_abc123" });
 
     const result = await getToken();
 
-    expect(result).toEqual({ revealed: false, token: "vct_abc123" });
-  });
-
-  it("retorna token=null quando já foi revelado antes (edge — show-once)", async () => {
-    mockServicesFetch.mockResolvedValue({ revealed: true, token: null });
-
-    const result = await getToken();
-
-    expect(result.token).toBeNull();
-    expect(result.revealed).toBe(true);
+    expect(result).toEqual({ token: "vct_abc123" });
   });
 });
 

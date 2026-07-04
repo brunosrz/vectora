@@ -48,43 +48,36 @@ beforeEach(() => {
 });
 
 describe("TokenReveal", () => {
-  it("mostra o botão de revelar no estado inicial", () => {
-    renderWithClient(<TokenReveal initialRevealed={false} />);
+  it("mostra o botão de revelar quando o token está disponível", () => {
+    renderWithClient(<TokenReveal initialAvailable={true} />);
     expect(screen.getByText("token_reveal_cta")).toBeInTheDocument();
   });
 
-  it("mostra o token em texto plano na primeira revelação", async () => {
-    mockGetToken.mockResolvedValue({ revealed: false, token: "vct_abc123" });
-    renderWithClient(<TokenReveal initialRevealed={false} />);
+  it("mostra o token em texto plano ao revelar", async () => {
+    mockGetToken.mockResolvedValue({ token: "vct_abc123" });
+    renderWithClient(<TokenReveal initialAvailable={true} />);
 
     fireEvent.click(screen.getByText("token_reveal_cta"));
 
     await waitFor(() =>
       expect(screen.getByText("vct_abc123")).toBeInTheDocument(),
     );
-    expect(screen.getByText("token_show_once_warning")).toBeInTheDocument();
-  });
-
-  it("mostra aviso de 'já revelado' + botão de rotacionar quando revealed=true (edge)", async () => {
-    mockGetToken.mockResolvedValue({ revealed: true, token: null });
-    renderWithClient(<TokenReveal initialRevealed={false} />);
-
-    fireEvent.click(screen.getByText("token_reveal_cta"));
-
-    await waitFor(() =>
-      expect(screen.getByText("token_already_revealed")).toBeInTheDocument(),
-    );
+    expect(screen.getByText("token_keep_secret_warning")).toBeInTheDocument();
+    // recuperável — o botão de rotacionar fica disponível junto do token,
+    // não é a única saída de um estado "sem volta".
     expect(screen.getByText("token_rotate_cta")).toBeInTheDocument();
   });
 
-  it("já parte do estado 'revelado' quando initialRevealed=true", () => {
-    renderWithClient(<TokenReveal initialRevealed={true} />);
-    expect(screen.getByText("token_already_revealed")).toBeInTheDocument();
+  it("mostra aviso de token indisponível (conta legada) + CTA de rotacionar quando initialAvailable=false (edge)", () => {
+    renderWithClient(<TokenReveal initialAvailable={false} />);
+    expect(screen.getByText("token_not_available")).toBeInTheDocument();
+    expect(screen.getByText("token_rotate_cta")).toBeInTheDocument();
+    expect(screen.queryByText("token_reveal_cta")).not.toBeInTheDocument();
   });
 
-  it("copiar limpa o token da tela e mostra toast de sucesso", async () => {
-    mockGetToken.mockResolvedValue({ revealed: false, token: "vct_copyme" });
-    renderWithClient(<TokenReveal initialRevealed={false} />);
+  it("copiar mantém o token visível (recuperável, não é show-once) e mostra toast de sucesso", async () => {
+    mockGetToken.mockResolvedValue({ token: "vct_copyme" });
+    renderWithClient(<TokenReveal initialAvailable={true} />);
     fireEvent.click(screen.getByText("token_reveal_cta"));
     await waitFor(() =>
       expect(screen.getByText("vct_copyme")).toBeInTheDocument(),
@@ -94,18 +87,15 @@ describe("TokenReveal", () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith("vct_copyme");
     expect(mockToastSuccess).toHaveBeenCalledWith("token_copied");
-    // token some da tela; como revealed continua false, volta ao CTA de revelar.
-    await waitFor(() =>
-      expect(screen.getByText("token_reveal_cta")).toBeInTheDocument(),
-    );
+    expect(screen.getByText("vct_copyme")).toBeInTheDocument();
   });
 
-  it("rotacionar exibe o novo token e o toast de confirmação", async () => {
-    mockGetToken.mockResolvedValue({ revealed: true, token: null });
+  it("rotacionar a partir do token já revelado exibe o novo token e o toast de confirmação", async () => {
+    mockGetToken.mockResolvedValue({ token: "vct_old" });
     mockRotateToken.mockResolvedValue({ token: "vct_rotated999" });
-    renderWithClient(<TokenReveal initialRevealed={false} />);
+    renderWithClient(<TokenReveal initialAvailable={true} />);
     fireEvent.click(screen.getByText("token_reveal_cta"));
-    await waitFor(() => screen.getByText("token_rotate_cta"));
+    await waitFor(() => screen.getByText("vct_old"));
 
     fireEvent.click(screen.getByText("token_rotate_cta"));
 
@@ -115,9 +105,20 @@ describe("TokenReveal", () => {
     expect(mockToastSuccess).toHaveBeenCalledWith("token_rotated");
   });
 
+  it("rotacionar a partir do estado sem token (edge) passa a disponibilizar o token gerado", async () => {
+    mockRotateToken.mockResolvedValue({ token: "vct_first" });
+    renderWithClient(<TokenReveal initialAvailable={false} />);
+
+    fireEvent.click(screen.getByText("token_rotate_cta"));
+
+    await waitFor(() =>
+      expect(screen.getByText("vct_first")).toBeInTheDocument(),
+    );
+  });
+
   it("mostra toast de erro quando a revelação falha (edge)", async () => {
     mockGetToken.mockRejectedValue(new Error("services_error_500"));
-    renderWithClient(<TokenReveal initialRevealed={false} />);
+    renderWithClient(<TokenReveal initialAvailable={true} />);
 
     fireEvent.click(screen.getByText("token_reveal_cta"));
 
@@ -127,12 +128,12 @@ describe("TokenReveal", () => {
   });
 
   it("mostra o guia de início rápido só quando welcome=true", () => {
-    renderWithClient(<TokenReveal initialRevealed={false} welcome />);
+    renderWithClient(<TokenReveal initialAvailable={true} welcome />);
     expect(screen.getByText("token_quickstart_heading")).toBeInTheDocument();
   });
 
   it("não mostra o guia de início rápido por padrão (edge)", () => {
-    renderWithClient(<TokenReveal initialRevealed={false} />);
+    renderWithClient(<TokenReveal initialAvailable={true} />);
     expect(
       screen.queryByText("token_quickstart_heading"),
     ).not.toBeInTheDocument();

@@ -13,7 +13,7 @@ Free é 100% local, sem conta. Pro desbloqueia chat web multi-usuário, storage 
 Não. Seus dados ficam no **seu** servidor — cancelar a assinatura só rebaixa o tier de volta pra Free (recursos Pro deixam de funcionar), não deleta nada localmente.
 
 **Onde vejo meu `VECTORA_TOKEN`?**
-No [dashboard](https://vectora.company/dashboard), seção Token — revelado uma única vez por segurança; use "Rotacionar" se perder.
+No [dashboard](https://vectora.company/dashboard), seção Token — pode ser revelado de novo sempre que precisar. Use "Rotacionar" só se suspeitar que ele vazou (invalida o token atual e gera um novo).
 
 **Tem trial gratuito?**
 Sim — verifique a duração e condições atuais na [página de preços](https://vectora.company/#pricing).
