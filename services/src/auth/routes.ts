@@ -110,8 +110,9 @@ auth.post("/signup", async (c) => {
     .bind(userId, email, passwordHash, body.name, country)
     .run();
 
-  // Token de licença (VECTORA_TOKEN) — show-once, mesmo padrão do trigger
-  // handle_new_user original (company/supabase/migrations).
+  // Token de licença (VECTORA_TOKEN) — recuperável a qualquer momento pelo
+  // dashboard (GET /license/token/reveal), identifica a conta e o plano
+  // ativo (free ou pro) pro app local. Todo signup recebe um, mesmo Free.
   const rawToken = randomHex(32);
   const tokenHash = await sha256Hex(rawToken);
   await c.env.DB.prepare(

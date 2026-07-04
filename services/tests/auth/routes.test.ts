@@ -35,7 +35,7 @@ async function post(
 }
 
 describe("POST /signup", () => {
-  it("creates the user + free subscription + show-once token, and rejects a duplicate email", async () => {
+  it("creates the user + free subscription + recoverable token, and rejects a duplicate email", async () => {
     const body = signupBody();
     const res = await post("/signup", body);
     expect(res.status).toBe(200);

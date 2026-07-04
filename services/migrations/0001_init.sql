@@ -58,12 +58,13 @@ CREATE TABLE email_verifications (
 
 CREATE INDEX email_verifications_user_id_idx ON email_verifications(user_id);
 
--- Token de licença (VECTORA_TOKEN) — show-once: `token` some depois da
--- primeira revelação, só `token_hash` permanece (comparação em validate).
+-- Token de licença (VECTORA_TOKEN) — recuperável: `token` (plaintext) fica
+-- gravado indefinidamente pra poder ser revelado de novo pelo dashboard;
+-- `token_hash` é o que /validate usa pra comparação, nunca o plaintext.
 CREATE TABLE tokens (
   id         TEXT PRIMARY KEY,
   user_id    TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-  token      TEXT,               -- NULL depois do primeiro reveal
+  token      TEXT,               -- NULL só em linhas legadas pré-migração
   token_hash TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))

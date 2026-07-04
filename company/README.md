@@ -42,7 +42,7 @@ Nenhuma lógica de negócio mora neste projeto. Cada arquivo em `src/server/fns/
 | ---------------------------- | --------------------------------------------------------------------------- |
 | `server/fns/auth.ts`         | `getSession`, `signUp`, `signIn`, `signOut`, `verifyEmail`, `sendMagicLink` |
 | `server/fns/subscription.ts` | `getSubscription`, `createCheckout`, `createPortal`, `getLicenseHistory`    |
-| `server/fns/token.ts`        | `getTokenStatus`, `getToken` (show-once), `rotateToken`                     |
+| `server/fns/token.ts`        | `getTokenStatus`, `getToken` (recuperável), `rotateToken`                   |
 | `server/fns/api-keys.ts`     | `listApiKeys`, `createApiKey`, `revokeApiKey`                               |
 | `server/fns/gdpr.ts`         | `exportData`, `requestAccountDeletion`                                      |
 | `server/fns/issues.ts`       | `submitIssue`, `listOpenIssues`, `joinWaitlist`                             |
@@ -113,14 +113,14 @@ pnpm lint               # eslint
 
 Suíte atual: **28 arquivos de teste, 178 testes**, cobrindo toda a lógica de negócio testável do projeto — server functions (happy path + validação Zod + branches de erro), hooks (TanStack Query com mocks dos server functions), lib (`services/client`, `theme`, `analytics/ga4`, `analytics/plausible`) e componentes com lógica real (dashboard inteiro + shared não-estático). Segue o padrão de par caminho-feliz/caminho-de-erro no mesmo arquivo (ver `documents/testing-guide.md` no monorepo):
 
-| Área                                  | Arquivos | O que cobre                                                                                                                                                                                                           |
-| ------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/server/fns/*.test.ts`            | 8        | Happy path, validação Zod (email/senha/enum/uuid inválidos), branches (`not_found`, show-once do token, tolerância a erro no logout)                                                                                  |
-| `src/hooks/*.test.tsx`                | 3        | `useQuery`/`useMutation` com invalidação de cache, redirect via `window.location`                                                                                                                                     |
-| `src/lib/**/*.test.ts`                | 4        | Cookie de sessão, fetch tipado + erros, tema claro/escuro + `matchMedia`, analytics com/sem `window.gtag`/`window.plausible`                                                                                          |
-| `src/components/shared/*.test.tsx`    | 7        | CookieConsent, ThemeToggle, Header (menu mobile + dropdown de idioma), Logo, PageHeader, FaqAccordion, AuthLayout                                                                                                     |
-| `src/components/dashboard/*.test.tsx` | 5        | TokenReveal (show-once + rotate + copy), BillingSection (BR/INTL, free/pro), AccountSection (form + GDPR + delete), LicenseStatus/History (status desconhecido → fallback, IP mascarado), ApiKeysList (criar/revogar) |
-| `src/routes/downloads.test.ts`        | 1        | Detecção de SO a partir do `userAgent`                                                                                                                                                                                |
+| Área                                  | Arquivos | O que cobre                                                                                                                                                                                                             |
+| ------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/server/fns/*.test.ts`            | 8        | Happy path, validação Zod (email/senha/enum/uuid inválidos), branches (`not_found`, token recuperável, tolerância a erro no logout)                                                                                     |
+| `src/hooks/*.test.tsx`                | 3        | `useQuery`/`useMutation` com invalidação de cache, redirect via `window.location`                                                                                                                                       |
+| `src/lib/**/*.test.ts`                | 4        | Cookie de sessão, fetch tipado + erros, tema claro/escuro + `matchMedia`, analytics com/sem `window.gtag`/`window.plausible`                                                                                            |
+| `src/components/shared/*.test.tsx`    | 7        | CookieConsent, ThemeToggle, Header (menu mobile + dropdown de idioma), Logo, PageHeader, FaqAccordion, AuthLayout                                                                                                       |
+| `src/components/dashboard/*.test.tsx` | 5        | TokenReveal (recuperável + rotate + copy), BillingSection (BR/INTL, free/pro), AccountSection (form + GDPR + delete), LicenseStatus/History (status desconhecido → fallback, IP mascarado), ApiKeysList (criar/revogar) |
+| `src/routes/downloads.test.ts`        | 1        | Detecção de SO a partir do `userAgent`                                                                                                                                                                                  |
 
 Padrões usados nos mocks (ver `vitest.setup.ts`):
 

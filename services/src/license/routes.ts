@@ -139,21 +139,24 @@ license.post("/agent-login", async (c) => {
     .first<{ token: string | null; token_hash: string }>();
   if (!tokenRow) return c.json({ error: "token_not_found" }, 404);
 
+  // Token é recuperável (mesmo modelo de /token/reveal): devolve o mesmo raw
+  // sempre, nunca anula. Antes disso rotacionava a cada 2º login — o que
+  // invalidava silenciosamente o token já configurado numa instalação
+  // anterior sempre que o usuário conectasse uma segunda máquina.
   let raw: string;
   if (tokenRow.token) {
-    // Nunca revelado — entrega o raw existente e anula (show-once).
     raw = tokenRow.token;
-    await c.env.DB.prepare("UPDATE tokens SET token = NULL WHERE user_id = ?")
-      .bind(user.id)
-      .run();
   } else {
-    // Já revelado — rotaciona (invalida o token antigo).
+    // Linha legada de antes da mudança pra token recuperável (token já
+    // tinha sido zerado por um /agent-login ou /token/reveal antigo) —
+    // usuário já provou identidade via senha, então é seguro bootstrapar
+    // um token novo aqui em vez de mandar ele pro dashboard rotacionar.
     raw = randomHex(32);
     const newHash = await sha256Hex(raw);
     await c.env.DB.prepare(
-      "UPDATE tokens SET token = NULL, token_hash = ? WHERE user_id = ?",
+      "UPDATE tokens SET token = ?, token_hash = ? WHERE user_id = ?",
     )
-      .bind(newHash, user.id)
+      .bind(raw, newHash, user.id)
       .run();
   }
 

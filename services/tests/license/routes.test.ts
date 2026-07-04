@@ -181,7 +181,7 @@ describe("POST /validate", () => {
 });
 
 describe("POST /agent-login", () => {
-  it("reveals the token once and rotates it on a second login (show-once semantics)", async () => {
+  it("returns the same token on repeated logins — recoverable, not show-once (uma 2ª instalação não pode invalidar a 1ª)", async () => {
     const { email, password, rawToken } = await makeUserWithToken();
 
     const first = await license.request(
@@ -207,7 +207,38 @@ describe("POST /agent-login", () => {
       env,
     );
     const secondJson = await second.json<{ token: string }>();
-    expect(secondJson.token).not.toBe(rawToken);
+    expect(secondJson.token).toBe(rawToken);
+  });
+
+  it("bootstraps a fresh token when the row is a legacy show-once null (edge)", async () => {
+    const { email, password, userId } = await makeUserWithToken();
+    await env.DB.prepare("UPDATE tokens SET token = NULL WHERE user_id = ?")
+      .bind(userId)
+      .run();
+
+    const res = await license.request(
+      "/agent-login",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const { token } = await res.json<{ token: string }>();
+    expect(token).toMatch(/^[0-9a-f]{64}$/);
+
+    const again = await license.request(
+      "/agent-login",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      },
+      env,
+    );
+    expect((await again.json<{ token: string }>()).token).toBe(token);
   });
 
   it("reports tier/status null when the user has no subscription row", async () => {
