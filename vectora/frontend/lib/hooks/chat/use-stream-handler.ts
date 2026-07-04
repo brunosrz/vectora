@@ -125,6 +125,11 @@ function announceSSEConnected(): void {
 
 /** Marca o stream como caído por erro de transporte (badge "Reconectando…"). */
 function announceSSEDropped(err: unknown): void {
+  // A UI sempre mostra uma mensagem genérica localizada (nunca o erro cru
+  // pro usuário) — mas sem isso, a causa real (status HTTP, "failed to
+  // fetch", etc.) some completamente. Loga no console pra dar pra
+  // diagnosticar via DevTools (Ctrl+Shift+I, inclusive no build desktop).
+  console.error("[chat] queda de transporte no stream:", err);
   if (isNetworkError(err)) {
     useNetworkStore.getState().setSSEStatus("reconnecting");
   }
