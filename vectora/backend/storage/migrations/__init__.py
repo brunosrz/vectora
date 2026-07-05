@@ -4,6 +4,8 @@ Substitui o padrão ``ALTER TABLE … suppress(Exception)`` espalhado pelos
 services por um sistema declarativo de migrations versionadas.
 """
 
+from __future__ import annotations
+
 from backend.storage.migrations.runner import MigrationRunner, run_migrations
 
 __all__ = ["MigrationRunner", "run_migrations"]

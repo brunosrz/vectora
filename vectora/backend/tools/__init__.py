@@ -14,6 +14,8 @@ Este __init__.py re-exporta tudo para manter compatibilidade retroativa
 com qualquer código que importe direto de `tools`.
 """
 
+from __future__ import annotations
+
 import logging
 
 from langchain.tools import BaseTool

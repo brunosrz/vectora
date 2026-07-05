@@ -15,4 +15,35 @@ storage por workspace.
 (LanceDB) do Vectora. O RAG acha trechos por similaridade; o context graph dá
 relações estruturais. A união (`graph_query`): vector search acha os nós-semente,
 o grafo expande a vizinhança → contexto rico e barato em tokens.
+
+Lazy imports (``__getattr__``) — mesmo padrão de ``backend.mcp`` — evitam
+puxar tree-sitter/NetworkX no import do pacote quando só um submódulo
+específico é necessário.
 """
+
+from __future__ import annotations
+
+__all__ = [
+    "affected_summary",
+    "build_workspace_graph",
+    "explain_node",
+    "path_between",
+    "query_nodes",
+]
+
+
+def __getattr__(name: str) -> object:
+    if name == "build_workspace_graph":
+        from backend.context_graph.pipeline import build_workspace_graph
+
+        return build_workspace_graph
+    if name in (
+        "query_nodes",
+        "explain_node",
+        "path_between",
+        "affected_summary",
+    ):
+        from backend.context_graph import query
+
+        return getattr(query, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

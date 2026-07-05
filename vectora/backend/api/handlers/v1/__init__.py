@@ -1,5 +1,14 @@
-"""Handlers REST API v1 — endpoints Vectora-nativos.
+"""Handlers REST API v1 — endpoints Vectora-nativos de structured output.
 
-J3 adicionará os handlers principais (chat, threads, rag, workspaces...).
-E.B-7 adiciona os endpoints de structured output (extract, classify).
+Cada submódulo expõe um `router: APIRouter` montado em
+`backend.api.server.create_app()`: `extract` (extração estruturada),
+`classify` (classificação) e `jobs` (consulta de status assíncrono).
 """
+
+from __future__ import annotations
+
+from backend.api.handlers.v1.classify import router as classify_router
+from backend.api.handlers.v1.extract import router as extract_router
+from backend.api.handlers.v1.jobs import router as jobs_router
+
+__all__ = ["classify_router", "extract_router", "jobs_router"]

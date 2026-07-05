@@ -12,6 +12,8 @@ Nota: Embeddings são gerenciados por BackgroundEmbeddingWorker (services/backgr
 iniciado via async_lifespan() em services/utils.py. Não há mais EmbeddingService aqui.
 """
 
+from __future__ import annotations
+
 from backend.persistence.session import SessionService
 from backend.services.telemetry import TelemetryService
 

@@ -1,5 +1,7 @@
 """Native tools — utilities without external APIs."""
 
+from __future__ import annotations
+
 from backend.tools.native.crypto_utils import (
     base64_decode,
     base64_encode,

@@ -1,5 +1,7 @@
 """Helpers de conexão e índice para LanceDB (lite mode)."""
 
+from __future__ import annotations
+
 from backend.storage.lancedb.connection import LanceDBConnectionCache, get_lancedb
 from backend.storage.lancedb.index import create_ivf_index
 from backend.storage.lancedb.optimize import optimize_table, schedule_optimize

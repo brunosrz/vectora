@@ -1,5 +1,7 @@
 """Nodes Package — toolset canônico (ALL_TOOLS) e ToolNodes do agente."""
 
+from __future__ import annotations
+
 from backend.nodes.tools import (
     ALL_TOOLS,
     FS_TOOLS,

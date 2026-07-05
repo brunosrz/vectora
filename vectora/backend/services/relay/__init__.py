@@ -5,6 +5,8 @@ Webhooks e callbacks OAuth externos chegam pelo relay e são despachados ao
 FastAPI local sem abrir porta TCP pública.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from collections.abc import Callable, Coroutine
