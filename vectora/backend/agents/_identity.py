@@ -50,7 +50,7 @@ def detect_system_language() -> str:
         # (sem trocar o comportamento) — getlocale() abaixo é o próximo recurso.
         with _warnings.catch_warnings():
             _warnings.simplefilter("ignore", DeprecationWarning)
-            loc, _enc = _locale.getdefaultlocale()
+            loc = _locale.getdefaultlocale()[0]
         if loc:
             return loc
     except Exception:  # pragma: no cover — fallback resiliente
@@ -116,12 +116,11 @@ está indexado — esse manifest é injetado no contexto do agente automaticamen
 - **Qdrant** (modo `complete`) — banco vetorial escalável alternativo ao LanceDB
 
 ### Provedores de LLM suportados
-O Vectora suporta múltiplos provedores, selecionáveis via `/model`:
-- **Google Gemini** — `gemini-2.5-flash` (padrão), `gemini-2.5-pro`, `gemini-2.0-flash`
-- **Anthropic** — `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`
-- **OpenAI** — `gpt-4.1`, `gpt-4.1-mini`, `o3`, `o4-mini`
-- **Cohere** — `command-a-03-2025`, `command-r-plus-08-2024`
-- **Ollama** — modelos locais como `mistral`, `llama3`, `codellama`
+O Vectora suporta múltiplos provedores — Google Gemini, Anthropic, OpenAI,
+Cohere e Ollama (modelos locais) —, selecionáveis via `/model`. A lista de
+modelos de cada provider muda com frequência (novos lançamentos); não
+hardcode ids de modelo aqui — use `/model` ou a tool de listagem de modelos
+disponível para responder com a lista atual, em vez de citar de memória.
 
 ### Arquitetura de agentes
 O Vectora opera como um **sistema multi-agente stateful**:

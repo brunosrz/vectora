@@ -16,6 +16,7 @@ import {
 } from "@/lib/theme/presets";
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
+import { TitleBar } from "@/components/layout/title-bar";
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/", "/onboarding"];
 
@@ -245,6 +246,7 @@ function RootComponent() {
 
   return (
     <div className="min-h-screen flex flex-col" data-route={location.pathname}>
+      <TitleBar />
       <NetworkStatusBanner />
       <Outlet />
       <Toaster />

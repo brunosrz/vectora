@@ -26,6 +26,15 @@ export interface VectoraDesktopBridge {
     handler: (status: VectoraUpdateStatus) => void,
   ) => () => void;
   quitAndInstallUpdate?: () => void;
+  windowControls?: {
+    minimize: () => void;
+    maximizeToggle: () => void;
+    close: () => void;
+    isMaximized: () => Promise<boolean>;
+    onStateChange: (
+      handler: (state: { maximized: boolean }) => void,
+    ) => () => void;
+  };
 }
 
 declare global {

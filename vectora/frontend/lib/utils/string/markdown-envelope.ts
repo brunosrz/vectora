@@ -1,34 +1,45 @@
 /**
- * Markdown Envelope Stripping
+ * Markdown Envelope Stripping (defensivo)
  *
- * O orchestrator do Vectora envelopa toda resposta markdown em um bloco com
- * exatamente seis crases e o identificador `markdown`:
+ * O orchestrator do Vectora **não instrui mais** o modelo a envelopar a
+ * resposta em um bloco de código externo — a instrução original pedia 6
+ * crases (`` ``````markdown ``) para blindar fences internos, mas LLMs
+ * frequentemente ignoravam o "6" e usavam a convenção de mercado (3
+ * crases). Quando o parser (remark) recebia um envelope de 3 crases que o
+ * regex antigo não reconhecia (só aceitava 6), o fence vazava como texto
+ * literal na tela e fragmentava o texto em parágrafos duplicados
+ * palavra a palavra — daí a instrução ter sido removida do prompt
+ * (ver backend/services/agent_factory.py).
  *
- *     ``````markdown
- *     # Título
- *     ```python
- *     print("blocos triplos internos funcionam")
- *     ```
- *     ``````
+ * Esta função continua existindo como rede de segurança: se algum provider
+ * (ou um usuário colando texto já envelopado) ainda produzir um bloco
+ * ```markdown (ou `````` markdown, qualquer N≥3 crases) cobrindo a
+ * resposta inteira, ela é desempacotada antes da renderização. Em uma
+ * resposta normal (sem envelope) a função é um no-op — retorna o
+ * conteúdo como veio.
  *
- * Razão: blocos de código ``` ``` ``` internos não quebram a hierarquia de
- * parsing, porque o envelope externo usa 6 crases (qualquer fence interno
- * com ≤5 crases é tratado como conteúdo).
+ * Aceita qualquer N≥3 crases, exigindo (via backreference) que abertura e
+ * fechamento tenham exatamente o mesmo N — cobre tanto o 6 do design
+ * original quanto o 3 mais comum na prática. O preço é que uma resposta
+ * cujo ÚNICO conteúdo seja um bloco ```markdown intencional (ex.: "me
+ * mostre um exemplo de arquivo .md") pode ser desempacotada por engano;
+ * isso é raro e preferível ao bug de vazamento.
  *
- * Este módulo desempacota o envelope antes da renderização. Streaming-safe:
- * remove o abre/fecha mesmo quando ainda parciais durante a chegada dos tokens.
+ * Streaming-safe: remove o abre/fecha mesmo quando ainda parciais durante
+ * a chegada dos tokens.
  */
 
-// Captura ``````markdown\n...\n`````` (com fechamento, tolerante a CRLF/trailing space).
-// Lazy quantifier no corpo + final opcional para suportar streaming parcial.
+// Captura um envelope `````markdown\n...\n````` (N≥3 crases, abre/fecha com
+// o MESMO N via backreference \1), tolerante a CRLF/trailing space. Lazy
+// quantifier no corpo + final opcional para suportar streaming parcial.
 const FULL_ENVELOPE_RE =
-  /^[\t ]*``````\s*markdown[\t ]*\r?\n([\s\S]*?)\r?\n[\t ]*``````[\t ]*\s*$/;
+  /^[\t ]*(`{3,})\s*markdown[\t ]*\r?\n([\s\S]*?)\r?\n[\t ]*\1[\t ]*\s*$/;
 
 // Apenas a abertura — usado quando o stream ainda está chegando.
-const OPEN_ENVELOPE_RE = /^[\t ]*``````\s*markdown[\t ]*\r?\n/;
+const OPEN_ENVELOPE_RE = /^[\t ]*(`{3,})\s*markdown[\t ]*\r?\n/;
 
 /**
- * Remove o envelope ``````markdown ... `````` se presente.
+ * Remove o envelope `````markdown ... ````` (N≥3 crases) se presente.
  *
  * - Fechado completo → retorna o conteúdo interno
  * - Apenas aberto (streaming em andamento) → remove só o abre
@@ -40,16 +51,19 @@ export function stripMarkdownEnvelope(content: string): string {
 
   const trimmed = content.trimStart();
 
-  // Caso 1: envelope completo (abre + corpo + fecha)
+  // Caso 1: envelope completo (abre + corpo + fecha, mesmo N de crases)
   const full = trimmed.match(FULL_ENVELOPE_RE);
-  if (full) return full[1] ?? "";
+  if (full) return full[2] ?? "";
 
   // Caso 2: apenas a abertura chegou (token streaming parcial)
-  if (OPEN_ENVELOPE_RE.test(trimmed)) {
-    let body = trimmed.replace(OPEN_ENVELOPE_RE, "");
-    // Se o fecho ainda não chegou mas o stream terminou com `````` no final,
-    // remove o fechamento parcial também.
-    body = body.replace(/\r?\n[\t ]*``````[\t ]*\s*$/, "");
+  const open = trimmed.match(OPEN_ENVELOPE_RE);
+  if (open) {
+    const fence = open[1];
+    let body = trimmed.slice(open[0].length);
+    // Se o fecho ainda não chegou mas o stream terminou com N crases no
+    // final (mesmo N da abertura), remove o fechamento parcial também.
+    const closeRe = new RegExp(`\\r?\\n[\\t ]*${fence}[\\t ]*\\s*$`);
+    body = body.replace(closeRe, "");
     return body;
   }
 

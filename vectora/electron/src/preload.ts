@@ -37,6 +37,19 @@ export interface VectoraDesktopBridge {
   ) => () => void;
   /** Aplica update baixado e reinicia. */
   quitAndInstallUpdate: () => void;
+  /** Controles da titlebar customizada (frame: false — ver main.ts). */
+  windowControls: {
+    minimize: () => void;
+    maximizeToggle: () => void;
+    close: () => void;
+    isMaximized: () => Promise<boolean>;
+    /** Subscreve a mudanças de estado maximizado/restaurado da janela nativa
+     * (ex.: duplo-clique na titlebar, resize manual) — mantém o ícone
+     * maximizar/restaurar sincronizado sem polling. */
+    onStateChange: (
+      handler: (state: { maximized: boolean }) => void,
+    ) => () => void;
+  };
 }
 
 const bridge: VectoraDesktopBridge = {
@@ -60,6 +73,22 @@ const bridge: VectoraDesktopBridge = {
     };
   },
   quitAndInstallUpdate: () => ipcRenderer.send("vectora:quit-and-install"),
+  windowControls: {
+    minimize: () => ipcRenderer.send("vectora:window-minimize"),
+    maximizeToggle: () => ipcRenderer.send("vectora:window-maximize-toggle"),
+    close: () => ipcRenderer.send("vectora:window-close"),
+    isMaximized: () => ipcRenderer.invoke("vectora:window-is-maximized"),
+    onStateChange: (handler) => {
+      const listener = (
+        _event: unknown,
+        state: Parameters<typeof handler>[0],
+      ) => handler(state);
+      ipcRenderer.on("vectora:window-state", listener);
+      return () => {
+        ipcRenderer.removeListener("vectora:window-state", listener);
+      };
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld("vectora", bridge);

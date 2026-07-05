@@ -1,8 +1,9 @@
 /**
  * Tests para stripMarkdownEnvelope.
  *
- * Cobre: envelope completo, parcial (streaming), ausente, vazio, CRLF,
- * indentação, conteúdo interno com blocos de código, e casos limites.
+ * Cobre: envelope completo (N≥3 crases, qualquer N desde que abre/fecha
+ * combinem), parcial (streaming), ausente, vazio, CRLF, indentação,
+ * conteúdo interno com blocos de código, e casos limites.
  */
 
 import { describe, it, expect } from "vitest";
@@ -48,9 +49,23 @@ describe("stripMarkdownEnvelope", () => {
     expect(stripMarkdownEnvelope(input)).toBe("# Título\n\n- item 1\n- item 2");
   });
 
-  it("não remove fence tripla (3 crases) — só 6 crases são o envelope", () => {
+  it("remove envelope de 3 crases (convenção mais comum do modelo, regressão do bug de vazamento)", () => {
     const input = "```markdown\nconteúdo\n```";
-    expect(stripMarkdownEnvelope(input)).toBe("```markdown\nconteúdo\n```");
+    expect(stripMarkdownEnvelope(input)).toBe("conteúdo");
+  });
+
+  it("remove envelope de 4 ou 5 crases (qualquer N≥3, desde que abre/fecha combinem)", () => {
+    expect(stripMarkdownEnvelope("````markdown\nconteúdo\n````")).toBe(
+      "conteúdo",
+    );
+    expect(stripMarkdownEnvelope("`````markdown\nconteúdo\n`````")).toBe(
+      "conteúdo",
+    );
+  });
+
+  it("abre/fecha com N de crases diferentes: remove só a abertura, mantém o resto (fence malformado, mesmo tratamento de um streaming parcial)", () => {
+    const input = "```markdown\nconteúdo\n``````";
+    expect(stripMarkdownEnvelope(input)).toBe("conteúdo\n``````");
   });
 
   // ── Casos vazios e limites ────────────────────────────────────────────────
@@ -133,6 +148,14 @@ describe("stripMarkdownEnvelope", () => {
     const input = "``````markdown\n`````python\nprint('hi')\n`````\n``````";
     expect(stripMarkdownEnvelope(input)).toBe(
       "`````python\nprint('hi')\n`````",
+    );
+  });
+
+  it("token a token com envelope de 3 crases (caso real mais comum na prática)", () => {
+    expect(stripMarkdownEnvelope("```markdown\n")).toBe("");
+    expect(stripMarkdownEnvelope("```markdown\nOlá")).toBe("Olá");
+    expect(stripMarkdownEnvelope("```markdown\nOlá, mundo\n```")).toBe(
+      "Olá, mundo",
     );
   });
 

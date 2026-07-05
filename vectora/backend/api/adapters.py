@@ -528,8 +528,8 @@ def adapt_stream(
                     continue
 
                 # Emite message_break quando o nó emissor de tokens muda e já
-                # há tokens acumulados. O frontend usa isso para aplicar
-                # stripMarkdownEnvelope por segmento antes de concatenar.
+                # há tokens acumulados. O frontend trata cada segmento como
+                # bolha própria antes de concatenar.
                 if isinstance(payload, TokenEvent):
                     node_name = payload.node or ""
                     if (

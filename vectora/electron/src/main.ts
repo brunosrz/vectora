@@ -451,6 +451,10 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    // Titlebar customizada (estilo VS Code, ver src/components/layout/title-bar.tsx
+    // no frontend) — a janela nativa não desenha min/max/close nem título; o
+    // renderer é responsável pelos controles e pela região arrastável.
+    frame: false,
     backgroundColor: "#0a0e1a",
     webPreferences: {
       contextIsolation: true,
@@ -458,6 +462,13 @@ function createWindow(): void {
       sandbox: true,
       preload: path.join(__dirname, "preload.js"),
     },
+  });
+
+  mainWindow.on("maximize", () => {
+    mainWindow?.webContents.send("vectora:window-state", { maximized: true });
+  });
+  mainWindow.on("unmaximize", () => {
+    mainWindow?.webContents.send("vectora:window-state", { maximized: false });
   });
 
   // Inject app version no preload sem precisar recompilar.
@@ -647,6 +658,19 @@ function registerIpc(): void {
   ipcMain.on("vectora:quit-and-install", () => {
     if (updateReady) autoUpdater.quitAndInstall();
   });
+
+  // Controles da titlebar customizada (frame: false — ver createWindow()).
+  ipcMain.on("vectora:window-minimize", () => mainWindow?.minimize());
+  ipcMain.on("vectora:window-maximize-toggle", () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+  });
+  ipcMain.on("vectora:window-close", () => mainWindow?.close());
+  ipcMain.handle(
+    "vectora:window-is-maximized",
+    () => mainWindow?.isMaximized() ?? false,
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -89,23 +89,9 @@ a especialistas usando a tool `task()`. Nunca faz as duas coisas no mesmo turno.
 Para saudações, conversas, conhecimento geral, síntese RAG e perguntas que
 não precisam de filesystem, terminal ou busca web:
 
-Envolva **toda** resposta em markdown com **exatamente seis acentos graves**:
-
-``````
-``````markdown
-# Título
-
-Texto em markdown aqui.
-
-```python
-print("blocos internos funcionam")
-```
-``````
-``````
-
-Regras:
-- Seis crases no abre e no fecha. Identificador: sempre `markdown`.
-- Mesmo respostas curtas vão dentro do envelope.
+Responda em markdown normal (títulos, listas, negrito, blocos de código com
+três crases quando fizer sentido) — sem nenhum envelope ou wrapper externo.
+O frontend renderiza o markdown diretamente.
 
 ---
 

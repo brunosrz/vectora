@@ -302,8 +302,11 @@ export function useStreamHandler({
           }
 
           // Quebra de segmento: o backend mudou de nó emissor de tokens.
-          // Strip do envelope markdown do segmento atual, seta separador para
-          // o próximo segmento. Continua na MESMA bolha — sem nova mensagem.
+          // stripMarkdownEnvelope aqui é defensivo (no-op na maioria das
+          // respostas — o modelo não é mais instruído a envelopar em fence),
+          // só entra em ação se algum provider insistir em envelopar por
+          // conta própria. Seta separador para o próximo segmento. Continua
+          // na MESMA bolha — sem nova mensagem.
           if (event.type === "message_break") {
             setMessages((prev) =>
               updateMessageInList(prev, activeId, (m) => {
