@@ -49,6 +49,13 @@ const PLANNED = [
       "REST API pública completa — auth, threads/chat, workspaces, git, terminal, RAG, tasks, webhooks e settings via API (hoje só classify/extract/jobs são públicos)",
   },
   { label: "Integração nativa com VS Code e JetBrains via ACP" },
+  {
+    label:
+      "Ollama gateway — modelos locais custom (inclusive remotos) registrados pelo usuário",
+  },
+  {
+    label: "OpenRouter gateway — modelos custom via API key própria do usuário",
+  },
   { label: "SDK Python — pacote PyPI oficial (plugins/extensões do Vectora)" },
   { label: "SDK TypeScript/Node — pacote NPM oficial (plugins/extensões)" },
   { label: "GitHub Actions integration — run Vectora directly from CI" },
