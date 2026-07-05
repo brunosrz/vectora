@@ -1,6 +1,14 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useRouteContext } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
-import { Key, Shield, CreditCard, Zap, User, HelpCircle } from "lucide-react";
+import {
+  Key,
+  Shield,
+  CreditCard,
+  Zap,
+  User,
+  HelpCircle,
+  ShieldCheck,
+} from "lucide-react";
 import Logo from "#/components/shared/Logo";
 import ThemeToggle from "#/components/shared/ThemeToggle";
 
@@ -41,6 +49,20 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const { location } = useRouterState();
   const pathname = location.pathname;
+  const { session } = useRouteContext({ from: "__root__" });
+  const isAdmin = session?.role === "admin";
+
+  const desktopItems = isAdmin
+    ? [
+        ...NAV_ITEMS,
+        {
+          to: "/admin" as const,
+          exact: false,
+          icon: ShieldCheck,
+          labelKey: "nav_admin" as const,
+        },
+      ]
+    : NAV_ITEMS;
 
   return (
     <>
@@ -51,7 +73,7 @@ export default function Sidebar() {
           <ThemeToggle />
         </div>
         <nav className="flex flex-col gap-0.5 px-3">
-          {NAV_ITEMS.map((item) => {
+          {desktopItems.map((item) => {
             const active = item.exact
               ? pathname === item.to
               : pathname.startsWith(item.to);

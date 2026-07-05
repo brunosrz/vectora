@@ -33,7 +33,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => {
     const plausibleDomain =
       typeof import.meta !== "undefined"
-        ? import.meta.env.VITE_PLAUSIBLE_DOMAIN ?? "vectora.company"
+        ? (import.meta.env.VITE_PLAUSIBLE_DOMAIN ?? "vectora.company")
         : "vectora.company";
 
     return {
@@ -102,7 +102,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { session } = Route.useRouteContext();
   const { location } = useRouterState();
-  const isDashboard = location.pathname.startsWith("/dashboard");
+  const isDashboard =
+    location.pathname.startsWith("/dashboard") ||
+    location.pathname.startsWith("/admin");
   const isAuth =
     location.pathname === "/login" ||
     location.pathname === "/signup" ||

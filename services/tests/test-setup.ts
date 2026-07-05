@@ -4,6 +4,10 @@ import { beforeAll } from "vitest";
 import initSql from "../migrations/0001_init.sql?raw";
 // @ts-expect-error — idem.
 import telemetryAndRagStatusSql from "../migrations/0002_telemetry_and_rag_status.sql?raw";
+// @ts-expect-error — idem.
+import rbacBillingSql from "../migrations/0003_rbac_billing.sql?raw";
+// @ts-expect-error — idem.
+import seedAdminSql from "../migrations/0004_seed_admin.sql?raw";
 
 async function applyMigration(sql: string): Promise<void> {
   const withoutComments = sql
@@ -22,4 +26,6 @@ async function applyMigration(sql: string): Promise<void> {
 beforeAll(async () => {
   await applyMigration(initSql as string);
   await applyMigration(telemetryAndRagStatusSql as string);
+  await applyMigration(rbacBillingSql as string);
+  await applyMigration(seedAdminSql as string);
 });

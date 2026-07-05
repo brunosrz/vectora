@@ -23,8 +23,10 @@ import { Route as DpaRouteImport } from './routes/dpa'
 import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DashboardLicenseRouteImport } from './routes/dashboard/license'
 import { Route as DashboardBillingRouteImport } from './routes/dashboard/billing'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard/api-keys'
@@ -32,6 +34,8 @@ import { Route as DashboardAccountRouteImport } from './routes/dashboard/account
 import { Route as AuthVerifyRouteImport } from './routes/auth/verify'
 import { Route as AuthDeviceRouteImport } from './routes/auth/device'
 import { Route as ApiOgRouteImport } from './routes/api/og'
+import { Route as AdminGiftsRouteImport } from './routes/admin/gifts'
+import { Route as AdminCouponsRouteImport } from './routes/admin/coupons'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -103,6 +107,11 @@ const DashboardRouteRoute = DashboardRouteRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -112,6 +121,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const DashboardLicenseRoute = DashboardLicenseRouteImport.update({
   id: '/license',
@@ -148,9 +162,20 @@ const ApiOgRoute = ApiOgRouteImport.update({
   path: '/api/og',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminGiftsRoute = AdminGiftsRouteImport.update({
+  id: '/gifts',
+  path: '/gifts',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminCouponsRoute = AdminCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
@@ -165,6 +190,8 @@ export interface FileRoutesByFullPath {
   '/sla': typeof SlaRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/admin/coupons': typeof AdminCouponsRoute
+  '/admin/gifts': typeof AdminGiftsRoute
   '/api/og': typeof ApiOgRoute
   '/auth/device': typeof AuthDeviceRoute
   '/auth/verify': typeof AuthVerifyRoute
@@ -172,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/license': typeof DashboardLicenseRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -189,6 +217,8 @@ export interface FileRoutesByTo {
   '/sla': typeof SlaRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/admin/coupons': typeof AdminCouponsRoute
+  '/admin/gifts': typeof AdminGiftsRoute
   '/api/og': typeof ApiOgRoute
   '/auth/device': typeof AuthDeviceRoute
   '/auth/verify': typeof AuthVerifyRoute
@@ -196,11 +226,13 @@ export interface FileRoutesByTo {
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/license': typeof DashboardLicenseRoute
+  '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/cookies': typeof CookiesRoute
   '/downloads': typeof DownloadsRoute
@@ -215,6 +247,8 @@ export interface FileRoutesById {
   '/sla': typeof SlaRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/admin/coupons': typeof AdminCouponsRoute
+  '/admin/gifts': typeof AdminGiftsRoute
   '/api/og': typeof ApiOgRoute
   '/auth/device': typeof AuthDeviceRoute
   '/auth/verify': typeof AuthVerifyRoute
@@ -222,12 +256,14 @@ export interface FileRoutesById {
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/license': typeof DashboardLicenseRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/dashboard'
     | '/cookies'
     | '/downloads'
@@ -242,6 +278,8 @@ export interface FileRouteTypes {
     | '/sla'
     | '/support'
     | '/terms'
+    | '/admin/coupons'
+    | '/admin/gifts'
     | '/api/og'
     | '/auth/device'
     | '/auth/verify'
@@ -249,6 +287,7 @@ export interface FileRouteTypes {
     | '/dashboard/api-keys'
     | '/dashboard/billing'
     | '/dashboard/license'
+    | '/admin/'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -266,6 +305,8 @@ export interface FileRouteTypes {
     | '/sla'
     | '/support'
     | '/terms'
+    | '/admin/coupons'
+    | '/admin/gifts'
     | '/api/og'
     | '/auth/device'
     | '/auth/verify'
@@ -273,10 +314,12 @@ export interface FileRouteTypes {
     | '/dashboard/api-keys'
     | '/dashboard/billing'
     | '/dashboard/license'
+    | '/admin'
     | '/dashboard'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/dashboard'
     | '/cookies'
     | '/downloads'
@@ -291,6 +334,8 @@ export interface FileRouteTypes {
     | '/sla'
     | '/support'
     | '/terms'
+    | '/admin/coupons'
+    | '/admin/gifts'
     | '/api/og'
     | '/auth/device'
     | '/auth/verify'
@@ -298,11 +343,13 @@ export interface FileRouteTypes {
     | '/dashboard/api-keys'
     | '/dashboard/billing'
     | '/dashboard/license'
+    | '/admin/'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   CookiesRoute: typeof CookiesRoute
   DownloadsRoute: typeof DownloadsRoute
@@ -422,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -435,6 +489,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/dashboard/license': {
       id: '/dashboard/license'
@@ -485,8 +546,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/gifts': {
+      id: '/admin/gifts'
+      path: '/gifts'
+      fullPath: '/admin/gifts'
+      preLoaderRoute: typeof AdminGiftsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/coupons': {
+      id: '/admin/coupons'
+      path: '/coupons'
+      fullPath: '/admin/coupons'
+      preLoaderRoute: typeof AdminCouponsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
+
+interface AdminRouteRouteChildren {
+  AdminCouponsRoute: typeof AdminCouponsRoute
+  AdminGiftsRoute: typeof AdminGiftsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminCouponsRoute: AdminCouponsRoute,
+  AdminGiftsRoute: AdminGiftsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
 
 interface DashboardRouteRouteChildren {
   DashboardAccountRoute: typeof DashboardAccountRoute
@@ -510,6 +601,7 @@ const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   CookiesRoute: CookiesRoute,
   DownloadsRoute: DownloadsRoute,

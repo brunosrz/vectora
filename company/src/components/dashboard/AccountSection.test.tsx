@@ -55,6 +55,7 @@ const USER: SessionUser = {
   country: "BR",
   language: "pt",
   email_verified: true,
+  role: "user",
 };
 
 function renderWithClient(ui: ReactNode) {

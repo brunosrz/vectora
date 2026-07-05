@@ -36,6 +36,7 @@ interface UserRow {
   country: string;
   language: string;
   email_verified: number;
+  role: string;
 }
 
 function randomHex(bytes: number): string {
@@ -43,6 +44,44 @@ function randomHex(bytes: number): string {
   return Array.from(arr)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/** Aplica um presente 'pending' com esse email no signup (podia ter sido
+ * concedido antes mesmo da conta existir — ver admin/routes.ts). */
+async function applyPendingGift(
+  db: D1Database,
+  userId: string,
+  email: string,
+): Promise<void> {
+  const gift = await db
+    .prepare(
+      "SELECT id, duration_months FROM gifts WHERE email = ? AND status = 'pending'",
+    )
+    .bind(email)
+    .first<{ id: string; duration_months: number | null }>();
+  if (!gift) return;
+
+  const currentPeriodEnd = gift.duration_months
+    ? (() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + gift.duration_months!);
+        return d.toISOString();
+      })()
+    : null;
+
+  await db
+    .prepare(
+      "UPDATE subscriptions SET tier = 'pro', status = 'active', provider = 'gift', current_period_end = ?, updated_at = datetime('now') WHERE user_id = ?",
+    )
+    .bind(currentPeriodEnd, userId)
+    .run();
+
+  await db
+    .prepare(
+      "UPDATE gifts SET status = 'claimed', claimed_user_id = ?, claimed_at = datetime('now') WHERE id = ?",
+    )
+    .bind(userId, gift.id)
+    .run();
 }
 
 async function createEmailVerification(
@@ -126,6 +165,8 @@ auth.post("/signup", async (c) => {
   )
     .bind(crypto.randomUUID(), userId, country === "BR" ? "BRL" : "USD")
     .run();
+
+  await applyPendingGift(c.env.DB, userId, email);
 
   const verifyToken = await createEmailVerification(
     c.env.DB,
@@ -253,7 +294,7 @@ auth.get("/me", async (c) => {
   if (!userId) return c.json({ error: "unauthorized" }, 401);
 
   const user = await c.env.DB.prepare(
-    "SELECT id, email, full_name, country, language, email_verified FROM users WHERE id = ?",
+    "SELECT id, email, full_name, country, language, email_verified, role FROM users WHERE id = ?",
   )
     .bind(userId)
     .first<UserRow>();
@@ -266,6 +307,7 @@ auth.get("/me", async (c) => {
     country: user.country,
     language: user.language,
     email_verified: Boolean(user.email_verified),
+    role: user.role,
   });
 });
 

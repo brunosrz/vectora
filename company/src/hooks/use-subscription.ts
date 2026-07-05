@@ -27,9 +27,11 @@ export function useLicenseHistory() {
 
 export function useCreateCheckout() {
   return useMutation({
-    mutationFn: () => createCheckout(),
-    onSuccess: ({ url }) => {
-      window.location.href = url;
+    mutationFn: (params: { planId: string; couponCode?: string }) =>
+      createCheckout({ data: params }),
+    onSuccess: (res) => {
+      if ("redeemed" in res) return;
+      window.location.href = res.url;
     },
   });
 }

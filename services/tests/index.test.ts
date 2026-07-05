@@ -89,4 +89,48 @@ describe("scheduled()", () => {
       .first();
     expect(stillThere).not.toBeNull();
   });
+
+  it("expires gift subscriptions whose current_period_end has passed, leaving lifetime gifts untouched", async () => {
+    const expiredUserId = crypto.randomUUID();
+    const lifetimeUserId = crypto.randomUUID();
+    for (const id of [expiredUserId, lifetimeUserId]) {
+      await env.DB.prepare(
+        "INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)",
+      )
+        .bind(id, `${id}@example.com`, "pbkdf2$1$AA==$AA==")
+        .run();
+    }
+    await env.DB.prepare(
+      "INSERT INTO subscriptions (id, user_id, tier, status, provider, current_period_end) VALUES (?, ?, 'pro', 'active', 'gift', ?)",
+    )
+      .bind(
+        crypto.randomUUID(),
+        expiredUserId,
+        new Date(Date.now() - 1000).toISOString(),
+      )
+      .run();
+    await env.DB.prepare(
+      "INSERT INTO subscriptions (id, user_id, tier, status, provider, current_period_end) VALUES (?, ?, 'pro', 'active', 'gift', NULL)",
+    )
+      .bind(crypto.randomUUID(), lifetimeUserId)
+      .run();
+
+    const ctx = createExecutionContext();
+    await worker.scheduled!(createScheduledController(), env, ctx);
+    await waitOnExecutionContext(ctx);
+
+    const expired = await env.DB.prepare(
+      "SELECT status, tier FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(expiredUserId)
+      .first<{ status: string; tier: string }>();
+    expect(expired).toEqual({ status: "expired", tier: "free" });
+
+    const lifetime = await env.DB.prepare(
+      "SELECT status, tier FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(lifetimeUserId)
+      .first<{ status: string; tier: string }>();
+    expect(lifetime).toEqual({ status: "active", tier: "pro" });
+  });
 });

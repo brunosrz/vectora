@@ -1,14 +1,29 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { m } from "#/paraglide/messages";
 import {
   getSubscription,
   createCheckout,
   createPortal,
+  PLANS,
 } from "#/server/fns/subscription";
+import type { PlanId } from "#/server/fns/subscription";
 import { toast } from "sonner";
 import { ExternalLink } from "lucide-react";
 
+const PLAN_LABEL_KEYS = {
+  "1m": "billing_plan_1m",
+  "3m": "billing_plan_3m",
+  "6m": "billing_plan_6m",
+  "12m": "billing_plan_12m",
+  "36m": "billing_plan_36m",
+} as const satisfies Record<PlanId, keyof typeof m>;
+
 export default function BillingSection() {
+  const queryClient = useQueryClient();
+  const [planId, setPlanId] = useState<PlanId>("1m");
+  const [couponCode, setCouponCode] = useState("");
+
   const { data: sub, isLoading } = useQuery({
     queryKey: ["subscription"],
     queryFn: () => getSubscription(),
@@ -16,8 +31,16 @@ export default function BillingSection() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: () => createCheckout(),
+    mutationFn: () =>
+      createCheckout({
+        data: { planId, couponCode: couponCode.trim() || undefined },
+      }),
     onSuccess: (res) => {
+      if ("redeemed" in res) {
+        toast.success(m.billing_coupon_redeemed());
+        queryClient.invalidateQueries({ queryKey: ["subscription"] });
+        return;
+      }
       window.location.href = res.url;
     },
     onError: () => toast.error(m.error_generic()),
@@ -56,19 +79,42 @@ export default function BillingSection() {
             <p className="text-sm text-muted-foreground">
               {m.billing_free_desc()}
             </p>
+
+            <label className="text-xs font-medium text-muted-foreground">
+              {m.billing_plan_selector_label()}
+            </label>
+            <select
+              value={planId}
+              onChange={(e) => setPlanId(e.target.value as PlanId)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            >
+              {PLANS.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {m[PLAN_LABEL_KEYS[plan.id]]()} —{" "}
+                  {isBR ? `R$${plan.priceBrl}` : `$${plan.priceUsd}`}
+                </option>
+              ))}
+            </select>
+
+            <label className="text-xs font-medium text-muted-foreground">
+              {m.billing_coupon_label()}
+            </label>
+            <input
+              type="text"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+              placeholder={m.billing_coupon_placeholder()}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            />
+
             <button
               onClick={() => checkoutMutation.mutate()}
               disabled={checkoutMutation.isPending}
               className="flex items-center justify-between rounded-xl border border-primary/50 bg-primary/5 px-4 py-3 text-sm hover:border-primary transition-all disabled:opacity-50"
             >
-              <div>
-                <p className="font-semibold text-primary">
-                  {m.billing_upgrade_pro()}
-                </p>
-                <p className="text-muted-foreground">
-                  {isBR ? "R$24/mês" : "$9/mês"}
-                </p>
-              </div>
+              <p className="font-semibold text-primary">
+                {m.billing_upgrade_pro()}
+              </p>
               <ExternalLink className="h-4 w-4 text-primary" />
             </button>
           </div>

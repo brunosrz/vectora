@@ -21,11 +21,13 @@ import relayHandler, {
 } from "./relay";
 import updatesApp from "./updates/worker";
 import { auth } from "./auth/routes";
+import { admin } from "./admin/routes";
 import { profile } from "./profile/routes";
 import { billing } from "./billing/routes";
 import { license } from "./license/routes";
 import { oauth } from "./oauth/routes";
 import { gdpr, enqueueExpiredUserDeletions } from "./gdpr/routes";
+import { expireGiftSubscriptions } from "./billing/routes";
 import { apiKeys } from "./api-keys/routes";
 import { issues } from "./issues/routes";
 import { ragLibrary } from "./rag-library/routes";
@@ -42,6 +44,7 @@ function isRelayHost(hostname: string): boolean {
 
 const servicesApp = new Hono<{ Bindings: Env }>();
 servicesApp.route("/auth", auth);
+servicesApp.route("/admin", admin);
 servicesApp.route("/profile", profile);
 servicesApp.route("/billing", billing);
 servicesApp.route("/license", license);
@@ -78,6 +81,7 @@ export default {
     ctx: ExecutionContext,
   ): Promise<void> {
     ctx.waitUntil(enqueueExpiredUserDeletions(env).then(() => undefined));
+    ctx.waitUntil(expireGiftSubscriptions(env.DB).then(() => undefined));
   },
 
   async queue(batch: MessageBatch<unknown>, env: Env): Promise<void> {

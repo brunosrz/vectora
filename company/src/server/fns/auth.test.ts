@@ -51,11 +51,13 @@ describe("getSession", () => {
       country: "BR",
       language: "pt",
       email_verified: true,
+      role: "user",
     });
 
     const result = await getSession();
 
     expect(result?.email).toBe("a@b.com");
+    expect(result?.role).toBe("user");
     expect(mockServicesFetch).toHaveBeenCalledWith("/auth/me");
   });
 

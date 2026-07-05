@@ -53,16 +53,34 @@ describe("getSubscription", () => {
 });
 
 describe("createCheckout", () => {
-  it("retorna a URL de checkout", async () => {
+  it("retorna a URL de checkout e envia plan_id/coupon_code pro worker", async () => {
     mockServicesFetch.mockResolvedValue({ url: "https://checkout.test/abc" });
 
-    const result = await createCheckout();
+    const result = await createCheckout({
+      data: { planId: "3m", couponCode: "GALEGO" },
+    });
 
     expect(result).toEqual({ url: "https://checkout.test/abc" });
     expect(mockServicesFetch).toHaveBeenCalledWith(
       "/billing/checkout",
-      expect.objectContaining({ method: "POST" }),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ plan_id: "3m", coupon_code: "GALEGO" }),
+      }),
     );
+  });
+
+  it("aceita um checkout sem cupom e retorna { redeemed: true } para cupom free_lifetime (edge)", async () => {
+    mockServicesFetch.mockResolvedValue({ redeemed: true });
+
+    const result = await createCheckout({ data: { planId: "1m" } });
+
+    expect(result).toEqual({ redeemed: true });
+  });
+
+  it("rejeita um plan_id vazio antes de bater na rede (edge — validação Zod)", async () => {
+    await expect(createCheckout({ data: { planId: "" } })).rejects.toBeTruthy();
+    expect(mockServicesFetch).not.toHaveBeenCalled();
   });
 });
 

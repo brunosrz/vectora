@@ -14,6 +14,7 @@ export interface SessionUser {
   country: "BR" | "INTL";
   language: string;
   email_verified: boolean;
+  role: "user" | "admin";
 }
 
 export const getSession = createServerFn({ method: "GET" }).handler(

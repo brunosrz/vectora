@@ -95,6 +95,18 @@ export function waitlistJoinedHtml(): string {
   `);
 }
 
+export function giftReceivedHtml(
+  granterName: string,
+  durationLabel: string,
+  ctaUrl: string,
+): string {
+  return shell(`
+    <p style="color:#4ade80;font-size:14px;font-weight:600">🎁 Você recebeu um presente</p>
+    <p style="color:#94a3b8;font-size:14px">Você recebeu o Vectora Pro de presente de <strong>${granterName}</strong>! Duração: <strong>${durationLabel}</strong>.</p>
+    <a href="${ctaUrl}" style="display:inline-block;background:${BRAND_BLUE};color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-size:14px;font-weight:600;margin:16px 0">Acessar Vectora Pro →</a>
+  `);
+}
+
 export function accountDeletedHtml(name: string, deletionDate: string): string {
   return shell(`
     <p style="color:#f87171;font-size:14px;font-weight:600">Conta agendada para exclusão</p>

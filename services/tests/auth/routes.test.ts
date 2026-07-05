@@ -87,6 +87,65 @@ describe("POST /signup", () => {
   });
 });
 
+describe("POST /signup — pending gift", () => {
+  it("claims a pending gift for the email, granting Pro with the gift's duration", async () => {
+    const adminId = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, 'admin')",
+    )
+      .bind(adminId, `${adminId}@example.com`, "pbkdf2$1$AA==$AA==")
+      .run();
+    const body = signupBody();
+    const giftId = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO gifts (id, email, granted_by, duration_months) VALUES (?, ?, ?, 6)",
+    )
+      .bind(giftId, body.email, adminId)
+      .run();
+
+    const res = await post("/signup", body);
+    expect(res.status).toBe(200);
+
+    const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?")
+      .bind(body.email)
+      .first<{ id: string }>();
+    const sub = await env.DB.prepare(
+      "SELECT tier, status, provider, current_period_end FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(user!.id)
+      .first<{
+        tier: string;
+        status: string;
+        provider: string;
+        current_period_end: string;
+      }>();
+    expect(sub?.tier).toBe("pro");
+    expect(sub?.provider).toBe("gift");
+    expect(sub?.current_period_end).not.toBeNull();
+
+    const gift = await env.DB.prepare(
+      "SELECT status, claimed_user_id FROM gifts WHERE id = ?",
+    )
+      .bind(giftId)
+      .first<{ status: string; claimed_user_id: string }>();
+    expect(gift).toEqual({ status: "claimed", claimed_user_id: user!.id });
+  });
+
+  it("leaves a fresh signup with no gift on the default free tier", async () => {
+    const body = signupBody();
+    await post("/signup", body);
+    const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?")
+      .bind(body.email)
+      .first<{ id: string }>();
+    const sub = await env.DB.prepare(
+      "SELECT tier FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(user!.id)
+      .first<{ tier: string }>();
+    expect(sub?.tier).toBe("free");
+  });
+});
+
 describe("POST /signup — country BR", () => {
   it("creates a BR user with a BRL subscription", async () => {
     vi.stubGlobal(
@@ -209,7 +268,9 @@ describe("POST /login and GET /me", () => {
       env,
     );
     expect(me.status).toBe(200);
-    expect((await me.json<{ email: string }>()).email).toBe(body.email);
+    const meJson = await me.json<{ email: string; role: string }>();
+    expect(meJson.email).toBe(body.email);
+    expect(meJson.role).toBe("user");
 
     const unauthenticated = await auth.request("/me", {}, env);
     expect(unauthenticated.status).toBe(401);

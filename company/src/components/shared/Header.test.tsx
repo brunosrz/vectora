@@ -51,6 +51,7 @@ const SESSION: SessionUser = {
   country: "BR",
   language: "pt",
   email_verified: true,
+  role: "user",
 };
 
 beforeEach(() => {

@@ -148,6 +148,81 @@ describe("POST /billing/webhooks", () => {
     expect(sub?.status).toBe("past_due");
   });
 
+  it("grants current_period_end from the plan's months, and redeems the coupon exactly once", async () => {
+    const { userId } = await makeUserWithSession();
+    const adminId = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, 'admin')",
+    )
+      .bind(adminId, `${adminId}@example.com`, "pbkdf2$1$AA==$AA==")
+      .run();
+    const couponId = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO coupons (id, code, kind, grant_plan_id, charge_plan_id, created_by) VALUES (?, 'ASAASCOUPON', 'discount', '12m', '1m', ?)",
+    )
+      .bind(couponId, adminId)
+      .run();
+    vi.stubGlobal("fetch", mockFetch({ "api.resend.com": {} }));
+
+    const res = await billing.request(
+      "/webhooks?provider=asaas",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          event: "PAYMENT_RECEIVED",
+          payment: {
+            externalReference: `${userId}:12m:${couponId}`,
+            id: "pay_456",
+            value: 96,
+          },
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    const sub = await env.DB.prepare(
+      "SELECT current_period_end FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(userId)
+      .first<{ current_period_end: string }>();
+    const monthsAhead =
+      (new Date(sub!.current_period_end).getTime() - Date.now()) /
+      (30 * 24 * 60 * 60 * 1000);
+    expect(monthsAhead).toBeGreaterThan(11);
+    expect(monthsAhead).toBeLessThan(13);
+
+    const redemption = await env.DB.prepare(
+      "SELECT COUNT(*) as count FROM coupon_redemptions WHERE coupon_id = ? AND user_id = ?",
+    )
+      .bind(couponId, userId)
+      .first<{ count: number }>();
+    expect(redemption?.count).toBe(1);
+
+    // Reenvio do mesmo webhook (retry do Asaas) não redime 2x.
+    await billing.request(
+      "/webhooks?provider=asaas",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          event: "PAYMENT_CONFIRMED",
+          payment: {
+            externalReference: `${userId}:12m:${couponId}`,
+            id: "pay_456",
+            value: 96,
+          },
+        }),
+      },
+      env,
+    );
+    const redemptionAfterRetry = await env.DB.prepare(
+      "SELECT COUNT(*) as count FROM coupon_redemptions WHERE coupon_id = ? AND user_id = ?",
+    )
+      .bind(couponId, userId)
+      .first<{ count: number }>();
+    expect(redemptionAfterRetry?.count).toBe(1);
+  });
+
   it("cancels back to free on PAYMENT_DELETED/PAYMENT_REFUNDED", async () => {
     const { userId } = await makeUserWithSession();
 
@@ -240,6 +315,68 @@ describe("POST /billing/webhooks", () => {
       });
     });
 
+    it("invoice.paid with a coupon_id in the subscription metadata: redeems it exactly once, even across a retry", async () => {
+      const { userId } = await makeUserWithSession("USD");
+      const adminId = crypto.randomUUID();
+      await env.DB.prepare(
+        "INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, 'admin')",
+      )
+        .bind(adminId, `${adminId}@example.com`, "pbkdf2$1$AA==$AA==")
+        .run();
+      const couponId = crypto.randomUUID();
+      await env.DB.prepare(
+        "INSERT INTO coupons (id, code, kind, grant_plan_id, charge_plan_id, created_by) VALUES (?, 'STRIPECOUPON', 'discount', '12m', '1m', ?)",
+      )
+        .bind(couponId, adminId)
+        .run();
+      vi.stubGlobal(
+        "fetch",
+        mockFetch({
+          "api.stripe.com/v1/subscriptions/sub_coupon": {
+            id: "sub_coupon",
+            metadata: { plan: "12m", coupon_id: couponId },
+            items: {
+              data: [
+                { current_period_end: 1_800_000_000, price: { metadata: {} } },
+              ],
+            },
+          },
+          "api.resend.com": {},
+        }),
+      );
+
+      const payload = {
+        id: "evt_coupon",
+        type: "invoice.paid",
+        data: {
+          object: {
+            metadata: { user_id: userId },
+            amount_paid: 900,
+            currency: "usd",
+            parent: { subscription_details: { subscription: "sub_coupon" } },
+          },
+        },
+      };
+      const res = await postStripeEvent(payload);
+      expect(res.status).toBe(200);
+
+      const redemption = await env.DB.prepare(
+        "SELECT COUNT(*) as count FROM coupon_redemptions WHERE coupon_id = ? AND user_id = ?",
+      )
+        .bind(couponId, userId)
+        .first<{ count: number }>();
+      expect(redemption?.count).toBe(1);
+
+      // Stripe reenvia webhooks até obter 200 — o mesmo evento não pode redimir 2x.
+      await postStripeEvent({ ...payload, id: "evt_coupon_retry" });
+      const redemptionAfterRetry = await env.DB.prepare(
+        "SELECT COUNT(*) as count FROM coupon_redemptions WHERE coupon_id = ? AND user_id = ?",
+      )
+        .bind(couponId, userId)
+        .first<{ count: number }>();
+      expect(redemptionAfterRetry?.count).toBe(1);
+    });
+
     it("invoice.payment_failed: marks past_due and emails the user", async () => {
       const { userId } = await makeUserWithSession("USD");
       vi.stubGlobal("fetch", mockFetch({ "api.resend.com": {} }));
@@ -301,6 +438,29 @@ describe("GET /billing/subscription", () => {
   });
 });
 
+async function checkout(token: string, body: Record<string, unknown>) {
+  return billing.request(
+    "/checkout",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    },
+    env,
+  );
+}
+
+const STRIPE_PRICE_MOCKS = {
+  "api.stripe.com/v1/prices/price_test_fake": {
+    id: "price_test_fake",
+    product: "prod_123",
+  },
+  "api.stripe.com/v1/prices": { id: "price_new" },
+};
+
 describe("POST /billing/checkout", () => {
   it("rejects unauthenticated requests", async () => {
     expect(
@@ -308,7 +468,15 @@ describe("POST /billing/checkout", () => {
     ).toBe(401);
   });
 
-  it("BRL currency: creates an Asaas payment and returns its invoice URL", async () => {
+  it("rejects a missing or unknown plan_id", async () => {
+    const { token } = await makeUserWithSession("USD");
+    expect((await checkout(token, {})).status).toBe(400);
+    expect((await checkout(token, { plan_id: "does-not-exist" })).status).toBe(
+      400,
+    );
+  });
+
+  it("BRL currency: creates an Asaas payment for the plan's price and returns its invoice URL", async () => {
     const { token } = await makeUserWithSession("BRL");
     vi.stubGlobal(
       "fetch",
@@ -317,11 +485,7 @@ describe("POST /billing/checkout", () => {
       }),
     );
 
-    const res = await billing.request(
-      "/checkout",
-      { method: "POST", headers: { Authorization: `Bearer ${token}` } },
-      env,
-    );
+    const res = await checkout(token, { plan_id: "3m" });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ url: "https://asaas.test/invoice/1" });
   });
@@ -335,14 +499,11 @@ describe("POST /billing/checkout", () => {
         "api.stripe.com/v1/checkout/sessions": {
           url: "https://checkout.stripe.test/1",
         },
+        ...STRIPE_PRICE_MOCKS,
       }),
     );
 
-    const res = await billing.request(
-      "/checkout",
-      { method: "POST", headers: { Authorization: `Bearer ${token}` } },
-      env,
-    );
+    const res = await checkout(token, { plan_id: "1m" });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ url: "https://checkout.stripe.test/1" });
 
@@ -360,18 +521,168 @@ describe("POST /billing/checkout", () => {
       "api.stripe.com/v1/checkout/sessions": {
         url: "https://checkout.stripe.test/2",
       },
+      ...STRIPE_PRICE_MOCKS,
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const res = await billing.request(
-      "/checkout",
-      { method: "POST", headers: { Authorization: `Bearer ${token}` } },
-      env,
-    );
+    const res = await checkout(token, { plan_id: "1m" });
     expect(res.status).toBe(200);
     for (const call of fetchMock.mock.calls) {
       expect(String(call[0])).not.toContain("/v1/customers");
     }
+  });
+
+  describe("with a coupon", () => {
+    async function createCoupon(
+      overrides: Partial<{
+        code: string;
+        kind: "discount" | "free_lifetime";
+        grant_plan_id: string | null;
+        charge_plan_id: string | null;
+        max_redemptions: number | null;
+      }> = {},
+    ) {
+      const id = crypto.randomUUID();
+      const adminId = crypto.randomUUID();
+      await env.DB.prepare(
+        "INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, 'admin')",
+      )
+        .bind(adminId, `${adminId}@example.com`, "pbkdf2$1$AA==$AA==")
+        .run();
+      await env.DB.prepare(
+        `INSERT INTO coupons (id, code, kind, grant_plan_id, charge_plan_id, max_redemptions, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          id,
+          overrides.code ?? "TESTCODE",
+          overrides.kind ?? "discount",
+          overrides.grant_plan_id ?? "12m",
+          overrides.charge_plan_id ?? "6m",
+          overrides.max_redemptions ?? null,
+          adminId,
+        )
+        .run();
+      return id;
+    }
+
+    it("rejects an unknown coupon code", async () => {
+      const { token } = await makeUserWithSession("USD");
+      const res = await checkout(token, { plan_id: "1m", coupon_code: "NOPE" });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "invalid_coupon" });
+    });
+
+    it("discount: charges charge_plan_id but grants grant_plan_id via Stripe metadata", async () => {
+      const { token } = await makeUserWithSession("USD");
+      await createCoupon({ code: "DISCOUNT3M" });
+      let capturedBody: string | undefined;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = typeof input === "string" ? input : input.toString();
+          if (url.includes("/v1/checkout/sessions")) {
+            capturedBody = init?.body as string;
+            return new Response(
+              JSON.stringify({ url: "https://checkout.stripe.test/discount" }),
+              { status: 200 },
+            );
+          }
+          if (url.includes("/v1/customers")) {
+            return new Response(JSON.stringify({ id: "cus_new" }), {
+              status: 200,
+            });
+          }
+          if (url.includes("/v1/prices/price_test_fake")) {
+            return new Response(
+              JSON.stringify({ id: "price_test_fake", product: "prod_123" }),
+              { status: 200 },
+            );
+          }
+          if (url.includes("/v1/prices")) {
+            return new Response(JSON.stringify({ id: "price_1m_new" }), {
+              status: 200,
+            });
+          }
+          throw new Error(`unmocked fetch: ${url}`);
+        }),
+      );
+
+      const res = await checkout(token, {
+        plan_id: "6m",
+        coupon_code: "discount3m",
+      });
+      expect(res.status).toBe(200);
+      expect(capturedBody).toContain("metadata[plan]=12m");
+
+      const priceRow = await env.DB.prepare(
+        "SELECT stripe_price_id FROM plans WHERE id = '6m'",
+      ).first<{ stripe_price_id: string }>();
+      expect(priceRow?.stripe_price_id).toBe("price_1m_new");
+    });
+
+    it("free_lifetime: grants Pro lifetime immediately without any checkout, single-use", async () => {
+      const { userId, token } = await makeUserWithSession("USD");
+      await createCoupon({
+        code: "SECRET1",
+        kind: "free_lifetime",
+        grant_plan_id: null,
+        charge_plan_id: null,
+        max_redemptions: 1,
+      });
+
+      const res = await checkout(token, {
+        plan_id: "1m",
+        coupon_code: "SECRET1",
+      });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ redeemed: true });
+
+      const sub = await env.DB.prepare(
+        "SELECT tier, status, provider, current_period_end FROM subscriptions WHERE user_id = ?",
+      )
+        .bind(userId)
+        .first<{
+          tier: string;
+          status: string;
+          provider: string;
+          current_period_end: string | null;
+        }>();
+      expect(sub).toEqual({
+        tier: "pro",
+        status: "active",
+        provider: "gift",
+        current_period_end: null,
+      });
+
+      const { token: token2 } = await makeUserWithSession("USD");
+      const second = await checkout(token2, {
+        plan_id: "1m",
+        coupon_code: "SECRET1",
+      });
+      expect(second.status).toBe(400);
+      expect(await second.json()).toEqual({ error: "invalid_coupon" });
+    });
+
+    it("rejects a coupon the user already redeemed before (409, distinct from an unknown coupon)", async () => {
+      const { userId, token } = await makeUserWithSession("USD");
+      const couponId = await createCoupon({
+        code: "ONCEPERUSER",
+        max_redemptions: null,
+      });
+      await env.DB.prepare(
+        "INSERT INTO coupon_redemptions (id, coupon_id, user_id) VALUES (?, ?, ?)",
+      )
+        .bind(crypto.randomUUID(), couponId, userId)
+        .run();
+
+      const res = await checkout(token, {
+        plan_id: "1m",
+        coupon_code: "ONCEPERUSER",
+      });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: "coupon_already_redeemed" });
+    });
   });
 });
 

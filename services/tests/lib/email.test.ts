@@ -7,6 +7,7 @@ import {
   invoiceFailedHtml,
   waitlistJoinedHtml,
   accountDeletedHtml,
+  giftReceivedHtml,
   FROM_EMAIL,
 } from "../../src/lib/email";
 
@@ -75,5 +76,9 @@ describe("HTML templates", () => {
     expect(invoiceFailedHtml("Ada", "$9")).toContain("$9");
     expect(waitlistJoinedHtml()).toContain("lista de espera");
     expect(accountDeletedHtml("Ada", "01/01/2027")).toContain("01/01/2027");
+    const gift = giftReceivedHtml("Bruno", "Vitalício", "https://x/dashboard");
+    expect(gift).toContain("Bruno");
+    expect(gift).toContain("Vitalício");
+    expect(gift).toContain("https://x/dashboard");
   });
 });

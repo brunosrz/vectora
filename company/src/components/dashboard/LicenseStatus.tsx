@@ -62,8 +62,9 @@ export function LicenseStatus() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: () => createCheckout(),
+    mutationFn: () => createCheckout({ data: { planId: "1m" } }),
     onSuccess: (res) => {
+      if ("redeemed" in res) return;
       window.location.href = res.url;
     },
     onError: () => toast.error(m.error_generic()),

@@ -12,8 +12,28 @@ import type { Env } from "../relay/types";
 import { requireUserId } from "../auth/routes";
 import { invoicePaidHtml, invoiceFailedHtml } from "../lib/email";
 import { enqueueEmail } from "../lib/queue";
+import { getPlan, ensureStripePrice, type Plan } from "./plans";
 
 export const billing = new Hono<{ Bindings: Env }>();
+
+/** Expira presentes/cupons com prazo fixo vencido — vitalícios
+ * (current_period_end NULL) nunca entram aqui. Rodado 1x/dia (ver
+ * scheduled() em index.ts, mesmo cron do GDPR hard-delete). */
+export async function expireGiftSubscriptions(db: D1Database): Promise<number> {
+  // current_period_end é gravado como ISO8601 (toISOString(), com "T"/"Z") —
+  // comparar contra datetime('now') do SQLite ("YYYY-MM-DD HH:MM:SS", sem
+  // "T"/"Z") quebra a ordenação lexicográfica na hora certa do dia. Bindar
+  // um ISO8601 calculado em JS mantém os dois lados no mesmo formato.
+  const result = await db
+    .prepare(
+      `UPDATE subscriptions SET status = 'expired', tier = 'free'
+       WHERE provider = 'gift' AND current_period_end IS NOT NULL
+         AND current_period_end < ? AND status = 'active'`,
+    )
+    .bind(new Date().toISOString())
+    .run();
+  return result.meta.changes ?? 0;
+}
 
 billing.get("/subscription", async (c) => {
   const userId = await requireUserId(c);
@@ -40,6 +60,115 @@ interface SubRow {
   customer_id: string | null;
 }
 
+interface CouponRow {
+  id: string;
+  code: string;
+  kind: "discount" | "free_lifetime";
+  grant_plan_id: string | null;
+  charge_plan_id: string | null;
+  max_redemptions: number | null;
+  times_redeemed: number;
+  active: number;
+  expires_at: string | null;
+}
+
+async function resolveCoupon(
+  db: D1Database,
+  code: string,
+  userId: string,
+): Promise<CouponRow | "invalid" | "already_redeemed"> {
+  const coupon = await db
+    .prepare("SELECT * FROM coupons WHERE code = ? AND active = 1")
+    .bind(code.toUpperCase())
+    .first<CouponRow>();
+  if (!coupon) return "invalid";
+  if (coupon.expires_at && new Date(coupon.expires_at).getTime() < Date.now()) {
+    return "invalid";
+  }
+  if (
+    coupon.max_redemptions !== null &&
+    coupon.times_redeemed >= coupon.max_redemptions
+  ) {
+    return "invalid";
+  }
+
+  const already = await db
+    .prepare(
+      "SELECT id FROM coupon_redemptions WHERE coupon_id = ? AND user_id = ?",
+    )
+    .bind(coupon.id, userId)
+    .first();
+  if (already) return "already_redeemed";
+
+  return coupon;
+}
+
+async function redeemCoupon(
+  db: D1Database,
+  coupon: CouponRow,
+  userId: string,
+): Promise<void> {
+  await db
+    .prepare(
+      "INSERT INTO coupon_redemptions (id, coupon_id, user_id) VALUES (?, ?, ?)",
+    )
+    .bind(crypto.randomUUID(), coupon.id, userId)
+    .run();
+
+  const nextRedeemed = coupon.times_redeemed + 1;
+  const exhausted =
+    coupon.max_redemptions !== null && nextRedeemed >= coupon.max_redemptions;
+  await db
+    .prepare(
+      exhausted
+        ? "UPDATE coupons SET times_redeemed = ?, active = 0 WHERE id = ?"
+        : "UPDATE coupons SET times_redeemed = ? WHERE id = ?",
+    )
+    .bind(nextRedeemed, coupon.id)
+    .run();
+}
+
+/** Aplica a redenção (audit + contador) a partir do id do cupom — usado pelos
+ * webhooks assíncronos (Stripe/Asaas), onde só o `coupon_id` sobrevive no
+ * metadata/externalReference, não a row completa já resolvida no checkout. */
+async function redeemCouponById(
+  db: D1Database,
+  couponId: string,
+  userId: string,
+): Promise<void> {
+  const coupon = await db
+    .prepare("SELECT * FROM coupons WHERE id = ?")
+    .bind(couponId)
+    .first<CouponRow>();
+  if (!coupon) return;
+
+  const already = await db
+    .prepare(
+      "SELECT id FROM coupon_redemptions WHERE coupon_id = ? AND user_id = ?",
+    )
+    .bind(couponId, userId)
+    .first();
+  if (already) return;
+
+  await redeemCoupon(db, coupon, userId);
+}
+
+export async function grantSubscription(
+  db: D1Database,
+  userId: string,
+  params: {
+    provider: "gift" | "asaas" | "stripe";
+    currentPeriodEnd: string | null;
+  },
+): Promise<void> {
+  await db
+    .prepare(
+      "UPDATE subscriptions SET tier = 'pro', status = 'active', provider = ?, current_period_end = ?, updated_at = datetime('now') WHERE user_id = ?",
+    )
+    .bind(params.provider, params.currentPeriodEnd, userId)
+    .run();
+}
+
 billing.post("/checkout", async (c) => {
   const userId = await requireUserId(c);
   if (!userId) return c.json({ error: "unauthorized" }, 401);
@@ -48,6 +177,39 @@ billing.post("/checkout", async (c) => {
     .bind(userId)
     .first<{ email: string }>();
   if (!user) return c.json({ error: "not_found" }, 404);
+
+  const body = await c.req.json<{ plan_id?: string; coupon_code?: string }>();
+  if (!body.plan_id) return c.json({ error: "plan_id_required" }, 400);
+
+  const requestedPlan = await getPlan(c.env.DB, body.plan_id);
+  if (!requestedPlan) return c.json({ error: "invalid_plan" }, 400);
+
+  let coupon: CouponRow | null = null;
+  if (body.coupon_code) {
+    const resolved = await resolveCoupon(c.env.DB, body.coupon_code, userId);
+    if (resolved === "invalid") return c.json({ error: "invalid_coupon" }, 400);
+    if (resolved === "already_redeemed") {
+      return c.json({ error: "coupon_already_redeemed" }, 409);
+    }
+    coupon = resolved;
+  }
+
+  if (coupon?.kind === "free_lifetime") {
+    await grantSubscription(c.env.DB, userId, {
+      provider: "gift",
+      currentPeriodEnd: null,
+    });
+    await redeemCoupon(c.env.DB, coupon, userId);
+    return c.json({ redeemed: true });
+  }
+
+  // Cupom 'discount': cobra charge_plan_id mas concede grant_plan_id.
+  const chargePlan =
+    coupon?.kind === "discount"
+      ? ((await getPlan(c.env.DB, coupon.charge_plan_id!)) as Plan)
+      : requestedPlan;
+  const grantPlanId =
+    coupon?.kind === "discount" ? coupon.grant_plan_id! : requestedPlan.id;
 
   const sub = await c.env.DB.prepare(
     "SELECT currency, customer_id FROM subscriptions WHERE user_id = ?",
@@ -60,7 +222,7 @@ billing.post("/checkout", async (c) => {
   if (sub?.currency === "BRL") {
     // Asaas (BR)
     const asaasBase = c.env.ASAAS_API_URL || "https://api.asaas.com/v3";
-    const amount = 24.0;
+    const amount = chargePlan.price_brl_cents / 100;
 
     const paymentRes = await fetch(`${asaasBase}/payments`, {
       method: "POST",
@@ -73,8 +235,8 @@ billing.post("/checkout", async (c) => {
         billingType: "UNDEFINED",
         value: amount,
         dueDate: new Date(Date.now() + 86_400_000).toISOString().split("T")[0],
-        description: "Vectora Pro — 1 mês",
-        externalReference: `${userId}:pro`,
+        description: `Vectora Pro — ${grantPlanId}`,
+        externalReference: `${userId}:${grantPlanId}:${coupon?.id ?? ""}`,
       }),
     });
     const payment = await paymentRes.json<{
@@ -104,13 +266,24 @@ billing.post("/checkout", async (c) => {
       .run();
   }
 
+  const priceId = await ensureStripePrice(
+    stripe,
+    c.env.DB,
+    chargePlan,
+    c.env.STRIPE_PRICE_PRO_USD,
+  );
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
-    line_items: [{ price: c.env.STRIPE_PRICE_PRO_USD, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}/dashboard/billing?success=1`,
     cancel_url: `${appUrl}/dashboard/billing`,
-    metadata: { user_id: userId, plan: "pro" },
+    metadata: {
+      user_id: userId,
+      plan: grantPlanId,
+      coupon_id: coupon?.id ?? "",
+    },
   });
 
   return c.json({ url: session.url });
@@ -229,10 +402,11 @@ async function handleStripeWebhook(c: {
     const subId =
       typeof subscriptionId === "string" ? subscriptionId : subscriptionId?.id;
     const sub = await stripe.subscriptions.retrieve(subId as string);
-    const plan =
+    const grantPlanId =
       (sub.metadata?.plan as string | undefined) ??
       (sub.items.data[0]?.price?.metadata?.plan as string | undefined) ??
-      "pro";
+      "1m";
+    const couponId = sub.metadata?.coupon_id as string | undefined;
     const periodEndSeconds = sub.items.data[0]?.current_period_end ?? 0;
     const periodEndIso = new Date(periodEndSeconds * 1000).toISOString();
     const periodEnd = new Date(periodEndSeconds * 1000).toLocaleDateString(
@@ -241,10 +415,12 @@ async function handleStripeWebhook(c: {
     );
 
     await c.env.DB.prepare(
-      "UPDATE subscriptions SET status = 'active', tier = ?, provider = 'stripe', provider_id = ?, current_period_end = ? WHERE user_id = ?",
+      "UPDATE subscriptions SET status = 'active', tier = 'pro', provider = 'stripe', provider_id = ?, current_period_end = ? WHERE user_id = ?",
     )
-      .bind(plan, sub.id, periodEndIso, uid)
+      .bind(sub.id, periodEndIso, uid)
       .run();
+
+    if (couponId) await redeemCouponById(c.env.DB, couponId, uid);
 
     const email = await getUserEmail(c.env.DB, uid);
     if (email) {
@@ -255,7 +431,7 @@ async function handleStripeWebhook(c: {
       await enqueueEmail(c.env, {
         to: email,
         subject: "Pagamento confirmado — Vectora",
-        html: invoicePaidHtml(email, amount, plan, periodEnd),
+        html: invoicePaidHtml(email, amount, grantPlanId, periodEnd),
       });
     }
   }
@@ -309,7 +485,7 @@ async function handleAsaasWebhook(c: {
     };
   }>();
   const externalRef = body.payment?.externalReference ?? "";
-  const [uid, plan] = externalRef.split(":");
+  const [uid, grantPlanId, couponId] = externalRef.split(":");
   const event = body.event ?? "";
 
   await insertPaymentEvent(c.env.DB, {
@@ -321,18 +497,22 @@ async function handleAsaasWebhook(c: {
 
   if ((event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") && uid) {
     // Só existe checkout de Pro — pagamento confirmado sempre vira tier "pro".
+    const plan = await getPlan(c.env.DB, grantPlanId ?? "");
+    const periodEndDate = new Date();
+    periodEndDate.setMonth(periodEndDate.getMonth() + (plan?.months ?? 1));
+
     await c.env.DB.prepare(
-      "UPDATE subscriptions SET status = 'active', tier = 'pro', provider = 'asaas', provider_id = ? WHERE user_id = ?",
+      "UPDATE subscriptions SET status = 'active', tier = 'pro', provider = 'asaas', provider_id = ?, current_period_end = ? WHERE user_id = ?",
     )
-      .bind(body.payment?.id ?? null, uid)
+      .bind(body.payment?.id ?? null, periodEndDate.toISOString(), uid)
       .run();
+
+    if (couponId) await redeemCouponById(c.env.DB, couponId, uid);
 
     const email = await getUserEmail(c.env.DB, uid);
     if (email) {
       const amount = `R$${((body.payment?.value ?? 0) as number).toFixed(2).replace(".", ",")}`;
-      const periodEnd = new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000,
-      ).toLocaleDateString("pt-BR", {
+      const periodEnd = periodEndDate.toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "long",
         year: "numeric",
@@ -340,7 +520,7 @@ async function handleAsaasWebhook(c: {
       await enqueueEmail(c.env, {
         to: email,
         subject: "Pagamento confirmado — Vectora",
-        html: invoicePaidHtml(email, amount, plan ?? "Pro", periodEnd),
+        html: invoicePaidHtml(email, amount, grantPlanId ?? "Pro", periodEnd),
       });
     }
   }

@@ -91,10 +91,26 @@ describe("useCreateCheckout", () => {
     const { result } = renderHook(() => useCreateCheckout(), { wrapper });
 
     await act(async () => {
-      await result.current.mutateAsync();
+      await result.current.mutateAsync({ planId: "1m" });
     });
 
     expect(window.location.href).toBe("https://checkout.test/x");
+    expect(mockCreateCheckout).toHaveBeenCalledWith({
+      data: { planId: "1m" },
+    });
+  });
+
+  it("um cupom free_lifetime (redeemed: true) não tenta redirecionar (edge)", async () => {
+    mockCreateCheckout.mockResolvedValue({ redeemed: true });
+    const { wrapper } = makeWrapper();
+
+    const { result } = renderHook(() => useCreateCheckout(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ planId: "1m", couponCode: "SECRET" });
+    });
+
+    expect(window.location.href).toBe("");
   });
 });
 
