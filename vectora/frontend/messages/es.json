@@ -889,6 +889,8 @@
   "workbench_memory_no_result": "Sin resultado",
   "workbench_memory_empty_title": "La memoria está vacía",
   "workbench_memory_empty_desc": "Aquí aparece el contexto que el agente recupera en esta sesión (base de conocimiento y web).",
+  "workbench_memory_indexed_title": "Ya hay contenido indexado",
+  "workbench_memory_indexed_desc": "Este workspace ya tiene {n} fragmento(s) indexado(s) de sesiones anteriores. Envía un mensaje que use RAG para ver lo recuperado en esta conversación.",
   "workbench_memory_group_rag": "Base de conocimiento",
   "workbench_memory_group_web": "Web",
   "workspace_ingest_no_workspace": "Ningún workspace activo.",

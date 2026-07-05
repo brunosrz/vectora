@@ -8,7 +8,7 @@
  * (trechos da base de conhecimento + resultados web) em pílulas expansíveis.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Brain,
@@ -23,6 +23,49 @@ import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { MarkdownView } from "@/components/workbench/markdown-view";
 import { RagSettingsPanel } from "@/components/workbench/rag-settings-panel";
 import { m } from "@/lib/paraglide/messages";
+
+interface WorkspaceRagCollection {
+  name: string;
+  count: number;
+}
+
+/** RAG é escopo de workspace (LanceDB persiste entre sessões), não de
+ * thread — consulta GET /rag/workspace-summary pra saber o que já está
+ * indexado no workspace ATIVO, independente de `ragCitations` da thread. */
+function useWorkspaceRagSummary(workspaceId: string | undefined) {
+  const [collections, setCollections] = useState<WorkspaceRagCollection[]>([]);
+
+  useEffect(() => {
+    if (!workspaceId) {
+      setCollections([]);
+      return;
+    }
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/rag/workspace-summary?workspace_id=${encodeURIComponent(workspaceId)}`,
+        );
+        if (!res.ok || !alive) return;
+        const data = (await res.json()) as {
+          collections?: WorkspaceRagCollection[];
+        };
+        if (alive) {
+          setCollections(
+            Array.isArray(data.collections) ? data.collections : [],
+          );
+        }
+      } catch {
+        if (alive) setCollections([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [workspaceId]);
+
+  return collections;
+}
 
 interface MemoryTabProps {
   threadId: string;
@@ -91,6 +134,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
   const [messages] = useThreadMessages(threadId);
   const activeWorkspaceId = useWorkspacesStore((s) => s.getActive()?.id);
   const jobs = useRagJobsStore((s) => s.jobs);
+  const workspaceSummary = useWorkspaceRagSummary(activeWorkspaceId);
 
   // Jobs de indexação RAG do workspace ativo (atividade ao vivo).
   const ragJobs = useMemo(
@@ -146,6 +190,10 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
 
   const hasActivity = ragJobs.length > 0 || activeWeb.length > 0;
   const isEmpty = !hasActivity && rag.length === 0 && web.length === 0;
+  const indexedInWorkspace = workspaceSummary.reduce(
+    (total, c) => total + c.count,
+    0,
+  );
 
   if (isEmpty) {
     return (
@@ -155,10 +203,14 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
           <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
           <div className="max-w-[240px]">
             <p className="text-sm font-medium text-foreground">
-              {m.workbench_memory_empty_title()}
+              {indexedInWorkspace > 0
+                ? m.workbench_memory_indexed_title()
+                : m.workbench_memory_empty_title()}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              {m.workbench_memory_empty_desc()}
+              {indexedInWorkspace > 0
+                ? m.workbench_memory_indexed_desc({ n: indexedInWorkspace })
+                : m.workbench_memory_empty_desc()}
             </p>
           </div>
         </div>

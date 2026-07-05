@@ -1,10 +1,11 @@
 """Settings de RAG + gestão de coleções (aba de memória do workbench).
 
 Endpoints (exigem auth via middleware):
-    GET    /rag/settings           — settings de RAG em runtime
-    PATCH  /rag/settings           — atualiza (reranker on/off, top_k, providers, tipos)
-    GET    /rag/collections        — lista as coleções (tabelas LanceDB) e tamanho
-    DELETE /rag/collections/{name} — apaga uma coleção inteira
+    GET    /rag/settings             — settings de RAG em runtime
+    PATCH  /rag/settings             — atualiza (reranker on/off, top_k, providers, tipos)
+    GET    /rag/collections          — lista as coleções (tabelas LanceDB) e tamanho
+    DELETE /rag/collections/{name}   — apaga uma coleção inteira
+    GET    /rag/workspace-summary    — o que já está indexado num workspace específico
 
 Os settings persistem em ``runtime_settings`` (``~/.vectora/settings.json``) e são
 lidos pelo build do reranker/embeddings (``backend/tools/rag.py``).
@@ -84,6 +85,54 @@ async def list_collections() -> dict[str, Any]:
             count = None
         collections.append({"name": str(name), "count": count})
     return {"collections": collections}
+
+
+@router.get("/workspace-summary")
+async def get_workspace_rag_summary(workspace_id: str) -> dict[str, Any]:
+    """O que já está indexado NESTE workspace, por coleção.
+
+    RAG é escopo de workspace (persiste no LanceDB entre sessões), não de
+    thread — sem este endpoint, a aba Memória do workbench só via
+    `ragCitations` da thread atual (evento de streaming) e mostrava "vazio"
+    numa sessão nova mesmo com o workspace já indexado antes. `workspace_id`
+    vive dentro do JSON de `metadata` de cada linha (não é coluna própria do
+    LanceDB), então a contagem exige ler o metadata de cada linha — mesmo
+    custo já pago por `manage_retriever(action="list")` em `tools/rag.py`.
+    """
+    from backend.tools.rag import _parse_metadata
+
+    db = await _connect_lancedb()
+    if db is None:
+        return {"collections": []}
+    try:
+        names = (await db.list_tables()).tables
+    except Exception:
+        try:
+            names = await db.table_names()
+        except Exception:
+            logger.warning("rag: falha ao listar coleções", exc_info=True)
+            return {"collections": []}
+
+    summary: list[dict[str, Any]] = []
+    for name in names:
+        try:
+            table = await db.open_table(str(name))
+            df = await table.to_pandas()
+        except Exception:
+            # Coleção corrompida/sem tabela não deve derrubar as demais.
+            logger.warning(
+                "rag: falha ao ler coleção %r pro resumo do workspace",
+                name,
+                exc_info=True,
+            )
+            continue
+        if "metadata" not in df.columns:
+            continue
+        meta = df["metadata"].map(_parse_metadata)
+        count = sum(1 for m in meta if m.get("workspace_id") == workspace_id)
+        if count > 0:
+            summary.append({"name": str(name), "count": count})
+    return {"collections": summary}
 
 
 @router.delete("/collections/{name}")

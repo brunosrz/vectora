@@ -889,6 +889,8 @@
   "workbench_memory_no_result": "No result",
   "workbench_memory_empty_title": "Memory is empty",
   "workbench_memory_empty_desc": "Knowledge base (RAG) and web results the agent retrieves this session show up here.",
+  "workbench_memory_indexed_title": "Content already indexed",
+  "workbench_memory_indexed_desc": "This workspace already has {n} indexed chunk(s) from earlier sessions. Send a message that uses RAG to see what's retrieved in this conversation.",
   "workbench_memory_group_rag": "Knowledge base",
   "workbench_memory_group_web": "Web",
   "workspace_ingest_no_workspace": "No active workspace.",
