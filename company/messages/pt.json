@@ -11,6 +11,7 @@
   "nav_login": "Entrar",
   "nav_signup": "Criar Conta",
   "nav_support": "Suporte",
+  "nav_logout": "Sair",
   "hero_eyebrow": "Auto-hospedado · Privacidade em primeiro lugar · Extensível",
   "hero_tagline": "Sua IA. Seus dados. Seu servidor.",
   "hero_subtitle": "Agente de IA auto-hospedado com RAG, MCP e chat web multiusuário. Seus dados nunca saem do seu servidor.",

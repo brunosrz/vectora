@@ -8,9 +8,11 @@ import {
   User,
   HelpCircle,
   ShieldCheck,
+  LogOut,
 } from "lucide-react";
 import Logo from "#/components/shared/Logo";
 import ThemeToggle from "#/components/shared/ThemeToggle";
+import { signOut } from "#/server/fns/auth";
 
 const NAV_ITEMS = [
   { to: "/dashboard" as const, exact: true, icon: Key, labelKey: "nav_token" },
@@ -96,6 +98,17 @@ export default function Sidebar() {
             );
           })}
         </nav>
+        <button
+          type="button"
+          onClick={async () => {
+            await signOut();
+            window.location.href = "/login";
+          }}
+          className="mt-auto flex items-center gap-3 rounded-lg px-3 py-2.5 mx-3 text-sm font-medium text-muted-foreground transition-all hover:bg-card hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {m.nav_logout()}
+        </button>
       </aside>
 
       {/* Mobile bottom tab bar (5 items + support excluded) */}
