@@ -17,7 +17,9 @@ import base64
 import contextlib
 import json
 import logging
+import os
 import uuid
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -28,12 +30,17 @@ from backend.api.schemas import (
     Attachment,
     AttachmentKind,
     ChatConfig,
+    DoneEvent,
+    ErrorEvent,
     GetToolsResponse,
     ResumeChatRequest,
     StreamChatRequest,
+    ThreadEvent,
     ToolSchema,
+    encode_event,
 )
 from backend.services import agent_factory
+from backend.settings import VISION_CAPABLE_PROVIDERS
 from backend.vtypes.context import ctx_from_config
 
 logger = logging.getLogger(__name__)
@@ -80,13 +87,46 @@ _EXT_TO_LANG: dict[str, str] = {
 }
 
 
-def _mime_to_lang(mime_type: str, filename: str) -> str:
+def _mime_to_lang(filename: str) -> str:
     """Detecta a linguagem de programação pela extensão do arquivo.
 
     Retorna string vazia se não reconhecido (ex: PDF, binários).
     """
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     return _EXT_TO_LANG.get(ext, "")
+
+
+def _resolve_provider(model_spec: str) -> str:
+    """Extrai o provider (``google_genai``, ``cohere`` etc.) do valor já
+    normalizado em ``configurable["model"]``. Sem escolha explícita de
+    modelo na request, espelha o fallback de
+    ``services/utils.py::load_llm`` (provider ativo do runtime/env).
+    """
+    if model_spec:
+        provider, _, _ = model_spec.partition(":")
+        return provider
+
+    from backend.services.runtime_settings import runtime_settings
+
+    return (os.getenv("LLM_PROVIDER") or runtime_settings.active_provider).replace(
+        "-", "_"
+    )
+
+
+async def _model_no_vision_stream(thread_id: str) -> AsyncGenerator[str]:
+    """Stream de um único erro — mensagem tem imagem anexada mas o provider
+    resolvido não aceita conteúdo multimodal (ex.: Cohere, Ollama). Evita
+    deixar a exceção crua da API do provider (ex.: Cohere BadRequestError
+    "image content is not supported") vazar pro usuário como erro genérico.
+    """
+    yield encode_event(ThreadEvent(thread_id=thread_id))
+    yield encode_event(
+        ErrorEvent(
+            message="Modelo não suporta imagens anexadas.",
+            code="MODEL_NO_VISION",
+        )
+    )
+    yield encode_event(DoneEvent(thread_id=thread_id))
 
 
 def _detect_planning_mode(content: str) -> tuple[str, bool]:
@@ -137,7 +177,7 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
             except Exception:
                 decoded = "[conteúdo não pôde ser decodificado]"
 
-            lang = _mime_to_lang(att.mime_type, att.name)
+            lang = _mime_to_lang(att.name)
             if lang:
                 block = f"\n[Arquivo: {att.name}]\n```{lang}\n{decoded}\n```"
             else:
@@ -375,6 +415,16 @@ async def stream_chat(
     if planning_mode:
         configurable["planning_mode"] = True
 
+    has_image = any(att.kind == AttachmentKind.IMAGE for att in request.attachments)
+    if has_image and _resolve_provider(configurable.get("model", "")) not in (
+        VISION_CAPABLE_PROVIDERS
+    ):
+        return StreamingResponse(
+            _model_no_vision_stream(thread_id),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     try:
         # Troca de modelo por request: o grafo é cacheado por modelo escolhido
         # (configurable["model"] já normalizado para "provider:model"). Sem
@@ -433,7 +483,12 @@ async def stream_chat(
     )
 
     return StreamingResponse(
-        adapt_stream(events, thread_id, workspace_id=workspace_id or None),
+        adapt_stream(
+            events,
+            thread_id,
+            workspace_id=workspace_id or None,
+            http_request=http_request,
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -500,7 +555,12 @@ async def resume_chat(
     )
 
     return StreamingResponse(
-        adapt_stream(events, request.thread_id, workspace_id=None),
+        adapt_stream(
+            events,
+            request.thread_id,
+            workspace_id=None,
+            http_request=http_request,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

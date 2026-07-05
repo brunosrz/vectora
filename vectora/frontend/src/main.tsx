@@ -26,7 +26,19 @@ declare module "@tanstack/react-router" {
 // rebuild, o novo SW instala e — com skipWaiting/clientsClaim — assume o controle,
 // disparando `controllerchange`. Recarregamos UMA vez aqui para servir os assets
 // novos em vez do cache antigo, evitando ver UI desatualizada após `scons frontend`.
-if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+//
+// Registro manual (`injectRegister: false` em vite.config.ts) — o script
+// auto-injetado do vite-plugin-pwa chamava `serviceWorker.register()` sem
+// checar o protocolo da origem; no app desktop (Electron, scheme customizado
+// `vectora-app://`) isso sempre falha (service worker só existe em
+// http:/https:, spec do browser), gerando erro de console todo boot. Só
+// registra em origem http(s) — no Electron pula inteiro, sem erro.
+if (
+  typeof navigator !== "undefined" &&
+  "serviceWorker" in navigator &&
+  typeof window !== "undefined" &&
+  /^https?:$/.test(window.location.protocol)
+) {
   // Na 1ª visita a página ainda não é controlada por um SW; nesse caso o
   // controllerchange é a instalação inicial (não um update) e NÃO recarregamos.
   const hadController = Boolean(navigator.serviceWorker.controller);
@@ -35,6 +47,10 @@ if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
     if (reloaded || !hadController) return;
     reloaded = true;
     window.location.reload();
+  });
+
+  void import("virtual:pwa-register").then(({ registerSW }) => {
+    registerSW({ immediate: true });
   });
 }
 

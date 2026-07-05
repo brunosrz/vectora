@@ -175,6 +175,12 @@ export const MODELS = {
     description: "Ultra-rápido e econômico (Anthropic)",
   },
   // ── Cohere ────────────────────────────────────────────────────────────────
+  "command-a-plus-05-2026": {
+    id: "cohere:command-a-plus-05-2026",
+    name: "Command A+ (Mai 2026)",
+    provider: "cohere",
+    description: "Geração mais recente, raciocínio agentic (Cohere)",
+  },
   "command-a-03-2025": {
     id: "cohere:command-a-03-2025",
     name: "Command A (Mar 2025)",
@@ -270,6 +276,7 @@ const DEPLOYMENT: DeploymentConfig = {
     "claude-sonnet-4-6",
     "claude-haiku-4-5",
     // Cohere
+    "command-a-plus-05-2026",
     "command-a-03-2025",
     "command-r-plus-08-2024",
     "command-r-08-2024",
@@ -319,6 +326,24 @@ export function getModelProvider(
 }
 
 /**
+ * Providers cujo modelo aceita imagem anexada. Espelha
+ * `backend/settings.py::VISION_CAPABLE_PROVIDERS` — a integração
+ * `langchain-cohere` não suporta multimodal (nenhum modelo Cohere),
+ * independente do que o próprio modelo saiba fazer via API nativa.
+ */
+const VISION_CAPABLE_PROVIDERS: ReadonlySet<ModelConfig["provider"]> = new Set([
+  "google-genai",
+  "openai",
+  "anthropic",
+]);
+
+export function isProviderVisionCapable(
+  provider: ModelConfig["provider"],
+): boolean {
+  return VISION_CAPABLE_PROVIDERS.has(provider);
+}
+
+/**
  * Janela de contexto em tokens por modelo. Espelha
  * `src/ui/commands/_shared.py::MODEL_CONTEXT_WINDOWS`. Atualizar nos dois
  * lugares ao registrar um modelo novo.
@@ -345,6 +370,9 @@ const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
   "anthropic:claude-opus-4-7": 200_000,
   "anthropic:claude-sonnet-4-6": 200_000,
   "anthropic:claude-haiku-4-5": 200_000,
+  // Command A+ tem input de 128k — menor que o Command A "clássico" apesar
+  // do nome (confirmado em cohere.com/blog/command-a-plus).
+  "cohere:command-a-plus-05-2026": 128_000,
   "cohere:command-a-03-2025": 256_000,
   "cohere:command-r-plus-08-2024": 128_000,
   "cohere:command-r-08-2024": 128_000,

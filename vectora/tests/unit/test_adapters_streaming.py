@@ -10,7 +10,9 @@ passo (``__anext__``) para provar a emissão incremental (não em lote).
 
 from __future__ import annotations
 
+import asyncio
 import json
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from langchain_core.messages import AIMessageChunk
@@ -115,6 +117,44 @@ async def test_empty_chunk_emits_no_token():
     }
     out = [_parse(s) async for s in adapt_stream(_agen([ev]), "tid")]
     assert [e for e in out if e["type"] == "token"] == []
+
+
+@pytest.mark.asyncio
+async def test_stops_consuming_events_when_client_disconnects_mid_stream():
+    """Regressão: cancelar o fetch no cliente não tinha efeito enquanto o
+    modelo estivesse "pensando" sem produzir token — o backend seguia
+    rodando o LangGraph até o próximo evento aparecer sozinho. Agora a
+    checagem de desconexão corre em paralelo ao consumo de cada evento
+    (asyncio.wait/FIRST_COMPLETED), não só depois que um evento chegar.
+    """
+    torn_down = {"value": False}
+
+    async def _slow_events():
+        try:
+            yield _chunk_event("um")
+            # Modelo "pensando" — nunca produz o próximo token sozinho; só a
+            # checagem de desconexão deve tirar o consumidor daqui.
+            await asyncio.sleep(10)
+            yield _chunk_event("nunca chega")  # nunca alcançado
+        finally:
+            torn_down["value"] = True
+
+    request = MagicMock()
+    # 1ª chamada (antes do 1º evento): ainda conectado. Da 2ª em diante
+    # (enquanto aguarda o evento que nunca chega): desconectado.
+    request.is_disconnected = AsyncMock(side_effect=[False, True, True, True])
+
+    out = [
+        _parse(s)
+        async for s in adapt_stream(_slow_events(), "tid", http_request=request)
+    ]
+
+    tokens = [e for e in out if e["type"] == "token"]
+    assert [t["content"] for t in tokens] == ["um"]
+    assert out[-1]["type"] == "done"
+    # O generator (e tudo que ele estivesse aguardando — a chamada real ao
+    # provider) foi encerrado, não só abandonado enquanto seguia rodando.
+    assert torn_down["value"] is True
 
 
 def _nested_chat_model_events(text: str, outer_run_id: str, inner_run_id: str):

@@ -42,6 +42,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      // Registro manual (via `virtual:pwa-register` em src/main.tsx) — o
+      // script auto-injetado chamava `serviceWorker.register()` sem checar
+      // o protocolo da origem, e o app desktop (Electron, scheme customizado
+      // `vectora-app://`) não suporta service worker nenhum (spec do
+      // browser exige http:/https:), gerando erro de console todo boot.
+      injectRegister: false,
       includeAssets: [
         "favicon.ico",
         "favicon-32x32.png",
@@ -135,6 +141,15 @@ export default defineConfig({
       "/metrics": apiProxy,
       "/mcp": apiProxy,
     },
+  },
+  optimizeDeps: {
+    // O pre-bundle do dep-scanner do Vite (esbuild/rolldown) não consegue
+    // fazer parse do worker `editor.api2` do monaco-editor ("invalid JS
+    // syntax"), quebrando o `vite dev` inteiro. monaco-editor já é
+    // carregado via import dinâmico (chunk próprio, ver `manualChunks`
+    // abaixo) — excluir do pre-bundle evita o erro sem mudar o build de
+    // produção (que não passa por esse scanner).
+    exclude: ["monaco-editor"],
   },
   resolve: {
     // Resolução de paths do `tsconfig.json` (`@/*`) — suporte nativo do

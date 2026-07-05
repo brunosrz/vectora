@@ -108,6 +108,8 @@ export function streamErrorMessage(code?: string): string {
       return msg.chat_error_auth();
     case "TIMEOUT":
       return msg.chat_error_timeout();
+    case "MODEL_NO_VISION":
+      return msg.chat_error_model_no_vision();
     default:
       return msg.chat_error_generic();
   }
@@ -165,6 +167,14 @@ interface UseStreamHandlerReturn {
     request: ResumeChatRequest,
     assistantMessageId: string,
   ) => Promise<{ assistantContent: string }>;
+  /**
+   * Aborta o stream em andamento IMEDIATAMENTE (não espera o próximo evento
+   * SSE chegar). Bug: `handleStop` só setava `shouldInterruptRef.current`,
+   * checado unicamente dentro do `for await` do loop de eventos — se o
+   * modelo está "pensando" sem produzir token nenhum, o cancelamento não
+   * tinha efeito nenhum até o servidor mandar alguma coisa.
+   */
+  abort: () => void;
 }
 
 // ============================================================================
@@ -502,7 +512,11 @@ export function useStreamHandler({
     [threadId, setMessages, shouldInterruptRef],
   );
 
-  return { processStream, processResume };
+  const abort = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
+  return { processStream, processResume, abort };
 }
 
 // ============================================================================

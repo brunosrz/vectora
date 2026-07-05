@@ -11,9 +11,11 @@ para o formato SSE (data: {...}\\n\\n) usado pelo endpoint /StreamChat.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import json
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from backend.api.node_labels import get_node_label
 from backend.api.schemas import (
@@ -33,6 +35,9 @@ from backend.api.schemas import (
     WorkbenchInvalidateEvent,
     encode_event,
 )
+
+if TYPE_CHECKING:
+    from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -319,6 +324,7 @@ def adapt_stream(
     events: Any,
     thread_id: str,
     workspace_id: str | None = None,
+    http_request: Request | None = None,
 ) -> Any:
     """AsyncGenerator que converte o stream de eventos LangGraph em linhas SSE.
 
@@ -330,6 +336,14 @@ def adapt_stream(
     ao final de cada turno do orchestrador (``on_chain_end`` do nó
     ``"orchestrator"``). Falhas são registradas em log e ignoradas — nunca
     interrompem o stream.
+
+    ``http_request`` — quando fornecido, corre a checagem de
+    ``request.is_disconnected()`` em paralelo ao consumo de cada evento do
+    LangGraph (``asyncio.wait`` com ``FIRST_COMPLETED``), não só depois que
+    um evento chegar. Sem isso, cancelar o fetch no cliente não tinha efeito
+    nenhum enquanto o modelo estivesse "pensando" sem produzir token nenhum
+    — o backend continuava rodando o grafo (e gastando a chamada ao
+    provider) até o próximo evento aparecer sozinho.
     """
 
     async def _gen() -> Any:
@@ -361,8 +375,43 @@ def adapt_stream(
         chat_model_run_ids: set[str] = set()
         nested_chat_model_run_ids: set[str] = set()
 
+        events_iter = events.__aiter__()
+
         try:
-            async for event in events:
+            while True:
+                next_task: asyncio.Task[Any] = asyncio.ensure_future(
+                    events_iter.__anext__()
+                )
+                if http_request is not None:
+                    disconnect_task: asyncio.Task[bool] | None = asyncio.ensure_future(
+                        http_request.is_disconnected()
+                    )
+                    done, _ = await asyncio.wait(
+                        {next_task, disconnect_task},
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+                    if disconnect_task in done and disconnect_task.result():
+                        next_task.cancel()
+                        # Espera a task cancelada de fato desenrolar antes de
+                        # fechar o generator — sem isso o `aclose()` corre
+                        # concorrente com o `__anext__()` ainda "em voo" e o
+                        # `finally`/`except GeneratorExit` do generator (que
+                        # encerra a chamada real ao provider) nunca chega a
+                        # rodar.
+                        with contextlib.suppress(BaseException):
+                            await next_task
+                        with contextlib.suppress(Exception):
+                            await events_iter.aclose()
+                        break
+                    disconnect_task.cancel()
+                else:
+                    await asyncio.wait({next_task})
+
+                try:
+                    event = next_task.result()
+                except StopAsyncIteration:
+                    break
+
                 kind = event.get("event", "")
                 name = event.get("name", "")
 

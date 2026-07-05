@@ -5,8 +5,8 @@
  * Includes file upload, drag & drop, and paste support.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Send, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +32,11 @@ import type { AgentConfig } from "@/components/layout/agent-settings";
 import type { ImageAttachment } from "@/lib/types";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import { useToastStore } from "@/lib/stores/toast-store";
+import {
+  getModelProvider,
+  isProviderVisionCapable,
+  type ModelOption,
+} from "@/lib/config/deployment-config";
 import { m } from "@/lib/paraglide/messages";
 
 interface VscodeOption {
@@ -52,7 +57,7 @@ function VscodeMenu({ workspaceId }: { workspaceId: string }) {
       `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
     );
     const options: VscodeOption[] = res.ok
-      ? (await res.json()).options ?? []
+      ? ((await res.json()).options ?? [])
       : [];
     const opt =
       options.find((o) => o.strategy === "local") ?? options[0] ?? null;
@@ -179,6 +184,15 @@ export function ChatInput({
     }
   };
 
+  // F1/bugfix — Cohere (e Ollama) não aceitam imagem na mensagem; avisa
+  // cedo em vez de deixar o envio estourar com o erro cru do provedor.
+  const hasImageWithoutVisionSupport = useMemo(() => {
+    const hasImage = attachedFiles.some((f) => f.mimeType.startsWith("image/"));
+    if (!hasImage || !agentConfig?.model) return false;
+    const provider = getModelProvider(agentConfig.model as ModelOption);
+    return !isProviderVisionCapable(provider);
+  }, [attachedFiles, agentConfig?.model]);
+
   // Auto-grow do textarea: ajusta a altura ao conteúdo até o teto de 240px;
   // depois disso o próprio textarea passa a scrollar internamente. Resolve
   // a queixa "ele não expande pra cima e com scroll visível".
@@ -212,6 +226,14 @@ export function ChatInput({
           {voiceError && (
             <div className="mb-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
               {voiceError}
+            </div>
+          )}
+
+          {/* Aviso: modelo atual não processa a imagem anexada */}
+          {hasImageWithoutVisionSupport && (
+            <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-500/10 px-3 py-2 rounded-md">
+              <TriangleAlert className="w-3.5 h-3.5 shrink-0" />
+              {m.chat_input_no_vision_warning()}
             </div>
           )}
 

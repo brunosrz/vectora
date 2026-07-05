@@ -362,7 +362,7 @@ export function ChatInterface({
   // Custom Hooks
   // ============================================================================
 
-  const { processStream, processResume } = useStreamHandler({
+  const { processStream, processResume, abort } = useStreamHandler({
     threadId,
     setMessages,
     agentConfig,
@@ -1051,7 +1051,12 @@ export function ChatInterface({
     console.log("User requested stop");
     uiDispatch({ type: "SET_STOPPING", payload: true });
     shouldInterruptRef.current = true;
-  }, [uiDispatch]);
+    // Aborta na hora — sem isso o cancelamento só tinha efeito quando o
+    // próximo evento SSE chegasse (`shouldInterruptRef` só era checado
+    // dentro do loop `for await`), o que podia demorar muito se o modelo
+    // ainda não tivesse produzido nenhum token.
+    abort();
+  }, [uiDispatch, abort]);
 
   const handleRegenerate = useCallback(async () => {
     if (uiState.isLoading || uiState.isRegenerating) return;

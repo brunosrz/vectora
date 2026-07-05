@@ -978,12 +978,22 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
         "claude-haiku-4-5",
     ],
     "cohere": [
+        "command-a-plus-05-2026",
         "command-a-03-2025",
         "command-r-plus-08-2024",
         "command-r-08-2024",
         "command-r7b-12-2024",
     ],
 }
+
+# Providers cujo modelo aceita imagem na mensagem (langchain_cohere e
+# ChatOllama não suportam multimodal na integração Python — ver tabela
+# "Featured models" de https://docs.langchain.com/oss/python/integrations/chat,
+# independente do modelo específico escolhido dentro do provider). Usado por
+# `api/handlers/chat.py::stream_chat` para recusar attachments de imagem
+# cedo, com um erro claro, em vez de deixar a API do provider estourar com
+# uma mensagem crua (ex.: Cohere "image content is not supported").
+VISION_CAPABLE_PROVIDERS: set[str] = {"google_genai", "openai", "anthropic"}
 
 # Fontes públicas das janelas de contexto:
 #   Gemini: https://ai.google.dev/gemini-api/docs/models
@@ -1016,7 +1026,10 @@ MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     "claude-opus-4-7": 200_000,
     "claude-sonnet-4-6": 200_000,
     "claude-haiku-4-5": 200_000,
-    # Cohere — Command A está em 256k; Command R em 128k
+    # Cohere — Command A+ tem input de 128k (menor que o Command A "clássico",
+    # apesar do nome — confirmado em cohere.com/blog/command-a-plus); Command
+    # A está em 256k; Command R em 128k
+    "command-a-plus-05-2026": 128_000,
     "command-a-03-2025": 256_000,
     "command-r-plus-08-2024": 128_000,
     "command-r-08-2024": 128_000,

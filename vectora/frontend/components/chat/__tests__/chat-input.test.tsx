@@ -246,3 +246,70 @@ describe("ChatInput", () => {
     }
   });
 });
+
+describe("ChatInput — aviso de modelo sem suporte a imagem", () => {
+  const imageFile = {
+    id: "f1",
+    mimeType: "image/png",
+    base64: "aGVsbG8=",
+    name: "foto.png",
+  };
+
+  it("mostra aviso quando há imagem anexada e o modelo é Cohere (sem visão)", () => {
+    render(
+      <ChatInput
+        {...baseProps({
+          attachedFiles: [imageFile],
+          agentConfig: { model: "cohere:command-a-03-2025" },
+        })}
+      />,
+    );
+    expect(
+      screen.getByText(m.chat_input_no_vision_warning()),
+    ).toBeInTheDocument();
+  });
+
+  it("não mostra aviso quando o modelo suporta imagem (Gemini)", () => {
+    render(
+      <ChatInput
+        {...baseProps({
+          attachedFiles: [imageFile],
+          agentConfig: { model: "google-genai:gemini-2.5-flash" },
+        })}
+      />,
+    );
+    expect(
+      screen.queryByText(m.chat_input_no_vision_warning()),
+    ).not.toBeInTheDocument();
+  });
+
+  it("não mostra aviso sem imagem anexada, mesmo com modelo Cohere", () => {
+    render(
+      <ChatInput
+        {...baseProps({
+          attachedFiles: [],
+          agentConfig: { model: "cohere:command-a-03-2025" },
+        })}
+      />,
+    );
+    expect(
+      screen.queryByText(m.chat_input_no_vision_warning()),
+    ).not.toBeInTheDocument();
+  });
+
+  it("não mostra aviso quando o anexo não é imagem (ex: código)", () => {
+    render(
+      <ChatInput
+        {...baseProps({
+          attachedFiles: [
+            { id: "f2", mimeType: "text/x-python", name: "script.py" },
+          ],
+          agentConfig: { model: "cohere:command-a-03-2025" },
+        })}
+      />,
+    );
+    expect(
+      screen.queryByText(m.chat_input_no_vision_warning()),
+    ).not.toBeInTheDocument();
+  });
+});

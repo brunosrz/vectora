@@ -3,17 +3,23 @@
 Cobre:
 - F1: schemas Pydantic (Attachment, StreamChatRequest.attachments)
 - F1: _build_human_message — conversão de attachments para HumanMessage multimodal
-- F1: _mime_to_lang — detecção de linguagem por extensão/mime_type
+- F1: _mime_to_lang — detecção de linguagem por extensão de arquivo
 """
 
 from __future__ import annotations
 
 import base64
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from langchain_core.messages import HumanMessage
 
-from backend.api.schemas import Attachment, AttachmentKind, StreamChatRequest
+from backend.api.schemas import (
+    Attachment,
+    AttachmentKind,
+    ChatConfig,
+    StreamChatRequest,
+)
 
 # ===========================================================================
 # Helpers
@@ -263,34 +269,119 @@ class TestMimeToLang:
     def test_python_by_extension(self) -> None:
         from backend.api.handlers.chat import _mime_to_lang
 
-        assert _mime_to_lang("text/x-python", "script.py") == "python"
+        assert _mime_to_lang("script.py") == "python"
 
     def test_typescript_by_extension(self) -> None:
         from backend.api.handlers.chat import _mime_to_lang
 
-        assert _mime_to_lang("text/typescript", "app.ts") == "typescript"
+        assert _mime_to_lang("app.ts") == "typescript"
 
     def test_tsx_by_extension(self) -> None:
         from backend.api.handlers.chat import _mime_to_lang
 
-        assert _mime_to_lang("text/typescript", "component.tsx") == "typescript"
+        assert _mime_to_lang("component.tsx") == "typescript"
 
     def test_json_by_extension(self) -> None:
         from backend.api.handlers.chat import _mime_to_lang
 
-        assert _mime_to_lang("application/json", "config.json") == "json"
+        assert _mime_to_lang("config.json") == "json"
 
     def test_pdf_returns_empty_string(self) -> None:
         from backend.api.handlers.chat import _mime_to_lang
 
-        assert _mime_to_lang("application/pdf", "doc.pdf") == ""
+        assert _mime_to_lang("doc.pdf") == ""
 
     def test_unknown_extension_returns_empty(self) -> None:
         from backend.api.handlers.chat import _mime_to_lang
 
-        assert _mime_to_lang("application/octet-stream", "file.xyz") == ""
+        assert _mime_to_lang("file.xyz") == ""
 
     def test_shell_script(self) -> None:
         from backend.api.handlers.chat import _mime_to_lang
 
-        assert _mime_to_lang("text/x-sh", "run.sh") == "bash"
+        assert _mime_to_lang("run.sh") == "bash"
+
+
+# ===========================================================================
+# Classe 5 — stream_chat recusa imagem quando o provider não suporta visão
+# ===========================================================================
+
+
+def _image_attachment() -> Attachment:
+    return Attachment(
+        kind=AttachmentKind.IMAGE,
+        name="foto.png",
+        mime_type="image/png",
+        base64_data=_b64("fake-image-bytes"),
+    )
+
+
+async def _collect_sse_body(response) -> str:
+    chunks = [chunk async for chunk in response.body_iterator]
+    return "".join(
+        chunk.decode() if isinstance(chunk, bytes) else chunk for chunk in chunks
+    )
+
+
+class TestStreamChatBlocksImageForNonVisionProvider:
+    """Regressão: imagem + Cohere estourava BadRequestError cru da API
+    ('image content is not supported for this model'). Agora recusa antes
+    de chamar o provider, com um ErrorEvent(code='MODEL_NO_VISION')."""
+
+    @pytest.mark.asyncio
+    async def test_cohere_with_image_returns_model_no_vision_without_calling_provider(
+        self,
+    ) -> None:
+        from backend.api.handlers import chat as chat_mod
+
+        mock_get_user_agent = AsyncMock()
+        with patch(
+            "backend.services.agent_factory.get_user_agent", mock_get_user_agent
+        ):
+            request = StreamChatRequest(
+                content="o que tem nessa imagem?",
+                config=ChatConfig(model="cohere:command-a-03-2025"),
+                attachments=[_image_attachment()],
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert '"code": "MODEL_NO_VISION"' in body
+        mock_get_user_agent.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_gemini_with_image_is_not_blocked(self) -> None:
+        """Provider com suporte a visão (google_genai) não é bloqueado —
+        confirma que a checagem é por provider, não um bloqueio geral."""
+        from backend.api.handlers import chat as chat_mod
+
+        async def _empty_events(*_a: object, **_kw: object):
+            for _ in ():
+                yield
+
+        mock_graph = MagicMock()
+        mock_graph.astream_events = MagicMock(return_value=_empty_events())
+
+        with (
+            patch(
+                "backend.services.agent_factory.get_user_agent",
+                new=AsyncMock(return_value=mock_graph),
+            ),
+            patch(
+                "backend.api.handlers.threads._upsert_session",
+                new=AsyncMock(),
+            ),
+        ):
+            request = StreamChatRequest(
+                content="o que tem nessa imagem?",
+                config=ChatConfig(model="google-genai:gemini-2.5-flash"),
+                attachments=[_image_attachment()],
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert "MODEL_NO_VISION" not in body

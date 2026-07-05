@@ -11,6 +11,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import type { Message } from "@/lib/types";
 import type { StreamEvent } from "@/lib/api/vectora-client";
+// Alias evita sombrear o `m` usado como nome de parâmetro em
+// `messages.find((m) => ...)` neste arquivo (convenção do projeto).
+import { m as paraglideMessages } from "@/lib/paraglide/messages";
 
 const streamChatMock = vi.fn();
 const resumeChatMock = vi.fn();
@@ -92,6 +95,52 @@ describe("useStreamHandler.processStream", () => {
     expect(assistant?.content).not.toContain("RESOURCE_EXHAUSTED");
     expect(assistant?.content).not.toContain("429");
     expect(assistant?.content).not.toMatch(/Erro no stream:/i);
+  });
+
+  it("evento de erro MODEL_NO_VISION vira aviso claro (imagem + provider sem visão)", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        {
+          type: "error",
+          message: "Modelo não suporta imagens anexadas.",
+          code: "MODEL_NO_VISION",
+        },
+      ]),
+    );
+
+    const { result } = run();
+    await result.current.processStream("o que tem nessa imagem?", "a1");
+
+    const assistant = messages.find((msg) => msg.id === "a1");
+    expect(assistant?.isError).toBe(true);
+    expect(assistant?.content).toBe(
+      paraglideMessages.chat_error_model_no_vision(),
+    );
+  });
+
+  it("abort() cancela o AbortController do processStream em andamento imediatamente", async () => {
+    let capturedSignal: AbortSignal | undefined;
+    streamChatMock.mockImplementation((_req: unknown, signal?: AbortSignal) => {
+      capturedSignal = signal;
+      return (async function* () {
+        // Simula o modelo "pensando" sem produzir nenhum token ainda —
+        // exatamente o cenário em que o bug antigo travava o cancelamento.
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        yield { type: "done", thread_id: "t1" } as StreamEvent;
+      })();
+    });
+
+    const { result } = run();
+    const streamPromise = result.current.processStream("oi", "a1");
+
+    await vi.waitFor(() => expect(capturedSignal).toBeDefined());
+    expect(capturedSignal?.aborted).toBe(false);
+
+    result.current.abort();
+
+    expect(capturedSignal?.aborted).toBe(true);
+    await streamPromise;
   });
 
   it("queda de transporte (throw) preserva conteúdo parcial já recebido", async () => {
