@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
@@ -136,6 +136,9 @@ function SessionPage() {
   const { enableFeaturesBeta } = useFeatureFlags();
   const chatSidebarWidth = useSettingsStore((s) => s.chatSidebarWidth);
   const setChatSidebarWidth = useSettingsStore((s) => s.setChatSidebarWidth);
+  // Modelo do chat — lido do store persistido (sobrevive a restart/reload).
+  const selectedModel = useSettingsStore((s) => s.selectedModel);
+  const setSelectedModel = useSettingsStore((s) => s.setSelectedModel);
   const sidebarWrapRef = useRef<HTMLDivElement>(null);
   const draggingSidebar = useRef(false);
 
@@ -286,9 +289,34 @@ function SessionPage() {
     () => !!userId && !isOnboardingDone(userId),
   );
   const [inputLocked, setInputLocked] = useState(false);
-  const [agentConfig, setAgentConfig] = useState<AgentConfig>(() => ({
-    model: getDefaultModel(),
+  // `model` reflete `selectedModel` do settings-store (persistido) — o
+  // restante de AgentConfig (repos, etc.) é local/efêmero por thread.
+  const [agentConfig, setAgentConfigState] = useState<AgentConfig>(() => ({
+    model: selectedModel || getDefaultModel(),
   }));
+  // Qualquer troca de modelo (seletor no composer, fallback automático por
+  // quota) persiste no settings-store — sem isso o modelo escolhido não
+  // sobrevivia a um restart/reload (cada mount reiniciava em
+  // getDefaultModel()).
+  const setAgentConfig = useCallback(
+    (config: AgentConfig) => {
+      setAgentConfigState(config);
+      if (config.model) setSelectedModel(config.model);
+    },
+    [setSelectedModel],
+  );
+  // A rehidratação do zustand/persist é assíncrona — no primeiro render
+  // `selectedModel` ainda pode ser o default da store recém-criada. Mantém
+  // `agentConfig.model` em sincronia sempre que `selectedModel` mudar (por
+  // rehidratação ou por outra aba via broadcast); mudanças partindo do
+  // próprio `setAgentConfig` já deixam os dois iguais, então o efeito vira
+  // no-op nesse caso (sem loop).
+  useEffect(() => {
+    if (selectedModel && selectedModel !== agentConfig.model) {
+      setAgentConfigState((prev) => ({ ...prev, model: selectedModel }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedModel]);
 
   // ── Navegação ─────────────────────────────────────────────────────────────
   const goTo = useCallback(
@@ -416,6 +444,35 @@ function SessionPage() {
           replace: true,
         });
       }
+      // Patch local imediato do cache — a sidebar não pode depender só do
+      // round-trip de `updateThreadMutation` (rede lenta/generateTitle
+      // assíncrono) para refletir a thread: sem isso ela só aparecia após
+      // reload, quando ListThreads era refeito do zero. Atualiza a entrada
+      // existente (posta pelo passo otimista acima) ou insere uma nova —
+      // defensivo para o caso de handleRegenerate/handleEditAndRerun
+      // chamarem onThreadUpdate direto numa thread ainda não presente.
+      queryClient.setQueryData<{ threads: VectoraThread[] }>(
+        threadsQueryKey,
+        (old) => {
+          const existing = old?.threads ?? [];
+          const now = new Date().toISOString();
+          if (existing.some((th) => th.id === id)) {
+            return {
+              threads: existing.map((th) =>
+                th.id === id ? { ...th, title, updated_at: now } : th,
+              ),
+            };
+          }
+          const inserted: VectoraThread = {
+            id,
+            created_at: now,
+            updated_at: now,
+            title,
+            workspace_id: useWorkspacesStore.getState().active_id ?? "",
+          };
+          return { threads: [inserted, ...existing] };
+        },
+      );
       void updateThreadMutation.mutate({ id, updates: { title } });
     },
     [updateThreadMutation, isNewRoute, navigate],

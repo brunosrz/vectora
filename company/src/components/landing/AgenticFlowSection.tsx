@@ -115,7 +115,7 @@ const BULLETS = [
 
 export default function AgenticFlowSection() {
   return (
-    <section className="px-4 py-[23px] sm:px-8">
+    <section className="px-4 py-[23px] sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-[1024px] grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
         <AgenticDiagram />
 

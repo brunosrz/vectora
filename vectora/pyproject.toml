@@ -261,6 +261,11 @@ skips = ["B110", "B101"]
 [tool.pyright]
 typeCheckingMode = "standard"
 pythonVersion = "3.13"
+# Backend roda em Windows (desktop) e Linux (VPS/docker) — sem isso, o Pyright
+# infere a plataforma do host de análise e marca ramos `sys.platform=="..."`
+# do outro SO como código morto (falso positivo em código genuinamente
+# multi-plataforma, ex.: _list_drives() em handlers/workspaces.py).
+pythonPlatform = "All"
 include = ["backend", "tests"]
 exclude = ["**/venv", "**/.venv", "**/env", "**/.env", "**/node_modules", "**/__pycache__"]
 venv = ".venv"

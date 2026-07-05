@@ -52,7 +52,7 @@ function VscodeMenu({ workspaceId }: { workspaceId: string }) {
       `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
     );
     const options: VscodeOption[] = res.ok
-      ? (await res.json()).options ?? []
+      ? ((await res.json()).options ?? [])
       : [];
     const opt =
       options.find((o) => o.strategy === "local") ?? options[0] ?? null;
@@ -195,9 +195,9 @@ export function ChatInput({
       <div className="absolute inset-0 pointer-events-none" />
 
       <div
-        className={`relative z-[50] border-t border-border/60 backdrop-blur-sm ${compact ? "bg-sidebar" : "bg-background"}`}
+        className={`relative z-[50] backdrop-blur-sm ${compact ? "bg-sidebar" : "bg-background"}`}
       >
-        <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-1.5">
+        <div className="w-full max-w-4xl mx-auto">
           {/* File Previews */}
           <FilePreviewGrid files={attachedFiles} onRemove={onRemoveFile} />
 

@@ -121,6 +121,9 @@ class TestWorkspaceTree:
     async def test_returns_empty_for_unknown_workspace(self, trusted_ws):
         from backend.api.handlers.workspaces import workspace_tree
 
+        # Fixture só registra "vws" — mantém workspace_registry.get("nope")
+        # isolado em None mesmo se outro teste registrar algo nesse id.
+        assert trusted_ws[0] == "vws"
         resp = await workspace_tree(workspace_id="nope", path="")
         assert resp.entries == []
 
@@ -345,6 +348,9 @@ class TestWorkspaceGitDiff:
 
         from backend.api.handlers.workspaces import workspace_git_diff
 
+        # Fixture só registra "vws" — mantém workspace_registry.get("nope")
+        # isolado em None mesmo se outro teste registrar algo nesse id.
+        assert trusted_ws[0] == "vws"
         resp = await workspace_git_diff(workspace_id="nope", response=Response())
         assert resp.is_git_repo is False
         assert resp.files == []
@@ -363,6 +369,9 @@ class TestWorkspaceGitDiffFile:
     async def test_returns_empty_for_unknown_workspace(self, trusted_ws):
         from backend.api.handlers.workspaces import workspace_git_diff_file
 
+        # Fixture só registra "vws" — mantém workspace_registry.get("nope")
+        # isolado em None mesmo se outro teste registrar algo nesse id.
+        assert trusted_ws[0] == "vws"
         resp = await workspace_git_diff_file(workspace_id="nope", path="x.md")
         assert resp.hunks == []
 
@@ -519,9 +528,58 @@ class TestGitCompareMerge:
         assert (root / "c.txt").exists()
 
 
+class TestGitLogPagination:
+    """Paginação de git_log (offset/has_more) — regressão do histórico do
+    workbench ficar preso aos primeiros 50 commits sem forma de avançar."""
+
+    @pytest.mark.asyncio
+    async def test_has_more_true_when_more_commits_than_page(self, trusted_ws):
+        from backend.api.handlers.workspaces import git_log
+
+        wsid, root = trusted_ws
+        repo = _init_repo(root)
+        for i in range(4):
+            (root / f"f{i}.txt").write_text(f"{i}\n", encoding="utf-8")
+            repo.index.add([f"f{i}.txt"])
+            repo.index.commit(f"commit {i}")
+        # 5 commits no total (init + 4). Página de 2 deixa mais pra buscar.
+        resp = await git_log(workspace_id=wsid, n=2, offset=0)
+        assert len(resp.commits) == 2
+        assert resp.has_more is True
+
+    @pytest.mark.asyncio
+    async def test_has_more_false_on_last_page(self, trusted_ws):
+        from backend.api.handlers.workspaces import git_log
+
+        wsid, root = trusted_ws
+        _init_repo(root)  # 1 commit só
+        resp = await git_log(workspace_id=wsid, n=50, offset=0)
+        assert len(resp.commits) == 1
+        assert resp.has_more is False
+
+    @pytest.mark.asyncio
+    async def test_offset_skips_already_seen_commits(self, trusted_ws):
+        from backend.api.handlers.workspaces import git_log
+
+        wsid, root = trusted_ws
+        repo = _init_repo(root)
+        for i in range(3):
+            (root / f"g{i}.txt").write_text(f"{i}\n", encoding="utf-8")
+            repo.index.add([f"g{i}.txt"])
+            repo.index.commit(f"commit {i}")
+        # 4 commits no total. Página 1 (offset=0, n=2) pega os 2 mais recentes;
+        # página 2 (offset=2, n=2) pega os 2 restantes, sem repetir.
+        page1 = await git_log(workspace_id=wsid, n=2, offset=0)
+        page2 = await git_log(workspace_id=wsid, n=2, offset=2)
+        assert {c.sha for c in page1.commits}.isdisjoint({c.sha for c in page2.commits})
+        assert page2.has_more is False
+
+
 class TestPrEndpoints:
     @pytest.mark.asyncio
     async def test_pr_list_unavailable_when_gh_fails(self, trusted_ws, monkeypatch):
+        from unittest.mock import MagicMock
+
         import backend.tools.gh as gh_mod
         from backend.api.handlers import workspaces as ws_mod
 
@@ -530,7 +588,7 @@ class TestPrEndpoints:
         monkeypatch.setattr(
             gh_mod,
             "_gh_run",
-            lambda *a, **k: {"status": "error", "message": "gh not found"},
+            MagicMock(return_value={"status": "error", "message": "gh not found"}),
         )
         resp = await ws_mod.pr_list(workspace_id=wsid)
         assert resp.available is False

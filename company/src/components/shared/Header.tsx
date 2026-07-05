@@ -45,7 +45,7 @@ export default function Header({ session }: { session: SessionUser | null }) {
         para ficar de fato centrada na viewport, independente do que está nos lados.
         Desktop: max-w-[1124px] conforme Figma.
       */}
-      <div className="relative mx-auto flex h-[62px] max-w-[1124px] items-center justify-between px-5 sm:px-6">
+      <div className="relative mx-auto flex h-[62px] max-w-[1124px] items-center justify-between px-4 sm:px-6">
         {/* ── Logo ── */}
         <Logo size="md" />
 

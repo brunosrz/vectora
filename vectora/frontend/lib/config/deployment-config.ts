@@ -276,7 +276,8 @@ const DEPLOYMENT: DeploymentConfig = {
     "command-r7b-12-2024",
   ],
   agents: ["vectora"],
-  defaultModel: "gemini-2.5-flash",
+  // Gemini 2.5 é geração anterior — 3 Flash Preview é o fallback atual.
+  defaultModel: "gemini-3-flash-preview",
   defaultAgent: "vectora",
   requiresAuth: false,
 };

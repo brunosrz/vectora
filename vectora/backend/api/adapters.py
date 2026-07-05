@@ -349,10 +349,36 @@ def adapt_stream(
         current_token_node: str | None = None
         token_buffer_nonempty = False
 
+        # FallbackChatModel (services/fallback_chat_model.py) chama o
+        # `.astream()` PÚBLICO do provider interno (ChatCohere, etc.) dentro do
+        # próprio `_astream()` — isso instrumenta um segundo run "chat_model"
+        # aninhado, que emite `on_chat_model_stream` para o MESMO token que o
+        # wrapper externo também emite, duplicando cada token no stream (e
+        # disparando message_break a cada um, já que o nome do run alterna
+        # entre o wrapper e o provider real). Rastreia quais run_ids de
+        # chat_model já são descendentes de outro chat_model run e descarta o
+        # streaming deles — mantém só a emissão mais externa (o wrapper).
+        chat_model_run_ids: set[str] = set()
+        nested_chat_model_run_ids: set[str] = set()
+
         try:
             async for event in events:
                 kind = event.get("event", "")
                 name = event.get("name", "")
+
+                if kind == "on_chat_model_start":
+                    run_id = event.get("run_id", "")
+                    parent_ids = event.get("parent_ids", []) or []
+                    if any(p in chat_model_run_ids for p in parent_ids):
+                        nested_chat_model_run_ids.add(run_id)
+                    else:
+                        chat_model_run_ids.add(run_id)
+
+                if (
+                    kind == "on_chat_model_stream"
+                    and event.get("run_id", "") in nested_chat_model_run_ids
+                ):
+                    continue
 
                 # Rastreia tempo de início dos nós para calcular duration_ms
                 if kind == "on_chain_start":

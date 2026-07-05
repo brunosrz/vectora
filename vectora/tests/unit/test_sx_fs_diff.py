@@ -114,7 +114,7 @@ def test_untracked_as_diff_single_line() -> None:
     """Arquivo untracked com 1 linha gera 1 hunk com header @@ -0,0 +1,1 @@."""
     from backend.api.handlers.workspaces import _untracked_as_diff
 
-    hunks = _untracked_as_diff("hello\n", "src/new.py")
+    hunks = _untracked_as_diff("hello\n")
     assert len(hunks) == 1
     assert hunks[0].header == "@@ -0,0 +1,1 @@"
     assert hunks[0].lines == ["+hello"]
@@ -125,7 +125,7 @@ def test_untracked_as_diff_multiline() -> None:
     from backend.api.handlers.workspaces import _untracked_as_diff
 
     content = "linha1\nlinha2\nlinha3\n"
-    hunks = _untracked_as_diff(content, "file.py")
+    hunks = _untracked_as_diff(content)
     assert hunks[0].header == "@@ -0,0 +1,3 @@"
     assert hunks[0].lines == ["+linha1", "+linha2", "+linha3"]
 
@@ -134,7 +134,7 @@ def test_untracked_as_diff_empty_content() -> None:
     """Arquivo vazio retorna lista vazia de hunks."""
     from backend.api.handlers.workspaces import _untracked_as_diff
 
-    hunks = _untracked_as_diff("", "empty.py")
+    hunks = _untracked_as_diff("")
     assert hunks == []
 
 
@@ -142,7 +142,7 @@ def test_untracked_as_diff_no_trailing_newline() -> None:
     """Conteúdo sem newline final deve incluir todas as linhas."""
     from backend.api.handlers.workspaces import _untracked_as_diff
 
-    hunks = _untracked_as_diff("abc", "x.py")
+    hunks = _untracked_as_diff("abc")
     assert hunks[0].lines == ["+abc"]
     assert hunks[0].header == "@@ -0,0 +1,1 @@"
 

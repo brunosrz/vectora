@@ -193,8 +193,14 @@ export interface GitLogCommit {
 
 export async function fetchGitLog(
   workspaceId: string,
-): Promise<{ branch: string; commits: GitLogCommit[] } | null> {
-  const res = await fetch(`${base(workspaceId)}/git/log?n=50`);
+  offset = 0,
+): Promise<{
+  branch: string;
+  commits: GitLogCommit[];
+  has_more: boolean;
+} | null> {
+  const qs = new URLSearchParams({ n: "50", offset: String(offset) });
+  const res = await fetch(`${base(workspaceId)}/git/log?${qs}`);
   if (!res.ok) return null;
   return res.json();
 }

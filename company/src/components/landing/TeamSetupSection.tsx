@@ -35,20 +35,21 @@ const STEPS = [
 
 export default function TeamSetupSection() {
   return (
-    <section className="px-4 py-[23px] sm:px-8">
+    <section className="px-4 py-[23px] sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1024px] flex-col items-center gap-[22px]">
         <h2 className="text-center text-[28px] font-semibold leading-[36px] text-foreground">
           {m.team_heading()}
         </h2>
 
-        {/* 4 cards lado a lado — largura fixa ditada pela linha de badges */}
-        <div className="flex w-full flex-wrap justify-center gap-2">
+        {/* Mobile/tablet: empilhados em largura total. Desktop (lg+): lado a
+            lado, largura fixa ditada pela linha de badges. */}
+        <div className="flex w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:justify-center">
           {STEPS.map((step, i) => {
             const { Icon } = step;
             return (
               <div
                 key={i}
-                className="flex w-[248px] shrink-0 flex-col gap-2 rounded-2xl border border-border bg-card/30 p-3"
+                className="flex w-full flex-col gap-2 rounded-2xl border border-border bg-card/30 p-3 lg:w-[248px] lg:shrink-0"
               >
                 {/* Ícone + contador */}
                 <div className="flex items-center justify-between">

@@ -773,6 +773,7 @@
   "workbench_git_discard_confirm": "Discard",
   "workbench_git_history_empty": "No commits found.",
   "workbench_git_commits_count": "{n} commits",
+  "workbench_git_history_load_more": "Load 50 more",
   "chat_rewind": "Rewind to here",
   "chat_rewind_title": "Rewind to this point?",
   "chat_rewind_desc": "Undo all changes made after this message — the workspace files will be restored to their state at this point.",

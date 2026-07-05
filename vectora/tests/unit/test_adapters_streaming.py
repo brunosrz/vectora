@@ -117,6 +117,67 @@ async def test_empty_chunk_emits_no_token():
     assert [e for e in out if e["type"] == "token"] == []
 
 
+def _nested_chat_model_events(text: str, outer_run_id: str, inner_run_id: str):
+    """Simula o FallbackChatModel: dois runs 'chat_model' aninhados emitindo o
+    MESMO token — o wrapper (outer, parent_ids=[node_run_id]) e o provider real
+    por baixo dele (inner, parent_ids=[node_run_id, outer_run_id]).
+    """
+    return [
+        {
+            "event": "on_chat_model_start",
+            "name": "FallbackChatModel",
+            "run_id": outer_run_id,
+            "parent_ids": ["node-run"],
+            "metadata": {"langgraph_node": "model"},
+            "data": {},
+        },
+        {
+            "event": "on_chat_model_start",
+            "name": "ChatCohere",
+            "run_id": inner_run_id,
+            "parent_ids": ["node-run", outer_run_id],
+            "metadata": {"langgraph_node": "model"},
+            "data": {},
+        },
+        {
+            "event": "on_chat_model_stream",
+            "name": "ChatCohere",
+            "run_name": "ChatCohere",
+            "run_id": inner_run_id,
+            "parent_ids": ["node-run", outer_run_id],
+            "metadata": {"langgraph_node": "model"},
+            "data": {"chunk": AIMessageChunk(content=text)},
+        },
+        {
+            "event": "on_chat_model_stream",
+            "name": "FallbackChatModel",
+            "run_name": "FallbackChatModel",
+            "run_id": outer_run_id,
+            "parent_ids": ["node-run"],
+            "metadata": {"langgraph_node": "model"},
+            "data": {"chunk": AIMessageChunk(content=text)},
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_fallback_chat_model_nested_run_does_not_duplicate_tokens():
+    """Regressão: FallbackChatModel envolvendo o provider real duplicava cada
+    token (um evento do wrapper, outro do provider aninhado por baixo) — o
+    adaptador deve manter só a emissão mais externa (a do run sem outro
+    chat_model como ancestral).
+    """
+    events = [
+        *_nested_chat_model_events("Ol", "outer-1", "inner-1"),
+        *_nested_chat_model_events("á", "outer-1", "inner-1"),
+    ]
+    out = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
+    tokens = [e for e in out if e["type"] == "token"]
+    assert [t["content"] for t in tokens] == ["Ol", "á"]
+    # Sem duplicação, o nó emissor nunca muda — nenhum message_break disparado.
+    assert not any(e["type"] == "message_break" for e in out)
+
+
 @pytest.mark.asyncio
 async def test_provider_error_midstream_becomes_clean_rate_limit():
     """429 no meio do stream vira ErrorEvent limpo (RATE_LIMIT), não JSON cru."""

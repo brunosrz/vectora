@@ -117,7 +117,7 @@ function FileRow({
               <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
             )}
             <span
-              className={`w-4 text-center font-bold shrink-0 ${statusTone(file.status)}`}
+              className={`w-3.5 text-center text-[10px] font-medium shrink-0 ${statusTone(file.status)}`}
             >
               {file.status}
             </span>
@@ -168,7 +168,9 @@ function FileRow({
             {!hunks && (
               <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
             )}
-            {hunks?.map((h, i) => <HunkView key={i} hunk={h} />)}
+            {hunks?.map((h, i) => (
+              <HunkView key={i} hunk={h} />
+            ))}
           </div>
         )}
       </div>

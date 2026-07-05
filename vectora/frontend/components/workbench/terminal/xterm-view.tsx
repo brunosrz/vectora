@@ -10,14 +10,16 @@ import { useEffect, useRef } from "react";
 
 import { VECTORA_API_URL } from "@/lib/constants/api";
 import { m } from "@/lib/paraglide/messages";
-/** Lê os tokens de cor ativos (`.dark`/`.light`) e monta o tema do xterm. */
+/** Lê os tokens de cor ativos (`.dark`/`.light`) e monta o tema do xterm.
+ * `background` usa `--sidebar` (o mesmo tom mais escuro da sidebar), não
+ * `--background` — consistente com o resto do chrome do workbench. */
 function readXtermTheme(): Record<string, string> {
   if (typeof document === "undefined") {
-    return { background: "#0a0a0a", foreground: "#e4e4e7" };
+    return { background: "#181818", foreground: "#e4e4e7" };
   }
   const styles = getComputedStyle(document.documentElement);
   const get = (name: string) => styles.getPropertyValue(name).trim();
-  const background = get("--background") || "#0a0a0a";
+  const background = get("--sidebar") || get("--background") || "#181818";
   const foreground = get("--foreground") || "#e4e4e7";
   const primary = get("--primary") || "#7FC8FF";
   return {
@@ -213,5 +215,5 @@ export function XtermView({
     };
   }, [terminalId, threadId, workspaceId]);
 
-  return <div ref={containerRef} className="h-full w-full bg-background" />;
+  return <div ref={containerRef} className="h-full w-full bg-sidebar" />;
 }

@@ -108,6 +108,8 @@ function CommitRow({
   );
 }
 
+const PAGE_SIZE = 50;
+
 export function HistoryView({
   workspaceId,
   onChanged,
@@ -120,17 +122,36 @@ export function HistoryView({
   const [data, setData] = useState<{
     branch: string;
     commits: GitLogCommit[];
+    has_more: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     if (!workspaceId) return;
     setLoading(true);
-    void fetchGitLog(workspaceId).then((d) => {
+    void fetchGitLog(workspaceId, 0).then((d) => {
       setLoading(false);
       setData(d);
     });
   }, [workspaceId]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!data || loadingMore) return;
+    setLoadingMore(true);
+    const next = await fetchGitLog(workspaceId, data.commits.length);
+    setLoadingMore(false);
+    if (!next) return;
+    setData((prev) =>
+      prev
+        ? {
+            branch: prev.branch,
+            commits: [...prev.commits, ...next.commits],
+            has_more: next.has_more,
+          }
+        : next,
+    );
+  }, [workspaceId, data, loadingMore]);
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, commit: GitLogCommit) => {
@@ -192,6 +213,19 @@ export function HistoryView({
             onContextMenu={handleContextMenu}
           />
         ))}
+        {data.has_more && (
+          <button
+            onClick={() => void handleLoadMore()}
+            disabled={loadingMore}
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-50"
+          >
+            {loadingMore ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              m.workbench_git_history_load_more()
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ function Eyebrow() {
 
 export default function Hero() {
   return (
-    <section className="flex flex-col items-center px-4 py-[23px] sm:px-8">
+    <section className="flex flex-col items-center px-4 py-[23px] sm:px-6 lg:px-8">
       {/* Container interno — max 1024 px conforme Figma */}
       <div className="flex w-full max-w-[1024px] flex-col items-center gap-6">
         {/* Logo maior no hero (40 px) */}

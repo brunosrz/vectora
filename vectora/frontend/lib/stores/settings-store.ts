@@ -9,6 +9,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { BaseThemeColors } from "@/lib/theme/presets";
+import { getDefaultModel } from "@/lib/config/deployment-config";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -106,6 +107,10 @@ export interface SettingsState {
   ideMode: boolean;
   /** Largura do painel de chat lateral no modo IDE (px). */
   chatSidebarWidth: number;
+  /** Modelo ativo do chat ("provider:model") — persistido para sobreviver a
+   *  restart/reload; sem isso cada mount de `$threadId.tsx` reiniciava do
+   *  zero em `getDefaultModel()`, ignorando a escolha do usuário. */
+  selectedModel: string;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -126,6 +131,7 @@ export interface SettingsState {
   setChatMode: (v: boolean) => void;
   setIdeMode: (v: boolean) => void;
   setChatSidebarWidth: (v: number) => void;
+  setSelectedModel: (v: string) => void;
   resetSettings: () => void;
 }
 
@@ -156,6 +162,7 @@ const DEFAULTS = {
   chatMode: false,
   ideMode: false,
   chatSidebarWidth: 256,
+  selectedModel: getDefaultModel(),
 };
 
 // ---------------------------------------------------------------------------
@@ -216,7 +223,13 @@ export const useSettingsStore = create<SettingsState>()(
       setIdeMode: (v) => set({ ideMode: v }),
       setChatSidebarWidth: (v) =>
         set({ chatSidebarWidth: Math.max(240, Math.min(800, Math.round(v))) }),
-      resetSettings: () => set({ ...DEFAULTS, language: detectLanguage() }),
+      setSelectedModel: (v) => set({ selectedModel: v }),
+      resetSettings: () =>
+        set({
+          ...DEFAULTS,
+          language: detectLanguage(),
+          selectedModel: getDefaultModel(),
+        }),
     }),
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
@@ -247,6 +260,7 @@ export const useSettingsStore = create<SettingsState>()(
         chatMode: state.chatMode,
         ideMode: state.ideMode,
         chatSidebarWidth: state.chatSidebarWidth,
+        selectedModel: state.selectedModel,
       }),
     },
   ),

@@ -10,15 +10,18 @@ export default function Footer() {
   // Títulos em foreground (mais contraste) sinalizam que NÃO são links.
   const titleClass =
     "text-[12px] font-semibold uppercase tracking-[0.6px] text-foreground";
-  // Links de cada seção fluem num grid de 3 colunas (quebra em 2 linhas),
-  // colunas dimensionadas ao conteúdo — não numa coluna única empilhada.
+  // Mobile/tablet: links empilhados numa coluna só (largura da seção é
+  // fixa em 1/3 do grid abaixo, não sobra espaço para 3 colunas de texto).
+  // Desktop (lg+): grid de 3 colunas dimensionadas ao conteúdo, como antes.
   const linksGridClass =
-    "grid grid-cols-[repeat(3,auto)] justify-start gap-x-6 gap-y-3 text-[14px] text-muted-foreground";
+    "grid grid-cols-1 gap-y-2 text-[14px] text-muted-foreground lg:grid-cols-[repeat(3,auto)] lg:justify-start lg:gap-x-6 lg:gap-y-3";
 
   return (
     <footer className="bg-footer">
-      {/* Seções distribuídas na largura (quebram no estreito); links em grid 3-col. */}
-      <div className="mx-auto flex max-w-[1024px] flex-wrap justify-between gap-x-12 gap-y-10 px-4 pb-8 pt-10 sm:px-6">
+      {/* Mobile/tablet: 3 colunas iguais lado a lado (Produto/Suporte/Legal),
+          largura total do container. Desktop (lg+): comportamento original,
+          seções dimensionadas ao próprio conteúdo. */}
+      <div className="mx-auto grid max-w-[1024px] grid-cols-3 gap-x-4 gap-y-10 px-4 pb-8 pt-10 sm:px-6 lg:flex lg:flex-wrap lg:justify-between lg:gap-x-12">
         {/* Produto */}
         <div className="flex flex-col gap-3">
           <p className={titleClass}>{m.footer_product()}</p>

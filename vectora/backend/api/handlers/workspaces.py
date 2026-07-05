@@ -21,6 +21,7 @@ import contextlib
 import hashlib
 import json
 import logging
+from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -320,7 +321,7 @@ async def trust_workspace(request: Request, body: TrustRequest) -> StatusRespons
 
 
 @router.post("/GitInitWorkspace", response_model=StatusResponse)
-async def git_init_workspace(request: Request, body: GitInitRequest) -> StatusResponse:
+async def git_init_workspace(body: GitInitRequest) -> StatusResponse:
     """Inicializa um repositório git na pasta do workspace."""
     from backend.services.workspace import workspace_registry
     from backend.tools.git import detect_git_info, git_init_repo
@@ -702,10 +703,8 @@ async def trust_workspace_rest(request: Request, body: TrustRequest) -> StatusRe
 
 
 @view_router.post("/git-init", response_model=StatusResponse)
-async def git_init_workspace_rest(
-    request: Request, body: GitInitRequest
-) -> StatusResponse:
-    return await git_init_workspace(request, body)
+async def git_init_workspace_rest(body: GitInitRequest) -> StatusResponse:
+    return await git_init_workspace(body)
 
 
 @view_router.get("/active", response_model=ActiveWorkspaceResponse)
@@ -966,7 +965,7 @@ def _parse_unified_diff(diff_text: str) -> list[DiffHunk]:
     return hunks
 
 
-def _untracked_as_diff(content: str, path: str) -> list[DiffHunk]:
+def _untracked_as_diff(content: str) -> list[DiffHunk]:
     """Gera hunks de diff sintético para arquivo untracked (puro adição).
 
     Arquivos não rastreados pelo git não aparecem em ``git diff HEAD``.
@@ -1145,7 +1144,7 @@ async def workspace_git_diff_file(
             content = filepath.read_text(encoding="utf-8", errors="replace")
         except OSError:
             content = ""
-        return DiffFileResponse(path=path, hunks=_untracked_as_diff(content, path))
+        return DiffFileResponse(path=path, hunks=_untracked_as_diff(content))
 
     try:
         porcelain = repo.git.status("--porcelain=v1", "--", path) or ""
@@ -1312,6 +1311,7 @@ class GitLogCommit(BaseModel):
 class GitLogResponse(BaseModel):
     branch: str
     commits: list[GitLogCommit]
+    has_more: bool = False
 
 
 class CommitDiffResponse(BaseModel):
@@ -1324,13 +1324,16 @@ class CommitDiffResponse(BaseModel):
 async def git_log(
     workspace_id: str,
     n: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
     branch: Annotated[str, Query()] = "",
 ) -> GitLogResponse:
-    """Lista os últimos ``n`` commits do repositório com decorações de refs.
+    """Lista ``n`` commits do repositório a partir de ``offset``, com refs.
 
     Reaproveita ``_open_workspace_repo`` e ``gitpython.iter_commits``.
     Inclui o campo ``refs`` com os nomes de branches/tags/HEAD que apontam
-    para cada commit — equivalente ao ``--decorate`` do ``git log``.
+    para cada commit — equivalente ao ``--decorate`` do ``git log``. Busca
+    ``n + 1`` internamente para saber se há mais commits além da página
+    atual (``has_more``), sem precisar de um segundo round-trip só pra isso.
     """
     import git  # type: ignore[import-not-found]
 
@@ -1370,12 +1373,16 @@ async def git_log(
         pass
 
     try:
-        commits = list(repo.iter_commits(ref, max_count=n))
+        commits = list(repo.iter_commits(ref, max_count=n + 1, skip=offset))
     except git.GitCommandError:
         return GitLogResponse(branch=ref, commits=[])
 
+    has_more = len(commits) > n
+    commits = commits[:n]
+
     return GitLogResponse(
         branch=ref,
+        has_more=has_more,
         commits=[
             GitLogCommit(
                 sha=c.hexsha,
@@ -2716,7 +2723,7 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
     ws = workspace_registry.get(workspace_id)
     if ws is None:
 
-        async def _not_found() -> Any:
+        async def _not_found() -> AsyncGenerator[str]:
             yield 'data: {"type": "error", "message": "Workspace não encontrado."}\n\n'
 
         return StreamingResponse(_not_found(), media_type="text/event-stream")
@@ -2758,7 +2765,7 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
     observer.schedule(_Handler(), cwd, recursive=True)
     observer.start()
 
-    async def _stream() -> Any:
+    async def _stream() -> AsyncGenerator[str]:
         try:
             # keepalive heartbeat + event loop
             while True:
@@ -3184,7 +3191,13 @@ async def rag_job_status(workspace_id: str, job_id: str) -> RagJobStatus:
         queue = await get_embedding_queue(settings.embedding_queue_dsn)
         stats = await queue.get_job_stats(job_id)
     except Exception:
-        logger.warning("rag_job_status_failed", extra={"job_id": job_id})
+        # `workspace_id` só existe pra manter a URL aninhada (consistência com
+        # os demais endpoints de workspace) — o lookup real é por job_id
+        # (chave única na fila), mas registra o par pra facilitar diagnóstico.
+        logger.warning(
+            "rag_job_status_failed",
+            extra={"job_id": job_id, "workspace_id": workspace_id},
+        )
         stats = {}
     return _rag_job_status(job_id, stats)
 
@@ -3224,7 +3237,6 @@ class ActiveContextRequest(BaseModel):
 async def set_active_context(
     workspace_id: str,
     body: ActiveContextRequest,
-    request: Request,
 ) -> StatusResponse:
     """Atualiza o arquivo em foco no editor para o agente via get_workbench_context."""
     try:

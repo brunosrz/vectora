@@ -773,6 +773,7 @@
   "workbench_git_discard_confirm": "Descartar",
   "workbench_git_history_empty": "Nenhum commit encontrado.",
   "workbench_git_commits_count": "{n} commits",
+  "workbench_git_history_load_more": "Carregar mais 50",
   "chat_rewind": "Retroceder até aqui",
   "chat_rewind_title": "Retroceder até este ponto?",
   "chat_rewind_desc": "Desfazer todas as alterações feitas após esta mensagem — os arquivos do workspace serão restaurados para o estado neste ponto.",
