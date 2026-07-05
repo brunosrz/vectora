@@ -903,33 +903,6 @@ class Settings(BaseSettings):
 
         logger.info(f"Model updated: {provider}={model}")
 
-    # ============================================================================
-    # LEGACY COMPATIBILITY
-    # ============================================================================
-
-    def get(self, key: str, default: Any = None) -> Any:
-        """Legacy method for backward compatibility with old Config class.
-
-        Args:
-            key: Environment variable name
-            default: Default value if not found
-
-        Returns:
-            Configuration value or default
-        """
-        return getattr(self, key.lower(), default)
-
-    def set(self, key: str, value: Any) -> None:
-        """Legacy method for backward compatibility.
-
-        Args:
-            key: Configuration key
-            value: New value
-        """
-        if hasattr(self, key.lower()):
-            setattr(self, key.lower(), value)
-            logger.debug(f"Configuration updated: {key}={value}")
-
 
 # ============================================================================
 # PROVIDER REGISTRY
