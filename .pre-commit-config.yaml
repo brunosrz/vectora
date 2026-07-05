@@ -114,7 +114,10 @@ repos:
         # `bandit.exe`: o stub de console-script gerado pelo pip/uv não é
         # assinado e o Smart App Control / WDAC do Windows o bloqueia ao spawn
         # (os error 4551). `python -m` importa o mesmo módulo sem o stub.
-        entry: uv run --project vectora python -m bandit -s B110,B101 -c vectora/pyproject.toml
+        # --exclude aqui espelha o mesmo skip do `scons lint` (SConstruct) —
+        # backend/context_graph é código portado do graphify (MIT) com
+        # exceções já documentadas em pyproject.toml per-file-ignores.
+        entry: uv run --project vectora python -m bandit -s B110,B101 -c vectora/pyproject.toml --exclude vectora/backend/context_graph
         language: system
         types: [python]
 

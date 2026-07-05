@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.services.memory_consolidation import (
+from backend.scheduling.memory_consolidation import (
     _build_consolidation_prompt,
     _parse_llm_output,
     consolidate_memory,
@@ -94,15 +94,15 @@ async def test_consolidate_memory_writes_agents_md(tmp_path: Path):
 
     with (
         patch(
-            "backend.services.memory_consolidation._agents_md_path",
+            "backend.scheduling.memory_consolidation._agents_md_path",
             return_value=agents_md,
         ),
         patch(
-            "backend.services.memory_consolidation._fetch_recent_threads",
+            "backend.scheduling.memory_consolidation._fetch_recent_threads",
             new=AsyncMock(return_value=fake_threads),
         ),
         patch(
-            "backend.services.memory_consolidation._invoke_llm",
+            "backend.scheduling.memory_consolidation._invoke_llm",
             new=AsyncMock(return_value=fake_llm_response),
         ),
     ):
@@ -120,15 +120,15 @@ async def test_consolidate_memory_no_threads_skips_write(tmp_path: Path):
 
     with (
         patch(
-            "backend.services.memory_consolidation._agents_md_path",
+            "backend.scheduling.memory_consolidation._agents_md_path",
             return_value=agents_md,
         ),
         patch(
-            "backend.services.memory_consolidation._fetch_recent_threads",
+            "backend.scheduling.memory_consolidation._fetch_recent_threads",
             new=AsyncMock(return_value=[]),
         ),
         patch(
-            "backend.services.memory_consolidation._invoke_llm",
+            "backend.scheduling.memory_consolidation._invoke_llm",
             new=AsyncMock(),
         ) as mock_llm,
     ):
@@ -145,15 +145,15 @@ async def test_consolidate_memory_llm_failure_does_not_raise(tmp_path: Path):
 
     with (
         patch(
-            "backend.services.memory_consolidation._agents_md_path",
+            "backend.scheduling.memory_consolidation._agents_md_path",
             return_value=agents_md,
         ),
         patch(
-            "backend.services.memory_consolidation._fetch_recent_threads",
+            "backend.scheduling.memory_consolidation._fetch_recent_threads",
             new=AsyncMock(return_value=[[("human", "hi"), ("assistant", "hello")]]),
         ),
         patch(
-            "backend.services.memory_consolidation._invoke_llm",
+            "backend.scheduling.memory_consolidation._invoke_llm",
             new=AsyncMock(side_effect=RuntimeError("LLM unavailable")),
         ),
     ):

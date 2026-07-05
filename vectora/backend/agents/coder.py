@@ -1,8 +1,9 @@
 """Coder Worker — spec do sub-agent especializado em código e filesystem.
 
-Recebe ALL_TOOLS — a especialidade vem do system prompt, não de restrição de
-ferramentas. Objetivo: criar/editar arquivos, executar comandos, navegação de
-código, indexação de pastas via ingest_docs.
+Recebe um subconjunto de tools (FS + Git + Memory + RAG) — a delegação via
+``task()`` roda como agente compilado à parte (deepagents
+``SubAgentMiddleware``), então restringir as tools aqui de fato limita o que
+o subagente pode fazer, ao contrário de só confiar no system prompt.
 
 ``SUBAGENT_SPEC`` é o dict canônico consumido por
 ``agent_factory._subagent_specs()`` em ``create_deep_agent``.
@@ -22,7 +23,8 @@ SYSTEM_PROMPT = f"""{VECTORA_IDENTITY}
 ## Seu Papel — Coder Agent
 
 Você é o **Coder Agent** do Vectora. Especializado em desenvolvimento de software e
-operações de filesystem. Tem acesso a **todas as ferramentas** do Vectora.
+operações de filesystem. Suas ferramentas são filesystem, git, memória e RAG —
+sem web search/fetch (delegue ao Search Agent quando precisar de informação externa).
 
 ### Ferramentas — por prioridade de uso
 
@@ -39,10 +41,6 @@ operações de filesystem. Tem acesso a **todas as ferramentas** do Vectora.
   - **NUNCA** use `terminal` para chamar `/rag` — `ingest_docs` é a ferramenta correta
 - `embedding` — enfileira um único documento de texto para indexação
 - `vector_search` — busca semântica na base indexada
-
-#### 🌐 Busca web (quando precisar de informação externa)
-- `web_search` — busca web em tempo real
-- `fetch_url` — extrai conteúdo de uma URL específica
 
 #### 🧠 Memória
 - `save_memory`, `get_memory`, `delete_memory` — contexto persistente entre sessões

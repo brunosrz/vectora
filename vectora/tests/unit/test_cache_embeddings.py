@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from backend.services import cache_embeddings
-from backend.services.kv import reset_kv
+from backend.embedding import cache_embeddings
+from backend.persistence.kv import reset_kv
 
 
 @pytest.fixture(autouse=True)

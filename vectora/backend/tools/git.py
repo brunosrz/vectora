@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 def _resolve_workspace(workspace_id: str | None, config: RunnableConfig | None) -> Any:
     """Resolve workspace → Workspace (mesmo padrão de workspace.py)."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     wid = workspace_id
     if wid is None and config is not None:

@@ -65,7 +65,7 @@ def get_checkpointer(db_dsn: str | None = None) -> Any:
         async with get_checkpointer() as cp:
             state = await cp.aget(config, ...)
     """
-    from backend.services.checkpoint import Checkpointer
+    from backend.persistence.checkpoint import Checkpointer
 
     return Checkpointer(db_dsn=db_dsn)
 
@@ -87,7 +87,7 @@ async def get_store(embedding_model: str | None = None) -> Any:
     """
     global _store
     if _store is None:
-        from backend.services.backends import build_store
+        from backend.llm.backends import build_store
 
         _store = await build_store(embedding_model)
         logger.debug("storage/factory: store criado (%s)", type(_store).__name__)
@@ -250,7 +250,7 @@ def _build_lc_embeddings() -> Any:
     cohere = _build_cohere_embeddings()
     voyage = _build_voyage_embeddings()
     if cohere is not None and voyage is not None:
-        from backend.services.fallback_embeddings import FallbackEmbeddings
+        from backend.llm.fallback_embeddings import FallbackEmbeddings
         from backend.settings import settings as _s
 
         return FallbackEmbeddings(
@@ -313,7 +313,7 @@ def _build_qdrant_vs(
     from langchain_qdrant import QdrantVectorStore, RetrievalMode
     from qdrant_client import QdrantClient
 
-    from backend.services.subscription import require_pro
+    from backend.rbac.subscription import require_pro
 
     require_pro()
 
@@ -387,7 +387,7 @@ async def get_pg_pool(dsn: str | None = None) -> Any:
 
     import asyncpg
 
-    from backend.services.subscription import require_pro
+    from backend.rbac.subscription import require_pro
     from backend.settings import settings as _s
 
     require_pro()
@@ -510,8 +510,8 @@ async def storage_health() -> dict[str, Any]:
 
     # Config — resumo do modo de armazenamento e backends configurados
     # (sem expor segredos: apenas booleanos de "configurado").
-    from backend.services.runtime_settings import runtime_settings
     from backend.settings import settings as _s
+    from backend.workspace.runtime_settings import runtime_settings
 
     result["config"] = {
         "storage_mode": runtime_settings.storage_mode,

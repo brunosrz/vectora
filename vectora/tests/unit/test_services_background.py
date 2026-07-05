@@ -13,8 +13,8 @@ from typing import Any
 import pytest
 
 import backend
+from backend.scheduling import background_tasks as bg
 from backend.services import agent_factory
-from backend.services import background_tasks as bg
 
 _MIGRATION = (
     Path(backend.__file__).parent
@@ -312,3 +312,80 @@ async def test_dispatch_webhook_matches_provider_and_event(db, monkeypatch):
     # Não casa: evento fora do filtro.
     assert await bg.dispatch_webhook_event("github", "issues", {}) == 0
     assert fired == []
+
+
+# ---------------------------------------------------------------------------
+# Delegação de subagente (tool `task`) → histórico na aba Tarefas
+# ---------------------------------------------------------------------------
+
+
+async def test_record_subagent_delegation_creates_anchor_and_run(db):
+    await bg.record_subagent_delegation(
+        session_id="s1",
+        user_id="u1",
+        subagent_type="coder",
+        description="Crie um arquivo X",
+        status="done",
+        summary="Arquivo criado.",
+        workspace_id="ws1",
+    )
+
+    tasks = await bg.list_tasks("s1")
+    assert len(tasks) == 1
+    anchor = tasks[0]
+    assert anchor.kind == "subagent"
+    assert anchor.name == "Subagente: coder"
+    assert anchor.trigger_config == {"subagent_type": "coder"}
+
+    runs = await bg.list_runs("s1")
+    assert len(runs) == 1
+    assert runs[0]["task_id"] == anchor.id
+    assert runs[0]["trigger_source"] == "subagent"
+    assert runs[0]["status"] == "done"
+    assert runs[0]["summary"] == "Arquivo criado."
+
+
+async def test_record_subagent_delegation_reuses_anchor_across_calls(db):
+    """Segunda delegação do mesmo subagente na mesma thread não duplica a âncora."""
+    await bg.record_subagent_delegation(
+        session_id="s1",
+        user_id="u1",
+        subagent_type="search",
+        description="Pesquise X",
+        status="done",
+        summary="ok",
+    )
+    await bg.record_subagent_delegation(
+        session_id="s1",
+        user_id="u1",
+        subagent_type="search",
+        description="Pesquise Y",
+        status="error",
+        summary="erro de rede",
+    )
+
+    tasks = await bg.list_tasks("s1")
+    assert len(tasks) == 1  # âncora única, reusada
+
+    runs = await bg.list_runs("s1")
+    assert len(runs) == 2
+    assert {r["status"] for r in runs} == {"done", "error"}
+
+
+async def test_record_subagent_delegation_tolerates_db_failure(db, monkeypatch):
+    """Erro/borda: falha ao persistir nunca deve propagar (best-effort)."""
+
+    async def _boom() -> None:
+        raise RuntimeError("db indisponível")
+
+    monkeypatch.setattr(bg, "_get_db", _boom)
+
+    # Não levanta — apenas loga e segue.
+    await bg.record_subagent_delegation(
+        session_id="s1",
+        user_id="u1",
+        subagent_type="coder",
+        description="x",
+        status="done",
+        summary="y",
+    )

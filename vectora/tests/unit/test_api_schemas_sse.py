@@ -301,7 +301,7 @@ class TestAuthSchemas:
 
     def test_user_response_from_user(self):
         from backend.api.schemas import UserResponse
-        from backend.services.auth import User
+        from backend.rbac.auth import User
 
         user = User(
             id="u-1",

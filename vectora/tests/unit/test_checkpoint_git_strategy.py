@@ -12,7 +12,7 @@ from pathlib import Path
 import git
 import pytest
 
-from backend.services.checkpoint import (
+from backend.persistence.checkpoint import (
     checkpoint_ref,
     create_git_checkpoint,
     list_git_checkpoints,

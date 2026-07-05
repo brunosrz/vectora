@@ -12,7 +12,7 @@ from pathlib import Path
 
 class TestGetExtractor:
     def test_python_file_returns_extractor(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
+        from backend.context_graph.extract import _get_extractor
 
         f = tmp_path / "app.py"
         f.touch()
@@ -21,7 +21,7 @@ class TestGetExtractor:
         assert callable(extractor)
 
     def test_typescript_file_returns_extractor(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
+        from backend.context_graph.extract import _get_extractor
 
         f = tmp_path / "app.ts"
         f.touch()
@@ -29,7 +29,7 @@ class TestGetExtractor:
         assert extractor is not None
 
     def test_tsx_file_returns_extractor(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
+        from backend.context_graph.extract import _get_extractor
 
         f = tmp_path / "Component.tsx"
         f.touch()
@@ -37,7 +37,7 @@ class TestGetExtractor:
         assert extractor is not None
 
     def test_go_file_returns_extractor(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
+        from backend.context_graph.extract import _get_extractor
 
         f = tmp_path / "main.go"
         f.touch()
@@ -45,23 +45,23 @@ class TestGetExtractor:
         assert extractor is not None
 
     def test_unknown_extension_returns_none(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
+        from backend.context_graph.extract import _get_extractor
 
         f = tmp_path / "data.xyz123abc"
         f.touch()
         assert _get_extractor(f) is None
 
     def test_mcp_json_routed_to_mcp_extractor(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
-        from backend.services.context_graph.mcp_ingest import extract_mcp_config
+        from backend.context_graph.extract import _get_extractor
+        from backend.context_graph.mcp_ingest import extract_mcp_config
 
         f = tmp_path / ".mcp.json"
         f.touch()
         assert _get_extractor(f) is extract_mcp_config
 
     def test_pyproject_toml_routed_to_manifest(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
-        from backend.services.context_graph.manifest_ingest import (
+        from backend.context_graph.extract import _get_extractor
+        from backend.context_graph.manifest_ingest import (
             extract_package_manifest,
         )
 
@@ -70,8 +70,8 @@ class TestGetExtractor:
         assert _get_extractor(f) is extract_package_manifest
 
     def test_pom_xml_routed_to_manifest(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
-        from backend.services.context_graph.manifest_ingest import (
+        from backend.context_graph.extract import _get_extractor
+        from backend.context_graph.manifest_ingest import (
             extract_package_manifest,
         )
 
@@ -80,7 +80,7 @@ class TestGetExtractor:
         assert _get_extractor(f) is extract_package_manifest
 
     def test_blade_php_returns_blade_extractor(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
+        from backend.context_graph.extract import _get_extractor
 
         f = tmp_path / "layout.blade.php"
         f.touch()
@@ -88,21 +88,21 @@ class TestGetExtractor:
         assert extractor is not None
 
     def test_json_non_mcp_returns_json_extractor(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor
+        from backend.context_graph.extract import _get_extractor
 
         f = tmp_path / "schema.json"
         f.touch()
         extractor = _get_extractor(f)
         # json files go through generic dispatch (not None unless unsupported)
         # At minimum callable or None; we assert not mcp
-        from backend.services.context_graph.mcp_ingest import extract_mcp_config
+        from backend.context_graph.mcp_ingest import extract_mcp_config
 
         assert extractor is not extract_mcp_config
 
 
 class TestSafeExtract:
     def test_returns_dict_on_success(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor, _safe_extract
+        from backend.context_graph.extract import _get_extractor, _safe_extract
 
         f = tmp_path / "file.py"
         f.write_text("x = 1\n", encoding="utf-8")
@@ -112,7 +112,7 @@ class TestSafeExtract:
         assert isinstance(result, dict)
 
     def test_returns_empty_on_exception(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _safe_extract
+        from backend.context_graph.extract import _safe_extract
 
         class _RaisingExtractor:
             def __call__(self, path: Path) -> dict:
@@ -127,24 +127,24 @@ class TestSafeExtract:
 
 class TestMakeId:
     def test_deterministic(self):
-        from backend.services.context_graph.extract import _make_id
+        from backend.context_graph.extract import _make_id
 
         assert _make_id("module", "fn") == _make_id("module", "fn")
 
     def test_different_inputs_different_ids(self):
-        from backend.services.context_graph.extract import _make_id
+        from backend.context_graph.extract import _make_id
 
         assert _make_id("module", "fn_a") != _make_id("module", "fn_b")
 
     def test_returns_string(self):
-        from backend.services.context_graph.extract import _make_id
+        from backend.context_graph.extract import _make_id
 
         assert isinstance(_make_id("x"), str)
 
 
 class TestFileStem:
     def test_plain_stem_includes_parent(self):
-        from backend.services.context_graph.extract import _file_stem
+        from backend.context_graph.extract import _file_stem
 
         # _file_stem qualifies with parent dir name to avoid ID collisions
         f = Path("/project/src/auth.py")
@@ -153,7 +153,7 @@ class TestFileStem:
         assert "src" in result
 
     def test_top_level_file_bare_stem(self):
-        from backend.services.context_graph.extract import _file_stem
+        from backend.context_graph.extract import _file_stem
 
         # A file at root level (parent is ".") returns bare stem
         f = Path("./Makefile")
@@ -163,28 +163,28 @@ class TestFileStem:
 
 class TestSourceLocation:
     def test_integer_line(self):
-        from backend.services.context_graph.extract import _source_location
+        from backend.context_graph.extract import _source_location
 
         result = _source_location(42)
         assert result is not None
         assert "42" in result
 
     def test_string_line(self):
-        from backend.services.context_graph.extract import _source_location
+        from backend.context_graph.extract import _source_location
 
         result = _source_location("10")
         assert result is not None
         assert "10" in result
 
     def test_none_returns_none(self):
-        from backend.services.context_graph.extract import _source_location
+        from backend.context_graph.extract import _source_location
 
         assert _source_location(None) is None
 
 
 class TestExtractPythonFile:
     def test_extracts_function(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor, _safe_extract
+        from backend.context_graph.extract import _get_extractor, _safe_extract
 
         f = tmp_path / "module.py"
         f.write_text("def authenticate(user): return True\n", encoding="utf-8")
@@ -195,7 +195,7 @@ class TestExtractPythonFile:
         assert any("authenticate" in lbl for lbl in node_labels)
 
     def test_extracts_class(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor, _safe_extract
+        from backend.context_graph.extract import _get_extractor, _safe_extract
 
         f = tmp_path / "service.py"
         f.write_text("class AuthService:\n    pass\n", encoding="utf-8")
@@ -206,7 +206,7 @@ class TestExtractPythonFile:
         assert any("AuthService" in lbl for lbl in node_labels)
 
     def test_empty_file_no_nodes(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor, _safe_extract
+        from backend.context_graph.extract import _get_extractor, _safe_extract
 
         f = tmp_path / "empty.py"
         f.write_text("", encoding="utf-8")
@@ -216,7 +216,7 @@ class TestExtractPythonFile:
         assert isinstance(result, dict)
 
     def test_syntax_error_graceful(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor, _safe_extract
+        from backend.context_graph.extract import _get_extractor, _safe_extract
 
         f = tmp_path / "bad.py"
         f.write_text("def (:\n    pass\n", encoding="utf-8")
@@ -228,7 +228,7 @@ class TestExtractPythonFile:
 
 class TestExtractTypeScriptFile:
     def test_extracts_function_ts(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor, _safe_extract
+        from backend.context_graph.extract import _get_extractor, _safe_extract
 
         f = tmp_path / "utils.ts"
         f.write_text(
@@ -241,7 +241,7 @@ class TestExtractTypeScriptFile:
         assert isinstance(result.get("nodes"), list)
 
     def test_extracts_interface(self, tmp_path: Path):
-        from backend.services.context_graph.extract import _get_extractor, _safe_extract
+        from backend.context_graph.extract import _get_extractor, _safe_extract
 
         f = tmp_path / "types.ts"
         f.write_text(
@@ -255,7 +255,7 @@ class TestExtractTypeScriptFile:
 
 class TestStripJsonc:
     def test_removes_line_comments(self):
-        from backend.services.context_graph.extract import _strip_jsonc
+        from backend.context_graph.extract import _strip_jsonc
 
         code = '{\n  "key": "value" // comment\n}'
         result = _strip_jsonc(code)
@@ -263,14 +263,14 @@ class TestStripJsonc:
         assert "value" in result
 
     def test_removes_block_comments(self):
-        from backend.services.context_graph.extract import _strip_jsonc
+        from backend.context_graph.extract import _strip_jsonc
 
         code = '{ /* block comment */ "key": 1 }'
         result = _strip_jsonc(code)
         assert "/*" not in result
 
     def test_preserves_urls(self):
-        from backend.services.context_graph.extract import _strip_jsonc
+        from backend.context_graph.extract import _strip_jsonc
 
         code = '{ "url": "https://example.com" }'
         result = _strip_jsonc(code)

@@ -26,8 +26,8 @@ from backend.api.handlers.background import (
     post_task,
     run_task_endpoint,
 )
+from backend.scheduling import background_tasks as bg
 from backend.services import agent_factory
-from backend.services import background_tasks as bg
 
 _UUID = "aa844f17-7e0e-4b0a-8991-c3aab9bdcc63"
 _MIGRATION = (

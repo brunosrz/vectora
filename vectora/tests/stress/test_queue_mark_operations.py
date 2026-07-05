@@ -19,7 +19,7 @@ import time
 
 import pytest
 
-from backend.services.queue import EmbeddingQueue, EmbeddingStatus
+from backend.embedding.queue import EmbeddingQueue, EmbeddingStatus
 
 
 @pytest.mark.stress

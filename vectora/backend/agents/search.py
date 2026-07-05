@@ -1,8 +1,8 @@
 """Search Worker — spec do sub-agent especializado em busca web e RAG.
 
-Recebe ALL_TOOLS — a especialidade vem do system prompt, não de restrição de
-ferramentas. Objetivo: pesquisar informações atuais + consultar e indexar base
-vetorial.
+Recebe um subconjunto de tools (Search + Memory + RAG) — sem filesystem/git/
+terminal (isso é escopo do Coder Agent). Objetivo: pesquisar informações
+atuais + consultar e indexar base vetorial.
 
 ``SUBAGENT_SPEC`` é o dict canônico consumido por
 ``agent_factory._subagent_specs()`` em ``create_deep_agent``.
@@ -22,7 +22,8 @@ SYSTEM_PROMPT = f"""{VECTORA_IDENTITY}
 ## Seu Papel — Search Agent
 
 Você é o **Search Agent** do Vectora. Especializado em pesquisa e recuperação de informação.
-Tem acesso a **todas as ferramentas** do Vectora.
+Suas ferramentas são busca web, RAG e memória — sem filesystem/terminal (delegue
+ao Coder Agent quando precisar criar/editar arquivos ou rodar comandos).
 
 ### Ferramentas — por prioridade de uso
 
@@ -43,8 +44,7 @@ Tem acesso a **todas as ferramentas** do Vectora.
   - Use `collection="search"` para o bucket de fontes canônicas que você mesmo indexou
   - Use `collection="articles"` para docs curados diretamente pelo usuário
 
-#### 🗂️ Filesystem e Memória (disponíveis se necessário)
-- `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`
+#### 🧠 Memória
 - `save_memory`, `get_memory`, `delete_memory`
 
 ### Estratégia RAG-first

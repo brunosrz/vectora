@@ -128,7 +128,7 @@ def _write_env(key: str, value: str) -> None:
 
 def _apply_set_values(set_values: list[str]) -> None:
     """Processa ``--set KEY=VALUE`` e persiste nos arquivos corretos."""
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     for kv in set_values:
         if "=" not in kv:
@@ -184,8 +184,8 @@ def _show_or_set(args: argparse.Namespace) -> None:
     from rich.console import Console
     from rich.table import Table
 
-    from backend.services.runtime_settings import runtime_settings
     from backend.settings import Settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     console = Console()
     settings = Settings()

@@ -8,8 +8,8 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
+from backend.scheduling.mq import reset_mq
 from backend.services import jobs
-from backend.services.mq import reset_mq
 
 
 @pytest.fixture(autouse=True)

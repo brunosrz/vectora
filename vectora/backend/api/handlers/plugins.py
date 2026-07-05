@@ -16,7 +16,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.services.plugins import (
+from backend.workspace.plugins import (
     McpServer,
     add_server,
     health_check,

@@ -70,17 +70,16 @@ class _BackgroundConsoleFilter(logging.Filter):
     - vectora.services.background  (worker de embedding)
     - vectora.services.queue       (fila de embedding)
     - vectora.graph                (build/compile do grafo — repete por request)
-    - vectora.agents.orchestrator  (session_context + decisão de routing)
+    - vectora.services.agent_factory (session_context + decisão de routing)
     - vectora.tools                (tools initialized)
     - vectora.api.handlers.chat    (graph inicializado)
     """
 
     _CONSOLE_NOISY: frozenset[str] = frozenset(
         {
-            "backend.services.background",
-            "backend.services.queue",
+            "backend.embedding.background",
+            "backend.embedding.queue",
             "backend.services.agent_factory",
-            "backend.agents.orchestrator",
             "backend.tools",
             "backend.api.handlers.chat",
         }

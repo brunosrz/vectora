@@ -34,9 +34,9 @@ from pathlib import Path
 from typing import Any
 
 from backend.agents._identity import VECTORA_IDENTITY
-from backend.services import tool_policy
-from backend.services.plugins import tools_version
-from backend.services.skills import skills_version
+from backend.rbac import tool_policy
+from backend.workspace.plugins import tools_version
+from backend.workspace.skills import skills_version
 
 logger = logging.getLogger(__name__)
 
@@ -99,12 +99,13 @@ O frontend renderiza o markdown diretamente.
 
 Use `task()` para especialistas:
 
-- **`task(name="coder", task="instrução detalhada")`** — filesystem, código,
-  terminal, git, npm, pip, testes, indexação/embedding de pastas.
-  Escreva a instrução como se delegasse a um colega que não leu a conversa.
+- **`task(subagent_type="coder", description="instrução detalhada")`** —
+  filesystem, código, terminal, git, npm, pip, testes, indexação/embedding
+  de pastas. Escreva a instrução como se delegasse a um colega que não leu
+  a conversa.
 
-- **`task(name="search", task="o que pesquisar")`** — busca web em tempo real,
-  fetch de URL, informação atual da internet.
+- **`task(subagent_type="search", description="o que pesquisar")`** —
+  busca web em tempo real, fetch de URL, informação atual da internet.
 
 ### Como escrever a instrução
 
@@ -121,8 +122,8 @@ Para tarefas genuinamente independentes, chame múltiplos `task()` no mesmo
 turno. O deepagents executa em paralelo automaticamente.
 
 Exemplo válido — "Pesquise X e também verifique o código Y":
-- `task(name="search", task="Pesquise X")`
-- `task(name="coder", task="Verifique o código Y")`
+- `task(subagent_type="search", description="Pesquise X")`
+- `task(subagent_type="coder", description="Verifique o código Y")`
 
 ---
 
@@ -220,6 +221,134 @@ def _subagent_specs(user_id: str | None = None) -> list[Any]:
 # ---------------------------------------------------------------------------
 
 
+def _load_project_docs() -> str | None:
+    """Carrega arquivos de instrução do projeto e contexto do .vectora/.
+
+    Coleta (em ordem de prioridade por weight):
+    1. Arquivos de instrução na raiz: AGENTS.md, CLAUDE.md, GEMINI.md, VECTORA.md, …
+    2. Todos os .md em .vectora/ com enabled=true (exceto MANIFEST.md e subpastas reservadas)
+
+    Frontmatter YAML/Paperclip é parseado — campos weight, inject_when, enabled,
+    truncate_at, title, description e tags são respeitados. Arquivos com
+    inject_when='on_request' são omitidos do system prompt (disponíveis via tool).
+
+    Retorna conteúdo formatado ou None se não encontrar nada.
+    """
+    from backend.services.context_files import (
+        collect_context_files,
+        format_context_files_for_prompt,
+    )
+
+    cwd = Path.cwd()
+    files = collect_context_files(str(cwd))
+    if not files:
+        return None
+
+    text = format_context_files_for_prompt(files, include_on_request=False)
+    return text or None
+
+
+def _load_workspaces_overview(active_id: str | None = None) -> str | None:
+    """Lista os workspaces registrados para o Vectora ter consciência deles.
+
+    O Vectora gerencia projetos isolados por diretório (workspaces). Injetar a
+    lista no system prompt dá conhecimento proativo — o agente sabe quais
+    projetos conhece sem precisar chamar `workspace_list`, e pode sugerir trocar
+    de workspace quando a pergunta for sobre outro projeto.
+
+    Retorna None se não houver nenhum workspace registrado.
+    """
+    try:
+        from backend.workspace.workspace import workspace_registry
+
+        workspaces = workspace_registry.list_all()
+    except Exception:
+        logger.debug("Falha ao listar workspaces para o contexto", exc_info=True)
+        return None
+
+    if not workspaces:
+        return None
+
+    lines: list[str] = [
+        "## Seus Workspaces",
+        "",
+        "Você gerencia estes projetos isolados (cada um com diretório, base RAG e "
+        "MANIFEST.md próprios). O marcado com ◀ é o ativo desta sessão:",
+        "",
+    ]
+    # Limita a 30 entradas para não inflar o contexto; o restante via `workspace_list`.
+    for ws in workspaces[:30]:
+        marker = " ◀ ativo" if active_id and ws.id == active_id else ""
+        git = " · git" if getattr(ws, "is_git_repo", False) else ""
+        lines.append(f"- **{ws.name}** (`{ws.id}`) — `{ws.cwd}`{git}{marker}")
+    if len(workspaces) > 30:
+        lines.append(f"- … e mais {len(workspaces) - 30} (use `workspace_list`).")
+    lines.append(
+        "\nUse `workspace_describe`/`bucket_summary` para detalhes de um workspace "
+        "e `vector_search` para buscar no conhecimento indexado do ativo."
+    )
+    return "\n".join(lines)
+
+
+def _load_session_context(workspace_id: str | None = None) -> str | None:
+    """Carrega contexto completo da sessão: arquivos de projeto + manifest do workspace.
+
+    Seções:
+    1. AGENTS.md / CLAUDE.md / VECTORA.md / GEMINI.md — instrução do projeto
+    2. Lista de workspaces registrados (consciência dos projetos do Vectora)
+    3. MANIFEST.md do workspace ativo — base de conhecimento indexada
+
+    O manifest é truncado a ~3200 chars para não inflar o contexto. Detalhes
+    por bucket ficam disponíveis via `bucket_summary` (tool sob demanda).
+    """
+    parts: list[str] = []
+
+    project_docs = _load_project_docs()
+    if project_docs:
+        parts.append(project_docs)
+
+    workspaces_overview = _load_workspaces_overview(workspace_id)
+    if workspaces_overview:
+        parts.append(workspaces_overview)
+
+    if workspace_id:
+        try:
+            from backend.workspace.workspace import workspace_registry
+
+            ws = workspace_registry.get(workspace_id)
+            if ws is not None:
+                manifest_path = ws.manifest_path()
+                if manifest_path.exists():
+                    raw_manifest = manifest_path.read_text(
+                        encoding="utf-8", errors="ignore"
+                    ).strip()
+                    from backend.services.context_files import parse_frontmatter
+
+                    _, manifest = parse_frontmatter(raw_manifest)
+                    manifest = manifest.strip()
+                    # Trunca a ~3200 chars (~800 tokens) para economizar contexto
+                    if len(manifest) > 3200:
+                        manifest = manifest[:3200] + "\n\n[... manifest truncado ...]"
+                    workspace_block = (
+                        f"## Workspace Ativo: {ws.name} ({ws.id})\n\n"
+                        f"{manifest}\n\n"
+                        "Ferramentas disponíveis para este workspace:\n"
+                        "- `vector_search` — busca semântica filtrada para este workspace\n"
+                        "- `workspace_describe`, `bucket_summary` — detalhes do manifest\n"
+                        "- `get_memory` — memórias episódicas (consulte quando perguntarem "
+                        "sobre preferências ou decisões anteriores)"
+                    )
+                    parts.append(workspace_block)
+        except Exception:
+            logger.debug(
+                "Falha ao carregar manifest do workspace %s",
+                workspace_id,
+                exc_info=True,
+            )
+
+    return "\n\n---\n\n".join(parts) if parts else None
+
+
 def _build_session_system_prompt(
     workspace_id: str | None = None,
 ) -> str:
@@ -231,10 +360,7 @@ def _build_session_system_prompt(
 
     Chamado a cada compilação do grafo — lazy e cacheado via singleton.
     """
-    # Importa utilities de contexto do orchestrator (evita duplicação)
     try:
-        from backend.agents.orchestrator import _load_session_context
-
         ctx = _load_session_context(workspace_id)
         if ctx:
             return _ORCHESTRATOR_PROMPT + f"\n\n---\n\n## Contexto do Projeto\n\n{ctx}"
@@ -304,7 +430,7 @@ async def _ensure_infra() -> None:
         _checkpointer = await _checkpointer_ctx.__aenter__()
 
     if _store is None:
-        from backend.services.backends import build_store
+        from backend.llm.backends import build_store
 
         _store = await build_store()
 
@@ -339,8 +465,8 @@ async def _build_graph_async(
     from deepagents import create_deep_agent
     from langchain_core.language_models.chat_models import BaseChatModel
 
+    from backend.llm.fallback_chat_model import FallbackChatModel
     from backend.nodes.tools import ALL_TOOLS, CHAT_TOOLS
-    from backend.services.fallback_chat_model import FallbackChatModel
 
     # FallbackChatModel envolve o LLM do modelo escolhido: em 429/quota antes do
     # primeiro token, troca para o próximo provider de `fallback_order` (lido em
@@ -365,7 +491,7 @@ async def _build_graph_async(
 
     global _profiles_registered
     if not _profiles_registered:
-        from backend.services.profiles import _register_profiles
+        from backend.workspace.profiles import _register_profiles
 
         _register_profiles()
         _profiles_registered = True
@@ -378,9 +504,9 @@ async def _build_graph_async(
 
     middleware = build_middleware_stack(permission_mode="ask")
 
-    from backend.services.backends import build_backend_lazy
-    from backend.services.skills import list_skill_paths
+    from backend.llm.backends import build_backend_lazy
     from backend.vtypes.context import VectoraContext
+    from backend.workspace.skills import list_skill_paths
 
     # Skills instaladas pelo usuário local (singleton compartilhado).
     # Paths absolutos — harness lê SKILL.md frontmatter on-demand.
@@ -586,7 +712,7 @@ def _invalidate_llm_cache(user_id: str) -> None:
         for k in stale_graph_keys:
             del _graphs_by_user[k]
 
-        from backend.services import llm_tools
+        from backend.llm import llm_tools
 
         stale_keys = [k for k in llm_tools._bound_cache if k[0] == user_id]
         for k in stale_keys:
@@ -623,7 +749,7 @@ async def coder_compensate(workspace_id: str | None = None) -> str | None:
     import subprocess  # nosec B404 — git controlado, sem shell=True
 
     try:
-        from backend.services.backends import _resolve_workspace_root
+        from backend.llm.backends import _resolve_workspace_root
 
         workspace_root = _resolve_workspace_root(workspace_id)
         if not (workspace_root / ".git").is_dir():

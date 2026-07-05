@@ -141,7 +141,7 @@ def test_resolve_reuses_active_workspace(monkeypatch):
             return True
 
     monkeypatch.setattr(
-        "backend.services.workspace.workspace_registry", _FakeRegistry()
+        "backend.workspace.workspace.workspace_registry", _FakeRegistry()
     )
     result = _resolve_workspace_id("", "thread1", "u")
     assert result == "ws-ativo"
@@ -170,7 +170,7 @@ def test_resolve_creates_session_workspace_when_no_active(monkeypatch):
             return True
 
     monkeypatch.setattr(
-        "backend.services.workspace.workspace_registry", _FakeRegistry()
+        "backend.workspace.workspace.workspace_registry", _FakeRegistry()
     )
     result = _resolve_workspace_id("", "thread1", "u")
     assert result == "sess-ws"

@@ -109,7 +109,7 @@ def _token_exp(access_token: str) -> int | None:
     Decodificação best-effort — token acabou de ser assinado por nós, então
     falha aqui só indicaria bug; não deve quebrar o fluxo de auth.
     """
-    from backend.services.auth import decode_access_token
+    from backend.rbac.auth import decode_access_token
 
     try:
         exp = decode_access_token(access_token).get("exp")
@@ -130,7 +130,7 @@ async def has_users_endpoint() -> HasUsersResponse:
     Usado pelo frontend para decidir se mostra signup ou signin na primeira
     visita. Após o primeiro signup, retorna sempre true.
     """
-    from backend.services.auth import has_users
+    from backend.rbac.auth import has_users
 
     return HasUsersResponse(exists=await has_users())
 
@@ -154,7 +154,7 @@ async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
     fallback `"local"` (ver `chat.py::_user_id_from_request`) como user_id.
     """
     from backend.cli.keys import upsert_env_key
-    from backend.services.auth import has_users
+    from backend.rbac.auth import has_users
 
     if await has_users():
         raise HTTPException(
@@ -192,7 +192,7 @@ async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
 @router.get("/invite/{token}", response_model=InviteValidationResponse)
 async def validate_invite_endpoint(token: str) -> InviteValidationResponse:
     """Valida um token de convite para a página de signup pré-verificar."""
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     info = await auth_svc.validate_invite(token)
     if info is None:
@@ -214,7 +214,7 @@ async def signup_endpoint(
 
     Retorna tokens via JSON e também os grava em cookies httpOnly.
     """
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     invite_role = None
     invite_token = body.invite_token.strip()
@@ -252,7 +252,7 @@ async def signin_endpoint(
     request: Request,
     response: Response,
 ) -> TokenResponse:
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     ip = _client_ip(request)
     try:
@@ -277,7 +277,7 @@ async def refresh_endpoint(
     response: Response,
 ) -> TokenResponse:
     """Rotaciona tokens usando o refresh token do body ou do cookie."""
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     token = body.refresh_token or request.cookies.get(_REFRESH_COOKIE, "")
     if not token:
@@ -301,7 +301,7 @@ async def signout_endpoint(
     request: Request,
     response: Response,
 ) -> dict:
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     token = body.refresh_token or request.cookies.get(_REFRESH_COOKIE, "")
     if token:
@@ -335,7 +335,7 @@ async def update_me_endpoint(
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
 
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     if body.name is not None:
         try:
@@ -369,7 +369,7 @@ async def list_user_ssh_keys(request: Request) -> dict:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
-    from backend.services.secrets.ssh_keys import list_ssh_keys
+    from backend.secrets.ssh_keys import list_ssh_keys
 
     return {"keys": list_ssh_keys(user.id)}
 
@@ -395,7 +395,7 @@ async def upload_user_ssh_key(request: Request) -> dict:
     content = await file.read()
     if not content or len(content) < 64:
         raise HTTPException(status_code=400, detail="Chave inválida ou vazia.")
-    from backend.services.secrets.ssh_keys import add_ssh_key
+    from backend.secrets.ssh_keys import add_ssh_key
 
     key_id = add_ssh_key(user.id, content)
     return {"key_id": key_id}
@@ -407,7 +407,7 @@ async def delete_user_ssh_key(request: Request, key_id: str) -> dict:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
-    from backend.services.secrets.ssh_keys import remove_ssh_key
+    from backend.secrets.ssh_keys import remove_ssh_key
 
     ok = remove_ssh_key(user.id, key_id)
     if not ok:
@@ -443,7 +443,7 @@ async def change_password_endpoint(
     request: Request,
     response: Response,
 ) -> dict:
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     user = getattr(request.state, "user", None)
     if user is None:
@@ -465,8 +465,8 @@ async def change_password_endpoint(
 
 @router.get("/users", response_model=UserListResponse)
 async def list_users(request: Request) -> UserListResponse:
-    from backend.services.auth import get_db_for_audit
-    from backend.services.permissions import require_min_role
+    from backend.rbac.auth import get_db_for_audit
+    from backend.rbac.permissions import require_min_role
 
     user = getattr(request.state, "user", None)
     require_min_role(user, "admin")
@@ -492,8 +492,8 @@ async def list_users(request: Request) -> UserListResponse:
 
 @router.post("/users/{user_id}/role")
 async def update_role(user_id: str, body: UpdateRoleRequest, request: Request) -> dict:
-    from backend.services.auth import get_db_for_audit
-    from backend.services.permissions import require_min_role
+    from backend.rbac.auth import get_db_for_audit
+    from backend.rbac.permissions import require_min_role
 
     caller = getattr(request.state, "user", None)
     require_min_role(caller, "root")
@@ -513,8 +513,8 @@ async def get_audit_log(
 ) -> list[AuditEntry]:
     import json
 
-    from backend.services.auth import get_db_for_audit
-    from backend.services.permissions import require_min_role
+    from backend.rbac.auth import get_db_for_audit
+    from backend.rbac.permissions import require_min_role
 
     caller = getattr(request.state, "user", None)
     require_min_role(caller, "admin")
@@ -557,7 +557,7 @@ async def get_audit_log(
 
 @router.get("/envs")
 async def get_envs(request: Request) -> dict:
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     user = getattr(request.state, "user", None)
     if user is None:
@@ -570,7 +570,7 @@ async def get_envs(request: Request) -> dict:
 
 @router.post("/envs")
 async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     user = getattr(request.state, "user", None)
     if user is None:
@@ -581,7 +581,7 @@ async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
 
 @router.delete("/envs/{key}")
 async def delete_env(key: str, request: Request) -> dict:
-    from backend.services import auth as auth_svc
+    from backend.rbac import auth as auth_svc
 
     user = getattr(request.state, "user", None)
     if user is None:

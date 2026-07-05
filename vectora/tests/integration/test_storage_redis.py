@@ -77,7 +77,7 @@ class TestRedisLLMCache:
     async def test_init_llm_cache_complete_mode(self, redis_url, monkeypatch):
         """init_llm_cache() em storage_mode=complete retorna instância de cache."""
         import backend.settings as _s
-        from backend.services.cache_llm import init_llm_cache, reset_llm_cache
+        from backend.llm.cache_llm import init_llm_cache, reset_llm_cache
 
         monkeypatch.setattr(_s.settings, "storage_mode", "complete")
         monkeypatch.setattr(_s.settings, "redis_url", redis_url)
@@ -95,7 +95,7 @@ class TestRedisLLMCache:
     async def test_init_llm_cache_disabled_returns_none(self, redis_url, monkeypatch):
         """init_llm_cache() com cache_llm_enabled=False retorna None."""
         import backend.settings as _s
-        from backend.services.cache_llm import init_llm_cache, reset_llm_cache
+        from backend.llm.cache_llm import init_llm_cache, reset_llm_cache
 
         monkeypatch.setattr(_s.settings, "cache_llm_enabled", False)
 
@@ -111,7 +111,7 @@ class TestRedisLLMCache:
         from langchain_core.caches import InMemoryCache
 
         import backend.settings as _s
-        from backend.services.cache_llm import init_llm_cache, reset_llm_cache
+        from backend.llm.cache_llm import init_llm_cache, reset_llm_cache
 
         monkeypatch.setattr(_s.settings, "storage_mode", "lite")
         monkeypatch.setattr(_s.settings, "cache_llm_enabled", True)

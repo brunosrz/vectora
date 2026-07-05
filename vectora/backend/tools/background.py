@@ -14,7 +14,7 @@ from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
-from backend.services import background_tasks
+from backend.scheduling import background_tasks
 
 logger = logging.getLogger(__name__)
 

@@ -423,7 +423,7 @@ async def create_thread(body: CreateThreadRequest, http_request: Request) -> Thr
 
     workspace_id = body.workspace_id
     if workspace_id:
-        from backend.services.workspace import workspace_registry
+        from backend.workspace.workspace import workspace_registry
 
         if workspace_registry.get(workspace_id) is not None:
             workspace_registry.set_active(workspace_id, _user_id(http_request))
@@ -782,7 +782,7 @@ async def rewind_thread(
             detail="workspace_id é obrigatório para o rewind (passe via query param).",
         )
 
-    from backend.services.workspace import (
+    from backend.workspace.workspace import (
         WorkspaceLockTimeoutError,
         acquire_workspace_lock,
         workspace_registry,
@@ -810,7 +810,7 @@ async def rewind_thread(
 
         try:
             async with acquire_workspace_lock(wid, thread_id, timeout=5.0):
-                from backend.services.checkpoint import restore_git_checkpoint
+                from backend.persistence.checkpoint import restore_git_checkpoint
 
                 result = restore_git_checkpoint(repo, git_sha)
         except WorkspaceLockTimeoutError as lock_exc:
@@ -830,7 +830,7 @@ async def rewind_thread(
             )
         try:
             async with acquire_workspace_lock(wid, thread_id, timeout=5.0):
-                from backend.services.checkpoint import restore_snapshot_checkpoint
+                from backend.persistence.checkpoint import restore_snapshot_checkpoint
 
                 result = restore_snapshot_checkpoint(_snapshot_path, ws.cwd)
         except WorkspaceLockTimeoutError as lock_exc:

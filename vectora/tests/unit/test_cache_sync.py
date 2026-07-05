@@ -6,8 +6,10 @@ import json
 
 import pytest
 
-from backend.services import cache_sync, plugins, tool_policy
-from backend.services.kv import MemoryKV, get_kv, reset_kv
+from backend.embedding import cache_sync
+from backend.persistence.kv import MemoryKV, get_kv, reset_kv
+from backend.rbac import tool_policy
+from backend.workspace import plugins
 
 
 @pytest.fixture(autouse=True)
@@ -73,7 +75,7 @@ async def test_policy_changed_avanca_versao() -> None:
 async def test_ws_active_changed_aplica_no_registry(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     calls: list[tuple[str, str]] = []
     monkeypatch.setattr(

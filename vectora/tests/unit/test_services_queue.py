@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-import backend.services.queue as _queue_mod
-from backend.services.queue import EmbeddingQueue, get_embedding_queue
+import backend.embedding.queue as _queue_mod
+from backend.embedding.queue import EmbeddingQueue, get_embedding_queue
 
 _DSN = "sqlite+aiosqlite:///:memory:"
 

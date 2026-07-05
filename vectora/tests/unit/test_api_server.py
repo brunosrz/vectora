@@ -54,7 +54,7 @@ class TestLifespan:
     """
 
     def test_lifespan_starts_embedding_worker(self, headless_app, monkeypatch):
-        import backend.services.background as bg
+        import backend.embedding.background as bg
 
         started = {"value": False}
 

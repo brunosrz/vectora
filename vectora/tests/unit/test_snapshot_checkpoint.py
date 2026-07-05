@@ -11,7 +11,7 @@ from __future__ import annotations
 import tarfile
 from pathlib import Path
 
-from backend.services.checkpoint import (
+from backend.persistence.checkpoint import (
     create_snapshot_checkpoint,
     gc_snapshots,
     restore_snapshot_checkpoint,

@@ -10,8 +10,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export type BackgroundKind = "routine" | "heartbreak";
-export type TriggerType = "interval" | "webhook" | "manual";
+export type BackgroundKind = "routine" | "heartbreak" | "subagent";
+export type TriggerType = "interval" | "webhook" | "manual" | "subagent";
 
 export interface BackgroundTask {
   id: string;

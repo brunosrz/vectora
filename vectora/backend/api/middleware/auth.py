@@ -112,7 +112,7 @@ async def _extract_user(request: Request) -> Any:
     """
     from jwt import PyJWTError as JWTError
 
-    from backend.services.auth import decode_access_token, get_user_by_id
+    from backend.rbac.auth import decode_access_token, get_user_by_id
 
     token: str | None = None
 

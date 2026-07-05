@@ -14,8 +14,8 @@ from unittest.mock import patch
 import pytest
 from langchain_core.embeddings import Embeddings
 
-from backend.services import provider_fallback as pf
-from backend.services.fallback_embeddings import FallbackEmbeddings
+from backend.llm import provider_fallback as pf
+from backend.llm.fallback_embeddings import FallbackEmbeddings
 
 
 class _FakeEmb(Embeddings):

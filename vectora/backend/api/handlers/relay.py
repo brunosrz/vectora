@@ -13,7 +13,7 @@ from pathlib import Path
 import aiohttp
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.relay.token import load_token
+from backend.services.relay.token import load_token
 
 logger = logging.getLogger(__name__)
 

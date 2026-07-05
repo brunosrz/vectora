@@ -69,7 +69,7 @@ async def _cleanup_session_1212() -> None:
 
     # 3. Limpa traces da session 1212
     try:
-        from backend.services.tracer import tracer
+        from backend.persistence.tracer import tracer
 
         removed = await tracer.clear_session(TEST_SESSION_ID)
         logger.info(f"Traces da session 1212 removidos: {removed}")
@@ -235,8 +235,8 @@ async def embed_direct(text: str, collection: str) -> None:
     """
     from uuid import uuid4
 
-    from backend.services.background import BackgroundEmbeddingWorker
-    from backend.services.queue import EmbeddingQueueRecord
+    from backend.embedding.background import BackgroundEmbeddingWorker
+    from backend.embedding.queue import EmbeddingQueueRecord
 
     worker = BackgroundEmbeddingWorker()
     vector = await worker._generate_embedding(text)

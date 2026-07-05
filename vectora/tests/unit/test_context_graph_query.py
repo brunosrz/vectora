@@ -7,7 +7,7 @@ from pathlib import Path
 
 import networkx as nx
 
-from backend.services.context_graph.query import (
+from backend.context_graph.query import (
     affected_summary,
     explain_node,
     load_graph_nx,

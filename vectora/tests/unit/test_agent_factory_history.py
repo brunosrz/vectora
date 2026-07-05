@@ -203,7 +203,7 @@ class TestProfilesRegisteredGuard:
         """Simula o guard: _profiles_registered=True → _register_profiles não chamado."""
         call_count: list[int] = [0]
 
-        import backend.services.profiles as profiles_mod
+        import backend.workspace.profiles as profiles_mod
 
         original_fn = profiles_mod._register_profiles
 
@@ -226,7 +226,7 @@ class TestProfilesRegisteredGuard:
         """Com _profiles_registered=False → _register_profiles é chamado."""
         call_count: list[int] = [0]
 
-        import backend.services.profiles as profiles_mod
+        import backend.workspace.profiles as profiles_mod
 
         original_fn = profiles_mod._register_profiles
 

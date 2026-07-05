@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from backend.services.workspace_config import (
+from backend.workspace.workspace_config import (
     WORKSPACE_LOCAL_DIR,
     ensure_workspace_files,
     load_workspace_config,

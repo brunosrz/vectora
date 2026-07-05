@@ -698,7 +698,7 @@ class TestBuildReranker:
         assert isinstance(out, VoyageAIRerank)
 
     def test_both_configured_returns_fallback_reranker(self):
-        from backend.services.fallback_reranker import FallbackReranker
+        from backend.llm.fallback_reranker import FallbackReranker
         from backend.tools.rag import _build_reranker
 
         with patch("backend.tools.rag.settings") as ms:
@@ -716,7 +716,7 @@ class TestBuildReranker:
 
 class TestFallbackRerankerBehavior:
     def _wrap(self, primary, secondary):
-        from backend.services.fallback_reranker import FallbackReranker
+        from backend.llm.fallback_reranker import FallbackReranker
 
         return FallbackReranker(
             primary,
@@ -726,7 +726,7 @@ class TestFallbackRerankerBehavior:
         )
 
     def test_compress_primary_ok_no_switch(self):
-        from backend.services import provider_fallback as pf
+        from backend.llm import provider_fallback as pf
 
         pf.drain_switches()
         primary = MagicMock()
@@ -738,7 +738,7 @@ class TestFallbackRerankerBehavior:
         assert pf.drain_switches() == []
 
     def test_compress_primary_quota_switches(self):
-        from backend.services import provider_fallback as pf
+        from backend.llm import provider_fallback as pf
 
         pf.drain_switches()
         primary = MagicMock()
@@ -759,7 +759,7 @@ class TestFallbackRerankerBehavior:
 
     @pytest.mark.asyncio
     async def test_acompress_quota_switches(self):
-        from backend.services import provider_fallback as pf
+        from backend.llm import provider_fallback as pf
 
         pf.drain_switches()
         primary = MagicMock()

@@ -272,14 +272,16 @@ export function TasksTab({ threadId }: { threadId: string }) {
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium truncate">{t.name}</span>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => void runTask(t.id)}
-                        title={m.background_run_now()}
-                        className="p-1 text-muted-foreground hover:text-foreground"
-                        data-testid="background-run-now"
-                      >
-                        <Play className="w-3 h-3" />
-                      </button>
+                      {t.kind !== "subagent" && (
+                        <button
+                          onClick={() => void runTask(t.id)}
+                          title={m.background_run_now()}
+                          className="p-1 text-muted-foreground hover:text-foreground"
+                          data-testid="background-run-now"
+                        >
+                          <Play className="w-3 h-3" />
+                        </button>
+                      )}
                       <button
                         onClick={() => void deleteTask(t.id)}
                         title={m.background_delete()}
@@ -287,15 +289,17 @@ export function TasksTab({ threadId }: { threadId: string }) {
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
-                      <Switch
-                        checked={t.enabled}
-                        onCheckedChange={(v) => void toggleTask(t.id, v)}
-                        aria-label={
-                          t.enabled
-                            ? m.background_active()
-                            : m.background_paused()
-                        }
-                      />
+                      {t.kind !== "subagent" && (
+                        <Switch
+                          checked={t.enabled}
+                          onCheckedChange={(v) => void toggleTask(t.id, v)}
+                          aria-label={
+                            t.enabled
+                              ? m.background_active()
+                              : m.background_paused()
+                          }
+                        />
+                      )}
                     </div>
                   </div>
                   <p className="text-muted-foreground truncate">
@@ -305,14 +309,18 @@ export function TasksTab({ threadId }: { threadId: string }) {
                     <span className="px-1 rounded bg-muted/60">
                       {t.kind === "routine"
                         ? m.background_kind_routine()
-                        : m.background_kind_heartbreak()}
+                        : t.kind === "heartbreak"
+                          ? m.background_kind_heartbreak()
+                          : m.background_trigger_subagent()}
                     </span>
                     <span className="px-1 rounded bg-muted/60">
                       {t.trigger_type === "interval"
                         ? m.background_trigger_interval()
                         : t.trigger_type === "webhook"
                           ? m.background_trigger_webhook()
-                          : m.background_trigger_manual()}
+                          : t.trigger_type === "subagent"
+                            ? m.background_trigger_subagent()
+                            : m.background_trigger_manual()}
                     </span>
                     <span>
                       {m.background_last_run()}:{" "}

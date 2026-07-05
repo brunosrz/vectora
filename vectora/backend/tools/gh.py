@@ -75,7 +75,7 @@ def _gh_run(
 
 def _resolve_cwd(workspace_id: str | None, config: RunnableConfig | None) -> str | None:
     """Resolve workspace → cwd para passar ao subprocess gh."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     wid = workspace_id
     if wid is None and config is not None:

@@ -34,14 +34,14 @@ class RagSettingsBody(BaseModel):
 
 @router.get("/settings")
 async def get_rag_settings() -> dict[str, Any]:
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     return runtime_settings.rag_settings
 
 
 @router.patch("/settings")
 async def patch_rag_settings(body: RagSettingsBody) -> dict[str, Any]:
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     return runtime_settings.set_rag_settings(**body.model_dump())
 

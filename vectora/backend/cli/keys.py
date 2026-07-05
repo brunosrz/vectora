@@ -103,7 +103,7 @@ def save_keys_to_env(keys: dict[str, str]) -> None:
 
 def _save_provider_to_settings(provider_id: str, model: str) -> None:
     """Salva provider e model ativos em ``~/.vectora/settings.json``."""
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     runtime_settings.set_active_model(provider_id, model)
     logger.info("Provider salvo", extra={"provider": provider_id, "model": model})

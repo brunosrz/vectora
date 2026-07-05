@@ -44,7 +44,7 @@ async def _user_from_token(token: str) -> Any:
     if not token:
         return None
     try:
-        from backend.services.auth import decode_access_token, get_user_by_id
+        from backend.rbac.auth import decode_access_token, get_user_by_id
 
         payload = decode_access_token(token)
         uid = str(payload.get("sub", ""))
@@ -56,7 +56,7 @@ async def _user_from_token(token: str) -> Any:
 
 
 def _trusted_workspace(workspace_id: str) -> Any:
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id) if workspace_id else None
     if ws is None or not getattr(ws, "trusted", False):

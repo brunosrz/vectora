@@ -158,7 +158,7 @@ ignore = [
 "backend/tools/*.py" = ["PLR0911", "S602"]
 # context_graph: código portado do graphify (MIT) — usa convenção networkx (G maiúsculo),
 # tem código XML real (S314), hashes do graphify (S324), e anotações incompletas herdadas.
-"backend/services/context_graph/*.py" = [
+"backend/context_graph/*.py" = [
     "N803", "N806",           # G é convenção networkx para grafos
     "ANN001", "ANN002", "ANN003", "ANN202",  # anotações em código portado
     "B023",                   # loop variable binding — padrão em closures networkx
@@ -188,7 +188,7 @@ ignore = [
 "backend/agents/*.py" = ["PLR0911"]
 "backend/nodes/engine.py" = ["E501"]
 "backend/nodes/base.py" = ["PLR0911"]
-"backend/services/checkpoint.py" = ["N802"]
+"backend/persistence/checkpoint.py" = ["N802"]
 # Wizards interativos de CLI: getpass/input() bloqueante é o comportamento
 # correto (nada mais roda no loop durante o prompt). S603 cobre o teste de
 # conexão que carrega o LLM; RUF006 o create_task do streaming de status.
@@ -211,7 +211,7 @@ line-ending = "lf"
 # extract.py: 8500+ linhas de parsers tree-sitter com imports opcionais (try/except).
 # Os módulos tree_sitter_* não estão nas deps do projeto — são extras opcionais.
 # Os atributos .type/.children são da API dinâmica do tree-sitter (sem stubs py.typed).
-include = ["backend/services/context_graph/extract.py"]
+include = ["backend/context_graph/extract.py"]
 
 [tool.ty.overrides.rules]
 unresolved-import = "ignore"
@@ -224,25 +224,25 @@ invalid-assignment = "ignore"
 # cluster.py: graspologic é opcional (fallback para networkx louvain).
 # dedup.py: usa load_llm via asyncio.get_event_loop() em contexto sync.
 include = [
-    "backend/services/context_graph/cluster.py",
-    "backend/services/context_graph/dedup.py",
-    "backend/services/context_graph/export.py",
-    "backend/services/context_graph/analyze.py",
-    "backend/services/context_graph/build.py",
-    "backend/services/context_graph/cache.py",
-    "backend/services/context_graph/detect.py",
-    "backend/services/context_graph/manifest_ingest.py",
-    "backend/services/context_graph/multigraph_compat.py",
-    "backend/services/context_graph/symbol_resolution.py",
-    "backend/services/context_graph/paths.py",
-    "backend/services/context_graph/report.py",
-    "backend/services/context_graph/security.py",
-    "backend/services/context_graph/graph_index.py",
-    "backend/services/context_graph/query.py",
-    "backend/services/context_graph/affected.py",
-    "backend/services/context_graph/semantic_cleanup.py",
-    "backend/services/context_graph/pipeline.py",
-    "backend/services/context_graph/validate.py",
+    "backend/context_graph/cluster.py",
+    "backend/context_graph/dedup.py",
+    "backend/context_graph/export.py",
+    "backend/context_graph/analyze.py",
+    "backend/context_graph/build.py",
+    "backend/context_graph/cache.py",
+    "backend/context_graph/detect.py",
+    "backend/context_graph/manifest_ingest.py",
+    "backend/context_graph/multigraph_compat.py",
+    "backend/context_graph/symbol_resolution.py",
+    "backend/context_graph/paths.py",
+    "backend/context_graph/report.py",
+    "backend/context_graph/security.py",
+    "backend/context_graph/graph_index.py",
+    "backend/context_graph/query.py",
+    "backend/context_graph/affected.py",
+    "backend/context_graph/semantic_cleanup.py",
+    "backend/context_graph/pipeline.py",
+    "backend/context_graph/validate.py",
 ]
 
 [tool.ty.overrides.rules]

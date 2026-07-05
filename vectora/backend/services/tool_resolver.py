@@ -14,8 +14,8 @@ from __future__ import annotations
 import logging
 
 from backend.nodes.tools import ALL_TOOLS
-from backend.services import tool_policy
-from backend.services.plugins import get_user_mcp_tools
+from backend.rbac import tool_policy
+from backend.workspace.plugins import get_user_mcp_tools
 
 logger = logging.getLogger(__name__)
 

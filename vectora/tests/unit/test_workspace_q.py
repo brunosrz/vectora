@@ -17,7 +17,7 @@ from types import SimpleNamespace
 import git
 import pytest
 
-from backend.services.workspace import WorkspaceRegistry
+from backend.workspace.workspace import WorkspaceRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -30,7 +30,7 @@ def reg(monkeypatch):
     r = WorkspaceRegistry()
     r._loaded = True
     monkeypatch.setattr(r, "_save", lambda: None)
-    monkeypatch.setattr("backend.services.workspace.workspace_registry", r)
+    monkeypatch.setattr("backend.workspace.workspace.workspace_registry", r)
     return r
 
 
@@ -79,7 +79,7 @@ class TestSessionWorkspace:
     ):
         """C.41 — Pasta não é criada no registro; apenas na primeira operação real."""
         monkeypatch.setattr(
-            "backend.services.workspace._session_workspaces_root",
+            "backend.workspace.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
         )
         ws = reg.get_or_create_session_workspace("thread123", "u")
@@ -90,7 +90,7 @@ class TestSessionWorkspace:
 
     def test_session_workspace_is_trusted(self, reg, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "backend.services.workspace._session_workspaces_root",
+            "backend.workspace.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
         )
         ws = reg.get_or_create_session_workspace("thread123", "u")
@@ -98,7 +98,7 @@ class TestSessionWorkspace:
 
     def test_session_workspace_is_idempotent(self, reg, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "backend.services.workspace._session_workspaces_root",
+            "backend.workspace.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
         )
         a = reg.get_or_create_session_workspace("thread123")

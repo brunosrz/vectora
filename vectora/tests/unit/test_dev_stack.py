@@ -294,8 +294,8 @@ def test_container_matches_spec_inspect_falha_recria(
 
 @pytest.fixture
 def _reset_singletons():
-    from backend.services.kv import reset_kv, reset_reachable_cache
-    from backend.services.mq import reset_mq
+    from backend.persistence.kv import reset_kv, reset_reachable_cache
+    from backend.scheduling.mq import reset_mq
 
     reset_kv()
     reset_mq()
@@ -309,7 +309,7 @@ def _reset_singletons():
 def test_get_kv_cai_para_memoria_com_redis_inacessivel(
     monkeypatch: pytest.MonkeyPatch, _reset_singletons
 ) -> None:
-    from backend.services.kv import MemoryKV, get_kv
+    from backend.persistence.kv import MemoryKV, get_kv
     from backend.settings import settings
 
     # Porta 9 (discard) — nada escutando; probe deve falhar rápido.
@@ -320,7 +320,7 @@ def test_get_kv_cai_para_memoria_com_redis_inacessivel(
 def test_get_mq_cai_para_memoria_com_redis_inacessivel(
     monkeypatch: pytest.MonkeyPatch, _reset_singletons
 ) -> None:
-    from backend.services.mq import MemoryMQ, get_mq
+    from backend.scheduling.mq import MemoryMQ, get_mq
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "redis_url", "redis://127.0.0.1:9/0")
@@ -328,7 +328,7 @@ def test_get_mq_cai_para_memoria_com_redis_inacessivel(
 
 
 def test_redis_reachable_cacheia_resultado(_reset_singletons) -> None:
-    from backend.services import kv
+    from backend.persistence import kv
 
     assert kv.redis_reachable("redis://127.0.0.1:9/0", timeout=0.1) is False
     assert "redis://127.0.0.1:9/0" in kv._reachable_cache

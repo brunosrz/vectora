@@ -11,11 +11,11 @@ class TestRagSettingsEndpoints:
     @pytest.mark.asyncio
     async def test_get_returns_runtime_settings(self, tmp_path):
         from backend.api.handlers import rag as handler
-        from backend.services.runtime_settings import RuntimeSettings
+        from backend.workspace.runtime_settings import RuntimeSettings
 
         rs = RuntimeSettings(path=tmp_path / "settings.json")
         # O handler importa runtime_settings localmente; patcha o módulo origem.
-        with patch("backend.services.runtime_settings.runtime_settings", rs):
+        with patch("backend.workspace.runtime_settings.runtime_settings", rs):
             out = await handler.get_rag_settings()
         assert out["reranker_enabled"] is True
         assert out["reranker_top_k"] == 5
@@ -24,10 +24,10 @@ class TestRagSettingsEndpoints:
     async def test_patch_updates_and_returns(self, tmp_path):
         from backend.api.handlers import rag as handler
         from backend.api.handlers.rag import RagSettingsBody
-        from backend.services.runtime_settings import RuntimeSettings
+        from backend.workspace.runtime_settings import RuntimeSettings
 
         rs = RuntimeSettings(path=tmp_path / "settings.json")
-        with patch("backend.services.runtime_settings.runtime_settings", rs):
+        with patch("backend.workspace.runtime_settings.runtime_settings", rs):
             out = await handler.patch_rag_settings(
                 RagSettingsBody(reranker_enabled=False, reranker_top_k=9)
             )

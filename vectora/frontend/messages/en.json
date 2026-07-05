@@ -611,6 +611,7 @@
   "background_trigger_interval": "Interval",
   "background_trigger_webhook": "Webhook",
   "background_trigger_manual": "Manual",
+  "background_trigger_subagent": "Subagent",
   "background_create": "Create",
   "background_cancel": "Cancel",
   "background_active": "Active",

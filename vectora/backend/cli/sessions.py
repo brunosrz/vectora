@@ -13,8 +13,8 @@ async def _run_sessions_async() -> None:
     from rich.console import Console
     from rich.table import Table
 
-    from backend.services.runtime_settings import runtime_settings
     from backend.settings import Settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     try:
         settings = Settings()

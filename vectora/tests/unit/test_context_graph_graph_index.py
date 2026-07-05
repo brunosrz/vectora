@@ -7,15 +7,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.services.context_graph.graph_index import (
+from backend.context_graph.graph_index import (
     _node_text,
     index_graph_nodes,
     purge_graph_index,
     search_graph_nodes,
 )
 
-_GETDB = "backend.services.context_graph.graph_index._get_db"
-_EMBED = "backend.services.context_graph.graph_index._embed_texts"
+_GETDB = "backend.context_graph.graph_index._get_db"
+_EMBED = "backend.context_graph.graph_index._embed_texts"
 
 _GRAPH_DATA = {
     "nodes": [

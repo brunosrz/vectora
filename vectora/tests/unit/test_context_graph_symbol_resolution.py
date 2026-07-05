@@ -17,28 +17,28 @@ def _code_node(nid: str, label: str, source_file: str = "mod.py") -> dict:
 
 class TestNormaliseCallableLabel:
     def test_strips_parens(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             normalise_callable_label,
         )
 
         assert normalise_callable_label("authenticate()") == "authenticate"
 
     def test_lowercases(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             normalise_callable_label,
         )
 
         assert normalise_callable_label("AuthService") == "authservice"
 
     def test_strips_leading_dot(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             normalise_callable_label,
         )
 
         assert normalise_callable_label(".method()") == "method"
 
     def test_strips_whitespace(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             normalise_callable_label,
         )
 
@@ -47,14 +47,14 @@ class TestNormaliseCallableLabel:
 
 class TestNodeIsResolvableSymbol:
     def test_code_node_with_label(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             node_is_resolvable_symbol,
         )
 
         assert node_is_resolvable_symbol(_code_node("n", "authenticate")) is True
 
     def test_document_node_not_resolvable(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             node_is_resolvable_symbol,
         )
 
@@ -66,7 +66,7 @@ class TestNodeIsResolvableSymbol:
         )
 
     def test_empty_label_not_resolvable(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             node_is_resolvable_symbol,
         )
 
@@ -76,21 +76,21 @@ class TestNodeIsResolvableSymbol:
         )
 
     def test_file_extension_label_not_resolvable(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             node_is_resolvable_symbol,
         )
 
         assert node_is_resolvable_symbol(_code_node("n", "auth.py")) is False
 
     def test_js_extension_not_resolvable(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             node_is_resolvable_symbol,
         )
 
         assert node_is_resolvable_symbol(_code_node("n", "utils.js")) is False
 
     def test_no_file_type_not_resolvable(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             node_is_resolvable_symbol,
         )
 
@@ -99,7 +99,7 @@ class TestNodeIsResolvableSymbol:
 
 class TestBuildLabelIndex:
     def test_indexes_code_nodes(self):
-        from backend.services.context_graph.symbol_resolution import build_label_index
+        from backend.context_graph.symbol_resolution import build_label_index
 
         nodes = [_code_node("n1", "authenticate"), _code_node("n2", "Login")]
         idx = build_label_index(nodes)
@@ -107,21 +107,21 @@ class TestBuildLabelIndex:
         assert "n1" in idx["authenticate"]
 
     def test_skips_non_code(self):
-        from backend.services.context_graph.symbol_resolution import build_label_index
+        from backend.context_graph.symbol_resolution import build_label_index
 
         nodes = [{"id": "n", "label": "Heading", "file_type": "document"}]
         idx = build_label_index(nodes)
         assert len(idx) == 0
 
     def test_multiple_nodes_same_label(self):
-        from backend.services.context_graph.symbol_resolution import build_label_index
+        from backend.context_graph.symbol_resolution import build_label_index
 
         nodes = [_code_node("n1", "fn", "a.py"), _code_node("n2", "fn", "b.py")]
         idx = build_label_index(nodes)
         assert len(idx["fn"]) == 2
 
     def test_node_without_id_skipped(self):
-        from backend.services.context_graph.symbol_resolution import build_label_index
+        from backend.context_graph.symbol_resolution import build_label_index
 
         nodes = [{"label": "fn", "file_type": "code", "source_file": "a.py"}]
         idx = build_label_index(nodes)
@@ -130,14 +130,14 @@ class TestBuildLabelIndex:
 
 class TestExistingEdgePairs:
     def test_basic_pairs(self):
-        from backend.services.context_graph.symbol_resolution import existing_edge_pairs
+        from backend.context_graph.symbol_resolution import existing_edge_pairs
 
         edges = [{"source": "a", "target": "b", "relation": "calls"}]
         pairs = existing_edge_pairs(edges)
         assert ("a", "b", "calls") in pairs
 
     def test_missing_source_or_target_skipped(self):
-        from backend.services.context_graph.symbol_resolution import existing_edge_pairs
+        from backend.context_graph.symbol_resolution import existing_edge_pairs
 
         edges = [
             {"target": "b", "relation": "calls"},
@@ -147,14 +147,14 @@ class TestExistingEdgePairs:
         assert len(pairs) == 0
 
     def test_empty_edges(self):
-        from backend.services.context_graph.symbol_resolution import existing_edge_pairs
+        from backend.context_graph.symbol_resolution import existing_edge_pairs
 
         assert existing_edge_pairs([]) == set()
 
 
 class TestIterRawCalls:
     def test_basic_iteration(self):
-        from backend.services.context_graph.symbol_resolution import iter_raw_calls
+        from backend.context_graph.symbol_resolution import iter_raw_calls
 
         per_file = [{"raw_calls": [{"callee": "fn", "caller_nid": "m"}]}]
         result = iter_raw_calls(per_file)
@@ -162,19 +162,19 @@ class TestIterRawCalls:
         assert result[0]["callee"] == "fn"
 
     def test_non_dict_skipped(self):
-        from backend.services.context_graph.symbol_resolution import iter_raw_calls
+        from backend.context_graph.symbol_resolution import iter_raw_calls
 
         result = iter_raw_calls(["not-a-dict", None, {"raw_calls": []}])
         assert result == []
 
     def test_non_list_raw_calls_skipped(self):
-        from backend.services.context_graph.symbol_resolution import iter_raw_calls
+        from backend.context_graph.symbol_resolution import iter_raw_calls
 
         result = iter_raw_calls([{"raw_calls": "not-a-list"}])
         assert result == []
 
     def test_non_dict_items_inside_list_skipped(self):
-        from backend.services.context_graph.symbol_resolution import iter_raw_calls
+        from backend.context_graph.symbol_resolution import iter_raw_calls
 
         result = iter_raw_calls([{"raw_calls": ["bad", {"callee": "ok"}]}])
         assert len(result) == 1
@@ -182,29 +182,29 @@ class TestIterRawCalls:
 
 class TestModuleStem:
     def test_plain_module(self):
-        from backend.services.context_graph.symbol_resolution import _module_stem
+        from backend.context_graph.symbol_resolution import _module_stem
 
         assert _module_stem("auth") == "auth"
 
     def test_dotted_module(self):
-        from backend.services.context_graph.symbol_resolution import _module_stem
+        from backend.context_graph.symbol_resolution import _module_stem
 
         assert _module_stem("app.services.auth") == "auth"
 
     def test_relative_import(self):
-        from backend.services.context_graph.symbol_resolution import _module_stem
+        from backend.context_graph.symbol_resolution import _module_stem
 
         assert _module_stem(".helper") == "helper"
 
     def test_none_returns_empty(self):
-        from backend.services.context_graph.symbol_resolution import _module_stem
+        from backend.context_graph.symbol_resolution import _module_stem
 
         assert _module_stem(None) == ""
 
 
 class TestParsePythonImportAliases:
     def test_from_import(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -215,7 +215,7 @@ class TestParsePythonImportAliases:
         assert aliases["authenticate"].module_stem == "auth"
 
     def test_from_import_as(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -226,7 +226,7 @@ class TestParsePythonImportAliases:
         assert aliases["auth_fn"].imported_name == "authenticate"
 
     def test_star_import_skipped(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -236,7 +236,7 @@ class TestParsePythonImportAliases:
         assert len(aliases) == 0
 
     def test_nested_import_not_indexed(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -246,7 +246,7 @@ class TestParsePythonImportAliases:
         assert "authenticate" not in aliases
 
     def test_plain_import_not_indexed(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -256,7 +256,7 @@ class TestParsePythonImportAliases:
         assert len(aliases) == 0
 
     def test_missing_file_returns_empty(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -264,7 +264,7 @@ class TestParsePythonImportAliases:
         assert aliases == {}
 
     def test_syntax_error_returns_empty(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -274,7 +274,7 @@ class TestParsePythonImportAliases:
         assert aliases == {}
 
     def test_relative_import(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -285,7 +285,7 @@ class TestParsePythonImportAliases:
         assert aliases["transform"].module_stem == "helper"
 
     def test_source_location_stored(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             parse_python_import_aliases,
         )
 
@@ -297,7 +297,7 @@ class TestParsePythonImportAliases:
 
 class TestBuildPythonSymbolIndex:
     def test_builds_stem_symbol_index(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             build_python_symbol_index,
         )
 
@@ -306,7 +306,7 @@ class TestBuildPythonSymbolIndex:
         assert ("auth", "authenticate") in idx
 
     def test_skips_non_code(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             build_python_symbol_index,
         )
 
@@ -322,7 +322,7 @@ class TestBuildPythonSymbolIndex:
         assert len(idx) == 0
 
     def test_no_source_file_skipped(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             build_python_symbol_index,
         )
 
@@ -333,7 +333,7 @@ class TestBuildPythonSymbolIndex:
 
 class TestFindUniquePythonSymbol:
     def test_finds_unique(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             ImportedSymbol,
             build_python_symbol_index,
             find_unique_python_symbol,
@@ -352,7 +352,7 @@ class TestFindUniquePythonSymbol:
         assert result == "auth_fn"
 
     def test_ambiguous_returns_none(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             ImportedSymbol,
             build_python_symbol_index,
             find_unique_python_symbol,
@@ -375,7 +375,7 @@ class TestFindUniquePythonSymbol:
         assert result == "auth_fn1"
 
     def test_missing_returns_none(self):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             ImportedSymbol,
             find_unique_python_symbol,
         )
@@ -393,7 +393,7 @@ class TestFindUniquePythonSymbol:
 
 class TestResolvePythonImportGuidedCalls:
     def test_resolves_call_via_import(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             resolve_python_import_guided_calls,
         )
 
@@ -422,7 +422,7 @@ class TestResolvePythonImportGuidedCalls:
         )
 
     def test_skips_member_calls(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             resolve_python_import_guided_calls,
         )
 
@@ -441,7 +441,7 @@ class TestResolvePythonImportGuidedCalls:
         assert len(edges) == 0
 
     def test_skips_non_python_files(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             resolve_python_import_guided_calls,
         )
 
@@ -452,7 +452,7 @@ class TestResolvePythonImportGuidedCalls:
         assert edges == []
 
     def test_no_duplicate_edges(self, tmp_path: Path):
-        from backend.services.context_graph.symbol_resolution import (
+        from backend.context_graph.symbol_resolution import (
             resolve_python_import_guided_calls,
         )
 

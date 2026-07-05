@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from backend.services.mq import MemoryMQ, RedisMQ, StreamMessage, get_mq, reset_mq
+from backend.scheduling.mq import MemoryMQ, RedisMQ, StreamMessage, get_mq, reset_mq
 
 
 @pytest.fixture(autouse=True)
@@ -140,7 +140,7 @@ def test_get_mq_default_memoria(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_get_mq_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
     """Em modo lite, redis_url é ignorado — sem consultar a rede."""
-    from backend.services import kv as kv_mod
+    from backend.persistence import kv as kv_mod
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "storage_mode", "lite")
@@ -157,7 +157,7 @@ def test_get_mq_complete_redis_inacessivel_cai_em_memoria(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Em modo complete com redis inacessível, cai em MemoryMQ."""
-    from backend.services import kv as kv_mod
+    from backend.persistence import kv as kv_mod
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "storage_mode", "complete")

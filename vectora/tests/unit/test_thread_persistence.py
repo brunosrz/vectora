@@ -284,7 +284,7 @@ class TestStreamChatRegistersThread:
                 side_effect=mock_upsert,
             ),
             patch(
-                "backend.services.workspace.workspace_registry",
+                "backend.workspace.workspace.workspace_registry",
                 mock_registry,
             ),
         ):
@@ -342,7 +342,7 @@ class TestStreamChatRegistersThread:
                 side_effect=mock_upsert,
             ),
             patch(
-                "backend.services.workspace.workspace_registry",
+                "backend.workspace.workspace.workspace_registry",
                 mock_registry2,
             ),
         ):

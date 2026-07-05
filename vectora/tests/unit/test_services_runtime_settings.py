@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.services.runtime_settings import RuntimeSettings
+from backend.workspace.runtime_settings import RuntimeSettings
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -249,7 +249,7 @@ class TestRagSettings:
         assert s["rerank_provider"] == "voyage"
 
     def test_persists_across_reload(self, tmp_settings_path) -> None:
-        from backend.services.runtime_settings import RuntimeSettings
+        from backend.workspace.runtime_settings import RuntimeSettings
 
         rs1 = RuntimeSettings(path=tmp_settings_path)
         rs1.set_rag_settings(reranker_top_k=20, ingest_file_types=["code"])

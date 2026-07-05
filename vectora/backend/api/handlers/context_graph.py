@@ -111,7 +111,7 @@ def _user_id(request: Request) -> str:
 
 
 def _graph_dir(workspace_id: str) -> Path | None:
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -230,7 +230,7 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
         _write_status(d, "running", **kw)
 
     try:
-        from backend.services.context_graph.pipeline import build_workspace_graph
+        from backend.context_graph.pipeline import build_workspace_graph
 
         result = await build_workspace_graph(
             workspace_id,
@@ -251,7 +251,7 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
                 edge_count=result.edge_count,
             )
     except Exception as exc:
-        from backend.services.provider_fallback import QuotaExhaustedError
+        from backend.llm.provider_fallback import QuotaExhaustedError
 
         if isinstance(exc, QuotaExhaustedError):
             # Quota esgotada em TODOS os providers — não é erro de pipeline:
@@ -385,7 +385,7 @@ async def post_query(
     _user_id(request)
     data = _require_graph_json(workspace_id)
 
-    from backend.services.context_graph.query import query_nodes
+    from backend.context_graph.query import query_nodes
 
     matched_nodes, neighborhood_edges = query_nodes(
         data, body.question, top_k=body.top_k
@@ -413,7 +413,7 @@ async def post_explain(
     _user_id(request)
     data = _require_graph_json(workspace_id)
 
-    from backend.services.context_graph.query import explain_node
+    from backend.context_graph.query import explain_node
 
     target, neighbors, connected = explain_node(data, body.node_id, depth=body.depth)
     if target is None:
@@ -437,7 +437,7 @@ async def post_path(
     _user_id(request)
     data = _require_graph_json(workspace_id)
 
-    from backend.services.context_graph.query import path_between
+    from backend.context_graph.query import path_between
 
     path_nodes, path_edges = path_between(data, body.source, body.target)
     if not path_nodes:
@@ -457,7 +457,7 @@ async def post_affected(
     _user_id(request)
     data = _require_graph_json(workspace_id)
 
-    from backend.services.context_graph.query import affected_summary
+    from backend.context_graph.query import affected_summary
 
     answer = affected_summary(data, body.node_query, depth=body.depth)
     return GraphQueryResponse(answer=answer, nodes=[], edges=[])

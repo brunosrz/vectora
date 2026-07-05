@@ -138,14 +138,14 @@ class TestMiddlewareStack:
 class TestHarnessProfiles:
     def test_register_profiles_idempotent(self):
         """_register_profiles() pode ser chamado múltiplas vezes sem erro."""
-        from backend.services.profiles import _register_profiles
+        from backend.workspace.profiles import _register_profiles
 
         _register_profiles()
         _register_profiles()  # segunda chamada: sem exceção
 
     def test_profiles_cover_providers(self):
         """Os três providers principais devem ter perfis registrados."""
-        from backend.services.profiles import _register_profiles
+        from backend.workspace.profiles import _register_profiles
 
         with patch("deepagents.register_harness_profile") as mock_reg:
             _register_profiles()
@@ -165,7 +165,7 @@ class TestHarnessProfiles:
 class TestFilesystemPermission:
     def test_deny_env_file(self):
         """Arquivos .env devem ser DENY para qualquer operação."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert FS_PERMISSION.check(".env", "read") == "deny"
         assert FS_PERMISSION.check(".env", "write") == "deny"
@@ -173,27 +173,27 @@ class TestFilesystemPermission:
 
     def test_deny_ssh_key(self):
         """Chaves SSH privadas devem ser DENY."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert FS_PERMISSION.check("id_rsa", "read") == "deny"
         assert FS_PERMISSION.check("/home/user/.ssh/id_ed25519", "read") == "deny"
 
     def test_allow_workspace(self):
         """Paths sob /workspace/ devem ser ALLOW."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert FS_PERMISSION.check("/workspace/src/main.py", "read") == "allow"
         assert FS_PERMISSION.check("/workspace/package.json", "write") == "allow"
 
     def test_allow_memories_read(self):
         """Leitura de memórias deve ser ALLOW."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert FS_PERMISSION.check("/memories/notes.md", "read") == "allow"
 
     def test_deny_skills_write(self):
         """Escrita em skills deve ser DENY."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert (
             FS_PERMISSION.check("/memories/skills/my-skill/SKILL.md", "write") == "deny"
@@ -201,7 +201,7 @@ class TestFilesystemPermission:
 
     def test_allow_skills_read(self):
         """Leitura de skills deve ser ALLOW."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert (
             FS_PERMISSION.check("/memories/skills/my-skill/SKILL.md", "read") == "allow"
@@ -209,28 +209,28 @@ class TestFilesystemPermission:
 
     def test_interrupt_external_write(self):
         """Escrita fora do workspace deve ser INTERRUPT."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert FS_PERMISSION.check("/tmp/something.txt", "write") == "interrupt"
         assert FS_PERMISSION.check("/home/user/notes.txt", "write") == "interrupt"
 
     def test_allow_external_read(self):
         """Leitura fora do workspace deve ser ALLOW (sem interrupt)."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         result = FS_PERMISSION.check("/tmp/something.txt", "read")
         assert result == "allow"
 
     def test_is_allowed_helper(self):
         """Atalho is_allowed() funciona corretamente."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert FS_PERMISSION.is_allowed("/workspace/file.py", "read") is True
         assert FS_PERMISSION.is_allowed(".env", "read") is False
 
     def test_requires_interrupt_helper(self):
         """requires_interrupt() detecta ops que precisam de aprovação."""
-        from backend.services.permissions import FS_PERMISSION
+        from backend.rbac.permissions import FS_PERMISSION
 
         assert FS_PERMISSION.requires_interrupt("/tmp/file.txt", "write") is True
         assert FS_PERMISSION.requires_interrupt("/workspace/file.py", "write") is False
@@ -300,9 +300,9 @@ class TestBuildStore:
 
         from langgraph.store.sqlite.aio import AsyncSqliteStore
 
-        from backend.services.backends import build_store
+        from backend.llm.backends import build_store
 
-        with patch("backend.services.backends._build_index", return_value=None):
+        with patch("backend.llm.backends._build_index", return_value=None):
             store = await build_store()
         assert isinstance(store, AsyncSqliteStore)
         # Fecha a conexão aiosqlite aberta pelo store para não vazar handle.
@@ -311,7 +311,7 @@ class TestBuildStore:
 
     def test_build_store_no_index_when_no_key(self):
         """Sem API key Cohere, build_store() retorna store sem indexação."""
-        from backend.services.backends import _build_index
+        from backend.llm.backends import _build_index
 
         with patch("backend.settings.settings") as mock_s:
             mock_s.embedding_model = "embed-multilingual-v3.0"
@@ -328,7 +328,7 @@ class TestBuildStore:
 class TestBuildBackend:
     def test_composite_backend_created(self):
         """build_backend() deve criar CompositeBackend sem erros."""
-        from backend.services.backends import build_backend
+        from backend.llm.backends import build_backend
 
         backend = build_backend(workspace_id=None, user_id="u1")
         assert backend is not None
@@ -378,9 +378,7 @@ class TestSubagentSpecs:
                     "tools": [],
                 },
             ),
-            patch(
-                "backend.services.tool_policy.get_disabled", return_value=["file_write"]
-            ),
+            patch("backend.rbac.tool_policy.get_disabled", return_value=["file_write"]),
         ):
             specs = _subagent_specs(user_id="u1")
 
@@ -393,7 +391,7 @@ class TestSubagentSpecs:
         self, tmp_path, monkeypatch
     ):
         """Kill-switch global (admin) filtra subagents mesmo sem user_id (sessão local)."""
-        from backend.services import tool_policy
+        from backend.rbac import tool_policy
         from backend.services.agent_factory import _subagent_specs
 
         monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tools")
@@ -475,7 +473,7 @@ class TestAgentsMdPaths:
 class TestLangSmith:
     def test_enable_disabled_by_default(self):
         """Com langsmith_tracing=False, enable retorna False."""
-        from backend.services.tracer import enable_langsmith_tracing
+        from backend.persistence.tracer import enable_langsmith_tracing
 
         with patch("backend.settings.settings") as mock_s:
             mock_s.langsmith_tracing = False
@@ -486,7 +484,7 @@ class TestLangSmith:
         """Com tracing=True mas sem api_key, retorna False."""
         import os
 
-        from backend.services.tracer import enable_langsmith_tracing
+        from backend.persistence.tracer import enable_langsmith_tracing
 
         env_backup = {
             k: os.environ.pop(k, None)
@@ -507,7 +505,7 @@ class TestLangSmith:
         """Com tracing=True e api_key, seta vars de ambiente corretamente."""
         import os
 
-        from backend.services.tracer import (
+        from backend.persistence.tracer import (
             disable_langsmith_tracing,
             enable_langsmith_tracing,
         )
@@ -531,7 +529,7 @@ class TestLangSmith:
         """disable_langsmith_tracing() remove as vars."""
         import os
 
-        from backend.services.tracer import disable_langsmith_tracing
+        from backend.persistence.tracer import disable_langsmith_tracing
 
         os.environ["LANGCHAIN_TRACING_V2"] = "true"
         os.environ["LANGCHAIN_API_KEY"] = "test"

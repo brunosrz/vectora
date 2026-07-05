@@ -15,7 +15,7 @@ from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
-from backend.services.kv import get_kv
+from backend.persistence.kv import get_kv
 
 if TYPE_CHECKING:
     from backend.vtypes import Workspace
@@ -87,7 +87,7 @@ def _resolve_workspace(
     workspace_id: str | None, config: RunnableConfig | None
 ) -> Workspace | None:
     """Resolve workspace_id → Workspace, priorizando config quando id é None."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     wid = workspace_id
     if wid is None and config is not None:
@@ -174,7 +174,7 @@ async def workspace_list() -> str:
     Mostra id, nome, diretório e versão do manifest de cada workspace.
     Útil para auditar projetos indexados ou alternar contextos.
     """
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     workspaces = workspace_registry.list_all()
     if not workspaces:

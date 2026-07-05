@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.services.plugins import (
+from backend.workspace.plugins import (
     McpServer,
     add_server,
     build_connection,
@@ -20,7 +20,7 @@ from backend.services.plugins import (
 @pytest.fixture(autouse=True)
 def iso_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "backend.services.plugins._plugins_dir", lambda: tmp_path / "mcp"
+        "backend.workspace.plugins._plugins_dir", lambda: tmp_path / "mcp"
     )
 
 

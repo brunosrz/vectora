@@ -40,7 +40,7 @@ def app_and_db(tmp_path_factory):
 
     import aiosqlite
 
-    import backend.services.auth as auth_mod
+    import backend.rbac.auth as auth_mod
 
     # Reset estado global
     auth_mod._db_conn = None
@@ -344,7 +344,7 @@ class TestUsageEndpoint:
 
 class TestToolsPolicy:
     def test_get_and_put_policy(self, client, root_tokens, tmp_path, monkeypatch):
-        from backend.services import tool_policy
+        from backend.rbac import tool_policy
 
         monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tp")
         access, _, _ = root_tokens
@@ -368,7 +368,7 @@ class TestToolsPolicy:
     def test_put_unknown_tool_rejected(
         self, client, root_tokens, tmp_path, monkeypatch
     ):
-        from backend.services import tool_policy
+        from backend.rbac import tool_policy
 
         monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tp")
         access, _, _ = root_tokens

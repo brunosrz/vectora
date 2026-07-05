@@ -143,7 +143,7 @@ async def list_users(request: Request) -> dict:
     require_admin(user)
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         users = await auth_svc.list_users()
         return {
@@ -173,7 +173,7 @@ async def get_user_detail(request: Request, user_id: str) -> dict:
     require_admin(user)
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         target = await auth_svc.get_user_by_id(user_id)
         if target is None:
@@ -220,7 +220,7 @@ async def update_user_role(
         )
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.update_user_role(user_id, body.role)
         return {"status": "updated", "user_id": user_id, "role": body.role}
@@ -239,7 +239,7 @@ async def delete_user(request: Request, user_id: str) -> dict:
         raise HTTPException(status_code=400, detail="Você não pode deletar a si mesmo.")
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.delete_user(user_id)
         return {"status": "deleted", "user_id": user_id}
@@ -254,7 +254,7 @@ async def get_user_tools(request: Request, user_id: str) -> dict:
     user = _get_user(request)
     require_admin(user)
     from backend.nodes.tools import ALL_TOOLS
-    from backend.services import tool_policy
+    from backend.rbac import tool_policy
 
     return {
         "disabled": tool_policy.get_disabled(user_id),
@@ -270,7 +270,7 @@ async def set_user_tools(
     user = _get_user(request)
     require_admin(user)
     from backend.nodes.tools import ALL_TOOLS
-    from backend.services import tool_policy
+    from backend.rbac import tool_policy
 
     valid = {t.name for t in ALL_TOOLS}
     unknown = [n for n in body.disabled if n not in valid]
@@ -292,7 +292,7 @@ async def create_invite(request: Request, body: CreateInviteBody) -> dict:
     """
     import os
 
-    from backend.services.subscription import require_pro
+    from backend.rbac.subscription import require_pro
 
     require_pro()
 
@@ -309,8 +309,8 @@ async def create_invite(request: Request, body: CreateInviteBody) -> dict:
     try:
         from typing import cast
 
-        from backend.services import auth as auth_svc
-        from backend.services.auth import Role
+        from backend.rbac import auth as auth_svc
+        from backend.rbac.auth import Role
 
         token, expires_at = await auth_svc.create_invite(
             user.id,
@@ -333,7 +333,7 @@ async def list_invites(request: Request) -> dict:
     require_admin(user)
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         invites = await auth_svc.list_invites()
         return {"invites": invites, "total": len(invites)}
@@ -349,7 +349,7 @@ async def revoke_invite(request: Request, token_hash: str) -> dict:
     require_admin(user)
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         removed = await auth_svc.revoke_invite(token_hash)
         if not removed:
@@ -375,7 +375,7 @@ async def list_tools_admin(request: Request) -> dict:
 
     try:
         from backend.nodes.tools import ALL_TOOLS
-        from backend.services import tool_policy
+        from backend.rbac import tool_policy
 
         disabled_global = set(tool_policy.get_disabled(tool_policy.GLOBAL_SCOPE))
         tools = [
@@ -410,7 +410,7 @@ async def toggle_tool(request: Request, tool_name: str, body: ToolToggleBody) ->
     require_admin(user)
 
     from backend.nodes.tools import ALL_TOOLS
-    from backend.services import tool_policy
+    from backend.rbac import tool_policy
 
     valid = {t.name for t in ALL_TOOLS}
     if tool_name not in valid:
@@ -459,7 +459,7 @@ async def system_info(request: Request) -> dict:
     # Métricas recentes do tracer
     recent_spans: list = []
     try:
-        from backend.services.tracer import tracer
+        from backend.persistence.tracer import tracer
 
         recent_spans = await tracer.get_recent(n=20)
     except Exception:
@@ -572,7 +572,7 @@ class FallbackOrderBody(BaseModel):
 async def get_fallback_order(request: Request) -> dict:
     """Lê a ordem de fallback de providers LLM (lista de 'provider:model')."""
     require_admin(_get_user(request))
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     return {"fallback_order": runtime_settings.fallback_order}
 
@@ -581,7 +581,7 @@ async def get_fallback_order(request: Request) -> dict:
 async def patch_fallback_order(request: Request, body: FallbackOrderBody) -> dict:
     """Define a ordem de fallback de LLM; devolve a lista normalizada persistida."""
     require_admin(_get_user(request))
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     runtime_settings.set_fallback_order(body.order)
     return {"status": "updated", "fallback_order": runtime_settings.fallback_order}
@@ -597,7 +597,7 @@ async def list_safe_roots_admin(request: Request) -> dict:
     """Lista as raízes confiáveis configuradas (admin)."""
     user = _get_user(request)
     require_admin(user)
-    from backend.services.safe_roots import get_safe_root_registry
+    from backend.rbac.safe_roots import get_safe_root_registry
 
     registry = get_safe_root_registry()
     return {
@@ -612,7 +612,7 @@ async def create_safe_root(request: Request, body: CreateSafeRootBody) -> dict:
     require_admin(user)
     from pathlib import Path as _Path
 
-    from backend.services.safe_roots import get_safe_root_registry
+    from backend.rbac.safe_roots import get_safe_root_registry
 
     target = _Path(body.path).expanduser()
     try:
@@ -645,7 +645,7 @@ async def update_safe_root(
     """Renomeia uma raiz confiável (label). Builtin aceita rename."""
     user = _get_user(request)
     require_admin(user)
-    from backend.services.safe_roots import get_safe_root_registry
+    from backend.rbac.safe_roots import get_safe_root_registry
 
     registry = get_safe_root_registry()
     updated = registry.update_label(root_id, body.label)
@@ -659,7 +659,7 @@ async def delete_safe_root(request: Request, root_id: str) -> dict:
     """Remove uma raiz confiável. Recusa se for builtin."""
     user = _get_user(request)
     require_admin(user)
-    from backend.services.safe_roots import get_safe_root_registry
+    from backend.rbac.safe_roots import get_safe_root_registry
 
     registry = get_safe_root_registry()
     root = registry.get(root_id)
@@ -1019,7 +1019,7 @@ async def update_storage_config(request: Request) -> dict:
 
     body = await request.json()
 
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     updated: dict[str, object] = {}
 

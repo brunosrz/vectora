@@ -50,7 +50,7 @@ def tier_rate_limit() -> str:
     """Limite dinâmico por tier — usado como ``@limiter.limit(tier_rate_limit)``
     nos endpoints REST ``/v1/*`` (Priority 2 do gating de subscription: não
     bloqueia o free, só aperta o throttle)."""
-    from backend.services.subscription import get_current_tier
+    from backend.rbac.subscription import get_current_tier
 
     return "100/minute" if get_current_tier() == "pro" else "10/minute"
 
@@ -65,7 +65,7 @@ def attach_limiter(app: FastAPI) -> None:
         # Redis e valem para todas as réplicas; sem ele (ou com o serviço
         # fora do ar — redis_url tem default no defaults.env), memória local
         # (já é o default do `limiter` criado acima).
-        from backend.services.kv import redis_reachable
+        from backend.persistence.kv import redis_reachable
         from backend.settings import settings
 
         storage_uri = (settings.redis_url or "").strip() or "memory://"

@@ -318,7 +318,7 @@ class TestToggleToolGlobal:
 
     @pytest.fixture(autouse=True)
     def iso_dir(self, tmp_path, monkeypatch):
-        from backend.services import tool_policy
+        from backend.rbac import tool_policy
 
         monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tools")
 
@@ -363,7 +363,7 @@ class TestToggleToolGlobal:
         """A persistência real é tool_policy — não um dict/atributo local do handler."""
         from backend.api.handlers.admin import ToolToggleBody, toggle_tool
         from backend.nodes.tools import ALL_TOOLS
-        from backend.services import tool_policy
+        from backend.rbac import tool_policy
 
         target = ALL_TOOLS[0].name
         await toggle_tool(self._admin_request(), target, ToolToggleBody(enabled=False))
@@ -375,7 +375,7 @@ class TestToggleToolGlobal:
     async def test_toggle_back_on_reenables(self):
         from backend.api.handlers.admin import ToolToggleBody, toggle_tool
         from backend.nodes.tools import ALL_TOOLS
-        from backend.services import tool_policy
+        from backend.rbac import tool_policy
 
         target = ALL_TOOLS[0].name
         await toggle_tool(self._admin_request(), target, ToolToggleBody(enabled=False))

@@ -262,7 +262,7 @@ async def test_record_turn_checkpoint_nonexistent_directory_no_error(
     ws.cwd = str(tmp_path / "nonexistent_workspace_dir_xyz")  # não existe
 
     monkeypatch.setattr(
-        "backend.services.workspace.workspace_registry",
+        "backend.workspace.workspace.workspace_registry",
         MagicMock(get=MagicMock(return_value=ws)),
     )
 
@@ -288,7 +288,7 @@ async def test_record_turn_checkpoint_nonexistent_directory_returns_silently(
     ws.cwd = str(tmp_path / "also_nonexistent_xyz")
 
     monkeypatch.setattr(
-        "backend.services.workspace.workspace_registry",
+        "backend.workspace.workspace.workspace_registry",
         MagicMock(get=MagicMock(return_value=ws)),
     )
 

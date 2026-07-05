@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from backend.services.context_graph.semantic_cleanup import (
+from backend.context_graph.semantic_cleanup import (
     MAX_SEMANTIC_FRAGMENT_BYTES,
     MAX_SEMANTIC_HYPEREDGE_NODES,
     MAX_SEMANTIC_ID_LENGTH,

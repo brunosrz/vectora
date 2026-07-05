@@ -50,7 +50,7 @@ def _events_stream(request_id: str) -> str:
 
 async def submit_job(kind: str, payload: dict | None = None) -> str:
     """Enfileira um job e retorna o ``request_id`` para acompanhamento."""
-    from backend.services.mq import get_mq
+    from backend.scheduling.mq import get_mq
 
     request_id = uuid.uuid4().hex
     await get_mq().enqueue(
@@ -63,7 +63,7 @@ async def submit_job(kind: str, payload: dict | None = None) -> str:
 
 async def publish_event(request_id: str, status: str, data: dict | None = None) -> None:
     """Publica um evento de progresso/resultado no stream do ``request_id``."""
-    from backend.services.mq import get_mq
+    from backend.scheduling.mq import get_mq
 
     await get_mq().enqueue(
         _events_stream(request_id), {"status": status, **(data or {})}
@@ -78,7 +78,7 @@ async def stream_job_events(
     Encerra após ``idle_timeout`` segundos sem novos eventos (proteção contra
     jobs travados / clientes pendurados).
     """
-    from backend.services.mq import get_mq
+    from backend.scheduling.mq import get_mq
 
     mq = get_mq()
     out: asyncio.Queue[dict] = asyncio.Queue()
@@ -123,7 +123,7 @@ async def run_jobs_worker(*, stop_event: asyncio.Event | None = None) -> None:
     job é entregue a um único worker. O nome do consumidor é único por processo
     para o redelivery do Redis funcionar.
     """
-    from backend.services.mq import get_mq
+    from backend.scheduling.mq import get_mq
 
     consumer = f"{socket.gethostname()}-{uuid.uuid4().hex[:8]}"
 

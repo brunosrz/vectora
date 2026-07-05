@@ -120,7 +120,7 @@ async def license_validate_token(body: ValidateTokenBody) -> dict:
     ``/auth/signup`` seguinte já herda o token configurado); se inválido ou
     Free, não persiste em disco (só fica no ambiente do processo atual).
     """
-    from backend.services.auth import has_users
+    from backend.rbac.auth import has_users
 
     if await has_users():
         raise HTTPException(

@@ -122,7 +122,7 @@ def web_search(
 
     t0 = time.perf_counter()
     try:
-        from backend.services.tracer import tracer as _tracer
+        from backend.persistence.tracer import tracer as _tracer
     except Exception:
         _tracer = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
@@ -221,7 +221,7 @@ def fetch_url(url: str) -> str:
 
     t0 = time.perf_counter()
     try:
-        from backend.services.tracer import tracer as _tracer
+        from backend.persistence.tracer import tracer as _tracer
     except Exception:
         _tracer = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 

@@ -43,14 +43,14 @@ def _async_bool(value: bool):
 
 
 def test_setup_local_exige_ausencia_de_usuarios():
-    with patch("backend.services.auth.has_users", lambda: _async_bool(True)):
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(True)):
         with pytest.raises(HTTPException) as exc:
             asyncio.run(setup_local_endpoint(SetupLocalRequest(name="Bruno")))
     assert exc.value.status_code == 409
 
 
 def test_setup_local_nome_obrigatorio():
-    with patch("backend.services.auth.has_users", lambda: _async_bool(False)):
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
         with pytest.raises(HTTPException) as exc:
             asyncio.run(setup_local_endpoint(SetupLocalRequest(name="   ")))
     assert exc.value.status_code == 422
@@ -58,7 +58,7 @@ def test_setup_local_nome_obrigatorio():
 
 def test_setup_local_persiste_e_desabilita_auth():
     with (
-        patch("backend.services.auth.has_users", lambda: _async_bool(False)),
+        patch("backend.rbac.auth.has_users", lambda: _async_bool(False)),
         patch("backend.cli.keys.upsert_env_key") as mock_upsert,
         patch("backend.api.handlers.auth._env_file", return_value=MagicMock()),
     ):
@@ -79,7 +79,7 @@ def test_setup_local_persiste_e_desabilita_auth():
 
 def test_setup_local_empresa_opcional_nao_grava_chave_vazia():
     with (
-        patch("backend.services.auth.has_users", lambda: _async_bool(False)),
+        patch("backend.rbac.auth.has_users", lambda: _async_bool(False)),
         patch("backend.cli.keys.upsert_env_key") as mock_upsert,
         patch("backend.api.handlers.auth._env_file", return_value=MagicMock()),
     ):

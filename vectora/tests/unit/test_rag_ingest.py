@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from backend.services import rag_ingest
+from backend.embedding import rag_ingest
 
 
 class _FakeQueue:

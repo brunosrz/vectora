@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 def _active_workspace(config: RunnableConfig | None) -> Any:
     """Resolve o Workspace ativo a partir do config (workspace_id)."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     wid = None
     if config is not None:
@@ -451,7 +451,7 @@ async def terminal(
     # output volta inteiro depois que o comando termina.
     transport = str(getattr(_ws, "transport", "local"))
     if transport != "local":
-        from backend.services.transport import get_transport
+        from backend.transport import get_transport
 
         backend = get_transport(_ws)
         cwd_remote = getattr(_ws, "remote_path", None) or str(root)

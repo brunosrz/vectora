@@ -179,7 +179,7 @@ async def test_rewind_ok_on_git_repo(tmp_path: Path, mem_db):
     repo.index.commit("init")
 
     # Cria checkpoint
-    from backend.services.checkpoint import create_git_checkpoint
+    from backend.persistence.checkpoint import create_git_checkpoint
 
     ckpt = create_git_checkpoint(repo, "thread-1", "estado A")
     assert ckpt["status"] == "ok"
@@ -203,8 +203,8 @@ async def test_rewind_ok_on_git_repo(tmp_path: Path, mem_db):
     await mem_db.commit()
 
     # Registra workspace no registry
-    from backend.services.workspace import workspace_registry
     from backend.vtypes import Workspace
+    from backend.workspace.workspace import workspace_registry
 
     ws = Workspace(
         id="ws-test", name="test", cwd=str(tmp_path), created_at=now, trusted=True

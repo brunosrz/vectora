@@ -21,7 +21,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from backend.services.background_tasks import BackgroundTask
+    from backend.scheduling.background_tasks import BackgroundTask
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ def _to_out(t: BackgroundTask) -> TaskOut:
 
 async def _require_task(thread_id: str, task_id: str) -> BackgroundTask:
     """Carrega a task garantindo que pertence à session da URL."""
-    from backend.services.background_tasks import get_task
+    from backend.scheduling.background_tasks import get_task
 
     task = await get_task(task_id)
     if task is None or task.session_id != thread_id:
@@ -119,7 +119,7 @@ async def _require_task(thread_id: str, task_id: str) -> BackgroundTask:
 
 @router.get("/tasks", response_model=list[TaskOut])
 async def get_tasks(request: Request, thread_id: str) -> list[TaskOut]:
-    from backend.services.background_tasks import list_tasks
+    from backend.scheduling.background_tasks import list_tasks
 
     _user_id(request)
     return [_to_out(t) for t in await list_tasks(thread_id)]
@@ -129,7 +129,7 @@ async def get_tasks(request: Request, thread_id: str) -> list[TaskOut]:
 async def post_task(
     request: Request, thread_id: str, body: CreateTaskRequest
 ) -> TaskOut:
-    from backend.services.background_tasks import create_task
+    from backend.scheduling.background_tasks import create_task
 
     uid = _user_id(request)
     try:
@@ -155,7 +155,7 @@ async def post_task(
 async def patch_task(
     request: Request, thread_id: str, task_id: str, body: UpdateTaskRequest
 ) -> TaskOut:
-    from backend.services.background_tasks import update_task
+    from backend.scheduling.background_tasks import update_task
 
     _user_id(request)
     await _require_task(thread_id, task_id)
@@ -176,7 +176,7 @@ async def patch_task(
 
 @router.delete("/tasks/{task_id}", status_code=204)
 async def delete_task_endpoint(request: Request, thread_id: str, task_id: str) -> None:
-    from backend.services.background_tasks import delete_task
+    from backend.scheduling.background_tasks import delete_task
 
     _user_id(request)
     await _require_task(thread_id, task_id)
@@ -190,7 +190,7 @@ async def run_task_endpoint(
     task_id: str,
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
-    from backend.services.background_tasks import run_task
+    from backend.scheduling.background_tasks import run_task
 
     _user_id(request)
     task = await _require_task(thread_id, task_id)
@@ -200,7 +200,7 @@ async def run_task_endpoint(
 
 @router.get("/runs", response_model=list[RunOut])
 async def get_runs(request: Request, thread_id: str) -> list[RunOut]:
-    from backend.services.background_tasks import list_runs
+    from backend.scheduling.background_tasks import list_runs
 
     _user_id(request)
     rows = await list_runs(thread_id)

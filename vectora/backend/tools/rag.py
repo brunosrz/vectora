@@ -14,7 +14,7 @@ from langchain_core.documents import Document as LCDoc
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
-from backend.services.queue import get_embedding_queue
+from backend.embedding.queue import get_embedding_queue
 from backend.services.text import text_service
 from backend.settings import settings
 
@@ -96,7 +96,7 @@ def _build_voyage_reranker() -> Any:
 
 def _rag_runtime() -> dict[str, Any]:
     """Settings de RAG configurados em runtime (aba de memória)."""
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     return runtime_settings.rag_settings
 
@@ -135,7 +135,7 @@ def _build_reranker() -> Any:
     if secondary is None:
         return primary
 
-    from backend.services.fallback_reranker import FallbackReranker
+    from backend.llm.fallback_reranker import FallbackReranker
 
     return FallbackReranker(
         primary,
@@ -189,7 +189,7 @@ async def embedding(
             },
         )
         try:
-            from backend.services.tracer import tracer as _tr
+            from backend.persistence.tracer import tracer as _tr
 
             async with _tr.span("embedding_tool", "enqueue") as _s:
                 _s.set(queue_id=queue_id, collection=collection, text_len=len(text))
@@ -212,7 +212,7 @@ async def embedding(
             extra={"collection": collection, "text_length": len(text)},
         )
         try:
-            from backend.services.tracer import tracer as _tr
+            from backend.persistence.tracer import tracer as _tr
 
             _tr.record_sync(
                 "embedding_tool",
@@ -312,7 +312,7 @@ async def vector_search(
         # embed_query usa input_type="search_query" (Cohere v3 é assimétrico:
         # os documentos são indexados com embed_documents → "search_document").
         # Não trocar por embed_documents aqui.
-        from backend.services.cache_embeddings import embed_query_cached
+        from backend.embedding.cache_embeddings import embed_query_cached
 
         query_vector = await embed_query_cached(
             query, settings.embedding_model, embeddings_model.embed_query
@@ -371,7 +371,7 @@ async def vector_search(
             },
         )
         try:
-            from backend.services.tracer import tracer as _tr
+            from backend.persistence.tracer import tracer as _tr
 
             async with _tr.span("vector_search_tool", "search") as _s:
                 _s.set(
@@ -472,7 +472,7 @@ async def ingest_docs(
     # dos markdowns (e vice-versa).
     ingest_types = {str(t) for t in _rag_runtime().get("ingest_file_types", [])}
     if ingest_types:
-        from backend.services.context_graph.detect import classify_file
+        from backend.context_graph.detect import classify_file
 
         filtered: list[Any] = []
         for fp in files_to_ingest:

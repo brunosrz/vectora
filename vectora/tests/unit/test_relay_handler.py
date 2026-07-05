@@ -15,14 +15,14 @@ from fastapi.testclient import TestClient
 
 class TestCreateRelayJwt:
     def test_retorna_string_jwt(self) -> None:
-        from backend.services.auth import create_relay_jwt
+        from backend.rbac.auth import create_relay_jwt
 
         token = create_relay_jwt()
         assert isinstance(token, str)
         assert token.count(".") == 2
 
     def test_decodifica_com_decode_access_token(self) -> None:
-        from backend.services.auth import create_relay_jwt, decode_access_token
+        from backend.rbac.auth import create_relay_jwt, decode_access_token
 
         token = create_relay_jwt()
         payload = decode_access_token(token)
@@ -31,7 +31,7 @@ class TestCreateRelayJwt:
     def test_exp_esta_no_futuro(self) -> None:
         import time
 
-        from backend.services.auth import create_relay_jwt, decode_access_token
+        from backend.rbac.auth import create_relay_jwt, decode_access_token
 
         token = create_relay_jwt(ttl_seconds=600)
         payload = decode_access_token(token)
@@ -40,7 +40,7 @@ class TestCreateRelayJwt:
     def test_ttl_personalizado(self) -> None:
         import time
 
-        from backend.services.auth import create_relay_jwt, decode_access_token
+        from backend.rbac.auth import create_relay_jwt, decode_access_token
 
         token = create_relay_jwt(ttl_seconds=120)
         payload = decode_access_token(token)

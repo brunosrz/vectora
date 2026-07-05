@@ -57,14 +57,14 @@ class TestGraphDir:
 
         registry = MagicMock()
         registry.get = MagicMock(return_value=None)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             assert _graph_dir("nonexistent") is None
 
     def test_workspace_found_returns_expected_path(self, tmp_path):
         from backend.api.handlers.context_graph import _graph_dir
 
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             result = _graph_dir("ws1")
         assert result == tmp_path / ".vectora" / "context-graph"
 
@@ -152,7 +152,7 @@ class TestRequireGraphJson:
         from backend.api.handlers.context_graph import _require_graph_json
 
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with pytest.raises(HTTPException) as exc:
                 _require_graph_json("ws1")
         assert exc.value.status_code == 404
@@ -162,7 +162,7 @@ class TestRequireGraphJson:
 
         _write_graph(tmp_path, {"nodes": [{"id": "x"}], "edges": []})
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             data = _require_graph_json("ws1")
         assert data["nodes"][0]["id"] == "x"
 
@@ -183,7 +183,7 @@ class TestGetStatus:
         registry, _ = _make_registry(tmp_path)
         # Build ativo neste processo → status "running" é legítimo (não-órfão).
         with (
-            patch("backend.services.workspace.workspace_registry", registry),
+            patch("backend.workspace.workspace.workspace_registry", registry),
             patch.dict(cg._active_builds, {"ws1": object()}, clear=False),
         ):
             s = await get_status(_fake_request(), "ws1")
@@ -199,7 +199,7 @@ class TestGetStatus:
         _write_status(graph_dir, "running")
         registry, _ = _make_registry(tmp_path)
         cg._active_builds.pop("ws1", None)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             s = await get_status(_fake_request(), "ws1")
         assert s.status == "not_built"
 
@@ -214,7 +214,7 @@ class TestGetStatus:
         (graph_dir / "checkpoint_ast.json").write_text("{}", encoding="utf-8")
         registry, _ = _make_registry(tmp_path)
         cg._active_builds.pop("ws1", None)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             s = await get_status(_fake_request(), "ws1")
         assert s.status == "paused"
 
@@ -225,7 +225,7 @@ class TestGetStatus:
         graph_dir = _write_graph(tmp_path, {})
         _write_status(graph_dir, "error", error="Pipeline falhou")
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             s = await get_status(_fake_request(), "ws1")
         assert s.status == "error"
         assert "Pipeline falhou" in (s.error or "")
@@ -237,7 +237,7 @@ class TestGetStatus:
         graph_dir = _write_graph(tmp_path, {})
         _write_status(graph_dir, "done", node_count=10, edge_count=25)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             s = await get_status(_fake_request(), "ws1")
         assert s.status == "done"
         assert s.node_count == 10
@@ -249,7 +249,7 @@ class TestGetStatus:
 
         _write_graph(tmp_path, {"nodes": [{"id": "a"}], "edges": []})
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             s = await get_status(_fake_request(), "ws1")
         assert s.status == "done"
 
@@ -258,7 +258,7 @@ class TestGetStatus:
         from backend.api.handlers.context_graph import get_status
 
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             s = await get_status(_fake_request(), "ws1")
         assert s.status == "not_built"
 
@@ -298,7 +298,7 @@ class TestPostQuery:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             resp = await post_query(
                 _fake_request(), "ws1", QueryRequest(question="auth")
             )
@@ -311,7 +311,7 @@ class TestPostQuery:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             resp = await post_query(
                 _fake_request(), "ws1", QueryRequest(question="zzznothingmatches")
             )
@@ -323,7 +323,7 @@ class TestPostQuery:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             resp = await post_query(
                 _fake_request(), "ws1", QueryRequest(question="auth", top_k=5)
             )
@@ -342,7 +342,7 @@ class TestPostExplain:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             resp = await post_explain(
                 _fake_request(), "ws1", ExplainRequest(node_id="n_auth")
             )
@@ -358,7 +358,7 @@ class TestPostExplain:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with pytest.raises(HTTPException) as exc:
                 await post_explain(
                     _fake_request(), "ws1", ExplainRequest(node_id="ghost")
@@ -378,7 +378,7 @@ class TestPostPath:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             resp = await post_path(
                 _fake_request(), "ws1", PathRequest(source="n_auth", target="n_token")
             )
@@ -404,7 +404,7 @@ class TestPostPath:
             },
         )
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with pytest.raises(HTTPException) as exc:
                 await post_path(
                     _fake_request(), "ws1", PathRequest(source="a", target="b")
@@ -419,7 +419,7 @@ class TestPostPath:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with pytest.raises(HTTPException) as exc:
                 await post_path(
                     _fake_request(), "ws1", PathRequest(source="ghost", target="n_auth")
@@ -439,7 +439,7 @@ class TestPostAffected:
 
         _write_graph(tmp_path, SAMPLE_DATA)
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             resp = await post_affected(
                 _fake_request(), "ws1", AffectedRequest(node_query="login")
             )
@@ -452,7 +452,7 @@ class TestPostAffected:
         from backend.api.handlers.context_graph import AffectedRequest, post_affected
 
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with pytest.raises(HTTPException) as exc:
                 await post_affected(
                     _fake_request(), "ws1", AffectedRequest(node_query="anything")
@@ -474,7 +474,7 @@ class TestPostBuild:
         mock_task = MagicMock()
         mock_task.add_done_callback = MagicMock()
 
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with patch(
                 "backend.api.handlers.context_graph.asyncio.create_task",
                 return_value=mock_task,
@@ -493,7 +493,7 @@ class TestPostBuild:
         _write_status(graph_dir, "running")
         registry, _ = _make_registry(tmp_path)
 
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             resp = await post_build(_fake_request(), "ws1", BuildRequest())
 
         assert resp.status == "running"
@@ -506,7 +506,7 @@ class TestPostBuild:
 
         registry = MagicMock()
         registry.get = MagicMock(return_value=None)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with pytest.raises(HTTPException) as exc:
                 await post_build(_fake_request(), "ws_miss", BuildRequest())
 
@@ -524,9 +524,9 @@ class TestPostBuild:
 
         mock_pipeline = AsyncMock(side_effect=pipeline_ok)
         with (
-            patch("backend.services.workspace.workspace_registry", registry),
+            patch("backend.workspace.workspace.workspace_registry", registry),
             patch(
-                "backend.services.context_graph.pipeline.build_workspace_graph",
+                "backend.context_graph.pipeline.build_workspace_graph",
                 new=mock_pipeline,
             ),
         ):
@@ -548,9 +548,9 @@ class TestPostBuild:
 
         mock_pipeline = AsyncMock(side_effect=pipeline_ok)
         with (
-            patch("backend.services.workspace.workspace_registry", registry),
+            patch("backend.workspace.workspace.workspace_registry", registry),
             patch(
-                "backend.services.context_graph.pipeline.build_workspace_graph",
+                "backend.context_graph.pipeline.build_workspace_graph",
                 new=mock_pipeline,
             ),
         ):
@@ -577,7 +577,7 @@ class TestDeleteBuild:
         mock_task.cancel = MagicMock()
 
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with patch(
                 "backend.api.handlers.context_graph._active_builds", {"ws1": mock_task}
             ):
@@ -591,7 +591,7 @@ class TestDeleteBuild:
         from backend.api.handlers.context_graph import delete_build
 
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             await delete_build(_fake_request(), "ws1")
 
     @pytest.mark.asyncio
@@ -603,7 +603,7 @@ class TestDeleteBuild:
         mock_task.cancel = MagicMock()
 
         registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
+        with patch("backend.workspace.workspace.workspace_registry", registry):
             with patch(
                 "backend.api.handlers.context_graph._active_builds", {"ws1": mock_task}
             ):
@@ -623,9 +623,9 @@ class TestRunBuildStatus:
 
         registry, _ = _make_registry(tmp_path)
         with (
-            patch("backend.services.workspace.workspace_registry", registry),
+            patch("backend.workspace.workspace.workspace_registry", registry),
             patch(
-                "backend.services.context_graph.pipeline.build_workspace_graph",
+                "backend.context_graph.pipeline.build_workspace_graph",
                 side_effect=side_effect,
             ),
         ):
@@ -636,7 +636,7 @@ class TestRunBuildStatus:
 
     @pytest.mark.asyncio
     async def test_quota_exhausted_writes_paused(self, tmp_path):
-        from backend.services.provider_fallback import QuotaExhaustedError
+        from backend.llm.provider_fallback import QuotaExhaustedError
 
         async def boom(*a, **k):
             raise QuotaExhaustedError("todos os providers esgotaram a quota")
@@ -657,7 +657,7 @@ class TestRunBuildStatus:
 
     @pytest.mark.asyncio
     async def test_quota_not_classified_as_error(self, tmp_path):
-        from backend.services.provider_fallback import QuotaExhaustedError
+        from backend.llm.provider_fallback import QuotaExhaustedError
 
         async def boom(*a, **k):
             raise QuotaExhaustedError("quota")
@@ -700,7 +700,7 @@ class TestRunBuildStatus:
         """Ao pausar por quota, step/step_total do último on_progress devem
         aparecer no status paused (para o frontend mostrar x/y passos)."""
         from backend.api.handlers.context_graph import BuildRequest, _run_build
-        from backend.services.provider_fallback import QuotaExhaustedError
+        from backend.llm.provider_fallback import QuotaExhaustedError
 
         registry, _ = _make_registry(tmp_path)
 
@@ -710,9 +710,9 @@ class TestRunBuildStatus:
             raise QuotaExhaustedError("quota")
 
         with (
-            patch("backend.services.workspace.workspace_registry", registry),
+            patch("backend.workspace.workspace.workspace_registry", registry),
             patch(
-                "backend.services.context_graph.pipeline.build_workspace_graph",
+                "backend.context_graph.pipeline.build_workspace_graph",
                 side_effect=boom_after_progress,
             ),
         ):
@@ -730,7 +730,7 @@ class TestRunBuildStatus:
     @pytest.mark.asyncio
     async def test_paused_sem_on_progress_nao_tem_step(self, tmp_path):
         """Se quota estoura antes de qualquer on_progress, step deve ser None."""
-        from backend.services.provider_fallback import QuotaExhaustedError
+        from backend.llm.provider_fallback import QuotaExhaustedError
 
         async def boom_imediato(*a, **k):
             raise QuotaExhaustedError("quota imediata")

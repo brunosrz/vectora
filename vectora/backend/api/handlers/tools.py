@@ -13,7 +13,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from backend.services import tool_policy
+from backend.rbac import tool_policy
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 

@@ -72,7 +72,7 @@ def test_profiles_register_emits_debug_not_info() -> None:
     ):
         import importlib
 
-        import backend.services.profiles as profiles_mod
+        import backend.workspace.profiles as profiles_mod
 
         importlib.reload(profiles_mod)
         profiles_mod._register_profiles()

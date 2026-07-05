@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import networkx as nx
 
-from backend.services.context_graph.affected import (
+from backend.context_graph.affected import (
     DEFAULT_AFFECTED_RELATIONS,
     AffectedHit,
     _bare_name,

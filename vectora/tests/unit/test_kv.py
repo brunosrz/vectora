@@ -6,8 +6,8 @@ import asyncio
 
 import pytest
 
-from backend.services import kv as kv_mod
-from backend.services.kv import MemoryKV, RedisKV, get_kv, publish_soon, reset_kv
+from backend.persistence import kv as kv_mod
+from backend.persistence.kv import MemoryKV, RedisKV, get_kv, publish_soon, reset_kv
 
 
 @pytest.fixture(autouse=True)

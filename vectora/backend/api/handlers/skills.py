@@ -16,7 +16,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.services.skills import (
+from backend.workspace.skills import (
     InstallSkillRequest,
     install_skill,
     list_skills,

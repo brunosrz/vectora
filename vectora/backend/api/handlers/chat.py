@@ -106,7 +106,7 @@ def _resolve_provider(model_spec: str) -> str:
         provider, _, _ = model_spec.partition(":")
         return provider
 
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     return (os.getenv("LLM_PROVIDER") or runtime_settings.active_provider).replace(
         "-", "_"
@@ -256,7 +256,7 @@ def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
     if requested:
         return requested
     try:
-        from backend.services.workspace import workspace_registry
+        from backend.workspace.workspace import workspace_registry
 
         # Reusa o workspace ativo do usuário em vez de registrar um por thread —
         # caso contrário cada conversa cria um ~/Documents/vectora/<thread_id>,
@@ -374,7 +374,7 @@ async def stream_chat(
             try:
                 from pathlib import Path
 
-                from backend.services.workspace import workspace_registry
+                from backend.workspace.workspace import workspace_registry
 
                 ws = workspace_registry.get(workspace_id)
                 if ws is not None and Path(ws.cwd).is_dir():
@@ -465,7 +465,7 @@ async def stream_chat(
     if not chat_mode and workspace_id:
         try:
             from backend.api.handlers.threads import build_pinned_context
-            from backend.services.workspace import workspace_registry
+            from backend.workspace.workspace import workspace_registry
 
             ws = workspace_registry.get(workspace_id)
             if ws is not None:
@@ -488,6 +488,7 @@ async def stream_chat(
             thread_id,
             workspace_id=workspace_id or None,
             http_request=http_request,
+            user_id=user_id,
         ),
         media_type="text/event-stream",
         headers={
@@ -560,6 +561,7 @@ async def resume_chat(
             request.thread_id,
             workspace_id=None,
             http_request=http_request,
+            user_id=resume_user_id,
         ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},

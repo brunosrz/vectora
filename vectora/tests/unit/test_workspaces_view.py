@@ -31,7 +31,7 @@ def trusted_ws(tmp_path, monkeypatch):
     Devolve uma tupla ``(workspace_id, tmp_path)`` para os testes montarem
     arquivos dentro de tmp_path e chamarem os endpoints com o id certo.
     """
-    from backend.services import workspace as ws_mod
+    from backend.workspace import workspace as ws_mod
 
     ws = Workspace(
         id="vws",

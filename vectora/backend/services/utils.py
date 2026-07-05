@@ -158,7 +158,7 @@ def load_llm(model_id: str = "") -> BaseLanguageModel:
     """
     import os
 
-    from backend.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
 
     temperature = float(_get_env_with_default("LLM_TEMPERATURE", "0.2"))
 
@@ -234,7 +234,7 @@ async def async_lifespan() -> AsyncGenerator[None]:
     """
     import logging
 
-    from backend.services.background import get_background_worker
+    from backend.embedding.background import get_background_worker
 
     _log = logging.getLogger(__name__)
 

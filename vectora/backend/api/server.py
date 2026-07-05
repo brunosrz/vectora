@@ -122,7 +122,7 @@ def _chat_static_root() -> Path | None:
 
 async def _stop_background_worker() -> None:
     """Para o background embedding worker se estiver rodando. Idempotente."""
-    from backend.services import background as bg
+    from backend.embedding import background as bg
 
     worker = bg._worker
     if worker is None:
@@ -192,7 +192,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
     # E.B-13 — LangSmith tracing opt-in (ativado se langsmith_tracing=true + api_key).
     try:
-        from backend.services.tracer import enable_langsmith_tracing
+        from backend.persistence.tracer import enable_langsmith_tracing
 
         enable_langsmith_tracing()
     except Exception as exc:
@@ -212,7 +212,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
     # C14 — Setup wizard: avisa o operador se ainda não há usuários cadastrados
     try:
-        from backend.services.auth import has_users as _has_users
+        from backend.rbac.auth import has_users as _has_users
 
         if not await _has_users():
             logger.warning(
@@ -265,7 +265,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     # Sincronização de caches entre réplicas (pub/sub via Redis quando
     # REDIS_URL configurado; no modo lite é local e inofensivo).
     try:
-        from backend.services.cache_sync import start_cache_sync
+        from backend.embedding.cache_sync import start_cache_sync
 
         await start_cache_sync()
     except Exception as exc:
@@ -274,7 +274,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     # Cache de completions LLM (RedisCache/RedisSemanticCache com Redis;
     # InMemoryCache caso contrário), aplicado via set_llm_cache.
     try:
-        from backend.services.cache_llm import init_llm_cache
+        from backend.llm.cache_llm import init_llm_cache
 
         init_llm_cache()
     except Exception as exc:
@@ -292,7 +292,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     # recupera nada (o `_lifespan` parava o worker no shutdown mas nunca o
     # iniciava no startup).
     try:
-        from backend.services.background import get_background_worker
+        from backend.embedding.background import get_background_worker
 
         embedding_worker = await get_background_worker()
         await embedding_worker.start()
@@ -301,7 +301,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
     # Tarefas em segundo plano: scheduler das tasks 'interval' (cron) por session.
     try:
-        from backend.services.background_tasks import get_scheduler
+        from backend.scheduling.background_tasks import get_scheduler
 
         await get_scheduler().start()
     except Exception as exc:
@@ -310,7 +310,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     # Memory consolidation: sintetiza threads a cada 6h e atualiza AGENTS.md.
     consolidation_task: asyncio.Task[None] | None = None
     try:
-        from backend.services.memory_consolidation import (
+        from backend.scheduling.memory_consolidation import (
             run_consolidation_for_all_users,
         )
 
@@ -331,8 +331,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
         _cfg = _gs_relay()
         if _cfg.relay_enabled:
-            from backend.relay import RelayClient
-            from backend.services.auth import create_relay_jwt
+            from backend.rbac.auth import create_relay_jwt
+            from backend.services.relay import RelayClient
 
             async def _relay_jwt_getter() -> str:
                 return create_relay_jwt()
@@ -355,14 +355,14 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             with suppress(Exception):
                 await _relay_client.stop()
         try:
-            from backend.services.background_tasks import get_scheduler as _gs
+            from backend.scheduling.background_tasks import get_scheduler as _gs
 
             await _gs().stop()
         except Exception:
             pass
         license_task.cancel()
         try:
-            from backend.services.cache_sync import stop_cache_sync
+            from backend.embedding.cache_sync import stop_cache_sync
 
             await stop_cache_sync()
         except Exception:
@@ -372,7 +372,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         jobs_stop.set()
         jobs_worker_task.cancel()
         try:
-            from backend.services.mq import get_mq
+            from backend.scheduling.mq import get_mq
 
             await get_mq().close()
         except Exception:
@@ -543,7 +543,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     @app.get("/metrics")
     async def metrics() -> list:
         try:
-            from backend.services.tracer import tracer
+            from backend.persistence.tracer import tracer
 
             return await tracer.get_recent(n=50)
         except Exception:

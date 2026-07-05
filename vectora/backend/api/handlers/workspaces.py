@@ -223,7 +223,7 @@ def _to_info(ws: Any) -> WorkspaceInfo:
 @router.get("/ListWorkspaces", response_model=ListWorkspacesResponse)
 async def list_workspaces(request: Request) -> ListWorkspacesResponse:
     """Lista todos os workspaces registrados."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
     active = workspace_registry.get_active(uid)
@@ -236,7 +236,7 @@ async def list_workspaces(request: Request) -> ListWorkspacesResponse:
 @router.get("/GetActiveWorkspace", response_model=ActiveWorkspaceResponse)
 async def get_active_workspace(request: Request) -> ActiveWorkspaceResponse:
     """Retorna o workspace ativo do usuário, ou ``None`` se não houver."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
     active = workspace_registry.get_active(uid)
@@ -252,7 +252,7 @@ async def set_active_workspace(
     request: Request, body: SetActiveRequest
 ) -> StatusResponse:
     """Troca o workspace ativo do usuário."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
     ok = workspace_registry.set_active(body.workspace_id, uid)
@@ -267,7 +267,7 @@ async def create_workspace(
     request: Request, body: CreateWorkspaceRequest
 ) -> StatusResponse:
     """Registra uma pasta como workspace, opcionalmente confiando e iniciando git."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     path = Path(body.path).expanduser()
     if not path.exists() or not path.is_dir():
@@ -288,7 +288,7 @@ async def create_remote_workspace(
     request: Request, body: CreateRemoteWorkspaceRequest
 ) -> StatusResponse:
     """Cria um workspace remoto (SSH ou Codespace). G.2.6."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
     try:
@@ -310,7 +310,7 @@ async def create_remote_workspace(
 @router.post("/TrustWorkspace", response_model=StatusResponse)
 async def trust_workspace(request: Request, body: TrustRequest) -> StatusResponse:
     """Marca um workspace como confiável."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
     ok = workspace_registry.trust(body.workspace_id, uid)
@@ -323,8 +323,8 @@ async def trust_workspace(request: Request, body: TrustRequest) -> StatusRespons
 @router.post("/GitInitWorkspace", response_model=StatusResponse)
 async def git_init_workspace(body: GitInitRequest) -> StatusResponse:
     """Inicializa um repositório git na pasta do workspace."""
-    from backend.services.workspace import workspace_registry
     from backend.tools.git import detect_git_info, git_init_repo
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(body.workspace_id)
     if ws is None:
@@ -440,7 +440,7 @@ async def browse_dir(
     """
     from fastapi import HTTPException
 
-    from backend.services.safe_roots import get_safe_root_registry
+    from backend.rbac.safe_roots import get_safe_root_registry
 
     registry = get_safe_root_registry()
     privileged = _is_privileged(request)
@@ -530,7 +530,7 @@ async def browse_dir(
 @router.get("/ListSafeRoots", response_model=ListSafeRootsResponse)
 async def list_safe_roots() -> ListSafeRootsResponse:
     """Lista as raízes confiáveis configuradas (visível a qualquer user)."""
-    from backend.services.safe_roots import get_safe_root_registry
+    from backend.rbac.safe_roots import get_safe_root_registry
 
     registry = get_safe_root_registry()
     return ListSafeRootsResponse(
@@ -549,7 +549,7 @@ async def list_codespaces_endpoint() -> ListCodespacesResponse:
     está ausente ou não-autenticado, devolve lista vazia + flag
     ``available=False`` (UI orienta o user).
     """
-    from backend.services.transport.codespace import list_codespaces
+    from backend.transport.codespace import list_codespaces
 
     try:
         raw = await list_codespaces()
@@ -585,7 +585,7 @@ async def test_ssh(body: TestSshRequest, request: Request) -> TestSshResponse:
     detalhes internos pra evitar info disclosure.
     """
     user_id = _user_id(request)
-    from backend.services.transport.ssh import SshTransport
+    from backend.transport.ssh import SshTransport
 
     transport = SshTransport(
         remote_host=body.host,
@@ -817,7 +817,7 @@ def _resolve_inside(workspace_id: str, rel_path: str) -> Path | None:
     `..` e symlinks para fora não escapem da pasta confiável.
     """
     from backend.services.security import resolve_within_workspace
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -841,7 +841,7 @@ async def workspace_tree(
     if resolved is None or not resolved.exists() or not resolved.is_dir():
         return TreeResponse(path=path, entries=[])
 
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     base = Path(ws.cwd) if ws else resolved
@@ -1017,7 +1017,7 @@ async def workspace_git_diff(workspace_id: str, response: Response) -> DiffSumma
     Retorna ``is_git_repo=False`` com lista vazia para workspaces sem
     ``.git`` ou quando ``git`` não está disponível no ambiente.
     """
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     # Versão do schema de diff: cada arquivo traz flags independentes
     # staged_change/unstaged_change/untracked (cobre XY=MM e untracked).
@@ -1110,7 +1110,7 @@ async def workspace_git_diff_file(
     path: Annotated[str, Query()],
 ) -> DiffFileResponse:
     """Hunks unificados de um arquivo específico (lazy load do diff-tab)."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -1197,7 +1197,7 @@ def _open_workspace_repo(workspace_id: str) -> Any | None:
     try:
         from git import Repo  # type: ignore[import-not-found]
 
-        from backend.services.workspace import workspace_registry
+        from backend.workspace.workspace import workspace_registry
 
         ws = workspace_registry.get(workspace_id)
         if ws is None:
@@ -1984,7 +1984,7 @@ async def vscode_options(workspace_id: str) -> VscodeOptionsResponse:
     """Retorna estratégias disponíveis para abrir o workspace no VS Code."""
     from urllib.parse import quote
 
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2051,7 +2051,7 @@ async def gitignore_preview(
     """Previsualiza quais arquivos um padrão .gitignore afetaria."""
     import pathspec
 
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2091,7 +2091,7 @@ async def gitignore_preview(
 @view_router.get("/{workspace_id}/fs/gitignore")
 async def get_gitignore(workspace_id: str) -> dict:
     """Lê o conteúdo do .gitignore raiz do workspace."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2112,7 +2112,7 @@ async def update_gitignore(
     workspace_id: str, body: GitignoreUpdateRequest
 ) -> StatusResponse:
     """Sobrescreve o .gitignore raiz do workspace."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2152,7 +2152,7 @@ class ResolveConflictRequest(BaseModel):
 @view_router.get("/{workspace_id}/git/conflicts", response_model=ConflictListResponse)
 async def list_conflicts(workspace_id: str) -> ConflictListResponse:
     """Lista arquivos com marcadores de conflito (diff-filter=U)."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2183,7 +2183,7 @@ async def resolve_conflict(  # noqa: PLR0911
     from pathlib import Path
 
     from backend.services.security import resolve_within_workspace
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2679,7 +2679,7 @@ async def stack_hint(workspace_id: str) -> StackHintResponse:
     """
     from fastapi import HTTPException
 
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if not ws:
@@ -2718,7 +2718,7 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
     from watchdog.events import FileSystemEvent, FileSystemEventHandler
     from watchdog.observers import Observer
 
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2806,7 +2806,7 @@ def _preview_key(workspace_id: str, name: str) -> str:
 
 
 def _launch_json_path(workspace_id: str) -> Path | None:
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2912,7 +2912,7 @@ async def preview_status(workspace_id: str) -> PreviewStatusResponse:
 @view_router.post("/{workspace_id}/preview/start", response_model=StatusResponse)
 async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusResponse:
     """Inicia o dev server de preview com o nome indicado."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -2975,7 +2975,7 @@ async def preview_stop(workspace_id: str, body: PreviewStopRequest) -> StatusRes
 @view_router.get("/{workspace_id}/preview/detect", response_model=DetectResponse)
 async def preview_detect(workspace_id: str) -> DetectResponse:
     """Detecta dev servers comuns no workspace e sugere configurações para launch.json."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -3089,7 +3089,7 @@ _RAG_TASKS: set[Any] = set()
 
 
 def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
-    from backend.services.background import get_worker_pause_state
+    from backend.embedding.background import get_worker_pause_state
 
     meta = _RAG_JOBS.get(job_id, {})
     enqueue_done = bool(meta.get("enqueue_done"))
@@ -3135,7 +3135,7 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
 
     from fastapi import HTTPException
 
-    from backend.services.rag_ingest import ingest_directory
+    from backend.embedding.rag_ingest import ingest_directory
     from backend.services.security import is_safe_file_path
 
     if not is_safe_file_path(body.path) or not Path(body.path).is_dir():
@@ -3184,7 +3184,7 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
 @view_router.get("/{workspace_id}/rag/jobs/{job_id}", response_model=RagJobStatus)
 async def rag_job_status(workspace_id: str, job_id: str) -> RagJobStatus:
     """Progresso de um job de indexação (chunks processados / total)."""
-    from backend.services.queue import get_embedding_queue
+    from backend.embedding.queue import get_embedding_queue
     from backend.settings import settings
 
     try:
@@ -3205,7 +3205,7 @@ async def rag_job_status(workspace_id: str, job_id: str) -> RagJobStatus:
 @view_router.get("/{workspace_id}/rag/jobs", response_model=list[RagJobStatus])
 async def rag_jobs(workspace_id: str) -> list[RagJobStatus]:
     """Lista os jobs de indexação deste workspace com seu progresso atual."""
-    from backend.services.queue import get_embedding_queue
+    from backend.embedding.queue import get_embedding_queue
     from backend.settings import settings
 
     out: list[RagJobStatus] = []
@@ -3240,7 +3240,7 @@ async def set_active_context(
 ) -> StatusResponse:
     """Atualiza o arquivo em foco no editor para o agente via get_workbench_context."""
     try:
-        from backend.services.kv import get_kv
+        from backend.persistence.kv import get_kv
 
         kv = get_kv()
         import json

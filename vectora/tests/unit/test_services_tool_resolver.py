@@ -33,7 +33,7 @@ async def test_local_user_gets_all_tools(fake_all_tools, monkeypatch):
 @pytest.mark.asyncio
 async def test_filters_disabled_tools(fake_all_tools, monkeypatch):
     monkeypatch.setattr(
-        "backend.services.tool_policy.is_allowed",
+        "backend.rbac.tool_policy.is_allowed",
         lambda uid, name: name != "terminal",
     )
 
@@ -51,9 +51,7 @@ async def test_filters_disabled_tools(fake_all_tools, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_appends_mcp_tools(fake_all_tools, monkeypatch):
-    monkeypatch.setattr(
-        "backend.services.tool_policy.is_allowed", lambda uid, name: True
-    )
+    monkeypatch.setattr("backend.rbac.tool_policy.is_allowed", lambda uid, name: True)
 
     async def _mcp(_uid):
         return [_FakeTool("mcp_search")]
@@ -70,9 +68,7 @@ async def test_appends_mcp_tools(fake_all_tools, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_mcp_failure_degrades_to_builtins(fake_all_tools, monkeypatch):
-    monkeypatch.setattr(
-        "backend.services.tool_policy.is_allowed", lambda uid, name: True
-    )
+    monkeypatch.setattr("backend.rbac.tool_policy.is_allowed", lambda uid, name: True)
 
     async def _boom(_uid):
         raise RuntimeError("mcp down")

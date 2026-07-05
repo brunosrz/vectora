@@ -10,7 +10,7 @@ import asyncio
 
 import pytest
 
-from backend.services.workspace import (
+from backend.workspace.workspace import (
     WorkspaceLockTimeoutError,
     acquire_workspace_lock,
     is_workspace_locked,

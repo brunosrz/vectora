@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.services import cache_llm
+from backend.llm import cache_llm
 from backend.settings import settings
 
 
@@ -57,7 +57,7 @@ def test_complete_redis_acessivel_usa_redis(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(cache_llm, "_build_redis_cache", lambda url: sentinel)
     monkeypatch.setattr(cache_llm, "_redis_supports_cache", lambda url: True)
     # redis_reachable é importado de kv dentro de _build_cache.
-    from backend.services import kv
+    from backend.persistence import kv
 
     monkeypatch.setattr(kv, "redis_reachable", lambda *a, **k: True)
     assert cache_llm._build_cache() is sentinel
@@ -70,7 +70,7 @@ def test_redis_sem_modulos_cai_para_inmemory(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr(settings, "cache_llm_enabled", True)
     monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
     monkeypatch.setattr(cache_llm, "_redis_supports_cache", lambda url: False)
-    from backend.services import kv
+    from backend.persistence import kv
 
     monkeypatch.setattr(kv, "redis_reachable", lambda *a, **k: True)
     assert isinstance(cache_llm._build_cache(), InMemoryCache)
@@ -107,7 +107,7 @@ def test_semantic_sem_embeddings_cai_para_exato(
 
 class TestEmbeddingsFallback:
     def test_wraps_both_when_both_available(self, monkeypatch):
-        from backend.services.fallback_embeddings import FallbackEmbeddings
+        from backend.llm.fallback_embeddings import FallbackEmbeddings
         from backend.storage import factory
 
         cohere = object()

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-import backend.services.background as _bg_mod
-from backend.services.background import (
+import backend.embedding.background as _bg_mod
+from backend.embedding.background import (
     BackgroundEmbeddingWorker,
     _is_rate_limit_error,
     get_worker_pause_state,
 )
-from backend.services.queue import EmbeddingQueueRecord
+from backend.embedding.queue import EmbeddingQueueRecord
 
 
 @pytest.fixture(autouse=True)

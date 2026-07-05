@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 from fastapi import HTTPException
 
+from backend.rbac import subscription as sub
 from backend.services import license as lic
-from backend.services import subscription as sub
 
 
 @pytest.fixture(autouse=True)

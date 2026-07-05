@@ -26,28 +26,28 @@ def _minimal_graph() -> nx.Graph:
 
 class TestSafeCommunityName:
     def test_strips_invalid_chars(self):
-        from backend.services.context_graph.report import _safe_community_name
+        from backend.context_graph.report import _safe_community_name
 
         assert _safe_community_name("My*Community") == "MyCommunity"
 
     def test_strips_md_extension(self):
-        from backend.services.context_graph.report import _safe_community_name
+        from backend.context_graph.report import _safe_community_name
 
         assert _safe_community_name("topic.md") == "topic"
 
     def test_empty_label_returns_unnamed(self):
-        from backend.services.context_graph.report import _safe_community_name
+        from backend.context_graph.report import _safe_community_name
 
         assert _safe_community_name("") == "unnamed"
         assert _safe_community_name("***") == "unnamed"
 
     def test_normal_label_unchanged(self):
-        from backend.services.context_graph.report import _safe_community_name
+        from backend.context_graph.report import _safe_community_name
 
         assert _safe_community_name("AuthSystem") == "AuthSystem"
 
     def test_newlines_replaced_with_space(self):
-        from backend.services.context_graph.report import _safe_community_name
+        from backend.context_graph.report import _safe_community_name
 
         result = _safe_community_name("line1\nline2")
         assert "\n" not in result
@@ -55,7 +55,7 @@ class TestSafeCommunityName:
 
 class TestGenerate:
     def _generate(self, graph: nx.Graph | None = None, **kwargs) -> str:
-        from backend.services.context_graph.report import generate
+        from backend.context_graph.report import generate
 
         G = graph or _minimal_graph()
         communities = kwargs.pop("communities", {0: ["a", "b"]})

@@ -36,7 +36,7 @@ logger = logging.getLogger("backend.mcp.server")
 try:
     from mcp.server.fastmcp import FastMCP
 
-    from backend.services.checkpoint import Checkpointer
+    from backend.persistence.checkpoint import Checkpointer
     from backend.settings import settings
     from backend.tools import (
         call_mcp_tool,
@@ -181,7 +181,7 @@ async def _with_timeout(
     """
     import asyncio
 
-    from backend.services.tracer import tracer
+    from backend.persistence.tracer import tracer
 
     timeout = TOOL_TIMEOUTS.get(tool_name, default_timeout)
 
@@ -619,7 +619,7 @@ async def vectora_metrics(
     """
     import asyncio
 
-    from backend.services.tracer import tracer
+    from backend.persistence.tracer import tracer
 
     try:
         spans = await asyncio.wait_for(tracer.get_recent(n=n), timeout=5.0)

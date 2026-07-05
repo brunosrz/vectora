@@ -12,7 +12,7 @@ Nota: Embeddings são gerenciados por BackgroundEmbeddingWorker (services/backgr
 iniciado via async_lifespan() em services/utils.py. Não há mais EmbeddingService aqui.
 """
 
-from backend.services.session import SessionService
+from backend.persistence.session import SessionService
 from backend.services.telemetry import TelemetryService
 
 __all__ = [

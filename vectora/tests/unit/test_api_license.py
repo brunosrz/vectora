@@ -255,7 +255,7 @@ def test_validate_token_endpoint_exige_ausencia_de_usuarios(
 ) -> None:
     from fastapi import HTTPException
 
-    monkeypatch.setattr("backend.services.auth.has_users", _async_true, raising=False)
+    monkeypatch.setattr("backend.rbac.auth.has_users", _async_true, raising=False)
     with pytest.raises(HTTPException) as exc:
         asyncio.run(
             handler.license_validate_token(handler.ValidateTokenBody(token="tok"))
@@ -278,7 +278,7 @@ def _async_false() -> Any:
 
 
 def test_validate_token_endpoint_token_vazio(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    monkeypatch.setattr("backend.rbac.auth.has_users", _async_false, raising=False)
     result = asyncio.run(
         handler.license_validate_token(handler.ValidateTokenBody(token="  "))
     )
@@ -286,7 +286,7 @@ def test_validate_token_endpoint_token_vazio(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_validate_token_endpoint_pro_persiste(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    monkeypatch.setattr("backend.rbac.auth.has_users", _async_false, raising=False)
     _patch_http(
         monkeypatch,
         {
@@ -316,7 +316,7 @@ def test_validate_token_endpoint_pro_persiste(monkeypatch: pytest.MonkeyPatch) -
 def test_validate_token_endpoint_free_nao_persiste(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    monkeypatch.setattr("backend.rbac.auth.has_users", _async_false, raising=False)
     _patch_http(
         monkeypatch,
         {
@@ -340,7 +340,7 @@ def test_validate_token_endpoint_free_nao_persiste(
 
 
 def test_validate_token_endpoint_invalido(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("backend.services.auth.has_users", _async_false, raising=False)
+    monkeypatch.setattr("backend.rbac.auth.has_users", _async_false, raising=False)
     _patch_http(
         monkeypatch,
         {"license/validate": ({"valid": False, "reason": "not_found"}, 200)},

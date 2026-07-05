@@ -183,8 +183,8 @@ class TestFallbackOrderEndpoint:
     """PATCH/GET /admin/model/fallback-order (Parte A)."""
 
     def _fresh_runtime(self, tmp_path, monkeypatch):
-        import backend.services.runtime_settings as rt_mod
-        from backend.services.runtime_settings import RuntimeSettings
+        import backend.workspace.runtime_settings as rt_mod
+        from backend.workspace.runtime_settings import RuntimeSettings
 
         fresh = RuntimeSettings(path=tmp_path / "settings.json")
         monkeypatch.setattr(rt_mod, "runtime_settings", fresh)

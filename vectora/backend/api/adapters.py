@@ -237,7 +237,7 @@ async def _record_turn_checkpoint(
     from datetime import UTC, datetime
 
     try:
-        from backend.services.workspace import workspace_registry
+        from backend.workspace.workspace import workspace_registry
 
         ws = workspace_registry.get(workspace_id)
         if ws is None:
@@ -255,7 +255,7 @@ async def _record_turn_checkpoint(
 
         try:
             repo = gitpy.Repo(ws.cwd, search_parent_directories=True)
-            from backend.services.checkpoint import create_git_checkpoint
+            from backend.persistence.checkpoint import create_git_checkpoint
 
             result = create_git_checkpoint(repo, thread_id, msg)
             if result["status"] != "ok":
@@ -275,7 +275,7 @@ async def _record_turn_checkpoint(
             if not _Path(ws.cwd).exists():
                 return
 
-            from backend.services.checkpoint import (
+            from backend.persistence.checkpoint import (
                 create_snapshot_checkpoint,
                 gc_snapshots,
             )
@@ -325,6 +325,7 @@ def adapt_stream(
     thread_id: str,
     workspace_id: str | None = None,
     http_request: Request | None = None,
+    user_id: str | None = None,
 ) -> Any:
     """AsyncGenerator que converte o stream de eventos LangGraph em linhas SSE.
 
@@ -344,6 +345,12 @@ def adapt_stream(
     nenhum enquanto o modelo estivesse "pensando" sem produzir token nenhum
     — o backend continuava rodando o grafo (e gastando a chamada ao
     provider) até o próximo evento aparecer sozinho.
+
+    ``user_id`` — quando fornecido, cada delegação de subagente (tool `task`,
+    ``deepagents.SubAgentMiddleware``) é registrada como execução na aba
+    Tarefas do workbench (``backend.scheduling.background_tasks``), sob uma
+    tarefa-âncora "Subagente: <tipo>" por (thread, subagent_type). Best-effort
+    — nunca interrompe o stream.
     """
 
     async def _gen() -> Any:
@@ -355,6 +362,9 @@ def adapt_stream(
         node_start_times: dict[str, float] = {}
         tool_start_times: dict[str, float] = {}
         tool_args_previews: dict[str, str] = {}
+        # Args da tool `task` (delegação de subagente) por run_id — usado
+        # pra registrar a execução na aba Tarefas quando o `on_tool_end` chegar.
+        subagent_calls: dict[str, dict[str, str]] = {}
         import time
 
         # Rastreia o nó emissor de tokens: emite message_break quando muda.
@@ -513,6 +523,11 @@ def adapt_stream(
                     run_id: str = event.get("run_id", name)
                     tool_start_times[run_id] = time.monotonic()
                     tool_args_previews[run_id] = preview
+                    if name == "task" and isinstance(tool_input, dict):
+                        subagent_calls[run_id] = {
+                            "subagent_type": str(tool_input.get("subagent_type", "")),
+                            "description": str(tool_input.get("description", "")),
+                        }
                     yield encode_event(
                         ToolActivityEvent(
                             tool_name=name,
@@ -572,6 +587,32 @@ def adapt_stream(
                             elapsed_ms=elapsed,
                         )
                     )
+
+                    # Delegação de subagente concluída — registra na aba Tarefas.
+                    call = subagent_calls.pop(run_id, None)
+                    if (
+                        call is not None
+                        and user_id is not None
+                        and isinstance(payload, ToolResultEvent)
+                    ):
+                        try:
+                            from backend.scheduling.background_tasks import (
+                                record_subagent_delegation,
+                            )
+
+                            await record_subagent_delegation(
+                                session_id=thread_id,
+                                user_id=user_id,
+                                subagent_type=call["subagent_type"] or "desconhecido",
+                                description=call["description"],
+                                status="error" if payload.is_error else "done",
+                                summary=payload.content_json[:400],
+                                workspace_id=workspace_id,
+                            )
+                        except Exception:
+                            logger.exception(
+                                "adapt_stream: falha ao registrar delegação de subagente"
+                            )
                     meta = _get_tool_meta(name)
                     tabs = meta.get("invalidates", [])
                     if tabs:

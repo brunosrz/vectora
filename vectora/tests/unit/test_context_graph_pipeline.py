@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.services.context_graph.pipeline import (
+from backend.context_graph.pipeline import (
     GraphResult,
     _graph_out_dir,
     _load_ast_checkpoint,
@@ -132,11 +132,11 @@ def test_run_ast_extraction_multiple_files(tmp_path):
 
 @pytest.mark.asyncio
 async def test_build_workspace_graph_no_workspace():
-    from backend.services.context_graph.pipeline import build_workspace_graph
+    from backend.context_graph.pipeline import build_workspace_graph
 
     registry = MagicMock()
     registry.get = MagicMock(return_value=None)
-    with patch("backend.services.workspace.workspace_registry", registry):
+    with patch("backend.workspace.workspace.workspace_registry", registry):
         result = await build_workspace_graph("nonexistent-id")
 
     assert result.error is not None
@@ -150,7 +150,7 @@ async def test_build_workspace_graph_no_workspace():
 
 @pytest.mark.asyncio
 async def test_build_workspace_graph_no_files(tmp_path):
-    from backend.services.context_graph.pipeline import build_workspace_graph
+    from backend.context_graph.pipeline import build_workspace_graph
 
     ws_mock = MagicMock()
     ws_mock.cwd = str(tmp_path)
@@ -159,15 +159,15 @@ async def test_build_workspace_graph_no_files(tmp_path):
 
     fake_detect = {"files": {}}
 
-    import backend.services.context_graph.analyze as analyze_mod
-    import backend.services.context_graph.build as build_mod
-    import backend.services.context_graph.cluster as cluster_mod
-    import backend.services.context_graph.detect as detect_mod
-    import backend.services.context_graph.export as export_mod
-    import backend.services.context_graph.report as report_mod
+    import backend.context_graph.analyze as analyze_mod
+    import backend.context_graph.build as build_mod
+    import backend.context_graph.cluster as cluster_mod
+    import backend.context_graph.detect as detect_mod
+    import backend.context_graph.export as export_mod
+    import backend.context_graph.report as report_mod
 
     with (
-        patch("backend.services.workspace.workspace_registry", registry),
+        patch("backend.workspace.workspace.workspace_registry", registry),
         patch.object(detect_mod, "detect", return_value=fake_detect),
     ):
         result = await build_workspace_graph("test-id", mode="ast")

@@ -16,13 +16,13 @@ import pytest
 
 class TestBodyContent:
     def test_no_frontmatter_returns_original(self):
-        from backend.services.context_graph.cache import _body_content
+        from backend.context_graph.cache import _body_content
 
         content = b"# Heading\n\nBody text"
         assert _body_content(content) == content
 
     def test_strips_yaml_frontmatter(self):
-        from backend.services.context_graph.cache import _body_content
+        from backend.context_graph.cache import _body_content
 
         content = b"---\ntitle: Test\n---\n# Body"
         result = _body_content(content)
@@ -30,13 +30,13 @@ class TestBodyContent:
         assert b"Body" in result
 
     def test_unclosed_frontmatter_returns_original(self):
-        from backend.services.context_graph.cache import _body_content
+        from backend.context_graph.cache import _body_content
 
         content = b"---\ntitle: Test\n# No closing delimiter"
         assert _body_content(content) == content
 
     def test_dashes_in_middle_not_treated_as_frontmatter(self):
-        from backend.services.context_graph.cache import _body_content
+        from backend.context_graph.cache import _body_content
 
         content = b"# Heading\n\n---\nthematic break"
         assert _body_content(content) == content
@@ -44,7 +44,7 @@ class TestBodyContent:
 
 class TestFileHash:
     def test_consistent_hash(self, tmp_path: Path):
-        from backend.services.context_graph.cache import file_hash
+        from backend.context_graph.cache import file_hash
 
         f = tmp_path / "file.py"
         f.write_text("def foo(): pass\n", encoding="utf-8")
@@ -54,7 +54,7 @@ class TestFileHash:
         assert len(h1) == 64  # SHA256 hex
 
     def test_different_content_different_hash(self, tmp_path: Path):
-        from backend.services.context_graph.cache import file_hash
+        from backend.context_graph.cache import file_hash
 
         f1 = tmp_path / "a.py"
         f2 = tmp_path / "b.py"
@@ -63,13 +63,13 @@ class TestFileHash:
         assert file_hash(f1, tmp_path) != file_hash(f2, tmp_path)
 
     def test_directory_raises(self, tmp_path: Path):
-        from backend.services.context_graph.cache import file_hash
+        from backend.context_graph.cache import file_hash
 
         with pytest.raises(IsADirectoryError):
             file_hash(tmp_path, tmp_path)
 
     def test_md_file_strips_frontmatter_for_hash(self, tmp_path: Path):
-        from backend.services.context_graph.cache import file_hash
+        from backend.context_graph.cache import file_hash
 
         f = tmp_path / "doc.md"
         f.write_text("---\nreviewed: false\n---\n# Content stays", encoding="utf-8")
@@ -84,7 +84,7 @@ class TestFileHash:
         assert len(h2) == 64
 
     def test_stat_cache_fastpath(self, tmp_path: Path):
-        from backend.services.context_graph.cache import file_hash
+        from backend.context_graph.cache import file_hash
 
         f = tmp_path / "f.py"
         f.write_text("data", encoding="utf-8")
@@ -98,7 +98,7 @@ class TestFileHash:
 class TestCacheDir:
     def test_creates_ast_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.chdir(tmp_path)
-        from backend.services.context_graph.cache import cache_dir
+        from backend.context_graph.cache import cache_dir
 
         d = cache_dir(tmp_path, kind="ast")
         assert d.exists()
@@ -108,7 +108,7 @@ class TestCacheDir:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
         monkeypatch.chdir(tmp_path)
-        from backend.services.context_graph.cache import cache_dir
+        from backend.context_graph.cache import cache_dir
 
         d = cache_dir(tmp_path, kind="semantic")
         assert d.exists()
@@ -117,7 +117,7 @@ class TestCacheDir:
 
 class TestLoadAndSaveCached:
     def test_save_and_load_roundtrip(self, tmp_path: Path):
-        from backend.services.context_graph.cache import load_cached, save_cached
+        from backend.context_graph.cache import load_cached, save_cached
 
         f = tmp_path / "source.py"
         f.write_text("def hello(): pass\n", encoding="utf-8")
@@ -130,33 +130,33 @@ class TestLoadAndSaveCached:
         assert result["nodes"][0]["id"] == "x"
 
     def test_load_returns_none_on_cache_miss(self, tmp_path: Path):
-        from backend.services.context_graph.cache import load_cached
+        from backend.context_graph.cache import load_cached
 
         f = tmp_path / "uncached.py"
         f.write_text("code", encoding="utf-8")
         assert load_cached(f, tmp_path) is None
 
     def test_load_returns_none_when_file_missing(self, tmp_path: Path):
-        from backend.services.context_graph.cache import load_cached
+        from backend.context_graph.cache import load_cached
 
         f = tmp_path / "ghost.py"
         assert load_cached(f, tmp_path) is None
 
     def test_save_non_file_is_noop(self, tmp_path: Path):
-        from backend.services.context_graph.cache import save_cached
+        from backend.context_graph.cache import save_cached
 
         save_cached(tmp_path, {"nodes": []}, tmp_path)  # directory → no-op
 
 
 class TestCachedFiles:
     def test_empty_when_no_cache(self, tmp_path: Path):
-        from backend.services.context_graph.cache import cached_files
+        from backend.context_graph.cache import cached_files
 
         result = cached_files(tmp_path)
         assert isinstance(result, set)
 
     def test_includes_saved_hash(self, tmp_path: Path):
-        from backend.services.context_graph.cache import (
+        from backend.context_graph.cache import (
             cached_files,
             file_hash,
             save_cached,
@@ -171,7 +171,7 @@ class TestCachedFiles:
 
 class TestClearCache:
     def test_clear_removes_all_entries(self, tmp_path: Path):
-        from backend.services.context_graph.cache import (
+        from backend.context_graph.cache import (
             cached_files,
             clear_cache,
             save_cached,
@@ -188,7 +188,7 @@ class TestClearCache:
 
 class TestRelativizeAndAbsolutize:
     def test_relativize_then_absolutize_roundtrip(self, tmp_path: Path):
-        from backend.services.context_graph.cache import (
+        from backend.context_graph.cache import (
             _absolutize_source_files_in,
             _relativize_source_files_in,
         )
@@ -204,7 +204,7 @@ class TestRelativizeAndAbsolutize:
         assert Path(restored).is_absolute()
 
     def test_relative_source_file_not_modified_by_relativize(self, tmp_path: Path):
-        from backend.services.context_graph.cache import _relativize_source_files_in
+        from backend.context_graph.cache import _relativize_source_files_in
 
         payload = {
             "nodes": [{"source_file": "src/auth.py"}],
@@ -215,7 +215,7 @@ class TestRelativizeAndAbsolutize:
         assert payload["nodes"][0]["source_file"] == "src/auth.py"
 
     def test_out_of_root_path_unchanged(self, tmp_path: Path):
-        from backend.services.context_graph.cache import _relativize_source_files_in
+        from backend.context_graph.cache import _relativize_source_files_in
 
         other_drive = "C:/other/path.py" if os.name == "nt" else "/other/path.py"
         payload = {
@@ -229,7 +229,7 @@ class TestRelativizeAndAbsolutize:
 
 class TestCheckSemanticCache:
     def test_all_uncached_when_empty(self, tmp_path: Path):
-        from backend.services.context_graph.cache import check_semantic_cache
+        from backend.context_graph.cache import check_semantic_cache
 
         f = tmp_path / "f.py"
         f.write_text("code", encoding="utf-8")
@@ -238,7 +238,7 @@ class TestCheckSemanticCache:
         assert sem_result[0] == []
 
     def test_cached_file_merged(self, tmp_path: Path):
-        from backend.services.context_graph.cache import (
+        from backend.context_graph.cache import (
             check_semantic_cache,
             save_cached,
         )
@@ -259,7 +259,7 @@ class TestCheckSemanticCache:
 
 class TestSaveSemanticCache:
     def test_saves_nodes_by_source_file(self, tmp_path: Path):
-        from backend.services.context_graph.cache import save_semantic_cache
+        from backend.context_graph.cache import save_semantic_cache
 
         f = tmp_path / "module.py"
         f.write_text("def fn(): pass\n", encoding="utf-8")
@@ -268,14 +268,14 @@ class TestSaveSemanticCache:
         assert count == 1
 
     def test_non_existent_file_not_saved(self, tmp_path: Path):
-        from backend.services.context_graph.cache import save_semantic_cache
+        from backend.context_graph.cache import save_semantic_cache
 
         nodes = [{"id": "ghost", "source_file": str(tmp_path / "ghost.py")}]
         count = save_semantic_cache(nodes, [], root=tmp_path)
         assert count == 0
 
     def test_empty_source_file_skipped(self, tmp_path: Path):
-        from backend.services.context_graph.cache import save_semantic_cache
+        from backend.context_graph.cache import save_semantic_cache
 
         count = save_semantic_cache([{"id": "n", "source_file": ""}], [], root=tmp_path)
         assert count == 0
@@ -283,7 +283,7 @@ class TestSaveSemanticCache:
 
 class TestCleanupStaleAstEntries:
     def test_removes_old_version_dirs(self, tmp_path: Path):
-        from backend.services.context_graph import cache as cache_mod
+        from backend.context_graph import cache as cache_mod
 
         ast_base = tmp_path / "cache" / "ast"
         ast_base.mkdir(parents=True)

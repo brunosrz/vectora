@@ -269,7 +269,7 @@ async def list_integrations(request: Request) -> dict:
     """Lista todas as integrações com status de conexão do usuário atual."""
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         overrides = await auth_svc.get_env_overrides(user.id)
     except Exception:
@@ -504,7 +504,7 @@ async def github_oauth_callback(
     # Salva como env_override do usuário identificado pelo state
     user_id = state
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.set_env_override(user_id, "GITHUB_TOKEN", access_token)
         logger.info("GitHub OAuth: token salvo para user_id=%s", user_id)
@@ -520,7 +520,7 @@ async def github_oauth_status(request: Request) -> dict:
     """Retorna se o GitHub está conectado e o username associado."""
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         overrides = await auth_svc.get_env_overrides(user.id)
         token = overrides.get("GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN", "")
@@ -555,7 +555,7 @@ async def github_oauth_disconnect(request: Request) -> dict:
     """Remove o GITHUB_TOKEN dos env_overrides do usuário."""
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.delete_env_override(user.id, "GITHUB_TOKEN")
         logger.info("GitHub OAuth: token removido para user_id=%s", user.id)
@@ -637,7 +637,7 @@ async def gitlab_oauth_callback(
         return RedirectResponse(url="/?oauth_error=gitlab_no_token", status_code=302)
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.set_env_override(state, "GITLAB_TOKEN", access_token)
         logger.info("GitLab OAuth: token salvo para user_id=%s", state)
@@ -652,7 +652,7 @@ async def gitlab_oauth_callback(
 async def gitlab_oauth_status(request: Request) -> dict:
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         overrides = await auth_svc.get_env_overrides(user.id)
         token = overrides.get("GITLAB_TOKEN") or os.environ.get("GITLAB_TOKEN", "")
@@ -683,7 +683,7 @@ async def gitlab_oauth_status(request: Request) -> dict:
 async def gitlab_oauth_disconnect(request: Request) -> dict:
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.delete_env_override(user.id, "GITLAB_TOKEN")
     except Exception as exc:
@@ -771,7 +771,7 @@ async def google_oauth_callback(
         return RedirectResponse(url="/?oauth_error=google_no_token", status_code=302)
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.set_env_override(state, "GOOGLE_ACCESS_TOKEN", access_token)
         if refresh_token:
@@ -790,7 +790,7 @@ async def google_oauth_callback(
 async def google_oauth_status(request: Request) -> dict:
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         overrides = await auth_svc.get_env_overrides(user.id)
         token = overrides.get("GOOGLE_ACCESS_TOKEN") or os.environ.get(
@@ -827,7 +827,7 @@ async def google_oauth_status(request: Request) -> dict:
 async def google_oauth_disconnect(request: Request) -> dict:
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.delete_env_override(user.id, "GOOGLE_ACCESS_TOKEN")
         await auth_svc.delete_env_override(user.id, "GOOGLE_REFRESH_TOKEN")
@@ -909,7 +909,7 @@ async def slack_oauth_callback(
         return RedirectResponse(url="/?oauth_error=slack_no_token", status_code=302)
 
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.set_env_override(state, "SLACK_BOT_TOKEN", bot_token)
         logger.info("Slack OAuth: token salvo para user_id=%s", state)
@@ -924,7 +924,7 @@ async def slack_oauth_callback(
 async def slack_oauth_status(request: Request) -> dict:
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         overrides = await auth_svc.get_env_overrides(user.id)
         token = overrides.get("SLACK_BOT_TOKEN") or os.environ.get(
@@ -961,7 +961,7 @@ async def slack_oauth_status(request: Request) -> dict:
 async def slack_oauth_disconnect(request: Request) -> dict:
     user = _get_user(request)
     try:
-        from backend.services import auth as auth_svc
+        from backend.rbac import auth as auth_svc
 
         await auth_svc.delete_env_override(user.id, "SLACK_BOT_TOKEN")
     except Exception as exc:

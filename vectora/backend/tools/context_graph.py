@@ -30,7 +30,7 @@ def _active_workspace_id(config: RunnableConfig | None) -> str | None:
 
 def _load_graph_data(workspace_id: str) -> tuple[dict | None, str | None]:
     """Carrega graph.json do workspace. Retorna (data, error_msg)."""
-    from backend.services.workspace import workspace_registry
+    from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
@@ -67,7 +67,7 @@ async def build_knowledge_graph(
         if not workspace_id:
             return "Erro: nenhum workspace ativo. Abra um workspace primeiro."
 
-        from backend.services.context_graph.pipeline import build_workspace_graph
+        from backend.context_graph.pipeline import build_workspace_graph
 
         result = await build_workspace_graph(workspace_id, model=model, mode=mode)
         if result.error:
@@ -112,7 +112,7 @@ async def graph_update(
         if not workspace_id:
             return "Erro: nenhum workspace ativo. Abra um workspace primeiro."
 
-        from backend.services.context_graph.pipeline import build_workspace_graph
+        from backend.context_graph.pipeline import build_workspace_graph
 
         result = await build_workspace_graph(
             workspace_id, model=model, mode="semantic", update=True
@@ -160,7 +160,7 @@ async def graph_query(
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
-        from backend.services.context_graph.query import query_nodes
+        from backend.context_graph.query import query_nodes
 
         matched, rel_edges = query_nodes(data, question, top_k=top_k)
         if not matched:
@@ -208,7 +208,7 @@ async def graph_explain(
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
-        from backend.services.context_graph.query import explain_node
+        from backend.context_graph.query import explain_node
 
         target, neighbors, connected = explain_node(data, node_id)
         if target is None:
@@ -260,7 +260,7 @@ async def graph_path(
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
-        from backend.services.context_graph.query import path_between
+        from backend.context_graph.query import path_between
 
         path_nodes, _ = path_between(data, source, target)
         if not path_nodes:
@@ -315,7 +315,7 @@ async def graph_affected(
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
-        from backend.services.context_graph.query import affected_summary
+        from backend.context_graph.query import affected_summary
 
         return affected_summary(data, node_query, depth=depth)
 

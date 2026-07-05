@@ -16,8 +16,8 @@ from backend.tools.git import git_stage, git_unstage
 @pytest.fixture
 def mock_ws(tmp_path, monkeypatch):
     """Workspace fake apontando para tmp_path com repo git inicializado."""
-    from backend.services import workspace as ws_mod
     from backend.vtypes import Workspace
+    from backend.workspace import workspace as ws_mod
 
     ws = Workspace(
         id="ws-git",

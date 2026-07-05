@@ -23,7 +23,7 @@ def trusted_ws(tmp_path, monkeypatch):
     registram um workspace confiável em tmp_path e passam seu id no config para
     que leituras/escritas ocorram dentro da pasta de teste.
     """
-    from backend.services import workspace as ws_mod
+    from backend.workspace import workspace as ws_mod
 
     ws = Workspace(
         id="testws",
@@ -118,8 +118,8 @@ class TestFileWrite:
         assert "fora do workspace" in result.lower() or "error" in result.lower()
 
     def test_requires_trust(self, tmp_path, monkeypatch):
-        from backend.services import workspace as ws_mod
         from backend.tools.fs import file_write
+        from backend.workspace import workspace as ws_mod
 
         untrusted = Workspace(
             id="untrusted",

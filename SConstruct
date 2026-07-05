@@ -393,7 +393,7 @@ def _action_lint(target, source, env):
                 "-q",
                 "-s", "B110,B101",
                 "-c", "pyproject.toml",
-                "--exclude", "backend/services/context_graph",
+                "--exclude", "backend/context_graph",
                 "-r", "backend",
             ],
             log=log,

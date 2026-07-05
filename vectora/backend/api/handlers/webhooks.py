@@ -336,7 +336,7 @@ async def _persist_event(
     workspace_id: str | None,
 ) -> None:
     try:
-        from backend.services.auth import _get_db
+        from backend.rbac.auth import _get_db
 
         db = await _get_db()
         await db.execute(
@@ -429,7 +429,7 @@ async def receive_webhook(provider: str, request: Request) -> Response:
     # etc.) espera resposta rápida; não bloqueamos o 200.
     async def _dispatch_bg() -> None:
         try:
-            from backend.services.background_tasks import dispatch_webhook_event
+            from backend.scheduling.background_tasks import dispatch_webhook_event
 
             await dispatch_webhook_event(provider, str(event_type), payload)
         except Exception:

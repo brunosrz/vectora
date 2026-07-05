@@ -61,7 +61,7 @@ class TestGitLabOAuth:
             r = client.get("/auth/gitlab/callback")
         assert r.status_code == 400
 
-    @patch("backend.services.auth.set_env_override", new_callable=AsyncMock)
+    @patch("backend.rbac.auth.set_env_override", new_callable=AsyncMock)
     def test_callback_token_salvo(
         self, mock_set: AsyncMock, client: TestClient
     ) -> None:
@@ -90,7 +90,7 @@ class TestGitLabOAuth:
                 "os.environ", {k: v for k, v in self._env.items() if "CLIENT" not in k}
             ),
             patch(
-                "backend.services.auth.get_env_overrides",
+                "backend.rbac.auth.get_env_overrides",
                 new_callable=AsyncMock,
                 return_value={},
             ),
@@ -99,7 +99,7 @@ class TestGitLabOAuth:
         assert r.status_code == 200
         assert r.json()["connected"] is False
 
-    @patch("backend.services.auth.delete_env_override", new_callable=AsyncMock)
+    @patch("backend.rbac.auth.delete_env_override", new_callable=AsyncMock)
     def test_disconnect(self, mock_del: AsyncMock, client: TestClient) -> None:
         r = client.request("DELETE", "/auth/gitlab")
         assert r.status_code == 200
@@ -131,7 +131,7 @@ class TestGoogleOAuth:
             r = client.get("/auth/google/callback")
         assert r.status_code == 400
 
-    @patch("backend.services.auth.set_env_override", new_callable=AsyncMock)
+    @patch("backend.rbac.auth.set_env_override", new_callable=AsyncMock)
     def test_callback_salva_access_e_refresh(
         self, mock_set: AsyncMock, client: TestClient
     ) -> None:
@@ -162,14 +162,14 @@ class TestGoogleOAuth:
 
     def test_status_sem_token(self, client: TestClient) -> None:
         with patch(
-            "backend.services.auth.get_env_overrides",
+            "backend.rbac.auth.get_env_overrides",
             new_callable=AsyncMock,
             return_value={},
         ):
             r = client.get("/auth/google/status")
         assert r.json()["connected"] is False
 
-    @patch("backend.services.auth.delete_env_override", new_callable=AsyncMock)
+    @patch("backend.rbac.auth.delete_env_override", new_callable=AsyncMock)
     def test_disconnect_remove_ambos_tokens(
         self, mock_del: AsyncMock, client: TestClient
     ) -> None:
@@ -202,7 +202,7 @@ class TestSlackOAuth:
             r = client.get("/auth/slack/callback")
         assert r.status_code == 400
 
-    @patch("backend.services.auth.set_env_override", new_callable=AsyncMock)
+    @patch("backend.rbac.auth.set_env_override", new_callable=AsyncMock)
     def test_callback_token_salvo(
         self, mock_set: AsyncMock, client: TestClient
     ) -> None:
@@ -245,14 +245,14 @@ class TestSlackOAuth:
 
     def test_status_sem_token(self, client: TestClient) -> None:
         with patch(
-            "backend.services.auth.get_env_overrides",
+            "backend.rbac.auth.get_env_overrides",
             new_callable=AsyncMock,
             return_value={},
         ):
             r = client.get("/auth/slack/status")
         assert r.json()["connected"] is False
 
-    @patch("backend.services.auth.delete_env_override", new_callable=AsyncMock)
+    @patch("backend.rbac.auth.delete_env_override", new_callable=AsyncMock)
     def test_disconnect(self, mock_del: AsyncMock, client: TestClient) -> None:
         r = client.request("DELETE", "/auth/slack")
         assert r.status_code == 200

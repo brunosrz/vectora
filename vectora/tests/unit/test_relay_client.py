@@ -21,17 +21,17 @@ def relay_url() -> str:
 class TestRelayTokenPersistence:
     def test_carrega_token_existente(self, relay_token_file: Path) -> None:
         relay_token_file.write_text("abc123")
-        from backend.relay.token import load_token
+        from backend.services.relay.token import load_token
 
         assert load_token(relay_token_file) == "abc123"
 
     def test_retorna_none_sem_arquivo(self, relay_token_file: Path) -> None:
-        from backend.relay.token import load_token
+        from backend.services.relay.token import load_token
 
         assert load_token(relay_token_file) is None
 
     def test_salva_token(self, relay_token_file: Path) -> None:
-        from backend.relay.token import save_token
+        from backend.services.relay.token import save_token
 
         save_token("xyz789", relay_token_file)
         assert relay_token_file.read_text() == "xyz789"
@@ -43,7 +43,7 @@ class TestRelayTokenPersistence:
     def test_token_salvo_tem_permissao_restrita(self, relay_token_file: Path) -> None:
         import stat
 
-        from backend.relay.token import save_token
+        from backend.services.relay.token import save_token
 
         save_token("xyz789", relay_token_file)
         mode = relay_token_file.stat().st_mode
@@ -54,7 +54,7 @@ class TestRelayTokenPersistence:
 class TestRelayClientBackoff:
     @pytest.mark.asyncio
     async def test_backoff_dobra_a_cada_falha(self) -> None:
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         client = RelayClient(
             relay_url="wss://relay.vectora.chat",
@@ -67,13 +67,14 @@ class TestRelayClientBackoff:
             if len(delays) >= 3:
                 raise asyncio.CancelledError
 
-        with patch("backend.relay.asyncio.sleep", fake_sleep):
+        with patch("backend.services.relay.asyncio.sleep", fake_sleep):
             with patch(
-                "backend.relay.RelayClient._connect_once",
+                "backend.services.relay.RelayClient._connect_once",
                 side_effect=ConnectionError("fail"),
             ):
                 with patch(
-                    "backend.relay.RelayClient._register", return_value="tok123"
+                    "backend.services.relay.RelayClient._register",
+                    return_value="tok123",
                 ):
                     with contextlib.suppress(asyncio.CancelledError):
                         await client._connect_loop()
@@ -83,7 +84,7 @@ class TestRelayClientBackoff:
 
     @pytest.mark.asyncio
     async def test_backoff_nao_ultrapassa_60s(self) -> None:
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         client = RelayClient(
             relay_url="wss://relay.vectora.chat",
@@ -96,13 +97,14 @@ class TestRelayClientBackoff:
             if len(delays) >= 10:
                 raise asyncio.CancelledError
 
-        with patch("backend.relay.asyncio.sleep", fake_sleep):
+        with patch("backend.services.relay.asyncio.sleep", fake_sleep):
             with patch(
-                "backend.relay.RelayClient._connect_once",
+                "backend.services.relay.RelayClient._connect_once",
                 side_effect=ConnectionError("fail"),
             ):
                 with patch(
-                    "backend.relay.RelayClient._register", return_value="tok123"
+                    "backend.services.relay.RelayClient._register",
+                    return_value="tok123",
                 ):
                     with contextlib.suppress(asyncio.CancelledError):
                         await client._connect_loop()
@@ -114,7 +116,7 @@ class TestRelayClientBackoff:
 class TestRelayClientRegister:
     @pytest.mark.asyncio
     async def test_register_usa_jwt_e_fingerprint(self, relay_token_file: Path) -> None:
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -133,7 +135,7 @@ class TestRelayClientRegister:
             token_path=relay_token_file,
         )
 
-        with patch("backend.relay.aiohttp.ClientSession") as mock_session_cls:
+        with patch("backend.services.relay.aiohttp.ClientSession") as mock_session_cls:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -154,7 +156,7 @@ class TestRelayClientRegister:
     async def test_register_reutiliza_token_existente(
         self, relay_token_file: Path
     ) -> None:
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         relay_token_file.write_text("existing")
         client = RelayClient(
@@ -163,7 +165,7 @@ class TestRelayClientRegister:
             token_path=relay_token_file,
         )
 
-        with patch("backend.relay.aiohttp.ClientSession") as mock_session_cls:
+        with patch("backend.services.relay.aiohttp.ClientSession") as mock_session_cls:
             token = await client._register()
 
         assert token == "existing"
@@ -173,7 +175,7 @@ class TestRelayClientRegister:
 class TestRelayClientStop:
     @pytest.mark.asyncio
     async def test_stop_cancela_task(self) -> None:
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         client = RelayClient(
             relay_url="wss://relay.vectora.chat",
@@ -190,7 +192,7 @@ class TestRelayClientStop:
 
     @pytest.mark.asyncio
     async def test_stop_idempotente_sem_task(self) -> None:
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         client = RelayClient(
             relay_url="wss://relay.vectora.chat",
@@ -201,7 +203,7 @@ class TestRelayClientStop:
 
 class TestRelayClientDispatch:
     def _client(self):
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         return RelayClient(
             relay_url="wss://relay.vectora.chat",
@@ -252,7 +254,7 @@ class TestRelayClientDispatch:
 
 class TestRelayClientForward:
     def _client(self):
-        from backend.relay import RelayClient
+        from backend.services.relay import RelayClient
 
         return RelayClient(
             relay_url="wss://relay.vectora.chat",
@@ -287,7 +289,9 @@ class TestRelayClientForward:
             "headers": {"Content-Type": "application/json"},
             "body": base64.b64encode(b'{"ref":"main"}').decode(),
         }
-        with patch("backend.relay.aiohttp.ClientSession", return_value=mock_session):
+        with patch(
+            "backend.services.relay.aiohttp.ClientSession", return_value=mock_session
+        ):
             await client._forward(ws, req)
 
         call_kwargs = ws.send_json.call_args[0][0]
@@ -302,7 +306,8 @@ class TestRelayClientForward:
         ws = AsyncMock()
 
         with patch(
-            "backend.relay.aiohttp.ClientSession", side_effect=ConnectionError("down")
+            "backend.services.relay.aiohttp.ClientSession",
+            side_effect=ConnectionError("down"),
         ):
             await client._forward(
                 ws,
@@ -322,7 +327,7 @@ class TestRelayClientForward:
 
 class TestMachineFingerprint:
     def test_retorna_string_hex_de_32_chars(self) -> None:
-        from backend.relay import _machine_fingerprint
+        from backend.services.relay import _machine_fingerprint
 
         fp = _machine_fingerprint()
         assert isinstance(fp, str)
@@ -334,12 +339,12 @@ class TestMachineFingerprint:
 
         if sys.platform == "win32":
             pytest.skip("Linux-only path test")
-        from backend.relay import _machine_fingerprint
+        from backend.services.relay import _machine_fingerprint
 
         machine_id_file = tmp_path / "machine-id"
         machine_id_file.write_text("abc123def456\n")
 
-        with patch("backend.relay.Path") as mock_path_cls:
+        with patch("backend.services.relay.Path") as mock_path_cls:
             mock_path_cls.side_effect = lambda *args: (
                 machine_id_file if args[0] == "/etc/machine-id" else Path(*args)
             )
@@ -351,13 +356,13 @@ class TestMachineFingerprint:
     def test_usa_hostname_como_fallback(self) -> None:
         import sys
 
-        from backend.relay import _machine_fingerprint
+        from backend.services.relay import _machine_fingerprint
 
         if sys.platform == "win32":
             with patch("winreg.OpenKey", side_effect=OSError("no registry")):
                 fp = _machine_fingerprint()
         else:
-            with patch("backend.relay.Path") as mock_path_cls:
+            with patch("backend.services.relay.Path") as mock_path_cls:
                 mock_p = MagicMock()
                 mock_p.is_file.return_value = False
                 mock_path_cls.return_value = mock_p

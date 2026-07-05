@@ -53,7 +53,7 @@ def _config(workspace_id: str) -> RunnableConfig:
 def _patch_registry(ws_mock):
     registry = MagicMock()
     registry.get = MagicMock(return_value=ws_mock)
-    return patch("backend.services.workspace.workspace_registry", registry)
+    return patch("backend.workspace.workspace.workspace_registry", registry)
 
 
 # ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ async def test_build_knowledge_graph_success(tmp_path):
     with (
         _patch_registry(ws),
         patch(
-            "backend.services.context_graph.pipeline.build_workspace_graph",
+            "backend.context_graph.pipeline.build_workspace_graph",
             new_callable=AsyncMock,
             return_value=result_mock,
         ),
@@ -279,7 +279,7 @@ async def test_graph_update_calls_pipeline_with_update_true(tmp_path):
     with (
         _patch_registry(ws),
         patch(
-            "backend.services.context_graph.pipeline.build_workspace_graph",
+            "backend.context_graph.pipeline.build_workspace_graph",
             new_callable=AsyncMock,
             return_value=result_mock,
         ) as mock_build,
@@ -441,7 +441,7 @@ async def test_graph_update_pipeline_error(tmp_path):
     with (
         _patch_registry(ws),
         patch(
-            "backend.services.context_graph.pipeline.build_workspace_graph",
+            "backend.context_graph.pipeline.build_workspace_graph",
             new_callable=AsyncMock,
             return_value=rm,
         ),
@@ -460,7 +460,7 @@ async def test_build_pipeline_error(tmp_path):
     with (
         _patch_registry(ws),
         patch(
-            "backend.services.context_graph.pipeline.build_workspace_graph",
+            "backend.context_graph.pipeline.build_workspace_graph",
             new_callable=AsyncMock,
             return_value=rm,
         ),
@@ -486,7 +486,7 @@ async def test_build_shows_god_nodes(tmp_path):
     with (
         _patch_registry(ws),
         patch(
-            "backend.services.context_graph.pipeline.build_workspace_graph",
+            "backend.context_graph.pipeline.build_workspace_graph",
             new_callable=AsyncMock,
             return_value=rm,
         ),
@@ -512,7 +512,7 @@ async def test_build_ast_mode_passed_to_pipeline(tmp_path):
     with (
         _patch_registry(ws),
         patch(
-            "backend.services.context_graph.pipeline.build_workspace_graph",
+            "backend.context_graph.pipeline.build_workspace_graph",
             new_callable=AsyncMock,
             return_value=rm,
         ) as mb,

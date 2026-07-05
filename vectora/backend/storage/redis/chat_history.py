@@ -28,7 +28,7 @@ def get_chat_history(session_id: str) -> Any | None:
     if not url:
         return None
 
-    from backend.services.kv import redis_reachable
+    from backend.persistence.kv import redis_reachable
 
     if not redis_reachable(url):
         logger.info(

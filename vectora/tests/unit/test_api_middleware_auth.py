@@ -114,7 +114,7 @@ def auth_client(tmp_path, monkeypatch):
 
     import aiosqlite
 
-    import backend.services.auth as auth_mod
+    import backend.rbac.auth as auth_mod
 
     auth_mod._db_conn = None
     auth_mod._get_secret = lambda: "middleware-test-secret-abcdefghi"  # type: ignore[assignment]  # ty: ignore[invalid-assignment]

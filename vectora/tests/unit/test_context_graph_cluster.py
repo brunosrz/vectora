@@ -20,7 +20,7 @@ def _make_connected_graph(n_nodes: int = 6) -> nx.Graph:
 
 class TestCohesionScore:
     def test_fully_connected_triangle(self):
-        from backend.services.context_graph.cluster import cohesion_score
+        from backend.context_graph.cluster import cohesion_score
 
         G = nx.Graph()
         G.add_nodes_from(["a", "b", "c"])
@@ -29,21 +29,21 @@ class TestCohesionScore:
         assert abs(score - 1.0) < 1e-6
 
     def test_no_edges_zero_cohesion(self):
-        from backend.services.context_graph.cluster import cohesion_score
+        from backend.context_graph.cluster import cohesion_score
 
         G = nx.Graph()
         G.add_nodes_from(["a", "b", "c"])
         assert cohesion_score(G, ["a", "b", "c"]) == 0.0
 
     def test_single_node_is_one(self):
-        from backend.services.context_graph.cluster import cohesion_score
+        from backend.context_graph.cluster import cohesion_score
 
         G = nx.Graph()
         G.add_node("a")
         assert cohesion_score(G, ["a"]) == 1.0
 
     def test_partial_connectivity(self):
-        from backend.services.context_graph.cluster import cohesion_score
+        from backend.context_graph.cluster import cohesion_score
 
         G = nx.Graph()
         G.add_nodes_from(["a", "b", "c"])
@@ -54,7 +54,7 @@ class TestCohesionScore:
 
 class TestScoreAll:
     def test_returns_dict_with_all_community_ids(self):
-        from backend.services.context_graph.cluster import score_all
+        from backend.context_graph.cluster import score_all
 
         G = nx.Graph()
         G.add_nodes_from(["a", "b", "c"])
@@ -66,12 +66,12 @@ class TestScoreAll:
 
 class TestCluster:
     def test_empty_graph_returns_empty(self):
-        from backend.services.context_graph.cluster import cluster
+        from backend.context_graph.cluster import cluster
 
         assert cluster(nx.Graph()) == {}
 
     def test_single_node_graph(self):
-        from backend.services.context_graph.cluster import cluster
+        from backend.context_graph.cluster import cluster
 
         G = nx.Graph()
         G.add_node("solo", label="Solo", source_file="s.py")
@@ -80,7 +80,7 @@ class TestCluster:
         assert "solo" in result[0]
 
     def test_no_edges_each_node_own_community(self):
-        from backend.services.context_graph.cluster import cluster
+        from backend.context_graph.cluster import cluster
 
         G = nx.Graph()
         G.add_nodes_from(["a", "b", "c"])
@@ -90,7 +90,7 @@ class TestCluster:
         assert total_nodes == 3
 
     def test_connected_nodes_clustered(self):
-        from backend.services.context_graph.cluster import cluster
+        from backend.context_graph.cluster import cluster
 
         G = _make_connected_graph(6)
         result = cluster(G)
@@ -99,7 +99,7 @@ class TestCluster:
         assert total == 6
 
     def test_directed_graph_converted_to_undirected(self):
-        from backend.services.context_graph.cluster import cluster
+        from backend.context_graph.cluster import cluster
 
         G = nx.DiGraph()
         G.add_node("a", label="A", source_file="a.py")
@@ -109,7 +109,7 @@ class TestCluster:
         assert isinstance(result, dict)
 
     def test_exclude_hubs_percentile(self):
-        from backend.services.context_graph.cluster import cluster
+        from backend.context_graph.cluster import cluster
 
         G = _make_connected_graph(8)
         # All nodes connected to node "0" — high degree hub
@@ -121,7 +121,7 @@ class TestCluster:
 
 class TestSplitCommunity:
     def test_no_edges_splits_into_singles(self):
-        from backend.services.context_graph.cluster import _split_community
+        from backend.context_graph.cluster import _split_community
 
         G = nx.Graph()
         G.add_nodes_from(["a", "b", "c"])
@@ -129,7 +129,7 @@ class TestSplitCommunity:
         assert len(parts) == 3
 
     def test_connected_community_may_split(self):
-        from backend.services.context_graph.cluster import _split_community
+        from backend.context_graph.cluster import _split_community
 
         G = _make_connected_graph(4)
         parts = _split_community(G, ["0", "1", "2", "3"])
@@ -140,7 +140,7 @@ class TestSplitCommunity:
 
 class TestRemapCommunitiesToPrevious:
     def test_preserves_ids_with_high_overlap(self):
-        from backend.services.context_graph.cluster import remap_communities_to_previous
+        from backend.context_graph.cluster import remap_communities_to_previous
 
         communities = {0: ["a", "b", "c"], 1: ["d", "e"]}
         previous = {"a": 5, "b": 5, "c": 5, "d": 7, "e": 7}
@@ -151,12 +151,12 @@ class TestRemapCommunitiesToPrevious:
         assert node_cid["d"] == node_cid["e"]
 
     def test_empty_communities_returns_empty(self):
-        from backend.services.context_graph.cluster import remap_communities_to_previous
+        from backend.context_graph.cluster import remap_communities_to_previous
 
         assert remap_communities_to_previous({}, {}) == {}
 
     def test_all_unmatched_gets_fresh_ids(self):
-        from backend.services.context_graph.cluster import remap_communities_to_previous
+        from backend.context_graph.cluster import remap_communities_to_previous
 
         communities = {0: ["x", "y"], 1: ["z"]}
         previous: dict[str, int] = {}  # no overlap
