@@ -70,6 +70,17 @@ from backend.tools.linear import (
     linear_update_issue,
 )
 from backend.tools.memory import delete_memory, get_memory, save_memory, search_memory
+from backend.tools.native import (
+    base64_decode,
+    base64_encode,
+    hash_text,
+    http_request,
+    json_query,
+    jwt_decode,
+    regex_test,
+    time_now,
+    time_parse,
+)
 from backend.tools.notion import notion_create_page, notion_read_page, notion_search
 from backend.tools.plans import update_plan_item
 from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
@@ -138,6 +149,19 @@ GRAPH_TOOLS: list[BaseTool] = [
 
 #: Ferramentas RAG de ingestão e gestão
 RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs, manage_retriever]
+
+#: Utilitários nativos (sem API externa, exceto http_request)
+NATIVE_TOOLS: list[BaseTool] = [
+    time_now,
+    time_parse,
+    hash_text,
+    base64_encode,
+    base64_decode,
+    regex_test,
+    json_query,
+    jwt_decode,
+    http_request,
+]
 
 #: Ferramentas git e GitHub CLI (G3)
 GIT_TOOLS: list[BaseTool] = [
@@ -244,6 +268,16 @@ for _t in [
     graph_affected,
     graph_update,
     sequential_thinking,
+    # Utilitários nativos
+    time_now,
+    time_parse,
+    hash_text,
+    base64_encode,
+    base64_decode,
+    regex_test,
+    json_query,
+    jwt_decode,
+    http_request,
 ]:
     _all[_t.name] = _t
 
@@ -280,6 +314,15 @@ CHAT_TOOLS: list[BaseTool] = [
     notion_search,
     notion_read_page,
     notion_create_page,
+    time_now,
+    time_parse,
+    hash_text,
+    base64_encode,
+    base64_decode,
+    regex_test,
+    json_query,
+    jwt_decode,
+    http_request,
 ]
 
 # ---------------------------------------------------------------------------

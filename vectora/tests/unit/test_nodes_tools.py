@@ -66,11 +66,37 @@ def test_search_memory_registered():
 
 
 def test_all_tools_count():
-    # Guarda contra perda acidental de registro de ferramentas.
-    # Atualize ao adicionar/remover tool em backend/nodes/tools.py.
-    # 62 anteriores + 6 novas (get_workbench_context, update_plan_item,
-    # create_background_task, sequential_thinking, git_stage, git_unstage).
-    assert len(ALL_TOOLS) == 68
+    # Guarda contra perda acidental de registro de ferramentas — atualize ao
+    # adicionar/remover tool em backend/nodes/tools.py.
+    assert len(ALL_TOOLS) == 77
+
+
+def test_native_tools_registered():
+    # Utilitários nativos (backend/tools/native/) existem e têm testes
+    # próprios, mas até aqui nunca chegavam ao agente real — ALL_TOOLS não
+    # os importava e o único consumidor de backend/tools/__init__.py::TOOLS
+    # (mcp/server.py) também não. O agente ficava sem time_now/hash_text/etc.
+    names = {t.name for t in ALL_TOOLS}
+    for expected in (
+        "time_now",
+        "time_parse",
+        "hash_text",
+        "base64_encode",
+        "base64_decode",
+        "regex_test",
+        "json_query",
+        "jwt_decode",
+        "http_request",
+    ):
+        assert expected in names, f"Native tool ausente: {expected}"
+
+
+def test_native_tools_registered_in_chat_mode():
+    from backend.nodes.tools import CHAT_TOOLS
+
+    names = {t.name for t in CHAT_TOOLS}
+    assert "time_now" in names
+    assert "hash_text" in names
 
 
 def test_graph_tools_registered():
