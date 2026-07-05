@@ -309,6 +309,18 @@ async def _ensure_infra() -> None:
         _store = await build_store()
 
 
+async def get_store() -> Any:
+    """Retorna o LangGraph BaseStore compartilhado (mesmo usado pelo agente).
+
+    Diferente de ``langgraph.config.get_store()`` (que só funciona dentro de
+    um grafo em execução, via contextvar), este getter devolve a instância
+    direta — para uso em handlers HTTP fora do ciclo de vida do grafo, que
+    precisam ler/escrever o mesmo namespace que as memory tools do agente.
+    """
+    await _ensure_infra()
+    return _store
+
+
 async def _build_graph_async(
     model_id: str = "", chat_mode: bool = False, user_id: str | None = None
 ) -> Any:

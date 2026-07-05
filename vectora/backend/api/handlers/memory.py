@@ -1,4 +1,4 @@
-"""Handler REST de memórias do usuário — Bloco N.
+"""Handler REST de memórias do usuário.
 
 Endpoints:
     GET    /memory                — lista memórias do usuário autenticado (paginado)
@@ -9,11 +9,16 @@ Endpoints:
 
 Todos os endpoints exigem autenticação (injetada via middleware).
 O user_id é extraído de ``request.state.user.id``.
+
+Lê e escreve o mesmo LangGraph BaseStore usado pelas memory tools do agente
+(``backend/tools/memory.py``), no namespace ``("user", <user_id>, "memories")``
+— painel de configurações e agente compartilham as mesmas memórias.
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -22,6 +27,11 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/memory", tags=["memory"])
+
+# asearch/aput/aget vêm de langgraph.store.base.BaseStore — sem tipo público
+# estável para o retorno de asearch importar aqui sem acoplar à implementação
+# concreta (InMemoryStore/AsyncSqliteStore).
+_LIST_ALL_LIMIT = 1000
 
 
 # ---------------------------------------------------------------------------
@@ -73,16 +83,27 @@ class DeleteMemoryResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _get_user_id(request: Request) -> str:
-    """Extrai user_id do request autenticado.
+def _user_id(request: Request) -> str:
+    """Extrai o user_id bruto do request autenticado.
 
-    O AuthMiddleware injeta ``request.state.user`` quando o token é válido.
-    Em modo CLI (root local sem auth), usa ``"local"`` como namespace.
+    Em modo CLI (root local sem auth), usa ``"local"`` — mesmo default de
+    ``backend/tools/memory.py::_user_id_from_config``.
     """
     user = getattr(request.state, "user", None)
     if user is not None and hasattr(user, "id"):
-        return f"user:{user.id}"
-    return "user:local"
+        return str(user.id)
+    return "local"
+
+
+def _namespace(request: Request) -> tuple[str, ...]:
+    """Namespace do store — idêntico ao usado pelas memory tools do agente."""
+    return ("user", _user_id(request), "memories")
+
+
+async def _store() -> Any:
+    from backend.services.agent_factory import get_store
+
+    return await get_store()
 
 
 # ---------------------------------------------------------------------------
@@ -97,23 +118,25 @@ async def create_memory(
 ) -> CreateMemoryResponse:
     """Cria uma nova memória manualmente (pelo painel de configurações)."""
     try:
-        from backend.services.memory import get_memory_store
+        ns = _namespace(request)
+        store = await _store()
 
-        namespace = _get_user_id(request)
-        store = await get_memory_store()
-
-        existing = await store.get(namespace, body.key)
+        existing = await store.aget(ns, body.key)
         if existing is not None:
             raise HTTPException(
                 status_code=409,
                 detail=f"Memória '{body.key}' já existe. Use PUT para editar.",
             )
 
-        await store.save(
-            user_id=namespace,
-            key=body.key,
-            content=body.content,
-            metadata=body.metadata,
+        await store.aput(
+            ns,
+            body.key,
+            {
+                "key": body.key,
+                "content": body.content,
+                "metadata": body.metadata,
+                "updated_at": datetime.now(UTC).isoformat(),
+            },
         )
         return CreateMemoryResponse(status="created", key=body.key)
     except HTTPException:
@@ -131,26 +154,24 @@ async def list_memories(
 ) -> ListMemoriesResponse:
     """Lista memórias do usuário autenticado, ordenadas por data de atualização."""
     try:
-        from backend.services.memory import get_memory_store
+        ns = _namespace(request)
+        store = await _store()
+        items = await store.asearch(ns, limit=_LIST_ALL_LIMIT)
 
-        namespace = _get_user_id(request)
-        store = await get_memory_store()
-        all_mems = await store.get_all(namespace)
-
-        # Ordena por updated_at descendente (mais recentes primeiro)
-        all_mems.sort(key=lambda m: m.get("updated_at", ""), reverse=True)
+        all_mems = [
+            {
+                "key": item.key,
+                "content": item.value.get("content", ""),
+                "metadata": item.value.get("metadata") or {},
+                "updated_at": item.value.get("updated_at", ""),
+            }
+            for item in items
+        ]
+        all_mems.sort(key=lambda m: m["updated_at"], reverse=True)
 
         page = all_mems[offset : offset + limit]
         return ListMemoriesResponse(
-            memories=[
-                MemoryItem(
-                    key=m["key"],
-                    content=m["content"],
-                    metadata=m.get("metadata") or {},
-                    updated_at=m.get("updated_at", ""),
-                )
-                for m in page
-            ],
+            memories=[MemoryItem(**m) for m in page],
             total=len(all_mems),
         )
     except Exception as exc:
@@ -162,20 +183,18 @@ async def list_memories(
 async def get_memory_by_key(request: Request, key: str) -> MemoryItem:
     """Retorna uma memória específica pelo key."""
     try:
-        from backend.services.memory import get_memory_store
-
-        namespace = _get_user_id(request)
-        store = await get_memory_store()
-        mem = await store.get(namespace, key)
-        if mem is None:
+        ns = _namespace(request)
+        store = await _store()
+        item = await store.aget(ns, key)
+        if item is None:
             raise HTTPException(
                 status_code=404, detail=f"Memória '{key}' não encontrada"
             )
         return MemoryItem(
             key=key,
-            content=mem["content"],
-            metadata=mem.get("metadata") or {},
-            updated_at=mem.get("updated_at", ""),
+            content=item.value.get("content", ""),
+            metadata=item.value.get("metadata") or {},
+            updated_at=item.value.get("updated_at", ""),
         )
     except HTTPException:
         raise
@@ -192,23 +211,24 @@ async def update_memory(
 ) -> UpdateMemoryResponse:
     """Edita o conteúdo de uma memória existente."""
     try:
-        from backend.services.memory import get_memory_store
+        ns = _namespace(request)
+        store = await _store()
 
-        namespace = _get_user_id(request)
-        store = await get_memory_store()
-
-        # Verifica se existe antes de salvar
-        existing = await store.get(namespace, key)
+        existing = await store.aget(ns, key)
         if existing is None:
             raise HTTPException(
                 status_code=404, detail=f"Memória '{key}' não encontrada"
             )
 
-        await store.save(
-            user_id=namespace,
-            key=key,
-            content=body.content,
-            metadata=body.metadata or existing.get("metadata") or {},
+        await store.aput(
+            ns,
+            key,
+            {
+                "key": key,
+                "content": body.content,
+                "metadata": body.metadata or existing.value.get("metadata") or {},
+                "updated_at": datetime.now(UTC).isoformat(),
+            },
         )
         return UpdateMemoryResponse(status="updated", key=key)
     except HTTPException:
@@ -222,15 +242,14 @@ async def update_memory(
 async def delete_memory_by_key(request: Request, key: str) -> DeleteMemoryResponse:
     """Deleta uma memória específica pelo key."""
     try:
-        from backend.services.memory import get_memory_store
-
-        namespace = _get_user_id(request)
-        store = await get_memory_store()
-        deleted = await store.delete(namespace, key)
-        if not deleted:
+        ns = _namespace(request)
+        store = await _store()
+        existing = await store.aget(ns, key)
+        if existing is None:
             raise HTTPException(
                 status_code=404, detail=f"Memória '{key}' não encontrada"
             )
+        await store.adelete(ns, key)
         return DeleteMemoryResponse(status="deleted", key=key)
     except HTTPException:
         raise
@@ -243,16 +262,14 @@ async def delete_memory_by_key(request: Request, key: str) -> DeleteMemoryRespon
 async def clear_all_memories(request: Request) -> DeleteMemoryResponse:
     """Limpa todas as memórias do usuário autenticado."""
     try:
-        from backend.services.memory import get_memory_store
-
-        namespace = _get_user_id(request)
-        store = await get_memory_store()
-        all_mems = await store.get_all(namespace)
+        ns = _namespace(request)
+        store = await _store()
+        items = await store.asearch(ns, limit=_LIST_ALL_LIMIT)
         count = 0
-        for mem in all_mems:
-            if await store.delete(namespace, mem["key"]):
-                count += 1
-        logger.info("clear_all_memories: %d removidas (namespace=%s)", count, namespace)
+        for item in items:
+            await store.adelete(ns, item.key)
+            count += 1
+        logger.info("clear_all_memories: %d removidas (namespace=%s)", count, ns)
         return DeleteMemoryResponse(status="cleared", deleted=count)
     except Exception as exc:
         logger.exception("clear_all_memories failed")

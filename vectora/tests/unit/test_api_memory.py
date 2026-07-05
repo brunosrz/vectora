@@ -1,57 +1,46 @@
 """Testes HTTP dos endpoints de memória (UX-11).
 
-Usa FastAPI TestClient com banco SQLite temporário, cobrindo:
+Usa FastAPI TestClient com um LangGraph InMemoryStore real (mesmo tipo de
+BaseStore usado em produção via ``backend.services.agent_factory.get_store``),
+cobrindo:
 - GET /memory — lista vazia, paginação
 - POST /memory — cria, 409 duplicado
 - PUT /memory/{key} — edita, 404 inexistente
 - DELETE /memory/{key} — deleta, 404 inexistente
 - DELETE /memory — limpa tudo
+- Regressão: API e memory tools do agente leem/escrevem o mesmo namespace
 """
 
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-
-
-@pytest.fixture(autouse=True)
-def _reset_memory_singleton():
-    """Reset memory singleton antes de cada teste (autouse)."""
-    import backend.services.memory as mem_mod
-
-    mem_mod._memory_store = None
-    yield
-    mem_mod._memory_store = None
+from langgraph.store.memory import InMemoryStore
 
 
 @pytest.fixture
-def client(tmp_path):
-    """TestClient com MemoryStore usando SQLite fresh por teste."""
-    import asyncio
-
-    import backend.services.memory as mem_mod
-
-    db_file = str(tmp_path / "mem.db")
+def client(monkeypatch):
+    """TestClient com um BaseStore real (InMemoryStore) compartilhado."""
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
-    os.environ["VECTORA_DB_FILE"] = db_file
 
-    # Cria e inicializa store com banco novo ANTES do app ser criado
-    store = mem_mod.MemoryStore(db_file)
-    asyncio.run(store.initialize())
-    mem_mod._memory_store = store
+    store = InMemoryStore()
+
+    async def _fake_get_store():
+        return store
+
+    monkeypatch.setattr("backend.services.agent_factory.get_store", _fake_get_store)
 
     from backend.api.server import create_app
 
     app = create_app(serve_static=False)
     tc = TestClient(app)
+    tc.store = store  # type: ignore[attr-defined]
 
     yield tc
 
-    os.environ.pop("VECTORA_DB_FILE", None)
-    mem_mod._memory_store = None
+    os.environ.pop("VECTORA_AUTH_REQUIRED", None)
 
 
 class TestMemoryList:
@@ -140,3 +129,52 @@ class TestMemoryDelete:
         """DELETE inexistente retorna 404."""
         resp = client.delete("/memory/nonexistent")
         assert resp.status_code == 404
+
+
+class TestMemorySharedStoreWithAgent:
+    """Regressão: painel de configurações e memory tools do agente devem
+    compartilhar o mesmo BaseStore/namespace — antes, o handler HTTP escrevia
+    num MemoryStore SQLite à parte, nunca visto pelo agente (e vice-versa).
+
+    ``backend.tools.memory._get_store`` normalmente resolve o store via
+    ``langgraph.config.get_store()`` (contextvar setado pelo LangGraph durante
+    a execução do grafo) — aqui simulamos essa resolução apontando pro mesmo
+    ``InMemoryStore`` do fixture ``client``, que é exatamente a instância que
+    ``create_deep_agent(store=...)`` recebe em produção (ver
+    ``backend.services.agent_factory._ensure_infra``).
+    """
+
+    @pytest.mark.asyncio
+    async def test_memory_saved_via_agent_tool_appears_in_api(
+        self, client, monkeypatch
+    ):
+        from langchain_core.runnables import RunnableConfig
+
+        from backend.tools.memory import save_memory
+
+        monkeypatch.setattr("backend.tools.memory._get_store", lambda: client.store)
+
+        config: RunnableConfig = {"configurable": {"user_id": "local"}}
+        await save_memory.ainvoke(
+            {"key": "from_agent", "content": "salvo pelo agente"}, config=config
+        )
+
+        resp = client.get("/memory/from_agent")
+        assert resp.status_code == 200
+        assert resp.json()["content"] == "salvo pelo agente"
+
+    def test_memory_created_via_api_is_visible_to_agent_tool(self, client, monkeypatch):
+        import asyncio
+
+        from langchain_core.runnables import RunnableConfig
+
+        from backend.tools.memory import get_memory
+
+        monkeypatch.setattr("backend.tools.memory._get_store", lambda: client.store)
+
+        client.post("/memory", json={"key": "from_api", "content": "salvo pelo painel"})
+
+        config: RunnableConfig = {"configurable": {"user_id": "local"}}
+        out = asyncio.run(get_memory.ainvoke({"key": "from_api"}, config=config))
+        assert '"status": "found"' in out
+        assert "salvo pelo painel" in out
