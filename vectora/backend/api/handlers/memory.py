@@ -159,19 +159,19 @@ async def list_memories(
         items = await store.asearch(ns, limit=_LIST_ALL_LIMIT)
 
         all_mems = [
-            {
-                "key": item.key,
-                "content": item.value.get("content", ""),
-                "metadata": item.value.get("metadata") or {},
-                "updated_at": item.value.get("updated_at", ""),
-            }
+            MemoryItem(
+                key=item.key,
+                content=item.value.get("content", ""),
+                metadata=item.value.get("metadata") or {},
+                updated_at=item.value.get("updated_at", ""),
+            )
             for item in items
         ]
-        all_mems.sort(key=lambda m: m["updated_at"], reverse=True)
+        all_mems.sort(key=lambda m: m.updated_at, reverse=True)
 
         page = all_mems[offset : offset + limit]
         return ListMemoriesResponse(
-            memories=[MemoryItem(**m) for m in page],
+            memories=page,
             total=len(all_mems),
         )
     except Exception as exc:
