@@ -50,8 +50,8 @@ function redirectToSignin(currentPath: string): never {
  * Guard chamado pelo `beforeLoad` da rota raiz.
  *
  * Fluxo:
- *  1. Rotas públicas (`/auth/*`, `/share/*`) passam direto.
- *  2. `GET /auth/has-users`: vazio → redirect `/auth/signup` (setup root).
+ *  1. Rotas públicas (`/auth/*`, `/share/*`, `/onboarding`) passam direto.
+ *  2. `GET /auth/has-users`: vazio → redirect `/onboarding` (wizard local/VPS).
  *  3. `GET /auth/me`: 200 → libera + atualiza store.
  *  4. 401 → `POST /auth/refresh` silencioso; sucesso libera, falha
  *     limpa o store e vai para `/auth/signin?from=<currentPath>`.

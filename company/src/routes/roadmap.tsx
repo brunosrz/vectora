@@ -25,7 +25,6 @@ const SHIPPED = [
   },
   { label: "Coder Agent + Search Agent — arquivos, terminal, git, web, RAG" },
   { label: "RAG híbrido — Cohere Embed + LanceDB + BM25/denso + reranker" },
-  { label: "Context Graph nativo — tree-sitter + extração por LLM" },
   { label: "MCP server sempre-ativo — Claude Code, Claude Desktop e outros" },
   { label: "Chat web multi-usuário (plano Pro)" },
   { label: "docs.vectora.company — documentação completa" },
@@ -40,14 +39,16 @@ const SHIPPED = [
 ];
 
 const BUILDING = [
+  { label: "Context Graph nativo — tree-sitter + extração por LLM (beta)" },
+  { label: "IDE mode — layout de editor no workbench (beta)" },
+];
+
+const PLANNED = [
   {
     label:
       "REST API pública completa — auth, threads/chat, workspaces, git, terminal, RAG, tasks, webhooks e settings via API (hoje só classify/extract/jobs são públicos)",
   },
-  { label: "VS Code extension (beta)" },
-];
-
-const PLANNED = [
+  { label: "Integração nativa com VS Code e JetBrains via ACP" },
   { label: "SDK Python — pacote PyPI oficial (plugins/extensões do Vectora)" },
   { label: "SDK TypeScript/Node — pacote NPM oficial (plugins/extensões)" },
   { label: "GitHub Actions integration — run Vectora directly from CI" },

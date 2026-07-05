@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import type { AuthUser } from "@/lib/types/auth";
 import { m } from "@/lib/paraglide/messages";
+import { consumeVpsGatePassed } from "@/lib/stores/onboarding-signal";
 
 /** Tamanho mínimo de senha — espelha a validação do backend. */
 const PASSWORD_MIN = 8;
@@ -74,7 +75,14 @@ function SignUpPage() {
       if (cancelled) return;
 
       if (!hasUsers) {
-        setReady(true);
+        // Só mostra o formulário direto se veio do gate VPS do wizard
+        // (token Pro já validado) — chegada direta (bookmark, histórico do
+        // navegador) com a instância ainda zerada volta pro wizard novo.
+        if (consumeVpsGatePassed()) {
+          setReady(true);
+          return;
+        }
+        void navigate({ to: "/onboarding" });
         return;
       }
 

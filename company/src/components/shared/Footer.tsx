@@ -23,9 +23,6 @@ export default function Footer() {
         <div className="flex flex-col gap-3">
           <p className={titleClass}>{m.footer_product()}</p>
           <div className={linksGridClass}>
-            <Link to="/" hash="pricing" className={linkClass}>
-              {m.nav_pricing()}
-            </Link>
             <a
               href="https://docs.vectora.company"
               target="_blank"
@@ -40,14 +37,6 @@ export default function Footer() {
             <Link to="/roadmap" className={linkClass}>
               {m.footer_roadmap()}
             </Link>
-            <a
-              href="https://status.vectora.company"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={linkClass}
-            >
-              {m.footer_status()}
-            </a>
           </div>
         </div>
 
@@ -59,7 +48,7 @@ export default function Footer() {
               {m.nav_support()}
             </Link>
             <Link to="/issues" className={linkClass}>
-              Issues
+              {m.nav_issues()}
             </Link>
           </div>
         </div>

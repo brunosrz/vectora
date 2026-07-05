@@ -218,8 +218,9 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             logger.warning(
                 "\n\n"
                 "  ✨  Vectora aguardando setup inicial.\n"
-                "      Abra o chat no browser e crie o primeiro usuário.\n"
-                "      O primeiro usuário se torna root automaticamente.\n"
+                "      Abra o chat no browser — o wizard vai perguntar seu\n"
+                "      nome e o modo de operação (local, sem conta, ou VPS\n"
+                "      com VECTORA_TOKEN Pro).\n"
             )
     except Exception:
         pass  # Não bloqueia o startup se o DB ainda não estiver criado

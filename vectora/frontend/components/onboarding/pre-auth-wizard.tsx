@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2, Check, Monitor, Server } from "lucide-react";
 import { m } from "@/lib/paraglide/messages";
+import { signalVpsGatePassed } from "@/lib/stores/onboarding-signal";
 
 type Step = "identity" | "mode" | "vps-token";
 
@@ -101,10 +102,11 @@ export function PreAuthWizard() {
         setTokenError(
           data.error === "not_pro_tier"
             ? m.onboarding_pre_vps_token_invalid()
-            : (data.error ?? m.onboarding_pre_vps_token_invalid()),
+            : data.error ?? m.onboarding_pre_vps_token_invalid(),
         );
         return;
       }
+      signalVpsGatePassed();
       void navigate({
         to: "/auth/signup",
         search: { name: name.trim() },

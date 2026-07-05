@@ -52,6 +52,13 @@ interface UpdateStatus {
   progress?: number;
 }
 
+// O `name` do package.json é "vectora-desktop" (identificador do pacote npm,
+// distinto de outros subprojetos do monorepo) — sem isto, Electron usa esse
+// valor pra derivar o userData path (%APPDATA%\vectora-desktop\ no Windows),
+// que não é o nome do produto. setName() força %APPDATA%\vectora\ sem
+// precisar renomear o pacote. Chamado antes de qualquer path ser resolvido.
+app.setName("vectora");
+
 let backend: ChildProcess | null = null;
 let backendPort: number | null = null;
 let backendPipePath: string | null = null; // Windows named pipe path (\\.\pipe\vectora-<pid>)

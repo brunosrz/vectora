@@ -31,17 +31,18 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
     : string;
 };
 declare namespace NodeJS {
-  interface ProcessEnv extends StringifyValues<
-    Pick<
-      Cloudflare.Env,
-      | "MAX_PAYLOAD_BYTES"
-      | "QUEUE_TTL_MS"
-      | "APP_URL"
-      | "RELAY_URL"
-      | "RELAY_HMAC_SECRET"
-      | "VECTORA_OAUTH_SECRET"
-    >
-  > {}
+  interface ProcessEnv
+    extends StringifyValues<
+      Pick<
+        Cloudflare.Env,
+        | "MAX_PAYLOAD_BYTES"
+        | "QUEUE_TTL_MS"
+        | "APP_URL"
+        | "RELAY_URL"
+        | "RELAY_HMAC_SECRET"
+        | "VECTORA_OAUTH_SECRET"
+      >
+    > {}
 }
 
 // Begin runtime types
@@ -2137,10 +2138,8 @@ declare var Request: {
  *
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Request)
  */
-interface Request<
-  CfHostMetadata = unknown,
-  Cf = CfProperties<CfHostMetadata>,
-> extends Body {
+interface Request<CfHostMetadata = unknown, Cf = CfProperties<CfHostMetadata>>
+  extends Body {
   /**
    * The **`clone()`** method of the Request interface creates a copy of the current `Request` object.
    *
@@ -3206,7 +3205,9 @@ interface TextDecoderStreamTextDecoderStreamInit {
  *
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy)
  */
-declare class ByteLengthQueuingStrategy implements QueuingStrategy<ArrayBufferView> {
+declare class ByteLengthQueuingStrategy
+  implements QueuingStrategy<ArrayBufferView>
+{
   constructor(init: QueuingStrategyInit);
   /**
    * The read-only **`ByteLengthQueuingStrategy.highWaterMark`** property returns the total number of bytes that can be contained in the internal queue before backpressure is applied.
@@ -12456,7 +12457,8 @@ interface RequestInitCfPropertiesVaryHeader {
   action: RequestInitCfPropertiesVaryAction;
 }
 /** Vary behavior for the `accept` request header. */
-interface RequestInitCfPropertiesVaryAcceptHeader extends RequestInitCfPropertiesVaryHeader {
+interface RequestInitCfPropertiesVaryAcceptHeader
+  extends RequestInitCfPropertiesVaryHeader {
   /**
    * Media types to keep when normalizing the `Accept` request header.
    *
@@ -12465,7 +12467,8 @@ interface RequestInitCfPropertiesVaryAcceptHeader extends RequestInitCfPropertie
   media_types?: string[];
 }
 /** Vary behavior for the `accept-language` request header. */
-interface RequestInitCfPropertiesVaryAcceptLanguageHeader extends RequestInitCfPropertiesVaryHeader {
+interface RequestInitCfPropertiesVaryAcceptLanguageHeader
+  extends RequestInitCfPropertiesVaryHeader {
   /**
    * Language tags to keep when normalizing the `Accept-Language` request
    * header.
@@ -12715,7 +12718,7 @@ interface RequestInitCfPropertiesImageDraw extends BasicImageTransformations {
    * How to combine the foreground and backdrop pixels to create the result
    */
   composite?: /** Foreground drawn on top of backdrop (default) */
-    | "over"
+  | "over"
     /** Foreground shown only where backdrop is opaque */
     | "in"
     /** Foreground drawn on top, but clipped to the backdrop's shape */
@@ -12950,7 +12953,8 @@ interface IncomingRequestCfPropertiesBotManagement {
    */
   clientTrustScore: number;
 }
-interface IncomingRequestCfPropertiesBotManagementEnterprise extends IncomingRequestCfPropertiesBotManagement {
+interface IncomingRequestCfPropertiesBotManagementEnterprise
+  extends IncomingRequestCfPropertiesBotManagement {
   /**
    * Results of Cloudflare's Bot Management analysis
    */
@@ -14792,8 +14796,7 @@ declare namespace CloudflareWorkersModule {
   export abstract class WorkflowEntrypoint<
     Env = unknown,
     T extends Rpc.Serializable<T> | unknown = unknown,
-  >
-    implements Rpc.WorkflowEntrypointBranded
+  > implements Rpc.WorkflowEntrypointBranded
   {
     [Rpc.__WORKFLOW_ENTRYPOINT_BRAND]: never;
     protected ctx: ExecutionContext;

@@ -37,14 +37,17 @@ function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Primeiro acesso (sem usuários) → setup do root
+  // Primeiro acesso (sem usuários) → wizard novo (/onboarding), nunca mais
+  // direto pro signup antigo. Chegar em /auth/signin com a instância zerada
+  // só acontece por link direto/histórico do navegador — o fluxo normal de
+  // primeiro acesso já é redirecionado pelo guard de __root.tsx.
   useEffect(() => {
     let cancelled = false;
     fetch("/auth/has-users", { credentials: "include" })
       .then((r) => r.json())
       .then((d: { exists?: boolean }) => {
         if (!cancelled && d.exists === false) {
-          void navigate({ to: "/auth/signup" });
+          void navigate({ to: "/onboarding" });
         }
       })
       .catch(() => {
