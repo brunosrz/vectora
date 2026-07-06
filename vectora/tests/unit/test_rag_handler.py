@@ -147,3 +147,68 @@ class TestWorkspaceRagSummary:
             out = await handler.get_workspace_rag_summary("ws-1")
 
         assert out == {"collections": [{"name": "articles", "count": 1}]}
+
+
+class TestRagSearch:
+    """POST /rag/search — busca direta do usuário, mesma vector_search do agente."""
+
+    @pytest.mark.asyncio
+    async def test_search_with_explicit_collection_returns_sorted_results(self):
+        import json
+
+        from backend.api.handlers import rag as handler
+        from backend.api.handlers.rag import RagSearchBody
+        from backend.tools.rag import vector_search
+
+        raw = json.dumps(
+            {
+                "status": "success",
+                "results": [
+                    {"content": "b", "score": 0.9},
+                    {"content": "a", "score": 0.1},
+                ],
+            }
+        )
+        with patch.object(vector_search, "coroutine", AsyncMock(return_value=raw)):
+            out = await handler.search_rag(
+                RagSearchBody(query="oi", collection="articles", limit=5)
+            )
+
+        assert out["query"] == "oi"
+        assert [r["content"] for r in out["results"]] == ["a", "b"]
+        assert all(r["collection"] == "articles" for r in out["results"])
+
+    @pytest.mark.asyncio
+    async def test_search_without_collection_or_workspace_falls_back_to_articles(self):
+        from backend.api.handlers import rag as handler
+        from backend.api.handlers.rag import RagSearchBody
+        from backend.tools.rag import vector_search
+
+        mocked = AsyncMock(return_value='{"status": "no_results", "results": []}')
+        with patch.object(vector_search, "coroutine", mocked):
+            out = await handler.search_rag(RagSearchBody(query="oi"))
+
+        mocked.assert_awaited_once_with(query="oi", collection="articles", limit=5)
+        assert out["results"] == []
+
+    @pytest.mark.asyncio
+    async def test_search_with_workspace_but_nothing_indexed_returns_empty(self):
+        """Edge — workspace sem nenhuma coleção indexada não deve chamar vector_search."""
+        from backend.api.handlers import rag as handler
+        from backend.api.handlers.rag import RagSearchBody
+        from backend.tools.rag import vector_search
+
+        with (
+            patch.object(
+                handler,
+                "get_workspace_rag_summary",
+                AsyncMock(return_value={"collections": []}),
+            ),
+            patch.object(vector_search, "coroutine", AsyncMock()) as mocked,
+        ):
+            out = await handler.search_rag(
+                RagSearchBody(query="oi", workspace_id="ws-vazio")
+            )
+
+        mocked.assert_not_awaited()
+        assert out == {"results": []}

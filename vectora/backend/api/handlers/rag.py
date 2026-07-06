@@ -6,6 +6,7 @@ Endpoints (exigem auth via middleware):
     GET    /rag/collections          — lista as coleções (tabelas LanceDB) e tamanho
     DELETE /rag/collections/{name}   — apaga uma coleção inteira
     GET    /rag/workspace-summary    — o que já está indexado num workspace específico
+    POST   /rag/search               — busca direta do usuário (thin wrapper sobre vector_search)
 
 Os settings persistem em ``runtime_settings`` (``~/.vectora/settings.json``) e são
 lidos pelo build do reranker/embeddings (``backend/tools/rag.py``).
@@ -133,6 +134,56 @@ async def get_workspace_rag_summary(workspace_id: str) -> dict[str, Any]:
         if count > 0:
             summary.append({"name": str(name), "count": count})
     return {"collections": summary}
+
+
+class RagSearchBody(BaseModel):
+    query: str
+    workspace_id: str | None = None
+    collection: str | None = None
+    limit: int = 5
+
+
+@router.post("/search")
+async def search_rag(body: RagSearchBody) -> dict[str, Any]:
+    """Busca direta do usuário na base RAG — mesma `vector_search` que o agente usa.
+
+    Sem `collection`, busca em toda coleção indexada com o `workspace_id`
+    dado (via `/rag/workspace-summary`); resultados de todas as coleções
+    são combinados e ordenados por score.
+    """
+    import json as _json
+
+    from backend.tools.rag import vector_search
+
+    collections: list[str]
+    if body.collection:
+        collections = [body.collection]
+    elif body.workspace_id:
+        summary = await get_workspace_rag_summary(body.workspace_id)
+        collections = [c["name"] for c in summary["collections"]]
+    else:
+        collections = ["articles"]
+
+    if not collections:
+        return {"results": []}
+
+    all_results: list[dict[str, Any]] = []
+    for collection in collections:
+        raw = await vector_search.ainvoke(
+            {"query": body.query, "collection": collection, "limit": body.limit}
+        )
+        try:
+            parsed = _json.loads(raw)
+        except ValueError:
+            continue
+        for r in parsed.get("results", []):
+            r["collection"] = collection
+            all_results.append(r)
+
+    all_results.sort(
+        key=lambda r: r.get("relevance_score") or -r.get("score", 0), reverse=True
+    )
+    return {"results": all_results[: body.limit], "query": body.query}
 
 
 @router.delete("/collections/{name}")

@@ -6,7 +6,13 @@
  * A aba consulta GET /rag/workspace-summary pra distinguir os dois casos.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  cleanup,
+  fireEvent,
+} from "@testing-library/react";
 import { MemoryTab } from "../memory-tab";
 
 vi.mock("@/lib/paraglide/messages", () => ({
@@ -163,5 +169,68 @@ describe("MemoryTab", () => {
     expect(
       screen.queryByText("workbench_memory_indexed_title"),
     ).not.toBeInTheDocument();
+  });
+
+  it("busca /rag/search com o texto digitado e mostra os resultados", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/rag/workspace-summary")) {
+        return new Response(JSON.stringify({ collections: [] }));
+      }
+      if (String(url) === "/rag/search") {
+        const body = JSON.parse(String(init?.body));
+        expect(body).toEqual({ query: "auth", workspace_id: "ws-1" });
+        return new Response(
+          JSON.stringify({
+            results: [{ content: "trecho sobre auth", collection: "articles" }],
+          }),
+        );
+      }
+      throw new Error(`unmocked fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<MemoryTab threadId="t1" />);
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_memory_search_placeholder"),
+      { target: { value: "auth" } },
+    );
+
+    await waitFor(
+      () => expect(screen.getAllByText("articles").length).toBeGreaterThan(0),
+      { timeout: 2000 },
+    );
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByText("trecho sobre auth")).toBeInTheDocument();
+  });
+
+  it("mostra 'nenhum resultado' quando a busca não encontra nada (edge)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (String(url).includes("/rag/workspace-summary")) {
+          return new Response(JSON.stringify({ collections: [] }));
+        }
+        if (String(url) === "/rag/search") {
+          return new Response(JSON.stringify({ results: [] }));
+        }
+        throw new Error(`unmocked fetch: ${url}`);
+      }),
+    );
+
+    render(<MemoryTab threadId="t1" />);
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_memory_search_placeholder"),
+      { target: { value: "nada-aqui" } },
+    );
+
+    await waitFor(
+      () =>
+        expect(
+          screen.getByText("workbench_memory_search_no_results"),
+        ).toBeInTheDocument(),
+      { timeout: 2000 },
+    );
   });
 });

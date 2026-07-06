@@ -16,6 +16,7 @@ import {
   Database,
   Globe,
   Loader2,
+  Search,
 } from "lucide-react";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
@@ -65,6 +66,59 @@ function useWorkspaceRagSummary(workspaceId: string | undefined) {
   }, [workspaceId]);
 
   return collections;
+}
+
+interface RagSearchResult {
+  content: string;
+  collection: string;
+  score?: number;
+  relevance_score?: number;
+  metadata?: { source?: string };
+}
+
+/** Busca direta do usuário na base RAG — POST /rag/search, mesma
+ * `vector_search` que o agente usa. Não substitui `ragCitations` (o que o
+ * agente já recuperou nesta resposta): é uma consulta explícita, disparada
+ * pelo usuário, escopada ao workspace ativo. */
+function useRagSearch(workspaceId: string | undefined) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<RagSearchResult[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setResults(null);
+      return;
+    }
+    let alive = true;
+    setLoading(true);
+    const handle = setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch("/rag/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: trimmed, workspace_id: workspaceId }),
+          });
+          if (!res.ok || !alive) return;
+          const data = (await res.json()) as { results?: RagSearchResult[] };
+          if (alive)
+            setResults(Array.isArray(data.results) ? data.results : []);
+        } catch {
+          if (alive) setResults([]);
+        } finally {
+          if (alive) setLoading(false);
+        }
+      })();
+    }, 300);
+    return () => {
+      alive = false;
+      clearTimeout(handle);
+    };
+  }, [query, workspaceId]);
+
+  return { query, setQuery, results, loading };
 }
 
 interface MemoryTabProps {
@@ -130,11 +184,33 @@ function MemoryPill({ item }: { item: MemoryItem }) {
   );
 }
 
+function MemorySearchBox({
+  query,
+  onChange,
+}: {
+  query: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="relative px-3 pt-2">
+      <Search className="pointer-events-none absolute left-5.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={m.workbench_memory_search_placeholder()}
+        className="w-full rounded-lg border border-border/60 bg-card/30 py-1.5 pl-7 pr-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+      />
+    </div>
+  );
+}
+
 export function MemoryTab({ threadId }: MemoryTabProps) {
   const [messages] = useThreadMessages(threadId);
   const activeWorkspaceId = useWorkspacesStore((s) => s.getActive()?.id);
   const jobs = useRagJobsStore((s) => s.jobs);
   const workspaceSummary = useWorkspaceRagSummary(activeWorkspaceId);
+  const search = useRagSearch(activeWorkspaceId);
 
   // Jobs de indexação RAG do workspace ativo (atividade ao vivo).
   const ragJobs = useMemo(
@@ -195,25 +271,66 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
     0,
   );
 
+  const searchSection = search.query.trim() && (
+    <section className="space-y-1.5">
+      <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <Search className="h-3 w-3" />
+        {m.workbench_memory_search_results()}
+        {search.results && ` (${search.results.length})`}
+      </h3>
+      {search.loading && (
+        <div className="flex items-center gap-2 px-2.5 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+          {m.workbench_memory_searching()}
+        </div>
+      )}
+      {!search.loading && search.results?.length === 0 && (
+        <p className="px-2.5 py-2 text-xs text-muted-foreground">
+          {m.workbench_memory_search_no_results()}
+        </p>
+      )}
+      {!search.loading &&
+        search.results?.map((r, i) => (
+          <MemoryPill
+            key={`search-${i}`}
+            item={{
+              id: `search-${i}`,
+              kind: "rag",
+              title: r.metadata?.source ?? r.collection,
+              subtitle: r.collection,
+              content: r.content,
+            }}
+          />
+        ))}
+    </section>
+  );
+
   if (isEmpty) {
     return (
       <div className="flex h-full flex-col">
         <RagSettingsPanel />
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-          <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
-          <div className="max-w-[240px]">
-            <p className="text-sm font-medium text-foreground">
-              {indexedInWorkspace > 0
-                ? m.workbench_memory_indexed_title()
-                : m.workbench_memory_empty_title()}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              {indexedInWorkspace > 0
-                ? m.workbench_memory_indexed_desc({ n: indexedInWorkspace })
-                : m.workbench_memory_empty_desc()}
-            </p>
+        <MemorySearchBox query={search.query} onChange={search.setQuery} />
+        {searchSection ? (
+          <div className="flex-1 space-y-4 overflow-auto px-3 py-3">
+            {searchSection}
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+            <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
+            <div className="max-w-[240px]">
+              <p className="text-sm font-medium text-foreground">
+                {indexedInWorkspace > 0
+                  ? m.workbench_memory_indexed_title()
+                  : m.workbench_memory_empty_title()}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {indexedInWorkspace > 0
+                  ? m.workbench_memory_indexed_desc({ n: indexedInWorkspace })
+                  : m.workbench_memory_empty_desc()}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -221,7 +338,9 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
   return (
     <div className="flex h-full flex-col">
       <RagSettingsPanel />
-      <div className="flex-1 space-y-4 overflow-auto px-3 pb-3">
+      <MemorySearchBox query={search.query} onChange={search.setQuery} />
+      <div className="flex-1 space-y-4 overflow-auto px-3 pb-3 pt-3">
+        {searchSection}
         {hasActivity && (
           <section className="space-y-1.5">
             <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
