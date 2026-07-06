@@ -9,6 +9,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { useSettingsStore } from "./settings-store";
 
 export interface FileWindowState {
   /** workspaceId — uma janela por workspace */
@@ -70,6 +71,33 @@ function basename(path: string): string {
   return path.split(/[/\\]/).pop() || path;
 }
 
+const DEFAULT_WIN_W = 640;
+const DEFAULT_WIN_H = 460;
+
+/** Posição inicial centralizada na área de conteúdo VISÍVEL (descontando a
+ * sidebar esquerda), não no viewport inteiro — antes disso, janelas
+ * nasciam sempre perto de x=80/y=80, o que fica embaixo/colado na sidebar
+ * em qualquer largura de tela. `count` escalona janelas subsequentes da
+ * mesma centralização (não mais de um ponto fixo no canto). */
+function initialBounds(count: number): { x: number; y: number } {
+  if (typeof window === "undefined") {
+    return { x: 80 + (count % 6) * 32, y: 80 + (count % 6) * 32 };
+  }
+  const sidebarWidth = useSettingsStore.getState().sidebarWidth;
+  const contentLeft = sidebarWidth;
+  const contentWidth = Math.max(
+    window.innerWidth - sidebarWidth,
+    DEFAULT_WIN_W,
+  );
+  const centerX = contentLeft + (contentWidth - DEFAULT_WIN_W) / 2;
+  const centerY = (window.innerHeight - DEFAULT_WIN_H) / 2;
+  const stagger = (count % 6) * 32;
+  return {
+    x: Math.max(contentLeft, centerX + stagger),
+    y: Math.max(24, centerY + stagger),
+  };
+}
+
 export const useWindowsStore = create<WindowsState>()(
   persist(
     (set, get) => ({
@@ -111,7 +139,7 @@ export const useWindowsStore = create<WindowsState>()(
           }
           const activeTab =
             s.dockedActiveTab === path
-              ? tabs[Math.max(0, s.dockedTabs.indexOf(path) - 1)] ?? tabs[0]
+              ? (tabs[Math.max(0, s.dockedTabs.indexOf(path) - 1)] ?? tabs[0])
               : s.dockedActiveTab;
           return { dockedTabs: tabs, dockedActiveTab: activeTab };
         }),
@@ -144,16 +172,17 @@ export const useWindowsStore = create<WindowsState>()(
           }
 
           const count = s.windows.length;
+          const { x, y } = initialBounds(count);
           const next: FileWindowState = {
             id,
             workspaceId,
             tabs: [path],
             activeTab: path,
             title: basename(path),
-            x: 80 + (count % 6) * 32,
-            y: 80 + (count % 6) * 32,
-            w: 640,
-            h: 460,
+            x,
+            y,
+            w: DEFAULT_WIN_W,
+            h: DEFAULT_WIN_H,
             minimized: false,
             zIndex: z,
           };
@@ -175,7 +204,7 @@ export const useWindowsStore = create<WindowsState>()(
           }
           const activeTab =
             win.activeTab === path
-              ? tabs[Math.max(0, win.tabs.indexOf(path) - 1)] ?? tabs[0]
+              ? (tabs[Math.max(0, win.tabs.indexOf(path) - 1)] ?? tabs[0])
               : win.activeTab;
           return {
             windows: s.windows.map((w) =>

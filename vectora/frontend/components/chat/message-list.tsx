@@ -513,8 +513,10 @@ export const MessageList = memo(function MessageList({
       {showScrollButton && !isLoadingThread && (
         <button
           onClick={scrollToBottom}
-          className="scroll-button fixed bottom-32 right-4 sm:right-8 p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform z-50"
-          style={{ background: "#7FC8FF", color: "white" }}
+          // absolute (não fixed): posiciona relativo ao container de
+          // mensagens (que já é `relative`, ver acima), não ao viewport —
+          // evita sobrepor a nav rail do workbench quando ele está aberto.
+          className="scroll-button absolute bottom-32 right-4 sm:right-8 p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform z-50 bg-primary text-primary-foreground"
           aria-label="Voltar ao fim"
         >
           <ArrowDown className="w-5 h-5" />

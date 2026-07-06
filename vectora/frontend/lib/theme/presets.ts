@@ -49,6 +49,8 @@ const TOKEN_VAR_NAMES = [
   "--sidebar",
   "--user-bubble",
   "--user-bubble-foreground",
+  "--scrollbar-thumb",
+  "--scrollbar-thumb-hover",
 ] as const;
 
 /** Presets baseados nos temas originais do VS Code (paletas open-source). */
@@ -170,6 +172,8 @@ export function buildThemeTokens(
     "--sidebar": base.sidebar,
     "--user-bubble": base.userBubble,
     "--user-bubble-foreground": contrastFg(base.userBubble),
+    "--scrollbar-thumb": `color-mix(in srgb, ${base.foreground} 65%, ${base.background})`,
+    "--scrollbar-thumb-hover": base.foreground,
   };
 }
 

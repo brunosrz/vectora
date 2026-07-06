@@ -59,6 +59,18 @@
      mais escuro que --background para criar contraste visual com o chat. */
   --sidebar: #181818;
 
+  /* Thumb da scrollbar customizada (.custom-scrollbar, ver regra global
+     abaixo) — usa color-mix em vez de valor fixo pra herdar corretamente
+     em .light (var(--foreground)/var(--background) são resolvidos no
+     ponto de uso, não na declaração, então funciona sob .light sem
+     precisar redeclarar lá). */
+  --scrollbar-thumb: color-mix(
+    in srgb,
+    var(--foreground) 65%,
+    var(--background)
+  );
+  --scrollbar-thumb-hover: var(--foreground);
+
   color-scheme: dark;
 }
 
@@ -148,8 +160,8 @@
 
   --radius: 0.5rem;
 
-  --font-aeonik-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo,
-    Monaco, monospace;
+  --font-aeonik-mono:
+    "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, Monaco, monospace;
 }
 
 @layer base {
@@ -193,4 +205,36 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* Scrollbar customizada (chat, thread-list, collapsed-sidebar) — regra
+   única global. Antes disso, 3 componentes injetavam a mesma classe via
+   tags <style> inline não escopadas (uma delas com #7FC8FF hardcoded),
+   competindo por especificidade/ordem de montagem — causa do artefato
+   azul que aparecia na sidebar colapsada. Fica invisível até o hover,
+   igual ao padrão que thread-list.tsx já usava corretamente. */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scroll-behavior: smooth;
+  will-change: scroll-position;
+}
+.custom-scrollbar:hover {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }

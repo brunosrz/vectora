@@ -484,14 +484,41 @@ async def list_threads(request: ListThreadsRequest) -> ListThreadsResponse:
     )
     mode_filter = _normalize_mode(request.mode) if request.mode else ""
     if mode_filter:
-        query = cols + "WHERE mode = ? ORDER BY last_activity DESC LIMIT ?"
+        query = (
+            cols + "WHERE mode = ? AND message_count > 0 "
+            "ORDER BY last_activity DESC LIMIT ?"
+        )
         params: tuple[Any, ...] = (mode_filter, limit)
     else:
-        query = cols + "ORDER BY last_activity DESC LIMIT ?"
+        query = cols + "WHERE message_count > 0 ORDER BY last_activity DESC LIMIT ?"
         params = (limit,)
     async with db.execute(query, params) as cur:
         rows = await cur.fetchall()
     return ListThreadsResponse(threads=[_row_to_thread(r) for r in rows])
+
+
+async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
+    """Apaga threads sem nenhuma mensagem, mais antigas que `max_age_hours`.
+
+    Espelha o TTL de 5min do registro client-side (`new-thread-registry.ts`)
+    com uma margem generosa — threads "novas" ainda em uso (usuário
+    digitando) nunca chegam nem perto de 1h sem a primeira mensagem, então
+    o cutoff é seguro. `ListThreads` já filtra `message_count > 0`, então
+    isso é higiene do banco, não uma correção de comportamento visível.
+    """
+    from datetime import timedelta
+
+    cutoff = (datetime.now(UTC) - timedelta(hours=max_age_hours)).isoformat()
+    db = await _get_db()
+    cur = await db.execute(
+        "DELETE FROM vectora_sessions WHERE message_count = 0 AND created_at < ?",
+        (cutoff,),
+    )
+    await db.commit()
+    deleted = cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+    if deleted:
+        logger.info("threads: %d thread(s) vazia(s) removida(s) por hygiene", deleted)
+    return deleted
 
 
 # ---------------------------------------------------------------------------

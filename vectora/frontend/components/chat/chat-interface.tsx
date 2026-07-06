@@ -61,31 +61,6 @@ import { LARGE_PASTE_THRESHOLD } from "@/lib/constants/features";
 import { m as msg } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 
-// Enhanced scrollbar styles with smooth transitions
-const scrollbarStyles = `
-  .custom-scrollbar {
-    scroll-behavior: smooth;
-    will-change: scroll-position;
-  }
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #7FC8FF;
-    border-radius: 3px;
-    transition: background 0.2s ease;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #7FC8FF;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:active {
-    background: #7FC8FF;
-  }
-`;
-
 interface ChatInterfaceProps {
   showToolCalls?: boolean;
   threadId: string;
@@ -1261,7 +1236,6 @@ export function ChatInterface({
 
   return (
     <>
-      <style>{scrollbarStyles}</style>
       <main className="h-full flex flex-col overflow-hidden relative">
         {isNewChat ? (
           <EmptyStateHeader

@@ -3,11 +3,12 @@
 /**
  * ContextualHelp — Botão "?" com dicas adaptadas ao estado do workspace.
  *
- * Renderiza um DropdownMenu com até 5 dicas rápidas baseadas no contexto:
+ * Renderiza um DropdownMenu com dicas rápidas baseadas no contexto:
  *   - Sem workspace → como adicionar uma pasta
  *   - Com workspace sem git → sugestão de git init
  *   - Com workspace git → dicas do workbench (diff, log, stash)
- *   - Sempre: link para os atalhos de teclado
+ *   - Sempre: slash commands, subagentes, @-menções, terminal compartilhado,
+ *     modo Plan, busca RAG, e link pros atalhos de teclado
  */
 
 import { HelpCircle } from "lucide-react";
@@ -45,7 +46,10 @@ export function ContextualHelp({ onShowShortcuts }: ContextualHelpProps) {
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent
+        align="end"
+        className="w-72 max-h-[70vh] overflow-y-auto custom-scrollbar"
+      >
         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
           {m.help_title()}
         </DropdownMenuLabel>
@@ -77,6 +81,21 @@ export function ContextualHelp({ onShowShortcuts }: ContextualHelpProps) {
 
         <DropdownMenuItem className="pointer-events-none text-xs text-foreground/80 whitespace-normal py-2">
           💬 {m.help_tip_slash_commands()}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="pointer-events-none text-xs text-foreground/80 whitespace-normal py-2">
+          🧩 {m.help_tip_subagents()}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="pointer-events-none text-xs text-foreground/80 whitespace-normal py-2">
+          📎 {m.help_tip_mentions()}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="pointer-events-none text-xs text-foreground/80 whitespace-normal py-2">
+          🖥️ {m.help_tip_shared_terminal()}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="pointer-events-none text-xs text-foreground/80 whitespace-normal py-2">
+          🗺️ {m.help_tip_plan_mode()}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="pointer-events-none text-xs text-foreground/80 whitespace-normal py-2">
+          🔎 {m.help_tip_rag_search()}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

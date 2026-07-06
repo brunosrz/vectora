@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo, memo, useCallback } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { PANEL_TRANSITION } from "@/lib/motion/transitions";
 import type { Thread } from "@/lib/hooks/threads";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
@@ -118,57 +120,81 @@ export const Sidebar = memo(function Sidebar({
     });
   }, []);
 
-  if (isCollapsed) {
-    return (
-      <CollapsedSidebar
-        threads={threads}
-        currentThreadId={currentThreadId}
-        onToggle={onToggle}
-        onSelectThread={onSelectThread}
-        onNewChat={onNewChat}
-      />
-    );
-  }
-
   return (
     <>
-      <div
-        className="md:hidden fixed inset-0 z-30 bg-background/60 backdrop-blur-sm"
-        onClick={onToggle}
-        aria-hidden
-      />
-      <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-full bg-sidebar border-r border-border/40 flex-col">
-        <SidebarHeader onToggle={onToggle} />
+      {!isCollapsed && (
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-background/60 backdrop-blur-sm"
+          onClick={onToggle}
+          aria-hidden
+        />
+      )}
 
-        <SidebarModeToggle />
+      {/* AnimatePresence com os dois estados (collapsed/expanded) como
+          filhos diretos — mesmo padrão do workbench-panel.tsx (troca de
+          aba) — dá o cross-fade que a sidebar não tinha antes, diferente
+          de um early-return que nunca monta os dois lados na mesma árvore. */}
+      <AnimatePresence mode="wait" initial={false}>
+        {isCollapsed ? (
+          <motion.div
+            key="collapsed"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={PANEL_TRANSITION}
+          >
+            <CollapsedSidebar
+              threads={threads}
+              currentThreadId={currentThreadId}
+              onToggle={onToggle}
+              onSelectThread={onSelectThread}
+              onNewChat={onNewChat}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="expanded"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={PANEL_TRANSITION}
+            className="contents"
+          >
+            <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-full bg-sidebar border-r border-border/40 flex-col">
+              <SidebarHeader onToggle={onToggle} />
 
-        {onNewChat && (
-          <NewChatButton onClick={onNewChat} active={isNewSession} />
+              <SidebarModeToggle />
+
+              {onNewChat && (
+                <NewChatButton onClick={onNewChat} active={isNewSession} />
+              )}
+
+              <SessionSearch
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onClear={handleClearSearch}
+              />
+
+              <ThreadList
+                isLoading={isLoading}
+                searchQuery={searchQuery}
+                filteredThreads={filteredThreads}
+                workspaceGroups={workspaceGroups}
+                orphans={orphans}
+                grouped={grouped}
+                currentThreadId={currentThreadId}
+                collapsedWorkspaces={collapsedWorkspaces}
+                isSearching={isSearching}
+                onSelectThread={onSelectThread}
+                onDeleteThread={handleDeleteThread}
+                onToggleWorkspace={toggleWorkspaceGroup}
+              />
+
+              <SidebarFooter />
+            </aside>
+          </motion.div>
         )}
-
-        <SessionSearch
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onClear={handleClearSearch}
-        />
-
-        <ThreadList
-          isLoading={isLoading}
-          searchQuery={searchQuery}
-          filteredThreads={filteredThreads}
-          workspaceGroups={workspaceGroups}
-          orphans={orphans}
-          grouped={grouped}
-          currentThreadId={currentThreadId}
-          collapsedWorkspaces={collapsedWorkspaces}
-          isSearching={isSearching}
-          onSelectThread={onSelectThread}
-          onDeleteThread={handleDeleteThread}
-          onToggleWorkspace={toggleWorkspaceGroup}
-        />
-
-        <SidebarFooter />
-      </aside>
+      </AnimatePresence>
 
       <ConfirmDialog
         open={pendingDeleteId !== null}

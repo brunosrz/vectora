@@ -190,10 +190,9 @@ jobs:
   # Windows (2x). Por isso roda SÓ com "[up-release]" na mensagem do commit
   # (mesmo marcador que `scons up-release` usa) ou disparo manual
   # (workflow_dispatch) — não em todo push, que estouraria a cota de Actions.
-  # Gatilho é a MENSAGEM do commit, não uma tag — decisão do usuário: tags
-  # exigiam um push extra (`git push --tags`) fácil de esquecer; a mensagem
-  # já viaja junto do push normal. A PUBLICAÇÃO da GitHub Release
-  # (--publish always) e a publicação no canal de update (R2/KV, job
+  # O gatilho é a mensagem do commit, viajando junto do push normal — não
+  # depende de uma tag separada. A PUBLICAÇÃO da GitHub Release (--publish
+  # always) e a publicação no canal de update (R2/KV, job
   # publish-update-channel abaixo) só ocorrem com "[up-release]" — nunca em
   # workflow_dispatch manual (que é só pra validar que a matriz builda).
   release-native:
@@ -265,10 +264,8 @@ jobs:
         # (build-hybrid.py, na raiz do monorepo — não em vectora/): Nuitka
         # --mode=package compila só o pacote backend pra backend.pyd, depois
         # PyInstaller empacota launcher.py + backend.pyd + libs em
-        # dist/vectora/ (onedir). O job antigo chamava um `nuitka
-        # backend/launcher.py` onefile direto, que nunca existiu de verdade
-        # nesse caminho — script certo é este, daí o working-directory
-        # sobrescrevendo o default do job (que é "vectora").
+        # dist/vectora/ (onedir). working-directory sobrescreve o default
+        # do job (que é "vectora") porque o script fica um nível acima.
         working-directory: .
         # build-hybrid.py espera "--jobs N" como dois argv separados
         # (sys.argv.index("--jobs")+1) — "--jobs=4" não bate no parser.

@@ -56,6 +56,7 @@ import { TasksTab } from "./tabs/tasks-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
+import { PANEL_TRANSITION } from "@/lib/motion/transitions";
 
 interface WorkbenchPanelProps {
   threadId: string;
@@ -308,7 +309,7 @@ export function WorkbenchContent({
             initial={{ opacity: 0, x: 6 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -6 }}
-            transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
+            transition={PANEL_TRANSITION}
             className="absolute inset-0"
           >
             {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}

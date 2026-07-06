@@ -725,7 +725,11 @@ export const MessageItem = memo(
         >
           {message.role === "assistant" && !compact && (
             <div
-              className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${message.isThinking ? "dance-wrapper" : ""}`}
+              // mt-0.5: a bolha começa com py-2 (8px) de padding no topo;
+              // o ícone de 32px centralizado sozinho fica ligeiramente
+              // acima da primeira linha de texto — esse nudge alinha o
+              // topo visual do ícone com o topo do texto.
+              className={`w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5 ${message.isThinking ? "dance-wrapper" : ""}`}
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center">
                 <Image
@@ -742,7 +746,7 @@ export const MessageItem = memo(
             className={`min-w-0 space-y-2 ${message.role === "user" ? (compact ? "max-w-[90%]" : "max-w-[85%]") : "flex-1"}`}
           >
             <div
-              className={`rounded-lg px-3 py-2 transition-all duration-150 ease-out ${message.role === "user" ? "bg-user-bubble text-user-bubble-foreground" : "bg-muted text-foreground"}`}
+              className={`rounded-lg px-3 py-2 transition-all duration-150 ease-out ${message.role === "user" ? "bg-muted text-foreground" : "text-foreground"}`}
               style={{
                 willChange: message.isThinking ? "contents" : "auto",
                 contain: "layout style paint",

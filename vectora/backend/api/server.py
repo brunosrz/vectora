@@ -323,6 +323,21 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar memory consolidation: %s", exc)
 
+    # Hygiene: apaga threads sem mensagem (abandonadas antes do 1º envio,
+    # ex. crash/cancelamento) a cada hora — sessões fantasma na sidebar.
+    thread_cleanup_task: asyncio.Task[None] | None = None
+    try:
+        from backend.api.handlers.threads import cleanup_empty_threads
+
+        async def _thread_cleanup_loop() -> None:
+            while True:
+                await asyncio.sleep(3600)
+                await cleanup_empty_threads()
+
+        thread_cleanup_task = asyncio.create_task(_thread_cleanup_loop())
+    except Exception as exc:
+        logger.warning("api/server: falha ao iniciar cleanup de threads: %s", exc)
+
     # Relay client — WebSocket persistente para receber webhooks e callbacks OAuth.
     # Só inicia quando RELAY_ENABLED=true nas settings (padrão).
     _relay_client = None
@@ -351,6 +366,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         logger.info("api/server: shutdown — fechando recursos")
         if consolidation_task is not None:
             consolidation_task.cancel()
+        if thread_cleanup_task is not None:
+            thread_cleanup_task.cancel()
         if _relay_client is not None:
             with suppress(Exception):
                 await _relay_client.stop()

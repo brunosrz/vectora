@@ -1,10 +1,12 @@
 "use client";
 
 import { memo } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, ChevronRight, Folder } from "lucide-react";
 import type { Thread } from "@/lib/hooks/threads";
 import type { WorkspaceInfo } from "@/lib/stores/workspaces-store";
 import { m } from "@/lib/paraglide/messages";
+import { PANEL_TRANSITION } from "@/lib/motion/transitions";
 import { shortWorkspaceName } from "./sidebar-utils";
 import { ThreadItem } from "./thread-item";
 
@@ -57,19 +59,29 @@ export const WorkspaceGroup = memo(function WorkspaceGroup({
           {m.sidebar_workspace_thread_count({ n: threads.length })}
         </span>
       </button>
-      {expanded && (
-        <div className="space-y-0.5 pl-2">
-          {threads.map((thread) => (
-            <ThreadItem
-              key={thread.thread_id}
-              thread={thread}
-              isActive={thread.thread_id === currentThreadId}
-              onSelect={onSelect}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={PANEL_TRANSITION}
+            className="overflow-hidden"
+          >
+            <div className="space-y-0.5 pl-2">
+              {threads.map((thread) => (
+                <ThreadItem
+                  key={thread.thread_id}
+                  thread={thread}
+                  isActive={thread.thread_id === currentThreadId}
+                  onSelect={onSelect}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 });

@@ -8,28 +8,6 @@ import { ThreadGroup } from "./thread-group";
 import { WorkspaceGroup } from "./workspace-group";
 import type { WorkspaceThreadGroup, GroupedThreads } from "./sidebar-utils";
 
-const scrollbarStyles = `
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-  }
-  .custom-scrollbar:hover {
-    scrollbar-color: var(--muted-foreground) transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 3px;
-  }
-  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--muted-foreground);
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--foreground);
-  }
-`;
-
 interface ThreadListProps {
   isLoading: boolean;
   searchQuery: string;
@@ -63,7 +41,6 @@ export const ThreadList = memo(function ThreadList({
 
   return (
     <>
-      <style>{scrollbarStyles}</style>
       <nav className="flex-1 overflow-y-auto py-2 bg-gradient-to-b from-sidebar-accent/5 via-transparent to-sidebar-accent/10 custom-scrollbar">
         {isLoading ? (
           <ThreadListSkeleton />
