@@ -245,10 +245,20 @@ function RootComponent() {
   }, [themePreset, customThemeColors]);
 
   return (
-    <div className="min-h-screen flex flex-col" data-route={location.pathname}>
+    <div
+      className="h-screen flex flex-col overflow-hidden"
+      data-route={location.pathname}
+    >
       <TitleBar />
       <NetworkStatusBanner />
-      <Outlet />
+      {/* flex-1 min-h-0: dá altura definida pro Outlet — sem isso, rotas que
+          assumem "h-full" (chat, workbench) não conseguem resolver a
+          porcentagem contra um ancestral só com min-h-screen (altura
+          indefinida), e o overflow acaba subindo pro documento inteiro,
+          arrastando a TitleBar (que não é fixed) junto no scroll. */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <Outlet />
+      </div>
       <Toaster />
     </div>
   );

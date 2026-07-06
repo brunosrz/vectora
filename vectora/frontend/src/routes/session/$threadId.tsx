@@ -557,7 +557,7 @@ function SessionPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
+    <div className="flex flex-col h-full overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
       <AnimatePresence mode="wait" initial={false}>
