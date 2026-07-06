@@ -448,7 +448,10 @@ async def get_store() -> Any:
 
 
 async def _build_graph_async(
-    model_id: str = "", chat_mode: bool = False, user_id: str | None = None
+    model_id: str = "",
+    chat_mode: bool = False,
+    user_id: str | None = None,
+    permission_mode: str = "ask",
 ) -> Any:
     """Compila um grafo deepagents para ``model_id`` (checkpointer/store compartilhados).
 
@@ -457,6 +460,9 @@ async def _build_graph_async(
     é conversacional puro: ``CHAT_TOOLS`` (sem fs/git/terminal/workspace) e sem
     subagents de dev. ``user_id`` filtra a toolset principal e a dos subagents
     por ``tool_policy.effective_disabled`` (kill-switch global + ABAC).
+    ``permission_mode`` determina o comportamento de HITL (ver
+    ``backend.services.middleware.build_middleware_stack``) — cada modo com
+    ``interrupt_on`` distinto tem seu próprio grafo compilado e cacheado.
     """
     await _ensure_infra()
 
@@ -496,13 +502,13 @@ async def _build_graph_async(
         _register_profiles()
         _profiles_registered = True
 
-    # Middleware stack: HumanInTheLoopMiddleware com mode="ask" para o
-    # singleton compartilhado. create_deep_agent já adiciona
-    # SummarizationMiddleware ao stack base incondicionalmente.
-    # E.B-5 (context_schema=VectoraContext) permitirá modo dinâmico por usuário.
+    # Middleware stack: HumanInTheLoopMiddleware conforme permission_mode.
+    # create_deep_agent já adiciona SummarizationMiddleware ao stack base
+    # incondicionalmente. Cada permission_mode com interrupt_on distinto tem
+    # seu próprio grafo compilado e cacheado (ver get_user_agent).
     from backend.services.middleware import build_middleware_stack
 
-    middleware = build_middleware_stack(permission_mode="ask")
+    middleware = build_middleware_stack(permission_mode=permission_mode)
 
     from backend.llm.backends import build_backend_lazy
     from backend.vtypes.context import VectoraContext
@@ -569,14 +575,33 @@ def _check_global_tools_version() -> None:
     _global_tools_version = current
 
 
+#: permission_mode que produzem o MESMO interrupt_on (ver
+#: middleware._interrupt_on_for_mode) — compartilham grafo compilado em vez de
+#: cachear uma cópia idêntica por nome.
+_PERMISSION_MODE_CACHE_KEY: dict[str, str] = {
+    "bypass": "bypass",
+    "auto": "bypass",
+    "accept_edits": "accept_edits",
+    "plan": "plan",
+}
+
+
 async def get_user_agent(
-    user_id: str | None = None, model: str = "", chat_mode: bool = False
+    user_id: str | None = None,
+    model: str = "",
+    chat_mode: bool = False,
+    permission_mode: str = "ask",
 ) -> Any:
-    """Retorna o grafo compilado para (user_id, model, chat_mode), cache por sessão.
+    """Retorna o grafo compilado para (user_id, model, chat_mode, permission_mode).
 
     Se user_id está presente: cacheia por (user_id, model_key). Se user_id é None:
     usa cache global por model_key. O ``chat_mode`` entra no ``model_key`` (sufixo
     ``#chat``) — chat e dev têm grafos compilados separados (toolsets diferentes).
+    ``permission_mode`` entra como outro sufixo (``#<modo>``) SÓ quando o modo tem
+    um ``interrupt_on`` distinto de "ask" (ver ``_PERMISSION_MODE_CACHE_KEY``) —
+    isso é o que faz o modo "plan" ter comportamento de HITL realmente diferente
+    de "ask" (antes, todo grafo era compilado com ``permission_mode="ask"`` fixo,
+    e o valor por request em ``configurable`` nunca era lido em lugar nenhum).
     Todos compartilham checkpointer/store. Thread-safe via asyncio.Lock.
 
     A toolset é filtrada por ``tool_policy.effective_disabled(user_id)`` no
@@ -587,7 +612,10 @@ async def get_user_agent(
     _check_global_tools_version()
 
     base = model or "__default__"
+    mode_suffix = _PERMISSION_MODE_CACHE_KEY.get(permission_mode, "")
     model_key = f"{base}#chat" if chat_mode else base
+    if mode_suffix:
+        model_key = f"{model_key}#{mode_suffix}"
 
     # DE-5: Cache por sessão (user_id, model_key)
     if user_id:
@@ -596,7 +624,7 @@ async def get_user_agent(
             async with _lock:
                 if session_key not in _graphs_by_user:
                     _graphs_by_user[session_key] = await _build_graph_async(
-                        model, chat_mode, user_id
+                        model, chat_mode, user_id, permission_mode
                     )
         _track_versions(user_id)
         return _graphs_by_user[session_key]
@@ -605,7 +633,9 @@ async def get_user_agent(
     if model_key not in _graphs:
         async with _lock:
             if model_key not in _graphs:
-                _graphs[model_key] = await _build_graph_async(model, chat_mode, user_id)
+                _graphs[model_key] = await _build_graph_async(
+                    model, chat_mode, user_id, permission_mode
+                )
 
     return _graphs[model_key]
 

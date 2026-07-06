@@ -47,6 +47,12 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+#: permission_mode do último turno de cada thread — resume_chat (HITL) precisa
+#: retomar no MESMO grafo compilado (ver agent_factory.get_user_agent), já que
+#: cada permission_mode com interrupt_on distinto ("plan", "accept_edits",
+#: "bypass"/"auto") agora é um grafo cacheado à parte, não mais um "ask" fixo.
+_thread_permission_mode: dict[str, str] = {}
+
 # ---------------------------------------------------------------------------
 # F1 — Helpers de attachments multimodais
 # ---------------------------------------------------------------------------
@@ -430,8 +436,13 @@ async def stream_chat(
         # (configurable["model"] já normalizado para "provider:model"). Sem
         # escolha, usa o grafo do modelo padrão. chat_mode usa um grafo separado
         # com toolset conversacional (CHAT_TOOLS).
+        permission_mode = configurable.get("permission_mode", "ask")
+        _thread_permission_mode[thread_id] = permission_mode
         graph = await agent_factory.get_user_agent(
-            user_id, model=configurable.get("model", ""), chat_mode=chat_mode
+            user_id,
+            model=configurable.get("model", ""),
+            chat_mode=chat_mode,
+            permission_mode=permission_mode,
         )
     except Exception as exc:
         logger.exception("api/chat: erro ao inicializar grafo")
@@ -517,8 +528,11 @@ async def resume_chat(
     from langgraph.types import Command
 
     resume_user_id = _user_id_from_request(http_request)
+    permission_mode = _thread_permission_mode.get(request.thread_id, "ask")
     try:
-        graph = await agent_factory.get_user_agent(resume_user_id)
+        graph = await agent_factory.get_user_agent(
+            resume_user_id, permission_mode=permission_mode
+        )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

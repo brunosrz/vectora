@@ -105,6 +105,69 @@ async def test_get_user_agent_no_user_id_uses_global_cache():
 
 
 # ---------------------------------------------------------------------------
+# A4 — permission_mode entra na chave de cache (plan != ask, mesmo cache antes)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_user_agent_plan_mode_gets_its_own_cached_graph():
+    """permission_mode="plan" compila/cacheia um grafo À PARTE de "ask".
+
+    Antes desta mudança, TODO grafo era compilado com permission_mode="ask"
+    fixo — passar "plan" no request nunca tinha efeito nenhum no HITL real.
+    """
+    fake_ask_graph = MagicMock(name="graph-ask")
+    fake_plan_graph = MagicMock(name="graph-plan")
+    build_mock = AsyncMock(side_effect=[fake_ask_graph, fake_plan_graph])
+
+    with (
+        patch("backend.services.agent_factory._build_graph_async", new=build_mock),
+        patch("backend.services.agent_factory._track_versions"),
+    ):
+        import backend.services.agent_factory as af
+
+        af._graphs_by_user.clear()
+        af._graphs.clear()
+
+        g_ask = await af.get_user_agent(
+            user_id="user-1", model="", permission_mode="ask"
+        )
+        g_plan = await af.get_user_agent(
+            user_id="user-1", model="", permission_mode="plan"
+        )
+
+        assert g_ask is fake_ask_graph
+        assert g_plan is fake_plan_graph
+        assert g_ask is not g_plan
+        assert build_mock.call_count == 2
+        # último arg posicional de _build_graph_async é permission_mode
+        assert build_mock.call_args_list[0].args[-1] == "ask"
+        assert build_mock.call_args_list[1].args[-1] == "plan"
+
+
+@pytest.mark.asyncio
+async def test_get_user_agent_repeated_plan_mode_reuses_cached_graph():
+    """Duas chamadas com permission_mode="plan" reusam o mesmo grafo cacheado."""
+    fake_graph = MagicMock()
+    build_mock = AsyncMock(return_value=fake_graph)
+
+    with (
+        patch("backend.services.agent_factory._build_graph_async", new=build_mock),
+        patch("backend.services.agent_factory._track_versions"),
+    ):
+        import backend.services.agent_factory as af
+
+        af._graphs_by_user.clear()
+        af._graphs.clear()
+
+        g1 = await af.get_user_agent(user_id="user-2", permission_mode="plan")
+        g2 = await af.get_user_agent(user_id="user-2", permission_mode="plan")
+
+        assert g1 is g2
+        assert build_mock.call_count == 1
+
+
+# ---------------------------------------------------------------------------
 # DE-12 — ParallelToolNode — execução paralela de tools de tipos diferentes
 # ---------------------------------------------------------------------------
 

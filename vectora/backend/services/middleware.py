@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from langchain.agents.middleware.human_in_the_loop import (
         DecisionType,  # type: ignore[import-untyped]
     )
+    from langchain.agents.middleware.types import ToolCallRequest
 
 # ---------------------------------------------------------------------------
 # HITL: mapeamento permission_mode → interrupt_on
@@ -58,6 +59,34 @@ _EDITS_DECISIONS: list[DecisionType] = cast(  # type: ignore[assignment]
 )
 
 
+def _plan_mode_should_interrupt(req: ToolCallRequest) -> bool:
+    """Predicate do modo ``"plan"``: interrompe só a 1ª tool destrutiva do turno.
+
+    Diferente de ``"ask"`` (interrompe TODA tool destrutiva, em toda rodada de
+    tool-calling), o modo plan pausa uma vez só por turno — depois de aprovada,
+    as tools destrutivas seguintes na MESMA resposta ao usuário (mesmo turno)
+    rodam sem pausas novas. Detecta "turno atual" varrendo ``state["messages"]``
+    de trás pra frente até a última ``HumanMessage``: se já existe um
+    ``ToolMessage`` de uma tool destrutiva DEPOIS dela, o gate já foi passado
+    neste turno — não sem novo autorização em toda pergunta nova.
+    """
+    from langchain_core.messages import HumanMessage, ToolMessage
+
+    state = req.state
+    messages = state.get("messages", []) if isinstance(state, dict) else []
+
+    last_human_idx = -1
+    for idx, msg in enumerate(messages):
+        if isinstance(msg, HumanMessage):
+            last_human_idx = idx
+
+    for msg in messages[last_human_idx + 1 :]:
+        if isinstance(msg, ToolMessage) and msg.name in _REQUIRE_APPROVAL:
+            return False  # gate já passado neste turno — segue sem novo interrupt
+
+    return True  # primeira tool destrutiva do turno — pausa pra aprovação
+
+
 def _interrupt_on_for_mode(permission_mode: str) -> dict[str, Any]:
     """Retorna o dict ``interrupt_on`` canônico para o modo de permissão.
 
@@ -65,7 +94,11 @@ def _interrupt_on_for_mode(permission_mode: str) -> dict[str, Any]:
 
     - ``"bypass"`` / ``"auto"`` → ``{}`` (sem pausas)
     - ``"accept_edits"``        → só terminal interrompe (approve/edit/respond)
-    - ``"ask"`` / ``"plan"``    → todas as tools destrutivas interrompem (all decisions)
+    - ``"ask"``                 → toda tool destrutiva interrompe, em toda
+      rodada de tool-calling (all decisions)
+    - ``"plan"``                → só a 1ª tool destrutiva do turno interrompe
+      (``_plan_mode_should_interrupt``); aprovado uma vez, o resto do turno
+      roda sem novas pausas — diferente de ``"ask"``, que pausa em CADA rodada
 
     O dict retornado é passado diretamente a ``HumanInTheLoopMiddleware`` ou
     ao parâmetro ``interrupt_on`` de ``create_deep_agent``.
@@ -83,7 +116,14 @@ def _interrupt_on_for_mode(permission_mode: str) -> dict[str, Any]:
                 name: InterruptOnConfig(allowed_decisions=_EDITS_DECISIONS)
                 for name in (_REQUIRE_APPROVAL - _ACCEPT_EDITS_AUTO)
             }
-        case _:  # "ask", "plan" ou desconhecido → mais restritivo
+        case "plan":
+            return {
+                name: InterruptOnConfig(
+                    allowed_decisions=_ALL_DECISIONS, when=_plan_mode_should_interrupt
+                )
+                for name in _REQUIRE_APPROVAL
+            }
+        case _:  # "ask" ou desconhecido → mais restritivo
             return {
                 name: InterruptOnConfig(allowed_decisions=_ALL_DECISIONS)
                 for name in _REQUIRE_APPROVAL
