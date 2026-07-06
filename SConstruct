@@ -7,7 +7,7 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons release-win   → instalador Windows (.msi + .exe NSIS)
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
-    scons up-version [bump=patch|minor|major] → bump + build do instalador + publica no update
+    scons up-release [bump=patch|minor|major] → bump + build do instalador + publica no update
     scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
@@ -576,15 +576,19 @@ def _action_clean(target, source, env):
             print(f">> removido: {path}")
 
 
-# ── Up-version ────────────────────────────────────────────────────────────────
-# `scons up-version [bump=patch|minor|major]` — sobe o semver em pyproject.toml
+# ── Up-release ────────────────────────────────────────────────────────────────
+# `scons up-release [bump=patch|minor|major]` — sobe o semver em pyproject.toml
 # (fonte única — backend/version.py lê de lá via importlib.metadata) e propaga
 # pro package.json do electron/services, sincroniza o venv (`uv sync` — sem
 # isso o importlib.metadata ficaria com a versão antiga em cache), builda o
-# instalador do SO atual e publica no canal de update (R2 + KV) que
-# `services/src/updates/worker.ts` serve. É esse o propósito do comando: sair
-# de "versão bumped" pra "versão publicada" numa única chamada. company/ fica
-# de fora (não tem version própria, é site separado do app).
+# instalador do SO atual (build local, current OS) e publica no canal de
+# update (R2 + KV) que `services/src/updates/worker.ts` serve. O commit criado
+# tem "[up-release]" na mensagem — esse é o mesmo marcador que o GitHub
+# Actions (.github/workflows/vectora.yml) procura pra disparar o job
+# release-native (build matrix linux/mac/win) + publish-update-channel, então
+# dar `git push` depois deste comando completa a cobertura de SOs que o build
+# local não faz. company/ fica de fora (não tem version própria, é site
+# separado do app).
 
 def _read_pyproject_version(path: str) -> tuple[int, int, int]:
     text = open(path, encoding="utf-8").read()
@@ -636,7 +640,7 @@ def _numeric_build_hash(short_hash: str) -> int:
     return int(short_hash, 16) % 65536
 
 
-def _action_up_version(target, source, env):
+def _action_up_release(target, source, env):
     bump_kind = ARGUMENTS.get("bump", "patch")
     if bump_kind not in ("major", "minor", "patch"):
         print(f">> bump inválido: {bump_kind!r} — use bump=major|minor|patch")
@@ -665,7 +669,12 @@ def _action_up_version(target, source, env):
         ["git", "add", pyproject_path, *package_json_paths], cwd=ROOT, check=True
     )
     subprocess.run(
-        ["git", "commit", "-m", f"chore: bump version to v{new_version_str}"],
+        [
+            "git",
+            "commit",
+            "-m",
+            f"chore: bump version to v{new_version_str} [up-release]",
+        ],
         cwd=ROOT,
         check=True,
     )
@@ -677,8 +686,9 @@ def _action_up_version(target, source, env):
     os.environ["VECTORA_BUILD_VERSION"] = build_version
 
     print(f">> versão {'.'.join(str(p) for p in old_version)} → {new_version_str}")
-    print(f">> commit + tag v{new_version_str} criados (sem push — manual)")
+    print(f">> commit [up-release] + tag v{new_version_str} criados (sem push — manual)")
     print(f">> buildVersion: {build_version}")
+    print(">> dê `git push` pra disparar o build matrix (linux/mac/win) + publish no GitHub Actions")
 
     platform = {"win32": "win", "darwin": "mac"}.get(sys.platform, "linux")
     print(f">> buildando instalador ({platform}) para publicar no canal de update...")
@@ -688,7 +698,7 @@ def _action_up_version(target, source, env):
     _action_build_desktop(target, source, env)
     _action_package(target, source, env, platform)
 
-    with _open_log("up-version-publish") as log:
+    with _open_log("up-release-publish") as log:
         _pnpm_install_if_needed("services", log)
         _run(
             [PNPM, "--dir", "services", "run", "release", "--", f"--version={new_version_str}"],
@@ -701,7 +711,7 @@ def _action_up_version(target, source, env):
 # `scons prod` — deploy de produção da borda web/edge do monorepo: docs
 # (Vercel, docs.vectora.company), company (Vercel, vectora.company) e services
 # (Cloudflare Worker único: relay + updates). NÃO cobre o app desktop — isso é
-# `scons up-version`, que já builda o instalador do SO atual e publica no
+# `scons up-release`, que já builda o instalador do SO atual e publica no
 # canal de update (R2 + KV) como parte do próprio bump de versão.
 #
 # Requer `vercel` e `wrangler` autenticados localmente (ambos já usados nesta
@@ -733,9 +743,11 @@ def _action_help(target, source, env):
     scons release-win      instalador Windows (.msi + .exe NSIS)
     scons release-mac      instalador macOS (.dmg universal)
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
-    scons up-version [bump=patch|minor|major]
-                           bump de versão + build do instalador do SO atual +
-                           publica no canal de update (R2 + KV)
+    scons up-release [bump=patch|minor|major]
+                           bump de versão (commit com "[up-release]") + build
+                           do instalador do SO atual + publica no canal de
+                           update (R2 + KV) — push depois dispara a matriz
+                           linux/mac/win no GitHub Actions
     scons prod             deploy de produção: docs + company (Vercel) + services (Worker)
 
   Build
@@ -786,7 +798,7 @@ _cmd("release-mac",   lambda target, source, env: _action_package(target, source
 _cmd("release-linux", lambda target, source, env: _action_package(target, source, env, "linux"), deps=_FULL_DEPS)
 _cmd("release",       lambda target, source, env: _action_package(target, source, env),          deps=_FULL_DEPS)
 
-_cmd("up-version",    _action_up_version)
+_cmd("up-release",    _action_up_release)
 _cmd("prod",           _action_prod)
 
 _cmd("tests",         _action_tests)

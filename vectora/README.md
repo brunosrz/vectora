@@ -142,7 +142,7 @@ scons release          Build completo + instalador nativo para o SO atual
 scons release-win      Instalador Windows (.msi + .exe NSIS)
 scons release-mac      Instalador macOS (.dmg universal x64+arm64)
 scons release-linux    Instaladores Linux (.AppImage + .deb + .rpm)
-scons up-version [bump=patch|minor|major]   Bump de versão + tag git
+scons up-release [bump=patch|minor|major]   Bump de versão + commit [up-release]
 ```
 
 Pipeline executado em sequência (encadeado automaticamente por `release`):

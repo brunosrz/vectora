@@ -1,8 +1,9 @@
 name: Vectora (app)
 
 # Pipeline do app Vectora (backend Python + frontend Vite + casca Electron).
-# Reusable: disparado só pelo runner ci.yml (que faz o path-gating). O job
-# release-native continua gated a tags v* / workflow_dispatch internamente.
+# Reusable: disparado só pelo runner ci.yml. O job release-native (+
+# publish-update-channel) segue gated a "[up-release]" na mensagem do
+# commit / workflow_dispatch internamente — não a tags.
 on:
   workflow_call:
 
@@ -186,13 +187,19 @@ jobs:
 
   # ── 5. Release Native Binaries (Nuitka onefile + Electron installers) ───
   # Matriz cara: 4 SOs, incluindo macOS (multiplicador 10x de minutos) e
-  # Windows (2x). Por isso roda SÓ em tags v* (release) ou disparo manual
+  # Windows (2x). Por isso roda SÓ com "[up-release]" na mensagem do commit
+  # (mesmo marcador que `scons up-release` usa) ou disparo manual
   # (workflow_dispatch) — não em todo push, que estouraria a cota de Actions.
-  # A PUBLICAÇÃO nas releases privadas só ocorre em tags v* (--publish always).
+  # Gatilho é a MENSAGEM do commit, não uma tag — decisão do usuário: tags
+  # exigiam um push extra (`git push --tags`) fácil de esquecer; a mensagem
+  # já viaja junto do push normal. A PUBLICAÇÃO da GitHub Release
+  # (--publish always) e a publicação no canal de update (R2/KV, job
+  # publish-update-channel abaixo) só ocorrem com "[up-release]" — nunca em
+  # workflow_dispatch manual (que é só pra validar que a matriz builda).
   release-native:
     name: Release native (${{ matrix.target }}/${{ matrix.arch }})
     needs: [test-unit, test-stress, test-external]
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     strategy:
       fail-fast: false
       matrix:
@@ -250,7 +257,7 @@ jobs:
         run: |
           pnpm --dir electron install --frozen-lockfile
           pnpm --dir electron build
-          pnpm --dir electron exec electron-builder --${{ matrix.target }} --publish ${{ startsWith(github.ref, 'refs/tags/v') && 'always' || 'never' }}
+          pnpm --dir electron exec electron-builder --${{ matrix.target }} --publish ${{ contains(github.event.head_commit.message, '[up-release]') && 'always' || 'never' }}
       - name: Upload installers
         uses: actions/upload-artifact@v6
         with:
@@ -268,15 +275,16 @@ jobs:
           retention-days: 30
 
   # ── 6. Publish to update channel (R2 + KV) ───────────────────────────────
-  # Roda só em tag v* (não em workflow_dispatch/[build], que são builds de
-  # teste) e uma única vez, depois que TODA a matriz terminou — publicar de
-  # dentro de cada job da matriz faria 4 read-modify-write concorrentes na
-  # mesma chave `config` do KV (services/scripts/release.ts::putChannelVersion),
-  # corrompendo o rollout_percent/previous_stable por race condition.
+  # Roda só com "[up-release]" na mensagem do commit (nunca em
+  # workflow_dispatch manual, que é só pra validar a matriz) e uma única vez,
+  # depois que TODA a matriz terminou — publicar de dentro de cada job da
+  # matriz faria 4 read-modify-write concorrentes na mesma chave `config` do
+  # KV (services/scripts/release.ts::putChannelVersion), corrompendo o
+  # rollout_percent/previous_stable por race condition.
   publish-update-channel:
     name: Publish to update channel (R2 + KV)
     needs: release-native
-    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ contains(github.event.head_commit.message, '[up-release]') }}
     runs-on: ubuntu-latest
     environment:
       name: services-production
@@ -291,6 +299,13 @@ jobs:
       - uses: pnpm/action-setup@v6
         with:
           version: 11.5.0
+      - name: Read version from pyproject.toml
+        # Fonte única do semver (mesmo arquivo que backend/version.py lê via
+        # importlib.metadata) — sem tag pra extrair a versão, lemos direto.
+        id: version
+        run: |
+          VERSION=$(grep -m1 '^version' vectora/pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Download all installers
         uses: actions/download-artifact@v6
         with:
@@ -302,10 +317,9 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Publish (R2 + KV)
         # Sem CLOUDFLARE_API_TOKEN o wrangler falha na autenticação — deixa o
-        # job vermelho de propósito aqui (diferente do deploy do Worker em
-        # services.yml, que faz no-op silencioso): publicar release é uma
-        # tag v* deliberada, não um push comum, então falha visível é o
-        # comportamento certo se o secret não estiver configurado.
+        # job vermelho de propósito: publicar release é um "[up-release]"
+        # deliberado, então falha visível é o comportamento certo se o
+        # secret não estiver configurado (nunca um no-op silencioso aqui).
         working-directory: services
         run: |
-          pnpm run release -- --version=${GITHUB_REF#refs/tags/v} --dist="$GITHUB_WORKSPACE/dist-electron-all"
+          pnpm run release -- --version=${{ steps.version.outputs.value }} --dist="$GITHUB_WORKSPACE/dist-electron-all"

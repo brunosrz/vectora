@@ -1,15 +1,13 @@
 name: CI
 
-# Orquestrador único do monorepo. É o ÚNICO workflow com gatilhos de push/PR —
-# os demais (vectora, company, docs, services) são reusable
-# (`on: workflow_call`) e só rodam quando este runner os chama.
-#
-# Path-gating centralizado: `dorny/paths-filter` detecta o que mudou e cada
-# projeto só roda se sua árvore foi tocada (ou em workflow_dispatch manual).
+# GitHub Actions cobre só o app Vectora (backend Python + frontend + Electron).
+# Deploy de company/docs/services é manual (Vercel/Wrangler CLI local) — não
+# roda aqui. Release de versão (build matrix + publish no R2/KV) dispara por
+# mensagem de commit contendo "[up-release]", não por tag — ver
+# .github/workflows/vectora.yml (job release-native/publish-update-channel).
 on:
   push:
     branches: ["**"]
-    tags: ["v*"]
   pull_request:
     branches: ["**"]
   workflow_dispatch:
@@ -22,56 +20,6 @@ permissions:
   contents: read
 
 jobs:
-  # ── Detecção de mudanças por projeto ─────────────────────────────────────
-  changes:
-    name: Detect changes
-    runs-on: ubuntu-latest
-    outputs:
-      vectora: ${{ steps.filter.outputs.vectora }}
-      company: ${{ steps.filter.outputs.company }}
-      docs: ${{ steps.filter.outputs.docs }}
-      services: ${{ steps.filter.outputs.services }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v4
-        id: filter
-        with:
-          filters: |
-            vectora:
-              - 'vectora/**'
-              - '.github/workflows/vectora.yml'
-              - '.github/actions/setup-uv/**'
-            company:
-              - 'company/**'
-              - '.github/workflows/company.yml'
-            docs:
-              - 'docs/**'
-              - '.github/workflows/docs.yml'
-            services:
-              - 'services/**'
-              - '.github/workflows/services.yml'
-
-  # ── Workflows de projeto (reusable, gated pelo runner) ───────────────────
-  # vectora é o app principal: roda SEMPRE (não path-gated), pra validar o core
-  # a cada push/PR. O job release-native segue gated a tags v*/dispatch por dentro.
   vectora:
     uses: ./.github/workflows/vectora.yml
-    secrets: inherit
-
-  company:
-    needs: changes
-    if: ${{ needs.changes.outputs.company == 'true' || github.event_name == 'workflow_dispatch' }}
-    uses: ./.github/workflows/company.yml
-    secrets: inherit
-
-  docs:
-    needs: changes
-    if: ${{ needs.changes.outputs.docs == 'true' || github.event_name == 'workflow_dispatch' }}
-    uses: ./.github/workflows/docs.yml
-    secrets: inherit
-
-  services:
-    needs: changes
-    if: ${{ needs.changes.outputs.services == 'true' || github.event_name == 'workflow_dispatch' }}
-    uses: ./.github/workflows/services.yml
     secrets: inherit
