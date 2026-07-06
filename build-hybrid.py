@@ -83,9 +83,13 @@ def main() -> None:
         cwd=VECTORA,
         desc="Nuitka --mode=package backend -> backend.pyd",
     )
-    pyd = next((VECTORA / "dist-nuitka").glob("backend*.pyd"), None)
+    # Nuitka nomeia o módulo de extensão pela convenção do CPython: .pyd no
+    # Windows, .so no Linux e no macOS (extensão importável — .dylib é só
+    # pra bibliotecas compartilhadas comuns, não módulos de import).
+    ext = "pyd" if sys.platform == "win32" else "so"
+    pyd = next((VECTORA / "dist-nuitka").glob(f"backend*.{ext}"), None)
     if not pyd:
-        sys.exit("backend.pyd não gerado")
+        sys.exit(f"backend.{ext} não gerado")
     print(f"OK: {pyd}")
 
     # Fase 2 — PyInstaller: launcher + backend.pyd + libs -> vectora.exe
