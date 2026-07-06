@@ -51,6 +51,10 @@ name = "{name}"
 # [agent]
 # allowed_models = ["claude-sonnet-4-6"]
 # default_model = "claude-sonnet-4-6"
+# auto_commit = false                        # commit automático após file_write/file_edit
+
+# [hooks]
+# post_file_write = ["ruff format {{file}}"]  # {{file}} = path absoluto do arquivo editado
 """
 
 
@@ -78,6 +82,20 @@ class AgentSection(BaseModel):
     allowed_models: list[str] | None = None
     default_model: str | None = None
     recursion_limit: int | None = None
+    #: Opt-in (desligado por default) — commit automático após file_write/
+    #: file_edit bem-sucedido. Mensagem gerada deterministicamente a partir
+    #: do path editado, não por chamada de LLM (custo/latência extra).
+    auto_commit: bool = False
+
+
+class HooksSection(BaseModel):
+    """Comandos shell disparados após uma tool específica rodar.
+
+    ``{file}`` no comando é substituído pelo path absoluto do arquivo
+    afetado. Falha de hook nunca propaga pro resultado da tool — só loga.
+    """
+
+    post_file_write: list[str] = []
 
 
 class WorkspaceConfig(BaseModel):
@@ -87,6 +105,7 @@ class WorkspaceConfig(BaseModel):
     storage: StorageSection = StorageSection()
     rag: RagSection = RagSection()
     agent: AgentSection = AgentSection()
+    hooks: HooksSection = HooksSection()
 
 
 def _resolve_env_placeholders(value: object) -> object:

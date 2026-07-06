@@ -100,6 +100,41 @@ allowed_models = ["claude-sonnet-4-6"]
     assert cfg.agent.allowed_models == ["claude-sonnet-4-6"]
 
 
+def test_load_workspace_config_reads_hooks_and_auto_commit(tmp_path):
+    (tmp_path / "vectora.toml").write_text(
+        """
+[agent]
+auto_commit = true
+
+[hooks]
+post_file_write = ["ruff format {file}", "prettier --write {file}"]
+""",
+        encoding="utf-8",
+    )
+
+    cfg = load_workspace_config(tmp_path)
+
+    assert cfg is not None
+    assert cfg.agent.auto_commit is True
+    assert cfg.hooks.post_file_write == [
+        "ruff format {file}",
+        "prettier --write {file}",
+    ]
+
+
+def test_load_workspace_config_defaults_hooks_and_auto_commit_when_absent(tmp_path):
+    """Edge — sem [hooks]/[agent].auto_commit no toml, defaults seguros (off)."""
+    (tmp_path / "vectora.toml").write_text(
+        '[workspace]\nname = "demo"\n', encoding="utf-8"
+    )
+
+    cfg = load_workspace_config(tmp_path)
+
+    assert cfg is not None
+    assert cfg.agent.auto_commit is False
+    assert cfg.hooks.post_file_write == []
+
+
 def test_load_workspace_config_returns_none_on_invalid_toml(tmp_path):
     (tmp_path / "vectora.toml").write_text("not valid toml [[[", encoding="utf-8")
 

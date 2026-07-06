@@ -443,3 +443,96 @@ class TestArtifactSlug:
 
         slug = _artifact_slug("a  b   c")
         assert "--" not in slug
+
+
+# ---------------------------------------------------------------------------
+# Hooks pós-escrita + auto-commit (Trilha B) — vectora.toml [hooks]/[agent]
+# ---------------------------------------------------------------------------
+
+
+class TestPostWriteHooksAndAutoCommit:
+    def test_file_write_runs_post_write_hook(self, tmp_path, trusted_ws):
+        """[hooks] post_file_write roda com {file} substituído pelo path real."""
+        from backend.tools.fs import file_write
+
+        marker = tmp_path / "hook-ran.txt"
+        (tmp_path / "vectora.toml").write_text(
+            "[hooks]\npost_file_write = [\"python -c \\\"open(r'{file}' + '.marker', 'w').close()\\\"\"]\n",
+            encoding="utf-8",
+        )
+
+        dest = tmp_path / "novo.txt"
+        file_write.invoke({"file_path": str(dest), "content": "ola"}, config=trusted_ws)
+
+        marker_file = Path(str(dest) + ".marker")
+        assert marker_file.exists()
+
+    def test_file_write_without_config_does_not_run_hooks(self, tmp_path, trusted_ws):
+        """Sem vectora.toml (ou sem seções configuradas), nenhum hook roda — edge."""
+        from backend.tools.fs import file_write
+
+        dest = tmp_path / "sem-config.txt"
+        result = file_write.invoke(
+            {"file_path": str(dest), "content": "ola"}, config=trusted_ws
+        )
+        assert "ok" in result.lower() or "written" in result.lower()
+
+    def test_file_edit_auto_commit_creates_git_commit(self, tmp_path, trusted_ws):
+        """agent.auto_commit=true faz file_edit gerar um commit git automático."""
+        import git
+
+        from backend.tools.fs import file_edit
+
+        repo = git.Repo.init(tmp_path)
+        repo.config_writer().set_value("user", "name", "Test").release()
+        repo.config_writer().set_value("user", "email", "t@t.com").release()
+
+        target = tmp_path / "arquivo.py"
+        target.write_text("x = 1\n", encoding="utf-8")
+        repo.index.add(["arquivo.py"])
+        repo.index.commit("initial")
+
+        (tmp_path / "vectora.toml").write_text(
+            "[agent]\nauto_commit = true\n", encoding="utf-8"
+        )
+
+        file_edit.invoke(
+            {
+                "file_path": str(target),
+                "old_text": "x = 1",
+                "new_text": "x = 2",
+            },
+            config=trusted_ws,
+        )
+
+        latest = next(repo.iter_commits())
+        assert "arquivo.py" in str(latest.message)
+        assert repo.is_dirty() is False
+
+    def test_file_edit_auto_commit_disabled_by_default_leaves_changes_uncommitted(
+        self, tmp_path, trusted_ws
+    ):
+        """Edge — sem auto_commit=true (default), a edição NÃO vira commit."""
+        import git
+
+        from backend.tools.fs import file_edit
+
+        repo = git.Repo.init(tmp_path)
+        repo.config_writer().set_value("user", "name", "Test").release()
+        repo.config_writer().set_value("user", "email", "t@t.com").release()
+
+        target = tmp_path / "arquivo.py"
+        target.write_text("x = 1\n", encoding="utf-8")
+        repo.index.add(["arquivo.py"])
+        repo.index.commit("initial")
+
+        file_edit.invoke(
+            {
+                "file_path": str(target),
+                "old_text": "x = 1",
+                "new_text": "x = 2",
+            },
+            config=trusted_ws,
+        )
+
+        assert repo.is_dirty() is True

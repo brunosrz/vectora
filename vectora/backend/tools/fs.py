@@ -144,6 +144,68 @@ def file_read(
         return "Error reading file. Check logs."
 
 
+async def _run_hooks_and_autocommit_async(path: Path, root: Path, cfg: Any) -> None:
+    """Roda hooks ``post_file_write`` + auto-commit opcional (``vectora.toml``)."""
+    for cmd_template in cfg.hooks.post_file_write:
+        cmd = cmd_template.replace("{file}", str(path))
+        proc = await asyncio.create_subprocess_shell(
+            cmd,
+            cwd=str(root),
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await proc.wait()
+        logger.info(
+            "post_file_write_hook_executed",
+            extra={"command": cmd_template, "exit_code": proc.returncode},
+        )
+
+    if cfg.agent.auto_commit:
+        rel = path.relative_to(root) if path.is_relative_to(root) else path
+        add = await asyncio.create_subprocess_exec(
+            "git",
+            "add",
+            str(path),
+            cwd=str(root),
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await add.wait()
+        commit = await asyncio.create_subprocess_exec(
+            "git",
+            "commit",
+            "-m",
+            f"auto: update {rel}",
+            cwd=str(root),
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await commit.wait()
+        logger.info("auto_commit_executed", extra={"path": str(rel)})
+
+
+def _run_hooks_and_autocommit(path: Path, config: RunnableConfig | None) -> None:
+    """Dispara hooks/auto-commit pós-escrita — nunca propaga falha pra tool.
+
+    ``file_write``/``file_edit`` são tools síncronas (rodam via
+    ``asyncio.to_thread`` no worker do LangGraph, sem event loop próprio
+    nessa thread) — ``asyncio.run`` aqui abre um loop novo só pra essa
+    chamada, isolado do loop principal do servidor.
+    """
+    try:
+        from backend.workspace.workspace_config import load_workspace_config
+
+        root, _ws = _workspace_root(config)
+        cfg = load_workspace_config(root)
+        if cfg is None or (not cfg.hooks.post_file_write and not cfg.agent.auto_commit):
+            return
+        asyncio.run(_run_hooks_and_autocommit_async(path, root, cfg))
+    except Exception:
+        logger.warning(
+            "post_write_hooks_failed", extra={"path": str(path)}, exc_info=True
+        )
+
+
 @tool(
     extras={
         "render_hint": "diff",
@@ -190,6 +252,7 @@ def file_edit(
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(new_text, encoding="utf-8")
             logger.info("file_edit created new file", extra={"path": file_path})
+            _run_hooks_and_autocommit(path, config)
             return f"[OK] File created: {file_path}"
 
         content = path.read_text(encoding="utf-8")
@@ -209,6 +272,7 @@ def file_edit(
             "file_edit completed",
             extra={"path": file_path, "occurrences": count, "replace_all": replace_all},
         )
+        _run_hooks_and_autocommit(path, config)
         return f"[OK] File edited successfully ({count} occurrence{'s' if count != 1 else ''} replaced)"
     except Exception:
         logger.exception("file_edit failed", extra={"path": file_path})
@@ -261,6 +325,7 @@ def file_write(
         logger.info(
             "file_write completed", extra={"path": file_path, "size_bytes": size}
         )
+        _run_hooks_and_autocommit(path, config)
         return f"[OK] File written: {file_path} ({size} bytes)"
     except Exception:
         logger.exception("file_write failed", extra={"path": file_path})
