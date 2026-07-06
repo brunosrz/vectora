@@ -66,6 +66,13 @@ def main() -> None:
     if "--jobs" in sys.argv:
         jobs = sys.argv[sys.argv.index("--jobs") + 1]
 
+    # No macOS, o binário "gcc" do PATH é na real o clang da Apple (alias
+    # histórico) — sem --clang, o Nuitka detecta "gcc" e passa flags
+    # exclusivas de GNU GCC (-fpartial-inlining, -ftrack-macro-expansion=0,
+    # -fno-var-tracking-assignments) que o clang rejeita, quebrando a
+    # compilação Scons. --clang força o Nuitka a gerar as flags certas.
+    clang_flag = ["--clang"] if sys.platform == "darwin" else []
+
     # Fase 1 — Nuitka: pacote backend -> backend.pyd (só backend vira C)
     run(
         [
@@ -74,6 +81,7 @@ def main() -> None:
             "nuitka",
             "--mode=package",
             "--msvc=latest",
+            *clang_flag,
             f"--jobs={jobs}",
             f"--output-dir={VECTORA / 'dist-nuitka'}",
             "--include-module=backend.services.ipc_pipe_win",
