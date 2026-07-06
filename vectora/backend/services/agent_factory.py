@@ -461,6 +461,16 @@ async def _ensure_infra() -> None:
             Path(db_path).parent.mkdir(parents=True, exist_ok=True)
             _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
             _checkpointer = await _checkpointer_ctx.__aenter__()
+            # from_conn_string não aplica nenhum PRAGMA (nem WAL, nem
+            # busy_timeout) — sem isso, duas sessões/workspaces escrevendo ao
+            # mesmo tempo no mesmo checkpoints.db batem em "database is
+            # locked" na hora em vez de esperar (D2). Mesmos PRAGMAs do pool
+            # hardened de backend/storage/sqlite/pool.py.
+            await _checkpointer.conn.executescript(
+                "PRAGMA journal_mode=WAL;"
+                "PRAGMA busy_timeout=30000;"
+                "PRAGMA synchronous=NORMAL;"
+            )
 
     if _store is None:
         from backend.settings import settings as _settings
