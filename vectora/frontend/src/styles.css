@@ -208,11 +208,10 @@
 }
 
 /* Scrollbar customizada (chat, thread-list, collapsed-sidebar) — regra
-   única global. Antes disso, 3 componentes injetavam a mesma classe via
-   tags <style> inline não escopadas (uma delas com #7FC8FF hardcoded),
-   competindo por especificidade/ordem de montagem — causa do artefato
-   azul que aparecia na sidebar colapsada. Fica invisível até o hover,
-   igual ao padrão que thread-list.tsx já usava corretamente. */
+   única global e escopada, evita colisão de especificidade entre
+   componentes que aplicam a mesma classe. Fica invisível até o hover,
+   cor vinda de --scrollbar-thumb/--scrollbar-thumb-hover (derivados por
+   tema, ver presets.ts). */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;

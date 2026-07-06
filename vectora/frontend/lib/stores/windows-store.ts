@@ -75,10 +75,8 @@ const DEFAULT_WIN_W = 640;
 const DEFAULT_WIN_H = 460;
 
 /** Posição inicial centralizada na área de conteúdo VISÍVEL (descontando a
- * sidebar esquerda), não no viewport inteiro — antes disso, janelas
- * nasciam sempre perto de x=80/y=80, o que fica embaixo/colado na sidebar
- * em qualquer largura de tela. `count` escalona janelas subsequentes da
- * mesma centralização (não mais de um ponto fixo no canto). */
+ * sidebar esquerda), não no viewport inteiro. `count` escalona janelas
+ * subsequentes a partir da mesma centralização. */
 function initialBounds(count: number): { x: number; y: number } {
   if (typeof window === "undefined") {
     return { x: 80 + (count % 6) * 32, y: 80 + (count % 6) * 32 };

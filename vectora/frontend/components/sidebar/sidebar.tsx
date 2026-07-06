@@ -132,8 +132,8 @@ export const Sidebar = memo(function Sidebar({
 
       {/* AnimatePresence com os dois estados (collapsed/expanded) como
           filhos diretos — mesmo padrão do workbench-panel.tsx (troca de
-          aba) — dá o cross-fade que a sidebar não tinha antes, diferente
-          de um early-return que nunca monta os dois lados na mesma árvore. */}
+          aba). Precisa dos dois estados na mesma árvore pra animar a
+          transição entre eles; um early-return por estado não permite. */}
       <AnimatePresence mode="wait" initial={false}>
         {isCollapsed ? (
           <motion.div

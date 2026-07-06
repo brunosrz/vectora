@@ -161,7 +161,6 @@ describe("MessageItem", () => {
     );
     const bubble = container.querySelector(".bg-muted");
     expect(bubble).toBeTruthy();
-    // Não deve ter a classe de fundo antiga (azul)
     expect(container.querySelector(".bg-user-bubble")).toBeNull();
   });
 
