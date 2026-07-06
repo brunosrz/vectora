@@ -7,6 +7,11 @@ name: CI
 # Path-gating centralizado: `dorny/paths-filter` detecta o que mudou e cada
 # projeto só roda se sua árvore foi tocada (ou em workflow_dispatch manual).
 on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["**"]
   workflow_dispatch:
 
 concurrency:
