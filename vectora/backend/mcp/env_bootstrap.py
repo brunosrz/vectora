@@ -6,7 +6,7 @@ servidor. Este módulo detecta esse cenário e persiste as keys em ~/.vectora/.e
 para que o chat interativo (`vectora`) também funcione sem precisar do wizard.
 
 Fluxo:
-  1. MCP client instala vectora-agent e coleta COHERE_API_KEY, TAVILY_API_KEY, etc.
+  1. MCP client instala vectora e coleta COHERE_API_KEY, TAVILY_API_KEY, etc.
   2. Inicia `vectora mcp-server` com essas vars no ambiente do processo.
   3. _bootstrap_env_from_mcp() roda na inicialização do servidor.
   4. Se ~/.vectora/.env não existir (primeira execução), cria com as keys presentes.

@@ -25,6 +25,9 @@ export interface ToolCall {
   /** Duração em ms — preenchido pelo tool_activity(end) SSE (FASE 3.3) */
   elapsedMs?: number;
   isError?: boolean;
+  /** Linhas de output ao vivo (evento `terminal_line`) — só pra `terminal`,
+   * enquanto o comando ainda roda e `output` ainda não chegou. */
+  liveOutputLines?: string[];
 }
 
 /**

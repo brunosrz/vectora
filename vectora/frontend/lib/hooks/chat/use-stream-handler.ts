@@ -570,6 +570,33 @@ async function handleEvent(
       break;
     }
 
+    // Streaming ao vivo da tool `terminal` — chega enquanto o comando ainda
+    // roda (antes do tool_result). Só existe uma tool `terminal` ativa por
+    // vez (backend/services/terminal_stream.py garante isso); anexa na
+    // última tool call desse tipo que ainda não tem output.
+    case "terminal_line": {
+      setMessages((prev) =>
+        updateMessageInList(prev, assistantMessageId, (m) => {
+          const calls = m.toolCalls ?? [];
+          const idx = calls.findLastIndex(
+            (tc) =>
+              tc.renderHint === "terminal_output" && tc.output === undefined,
+          );
+          if (idx === -1) return m;
+          const updated = [...calls];
+          updated[idx] = {
+            ...updated[idx],
+            liveOutputLines: [
+              ...(updated[idx].liveOutputLines ?? []),
+              event.line,
+            ],
+          };
+          return { ...m, toolCalls: updated };
+        }),
+      );
+      break;
+    }
+
     case "tool_result": {
       let output: unknown;
       try {

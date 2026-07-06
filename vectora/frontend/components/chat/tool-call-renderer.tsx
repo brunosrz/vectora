@@ -137,7 +137,7 @@ function SearchResultsViewer({ results }: { results: unknown }) {
     const parsed = typeof results === "string" ? JSON.parse(results) : results;
     items = Array.isArray(parsed)
       ? parsed
-      : parsed?.memories ?? parsed?.results ?? [];
+      : (parsed?.memories ?? parsed?.results ?? []);
   } catch {
     return <JsonViewer data={results} label="Ver resultados" />;
   }
@@ -264,7 +264,7 @@ function QueueBadge({ data }: { data: unknown }) {
     info =
       typeof data === "string"
         ? JSON.parse(data)
-        : (data as Record<string, unknown>) ?? {};
+        : ((data as Record<string, unknown>) ?? {});
   } catch {
     /* usa {} */
   }
@@ -286,7 +286,7 @@ function QueueProgress({ data }: { data: unknown }) {
     info =
       typeof data === "string"
         ? JSON.parse(data)
-        : (data as Record<string, unknown>) ?? {};
+        : ((data as Record<string, unknown>) ?? {});
   } catch {
     /* usa {} */
   }
@@ -380,7 +380,7 @@ function ArtifactCard({ data }: { data: unknown }) {
     info =
       typeof data === "string"
         ? JSON.parse(data)
-        : (data as Record<string, unknown>) ?? {};
+        : ((data as Record<string, unknown>) ?? {});
   } catch {
     /* usa {} */
   }
@@ -606,13 +606,25 @@ export const ToolCallRenderer = memo(function ToolCallRenderer({
       {/* Argumentos */}
       <JsonViewer data={tool.args} label="Ver argumentos" />
 
+      {/* Output ao vivo do terminal — chega linha a linha enquanto o comando
+          ainda roda (evento `terminal_line`), antes do tool_result final. */}
+      {tool.output == null &&
+        tool.renderHint === "terminal_output" &&
+        (tool.liveOutputLines?.length ?? 0) > 0 && (
+          <TerminalBlock content={tool.liveOutputLines!.join("\n")} />
+        )}
+
       {/* M4 — Tool result pendente: pulse skeleton enquanto aguarda resposta */}
-      {tool.output == null && (isStreaming ?? true) && (
-        <div className="mt-1.5 border-t border-border/40 pt-1.5 space-y-1.5">
-          <div className="h-2.5 w-3/4 rounded-full bg-muted/70 animate-pulse" />
-          <div className="h-2.5 w-1/2 rounded-full bg-muted/50 animate-pulse" />
-        </div>
-      )}
+      {tool.output == null &&
+        (isStreaming ?? true) &&
+        !(
+          tool.renderHint === "terminal_output" && tool.liveOutputLines?.length
+        ) && (
+          <div className="mt-1.5 border-t border-border/40 pt-1.5 space-y-1.5">
+            <div className="h-2.5 w-3/4 rounded-full bg-muted/70 animate-pulse" />
+            <div className="h-2.5 w-1/2 rounded-full bg-muted/50 animate-pulse" />
+          </div>
+        )}
 
       {/* Output — renderizado pelo renderer do hint */}
       {tool.output != null && (

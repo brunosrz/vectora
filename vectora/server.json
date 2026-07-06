@@ -10,7 +10,7 @@
   "packages": [
     {
       "registryType": "pypi",
-      "identifier": "vectora-agent",
+      "identifier": "vectora",
       "version": "0.1.0",
       "transport": {
         "type": "sse",

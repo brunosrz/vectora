@@ -38,19 +38,19 @@ junho/2026. Caminhos referenciam `backend/...` (backend Python) e
 
 #### 2. Agente (LangChain / LangGraph)
 
-| Ingrediente                     | Onde                                                                 | Para quê                                                                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **LangChain core**              | `backend/agents/*`, `backend/services/utils.py`                      | abstração de `BaseTool`, `BaseMessage`, `BaseChatModel`                                                                                                                               |
-| **LangGraph**                   | `backend/services/agent_factory.py`                                  | grafo orchestrator → coder/search/rag + HITL via `interrupt()`                                                                                                                        |
-| **langgraph-checkpoint-sqlite** | `backend/services/checkpoint.py`                                     | persiste estado do grafo por thread em `~/.vectora/data/vectora.db`                                                                                                                   |
-| **langchain-cohere**            | `backend/services/utils.py`, `backend/tools/rag.py`                  | `CohereEmbeddings` (RAG, memórias) + `CohereRerank` (re-ranking)                                                                                                                      |
-| **langchain-ollama**            | `backend/services/utils.py`                                          | provider local sem custo                                                                                                                                                              |
-| **langchain-tavily**            | `backend/tools/web.py`                                               | busca web + extração de conteúdo de URLs                                                                                                                                              |
-| **langchain-mcp-adapters**      | `backend/services/plugins.py`                                        | adapta servidores MCP de terceiros como `BaseTool` do agente                                                                                                                          |
-| **langchain-text-splitters**    | `backend/services/background.py`                                     | chunking de documentos para o RAG                                                                                                                                                     |
-| **langchain-community**         | **dep instalada, 0 imports hoje** (potencial subutilizado — ver §21) | catálogo **oficial** de conectores 1st-party da LangChain: 100+ document loaders, vector stores, chat histories, retrievers, caches, tools utilitárias                                |
+| Ingrediente                     | Onde                                                                 | Para quê                                                                                                                                                                             |
+| ------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **LangChain core**              | `backend/agents/*`, `backend/services/utils.py`                      | abstração de `BaseTool`, `BaseMessage`, `BaseChatModel`                                                                                                                              |
+| **LangGraph**                   | `backend/services/agent_factory.py`                                  | grafo orchestrator → coder/search/rag + HITL via `interrupt()`                                                                                                                       |
+| **langgraph-checkpoint-sqlite** | `backend/services/checkpoint.py`                                     | persiste estado do grafo por thread em `~/.vectora/data/vectora.db`                                                                                                                  |
+| **langchain-cohere**            | `backend/services/utils.py`, `backend/tools/rag.py`                  | `CohereEmbeddings` (RAG, memórias) + `CohereRerank` (re-ranking)                                                                                                                     |
+| **langchain-ollama**            | `backend/services/utils.py`                                          | provider local sem custo                                                                                                                                                             |
+| **langchain-tavily**            | `backend/tools/web.py`                                               | busca web + extração de conteúdo de URLs                                                                                                                                             |
+| **langchain-mcp-adapters**      | `backend/services/plugins.py`                                        | adapta servidores MCP de terceiros como `BaseTool` do agente                                                                                                                         |
+| **langchain-text-splitters**    | `backend/services/background.py`                                     | chunking de documentos para o RAG                                                                                                                                                    |
+| **langchain-community**         | **dep instalada, 0 imports hoje** (potencial subutilizado — ver §21) | catálogo **oficial** de conectores 1st-party da LangChain: 100+ document loaders, vector stores, chat histories, retrievers, caches, tools utilitárias                               |
 | **deepagents**                  | **dep instalada, 0 imports hoje**                                    | Bloco E entregou TUI textual + `agent_factory` próprio, mas a migração para `create_deep_agent` ficou parcial (E2 marcado ⏳ na auditoria do `agent-core-roadmap.md`); reabre em DE-1 |
-| **tiktoken**                    | `backend/services/text.py`                                           | conta tokens para janelas de contexto, custo, e truncamento                                                                                                                           |
+| **tiktoken**                    | `backend/services/text.py`                                           | conta tokens para janelas de contexto, custo, e truncamento                                                                                                                          |
 
 > **LLMs específicos** (Google, OpenAI, Anthropic): hoje o `load_llm()`
 > em `backend/services/utils.py` usa `init_chat_model` da langchain — não
@@ -663,8 +663,8 @@ serializado normalmente. Não há mágica nova; é uma fábrica.
 
 #### 1. Como o motor está hoje (auditoria por capacidade)
 
-| #   | Capacidade                           | Hoje                                                                           | Canônico (Deep Agents)                                                                                                                       | Status                                              |
-| --- | ------------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| #   | Capacidade                           | Hoje                                                                           | Canônico (Deep Agents)                                                                                                                       | Status                                             |
+| --- | ------------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | 1   | Construção do agente                 | `agent_factory.build_graph()` artesanal em `backend/services/agent_factory.py` | `create_deep_agent(model=, tools=, subagents=, middleware=, backend=, memory=, skills=, permissions=, interrupt_on=, response_format=, ...)` | ❌ Custom                                           |
 | 2   | Orquestração de subagents            | Funções async (`coder`, `search`) + nós de finalize                            | Subagents como `dict {name, description, prompt, tools, model}` ou `AsyncSubAgent`; harness expõe `task` tool automaticamente                | ⏳ Parcial — comportamento ok, superfície diferente |
 | 3   | HITL                                 | Nó `hitl_check` custom + `interrupt()` raw                                     | `HumanInTheLoopMiddleware(interrupt_on={"tool": {"allowed_decisions": [...]}})`                                                              | ❌ Custom                                           |
@@ -817,8 +817,8 @@ Lista ordenada de `AgentMiddleware`. Hooks em pontos estratégicos:
 
 **Built-ins disponíveis** (todos `provider-agnostic`):
 
-| Middleware                  | Função                                           | Status no Vectora                    |
-| --------------------------- | ------------------------------------------------ | ------------------------------------ |
+| Middleware                  | Função                                           | Status no Vectora                   |
+| --------------------------- | ------------------------------------------------ | ----------------------------------- |
 | `SummarizationMiddleware`   | Comprime histórico quando perto do limite        | ❌ Ausente                           |
 | `HumanInTheLoopMiddleware`  | Pausa antes de tools sensíveis (`interrupt_on=`) | ❌ Custom                            |
 | `ModelCallLimitMiddleware`  | Limita chamadas ao modelo por thread/run         | ❌ Ausente                           |
@@ -953,7 +953,7 @@ backend=lambda rt: CompositeBackend(
         ),
         "/skills/": StoreBackend(
             rt,
-            namespace=lambda rt: ("vectora-agent",),
+            namespace=lambda rt: ("vectora",),
         ),
     },
 )
@@ -1910,23 +1910,23 @@ ou **MCP de terceiro** (via MCP Library).
 
 | Tool          | Categoria   | Status | Backend                                   |
 | ------------- | ----------- | ------ | ----------------------------------------- |
-| `fs_read`     | File System | ✅     | stdlib                                    |
-| `fs_write`    | File System | ✅     | stdlib                                    |
-| `fs_edit`     | File System | ✅     | stdlib + difflib                          |
-| `fs_grep`     | File System | ✅     | ripgrep wrap                              |
-| `fs_glob`     | File System | ✅     | pathlib                                   |
-| `fs_tree`     | File System | ✅     | stdlib                                    |
-| `git_*`       | Git         | ✅     | subprocess gitpython                      |
-| `gh_*`        | GitHub      | ✅     | `gh` CLI wrap                             |
-| `web_search`  | Web         | ✅     | Tavily v2 via langchain-tavily            |
-| `web_fetch`   | Web         | ✅     | httpx                                     |
-| `rag_search`  | RAG         | ✅     | LanceDB/Qdrant + Cohere rerank            |
-| `rag_add`     | RAG         | ✅     | embedding queue                           |
-| `workspace_*` | Workspace   | ✅     | LangGraph store + filesystem              |
-| `memory_*`    | Memory      | ✅     | LangGraph SqliteStore/PostgresStore       |
-| `mcp_call`    | MCP         | ✅     | mcp-client (delegação para MCPs externos) |
-| `terminal`    | Terminal    | ✅     | PTY (xterm.js no chat)                    |
-| `skill_*`     | Skills      | ✅     | skill resolver                            |
+| `fs_read`     | File System | ✅      | stdlib                                    |
+| `fs_write`    | File System | ✅      | stdlib                                    |
+| `fs_edit`     | File System | ✅      | stdlib + difflib                          |
+| `fs_grep`     | File System | ✅      | ripgrep wrap                              |
+| `fs_glob`     | File System | ✅      | pathlib                                   |
+| `fs_tree`     | File System | ✅      | stdlib                                    |
+| `git_*`       | Git         | ✅      | subprocess gitpython                      |
+| `gh_*`        | GitHub      | ✅      | `gh` CLI wrap                             |
+| `web_search`  | Web         | ✅      | Tavily v2 via langchain-tavily            |
+| `web_fetch`   | Web         | ✅      | httpx                                     |
+| `rag_search`  | RAG         | ✅      | LanceDB/Qdrant + Cohere rerank            |
+| `rag_add`     | RAG         | ✅      | embedding queue                           |
+| `workspace_*` | Workspace   | ✅      | LangGraph store + filesystem              |
+| `memory_*`    | Memory      | ✅      | LangGraph SqliteStore/PostgresStore       |
+| `mcp_call`    | MCP         | ✅      | mcp-client (delegação para MCPs externos) |
+| `terminal`    | Terminal    | ✅      | PTY (xterm.js no chat)                    |
+| `skill_*`     | Skills      | ✅      | skill resolver                            |
 
 ##### A adicionar — Onda 1 (pré-lançamento, crítico)
 
@@ -1981,7 +1981,7 @@ ou **MCP de terceiro** (via MCP Library).
 | Tool                       | Categoria | Backend           | Justificativa                    |
 | -------------------------- | --------- | ----------------- | -------------------------------- |
 | `image_resize_crop`        | Image     | Pillow (PIL)      | Manipulação básica sem chamar IA |
-| `image_convert_format`     | Image     | Pillow            | PNG ↔ JPEG ↔ WebP              |
+| `image_convert_format`     | Image     | Pillow            | PNG ↔ JPEG ↔ WebP                |
 | `image_metadata`           | Image     | Pillow + exifread | EXIF, dimensões, etc.            |
 | `image_ocr`                | Image     | Tesseract         | OCR sem pagar API                |
 | `audio_convert`            | Audio     | FFmpeg wrap       | Formato + sample rate + duration |
@@ -2132,9 +2132,9 @@ Estimativa por onda:
 | Onda | Tamanho extra Python deps | Notas                                                         |
 | ---- | ------------------------- | ------------------------------------------------------------- |
 | 1    | ~2 MB                     | stdlib + httpx + PyJWT                                        |
-| 2    | ~120 MB ⚠️                | Playwright drivers (~80 MB) + alembic + drivers DB            |
+| 2    | ~120 MB ⚠️                 | Playwright drivers (~80 MB) + alembic + drivers DB            |
 | 3    | ~40 MB                    | reportlab + openpyxl + python-docx + python-pptx + matplotlib |
-| 4    | ~50 MB                    | Pillow + Tesseract + FFmpeg estático ⚠️                       |
+| 4    | ~50 MB                    | Pillow + Tesseract + FFmpeg estático ⚠️                        |
 | 5    | ~10 MB                    | dnspython + psutil + docker SDK                               |
 
 **Total estimado: ~220 MB extras** — Vectora hoje sai em ~150 MB, ficaria
@@ -2168,28 +2168,28 @@ demanda, sem inflar usuários que não precisam.
 
 #### Comparação honesta com concorrentes
 
-| Tool nativa proposta       |  Vectora  |      Claude Code      | Cursor |  Aider   | Continue |
-| -------------------------- | :-------: | :-------------------: | :----: | :------: | :------: |
-| File system completo       |    ✅     |          ✅           |   ✅   |    ✅    |    ✅    |
-| Git/GitHub                 |    ✅     |          ✅           |   ✅   |    ✅    | Parcial  |
-| Terminal persistente       |    ✅     |          ✅           |   ✅   |    ❌    |    ❌    |
-| RAG sobre projeto          |    ✅     |        Parcial        |   ✅   | Repo-map |    ✅    |
-| Browser automation         | 🔄 Onda 2 |       MCP ext.        |   ❌   |    ❌    |    ❌    |
-| Database query             | 🔄 Onda 2 |       MCP ext.        |   ❌   |    ❌    |    ❌    |
-| Code REPL sandboxado       | 🔄 Onda 2 |          ❌           |   ❌   |    ❌    |    ❌    |
-| PDF gen/read               | 🔄 Onda 3 |       MCP ext.        |   ❌   |    ❌    |    ❌    |
-| Excel gen/read             | 🔄 Onda 3 |       MCP ext.        |   ❌   |    ❌    |    ❌    |
-| PowerPoint gen             | 🔄 Onda 3 |          ❌           |   ❌   |    ❌    |    ❌    |
-| Word gen/read              | 🔄 Onda 3 |       MCP ext.        |   ❌   |    ❌    |    ❌    |
-| Charts/Plotly              | 🔄 Onda 3 |          ❌           |   ❌   |    ❌    |    ❌    |
-| Mermaid/PlantUML/Graphviz  | 🔄 Onda 3 |          ❌           |   ❌   |    ❌    |    ❌    |
-| OCR Tesseract              | 🔄 Onda 4 |          ❌           |   ❌   |    ❌    |    ❌    |
-| Image manipulação básica   | 🔄 Onda 4 |          ❌           |   ❌   |    ❌    |    ❌    |
-| Audio convert (FFmpeg)     | 🔄 Onda 4 |          ❌           |   ❌   |    ❌    |    ❌    |
-| Time/timezone tools        | 🔄 Onda 1 |          ❌           |   ❌   |    ❌    |    ❌    |
-| JWT decode / hash / base64 | 🔄 Onda 1 |          ❌           |   ❌   |    ❌    |    ❌    |
-| Sequential thinking        | 🔄 Onda 2 | ✅ extension thinking |   ❌   |    ❌    |    ❌    |
-| Docker/k8s read-only       | 🔄 Onda 5 |       MCP ext.        |   ❌   |    ❌    |    ❌    |
+| Tool nativa proposta       | Vectora  |     Claude Code      | Cursor |  Aider   | Continue |
+| -------------------------- | :------: | :------------------: | :----: | :------: | :------: |
+| File system completo       |    ✅     |          ✅           |   ✅    |    ✅     |    ✅     |
+| Git/GitHub                 |    ✅     |          ✅           |   ✅    |    ✅     | Parcial  |
+| Terminal persistente       |    ✅     |          ✅           |   ✅    |    ❌     |    ❌     |
+| RAG sobre projeto          |    ✅     |       Parcial        |   ✅    | Repo-map |    ✅     |
+| Browser automation         | 🔄 Onda 2 |       MCP ext.       |   ❌    |    ❌     |    ❌     |
+| Database query             | 🔄 Onda 2 |       MCP ext.       |   ❌    |    ❌     |    ❌     |
+| Code REPL sandboxado       | 🔄 Onda 2 |          ❌           |   ❌    |    ❌     |    ❌     |
+| PDF gen/read               | 🔄 Onda 3 |       MCP ext.       |   ❌    |    ❌     |    ❌     |
+| Excel gen/read             | 🔄 Onda 3 |       MCP ext.       |   ❌    |    ❌     |    ❌     |
+| PowerPoint gen             | 🔄 Onda 3 |          ❌           |   ❌    |    ❌     |    ❌     |
+| Word gen/read              | 🔄 Onda 3 |       MCP ext.       |   ❌    |    ❌     |    ❌     |
+| Charts/Plotly              | 🔄 Onda 3 |          ❌           |   ❌    |    ❌     |    ❌     |
+| Mermaid/PlantUML/Graphviz  | 🔄 Onda 3 |          ❌           |   ❌    |    ❌     |    ❌     |
+| OCR Tesseract              | 🔄 Onda 4 |          ❌           |   ❌    |    ❌     |    ❌     |
+| Image manipulação básica   | 🔄 Onda 4 |          ❌           |   ❌    |    ❌     |    ❌     |
+| Audio convert (FFmpeg)     | 🔄 Onda 4 |          ❌           |   ❌    |    ❌     |    ❌     |
+| Time/timezone tools        | 🔄 Onda 1 |          ❌           |   ❌    |    ❌     |    ❌     |
+| JWT decode / hash / base64 | 🔄 Onda 1 |          ❌           |   ❌    |    ❌     |    ❌     |
+| Sequential thinking        | 🔄 Onda 2 | ✅ extension thinking |   ❌    |    ❌     |    ❌     |
+| Docker/k8s read-only       | 🔄 Onda 5 |       MCP ext.       |   ❌    |    ❌     |    ❌     |
 
 **Diferencial competitivo claro:** Vectora oferece batteries-included
 em escala que nenhum concorrente match.

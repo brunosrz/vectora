@@ -129,7 +129,7 @@ Rich + prompt-toolkit. Agent-aware panel titles, structured output JSON filterin
 ## Installation
 
 ```bash
-uv tool install vectora-agent
+uv tool install vectora
 vectora setup
 vectora chat
 ```
@@ -138,7 +138,7 @@ vectora chat
 
 ## PyPI
 
-Package: [`vectora-agent`](https://pypi.org/project/vectora-agent/)
+Package: [`vectora`](https://pypi.org/project/vectora/)
 Imports and CLIs remain `vectora` and `vectora-mcp`.
 
 ---

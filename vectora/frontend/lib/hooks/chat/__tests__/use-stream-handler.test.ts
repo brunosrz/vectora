@@ -542,6 +542,54 @@ describe("useStreamHandler.processStream", () => {
     expect(a?.content).toContain("\n\n");
     expect(a?.content).toMatch(/Primeiro[\s\S]*Segundo/);
   });
+
+  it("terminal_line anexa linhas ao vivo na tool terminal ainda sem output", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "tool_call",
+          tool_name: "terminal",
+          tool_call_id: "tc1",
+          args_json: '{"command":"npm install"}',
+          render_hint: "terminal_output",
+        },
+        { type: "terminal_line", line: "added 1 package" },
+        { type: "terminal_line", line: "audited 5 packages" },
+        {
+          type: "tool_result",
+          tool_call_id: "tc1",
+          content_json: '"done"',
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    const a = messages.find((m) => m.id === "a1");
+    const tc = a?.toolCalls?.find((t) => t.id === "tc1");
+    expect(tc?.liveOutputLines).toEqual([
+      "added 1 package",
+      "audited 5 packages",
+    ]);
+    // Output final chegou — a UI passa a mostrar `output`, não mais as linhas.
+    expect(tc?.output).toBe("done");
+  });
+
+  it("terminal_line sem nenhuma tool terminal ativa não quebra o stream (edge)", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "terminal_line", line: "linha orfa" },
+        { type: "token", content: "ok" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+    expect(out.assistantContent).toBe("ok");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.toolCalls ?? []).toHaveLength(0);
+  });
 });
 
 // ============================================================================

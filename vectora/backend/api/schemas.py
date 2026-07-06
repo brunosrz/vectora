@@ -264,6 +264,18 @@ class ToolActivityEvent(BaseModel):
     elapsed_ms: int | None = None
 
 
+class TerminalLineEvent(BaseModel):
+    """Linha de output emitida em tempo real pela tool ``terminal``.
+
+    Diferente de ``ToolResultEvent`` (saída completa só ao fim da tool),
+    este evento chega incrementalmente enquanto o comando ainda roda —
+    o frontend anexa cada linha a um bloco de output ao vivo, associado
+    à ``tool_call_id`` da chamada de ``terminal`` em andamento.
+    """
+
+    line: str
+
+
 class ModelSwitchedEvent(BaseModel):
     """Provider trocado automaticamente por quota esgotada (fallback).
 
@@ -298,6 +310,7 @@ StreamChatEventPayload = (
     | WorkbenchInvalidateEvent
     | ToolActivityEvent
     | ModelSwitchedEvent
+    | TerminalLineEvent
 )
 
 _TYPE_MAP: dict[type, str] = {
@@ -316,6 +329,7 @@ _TYPE_MAP: dict[type, str] = {
     WorkbenchInvalidateEvent: "workbench_invalidate",
     ToolActivityEvent: "tool_activity",
     ModelSwitchedEvent: "model_switched",
+    TerminalLineEvent: "terminal_line",
 }
 
 

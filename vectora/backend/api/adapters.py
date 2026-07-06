@@ -28,6 +28,7 @@ from backend.api.schemas import (
     RagCitation,
     RagCitationEvent,
     StreamChatEventPayload,
+    TerminalLineEvent,
     TokenEvent,
     ToolActivityEvent,
     ToolCallEvent,
@@ -387,40 +388,71 @@ def adapt_stream(
 
         events_iter = events.__aiter__()
 
+        # Streaming ao vivo da tool `terminal`: enquanto o comando roda, não
+        # chega NENHUM evento novo do LangGraph (o ToolNode fica bloqueado
+        # dentro do await da tool) — sem essa fila em paralelo, o output só
+        # apareceria no on_tool_end, no final. `emit_terminal_line` (chamado
+        # pela tool a cada linha) empurra aqui via callback registrado.
+        term_queue: asyncio.Queue[str] = asyncio.Queue()
+
+        def _on_terminal_line(line: str) -> None:
+            with contextlib.suppress(Exception):
+                term_queue.put_nowait(line)
+
+        from backend.services.terminal_stream import (
+            register_terminal_output_callback,
+            unregister_terminal_output_callback,
+        )
+
+        register_terminal_output_callback(_on_terminal_line)
+
+        next_task: asyncio.Task[Any] = asyncio.ensure_future(events_iter.__anext__())
+        term_task: asyncio.Task[str] = asyncio.ensure_future(term_queue.get())
+
         try:
             while True:
-                next_task: asyncio.Task[Any] = asyncio.ensure_future(
-                    events_iter.__anext__()
-                )
+                wait_set: set[asyncio.Task[Any]] = {next_task, term_task}
+                disconnect_task: asyncio.Task[bool] | None = None
                 if http_request is not None:
-                    disconnect_task: asyncio.Task[bool] | None = asyncio.ensure_future(
+                    disconnect_task = asyncio.ensure_future(
                         http_request.is_disconnected()
                     )
-                    done, _ = await asyncio.wait(
-                        {next_task, disconnect_task},
-                        return_when=asyncio.FIRST_COMPLETED,
-                    )
+                    wait_set.add(disconnect_task)
+
+                done, _ = await asyncio.wait(
+                    wait_set, return_when=asyncio.FIRST_COMPLETED
+                )
+
+                if disconnect_task is not None:
                     if disconnect_task in done and disconnect_task.result():
                         next_task.cancel()
-                        # Espera a task cancelada de fato desenrolar antes de
-                        # fechar o generator — sem isso o `aclose()` corre
+                        term_task.cancel()
+                        # Espera as tasks canceladas de fato desenrolarem antes
+                        # de fechar o generator — sem isso o `aclose()` corre
                         # concorrente com o `__anext__()` ainda "em voo" e o
                         # `finally`/`except GeneratorExit` do generator (que
                         # encerra a chamada real ao provider) nunca chega a
                         # rodar.
                         with contextlib.suppress(BaseException):
                             await next_task
+                        with contextlib.suppress(BaseException):
+                            await term_task
                         with contextlib.suppress(Exception):
                             await events_iter.aclose()
                         break
                     disconnect_task.cancel()
-                else:
-                    await asyncio.wait({next_task})
+
+                if term_task in done:
+                    line = term_task.result()
+                    yield encode_event(TerminalLineEvent(line=line))
+                    term_task = asyncio.ensure_future(term_queue.get())
+                    continue
 
                 try:
                     event = next_task.result()
                 except StopAsyncIteration:
                     break
+                next_task = asyncio.ensure_future(events_iter.__anext__())
 
                 kind = event.get("event", "")
                 name = event.get("name", "")
@@ -626,6 +658,11 @@ def adapt_stream(
             yield encode_event(ErrorEvent(message=friendly, code=code))
 
         finally:
+            unregister_terminal_output_callback()
+            if not term_task.done():
+                term_task.cancel()
+                with contextlib.suppress(BaseException):
+                    await term_task
             yield encode_event(DoneEvent(thread_id=thread_id))
 
     return _gen()
