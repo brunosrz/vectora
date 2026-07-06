@@ -200,6 +200,8 @@ jobs:
     name: Release native (${{ matrix.target }}/${{ matrix.arch }})
     needs: [test-unit, test-stress, test-external]
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     strategy:
       fail-fast: false
       matrix:
@@ -236,6 +238,28 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm build
+      - name: Install ccache
+        # Nuitka já avisa nos logs "You are not using ccache" — sem ele,
+        # cada run recompila os ~230 arquivos C do backend do zero (a
+        # etapa mais lenta da matriz, 10-20min). Instala o binário aqui;
+        # o cache do diretório em si é o próximo step.
+        shell: bash
+        run: |
+          case "${{ runner.os }}" in
+            Linux) sudo apt-get update -qq && sudo apt-get install -y ccache ;;
+            macOS) brew install ccache ;;
+            Windows) choco install ccache -y ;;
+          esac
+      - name: Cache ccache (Nuitka C compilation)
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          # Chave por SO/arch + hash do backend: cache miss só quando o
+          # backend muda de verdade; restore-keys garante reuso parcial
+          # (objetos não afetados pela mudança) mesmo em cache miss.
+          key: ccache-${{ matrix.target }}-${{ matrix.arch }}-${{ hashFiles('vectora/backend/**') }}
+          restore-keys: |
+            ccache-${{ matrix.target }}-${{ matrix.arch }}-
       - name: Build hybrid (Nuitka backend.pyd + PyInstaller onedir)
         # Mesmo pipeline que `scons release` roda localmente
         # (build-hybrid.py, na raiz do monorepo — não em vectora/): Nuitka

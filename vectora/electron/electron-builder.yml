@@ -145,8 +145,10 @@ deb:
   afterInstall: build-resources/linux-after-install.sh
   afterRemove: build-resources/linux-after-remove.sh
 
-appImage:
-  license: ../LICENSE
+# Sem LICENSE no repo (produto proprietário, sem texto de licença definido
+# ainda) — electron-builder falha o build do AppImage se `license:` apontar
+# pra um arquivo inexistente. Reintroduzir aqui quando houver um EULA real.
+appImage: {}
 
 msi:
   # LGHT1105: ICE validation exige privilégio de admin ou política do SO específica.
