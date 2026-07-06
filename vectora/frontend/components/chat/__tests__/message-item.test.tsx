@@ -155,24 +155,23 @@ describe("MessageItem", () => {
     expect(container.querySelector(".justify-end")).toBeNull();
   });
 
-  it("bolha do usuário usa bg-user-bubble e não bg-muted", () => {
+  it("bolha do usuário usa bg-muted e não bg-user-bubble", () => {
     const { container } = render(
       <MessageItem {...baseProps(msg({ role: "user", content: "olá" }))} />,
     );
-    const bubble = container.querySelector(".bg-user-bubble");
+    const bubble = container.querySelector(".bg-muted");
     expect(bubble).toBeTruthy();
-    // Não deve ter a classe de fundo do assistente
-    expect(bubble?.className).not.toContain("bg-muted");
+    // Não deve ter a classe de fundo antiga (azul)
+    expect(container.querySelector(".bg-user-bubble")).toBeNull();
   });
 
-  it("bolha do assistente usa bg-muted e não bg-user-bubble", () => {
+  it("bolha do assistente não tem fundo (nem bg-muted nem bg-user-bubble)", () => {
     const { container } = render(
       <MessageItem
         {...baseProps(msg({ role: "assistant", content: "resposta" }))}
       />,
     );
-    const bubble = container.querySelector(".bg-muted");
-    expect(bubble).toBeTruthy();
+    expect(container.querySelector(".bg-muted")).toBeNull();
     expect(container.querySelector(".bg-user-bubble")).toBeNull();
   });
 
