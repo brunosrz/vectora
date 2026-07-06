@@ -80,6 +80,81 @@ class MemoryMQ:
         self._streams.clear()
 
 
+class NatsMQ:
+    """Backend NATS JetStream — persistência em disco sem exigir Redis.
+
+    Equivalente a ``RedisMQ`` (Redis Streams + consumer group), mas sobre
+    JetStream: ``add_stream`` cria o stream sob demanda, ``pull_subscribe``
+    com consumer durável dá o mesmo redelivery at-least-once (mensagem sem
+    ACK volta a ser entregue).
+    """
+
+    def __init__(self, url: str) -> None:
+        self._url = url
+        self._nc: Any = None
+        self._js: Any = None
+
+    async def _connect(self) -> Any:
+        if self._js is None:
+            import nats
+
+            self._nc = await nats.connect(self._url)
+            self._js = self._nc.jetstream()
+        return self._js
+
+    async def enqueue(self, stream: str, payload: dict) -> str:
+        js = await self._connect()
+        await js.add_stream(name=stream, subjects=[stream])
+        ack = await js.publish(
+            stream, json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        )
+        return str(ack.seq)
+
+    async def consume(
+        self,
+        stream: str,
+        group: str,
+        consumer: str,
+        handler: Handler,
+        *,
+        stop_event: asyncio.Event | None = None,
+        block_ms: int = 5000,
+    ) -> None:
+        js = await self._connect()
+        await js.add_stream(name=stream, subjects=[stream])
+        sub = await js.pull_subscribe(stream, durable=group)
+        while stop_event is None or not stop_event.is_set():
+            try:
+                msgs = await sub.fetch(1, timeout=block_ms / 1000)
+            except TimeoutError:
+                continue
+            except Exception as exc:
+                logger.warning(
+                    "mq[%s]: fetch NATS falhou (%s) — retry em 2s", stream, exc
+                )
+                await asyncio.sleep(2)
+                continue
+            for msg in msgs:
+                try:
+                    payload = json.loads(msg.data.decode("utf-8"))
+                except json.JSONDecodeError:
+                    payload = {}
+                try:
+                    await handler(StreamMessage(id=str(msg.reply), payload=payload))
+                    await msg.ack()
+                except Exception:
+                    logger.exception(
+                        "mq[%s]: handler falhou (sem ACK, redelivery via NATS)", stream
+                    )
+
+    async def close(self) -> None:
+        import contextlib
+
+        if self._nc is not None:
+            with contextlib.suppress(Exception):
+                await self._nc.close()
+
+
 class RedisMQ:
     """Backend Redis Streams com consumer groups (at-least-once)."""
 
@@ -155,13 +230,18 @@ class RedisMQ:
             await self._redis.aclose()
 
 
-MQ = MemoryMQ | RedisMQ
+MQ = MemoryMQ | RedisMQ | NatsMQ
 
 _mq: MQ | None = None
 
 
-def get_mq() -> MQ:
-    """Singleton da message queue — Redis quando ``settings.redis_url`` setado."""
+async def get_mq() -> MQ:
+    """Singleton da fila — Redis (Pro) → NATS (sidecar, default de todos) → memória.
+
+    Antes, sem Redis a fila virava puramente em-memória (perde tudo ao
+    reiniciar), independente de storage_mode — o sidecar NATS/JetStream dá
+    persistência em disco pra TODO usuário, não só quem paga Redis.
+    """
     global _mq
     if _mq is None:
         from backend.persistence.kv import redis_reachable
@@ -173,11 +253,20 @@ def get_mq() -> MQ:
                 _mq = RedisMQ(url)
                 logger.info("mq: backend Redis Streams")
             except Exception as exc:
-                logger.warning("mq: Redis indisponível (%s) — usando memória", exc)
-                _mq = MemoryMQ()
-        else:
-            if settings.storage_mode == "complete" and url:
-                logger.info("mq: redis_url configurado mas inacessível — memória")
+                logger.warning("mq: Redis indisponível (%s) — tentando NATS", exc)
+
+        if _mq is None:
+            from backend.scheduling.nats_sidecar import ensure_nats_sidecar
+
+            nats_url = await ensure_nats_sidecar()
+            if nats_url:
+                try:
+                    _mq = NatsMQ(nats_url)
+                    logger.info("mq: backend NATS JetStream (sidecar)")
+                except Exception as exc:
+                    logger.warning("mq: NATS indisponível (%s) — usando memória", exc)
+
+        if _mq is None:
             _mq = MemoryMQ()
     return _mq
 

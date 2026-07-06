@@ -48,7 +48,8 @@ async def get_cached(
     from backend.persistence.kv import get_kv
 
     try:
-        raw = await get_kv().get(_key(text, model, kind=kind))
+        kv = await get_kv()
+        raw = await kv.get(_key(text, model, kind=kind))
         return json.loads(raw) if raw else None
     except Exception:
         return None
@@ -63,7 +64,8 @@ async def put_cached(
     from backend.persistence.kv import get_kv
 
     try:
-        await get_kv().set(
+        kv = await get_kv()
+        await kv.set(
             _key(text, model, kind=kind), json.dumps(vector), ttl_s=_TTL_SECONDS
         )
     except Exception:

@@ -374,9 +374,17 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         try:
             from backend.scheduling.mq import get_mq
 
-            await get_mq().close()
+            mq = await get_mq()
+            await mq.close()
         except Exception:
             logger.debug("api/server: erro ao fechar message queue")
+
+        try:
+            from backend.scheduling.nats_sidecar import stop_nats_sidecar
+
+            await stop_nats_sidecar()
+        except Exception:
+            logger.debug("api/server: erro ao encerrar sidecar NATS")
         from backend.api.handlers.chat import aclose_graph
         from backend.services.pty_registry import pty_registry
 

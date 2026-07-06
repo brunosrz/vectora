@@ -173,13 +173,114 @@ class RedisKV:
             await self._redis.aclose()
 
 
-KV = MemoryKV | RedisKV
+class NatsKV:
+    """Backend NATS — bucket JetStream KV (get/set/delete) + pub/sub core.
+
+    Equivalente a ``RedisKV``, mas sobre o sidecar NATS/JetStream embutido —
+    disponível pra TODO usuário (não só quem paga Redis), com persistência em
+    disco via o bucket JetStream.
+    """
+
+    _BUCKET = "vectora_kv"
+
+    def __init__(self, url: str) -> None:
+        self._url = url
+        self._nc: Any = None
+        self._kv: Any = None
+        self._subs: dict[str, list[Subscriber]] = {}
+        self._reader: asyncio.Task | None = None
+
+    async def _connect(self) -> Any:
+        if self._kv is None:
+            import nats
+
+            self._nc = await nats.connect(self._url)
+            js = self._nc.jetstream()
+            try:
+                self._kv = await js.key_value(self._BUCKET)
+            except Exception:
+                self._kv = await js.create_key_value(bucket=self._BUCKET)
+        return self._kv
+
+    async def get(self, key: str) -> str | None:
+        kv = await self._connect()
+        try:
+            entry = await kv.get(key)
+        except Exception:
+            return None
+        return entry.value.decode("utf-8") if entry and entry.value else None
+
+    async def set(self, key: str, value: str, *, ttl_s: float | None = None) -> None:
+        # ttl_s ignorado — JetStream KV usa TTL de bucket, não por chave;
+        # os usos atuais (invalidação de cache L2) toleram entradas sem TTL.
+        kv = await self._connect()
+        await kv.put(key, value.encode("utf-8"))
+
+    async def delete(self, key: str) -> None:
+        kv = await self._connect()
+        with contextlib.suppress(Exception):
+            await kv.delete(key)
+
+    async def publish(self, channel: str, payload: str) -> None:
+        await self._connect()
+        await self._nc.publish(channel, payload.encode("utf-8"))
+
+    def subscribe(self, channel: str, callback: Subscriber) -> None:
+        self._subs.setdefault(channel, []).append(callback)
+
+    async def start(self) -> None:
+        if not self._subs or self._reader is not None:
+            return
+        await self._connect()
+        self._reader = asyncio.create_task(self._read_loop())
+
+    async def _read_loop(self) -> None:
+        try:
+            subs = [await self._nc.subscribe(channel) for channel in self._subs]
+            async for msg in _merge_subscriptions(subs):
+                payload = msg.data.decode("utf-8")
+                for callback in self._subs.get(msg.subject, []):
+                    await _dispatch(callback, payload)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning("kv: reader NATS encerrou com erro: %s", exc)
+
+    async def close(self) -> None:
+        if self._reader is not None:
+            self._reader.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._reader
+            self._reader = None
+        if self._nc is not None:
+            with contextlib.suppress(Exception):
+                await self._nc.close()
+
+
+async def _merge_subscriptions(subs: list[Any]) -> Any:
+    """Intercala mensagens de várias subscriptions NATS num único async generator."""
+    queue: asyncio.Queue[Any] = asyncio.Queue()
+
+    async def _pump(sub: Any) -> None:
+        async for msg in sub.messages:
+            await queue.put(msg)
+
+    tasks = [asyncio.create_task(_pump(sub)) for sub in subs]
+    try:
+        while True:
+            yield await queue.get()
+    finally:
+        for t in tasks:
+            t.cancel()
+
+
+KV = MemoryKV | RedisKV | NatsKV
 
 _kv: KV | None = None
 
 
-def get_kv() -> KV:
-    """Singleton do KV — Redis quando ``settings.redis_url`` está setado."""
+async def get_kv() -> KV:
+    """Singleton do KV — Redis (Pro) → NATS (sidecar, default de todos) → memória."""
     global _kv
     if _kv is None:
         from backend.settings import settings
@@ -190,11 +291,20 @@ def get_kv() -> KV:
                 _kv = RedisKV(url)
                 logger.info("kv: backend Redis (%s)", url.split("@")[-1])
             except Exception as exc:
-                logger.warning("kv: Redis indisponível (%s) — usando memória", exc)
-                _kv = MemoryKV()
-        else:
-            if settings.storage_mode == "complete" and url:
-                logger.info("kv: redis_url configurado mas inacessível — memória")
+                logger.warning("kv: Redis indisponível (%s) — tentando NATS", exc)
+
+        if _kv is None:
+            from backend.scheduling.nats_sidecar import ensure_nats_sidecar
+
+            nats_url = await ensure_nats_sidecar()
+            if nats_url:
+                try:
+                    _kv = NatsKV(nats_url)
+                    logger.info("kv: backend NATS (sidecar)")
+                except Exception as exc:
+                    logger.warning("kv: NATS indisponível (%s) — usando memória", exc)
+
+        if _kv is None:
             _kv = MemoryKV()
     return _kv
 
@@ -210,6 +320,11 @@ def reset_kv() -> None:
 _background_tasks: set[asyncio.Task] = set()
 
 
+async def _publish_via_kv(channel: str, payload: str) -> None:
+    kv = await get_kv()
+    await kv.publish(channel, payload)
+
+
 def publish_soon(channel: str, payload: str) -> None:
     """Publica sem bloquear, a partir de código síncrono.
 
@@ -221,6 +336,6 @@ def publish_soon(channel: str, payload: str) -> None:
         loop = asyncio.get_running_loop()
     except RuntimeError:
         return
-    task = loop.create_task(get_kv().publish(channel, payload))
+    task = loop.create_task(_publish_via_kv(channel, payload))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)

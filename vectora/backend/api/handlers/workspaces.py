@@ -3242,7 +3242,7 @@ async def set_active_context(
     try:
         from backend.persistence.kv import get_kv
 
-        kv = get_kv()
+        kv = await get_kv()
         import json
 
         key = f"workbench:context:{workspace_id}"

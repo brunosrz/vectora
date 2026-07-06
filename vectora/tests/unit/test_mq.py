@@ -130,15 +130,18 @@ async def test_redis_mq_grupo_idempotente() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_get_mq_default_memoria(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio
+async def test_get_mq_default_memoria(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "redis_url", None)
-    assert isinstance(get_mq(), MemoryMQ)
-    assert get_mq() is get_mq()
+    mq = await get_mq()
+    assert isinstance(mq, MemoryMQ)
+    assert mq is await get_mq()
 
 
-def test_get_mq_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio
+async def test_get_mq_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
     """Em modo lite, redis_url é ignorado — sem consultar a rede."""
     from backend.persistence import kv as kv_mod
     from backend.settings import settings
@@ -150,17 +153,46 @@ def test_get_mq_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
         raise AssertionError("redis_reachable não deve ser consultado em lite")
 
     monkeypatch.setattr(kv_mod, "redis_reachable", _boom)
-    assert isinstance(get_mq(), MemoryMQ)
+    assert isinstance(await get_mq(), MemoryMQ)
 
 
-def test_get_mq_complete_redis_inacessivel_cai_em_memoria(
+@pytest.mark.asyncio
+async def test_get_mq_complete_redis_inacessivel_tenta_nats_e_cai_em_memoria(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Em modo complete com redis inacessível, cai em MemoryMQ."""
+    """Em modo complete com Redis inacessível, tenta NATS e cai em MemoryMQ sem o sidecar."""
+    from unittest.mock import AsyncMock
+
     from backend.persistence import kv as kv_mod
+    from backend.scheduling import nats_sidecar
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "storage_mode", "complete")
     monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
     monkeypatch.setattr(kv_mod, "redis_reachable", lambda _url: False)
-    assert isinstance(get_mq(), MemoryMQ)
+    monkeypatch.setattr(
+        nats_sidecar, "ensure_nats_sidecar", AsyncMock(return_value=None)
+    )
+    assert isinstance(await get_mq(), MemoryMQ)
+
+
+@pytest.mark.asyncio
+async def test_get_mq_sem_redis_usa_nats_quando_sidecar_disponivel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Sem Redis mas com o sidecar NATS de pé, usa NatsMQ (persistência p/ todos)."""
+    from unittest.mock import AsyncMock
+
+    from backend.scheduling import mq as mq_mod
+    from backend.scheduling import nats_sidecar
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "storage_mode", "complete")
+    monkeypatch.setattr(settings, "redis_url", None)
+    monkeypatch.setattr(
+        nats_sidecar,
+        "ensure_nats_sidecar",
+        AsyncMock(return_value="nats://127.0.0.1:4222"),
+    )
+    result = await get_mq()
+    assert isinstance(result, mq_mod.NatsMQ)

@@ -53,7 +53,8 @@ async def submit_job(kind: str, payload: dict | None = None) -> str:
     from backend.scheduling.mq import get_mq
 
     request_id = uuid.uuid4().hex
-    await get_mq().enqueue(
+    mq = await get_mq()
+    await mq.enqueue(
         JOBS_STREAM,
         {"request_id": request_id, "kind": kind, "payload": payload or {}},
     )
@@ -65,9 +66,8 @@ async def publish_event(request_id: str, status: str, data: dict | None = None) 
     """Publica um evento de progresso/resultado no stream do ``request_id``."""
     from backend.scheduling.mq import get_mq
 
-    await get_mq().enqueue(
-        _events_stream(request_id), {"status": status, **(data or {})}
-    )
+    mq = await get_mq()
+    await mq.enqueue(_events_stream(request_id), {"status": status, **(data or {})})
 
 
 async def stream_job_events(
@@ -80,7 +80,7 @@ async def stream_job_events(
     """
     from backend.scheduling.mq import get_mq
 
-    mq = get_mq()
+    mq = await get_mq()
     out: asyncio.Queue[dict] = asyncio.Queue()
     stop = asyncio.Event()
 
@@ -144,7 +144,8 @@ async def run_jobs_worker(*, stop_event: asyncio.Event | None = None) -> None:
             await publish_event(request_id, "error", {"error": str(exc)})
 
     logger.info("jobs: worker iniciado (consumer=%s)", consumer)
-    await get_mq().consume(
+    mq = await get_mq()
+    await mq.consume(
         JOBS_STREAM,
         group=JOBS_GROUP,
         consumer=consumer,

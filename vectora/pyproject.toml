@@ -99,6 +99,7 @@ dependencies = [
     "tree-sitter-json>=0.23,<0.26",
     "langchain-voyageai>=0.3.3",
     "playwright>=1.50.0",
+    "nats-py>=2.9.0",
 ]
 
 [project.scripts]

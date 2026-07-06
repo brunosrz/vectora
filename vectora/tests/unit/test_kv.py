@@ -119,21 +119,24 @@ async def test_redis_kv_pubsub_dispatch() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_get_kv_default_memoria(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio
+async def test_get_kv_default_memoria(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "redis_url", None)
-    assert isinstance(get_kv(), MemoryKV)
+    assert isinstance(await get_kv(), MemoryKV)
 
 
-def test_get_kv_singleton(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio
+async def test_get_kv_singleton(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "redis_url", None)
-    assert get_kv() is get_kv()
+    assert await get_kv() is await get_kv()
 
 
-def test_get_kv_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio
+async def test_get_kv_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
     """Em modo lite, redis_url é ignorado mesmo se setado — sem tocar a rede."""
     from backend.settings import settings
 
@@ -144,19 +147,47 @@ def test_get_kv_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
         raise AssertionError("redis_reachable não deve ser consultado em lite")
 
     monkeypatch.setattr(kv_mod, "redis_reachable", _boom)
-    assert isinstance(get_kv(), MemoryKV)
+    assert isinstance(await get_kv(), MemoryKV)
 
 
-def test_get_kv_complete_redis_inacessivel_cai_em_memoria(
+@pytest.mark.asyncio
+async def test_get_kv_complete_redis_inacessivel_tenta_nats_e_cai_em_memoria(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Em modo complete com redis inacessível, cai em MemoryKV."""
+    """Em modo complete com Redis inacessível, tenta NATS e cai em MemoryKV sem o sidecar."""
+    from unittest.mock import AsyncMock
+
+    from backend.scheduling import nats_sidecar
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "storage_mode", "complete")
     monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
     monkeypatch.setattr(kv_mod, "redis_reachable", lambda _url: False)
-    assert isinstance(get_kv(), MemoryKV)
+    monkeypatch.setattr(
+        nats_sidecar, "ensure_nats_sidecar", AsyncMock(return_value=None)
+    )
+    assert isinstance(await get_kv(), MemoryKV)
+
+
+@pytest.mark.asyncio
+async def test_get_kv_sem_redis_usa_nats_quando_sidecar_disponivel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Sem Redis mas com o sidecar NATS de pé, usa NatsKV (persistência p/ todos)."""
+    from unittest.mock import AsyncMock
+
+    from backend.scheduling import nats_sidecar
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "storage_mode", "complete")
+    monkeypatch.setattr(settings, "redis_url", None)
+    monkeypatch.setattr(
+        nats_sidecar,
+        "ensure_nats_sidecar",
+        AsyncMock(return_value="nats://127.0.0.1:4222"),
+    )
+    result = await get_kv()
+    assert isinstance(result, kv_mod.NatsKV)
 
 
 @pytest.mark.asyncio
@@ -165,7 +196,8 @@ async def test_publish_soon_entrega_no_loop(monkeypatch: pytest.MonkeyPatch) -> 
 
     monkeypatch.setattr(settings, "redis_url", None)
     received: list[str] = []
-    get_kv().subscribe("ch", received.append)
+    kv = await get_kv()
+    kv.subscribe("ch", received.append)
     publish_soon("ch", "payload")
     await asyncio.sleep(0.05)  # deixa a task agendada rodar
     assert received == ["payload"]

@@ -275,7 +275,7 @@ async def get_workbench_context(
         configurable = (config or {}).get("configurable") or {}
         workspace_id = configurable.get("workspace_id", "default")
         key = _workbench_ctx_key(workspace_id)
-        kv = get_kv()
+        kv = await get_kv()
         raw = await kv.get(key)
         if raw is None:
             return json.dumps({"status": "no_context"})

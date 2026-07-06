@@ -306,7 +306,8 @@ def _reset_singletons():
     reset_reachable_cache()
 
 
-def test_get_kv_cai_para_memoria_com_redis_inacessivel(
+@pytest.mark.asyncio
+async def test_get_kv_cai_para_memoria_com_redis_inacessivel(
     monkeypatch: pytest.MonkeyPatch, _reset_singletons
 ) -> None:
     from backend.persistence.kv import MemoryKV, get_kv
@@ -314,17 +315,18 @@ def test_get_kv_cai_para_memoria_com_redis_inacessivel(
 
     # Porta 9 (discard) — nada escutando; probe deve falhar rápido.
     monkeypatch.setattr(settings, "redis_url", "redis://127.0.0.1:9/0")
-    assert isinstance(get_kv(), MemoryKV)
+    assert isinstance(await get_kv(), MemoryKV)
 
 
-def test_get_mq_cai_para_memoria_com_redis_inacessivel(
+@pytest.mark.asyncio
+async def test_get_mq_cai_para_memoria_com_redis_inacessivel(
     monkeypatch: pytest.MonkeyPatch, _reset_singletons
 ) -> None:
     from backend.scheduling.mq import MemoryMQ, get_mq
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "redis_url", "redis://127.0.0.1:9/0")
-    assert isinstance(get_mq(), MemoryMQ)
+    assert isinstance(await get_mq(), MemoryMQ)
 
 
 def test_redis_reachable_cacheia_resultado(_reset_singletons) -> None:

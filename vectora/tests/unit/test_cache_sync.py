@@ -29,7 +29,7 @@ def _isolado(monkeypatch: pytest.MonkeyPatch):
 @pytest.mark.asyncio
 async def test_start_cache_sync_registra_subscribers() -> None:
     await cache_sync.start_cache_sync()
-    kv = get_kv()
+    kv = await get_kv()
     assert isinstance(kv, MemoryKV)
     assert cache_sync.CHANNEL_TOOLS in kv._subs
     assert cache_sync.CHANNEL_POLICY in kv._subs
@@ -41,7 +41,7 @@ async def test_tools_changed_avanca_versao_e_dropa_cache() -> None:
     await cache_sync.start_cache_sync()
     plugins._mcp_tools_cache["u1"] = (0, ["tool_antiga"])
 
-    await get_kv().publish(
+    await (await get_kv()).publish(
         cache_sync.CHANNEL_TOOLS, json.dumps({"user_id": "u1", "version": 5})
     )
     assert plugins.tools_version("u1") == 5
@@ -54,7 +54,7 @@ async def test_tools_changed_versao_antiga_e_noop() -> None:
     plugins._versions["u1"] = 10
     plugins._mcp_tools_cache["u1"] = (10, ["tool"])
 
-    await get_kv().publish(
+    await (await get_kv()).publish(
         cache_sync.CHANNEL_TOOLS, json.dumps({"user_id": "u1", "version": 3})
     )
     # Versão menor não regride nem dropa o cache (evita eco do próprio bump).
@@ -65,7 +65,7 @@ async def test_tools_changed_versao_antiga_e_noop() -> None:
 @pytest.mark.asyncio
 async def test_policy_changed_avanca_versao() -> None:
     await cache_sync.start_cache_sync()
-    await get_kv().publish(
+    await (await get_kv()).publish(
         cache_sync.CHANNEL_POLICY, json.dumps({"user_id": "u2", "version": 2})
     )
     assert tool_policy.policy_version("u2") == 2
@@ -84,7 +84,7 @@ async def test_ws_active_changed_aplica_no_registry(
         lambda wid, uid: calls.append((wid, uid)),
     )
     await cache_sync.start_cache_sync()
-    await get_kv().publish(
+    await (await get_kv()).publish(
         cache_sync.CHANNEL_WS_ACTIVE,
         json.dumps({"user_id": "u3", "workspace_id": "ws-9"}),
     )
@@ -95,5 +95,5 @@ async def test_ws_active_changed_aplica_no_registry(
 async def test_payload_invalido_e_ignorado() -> None:
     await cache_sync.start_cache_sync()
     # Nenhuma exceção deve escapar para o publisher.
-    await get_kv().publish(cache_sync.CHANNEL_TOOLS, "não-é-json")
-    await get_kv().publish(cache_sync.CHANNEL_TOOLS, json.dumps({"version": 1}))
+    await (await get_kv()).publish(cache_sync.CHANNEL_TOOLS, "não-é-json")
+    await (await get_kv()).publish(cache_sync.CHANNEL_TOOLS, json.dumps({"version": 1}))

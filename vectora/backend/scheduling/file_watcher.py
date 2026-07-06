@@ -62,7 +62,7 @@ async def _kv_publish(workspace_id: str, channel: str, payload: dict) -> None:
 
         from backend.persistence.kv import get_kv
 
-        kv = get_kv()
+        kv = await get_kv()
         await kv.set(f"watch:{channel}:{workspace_id}", json.dumps(payload), ttl_s=10)
     except Exception:
         logger.debug("file_watcher: falha ao publicar no KV workspace=%s", workspace_id)

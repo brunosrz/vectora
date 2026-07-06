@@ -69,7 +69,7 @@ def _on_ws_active_changed(payload: str) -> None:
 
 async def start_cache_sync() -> None:
     """Registra os subscribers e inicia o reader (chamado no lifespan)."""
-    kv = get_kv()
+    kv = await get_kv()
     kv.subscribe(CHANNEL_TOOLS, _on_tools_changed)
     kv.subscribe(CHANNEL_POLICY, _on_policy_changed)
     kv.subscribe(CHANNEL_WS_ACTIVE, _on_ws_active_changed)
@@ -78,4 +78,5 @@ async def start_cache_sync() -> None:
 
 
 async def stop_cache_sync() -> None:
-    await get_kv().close()
+    kv = await get_kv()
+    await kv.close()
