@@ -5,6 +5,7 @@ import json
 import logging
 import platform
 import re
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any
@@ -398,6 +399,99 @@ def list_dir(
         return "Error listing directory. Check logs."
 
 
+#: Comandos em execução aguardando o próximo turno — chave é ``thread_id``.
+#: Permite responder a um prompt interativo (ex.: "continuar? [y/N]") sem
+#: matar o processo: a tool devolve o controle ao agente quando fica idle
+#: por muito tempo com o processo ainda vivo, e uma chamada seguinte com
+#: ``stdin_input`` retoma a MESMA sessão em vez de spawnar um comando novo.
+_pending_terminal: dict[str, dict[str, Any]] = {}
+
+_IDLE_TIMEOUT = 6.0
+"""Sem output novo por esse tempo + processo vivo → provavelmente esperando
+input; devolve o controle ao agente em vez de continuar bloqueado."""
+
+_HARD_TIMEOUT = 60.0
+"""Teto absoluto — depois disso o processo é morto de verdade."""
+
+
+async def _drain_terminal_output(
+    thread_id: str,
+    proc: asyncio.subprocess.Process,
+    output_lines: list[str],
+    start: float,
+    read_state: dict[str, Any] | None = None,
+) -> str | None:
+    """Aguarda output novo com idle-detection. None = processo terminou normalmente.
+
+    Enquanto o processo está vivo, corre duas tasks de leitura (stdout/stderr)
+    em paralelo com um watchdog que mede o tempo desde o último output. Se o
+    processo ficar ``_IDLE_TIMEOUT`` segundos sem produzir nada (mas ainda
+    vivo), assume que está esperando input — registra em ``_pending_terminal``
+    (incluindo ``read_state``, para a próxima chamada REUSAR as mesmas tasks de
+    leitura em vez de abrir um segundo leitor concorrente no mesmo stream) e
+    devolve uma string com o output parcial + instrução.
+    """
+    if read_state is None:
+        last_activity = [time.monotonic()]
+
+        async def _stream(stream: asyncio.StreamReader | None) -> None:
+            if stream is None:
+                return
+            while True:
+                raw = await stream.readline()
+                if not raw:
+                    break
+                line = raw.decode("utf-8", errors="replace").rstrip("\r\n")
+                output_lines.append(line)
+                emit_terminal_line(line)
+                last_activity[0] = time.monotonic()
+
+        stdout_task = asyncio.ensure_future(_stream(proc.stdout))
+        stderr_task = asyncio.ensure_future(_stream(proc.stderr))
+        read_state = {
+            "both": asyncio.gather(stdout_task, stderr_task),
+            "last_activity": last_activity,
+        }
+
+    both = read_state["both"]
+    last_activity = read_state["last_activity"]
+
+    while True:
+        try:
+            await asyncio.wait_for(asyncio.shield(both), timeout=0.3)
+            break  # ambos os streams fecharam — processo terminou de escrever
+        except TimeoutError:
+            pass
+
+        if time.monotonic() - start > _HARD_TIMEOUT:
+            both.cancel()
+            proc.kill()
+            await proc.wait()
+            _pending_terminal.pop(thread_id, None)
+            logger.warning("terminal_command_timeout", extra={"thread_id": thread_id})
+            return "Error: Command timed out after 60 seconds"
+
+        if (
+            proc.returncode is None
+            and time.monotonic() - last_activity[0] > _IDLE_TIMEOUT
+        ):
+            if thread_id:
+                _pending_terminal[thread_id] = {
+                    "proc": proc,
+                    "output_lines": output_lines,
+                    "read_state": read_state,
+                }
+            return "\n".join(output_lines) + (
+                "\n\n[Comando ainda rodando, sem output novo há alguns "
+                "segundos — pode estar esperando input. Use "
+                'terminal(stdin_input="...") para responder no mesmo '
+                'processo, ou stdin_input="\\x03" para tentar Ctrl+C.]'
+            )
+
+    await proc.wait()
+    return None
+
+
 @tool(
     extras={
         "render_hint": "terminal_output",
@@ -408,18 +502,23 @@ def list_dir(
     }
 )
 async def terminal(
-    command: str,
+    command: str = "",
+    stdin_input: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Executa um comando shell de forma assíncrona (não bloqueia o event loop).
 
-    Suporta comandos longos via streaming interno. Bloqueia destrutivos por whitelist.
-    O comando roda com o diretório de trabalho fixado no workspace ativo.
-    Comandos multi-etapa ainda exigem invocações separadas (uma tool call por comando)
-    pois o processo é finalizado ao retornar — não há sessão persistente de terminal.
+    Suporta comandos interativos: se um comando anterior nesta mesma thread
+    ainda estiver rodando esperando input (ex.: prompt "continuar? [y/N]"),
+    chame de novo passando só ``stdin_input`` (sem ``command``) para
+    responder no MESMO processo, em vez de spawnar um comando novo.
 
     Args:
-        command: Comando shell para executar
+        command: Comando shell para executar. Vazio quando só respondendo
+            a um prompt pendente via ``stdin_input``.
+        stdin_input: Texto para escrever no stdin de um comando pendente
+            desta thread (envia com quebra de linha automática). Requer que
+            exista um comando ainda rodando e esperando input.
 
     Returns:
         Saída do comando (stdout + stderr) ou mensagem de erro se bloqueado
@@ -427,6 +526,42 @@ async def terminal(
     trust_err = _require_trust(config)
     if trust_err:
         return trust_err
+
+    thread_id = (
+        str((config.get("configurable") or {}).get("thread_id", "")) if config else ""
+    )
+    pending = _pending_terminal.get(thread_id) if thread_id else None
+
+    if stdin_input is not None:
+        if pending is None or pending["proc"].returncode is not None:
+            return (
+                "Error: não há comando pendente esperando input nesta sessão "
+                "— chame `terminal` com um `command` novo."
+            )
+        proc = pending["proc"]
+        output_lines = pending["output_lines"]
+        if proc.stdin is None:
+            _pending_terminal.pop(thread_id, None)
+            return "Error: stdin do processo pendente não está disponível."
+        try:
+            proc.stdin.write((stdin_input + "\n").encode("utf-8"))
+            await proc.stdin.drain()
+        except Exception:
+            _pending_terminal.pop(thread_id, None)
+            return "Error: falha ao enviar input — o processo pode ter encerrado."
+
+        start = time.monotonic()
+        idle_result = await _drain_terminal_output(
+            thread_id, proc, output_lines, start, read_state=pending.get("read_state")
+        )
+        if idle_result is not None:
+            return idle_result
+        _pending_terminal.pop(thread_id, None)
+        output = "\n".join(output_lines)
+        return output or f"Command executed with exit code {proc.returncode}"
+
+    if not command:
+        return "Error: informe `command` (ou `stdin_input` para responder a um comando pendente)."
 
     # Normaliza comandos Unix → Windows quando necessário
     if platform.system() == "Windows":
@@ -447,8 +582,8 @@ async def terminal(
     root, _ws = _workspace_root(config)
 
     # G.2.3 — Workspace remoto (SSH ou Codespace): delega via transport.
-    # O streaming linha-a-linha não é suportado nesse caminho ainda; o
-    # output volta inteiro depois que o comando termina.
+    # O streaming linha-a-linha e o stdin interativo não são suportados
+    # nesse caminho ainda; o output volta inteiro depois que o comando termina.
     transport = str(getattr(_ws, "transport", "local"))
     if transport != "local":
         from backend.transport import get_transport
@@ -471,49 +606,24 @@ async def terminal(
         )
         return output or f"Command executed with exit code {result.exit_code}"
 
-    proc: asyncio.subprocess.Process | None = None
     try:
         # asyncio.create_subprocess_shell não bloqueia o event loop
         # permitindo que o UI (Rich panels) e outras tarefas continuem rodando.
         # cwd confina o comando ao workspace ativo (Q4 — scope guard rails).
+        # stdin=PIPE viabiliza responder a prompts interativos (stdin_input).
         proc = await asyncio.create_subprocess_shell(
             command,
+            stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(root),
         )
 
         output_lines: list[str] = []
-
-        async def _stream(
-            stream: asyncio.StreamReader | None,
-        ) -> None:
-            """Lê linhas de um stream e emite via callback em tempo real."""
-            if stream is None:
-                return
-            while True:
-                raw = await stream.readline()
-                if not raw:
-                    break
-                line = raw.decode("utf-8", errors="replace").rstrip("\r\n")
-                output_lines.append(line)
-                emit_terminal_line(line)  # → UI recebe em tempo real
-
-        # Timeout de 30s sobre a leitura de ambos os streams
-        try:
-            await asyncio.wait_for(
-                asyncio.gather(
-                    _stream(proc.stdout),
-                    _stream(proc.stderr),
-                ),
-                timeout=30,
-            )
-            await proc.wait()
-        except TimeoutError:
-            proc.kill()
-            await proc.wait()
-            logger.warning("terminal_command_timeout", extra={"command": command[:50]})
-            return "Error: Command timed out after 30 seconds"
+        start = time.monotonic()
+        idle_result = await _drain_terminal_output(thread_id, proc, output_lines, start)
+        if idle_result is not None:
+            return idle_result
 
         output = "\n".join(output_lines)
 
@@ -530,6 +640,8 @@ async def terminal(
 
     except Exception:
         logger.exception("terminal_command_failed", extra={"command": command[:50]})
+        if thread_id:
+            _pending_terminal.pop(thread_id, None)
         if proc is not None and proc.returncode is None:
             try:
                 proc.kill()
