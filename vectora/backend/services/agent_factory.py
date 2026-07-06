@@ -383,6 +383,7 @@ _graphs_by_user: dict[tuple[str, str], Any] = {}  # (user_id, model) → graph (
 _checkpointer_ctx: Any = None
 _checkpointer: Any = None
 _store: Any = None
+_store_ctx: Any = None  # context manager do store Postgres (complete mode)
 _lock = asyncio.Lock()
 _profiles_registered: bool = False
 
@@ -414,25 +415,81 @@ def _agents_md_paths() -> list[str] | None:
 
 
 async def _ensure_infra() -> None:
-    """Abre (uma única vez) o checkpointer SQLite + store compartilhados.
+    """Abre (uma única vez) o checkpointer + store compartilhados.
 
     Todos os grafos (um por modelo) reusam estes recursos — assim há uma só
-    conexão SQLite com o checkpointer, sem disputa de lock entre grafos.
+    conexão com o checkpointer, sem disputa de lock entre grafos.
+
+    Em ``storage_mode="complete"`` com ``postgres_dsn`` configurado, usa
+    ``AsyncPostgresSaver``/``AsyncPostgresStore`` (schema real, sem gargalo de
+    lock de arquivo único) — antes disso o modo complete tinha Qdrant/Redis
+    de verdade mas o checkpointer/store continuavam presos no SQLite,
+    independente do modo escolhido. Fallback: qualquer falha ao abrir o
+    Postgres (DSN ruim, banco fora do ar) degrada pro SQLite, para uma
+    sessão nunca deixar de iniciar por causa de storage.
     """
-    global _checkpointer_ctx, _checkpointer, _store
+    global _checkpointer_ctx, _checkpointer, _store, _store_ctx
 
     if _checkpointer is None:
-        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+        from backend.settings import settings as _settings
 
-        db_path = str(Path.home() / ".vectora" / "checkpoints.db")
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
-        _checkpointer = await _checkpointer_ctx.__aenter__()
+        if _settings.storage_mode == "complete" and _settings.postgres_dsn:
+            try:
+                from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+                dsn = _settings.postgres_dsn.replace(
+                    "postgresql+asyncpg://", "postgresql://"
+                )
+                _checkpointer_ctx = AsyncPostgresSaver.from_conn_string(dsn)
+                _checkpointer = await _checkpointer_ctx.__aenter__()
+                await _checkpointer.setup()
+                logger.info(
+                    "agent_factory: checkpointer Postgres ativo (storage_mode=complete)"
+                )
+            except Exception:
+                logger.warning(
+                    "agent_factory: falha ao abrir checkpointer Postgres, caindo pro SQLite",
+                    exc_info=True,
+                )
+                _checkpointer_ctx = None
+                _checkpointer = None
+
+        if _checkpointer is None:
+            from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
+            db_path = str(Path.home() / ".vectora" / "checkpoints.db")
+            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+            _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
+            _checkpointer = await _checkpointer_ctx.__aenter__()
 
     if _store is None:
-        from backend.llm.backends import build_store
+        from backend.settings import settings as _settings
 
-        _store = await build_store()
+        if _settings.storage_mode == "complete" and _settings.postgres_dsn:
+            try:
+                from langgraph.store.postgres.aio import AsyncPostgresStore
+
+                dsn = _settings.postgres_dsn.replace(
+                    "postgresql+asyncpg://", "postgresql://"
+                )
+                _store_ctx = AsyncPostgresStore.from_conn_string(dsn)
+                _store = await _store_ctx.__aenter__()
+                await _store.setup()
+                logger.info(
+                    "agent_factory: store Postgres ativo (storage_mode=complete)"
+                )
+            except Exception:
+                logger.warning(
+                    "agent_factory: falha ao abrir store Postgres, caindo pro SQLite",
+                    exc_info=True,
+                )
+                _store_ctx = None
+                _store = None
+
+        if _store is None:
+            from backend.llm.backends import build_store
+
+            _store = await build_store()
 
 
 async def get_store() -> Any:
@@ -819,19 +876,21 @@ async def coder_compensate(workspace_id: str | None = None) -> str | None:
 
 
 async def aclose() -> None:
-    """Fecha o grafo + checkpointer SQLite. Idempotente.
+    """Fecha o grafo + checkpointer/store (SQLite ou Postgres). Idempotente.
 
     Deve ser chamado no shutdown do FastAPI (lifespan).
     """
-    global _checkpointer_ctx, _checkpointer, _store
+    global _checkpointer_ctx, _checkpointer, _store, _store_ctx
 
     async with _lock:
         if _checkpointer_ctx is None:
             return
         ctx = _checkpointer_ctx
+        store_ctx = _store_ctx
         _checkpointer_ctx = None
         _checkpointer = None
         _store = None  # reaberto no próximo _ensure_infra
+        _store_ctx = None
         _graphs.clear()
         _version_tracker.clear()
         try:
@@ -839,6 +898,12 @@ async def aclose() -> None:
             logger.info("agent_factory: checkpointer fechado")
         except Exception as exc:
             logger.warning("agent_factory: erro ao fechar checkpointer: %s", exc)
+        if store_ctx is not None:
+            try:
+                await store_ctx.__aexit__(None, None, None)
+                logger.info("agent_factory: store Postgres fechado")
+            except Exception as exc:
+                logger.warning("agent_factory: erro ao fechar store Postgres: %s", exc)
 
 
 async def awarm() -> None:
