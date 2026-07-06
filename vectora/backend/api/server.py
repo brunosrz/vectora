@@ -386,6 +386,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         except Exception:
             logger.debug("api/server: erro ao encerrar PTYs")
 
+        try:
+            from backend.browser.session import close_all_browser_sessions
+
+            await close_all_browser_sessions()
+        except Exception:
+            logger.debug("api/server: erro ao encerrar sessões de browser")
+
         # Ordem lógica: parar workers que podem estar usando o grafo ANTES de
         # fechar o checkpointer. Mas como ambos têm `try/except` internos e são
         # independentes na prática, rodamos em paralelo via `gather` para

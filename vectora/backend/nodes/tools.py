@@ -15,6 +15,13 @@ from typing import TYPE_CHECKING
 from langgraph.prebuilt import ToolNode
 
 from backend.tools.background import create_background_task
+from backend.tools.browser import (
+    browser_click,
+    browser_fill,
+    browser_read_dom,
+    browser_screenshot,
+    browser_scroll,
+)
 from backend.tools.context_graph import (
     build_knowledge_graph,
     graph_affected,
@@ -124,6 +131,15 @@ FS_TOOLS: list[BaseTool] = [
     create_artifact,
 ]
 
+#: Ferramentas de browser automation sobre o preview do workspace (A2)
+BROWSER_TOOLS: list[BaseTool] = [
+    browser_screenshot,
+    browser_click,
+    browser_scroll,
+    browser_fill,
+    browser_read_dom,
+]
+
 #: Ferramentas de memória (C4: search_memory adicionado)
 MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory, search_memory]
 
@@ -210,6 +226,11 @@ for _t in [
     list_dir,
     terminal,
     create_artifact,
+    browser_screenshot,
+    browser_click,
+    browser_scroll,
+    browser_fill,
+    browser_read_dom,
     save_memory,
     get_memory,
     delete_memory,
@@ -346,6 +367,7 @@ logger.debug(
 
 __all__ = [
     "ALL_TOOLS",
+    "BROWSER_TOOLS",
     "CHAT_TOOLS",
     "FS_TOOLS",
     "GIT_TOOLS",

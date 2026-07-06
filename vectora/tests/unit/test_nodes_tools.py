@@ -68,7 +68,20 @@ def test_search_memory_registered():
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas — atualize ao
     # adicionar/remover tool em backend/nodes/tools.py.
-    assert len(ALL_TOOLS) == 77
+    assert len(ALL_TOOLS) == 82
+
+
+def test_browser_tools_registered():
+    # A2 — automação de browser sobre o preview do workspace (Playwright).
+    names = {t.name for t in ALL_TOOLS}
+    for expected in (
+        "browser_screenshot",
+        "browser_click",
+        "browser_scroll",
+        "browser_fill",
+        "browser_read_dom",
+    ):
+        assert expected in names, f"Browser tool ausente: {expected}"
 
 
 def test_native_tools_registered():

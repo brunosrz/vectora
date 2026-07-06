@@ -7,6 +7,8 @@ Agrupa todas as ferramentas do agente em módulos temáticos:
 - fs       → file_read, file_edit, file_write, grep, list_dir, terminal
 - memory   → save_memory, get_memory, delete_memory
 - mcp      → call_mcp_tool
+- browser  → browser_screenshot, browser_click, browser_scroll, browser_fill,
+             browser_read_dom
 - native   → time_now, time_parse, hash_text, base64_encode, regex_test,
              json_query, jwt_decode, http_request
 
@@ -21,6 +23,13 @@ import logging
 from langchain.tools import BaseTool
 
 from backend.settings import settings
+from backend.tools.browser import (
+    browser_click,
+    browser_fill,
+    browser_read_dom,
+    browser_screenshot,
+    browser_scroll,
+)
 from backend.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
 from backend.tools.git import git_stage, git_unstage
 from backend.tools.mcp import call_mcp_tool
@@ -66,6 +75,17 @@ def _build_tools_list() -> list[BaseTool]:
     # Git stage/unstage (operações de index)
     tools.extend([git_stage, git_unstage])
 
+    # Browser automation sobre o preview do workspace (A2)
+    tools.extend(
+        [
+            browser_screenshot,
+            browser_click,
+            browser_scroll,
+            browser_fill,
+            browser_read_dom,
+        ]
+    )
+
     # Native utilities
     tools.extend(
         [
@@ -103,6 +123,11 @@ __all__ = [
     "TOOLS_BY_NAME",
     "base64_decode",
     "base64_encode",
+    "browser_click",
+    "browser_fill",
+    "browser_read_dom",
+    "browser_screenshot",
+    "browser_scroll",
     "call_mcp_tool",
     "delete_memory",
     "embedding",

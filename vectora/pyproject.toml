@@ -98,6 +98,7 @@ dependencies = [
     "tree-sitter-cpp>=0.23,<0.25",
     "tree-sitter-json>=0.23,<0.26",
     "langchain-voyageai>=0.3.3",
+    "playwright>=1.50.0",
 ]
 
 [project.scripts]
