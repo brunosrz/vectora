@@ -10,6 +10,8 @@ import {
   ChevronDown,
   ChevronRight,
   RotateCcw,
+  Download,
+  X,
 } from "lucide-react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { AgentStatusLine } from "./agent-status-line";
@@ -524,6 +526,12 @@ export const MessageItem = memo(
     const [rewindOpen, setRewindOpen] = useState(false);
     const [rewinding, setRewinding] = useState(false);
 
+    // ── Trilha C — Lightbox de imagem ───────────────────────────────────
+    const [lightboxImage, setLightboxImage] = useState<{
+      src: string;
+      name: string;
+    } | null>(null);
+
     const handleRewind = useCallback(async () => {
       if (!threadId || !workspaceId || humanMessageIndex === undefined) return;
       setRewinding(true);
@@ -869,7 +877,18 @@ export const MessageItem = memo(
                             >
                               {isImage ? (
                                 // Image with filename overlay
-                                <div className="relative h-full w-full">
+                                <button
+                                  type="button"
+                                  className="relative h-full w-full cursor-zoom-in"
+                                  onClick={() =>
+                                    setLightboxImage({
+                                      src:
+                                        file.url ||
+                                        `data:${file.mimeType};base64,${file.base64}`,
+                                      name: fileName,
+                                    })
+                                  }
+                                >
                                   <img
                                     src={
                                       file.url ||
@@ -886,7 +905,7 @@ export const MessageItem = memo(
                                       {fileName}
                                     </p>
                                   </div>
-                                </div>
+                                </button>
                               ) : (
                                 // File card with icon
                                 <div className="h-full flex flex-col items-center justify-center p-3 text-center">
@@ -1063,6 +1082,49 @@ export const MessageItem = memo(
                 )}
               </>
             )}
+
+            <Dialog
+              open={lightboxImage !== null}
+              onOpenChange={(v) => !v && setLightboxImage(null)}
+            >
+              <DialogContent className="max-w-[90vw] max-h-[90vh] w-fit p-2 bg-background/95">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>
+                    {lightboxImage?.name ?? m.chat_image_lightbox_title()}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {m.chat_image_lightbox_title()}
+                  </DialogDescription>
+                </DialogHeader>
+                {lightboxImage && (
+                  <div className="relative flex items-center justify-center">
+                    <img
+                      src={lightboxImage.src}
+                      alt={lightboxImage.name}
+                      className="max-h-[85vh] max-w-[85vw] object-contain rounded"
+                    />
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <a
+                        href={lightboxImage.src}
+                        download={lightboxImage.name}
+                        className="p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
+                        title={m.chat_image_lightbox_download()}
+                      >
+                        <Download className="w-4 h-4" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setLightboxImage(null)}
+                        className="p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
+                        title={m.workbench_files_cancel()}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
 
             {message.role === "assistant" && (
               <>

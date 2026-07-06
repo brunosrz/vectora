@@ -389,4 +389,59 @@ describe("MessageItem", () => {
     expect(metaSpan).toBeTruthy();
     expect(metaSpan?.textContent).toMatch(/3\.0s/);
   });
+
+  it("clicar na thumbnail de imagem abre o lightbox em tela cheia", () => {
+    render(
+      <MessageItem
+        {...baseProps(
+          msg({
+            role: "user",
+            content: "olha essa imagem",
+            images: [
+              {
+                id: "img1",
+                name: "foto.png",
+                mimeType: "image/png",
+                base64: "AAAA",
+                size: 1234,
+              },
+            ],
+          }),
+        )}
+      />,
+    );
+
+    fireEvent.click(screen.getByAltText("foto.png"));
+
+    // Lightbox mostra a mesma imagem em um <img> adicional (dialog)
+    expect(screen.getAllByAltText("foto.png")).toHaveLength(2);
+  });
+
+  it("fechar o lightbox some com a segunda instância da imagem (edge)", () => {
+    render(
+      <MessageItem
+        {...baseProps(
+          msg({
+            role: "user",
+            content: "olha essa imagem",
+            images: [
+              {
+                id: "img1",
+                name: "foto.png",
+                mimeType: "image/png",
+                base64: "AAAA",
+                size: 1234,
+              },
+            ],
+          }),
+        )}
+      />,
+    );
+
+    fireEvent.click(screen.getByAltText("foto.png"));
+    expect(screen.getAllByAltText("foto.png")).toHaveLength(2);
+
+    fireEvent.click(screen.getByTitle("Cancel"));
+    expect(screen.getAllByAltText("foto.png")).toHaveLength(1);
+  });
 });

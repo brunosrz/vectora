@@ -783,6 +783,8 @@
   "workbench_git_commits_count": "{n} commits",
   "workbench_git_history_load_more": "Load 50 more",
   "chat_rewind": "Rewind to here",
+  "chat_image_lightbox_title": "View image",
+  "chat_image_lightbox_download": "Download image",
   "chat_rewind_title": "Rewind to this point?",
   "chat_rewind_desc": "Undo all changes made after this message — the workspace files will be restored to their state at this point.",
   "chat_rewind_confirm": "Rewind",
