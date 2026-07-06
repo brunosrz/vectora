@@ -212,3 +212,81 @@ class TestRagSearch:
 
         mocked.assert_not_awaited()
         assert out == {"results": []}
+
+
+class TestRagCollectionsRealLanceDB:
+    """LanceDB é embedded (file-based, sem rede) — roda contra dados reais,
+    validando o FORMATO do retorno (chaves/tipos), não conteúdo fixo.
+
+    Mantém as classes TestRagCollections/TestWorkspaceRagSummary acima (que
+    mockam `_connect_lancedb`) — esta é a 2ª passada, sem mock nenhum de
+    storage, só a instância Cohere/embedding continua fora do escopo (RAG
+    handler nunca chama embedding pra listar/gerenciar coleções).
+    """
+
+    @pytest.mark.asyncio
+    async def test_list_collections_shape_with_real_table(self, tmp_path):
+        import lancedb
+        import pyarrow as pa
+
+        from backend.api.handlers import rag as handler
+        from backend.settings import settings
+
+        db = await lancedb.connect_async(str(tmp_path))
+        schema = pa.schema(
+            [
+                pa.field("id", pa.string()),
+                pa.field("text", pa.string()),
+                pa.field("metadata", pa.string()),
+            ]
+        )
+        table = await db.create_table("articles", schema=schema)
+        await table.add(
+            [{"id": "1", "text": "conteudo", "metadata": '{"workspace_id": "ws-1"}'}]
+        )
+
+        with patch.object(settings, "lancedb_dir", tmp_path):
+            out = await handler.list_collections()
+
+        assert isinstance(out, dict)
+        assert isinstance(out["collections"], list)
+        assert len(out["collections"]) == 1
+        collection = out["collections"][0]
+        assert isinstance(collection["name"], str)
+        assert isinstance(collection["count"], int)
+
+    @pytest.mark.asyncio
+    async def test_workspace_summary_shape_with_real_table(self, tmp_path):
+        import lancedb
+        import pyarrow as pa
+
+        from backend.api.handlers import rag as handler
+        from backend.settings import settings
+
+        db = await lancedb.connect_async(str(tmp_path))
+        schema = pa.schema(
+            [
+                pa.field("id", pa.string()),
+                pa.field("text", pa.string()),
+                pa.field("metadata", pa.string()),
+            ]
+        )
+        table = await db.create_table("articles", schema=schema)
+        await table.add(
+            [
+                {"id": "1", "text": "a", "metadata": '{"workspace_id": "ws-real"}'},
+                {"id": "2", "text": "b", "metadata": '{"workspace_id": "outro"}'},
+            ]
+        )
+
+        with patch.object(settings, "lancedb_dir", tmp_path):
+            out = await handler.get_workspace_rag_summary("ws-real")
+
+        assert isinstance(out, dict)
+        assert isinstance(out["collections"], list)
+        for entry in out["collections"]:
+            assert set(entry.keys()) == {"name", "count"}
+            assert isinstance(entry["name"], str)
+            assert isinstance(entry["count"], int)
+        # workspace_id filtra corretamente: só a linha de "ws-real" conta.
+        assert out["collections"][0]["count"] == 1

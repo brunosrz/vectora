@@ -140,6 +140,78 @@ async def test_git_unstage_git_error(mock_ws):
 
 
 # ---------------------------------------------------------------------------
+# git_stage / git_unstage — repo real (sem mock de git.Repo)
+#
+# Os testes acima mockam git.Repo pra cobrir os caminhos de erro sem custo
+# de I/O; estes validam contra um repositório de verdade (git é um binário
+# local, sem rede) — a asserção é sobre o ESTADO do index (repo.index.entries/
+# repo.is_dirty()), não sobre uma string fixa de retorno.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def real_repo_ws(tmp_path, monkeypatch):
+    """Workspace apontando pra um repo git real com um commit inicial."""
+    import git as gitpy
+
+    from backend.vtypes import Workspace
+    from backend.workspace import workspace as ws_mod
+
+    repo = gitpy.Repo.init(tmp_path)
+    repo.config_writer().set_value("user", "name", "Test").release()
+    repo.config_writer().set_value("user", "email", "t@t.com").release()
+    (tmp_path / "README.md").write_text("# repo\n", encoding="utf-8")
+    repo.index.add(["README.md"])
+    repo.index.commit("initial")
+
+    ws = Workspace(
+        id="ws-real-git",
+        name="ws-real-git",
+        cwd=str(tmp_path),
+        created_at="2024-01-01T00:00:00+00:00",
+        trusted=True,
+    )
+    monkeypatch.setattr(
+        ws_mod.workspace_registry,
+        "get",
+        lambda wid: ws if wid == "ws-real-git" else None,
+    )
+    return ws, repo, tmp_path
+
+
+@pytest.mark.asyncio
+async def test_git_stage_real_repo_adds_to_index(real_repo_ws):
+    ws, repo, root = real_repo_ws
+    (root / "novo.py").write_text("x = 1\n", encoding="utf-8")
+
+    result_raw = await git_stage.ainvoke(
+        {"path": "novo.py", "workspace_id": ws.id}, config=_make_config(ws.id)
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+    staged_paths = {entry[0] for entry in repo.index.entries}
+    assert "novo.py" in staged_paths
+
+
+@pytest.mark.asyncio
+async def test_git_unstage_real_repo_removes_from_index(real_repo_ws):
+    ws, repo, root = real_repo_ws
+    (root / "novo.py").write_text("x = 1\n", encoding="utf-8")
+    repo.index.add(["novo.py"])
+    assert "novo.py" in {entry[0] for entry in repo.index.entries}
+
+    result_raw = await git_unstage.ainvoke(
+        {"path": "novo.py", "workspace_id": ws.id}, config=_make_config(ws.id)
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+    # git reset HEAD tira do index mas mantém o arquivo como untracked/modified.
+    assert repo.is_dirty(untracked_files=True)
+
+
+# ---------------------------------------------------------------------------
 # Metadados de invalidação (contrato "invalidates")
 # ---------------------------------------------------------------------------
 
