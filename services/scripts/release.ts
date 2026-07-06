@@ -131,7 +131,7 @@ function putChannelVersion(channel: string, version: string) {
 
 function main() {
   const { channel, version, dist } = parseArgs(process.argv.slice(2));
-  const bucket = "vectora-releases";
+  const bucket = "vectora-r2";
 
   const files = readdirSync(dist).filter(
     (f) => !f.endsWith(".yml.tmp") && !f.startsWith("."),

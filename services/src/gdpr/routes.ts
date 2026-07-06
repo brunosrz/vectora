@@ -3,7 +3,7 @@
  * company/supabase/functions/cron-hard-delete/index.ts (agora Cloudflare
  * Cron Trigger nativo, ver scheduled() em src/index.ts, não pg_cron/HTTP).
  *
- * Export usa o bucket R2 já existente (`R2`, vectora-releases) com prefixo
+ * Export usa o bucket R2 já existente (`R2`, vectora-r2) com prefixo
  * `exports/` — evita provisionar um bucket novo só pra isso; são poucos
  * bytes de JSON por usuário, não briga de espaço com os instaladores.
  */

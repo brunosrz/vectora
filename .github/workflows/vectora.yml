@@ -266,3 +266,46 @@ jobs:
             vectora/electron/dist-electron/*.blockmap
           if-no-files-found: warn
           retention-days: 30
+
+  # ── 6. Publish to update channel (R2 + KV) ───────────────────────────────
+  # Roda só em tag v* (não em workflow_dispatch/[build], que são builds de
+  # teste) e uma única vez, depois que TODA a matriz terminou — publicar de
+  # dentro de cada job da matriz faria 4 read-modify-write concorrentes na
+  # mesma chave `config` do KV (services/scripts/release.ts::putChannelVersion),
+  # corrompendo o rollout_percent/previous_stable por race condition.
+  publish-update-channel:
+    name: Publish to update channel (R2 + KV)
+    needs: release-native
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: services-production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.5.0
+      - name: Download all installers
+        uses: actions/download-artifact@v6
+        with:
+          pattern: vectora-*
+          path: dist-electron-all
+          merge-multiple: true
+      - name: Install services deps
+        working-directory: services
+        run: pnpm install --frozen-lockfile
+      - name: Publish (R2 + KV)
+        # Sem CLOUDFLARE_API_TOKEN o wrangler falha na autenticação — deixa o
+        # job vermelho de propósito aqui (diferente do deploy do Worker em
+        # services.yml, que faz no-op silencioso): publicar release é uma
+        # tag v* deliberada, não um push comum, então falha visível é o
+        # comportamento certo se o secret não estiver configurado.
+        working-directory: services
+        run: |
+          pnpm run release -- --version=${GITHUB_REF#refs/tags/v} --dist="$GITHUB_WORKSPACE/dist-electron-all"
