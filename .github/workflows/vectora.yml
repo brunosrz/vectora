@@ -236,15 +236,25 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm build
-      - name: Build Nuitka onefile
-        # Flags de build vivem nas diretivas `# nuitka-project:` em
-        # backend/launcher.py (fonte única). Aqui só passamos --jobs.
-        run: uv run python -m nuitka --jobs=4 backend/launcher.py
+      - name: Build hybrid (Nuitka backend.pyd + PyInstaller onedir)
+        # Mesmo pipeline que `scons release` roda localmente
+        # (build-hybrid.py, na raiz do monorepo — não em vectora/): Nuitka
+        # --mode=package compila só o pacote backend pra backend.pyd, depois
+        # PyInstaller empacota launcher.py + backend.pyd + libs em
+        # dist/vectora/ (onedir). O job antigo chamava um `nuitka
+        # backend/launcher.py` onefile direto, que nunca existiu de verdade
+        # nesse caminho — script certo é este, daí o working-directory
+        # sobrescrevendo o default do job (que é "vectora").
+        working-directory: .
+        # build-hybrid.py espera "--jobs N" como dois argv separados
+        # (sys.argv.index("--jobs")+1) — "--jobs=4" não bate no parser.
+        run: python build-hybrid.py --jobs 4
         shell: bash
       - name: Smoke test (license bypass)
         env:
           VECTORA_LICENSE_BYPASS: "1"
-        run: ./dist-nuitka/vectora --version || ./dist-nuitka/vectora.exe --version
+        working-directory: .
+        run: ./dist/vectora/vectora --version || ./dist/vectora/vectora.exe --version
         shell: bash
       - name: Build desktop shell + installer
         env:
