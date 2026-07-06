@@ -34,7 +34,7 @@ export interface ChatConfig {
 }
 
 /** Tipo semântico do attachment — espelha AttachmentKind do backend. */
-export type AttachmentKind = "image" | "pdf" | "code" | "text";
+export type AttachmentKind = "image" | "pdf" | "code" | "text" | "audio";
 
 /**
  * Arquivo anexado a uma mensagem.

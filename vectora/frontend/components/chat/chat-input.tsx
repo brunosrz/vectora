@@ -57,7 +57,7 @@ function VscodeMenu({ workspaceId }: { workspaceId: string }) {
       `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
     );
     const options: VscodeOption[] = res.ok
-      ? (await res.json()).options ?? []
+      ? ((await res.json()).options ?? [])
       : [];
     const opt =
       options.find((o) => o.strategy === "local") ?? options[0] ?? null;
@@ -307,7 +307,7 @@ export function ChatInput({
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,.py,.js,.ts,.tsx,.jsx,.java,.cpp,.c,.h,.cs,.go,.rs,.rb,.php,.sh,.bash,.yaml,.yml,.json,.xml,.html,.css,.md,.txt,.log,.sql,.graphql,.r,.swift,.kt,.scala,.har"
+                    accept="image/*,audio/*,.py,.js,.ts,.tsx,.jsx,.java,.cpp,.c,.h,.cs,.go,.rs,.rb,.php,.sh,.bash,.yaml,.yml,.json,.xml,.html,.css,.md,.txt,.log,.sql,.graphql,.r,.swift,.kt,.scala,.har,.mp3,.wav,.m4a,.ogg,.webm"
                     multiple
                     onChange={onFileSelect}
                     className="hidden"

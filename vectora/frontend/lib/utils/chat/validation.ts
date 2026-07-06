@@ -54,10 +54,20 @@ export const validateImageFile = (
 ): { valid: boolean; error?: string } => {
   // HAR files can be large network captures — allow up to 50MB.
   // Public CLC does not support HAR analysis; HAR files are ignored before streaming.
+  // Audio files capped at 25MB — matches the OpenAI Whisper API's own limit.
   // All other file types retain the original 10MB limit.
   const isHar = file.name.toLowerCase().endsWith(".har");
-  const maxSize = isHar ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-  const maxSizeLabel = isHar ? "50MB" : "10MB";
+  const isAudio =
+    file.type.startsWith("audio/") ||
+    [".mp3", ".wav", ".m4a", ".ogg", ".webm"].some((ext) =>
+      file.name.toLowerCase().endsWith(ext),
+    );
+  const maxSize = isHar
+    ? 50 * 1024 * 1024
+    : isAudio
+      ? 25 * 1024 * 1024
+      : 10 * 1024 * 1024;
+  const maxSizeLabel = isHar ? "50MB" : isAudio ? "25MB" : "10MB";
   if (file.size > maxSize) {
     return { valid: false, error: `File must be smaller than ${maxSizeLabel}` };
   }
@@ -70,6 +80,16 @@ export const validateImageFile = (
     "image/png",
     "image/gif",
     "image/webp",
+    // Audio
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/mp4",
+    "audio/m4a",
+    "audio/x-m4a",
+    "audio/ogg",
+    "audio/webm",
     // Text/Code
     "text/plain",
     "text/markdown",
@@ -137,6 +157,12 @@ export const validateImageFile = (
     ".scala",
     // Network/Debug files
     ".har",
+    // Audio
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".ogg",
+    ".webm",
   ];
 
   const fileName = file.name.toLowerCase();

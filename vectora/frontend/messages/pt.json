@@ -58,6 +58,7 @@
   "time_months_ago": "há {n} meses",
   "welcome_title": "O que posso fazer por você?",
   "welcome_drop_files": "Solte arquivos aqui",
+  "audio_attachment_badge": "ÁUDIO",
   "welcome_suggestion_1": "Explique a estrutura do projeto e os arquivos principais",
   "welcome_suggestion_2": "Encontre e corrija bugs ou problemas no código",
   "welcome_suggestion_3": "Escreva testes para as funções mais críticas",

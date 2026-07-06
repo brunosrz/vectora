@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { m } from "@/lib/paraglide/messages";
 import type { ImageAttachment } from "@/lib/types";
 import { renderPdfFirstPage } from "@/lib/utils/files/pdf-preview";
 
@@ -61,7 +62,12 @@ function extOf(filename: string): string {
 function isCodeFile(file: ImageAttachment): boolean {
   if (file.mimeType?.startsWith("image/")) return false;
   if (file.mimeType === "application/pdf") return false;
+  if (file.mimeType?.startsWith("audio/")) return false;
   return CODE_EXTENSIONS.has(extOf(file.name ?? ""));
+}
+
+function isAudioFile(file: ImageAttachment): boolean {
+  return Boolean(file.mimeType?.startsWith("audio/"));
 }
 
 /** Decodifica base64 → text (UTF-8 safe) */
@@ -206,6 +212,47 @@ function CodePreview({ file }: { file: ImageAttachment }) {
   );
 }
 
+/** Preview de arquivo de áudio — ícone de nota musical + nome + tamanho */
+function AudioChip({ file }: { file: ImageAttachment }) {
+  const fileName = file.name ?? "audio";
+  const fileSizeKB = file.size ? Math.round(file.size / 1024) : 0;
+
+  return (
+    <div className="h-full flex flex-col items-center justify-center p-2 text-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-8 h-8 mb-1.5 text-purple-400"
+      >
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </svg>
+      <span
+        className="text-[11px] font-medium text-foreground truncate w-full px-1 mb-0.5"
+        title={fileName}
+      >
+        {fileName}
+      </span>
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-purple-900/40 text-purple-300">
+          {m.audio_attachment_badge()}
+        </span>
+        {fileSizeKB > 0 && (
+          <span className="text-[10px] text-muted-foreground">
+            {fileSizeKB}KB
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ============================================================================
 // FilePreviewCard
 // ============================================================================
@@ -219,6 +266,7 @@ function FilePreviewCard({
 }) {
   const isImage = file.mimeType?.startsWith("image/");
   const isPdf = file.mimeType === "application/pdf";
+  const isAudio = isAudioFile(file);
   const isCode = isCodeFile(file);
   const fileName = file.name ?? "File";
   const fileExt = extOf(fileName);
@@ -243,6 +291,9 @@ function FilePreviewCard({
       ) : isPdf ? (
         // ── PDF — thumbnail via pdfjs (F2)
         <PdfThumbnail file={file} />
+      ) : isAudio ? (
+        // ── Áudio — ícone dedicado
+        <AudioChip file={file} />
       ) : isCode ? (
         // ── Código/Texto — snippet das primeiras linhas (F4)
         <CodePreview file={file} />

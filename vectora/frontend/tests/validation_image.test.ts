@@ -46,4 +46,20 @@ describe("validateImageFile", () => {
     expect(res.valid).toBe(false);
     expect(res.error).toContain(".exe");
   });
+
+  it("aceita áudio até 25MB por mimetype", () => {
+    expect(
+      validateImageFile(file("memo.mp3", 20 * MB, "audio/mpeg")).valid,
+    ).toBe(true);
+  });
+
+  it("aceita áudio por extensão quando o mimetype está vazio", () => {
+    expect(validateImageFile(file("memo.wav", 1 * MB, "")).valid).toBe(true);
+  });
+
+  it("rejeita áudio acima de 25MB", () => {
+    const res = validateImageFile(file("memo.mp3", 26 * MB, "audio/mpeg"));
+    expect(res.valid).toBe(false);
+    expect(res.error).toContain("25MB");
+  });
 });

@@ -131,21 +131,24 @@ class TestStreamChatRequestAttachments:
 
 
 class TestBuildHumanMessage:
-    def test_no_attachments_returns_plain_string(self) -> None:
+    @pytest.mark.asyncio
+    async def test_no_attachments_returns_plain_string(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
-        msg = _build_human_message("olá", [])
+        msg = await _build_human_message("olá", [])
         assert isinstance(msg, HumanMessage)
         assert msg.content == "olá"
 
-    def test_empty_list_returns_plain_string(self) -> None:
+    @pytest.mark.asyncio
+    async def test_empty_list_returns_plain_string(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
-        msg = _build_human_message("teste", [])
+        msg = await _build_human_message("teste", [])
         assert isinstance(msg.content, str)
         assert msg.content == "teste"
 
-    def test_image_attachment_produces_multimodal(self) -> None:
+    @pytest.mark.asyncio
+    async def test_image_attachment_produces_multimodal(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
         raw = _b64_bytes(b"fake_image_bytes")
@@ -155,7 +158,7 @@ class TestBuildHumanMessage:
             mime_type="image/png",
             base64_data=raw,
         )
-        msg = _build_human_message("veja isso", [att])
+        msg = await _build_human_message("veja isso", [att])
 
         assert isinstance(msg.content, list)
         # Parte 0: texto original
@@ -165,7 +168,8 @@ class TestBuildHumanMessage:
         assert "data:image/png;base64," in msg.content[1]["image_url"]["url"]
         assert raw in msg.content[1]["image_url"]["url"]
 
-    def test_code_attachment_injects_code_block(self) -> None:
+    @pytest.mark.asyncio
+    async def test_code_attachment_injects_code_block(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
         code = "def hello():\n    print('hi')"
@@ -175,7 +179,7 @@ class TestBuildHumanMessage:
             mime_type="text/x-python",
             base64_data=_b64(code),
         )
-        msg = _build_human_message("explique", [att])
+        msg = await _build_human_message("explique", [att])
 
         assert isinstance(msg.content, list)
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
@@ -183,7 +187,8 @@ class TestBuildHumanMessage:
         assert "python" in all_text  # linguagem detectada pela extensão
         assert code in all_text
 
-    def test_pdf_attachment_injects_decoded_text(self) -> None:
+    @pytest.mark.asyncio
+    async def test_pdf_attachment_injects_decoded_text(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
         content = "Este é o conteúdo do PDF"
@@ -193,14 +198,15 @@ class TestBuildHumanMessage:
             mime_type="application/pdf",
             base64_data=_b64(content),
         )
-        msg = _build_human_message("resuma", [att])
+        msg = await _build_human_message("resuma", [att])
 
         assert isinstance(msg.content, list)
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
         assert "relatorio.pdf" in all_text
         assert content in all_text
 
-    def test_text_attachment_decoded_utf8(self) -> None:
+    @pytest.mark.asyncio
+    async def test_text_attachment_decoded_utf8(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
         content = "Olá, Mundo! 🌍"
@@ -210,12 +216,13 @@ class TestBuildHumanMessage:
             mime_type="text/plain",
             base64_data=_b64(content),
         )
-        msg = _build_human_message("leia", [att])
+        msg = await _build_human_message("leia", [att])
 
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
         assert content in all_text
 
-    def test_mixed_attachments_correct_parts_count(self) -> None:
+    @pytest.mark.asyncio
+    async def test_mixed_attachments_correct_parts_count(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
         img_att = Attachment(
@@ -230,14 +237,15 @@ class TestBuildHumanMessage:
             mime_type="text/x-python",
             base64_data=_b64("x = 1"),
         )
-        msg = _build_human_message("analyze", [img_att, code_att])
+        msg = await _build_human_message("analyze", [img_att, code_att])
 
         assert isinstance(msg.content, list)
         assert len(msg.content) == 3  # texto + image_url + texto-código
         types = [p["type"] for p in msg.content]
         assert types == ["text", "image_url", "text"]
 
-    def test_multiple_images(self) -> None:
+    @pytest.mark.asyncio
+    async def test_multiple_images(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
         att1 = Attachment(
@@ -252,12 +260,61 @@ class TestBuildHumanMessage:
             mime_type="image/jpeg",
             base64_data=_b64_bytes(b"img2"),
         )
-        msg = _build_human_message("compare", [att1, att2])
+        msg = await _build_human_message("compare", [att1, att2])
 
         assert len(msg.content) == 3  # text + 2 images
         assert msg.content[1]["type"] == "image_url"
         assert msg.content[2]["type"] == "image_url"
         assert "image/jpeg" in msg.content[2]["image_url"]["url"]
+
+    @pytest.mark.asyncio
+    async def test_audio_attachment_transcribed_and_injected(self) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        from backend.api.handlers.chat import _build_human_message
+
+        att = Attachment(
+            kind=AttachmentKind.AUDIO,
+            name="memo.mp3",
+            mime_type="audio/mpeg",
+            base64_data=_b64_bytes(b"fake_audio_bytes"),
+        )
+        with patch(
+            "backend.llm.transcription.transcribe_audio",
+            AsyncMock(return_value="fale sobre o projeto"),
+        ):
+            msg = await _build_human_message("ouça isso", [att])
+
+        assert isinstance(msg.content, list)
+        all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
+        assert "memo.mp3" in all_text
+        assert "fale sobre o projeto" in all_text
+
+    @pytest.mark.asyncio
+    async def test_audio_attachment_transcription_failure_injects_error_note(
+        self,
+    ) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        from backend.api.handlers.chat import _build_human_message
+        from backend.llm.transcription import TranscriptionError
+
+        att = Attachment(
+            kind=AttachmentKind.AUDIO,
+            name="memo.wav",
+            mime_type="audio/wav",
+            base64_data=_b64_bytes(b"fake_audio_bytes"),
+        )
+        with patch(
+            "backend.llm.transcription.transcribe_audio",
+            AsyncMock(side_effect=TranscriptionError("sem chave configurada")),
+        ):
+            msg = await _build_human_message("ouça isso", [att])
+
+        assert isinstance(msg.content, list)
+        all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
+        assert "memo.wav" in all_text
+        assert "falha ao transcrever" in all_text
 
 
 # ===========================================================================

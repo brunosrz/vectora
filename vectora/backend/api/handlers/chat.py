@@ -147,11 +147,35 @@ def _detect_planning_mode(content: str) -> tuple[str, bool]:
     return content, False
 
 
-def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
+async def _transcribe_attachment(att: Attachment) -> str:
+    """Transcreve um anexo de áudio, devolvendo um bloco de texto pronto pra inserir.
+
+    Falha de transcrição (sem chave configurada, erro de rede/API) nunca
+    propaga — vira uma nota inline indicando que a transcrição não rodou,
+    preservando o resto do turno.
+    """
+    from backend.llm.transcription import TranscriptionError, transcribe_audio
+
+    try:
+        audio_bytes = base64.b64decode(att.base64_data)
+    except Exception:
+        return f"\n[Áudio: {att.name} — não foi possível decodificar o arquivo]"
+
+    try:
+        transcript = await transcribe_audio(audio_bytes, att.name, att.mime_type)
+    except TranscriptionError:
+        logger.exception("chat: falha ao transcrever áudio %s", att.name)
+        return f"\n[Áudio: {att.name} — falha ao transcrever]"
+
+    return f"\n[Áudio: {att.name}]\n{transcript}"
+
+
+async def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
     """Constrói HumanMessage com suporte a conteúdo multimodal.
 
     - Sem attachments → ``HumanMessage(content=str)`` simples
     - Imagem → content list com ``type=image_url`` (formato OpenAI)
+    - Áudio → transcrito via Whisper (STT) e injetado como texto
     - Código/PDF/texto → injetado como bloco de código ou texto no content list
 
     O formato de ``content`` como lista é compatível com a maioria dos provedores
@@ -174,6 +198,8 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
                     },
                 }
             )
+        elif att.kind == AttachmentKind.AUDIO:
+            parts.append({"type": "text", "text": await _transcribe_attachment(att)})
         else:
             # Código, PDF ou texto — decodifica e injeta como texto
             try:
@@ -457,7 +483,7 @@ async def stream_chat(
         "recursion_limit": request.config.recursion_limit or 50,
     }
 
-    human_msg = _build_human_message(request.content, request.attachments)
+    human_msg = await _build_human_message(request.content, request.attachments)
 
     # Planning mode: injeta instrução de planejamento no HumanMessage
     if planning_mode:

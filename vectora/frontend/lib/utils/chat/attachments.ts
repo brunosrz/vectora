@@ -13,11 +13,13 @@ import type { Attachment, AttachmentKind } from "@/lib/api/vectora-client";
  *
  * - `image/*` → "image"
  * - `application/pdf` → "pdf"
+ * - `audio/*` → "audio"
  * - qualquer outra coisa → "code" (tratado como código/texto pelo backend)
  */
 function deriveKind(mimeType: string): AttachmentKind {
   if (mimeType.startsWith("image/")) return "image";
   if (mimeType === "application/pdf") return "pdf";
+  if (mimeType.startsWith("audio/")) return "audio";
   // txt, json, yaml, markdown, código-fonte, etc.
   return "code";
 }

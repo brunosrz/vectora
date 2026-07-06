@@ -46,6 +46,7 @@ class AttachmentKind(StrEnum):
     PDF = "pdf"  # PDF → texto decodificado
     CODE = "code"  # código → bloco de código com linguagem detectada
     TEXT = "text"  # texto genérico → injetado como texto
+    AUDIO = "audio"  # áudio → transcrito via STT e injetado como texto
 
 
 class Attachment(BaseModel):
