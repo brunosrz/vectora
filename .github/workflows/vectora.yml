@@ -141,7 +141,7 @@ jobs:
       - name: Run unit tests
         run: uv run pytest tests/unit/ -v --cov=backend --cov-report=xml
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: vectora/coverage.xml
         continue-on-error: true
@@ -243,6 +243,8 @@ jobs:
         # etapa mais lenta da matriz, 10-20min). Instala o binário aqui;
         # o cache do diretório em si é o próximo step.
         shell: bash
+        env:
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
         run: |
           case "${{ runner.os }}" in
             Linux) sudo apt-get update -qq && sudo apt-get install -y ccache ;;
@@ -250,7 +252,7 @@ jobs:
             Windows) choco install ccache -y ;;
           esac
       - name: Cache ccache (Nuitka C compilation)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/.ccache
           # Chave por SO/arch + hash do backend: cache miss só quando o
