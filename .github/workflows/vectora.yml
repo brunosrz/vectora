@@ -343,6 +343,10 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # API token R2 (S3) — upload dos instaladores via multipart; o
+      # CLOUDFLARE_API_TOKEN acima autentica só o wrangler (KV).
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -372,8 +376,9 @@ jobs:
         working-directory: services
         run: pnpm install --frozen-lockfile
       - name: Publish (R2 + KV)
-        # Sem CLOUDFLARE_API_TOKEN o wrangler falha na autenticação — o job
-        # fica vermelho de propósito, nunca um no-op silencioso.
+        # Sem CLOUDFLARE_API_TOKEN (wrangler/KV) ou sem as credenciais R2
+        # (upload S3) o script falha na autenticação — o job fica vermelho
+        # de propósito, nunca um no-op silencioso.
         working-directory: services
         run: |
           pnpm run release -- --version=${{ steps.version.outputs.value }} --dist="$GITHUB_WORKSPACE/dist-electron-all"

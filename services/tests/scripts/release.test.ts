@@ -7,6 +7,7 @@ import {
   MANIFEST_ARCHES,
   RETENTION_COUNT,
   computeRetention,
+  r2ClientConfig,
 } from "../../scripts/release";
 
 describe("parseArgs", () => {
@@ -143,5 +144,38 @@ describe("computeRetention", () => {
 
   it("RETENTION_COUNT default é 3", () => {
     expect(RETENTION_COUNT).toBe(3);
+  });
+});
+
+describe("r2ClientConfig", () => {
+  const FULL_ENV = {
+    CLOUDFLARE_ACCOUNT_ID: "acc-123",
+    R2_ACCESS_KEY_ID: "key-id",
+    R2_SECRET_ACCESS_KEY: "key-secret",
+  };
+
+  it("monta endpoint S3 do R2 com credenciais e region auto", () => {
+    const config = r2ClientConfig(FULL_ENV);
+    expect(config.endpoint).toBe("https://acc-123.r2.cloudflarestorage.com");
+    expect(config.region).toBe("auto");
+    expect(config.credentials).toEqual({
+      accessKeyId: "key-id",
+      secretAccessKey: "key-secret",
+    });
+  });
+
+  it("credencial ausente → erro nomeando exatamente as que faltam (par de erro)", () => {
+    expect(() => r2ClientConfig({ CLOUDFLARE_ACCOUNT_ID: "acc-123" })).toThrow(
+      /R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY/,
+    );
+    expect(() => r2ClientConfig({})).toThrow(
+      /CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY/,
+    );
+  });
+
+  it("credencial vazia conta como ausente (edge: env var declarada sem valor)", () => {
+    expect(() =>
+      r2ClientConfig({ ...FULL_ENV, R2_SECRET_ACCESS_KEY: "" }),
+    ).toThrow(/R2_SECRET_ACCESS_KEY/);
   });
 });

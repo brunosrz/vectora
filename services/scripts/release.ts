@@ -2,7 +2,7 @@
  * Publica os instaladores de `vectora/electron/dist-electron/` no R2 e atualiza
  * o canal de release no KV (`channels.<channel>.version`).
  *
- * Uso (depois de `scons release-<os>`, a partir de services/):
+ * Uso (depois de `scons release`, a partir de services/):
  *   pnpm release -- --channel=latest --version=0.1.1 [--dist=<path>]
  *
  * Sobe pra key `<channel>/<os>/<arch>/<version>/<filename>` (mesmo padrão que
@@ -10,9 +10,18 @@
  * manifesto `latest*.yml` que o electron-builder gera junto vai pro mesmo
  * lugar, com o nome fixo `latest.yml` (é o que
  * `GET /updates/:channel/:os/:arch/latest.yml` espera).
+ *
+ * R2 via API S3 (multipart) — `wrangler r2 object put` recusa arquivos acima
+ * de 300 MiB e instaladores passam disso (AppImage ~460 MiB). Requer
+ * CLOUDFLARE_ACCOUNT_ID + R2_ACCESS_KEY_ID + R2_SECRET_ACCESS_KEY no env
+ * (API token R2 criado no dashboard Cloudflare). O KV continua via wrangler
+ * (não tem API S3 e os valores são pequenos), autenticado por
+ * CLOUDFLARE_API_TOKEN.
  */
+import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import { execFileSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { createReadStream, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -46,11 +55,10 @@ export const MANIFEST_ARCHES: Record<string, string[]> = {
   linux: ["x64", "arm64"],
 };
 
-// Quantas versões ficam disponíveis em R2 por canal. wrangler não expõe
-// listagem de objetos (só get/put/delete) — em vez de descobrir versões
-// antigas escaneando o bucket, o config no KV grava (via `uploads` abaixo)
-// exatamente quais chaves cada versão publicou, e a poda apaga por essa
-// lista. 3 dá margem pra quem já está baixando uma versão no meio de um
+// Quantas versões ficam disponíveis em R2 por canal. A poda apaga pelas
+// chaves que cada versão gravou no KV (`uploads` abaixo), não por listagem
+// do bucket — a lista registrada é a fonte de verdade do que cada versão
+// publicou. 3 dá margem pra quem já está baixando uma versão no meio de um
 // up-release nunca ver o download sumir no meio do caminho.
 export const RETENTION_COUNT = 3;
 
@@ -92,36 +100,66 @@ export function extOf(filename: string): string {
   return dot === -1 ? "" : filename.slice(dot + 1);
 }
 
-function uploadFile(
+export interface R2ClientConfig {
+  region: "auto";
+  endpoint: string;
+  credentials: { accessKeyId: string; secretAccessKey: string };
+}
+
+export function r2ClientConfig(
+  env: Record<string, string | undefined> = process.env,
+): R2ClientConfig {
+  const required = [
+    "CLOUDFLARE_ACCOUNT_ID",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+  ] as const;
+  const missing = required.filter((name) => !env[name]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Credenciais R2 ausentes no env: ${missing.join(", ")} — ` +
+        "crie um API token R2 (dashboard Cloudflare → R2 → Manage API Tokens) " +
+        "e exporte as três variáveis.",
+    );
+  }
+  return {
+    region: "auto",
+    endpoint: `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID as string,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY as string,
+    },
+  };
+}
+
+let s3Singleton: S3Client | null = null;
+
+function s3Client(): S3Client {
+  s3Singleton ??= new S3Client(r2ClientConfig());
+  return s3Singleton;
+}
+
+async function uploadFile(
   bucket: string,
   key: string,
   filePath: string,
   contentType: string,
-) {
-  execFileSync(
-    "npx",
-    [
-      "wrangler",
-      "r2",
-      "object",
-      "put",
-      `${bucket}/${key}`,
-      "--file",
-      filePath,
-      "--content-type",
-      contentType,
-      "--remote",
-    ],
-    { stdio: "inherit" },
-  );
+): Promise<void> {
+  console.log(`↑ ${key}`);
+  await new Upload({
+    client: s3Client(),
+    params: {
+      Bucket: bucket,
+      Key: key,
+      Body: createReadStream(filePath),
+      ContentType: contentType,
+    },
+  }).done();
 }
 
-function deleteFile(bucket: string, key: string) {
-  execFileSync(
-    "npx",
-    ["wrangler", "r2", "object", "delete", `${bucket}/${key}`, "--remote"],
-    { stdio: "inherit" },
-  );
+async function deleteFile(bucket: string, key: string): Promise<void> {
+  console.log(`✗ ${key}`);
+  await s3Client().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
 
 interface StoredConfig {
@@ -180,12 +218,12 @@ function writeConfig(config: StoredConfig) {
  * poda versões além de RETENTION_COUNT, apagando as chaves gravadas na
  * publicação delas.
  */
-function publishVersionAndPrune(
+async function publishVersionAndPrune(
   bucket: string,
   channel: string,
   version: string,
   uploadedKeys: string[],
-) {
+): Promise<void> {
   const config = readConfig();
   const existing = config.channels[channel];
   const { retained, pruned } = computeRetention(
@@ -204,7 +242,7 @@ function publishVersionAndPrune(
   for (const prunedVersion of pruned) {
     const prunedKey = `${channel}/${prunedVersion}`;
     for (const key of config.uploads[prunedKey] ?? []) {
-      deleteFile(bucket, key);
+      await deleteFile(bucket, key);
     }
     delete config.uploads[prunedKey];
   }
@@ -217,7 +255,7 @@ function publishVersionAndPrune(
   }
 }
 
-function main() {
+async function main(): Promise<void> {
   const { channel, version, dist } = parseArgs(process.argv.slice(2));
   const bucket = "vectora-r2";
 
@@ -231,7 +269,7 @@ function main() {
     if (manifestOs) {
       for (const arch of MANIFEST_ARCHES[manifestOs] ?? []) {
         const key = `${channel}/${manifestOs}/${arch}/${version}/latest.yml`;
-        uploadFile(bucket, key, join(dist, file), CONTENT_TYPES.yml);
+        await uploadFile(bucket, key, join(dist, file), CONTENT_TYPES.yml);
         uploadedKeys.push(key);
       }
       continue;
@@ -243,7 +281,7 @@ function main() {
     const key = `${channel}/${os}/${arch}/${version}/${file}`;
     const contentType =
       CONTENT_TYPES[extOf(file)] ?? "application/octet-stream";
-    uploadFile(bucket, key, join(dist, file), contentType);
+    await uploadFile(bucket, key, join(dist, file), contentType);
     uploadedKeys.push(key);
   }
 
@@ -251,12 +289,15 @@ function main() {
     throw new Error(`Nenhum instalador/manifesto reconhecido em ${dist}`);
   }
 
-  publishVersionAndPrune(bucket, channel, version, uploadedKeys);
+  await publishVersionAndPrune(bucket, channel, version, uploadedKeys);
   console.log(
     `✓ ${uploadedKeys.length} arquivo(s) publicados no canal "${channel}" v${version}`,
   );
 }
 
 if (require.main === module) {
-  main();
+  main().catch((err: unknown) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

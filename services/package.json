@@ -14,6 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1079.0",
+    "@aws-sdk/lib-storage": "^3.1079.0",
     "@cloudflare/vitest-pool-workers": "^0.18.0",
     "@cloudflare/workers-types": "^4.20260702.1",
     "@vitest/coverage-istanbul": "^4.1.9",
