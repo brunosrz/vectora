@@ -12,7 +12,7 @@ Download the installer for your OS:
 | OS      | Format                                   | Signing                                |
 | ------- | ---------------------------------------- | -------------------------------------- |
 | Windows | `.msi` or `.exe` (NSIS)                  | EV certificate (Azure Trusted Signing) |
-| macOS   | `.dmg` (separate Intel and Apple Silicon builds) | Apple Developer ID + notarized |
+| macOS   | `.dmg` (Apple Silicon only)              | Apple Developer ID + notarized         |
 | Linux   | `.AppImage`, `.deb`, or `.rpm`           | unsigned                               |
 
 Install normally (double-click / `dpkg -i` / `rpm -i`). The app opens with the backend already embedded — no separate Python, Node, or any other dependency to install.

@@ -1,11 +1,25 @@
 name: Vectora (app)
 
 # Pipeline do app Vectora (backend Python + frontend Vite + casca Electron).
-# Reusable: disparado só pelo runner ci.yml. O job release-native (+
-# publish-update-channel) segue gated a "[up-release]" na mensagem do
-# commit / workflow_dispatch internamente — não a tags.
+#
+# Repo privado = plano billado (Free tem cota baixa de minutos) — rodar a
+# suíte inteira (lint+testes+build+matriz de release) em todo push não
+# compensa quando a intenção não é publicar. Por isso os jobs de entrada
+# (lint/security/frontend) só rodam de verdade com "[up-release]" na
+# mensagem do commit ou workflow_dispatch manual; qualquer outro push
+# aparece como "skipped" no Actions — skip acontece antes de alocar
+# runner, então custa 0 minutos. release-native (+ publish-update-channel)
+# repete o mesmo gate internamente, não tags.
 on:
-  workflow_call:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -25,7 +39,7 @@ jobs:
   lint:
     name: Lint & Format Check
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-uv
@@ -42,7 +56,7 @@ jobs:
   security:
     name: Security Scanning
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-uv
@@ -61,7 +75,7 @@ jobs:
   frontend:
     name: Frontend (lint + types + tests)
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     steps:
       - uses: actions/checkout@v5
       - name: Setup Node.js
@@ -210,9 +224,6 @@ jobs:
             target: linux
           - os: macos-latest
             arch: arm64
-            target: mac
-          - os: macos-13
-            arch: x64
             target: mac
           - os: windows-latest
             arch: x64

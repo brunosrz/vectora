@@ -166,7 +166,7 @@ scons help              Lista completa com descrições
 
 ### CI/CD
 
-- **GitHub Actions** (`.github/workflows/`) — `ci.yml` é o orquestrador único (path-gating via `dorny/paths-filter`), disparado por `workflow_dispatch`; `vectora.yml` (reusable) roda lint → security scan (bandit + pip-audit) → frontend (oxlint/tsc/vitest) → build verification → testes unit/stress/integration+e2e → release nativo (matriz Linux/macOS x2/Windows, Nuitka onefile + electron-builder), gated a tags `v*` ou disparo manual.
+- **GitHub Actions** (`.github/workflows/vectora.yml`) — pipeline única: lint → security scan (bandit + pip-audit) → frontend (oxlint/tsc/vitest) → build verification → testes unit/stress/integration+e2e → release nativo (matriz Linux/macOS/Windows, build híbrido Nuitka + electron-builder). Todo o pipeline (inclusive lint) só roda de verdade com `[up-release]` na mensagem do commit ou `workflow_dispatch` manual — qualquer outro push aparece como "skipped", sem custar minutos.
 - **Jenkins** (`Jenkinsfile`, raiz do monorepo) — assume o CI contínuo em todo push/PR (`scons lint && scons tests`); o fluxo de release é um job parametrizado e manual que builda por SO (agentes dedicados Windows/macOS/Linux) e publica os instaladores no worker `services` (R2 + KV) via `services/scripts/release.ts`.
 
 ---

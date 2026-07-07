@@ -26,7 +26,7 @@ repos:
   # UV Lock Validation
   # ==========================================
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.16
+    rev: 0.11.27
     hooks:
       - id: uv-lock
 
@@ -80,7 +80,7 @@ repos:
   # Python Validation
   # ==========================================
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.18
+    rev: v0.15.20
     hooks:
       - id: ruff
         name: Ruff Lint (Python)
@@ -182,7 +182,7 @@ repos:
   # GitHub Actions Workflow Lint (actionlint)
   # ==========================================
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.7
+    rev: v1.7.12
     hooks:
       - id: actionlint
         name: Lint GitHub Actions workflows

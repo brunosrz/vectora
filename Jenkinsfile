@@ -2,14 +2,13 @@
 //
 // Dois fluxos independentes:
 //   1. CI (job normal, dispara em todo push/PR): scons lint && scons tests.
-//      Substitui o gate que .github/workflows/ci.yml fazia antes de virar
-//      workflow_dispatch-only — Jenkins assume o CI contínuo, GH Actions
-//      fica só manual/dispatch.
+//      Jenkins é o CI contínuo do repo — .github/workflows/vectora.yml só
+//      roda de verdade com "[up-release]" na mensagem do commit ou
+//      workflow_dispatch manual, pra não gastar minutos do plano billado.
 //   2. Release (job parametrizado, disparo MANUAL): scons up-version, build
 //      dos instaladores por SO (precisa de um agente por SO — Windows/macOS/
 //      Linux não cross-compilam entre si no electron-builder) e publish no
-//      vectora-services (R2 + KV via services/scripts/release.ts — era
-//      update-server/, unificado com o relay na Fase A do plano de services).
+//      vectora-services (R2 + KV via services/scripts/release.ts).
 //
 // Pré-requisito de infra (fora deste arquivo): controller Jenkins rodando +
 // pelo menos 1 agente por SO com label windows/macos/linux, uv/pnpm/scons
