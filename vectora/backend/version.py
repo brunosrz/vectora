@@ -24,12 +24,10 @@ def get_vectora_version() -> str:
 
 
 def get_build_version() -> str:
-    """Versão completa com hash numérico de build (X.Y.Z.<hash>).
-
-    O hash é calculado no build (``scons up-version``), não em runtime — o
-    binário Nuitka distribuído não carrega ``.git``. O pipeline de release
-    exporta ``VECTORA_BUILD_VERSION`` antes de empacotar; sem isso (dev local,
-    sem build oficial), cai pra versão semver sem hash.
+    """Versão completa com hash numérico de build (X.Y.Z.<hash>), quando
+    ``VECTORA_BUILD_VERSION`` está definida no ambiente; senão cai pra
+    versão semver sem hash. O binário Nuitka distribuído não carrega
+    ``.git``, então esse hash não pode ser calculado em runtime.
     """
     return os.environ.get("VECTORA_BUILD_VERSION", get_vectora_version())
 

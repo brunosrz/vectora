@@ -4,7 +4,6 @@ Vectora — SConstruct (SCons build file)
 Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons               → exibe ajuda
     scons release       → build completo + instalador para o SO atual
-    scons up-release [bump=patch|minor|major] → bump + build do instalador + publica no update
     scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
@@ -28,7 +27,6 @@ Subprojetos cobertos por lint e tests:
 
 import base64
 import glob
-import json
 import os
 import re
 import shutil
@@ -573,143 +571,13 @@ def _action_clean(target, source, env):
             print(f">> removido: {path}")
 
 
-# ── Up-release ────────────────────────────────────────────────────────────────
-# `scons up-release [bump=patch|minor|major]` — sobe o semver em pyproject.toml
-# (fonte única — backend/version.py lê de lá via importlib.metadata) e propaga
-# pro package.json do electron/services, sincroniza o venv (`uv sync` — sem
-# isso o importlib.metadata ficaria com a versão antiga em cache), builda o
-# instalador do SO atual (build local, current OS) e publica no canal de
-# update (R2 + KV) que `services/src/updates/worker.ts` serve. O commit criado
-# tem "[up-release]" na mensagem — esse é o mesmo marcador que o GitHub
-# Actions (.github/workflows/vectora.yml) procura pra disparar o job
-# release-native (build matrix linux/mac/win) + publish-update-channel, então
-# dar `git push` depois deste comando completa a cobertura de SOs que o build
-# local não faz. company/ fica de fora (não tem version própria, é site
-# separado do app).
-
-def _read_pyproject_version(path: str) -> tuple[int, int, int]:
-    text = open(path, encoding="utf-8").read()
-    m = re.search(r'(?m)^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"', text)
-    if not m:
-        raise RuntimeError(f"version não encontrada em {path}")
-    return int(m.group(1)), int(m.group(2)), int(m.group(3))
-
-
-def _write_pyproject_version(path: str, new_version: str) -> None:
-    text = open(path, encoding="utf-8").read()
-    new_text = re.sub(
-        r'(?m)^version\s*=\s*"\d+\.\d+\.\d+"',
-        f'version = "{new_version}"',
-        text,
-        count=1,
-    )
-    open(path, "w", encoding="utf-8").write(new_text)
-
-
-def _write_package_json_version(path: str, new_version: str) -> None:
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
-    data["version"] = new_version
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-        f.write("\n")
-
-
-def _bump_semver(version: tuple[int, int, int], kind: str) -> tuple[int, int, int]:
-    major, minor, patch = version
-    if kind == "major":
-        return (major + 1, 0, 0)
-    if kind == "minor":
-        return (major, minor + 1, 0)
-    return (major, minor, patch + 1)
-
-
-def _git_short_hash() -> str:
-    return subprocess.check_output(
-        ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True
-    ).strip()
-
-
-def _numeric_build_hash(short_hash: str) -> int:
-    # Windows limita o 4º campo de versão de arquivo (FileVersion/ProductVersion)
-    # a 16 bits — mod 65536 garante que o .msi/.exe nunca recebam um valor
-    # inválido, mesmo assim determinístico por commit.
-    return int(short_hash, 16) % 65536
-
-
-def _action_up_release(target, source, env):
-    bump_kind = ARGUMENTS.get("bump", "patch")
-    if bump_kind not in ("major", "minor", "patch"):
-        print(f">> bump inválido: {bump_kind!r} — use bump=major|minor|patch")
-        return 1
-
-    pyproject_path = os.path.join(VECTORA, "pyproject.toml")
-    package_json_paths = [
-        os.path.join(VECTORA, "electron", "package.json"),
-        os.path.join(SERVICES, "package.json"),
-    ]
-
-    old_version = _read_pyproject_version(pyproject_path)
-    new_version = _bump_semver(old_version, bump_kind)
-    new_version_str = ".".join(str(p) for p in new_version)
-
-    _write_pyproject_version(pyproject_path, new_version_str)
-    for pkg_path in package_json_paths:
-        _write_package_json_version(pkg_path, new_version_str)
-
-    # `get_vectora_version()` (backend/version.py) lê via importlib.metadata —
-    # sem re-sincronizar o venv, o dist-info instalado ficaria com a versão
-    # antiga em cache e o build empacotaria o número errado.
-    _run(["uv", "sync"], cwd=VECTORA)
-
-    subprocess.run(
-        ["git", "add", pyproject_path, *package_json_paths], cwd=ROOT, check=True
-    )
-    subprocess.run(
-        [
-            "git",
-            "commit",
-            "-m",
-            f"chore: bump version to v{new_version_str} [up-release]",
-        ],
-        cwd=ROOT,
-        check=True,
-    )
-    subprocess.run(["git", "tag", f"v{new_version_str}"], cwd=ROOT, check=True)
-
-    short_hash = _git_short_hash()
-    hash_num = _numeric_build_hash(short_hash)
-    build_version = f"{new_version_str}.{hash_num}"
-    os.environ["VECTORA_BUILD_VERSION"] = build_version
-
-    print(f">> versão {'.'.join(str(p) for p in old_version)} → {new_version_str}")
-    print(f">> commit [up-release] + tag v{new_version_str} criados (sem push — manual)")
-    print(f">> buildVersion: {build_version}")
-    print(">> dê `git push` pra disparar o build matrix (linux/mac/win) + publish no GitHub Actions")
-
-    platform = {"win32": "win", "darwin": "mac"}.get(sys.platform, "linux")
-    print(f">> buildando instalador ({platform}) para publicar no canal de update...")
-    _action_build_chat(target, source, env)
-    _action_build_nuitka(target, source, env)
-    _action_install_desktop(target, source, env)
-    _action_build_desktop(target, source, env)
-    _action_package(target, source, env, platform)
-
-    with _open_log("up-release-publish") as log:
-        _pnpm_install_if_needed("services", log)
-        _run(
-            [PNPM, "--dir", "services", "run", "release", "--", f"--version={new_version_str}"],
-            log=log,
-        )
-    print(f">> publicado no canal de update: v{new_version_str} ({platform})")
-
-
 # ── Prod (deploy) ─────────────────────────────────────────────────────────────
 # `scons prod` — deploy de produção da borda web/edge do monorepo: docs
 # (Vercel, docs.vectora.company), company (Vercel, vectora.company) e services
-# (Cloudflare Worker único: relay + updates). NÃO cobre o app desktop — isso é
-# `scons up-release`, que já builda o instalador do SO atual e publica no
-# canal de update (R2 + KV) como parte do próprio bump de versão.
+# (Cloudflare Worker único: relay + updates). Bump de versão, build do
+# instalador e publicação no canal de update rodam só via GitHub Actions
+# (.github/workflows/vectora.yml), disparados por "[up-release]" na mensagem
+# do commit.
 #
 # Requer `vercel` e `wrangler` autenticados localmente (ambos já usados nesta
 # máquina) e os projetos docs/company já linkados via `vercel link`
@@ -737,11 +605,6 @@ def _action_help(target, source, env):
 
   Produto final
     scons release          build completo + instalador para o SO atual
-    scons up-release [bump=patch|minor|major]
-                           bump de versão (commit com "[up-release]") + build
-                           do instalador do SO atual + publica no canal de
-                           update (R2 + KV) — push depois dispara a matriz
-                           linux/mac/win no GitHub Actions
     scons prod             deploy de produção: docs + company (Vercel) + services (Worker)
 
   Build
@@ -789,7 +652,6 @@ _FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
 
 _cmd("release", lambda target, source, env: _action_package(target, source, env), deps=_FULL_DEPS)
 
-_cmd("up-release",    _action_up_release)
 _cmd("prod",           _action_prod)
 
 _cmd("tests",         _action_tests)

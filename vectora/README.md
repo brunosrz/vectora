@@ -139,8 +139,10 @@ O sistema de build usa [SCons](https://scons.org/), incluído como dependência 
 
 ```
 scons release          Build completo + instalador nativo para o SO atual
-scons up-release [bump=patch|minor|major]   Bump de versão + commit [up-release]
 ```
+
+Bump de versão, build dos instaladores e publicação no canal de update rodam
+só via GitHub Actions, disparados por `[up-release]` na mensagem do commit.
 
 Pipeline executado em sequência (encadeado automaticamente por `release`):
 

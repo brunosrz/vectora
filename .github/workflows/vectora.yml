@@ -200,9 +200,8 @@ jobs:
         run: uv run pytest tests/e2e/ -v --timeout=180 --tb=short
 
   # ── 5. Release Native Binaries (Nuitka onefile + Electron installers) ───
-  # Matriz cara: 4 SOs, incluindo macOS (multiplicador 10x de minutos) e
-  # Windows (2x). Por isso roda SÓ com "[up-release]" na mensagem do commit
-  # (mesmo marcador que `scons up-release` usa) ou disparo manual
+  # Matriz cara: macOS (multiplicador 10x de minutos) e Windows (2x). Por
+  # isso roda SÓ com "[up-release]" na mensagem do commit ou disparo manual
   # (workflow_dispatch) — não em todo push, que estouraria a cota de Actions.
   # O gatilho é a mensagem do commit, viajando junto do push normal — não
   # depende de uma tag separada. A PUBLICAÇÃO da GitHub Release (--publish
