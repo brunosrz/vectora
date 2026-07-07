@@ -46,6 +46,30 @@ export const MANIFEST_ARCHES: Record<string, string[]> = {
   linux: ["x64", "arm64"],
 };
 
+// Quantas versões ficam disponíveis em R2 por canal. wrangler não expõe
+// listagem de objetos (só get/put/delete) — em vez de descobrir versões
+// antigas escaneando o bucket, o config no KV grava (via `uploads` abaixo)
+// exatamente quais chaves cada versão publicou, e a poda apaga por essa
+// lista. 3 dá margem pra quem já está baixando uma versão no meio de um
+// up-release nunca ver o download sumir no meio do caminho.
+export const RETENTION_COUNT = 3;
+
+export function computeRetention(
+  history: string[],
+  newVersion: string,
+  retain: number = RETENTION_COUNT,
+): { retained: string[]; pruned: string[] } {
+  const safeRetain = Math.max(retain, 1);
+  const updated = [...history.filter((v) => v !== newVersion), newVersion];
+  if (updated.length <= safeRetain) {
+    return { retained: updated, pruned: [] };
+  }
+  return {
+    retained: updated.slice(updated.length - safeRetain),
+    pruned: updated.slice(0, updated.length - safeRetain),
+  };
+}
+
 export function parseArgs(argv: string[]) {
   const args = Object.fromEntries(
     argv
@@ -92,35 +116,49 @@ function uploadFile(
   );
 }
 
-function putChannelVersion(channel: string, version: string) {
-  // Lê o config atual (se existir) pra preservar rollout_percent e mover a
-  // versão anterior pra previous_stable — publicar não deve apagar histórico
-  // de rollback.
-  let current: {
-    channels: Record<
-      string,
-      { version: string; rollout_percent: number; previous_stable?: string }
-    >;
-    quarantined: string[];
-  };
+function deleteFile(bucket: string, key: string) {
+  execFileSync(
+    "npx",
+    ["wrangler", "r2", "object", "delete", `${bucket}/${key}`, "--remote"],
+    { stdio: "inherit" },
+  );
+}
+
+interface StoredConfig {
+  channels: Record<
+    string,
+    {
+      version: string;
+      rollout_percent: number;
+      previous_stable?: string;
+      history: string[];
+    }
+  >;
+  quarantined: string[];
+  // "<channel>/<version>" → chaves R2 publicadas por essa versão, pra poda
+  // apagar com precisão sem precisar listar o bucket.
+  uploads: Record<string, string[]>;
+}
+
+function readConfig(): StoredConfig {
   try {
     const raw = execFileSync(
       "npx",
       ["wrangler", "kv", "key", "get", "config", "--binding=KV", "--remote"],
       { encoding: "utf-8" },
     );
-    current = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as Partial<StoredConfig>;
+    return {
+      channels: parsed.channels ?? {},
+      quarantined: parsed.quarantined ?? [],
+      uploads: parsed.uploads ?? {},
+    };
   } catch {
-    current = { channels: {}, quarantined: [] };
+    return { channels: {}, quarantined: [], uploads: {} };
   }
+}
 
-  const previous = current.channels[channel]?.version;
-  current.channels[channel] = {
-    version,
-    rollout_percent: current.channels[channel]?.rollout_percent ?? 100,
-    ...(previous ? { previous_stable: previous } : {}),
-  };
-
+function writeConfig(config: StoredConfig) {
   execFileSync(
     "npx",
     [
@@ -129,12 +167,54 @@ function putChannelVersion(channel: string, version: string) {
       "key",
       "put",
       "config",
-      JSON.stringify(current),
+      JSON.stringify(config),
       "--binding=KV",
       "--remote",
     ],
     { stdio: "inherit" },
   );
+}
+
+/**
+ * Grava a nova versão no canal, registra as chaves R2 que ela publicou e
+ * poda versões além de RETENTION_COUNT, apagando as chaves gravadas na
+ * publicação delas.
+ */
+function publishVersionAndPrune(
+  bucket: string,
+  channel: string,
+  version: string,
+  uploadedKeys: string[],
+) {
+  const config = readConfig();
+  const existing = config.channels[channel];
+  const { retained, pruned } = computeRetention(
+    existing?.history ?? [],
+    version,
+  );
+
+  config.channels[channel] = {
+    version,
+    rollout_percent: existing?.rollout_percent ?? 100,
+    ...(existing?.version ? { previous_stable: existing.version } : {}),
+    history: retained,
+  };
+  config.uploads[`${channel}/${version}`] = uploadedKeys;
+
+  for (const prunedVersion of pruned) {
+    const prunedKey = `${channel}/${prunedVersion}`;
+    for (const key of config.uploads[prunedKey] ?? []) {
+      deleteFile(bucket, key);
+    }
+    delete config.uploads[prunedKey];
+  }
+
+  writeConfig(config);
+  if (pruned.length > 0) {
+    console.log(
+      `✓ versões podadas do canal "${channel}": ${pruned.join(", ")}`,
+    );
+  }
 }
 
 function main() {
@@ -145,14 +225,14 @@ function main() {
     (f) => !f.endsWith(".yml.tmp") && !f.startsWith("."),
   );
 
-  let uploaded = 0;
+  const uploadedKeys: string[] = [];
   for (const file of files) {
     const manifestOs = MANIFEST_OS[file];
     if (manifestOs) {
       for (const arch of MANIFEST_ARCHES[manifestOs] ?? []) {
         const key = `${channel}/${manifestOs}/${arch}/${version}/latest.yml`;
         uploadFile(bucket, key, join(dist, file), CONTENT_TYPES.yml);
-        uploaded++;
+        uploadedKeys.push(key);
       }
       continue;
     }
@@ -164,16 +244,16 @@ function main() {
     const contentType =
       CONTENT_TYPES[extOf(file)] ?? "application/octet-stream";
     uploadFile(bucket, key, join(dist, file), contentType);
-    uploaded++;
+    uploadedKeys.push(key);
   }
 
-  if (uploaded === 0) {
+  if (uploadedKeys.length === 0) {
     throw new Error(`Nenhum instalador/manifesto reconhecido em ${dist}`);
   }
 
-  putChannelVersion(channel, version);
+  publishVersionAndPrune(bucket, channel, version, uploadedKeys);
   console.log(
-    `✓ ${uploaded} arquivo(s) publicados no canal "${channel}" v${version}`,
+    `✓ ${uploadedKeys.length} arquivo(s) publicados no canal "${channel}" v${version}`,
   );
 }
 

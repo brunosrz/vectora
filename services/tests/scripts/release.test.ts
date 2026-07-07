@@ -5,6 +5,8 @@ import {
   INSTALLER_RE,
   MANIFEST_OS,
   MANIFEST_ARCHES,
+  RETENTION_COUNT,
+  computeRetention,
 } from "../../scripts/release";
 
 describe("parseArgs", () => {
@@ -87,5 +89,59 @@ describe("MANIFEST_ARCHES", () => {
   it("mac só publica manifesto em arm64 (Intel descontinuado, par de erro)", () => {
     expect(MANIFEST_ARCHES.mac).toEqual(["arm64"]);
     expect(MANIFEST_ARCHES.mac).not.toContain("x64");
+  });
+});
+
+describe("computeRetention", () => {
+  it("histórico vazio: primeira publicação vira o único item retido", () => {
+    const { retained, pruned } = computeRetention([], "0.1.0");
+    expect(retained).toEqual(["0.1.0"]);
+    expect(pruned).toEqual([]);
+  });
+
+  it("abaixo do limite: nada é podado", () => {
+    const { retained, pruned } = computeRetention(["0.1.0", "0.1.1"], "0.1.2");
+    expect(retained).toEqual(["0.1.0", "0.1.1", "0.1.2"]);
+    expect(pruned).toEqual([]);
+  });
+
+  it("exatamente no limite (RETENTION_COUNT=3): nada é podado", () => {
+    const { retained, pruned } = computeRetention(
+      ["0.1.0", "0.1.1"],
+      "0.1.2",
+      3,
+    );
+    expect(retained).toHaveLength(3);
+    expect(pruned).toEqual([]);
+  });
+
+  it("um acima do limite: poda só a mais antiga (par de erro)", () => {
+    const { retained, pruned } = computeRetention(
+      ["0.1.0", "0.1.1", "0.1.2"],
+      "0.1.3",
+      3,
+    );
+    expect(retained).toEqual(["0.1.1", "0.1.2", "0.1.3"]);
+    expect(pruned).toEqual(["0.1.0"]);
+  });
+
+  it("republicar a mesma versão não duplica nem poda a si mesma", () => {
+    const { retained, pruned } = computeRetention(
+      ["0.1.0", "0.1.1", "0.1.2"],
+      "0.1.2",
+      3,
+    );
+    expect(retained).toEqual(["0.1.0", "0.1.1", "0.1.2"]);
+    expect(pruned).toEqual([]);
+  });
+
+  it("retain=0 ou negativo (edge): nunca poda a versão recém-publicada", () => {
+    const { retained, pruned } = computeRetention(["0.1.0"], "0.1.1", 0);
+    expect(retained).toEqual(["0.1.1"]);
+    expect(pruned).toEqual(["0.1.0"]);
+  });
+
+  it("RETENTION_COUNT default é 3", () => {
+    expect(RETENTION_COUNT).toBe(3);
   });
 });

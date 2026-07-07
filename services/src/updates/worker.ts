@@ -17,11 +17,17 @@ interface ChannelConfig {
   version: string;
   rollout_percent: number;
   previous_stable?: string;
+  // Versões retidas em R2 pro canal (mais antiga primeiro), gravado por
+  // scripts/release.ts — o worker não lê, só preserva o formato do KV.
+  history?: string[];
 }
 
 interface RuntimeConfig {
   channels: Record<string, ChannelConfig>;
   quarantined: string[];
+  // "<channel>/<version>" → chaves R2 publicadas por essa versão, usado por
+  // scripts/release.ts pra podar sem precisar listar o bucket.
+  uploads?: Record<string, string[]>;
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -129,7 +135,7 @@ app.get("/download/:channel/:os/:arch/:ext", async (c) => {
   const ch = config.channels[channel];
   if (!ch) return c.text("unknown channel", 404);
   const version = config.quarantined.includes(ch.version)
-    ? ch.previous_stable ?? null
+    ? (ch.previous_stable ?? null)
     : ch.version;
   if (!version) return c.text("no version available", 404);
 
