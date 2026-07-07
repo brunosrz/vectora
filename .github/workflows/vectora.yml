@@ -368,10 +368,8 @@ jobs:
         working-directory: services
         run: pnpm install --frozen-lockfile
       - name: Publish (R2 + KV)
-        # Sem CLOUDFLARE_API_TOKEN o wrangler falha na autenticação — deixa o
-        # job vermelho de propósito: publicar release é um "[up-release]"
-        # deliberado, então falha visível é o comportamento certo se o
-        # secret não estiver configurado (nunca um no-op silencioso aqui).
+        # Sem CLOUDFLARE_API_TOKEN o wrangler falha na autenticação — o job
+        # fica vermelho de propósito, nunca um no-op silencioso.
         working-directory: services
         run: |
           pnpm run release -- --version=${{ steps.version.outputs.value }} --dist="$GITHUB_WORKSPACE/dist-electron-all"
