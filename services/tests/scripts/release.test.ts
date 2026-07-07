@@ -4,6 +4,7 @@ import {
   extOf,
   INSTALLER_RE,
   MANIFEST_OS,
+  MANIFEST_ARCHES,
 } from "../../scripts/release";
 
 describe("parseArgs", () => {
@@ -74,5 +75,17 @@ describe("MANIFEST_OS", () => {
     expect(MANIFEST_OS["latest.yml"]).toBe("win");
     expect(MANIFEST_OS["latest-mac.yml"]).toBe("mac");
     expect(MANIFEST_OS["latest-linux.yml"]).toBe("linux");
+  });
+});
+
+describe("MANIFEST_ARCHES", () => {
+  it("win e linux publicam manifesto em x64 e arm64", () => {
+    expect(MANIFEST_ARCHES.win).toEqual(["x64", "arm64"]);
+    expect(MANIFEST_ARCHES.linux).toEqual(["x64", "arm64"]);
+  });
+
+  it("mac só publica manifesto em arm64 (Intel descontinuado, par de erro)", () => {
+    expect(MANIFEST_ARCHES.mac).toEqual(["arm64"]);
+    expect(MANIFEST_ARCHES.mac).not.toContain("x64");
   });
 });

@@ -51,11 +51,8 @@ const PLATFORMS: Platform[] = [
     osToken: "mac",
     label: "macOS",
     emoji: "🍎",
-    primary: { arch: "universal", ext: "dmg", label: ".dmg (universal)" },
-    others: [
-      { arch: "arm64", ext: "dmg", label: ".dmg (Apple Silicon)" },
-      { arch: "x64", ext: "dmg", label: ".dmg (Intel)" },
-    ],
+    primary: { arch: "arm64", ext: "dmg", label: ".dmg (Apple Silicon)" },
+    others: [],
     install: m.downloads_install_macos,
   },
   {

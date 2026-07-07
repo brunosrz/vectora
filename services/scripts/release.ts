@@ -38,6 +38,14 @@ export const MANIFEST_OS: Record<string, string> = {
   "latest-linux.yml": "linux",
 };
 
+// Arquiteturas reais publicadas por SO (electron-builder.yml). mac só builda
+// arm64 (Intel descontinuado); win e linux buildam os dois numa job só.
+export const MANIFEST_ARCHES: Record<string, string[]> = {
+  win: ["x64", "arm64"],
+  mac: ["arm64"],
+  linux: ["x64", "arm64"],
+};
+
 export function parseArgs(argv: string[]) {
   const args = Object.fromEntries(
     argv
@@ -141,7 +149,7 @@ function main() {
   for (const file of files) {
     const manifestOs = MANIFEST_OS[file];
     if (manifestOs) {
-      for (const arch of ["x64", "arm64"]) {
+      for (const arch of MANIFEST_ARCHES[manifestOs] ?? []) {
         const key = `${channel}/${manifestOs}/${arch}/${version}/latest.yml`;
         uploadFile(bucket, key, join(dist, file), CONTENT_TYPES.yml);
         uploaded++;
