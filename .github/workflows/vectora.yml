@@ -203,11 +203,11 @@ jobs:
   # Matriz cara: macOS (multiplicador 10x de minutos) e Windows (2x). Por
   # isso roda SÓ com "[up-release]" na mensagem do commit ou disparo manual
   # (workflow_dispatch) — não em todo push, que estouraria a cota de Actions.
-  # O gatilho é a mensagem do commit, viajando junto do push normal — não
-  # depende de uma tag separada. A PUBLICAÇÃO da GitHub Release (--publish
-  # always) e a publicação no canal de update (R2/KV, job
-  # publish-update-channel abaixo) só ocorrem com "[up-release]" — nunca em
-  # workflow_dispatch manual (que é só pra validar que a matriz builda).
+  # Publicar é o propósito de rodar essa matriz de qualquer forma: sempre que
+  # ela roda (por qualquer um dos dois gatilhos), a GitHub Release
+  # (--publish always) e o canal de update (R2/KV, job publish-update-channel
+  # abaixo) são publicados juntos — não há um terceiro estado de "buildar sem
+  # publicar".
   release-native:
     name: Release native (${{ matrix.target }}/${{ matrix.arch }})
     needs: [test-unit, test-stress, test-external]
@@ -311,7 +311,7 @@ jobs:
         run: |
           pnpm --dir electron install --frozen-lockfile
           pnpm --dir electron build
-          pnpm --dir electron exec electron-builder --${{ matrix.target }} --publish ${{ contains(github.event.head_commit.message, '[up-release]') && 'always' || 'never' }}
+          pnpm --dir electron exec electron-builder --${{ matrix.target }} --publish always
       - name: Upload installers
         uses: actions/upload-artifact@v6
         with:
@@ -329,16 +329,14 @@ jobs:
           retention-days: 30
 
   # ── 6. Publish to update channel (R2 + KV) ───────────────────────────────
-  # Roda só com "[up-release]" na mensagem do commit (nunca em
-  # workflow_dispatch manual, que é só pra validar a matriz) e uma única vez,
-  # depois que TODA a matriz terminou — publicar de dentro de cada job da
-  # matriz faria 4 read-modify-write concorrentes na mesma chave `config` do
-  # KV (services/scripts/release.ts::putChannelVersion), corrompendo o
-  # rollout_percent/previous_stable por race condition.
+  # Roda uma única vez, depois que TODA a matriz (linux/mac/win) terminou —
+  # publicar de dentro de cada job da matriz faria read-modify-write
+  # concorrentes na mesma chave `config` do KV
+  # (services/scripts/release.ts::publishVersionAndPrune), corrompendo o
+  # rollout_percent/previous_stable/history por race condition.
   publish-update-channel:
     name: Publish to update channel (R2 + KV)
     needs: release-native
-    if: ${{ contains(github.event.head_commit.message, '[up-release]') }}
     runs-on: ubuntu-latest
     environment:
       name: services-production
