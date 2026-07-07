@@ -367,8 +367,9 @@ class TestStreamChatRegistersThread:
 # ---------------------------------------------------------------------------
 
 
-def _make_app_with_db(tmp_db: FakeDB) -> tuple:
-    """Cria app FastAPI com o FakeDB injetado em threads._get_db."""
+def _make_app_with_db(tmp_db: Any) -> tuple:
+    """Cria app FastAPI com um banco (FakeDB ou aiosqlite real) injetado em
+    threads._get_db."""
     import backend.api.handlers.threads as t_mod
 
     original_get_db = t_mod._get_db
@@ -509,20 +510,26 @@ class TestListThreadsIncludesUpserted:
 
     @pytest.mark.asyncio
     async def test_upserted_thread_appears_in_list(self):
-        """Thread registrada via _upsert_session aparece em ListThreads."""
+        """Thread com uma troca de mensagem real (_upsert_session +
+        _increment_message_count, o par que stream_chat chama a cada turno)
+        aparece em ListThreads. Usa aiosqlite real (não FakeDB) — o fake
+        anterior não aplicava o filtro `WHERE message_count > 0` de verdade,
+        mascarando esse comportamento."""
+        import aiosqlite
         from fastapi.testclient import TestClient
 
-        from backend.api.handlers.threads import _upsert_session
+        from backend.api.handlers.threads import (
+            _ensure_schema,
+            _increment_message_count,
+            _upsert_session,
+        )
 
-        db = FakeDB()
+        db = await aiosqlite.connect(":memory:")
+        await _ensure_schema(db)
         app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)
         try:
-            # Upsert direto no FakeDB (simula o que stream_chat fará)
-            with patch(
-                "backend.api.handlers.threads._get_db",
-                new=AsyncMock(return_value=db),
-            ):
-                await _upsert_session("streamed-thread-001")
+            await _upsert_session("streamed-thread-001")
+            await _increment_message_count("streamed-thread-001")
 
             client = TestClient(app, raise_server_exceptions=False)
             response = client.post(
@@ -533,28 +540,58 @@ class TestListThreadsIncludesUpserted:
             body = response.json()
             ids = [t["id"] for t in body["threads"]]
             assert "streamed-thread-001" in ids, (
-                f"Thread via _upsert_session não aparece em ListThreads. ids={ids}"
+                f"Thread com mensagem real não aparece em ListThreads. ids={ids}"
             )
         finally:
             _restore_app(t_mod, orig_get_db, orig_conn)
+            await db.close()
+
+    @pytest.mark.asyncio
+    async def test_upserted_thread_without_message_omitted_from_list(self):
+        """Par de erro do teste acima — _upsert_session sozinho (sem
+        _increment_message_count) não faz a thread aparecer em ListThreads."""
+        import aiosqlite
+        from fastapi.testclient import TestClient
+
+        from backend.api.handlers.threads import _ensure_schema, _upsert_session
+
+        db = await aiosqlite.connect(":memory:")
+        await _ensure_schema(db)
+        app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)
+        try:
+            await _upsert_session("streamed-thread-empty")
+
+            client = TestClient(app, raise_server_exceptions=False)
+            response = client.post(
+                "/vectora.chat.v1.ThreadService/ListThreads",
+                json={"limit": 50},
+            )
+            assert response.status_code == 200
+            ids = [t["id"] for t in response.json()["threads"]]
+            assert "streamed-thread-empty" not in ids
+        finally:
+            _restore_app(t_mod, orig_get_db, orig_conn)
+            await db.close()
 
     @pytest.mark.asyncio
     async def test_upserted_thread_with_title_in_list(self):
-        """Thread com title upsertada aparece com o title correto em ListThreads."""
+        """Thread com title upsertada e uma mensagem real aparece com o
+        title correto em ListThreads."""
+        import aiosqlite
         from fastapi.testclient import TestClient
 
-        from backend.api.handlers.threads import _upsert_session
+        from backend.api.handlers.threads import (
+            _ensure_schema,
+            _increment_message_count,
+            _upsert_session,
+        )
 
-        db = FakeDB()
+        db = await aiosqlite.connect(":memory:")
+        await _ensure_schema(db)
         app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)
         try:
-            with patch(
-                "backend.api.handlers.threads._get_db",
-                new=AsyncMock(return_value=db),
-            ):
-                await _upsert_session(
-                    "streamed-thread-002", title="Conversa Persistida"
-                )
+            await _upsert_session("streamed-thread-002", title="Conversa Persistida")
+            await _increment_message_count("streamed-thread-002")
 
             client = TestClient(app, raise_server_exceptions=False)
             response = client.post(
@@ -570,6 +607,7 @@ class TestListThreadsIncludesUpserted:
             assert thread.get("title") == "Conversa Persistida"
         finally:
             _restore_app(t_mod, orig_get_db, orig_conn)
+            await db.close()
 
 
 # ---------------------------------------------------------------------------
@@ -714,12 +752,20 @@ class TestModeColumn:
 
     @pytest.mark.asyncio
     async def test_upsert_writes_mode_column_and_list_filters(self):
+        """_upsert_session sozinho registra metadados (workspace/mode), mas
+        só uma troca de mensagem real (_increment_message_count, chamado por
+        stream_chat a cada turno) faz a thread aparecer em ListThreads —
+        replica o par (_upsert_session + _increment_message_count) que
+        stream_chat executa a cada turno de verdade.
+        """
         from backend.api.handlers import threads as th
 
         db = await self._fresh_db()
         with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
             await th._upsert_session("t-code", mode="code")
+            await th._increment_message_count("t-code")
             await th._upsert_session("t-chat", mode="chat")
+            await th._increment_message_count("t-chat")
 
             from backend.api.schemas import ListThreadsRequest
 
@@ -732,6 +778,21 @@ class TestModeColumn:
         assert [t.id for t in only_chat.threads] == ["t-chat"]
         assert [t.id for t in only_code.threads] == ["t-code"]
         assert only_chat.threads[0].mode == "chat"
+
+    @pytest.mark.asyncio
+    async def test_upsert_without_message_never_lists(self):
+        """Par de erro do teste acima — sem _increment_message_count (nenhuma
+        mensagem trocada), a thread nunca aparece em ListThreads."""
+        from backend.api.handlers import threads as th
+        from backend.api.schemas import ListThreadsRequest
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            await th._upsert_session("t-empty", mode="code")
+            out = await th.list_threads(ListThreadsRequest(limit=50))
+        await db.close()
+
+        assert {t.id for t in out.threads} == set()
 
     @pytest.mark.asyncio
     async def test_upsert_normalizes_dev_to_code_in_column(self):

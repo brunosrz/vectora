@@ -262,6 +262,21 @@ async def _upsert_session(
     await db.commit()
 
 
+async def _increment_message_count(thread_id: str) -> None:
+    """Incrementa ``message_count`` — chamado uma vez por turno real de chat
+    (`stream_chat`), nunca por `_upsert_session` sozinho (que também é
+    chamado por geração de título/jobs de fundo, sem mensagem nova nesses
+    casos). É o sinal que `ListThreads`/`cleanup_empty_threads` usam pra
+    distinguir uma thread com conversa de verdade de uma nunca usada.
+    """
+    db = await _get_db()
+    await db.execute(
+        "UPDATE vectora_sessions SET message_count = message_count + 1 WHERE thread_id = ?",
+        (thread_id,),
+    )
+    await db.commit()
+
+
 # ---------------------------------------------------------------------------
 # Pins de sessão (WB-1) — arquivos fixados, persistidos em extra["pins"]
 # ---------------------------------------------------------------------------

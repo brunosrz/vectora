@@ -422,13 +422,17 @@ async def stream_chat(
     # separadamente e não é consultado pelo endpoint de listagem). Persiste o
     # workspace e o modo (chat/dev) para que a sidebar filtre e restaure a pasta.
     try:
-        from backend.api.handlers.threads import _upsert_session
+        from backend.api.handlers.threads import (
+            _increment_message_count,
+            _upsert_session,
+        )
 
         await _upsert_session(
             thread_id,
             workspace_id=workspace_id or None,
             mode="chat" if chat_mode else "code",
         )
+        await _increment_message_count(thread_id)
     except Exception as exc:
         logger.warning(
             "api/chat: falha ao registrar thread em vectora_sessions: %s", exc

@@ -144,6 +144,10 @@ describe("useStreamHandler.processStream", () => {
   });
 
   it("queda de transporte (throw) preserva conteúdo parcial já recebido", async () => {
+    // announceSSEDropped loga via console.error de propósito (diagnóstico
+    // via DevTools) — espiona pra manter a saída do vitest limpa e
+    // validar que o log de diagnóstico realmente aconteceu.
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     streamChatMock.mockReturnValue(
       (async function* () {
         yield { type: "thread", thread_id: "t1" } as StreamEvent;
@@ -159,6 +163,11 @@ describe("useStreamHandler.processStream", () => {
     // Conteúdo parcial preservado; sem texto cru de exceção.
     expect(assistant?.content).toBe("parcial");
     expect(assistant?.isThinking).toBe(false);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[chat] queda de transporte no stream:",
+      expect.any(Error),
+    );
+    errorSpy.mockRestore();
   });
 
   it("message_break mantém bolha única e concatena segmentos com separador", async () => {
@@ -680,6 +689,7 @@ describe("useStreamHandler.processResume", () => {
   });
 
   it("queda de transporte preserva conteúdo parcial já recebido", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     resumeChatMock.mockReturnValue(
       (async function* () {
         yield { type: "token", content: "parcial" } as StreamEvent;
@@ -691,6 +701,11 @@ describe("useStreamHandler.processResume", () => {
     const a = messages.find((m) => m.id === "a1");
     expect(a?.isThinking).toBe(false);
     expect(a?.content).toContain("parcial");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[chat] queda de transporte no stream:",
+      expect.any(Error),
+    );
+    errorSpy.mockRestore();
   });
 
   it("AbortError não marca isError e encerra thinking", async () => {
