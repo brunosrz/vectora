@@ -9,7 +9,10 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons coverage      → mesma suíte com relatório de cobertura
     scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint+eslint
     scons update        → atualiza deps: uv (backend) + pnpm (frontend/company/
-                          services) + hugo mod (docs)
+                          services) + hugo mod (docs), respeitando ranges/lockfiles
+    scons update --latest → mesma coisa, mas ignora ranges/lockfiles (pnpm
+                          --latest cruza majors) — usar só antes de uma migração
+                          grande, seguido de revisão manual de cada breaking change
     scons docker        → sobe PostgreSQL + Redis + Qdrant via docker compose
     scons clean         → remove outputs de build
 
@@ -35,6 +38,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+AddOption(
+    "--latest",
+    dest="latest",
+    action="store_true",
+    default=False,
+    help="scons update --latest: ignora ranges/lockfiles, força major mais novo",
+)
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -504,23 +515,40 @@ def _action_coverage(target, source, env):
 def _action_update(target, source, env):
     """Atualiza dependências de todos os subprojetos.
 
-    uv respeita os constraints do pyproject.toml (pin do Python 3.13 intocado);
-    `pnpm update` sem --latest fica dentro dos ranges de cada package.json;
+    Default: uv respeita os constraints do pyproject.toml (pin do Python 3.13
+    intocado); `pnpm update` fica dentro dos ranges de cada package.json;
     `hugo mod get -u` atualiza o módulo Hextra pinado em docs/go.mod (o lint
     de propósito nunca faz esse upgrade — este é o único lugar que faz).
+
+    `scons update --latest`: `pnpm update --latest` ignora os ranges do
+    package.json e cruza majors (reescreve o package.json com a versão mais
+    nova de cada pacote) — uso preparatório de migração grande, nunca rotina;
+    depois é revisão manual por pacote major-bumped contra changelog/docs. Do
+    lado Python, `uv lock --upgrade` já resolve pro mais novo permitido pelos
+    `>=` sem teto do pyproject.toml (não há range a "ignorar" lá); Hugo idem
+    (`-u` já busca o tag mais recente do módulo).
+
     Não roda lint/tests ao final: o gate continua sendo
     `scons lint && scons tests`, manual, depois de revisar os lockfiles.
     """
+    latest = bool(GetOption("latest"))
+    pnpm_update_args = ["update", "--latest"] if latest else ["update"]
     with _open_log("update") as log:
         _run(["uv", "lock", "--upgrade"], log=log, cwd=VECTORA)
         _run(["uv", "sync"], log=log, cwd=VECTORA)
-        _run([PNPM, "--dir", "vectora/frontend", "update"], log=log)
+        _run([PNPM, "--dir", "vectora/frontend", *pnpm_update_args], log=log)
         _run([HUGO, "mod", "get", "-u"], log=log, cwd=DOCS)
         _run([HUGO, "mod", "tidy"], log=log, cwd=DOCS)
-        _run([PNPM, "--dir", "company", "update"], log=log)
-        _run([PNPM, "--dir", "services", "update"], log=log)
+        _run([PNPM, "--dir", "company", *pnpm_update_args], log=log)
+        _run([PNPM, "--dir", "services", *pnpm_update_args], log=log)
     print("\n>> log completo em .scons-logs/update.txt")
-    print(">> revise uv.lock / pnpm-lock.yaml (x3) / go.mod+go.sum antes de commitar")
+    if latest:
+        print(
+            ">> --latest: ranges/lockfiles ignorados — revise cada dep com "
+            "major bump contra changelog/docs antes de commitar"
+        )
+    else:
+        print(">> revise uv.lock / pnpm-lock.yaml (x3) / go.mod+go.sum antes de commitar")
 
 
 # ── Docker ────────────────────────────────────────────────────────────────────
@@ -657,6 +685,8 @@ def _action_help(target, source, env):
   Manutenção
     scons update           atualiza deps: uv (backend) + pnpm (frontend,
                            company, services) + hugo mod (docs)
+    scons update --latest  idem, mas ignora ranges/lockfiles (major bumps) —
+                           só antes de migração grande, com revisão manual depois
 """)
     sys.stdout.flush()
 

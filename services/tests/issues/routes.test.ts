@@ -134,9 +134,10 @@ describe("POST /issues — anexos (multipart)", () => {
     expect(res.status).toBe(200);
 
     const list = await issues.request("/", {}, env);
-    const body = await list.json<
-      Array<{ title: string; files: string[]; email?: string }>
-    >();
+    const body =
+      await list.json<
+        Array<{ title: string; files: string[]; email?: string }>
+      >();
     const created = body.find((i) => i.title === "Crash com anexos");
     expect(created?.files).toHaveLength(2);
     expect(created?.files[0]).toMatch(/^issues\//);
@@ -147,11 +148,7 @@ describe("POST /issues — anexos (multipart)", () => {
       expect(stored).not.toBeNull();
     }
 
-    const served = await issues.request(
-      `/files/${created?.files[0]}`,
-      {},
-      env,
-    );
+    const served = await issues.request(`/files/${created?.files[0]}`, {}, env);
     expect(served.status).toBe(200);
     expect(served.headers.get("Content-Type")).toBe("image/png");
   });
@@ -183,11 +180,11 @@ describe("POST /issues — anexos (multipart)", () => {
     expect(tooMany.status).toBe(400);
     expect(await tooMany.json()).toEqual({ error: "too_many_files" });
 
-    const huge = new File(
-      [new Uint8Array(ISSUE_FILE_LIMITS["image/png"] + 1)],
-      "huge.png",
-      { type: "image/png" },
-    );
+    const pngLimit = ISSUE_FILE_LIMITS["image/png"] ?? 0;
+    expect(pngLimit).toBeGreaterThan(0);
+    const huge = new File([new Uint8Array(pngLimit + 1)], "huge.png", {
+      type: "image/png",
+    });
     const tooBig = await issues.request(
       "/",
       { method: "POST", body: issueFormData([huge]) },

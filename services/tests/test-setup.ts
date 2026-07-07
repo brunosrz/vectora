@@ -8,6 +8,8 @@ import telemetryAndRagStatusSql from "../migrations/0002_telemetry_and_rag_statu
 import rbacBillingSql from "../migrations/0003_rbac_billing.sql?raw";
 // @ts-expect-error — idem.
 import seedAdminSql from "../migrations/0004_seed_admin.sql?raw";
+// @ts-expect-error — idem.
+import issueFilesSql from "../migrations/0005_issue_files.sql?raw";
 
 async function applyMigration(sql: string): Promise<void> {
   const withoutComments = sql
@@ -28,4 +30,5 @@ beforeAll(async () => {
   await applyMigration(telemetryAndRagStatusSql as string);
   await applyMigration(rbacBillingSql as string);
   await applyMigration(seedAdminSql as string);
+  await applyMigration(issueFilesSql as string);
 });

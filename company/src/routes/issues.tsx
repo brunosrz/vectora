@@ -1,12 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Paperclip, X } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import Turnstile from "#/components/shared/Turnstile";
 import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
-import { submitIssue, listOpenIssues } from "#/server/fns/issues";
+import {
+  submitIssue,
+  submitIssueWithFiles,
+  listOpenIssues,
+} from "#/server/fns/issues";
 import type { IssueListItem } from "#/server/fns/issues";
+import {
+  ISSUE_FILE_ACCEPT,
+  MAX_ISSUE_FILES,
+  isVideoType,
+  readVideoDuration,
+  validateIssueFile,
+} from "#/lib/issue-files";
+import type { IssueFileError } from "#/lib/issue-files";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/issues")({
@@ -32,29 +45,73 @@ const CATEGORY_LABELS: Record<Category, string> = {
   feature: "Feature request",
 };
 
+const FILE_ERROR_MESSAGES: Record<IssueFileError, () => string> = {
+  invalid_type: () => m.issues_file_error_invalid_type(),
+  too_large: () => m.issues_file_error_too_large(),
+  video_too_long: () => m.issues_file_error_video_too_long(),
+  too_many: () => m.issues_file_error_too_many(),
+};
+
 function IssueForm() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<Category>("bug");
   const [description, setDescription] = useState("");
   const [email, setEmail] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function addFiles(incoming: FileList | null) {
+    if (!incoming) return;
+    const next = [...files];
+    for (const file of Array.from(incoming)) {
+      if (next.length >= MAX_ISSUE_FILES) {
+        toast.error(FILE_ERROR_MESSAGES.too_many());
+        break;
+      }
+      let duration: number | undefined;
+      if (isVideoType(file.type)) {
+        duration = await readVideoDuration(file).catch(() => undefined);
+      }
+      const error = validateIssueFile(file, duration);
+      if (error) {
+        toast.error(`${file.name}: ${FILE_ERROR_MESSAGES[error]()}`);
+        continue;
+      }
+      next.push(file);
+    }
+    setFiles(next);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   const mutation = useMutation({
-    mutationFn: () =>
-      submitIssue({
-        data: {
-          title,
-          category,
-          description,
-          email,
-          turnstileToken: turnstileToken!,
-        },
-      }),
+    mutationFn: () => {
+      if (files.length === 0) {
+        return submitIssue({
+          data: {
+            title,
+            category,
+            description,
+            email,
+            turnstileToken: turnstileToken!,
+          },
+        });
+      }
+      const form = new FormData();
+      form.set("title", title);
+      form.set("category", category);
+      form.set("description", description);
+      form.set("email", email);
+      form.set("turnstileToken", turnstileToken!);
+      for (const file of files) form.append("files", file);
+      return submitIssueWithFiles({ data: form });
+    },
     onSuccess: () => {
       toast.success(m.issues_success());
       setTitle("");
       setDescription("");
       setEmail("");
+      setFiles([]);
       setTurnstileToken(null);
     },
     onError: () => toast.error(m.error_generic()),
@@ -137,6 +194,55 @@ function IssueForm() {
         />
       </div>
 
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground/90">
+          {m.issues_files_label()}
+        </label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ISSUE_FILE_ACCEPT}
+          multiple
+          className="hidden"
+          data-testid="issue-files-input"
+          onChange={(e) => void addFiles(e.target.files)}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={files.length >= MAX_ISSUE_FILES}
+          className="flex items-center gap-2 rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Paperclip className="h-4 w-4" />
+          {m.issues_files_hint()}
+        </button>
+        {files.length > 0 && (
+          <ul className="mt-2 space-y-1.5">
+            {files.map((file, index) => (
+              <li
+                key={`${file.name}-${index}`}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card/40 px-3 py-1.5 text-xs text-foreground"
+              >
+                <span className="truncate">
+                  {file.name}{" "}
+                  <span className="text-muted-foreground">
+                    ({Math.ceil(file.size / 1024)} KB)
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  aria-label={m.issues_file_remove()}
+                  onClick={() => setFiles(files.filter((_, i) => i !== index))}
+                  className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <Turnstile onSuccess={setTurnstileToken} />
 
       <button
@@ -176,6 +282,24 @@ function IssuesList({ issues }: { issues: IssueListItem[] }) {
               {issue.description && (
                 <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                   {issue.description}
+                </p>
+              )}
+              {issue.files.length > 0 && (
+                <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+                  <span className="text-muted-foreground/70">
+                    {m.issues_attachments()}:
+                  </span>
+                  {issue.files.map((url, index) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      #{index + 1}
+                    </a>
+                  ))}
                 </p>
               )}
               <time className="mt-1.5 block text-[11px] text-muted-foreground/70">
