@@ -213,10 +213,10 @@ jobs:
     needs: [test-unit, test-stress, test-external]
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     env:
+      # Nuitka escolhe clang/gcc + ccache no Linux/macOS, MSVC + clcache
+      # (vendorizado dentro do próprio pacote nuitka) no Windows — cada um lê
+      # sua própria env var de diretório de cache.
       CCACHE_DIR: ${{ github.workspace }}/.ccache
-      # Nuitka usa clcache (não ccache) no MSVC — precisa do próprio env var
-      # apontando pro mesmo diretório cacheado, senão escreve no default
-      # (%LOCALAPPDATA%\clcache) e o cache do Actions nunca pega nada.
       CLCACHE_DIR: ${{ github.workspace }}/.ccache
     strategy:
       fail-fast: false
@@ -251,11 +251,10 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm build
-      - name: Install ccache
-        # Nuitka já avisa nos logs "You are not using ccache" — sem ele,
-        # cada run recompila os ~230 arquivos C do backend do zero (a
-        # etapa mais lenta da matriz, 10-20min). Instala o binário aqui;
-        # o cache do diretório em si é o próximo step.
+      - name: Install ccache (Linux/macOS)
+        # Windows não entra aqui: o Nuitka usa clcache (vendorizado dentro
+        # do próprio pacote nuitka) no MSVC, não o binário ccache.
+        if: runner.os != 'Windows'
         shell: bash
         env:
           HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
@@ -263,7 +262,6 @@ jobs:
           case "${{ runner.os }}" in
             Linux) sudo apt-get update -qq && sudo apt-get install -y ccache ;;
             macOS) brew install ccache ;;
-            Windows) choco install ccache -y ;;
           esac
       - name: Cache ccache (Nuitka C compilation)
         uses: actions/cache@v5
