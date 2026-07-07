@@ -448,6 +448,13 @@ def adapt_stream(
                     term_task = asyncio.ensure_future(term_queue.get())
                     continue
 
+                # Quando disconnect_task foi a única task completada (cliente
+                # ainda conectado, result()=False), nem term_task nem next_task
+                # estão em done — re-entrar no wait sem chamar .result() num
+                # future pendente (InvalidStateError).
+                if next_task not in done:
+                    continue
+
                 try:
                     event = next_task.result()
                 except StopAsyncIteration:

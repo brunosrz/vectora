@@ -104,7 +104,12 @@ class FallbackChatModel(BaseChatModel):
             inner = self._inner(mid)
             streamed = False
             try:
-                async for msg_chunk in inner.astream(messages, stop=stop, **kwargs):
+                # Passa o run_manager filho para o modelo interno ligar a hierarquia de callbacks
+                # e permitir a deduplicação automática de streams no adapters.py.
+                inner_callbacks = run_manager.get_child() if run_manager else None
+                async for msg_chunk in inner.astream(
+                    messages, stop=stop, callbacks=inner_callbacks, **kwargs
+                ):
                     streamed = True
                     yield ChatGenerationChunk(message=msg_chunk)
                 return
@@ -143,7 +148,10 @@ class FallbackChatModel(BaseChatModel):
         for i, mid in enumerate(candidates):
             inner = self._inner(mid)
             try:
-                msg = await inner.ainvoke(messages, stop=stop, **kwargs)
+                inner_callbacks = run_manager.get_child() if run_manager else None
+                msg = await inner.ainvoke(
+                    messages, stop=stop, callbacks=inner_callbacks, **kwargs
+                )
                 return ChatResult(generations=[ChatGeneration(message=msg)])
             except Exception as exc:
                 if not (is_quota_error(exc) or is_transient_error(exc)):
