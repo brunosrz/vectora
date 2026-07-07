@@ -214,6 +214,10 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
+      # Nuitka usa clcache (não ccache) no MSVC — precisa do próprio env var
+      # apontando pro mesmo diretório cacheado, senão escreve no default
+      # (%LOCALAPPDATA%\clcache) e o cache do Actions nunca pega nada.
+      CLCACHE_DIR: ${{ github.workspace }}/.ccache
     strategy:
       fail-fast: false
       matrix:
@@ -221,7 +225,7 @@ jobs:
           - os: ubuntu-latest
             arch: x64
             target: linux
-          - os: macos-latest
+          - os: macos-26
             arch: arm64
             target: mac
           - os: windows-latest
