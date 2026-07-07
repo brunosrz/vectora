@@ -1,6 +1,7 @@
 allowBuilds:
   "@sentry-internal/node-cpu-profiler": true
   "@sentry/cli": true
+  "@sentry/node-cpu-profiler": true
   esbuild: true
   unrs-resolver: true
 

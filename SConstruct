@@ -8,6 +8,8 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
     scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint+eslint
+    scons update        → atualiza deps: uv (backend) + pnpm (frontend/company/
+                          services) + hugo mod (docs)
     scons docker        → sobe PostgreSQL + Redis + Qdrant via docker compose
     scons clean         → remove outputs de build
 
@@ -496,6 +498,31 @@ def _action_coverage(target, source, env):
     )
 
 
+# ── Update (deps) ─────────────────────────────────────────────────────────────
+
+
+def _action_update(target, source, env):
+    """Atualiza dependências de todos os subprojetos.
+
+    uv respeita os constraints do pyproject.toml (pin do Python 3.13 intocado);
+    `pnpm update` sem --latest fica dentro dos ranges de cada package.json;
+    `hugo mod get -u` atualiza o módulo Hextra pinado em docs/go.mod (o lint
+    de propósito nunca faz esse upgrade — este é o único lugar que faz).
+    Não roda lint/tests ao final: o gate continua sendo
+    `scons lint && scons tests`, manual, depois de revisar os lockfiles.
+    """
+    with _open_log("update") as log:
+        _run(["uv", "lock", "--upgrade"], log=log, cwd=VECTORA)
+        _run(["uv", "sync"], log=log, cwd=VECTORA)
+        _run([PNPM, "--dir", "vectora/frontend", "update"], log=log)
+        _run([HUGO, "mod", "get", "-u"], log=log, cwd=DOCS)
+        _run([HUGO, "mod", "tidy"], log=log, cwd=DOCS)
+        _run([PNPM, "--dir", "company", "update"], log=log)
+        _run([PNPM, "--dir", "services", "update"], log=log)
+    print("\n>> log completo em .scons-logs/update.txt")
+    print(">> revise uv.lock / pnpm-lock.yaml (x3) / go.mod+go.sum antes de commitar")
+
+
 # ── Docker ────────────────────────────────────────────────────────────────────
 
 
@@ -588,6 +615,14 @@ def _action_prod(target, source, env):
     with _open_log("prod") as log:
         _run([VERCEL, "--prod", "--yes"], log=log, cwd=DOCS)
         _run([VERCEL, "--prod", "--yes"], log=log, cwd=COMPANY)
+        # Migrations ANTES do deploy do worker: o código deployado assume o
+        # schema mais novo (ex.: users.role) — publicar worker sem aplicar as
+        # migrations quebra rotas em produção com SQLITE_ERROR.
+        _run(
+            [WRANGLER, "d1", "migrations", "apply", "vectora-db", "--remote"],
+            log=log,
+            cwd=SERVICES,
+        )
         _run([WRANGLER, "deploy"], log=log, cwd=SERVICES)
     print(
         "\n>> deploy de produção concluído: "
@@ -618,6 +653,10 @@ def _action_help(target, source, env):
     scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + company (eslint+tsc)
                            + docs (tsc) + services (tsc)
     scons clean            remove todos os outputs de build
+
+  Manutenção
+    scons update           atualiza deps: uv (backend) + pnpm (frontend,
+                           company, services) + hugo mod (docs)
 """)
     sys.stdout.flush()
 
@@ -658,6 +697,7 @@ _cmd("tests",         _action_tests)
 _cmd("coverage",      _action_coverage)
 _cmd("tests-storage", _action_tests_storage)
 _cmd("lint",          _action_lint)
+_cmd("update",        _action_update)
 _cmd("clean",         _action_clean)
 _cmd("help",          _action_help)
 _cmd("docker",        _action_docker)

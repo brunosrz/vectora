@@ -14,6 +14,7 @@ Build e testes rodam via **SCons** a partir da **raiz do monorepo** (requer `uv`
 scons tests          # todos os subprojetos: vectora + relay + company
 scons coverage       # mesma suíte com relatório de cobertura
 scons lint           # todos: ruff+ty+bandit (vectora) + tsc+oxlint+eslint (TS)
+scons update         # atualiza deps: uv (backend) + pnpm (front/company/services) + hugo mod (docs)
 scons docker         # sobe PostgreSQL + Redis + Qdrant via docker compose
 scons clean          # remove outputs de build
 ```
