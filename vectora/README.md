@@ -139,9 +139,6 @@ O sistema de build usa [SCons](https://scons.org/), incluído como dependência 
 
 ```
 scons release          Build completo + instalador nativo para o SO atual
-scons release-win      Instalador Windows (.msi + .exe NSIS)
-scons release-mac      Instalador macOS (.dmg universal x64+arm64)
-scons release-linux    Instaladores Linux (.AppImage + .deb + .rpm)
 scons up-release [bump=patch|minor|major]   Bump de versão + commit [up-release]
 ```
 
@@ -165,7 +162,7 @@ scons clean             Remove dist/ frontend/dist/ electron/dist*
 scons help              Lista completa com descrições
 ```
 
-**Nota:** no Windows basta abrir o PowerShell ou cmd na raiz do monorepo e rodar `scons release-win`. Sem Git bash, sem truques de shell.
+**Nota:** no Windows basta abrir o PowerShell ou cmd na raiz do monorepo e rodar `scons release`. Sem Git bash, sem truques de shell.
 
 ### CI/CD
 

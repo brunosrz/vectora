@@ -18,10 +18,11 @@ O "build híbrido" compila **só o pacote do backend** em C via Nuitka (`--mode=
 
 ```powershell
 scons release          # build completo + instalador nativo pro SO atual
-scons release-win      # instalador Windows (.msi + .exe NSIS)
-scons release-mac      # instalador macOS (.dmg universal x64+arm64)
-scons release-linux    # instaladores Linux (.AppImage + .deb + .rpm)
 ```
+
+Nuitka compila nativo ao host — não faz cross-compile. `scons release` sempre
+gera o instalador do SO em que você está rodando; os instaladores dos outros
+SOs saem da matriz `release-native` no GitHub Actions (um runner por SO).
 
 ## Pré-requisitos de build
 

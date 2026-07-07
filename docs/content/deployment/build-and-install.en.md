@@ -18,9 +18,6 @@ The "hybrid build" compiles **only the backend package** to C via Nuitka (`--mod
 
 ```powershell
 scons release          # full build + native installer for the current OS
-scons release-win      # Windows installer (.msi + .exe NSIS)
-scons release-mac      # macOS installer (universal x64+arm64 .dmg)
-scons release-linux    # Linux installers (.AppImage + .deb + .rpm)
 ```
 
 ## Build prerequisites

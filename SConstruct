@@ -4,9 +4,6 @@ Vectora — SConstruct (SCons build file)
 Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons               → exibe ajuda
     scons release       → build completo + instalador para o SO atual
-    scons release-win   → instalador Windows (.msi + .exe NSIS)
-    scons release-mac   → instalador macOS (.dmg universal)
-    scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
     scons up-release [bump=patch|minor|major] → bump + build do instalador + publica no update
     scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
@@ -740,9 +737,6 @@ def _action_help(target, source, env):
 
   Produto final
     scons release          build completo + instalador para o SO atual
-    scons release-win      instalador Windows (.msi + .exe NSIS)
-    scons release-mac      instalador macOS (.dmg universal)
-    scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
     scons up-release [bump=patch|minor|major]
                            bump de versão (commit com "[up-release]") + build
                            do instalador do SO atual + publica no canal de
@@ -793,10 +787,7 @@ _build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_de
 
 _FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
 
-_cmd("release-win",   lambda target, source, env: _action_package(target, source, env, "win"),   deps=_FULL_DEPS)
-_cmd("release-mac",   lambda target, source, env: _action_package(target, source, env, "mac"),   deps=_FULL_DEPS)
-_cmd("release-linux", lambda target, source, env: _action_package(target, source, env, "linux"), deps=_FULL_DEPS)
-_cmd("release",       lambda target, source, env: _action_package(target, source, env),          deps=_FULL_DEPS)
+_cmd("release", lambda target, source, env: _action_package(target, source, env), deps=_FULL_DEPS)
 
 _cmd("up-release",    _action_up_release)
 _cmd("prod",           _action_prod)

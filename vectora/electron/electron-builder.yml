@@ -84,7 +84,9 @@ mac:
   target:
     - target: dmg
       arch: [x64, arm64, universal]
-  icon: ../frontend/public/vectora.ico
+  # electron-builder gera o .icns a partir de um .svg/.png — .ico não é
+  # aceito nesse pipeline (icon-tool.js só lê .png/.svg/.icns).
+  icon: ../frontend/public/vectora.svg
   category: public.app-category.developer-tools
   hardenedRuntime: true
   gatekeeperAssess: false

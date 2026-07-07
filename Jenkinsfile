@@ -73,21 +73,21 @@ pipeline {
                     when { expression { params.RELEASE_WIN } }
                     agent { label 'windows' }
                     steps {
-                        sh 'scons release-win'
+                        sh 'scons release'
                     }
                 }
                 stage('macOS') {
                     when { expression { params.RELEASE_MAC } }
                     agent { label 'macos' }
                     steps {
-                        sh 'scons release-mac'
+                        sh 'scons release'
                     }
                 }
                 stage('Linux') {
                     when { expression { params.RELEASE_LINUX } }
                     agent { label 'linux' }
                     steps {
-                        sh 'scons release-linux'
+                        sh 'scons release'
                     }
                 }
             }
