@@ -12,7 +12,7 @@ Baixe o instalador do seu sistema operacional:
 | SO      | Formato                                  | Assinatura                             |
 | ------- | ---------------------------------------- | -------------------------------------- |
 | Windows | `.msi` ou `.exe` (NSIS)                  | Certificado EV (Azure Trusted Signing) |
-| macOS   | `.dmg` universal (Intel + Apple Silicon) | Apple Developer ID + notarizado        |
+| macOS   | `.dmg` (builds separados Intel e Apple Silicon) | Apple Developer ID + notarizado |
 | Linux   | `.AppImage`, `.deb` ou `.rpm`            | sem assinatura                         |
 
 Instale normalmente (duplo clique / `dpkg -i` / `rpm -i`). O app abre com o backend já embutido — não precisa instalar Python, Node, nem nenhuma dependência separada.
