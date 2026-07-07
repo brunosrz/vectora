@@ -195,11 +195,8 @@ describe("POST /admin/gifts", () => {
 
   it("for an email without an account yet: records a pending gift and enqueues the email", async () => {
     const { token } = await createUser("admin", { full_name: "Bruno" });
-    // mockImplementation: sem isso, a fila real do Miniflare processa a
-    // mensagem de verdade e o consumer chama sendEmail contra a API real do
-    // Resend com a chave de teste — 401 esperado, mas polui o stderr com o
-    // stack trace do erro sem testar nada que este teste se propõe a cobrir
-    // (aqui só importa que EMAIL_QUEUE.send foi chamado com os dados certos).
+    // EMAIL_QUEUE é o binding real do Miniflare — mockImplementation evita
+    // que .send() dispare o consumer da fila (chamada real ao Resend).
     const sendSpy = vi
       .spyOn(env.EMAIL_QUEUE, "send")
       .mockImplementation(async () => undefined as never);

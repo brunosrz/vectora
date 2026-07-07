@@ -119,8 +119,7 @@ linux:
       arch: [x64]
   icon: ../frontend/public/favicon-600x600.png
   category: Development
-  # electron-builder 26: as chaves do .desktop ficam sob `desktop.entry`
-  # (antes eram soltas em `desktop`).
+  # electron-builder 26: as chaves do .desktop ficam sob `desktop.entry`.
   desktop:
     entry:
       StartupWMClass: vectora

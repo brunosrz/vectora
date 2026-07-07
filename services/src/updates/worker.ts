@@ -164,10 +164,9 @@ interface TelemetryBody {
 /**
  * Lógica de verdade da telemetria de update (contagem + quarentena
  * automática) — roda dentro do consumer da fila `vectora-jobs`
- * (`max_concurrency = 1`, ver wrangler.toml), nunca direto na rota HTTP.
- * Antes era um read-modify-write direto em KV na própria rota: duas
- * instalações reportando ao mesmo tempo podiam se pisar na contagem. Rodando
- * serializado no consumer, essa race não existe mais.
+ * (`max_concurrency = 1`, ver wrangler.toml), nunca direto na rota HTTP:
+ * serializar no consumer evita duas instalações reportando ao mesmo tempo
+ * se pisarem na contagem.
  */
 export async function processUpdateTelemetry(
   env: Env,
