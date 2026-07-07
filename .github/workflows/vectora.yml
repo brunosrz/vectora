@@ -354,7 +354,11 @@ jobs:
       - name: Read version from pyproject.toml
         # Fonte única do semver (mesmo arquivo que backend/version.py lê via
         # importlib.metadata) — sem tag pra extrair a versão, lemos direto.
+        # working-directory: . sobrescreve o default do job (que é "vectora")
+        # — sem isso "vectora/pyproject.toml" resolveria pra
+        # vectora/vectora/pyproject.toml, inexistente.
         id: version
+        working-directory: .
         run: |
           VERSION=$(grep -m1 '^version' vectora/pyproject.toml | sed -E 's/version = "(.*)"/\1/')
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
