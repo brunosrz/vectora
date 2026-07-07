@@ -23,6 +23,7 @@ import { DockedEditor } from "@/components/workbench/windows/docked-editor";
 import { SessionSwitcher } from "@/components/header/session-switcher";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
+import { PANEL_TRANSITION } from "@/lib/motion/transitions";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { useWebhookWorkbench } from "@/lib/hooks/use-webhook-workbench";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
@@ -94,6 +95,9 @@ export const Route = createFileRoute("/session/$threadId")({
         ]),
   component: SessionPage,
 });
+
+// Largura da sidebar colapsada — bate com o w-16 do <CollapsedSidebar>.
+const SIDEBAR_COLLAPSED_WIDTH = 64;
 
 function SessionPage() {
   const { threadId: routeParam } = Route.useParams() as { threadId: string };
@@ -680,14 +684,22 @@ function SessionPage() {
             className="flex flex-1 min-h-0 overflow-visible"
           >
             {/* Sidebar desktop — oculto em mobile. Largura arrastável quando
-                expandida; colapsada usa a largura própria (w-16) do componente. */}
-            <div
+                expandida; colapsada anima até SIDEBAR_COLLAPSED_WIDTH. Width
+                animado via motion (não CSS transition) pra reusar o mesmo
+                PANEL_TRANSITION do resto do app; duration 0 durante o drag do
+                resize-handle, senão o arrasto ficaria com lag atrás do ponteiro. */}
+            <motion.div
               ref={sidebarWrapRef}
               className={`hidden md:flex shrink-0 relative ${sidebarOnRight ? "order-last" : ""}`}
-              style={
-                isSidebarCollapsed
-                  ? undefined
-                  : { width: hydrated ? sidebarWidth : 224 }
+              animate={{
+                width: isSidebarCollapsed
+                  ? SIDEBAR_COLLAPSED_WIDTH
+                  : hydrated
+                    ? sidebarWidth
+                    : 224,
+              }}
+              transition={
+                draggingSidebar.current ? { duration: 0 } : PANEL_TRANSITION
               }
             >
               {sidebar}
@@ -702,7 +714,7 @@ function SessionPage() {
                   className={`absolute top-0 ${sidebarOnRight ? "left-0" : "right-0"} z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors`}
                 />
               )}
-            </div>
+            </motion.div>
 
             {/* Sidebar mobile como Sheet overlay */}
             <Sheet

@@ -142,6 +142,7 @@ export const Sidebar = memo(function Sidebar({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
             transition={PANEL_TRANSITION}
+            className="contents"
           >
             <CollapsedSidebar
               threads={threads}
