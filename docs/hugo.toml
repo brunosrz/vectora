@@ -1,5 +1,5 @@
 baseURL = 'https://docs.vectora.company/'
-defaultContentLanguage = 'pt'
+defaultContentLanguage = 'en'
 defaultContentLanguageInSubdir = true
 title = 'Vectora Docs'
 enableEmoji = false
@@ -24,7 +24,7 @@ disableKinds = ["taxonomy", "term"]
   [languages.pt]
     label = "Português"
     locale = "pt-BR"
-    weight = 1
+    weight = 2
     title = "Vectora Docs"
     [languages.pt.params]
       description = "Vectora — agente de IA self-hosted com RAG híbrido, Context Graph nativo, servidor MCP sempre-ativo e chat web multi-usuário."
@@ -59,7 +59,7 @@ disableKinds = ["taxonomy", "term"]
   [languages.en]
     label = "English"
     locale = "en"
-    weight = 2
+    weight = 1
     title = "Vectora Docs"
     [languages.en.params]
       description = "Vectora — a self-hosted AI agent with hybrid RAG, a native Context Graph, an always-on MCP server, and a multi-user web chat."
@@ -298,7 +298,7 @@ disableKinds = ["taxonomy", "term"]
 
   [params.opengraph]
     image = '/img/vectora-logo.svg'
-    locale = 'pt_BR'
+    locale = 'en'
 
   [params.seo]
     keywords = 'Vectora, self-hosted AI agent, RAG, Context Graph, MCP, LangGraph, deep agent'

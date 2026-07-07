@@ -4522,7 +4522,7 @@ wheels = [
 
 [[package]]
 name = "vectora"
-version = "0.1.4"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
