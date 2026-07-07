@@ -277,10 +277,19 @@ jobs:
         working-directory: .
         run: ./dist/vectora/vectora --version || ./dist/vectora/vectora.exe --version
         shell: bash
+      - name: Export Windows signing cert
+        # electron-builder só pula a assinatura quando CSC_LINK está
+        # ausente (undefined) — setado como string vazia ainda conta
+        # como "certificado fornecido" e quebra o keychain no mac/linux.
+        # $GITHUB_ENV só é escrito neste step (matrix.target == 'win'),
+        # deixando a var genuinamente ausente nos outros SOs.
+        if: matrix.target == 'win'
+        shell: bash
+        run: |
+          echo "CSC_LINK=${{ secrets.WIN_CERTIFICATE_BASE64 }}" >> "$GITHUB_ENV"
+          echo "CSC_KEY_PASSWORD=${{ secrets.WIN_CERTIFICATE_PASSWORD }}" >> "$GITHUB_ENV"
       - name: Build desktop shell + installer
         env:
-          CSC_LINK: ${{ matrix.target == 'win' && secrets.WIN_CERTIFICATE_BASE64 || '' }}
-          CSC_KEY_PASSWORD: ${{ matrix.target == 'win' && secrets.WIN_CERTIFICATE_PASSWORD || '' }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
