@@ -77,16 +77,19 @@ async function renderAtStepToken() {
 }
 
 describe("StepToken", () => {
-  it("campo de token tem autocomplete=off para desabilitar autofill do browser", async () => {
+  it("campo de token usa autocomplete=new-password para desabilitar o autofill/sugestão de senha salva do browser", async () => {
+    // "off" é ignorado por Chrome/Edge em campos type="password" desde 2014
+    // (o browser mostra a sugestão de senha salva mesmo assim) — o valor
+    // que de fato suprime isso é "new-password".
     await renderAtStepToken();
     const input = screen.getByPlaceholderText("vct_…");
-    expect(input).toHaveAttribute("autocomplete", "off");
+    expect(input).toHaveAttribute("autocomplete", "new-password");
   });
 
-  it("erro: campo de token não deve ter hint semântico de autocomplete", async () => {
+  it("erro: campo de token não deve ter hint semântico que reative sugestões do browser", async () => {
     await renderAtStepToken();
     const input = screen.getByPlaceholderText("vct_…");
-    expect(input).not.toHaveAttribute("autocomplete", "new-password");
+    expect(input).not.toHaveAttribute("autocomplete", "off");
     expect(input).not.toHaveAttribute("autocomplete", "current-password");
     expect(input).not.toHaveAttribute("autocomplete", "email");
   });
@@ -94,7 +97,12 @@ describe("StepToken", () => {
 
 function mockStorageFetch(opts: {
   defaultsOk: boolean;
+  /** Modo "Completo" é Pro-only — testes que precisam selecioná-lo mockam
+   * uma licença configurada (Pro); default true preserva o comportamento
+   * anterior dos testes existentes (que já assumiam poder selecionar). */
+  pro?: boolean;
 }): ReturnType<typeof vi.fn> {
+  const pro = opts.pro ?? true;
   const defaults = {
     postgres: {
       url: "postgresql+asyncpg://vectora:vectora@localhost:5432/vectora",
@@ -144,6 +152,19 @@ function mockStorageFetch(opts: {
         }),
       };
     }
+    if (u.includes("/license/status")) {
+      return {
+        ok: true,
+        json: async () => ({
+          configured: pro,
+          tier: pro ? "pro" : null,
+          status: pro ? "active" : "unknown",
+          days_remaining: 0,
+          expires_at: "",
+          cached: false,
+        }),
+      };
+    }
     return { ok: true, json: async () => ({ has_token: false, mode: "lite" }) };
   });
 }
@@ -188,6 +209,42 @@ describe("StepMode — pré-preenchimento com defaults reais", () => {
       "redis://localhost:6379/0",
     )) as HTMLInputElement;
     expect(input.value).toBe("");
+  });
+});
+
+describe("StepMode — Completo é exclusivo do plano Pro", () => {
+  it("usuário Free vê o card Completo travado (Lock + badge) e não consegue selecioná-lo", async () => {
+    vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: true, pro: false }));
+    render(<SetupWizard userId="u-free" onComplete={vi.fn()} />);
+    await waitFor(() => screen.getByText("1 / 9"));
+    await act(async () => {
+      for (let i = 0; i < 3; i++) {
+        fireEvent.click(screen.getByRole("button", { name: "Next" }));
+      }
+    });
+    await waitFor(() => screen.getByText("4 / 9"));
+
+    const completeBtn = screen.getByText("Complete").closest("button")!;
+    await waitFor(() => expect(completeBtn).toBeDisabled());
+    expect(screen.getByText("Available on the Pro plan")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(completeBtn);
+    });
+    // Clique num botão disabled não abre os cards de conexão manual.
+    expect(screen.queryByPlaceholderText(/redis:\/\//)).toBeNull();
+  });
+
+  it("usuário Pro consegue selecionar Completo normalmente (sem cadeado)", async () => {
+    vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: true, pro: true }));
+    await renderAtStepMode();
+
+    expect(screen.queryByText("Available on the Pro plan")).toBeNull();
+    await waitFor(() =>
+      expect(
+        screen.getByDisplayValue("redis://:vectora@localhost:6379/0"),
+      ).toBeInTheDocument(),
+    );
   });
 });
 

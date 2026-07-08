@@ -18,9 +18,10 @@ import {
   FolderOpen,
   FolderPlus,
   Plus,
+  Lock,
 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
 import {
   Dialog,
@@ -296,6 +297,9 @@ function StepToken(_props: StepProps) {
       <p className="text-sm text-muted-foreground">
         {m.onboarding_token_body()}
       </p>
+      <p className="text-xs text-muted-foreground">
+        {m.onboarding_token_free_note()}
+      </p>
 
       {config?.vectora_token_configured && (
         <p className="text-xs text-muted-foreground font-mono">
@@ -311,7 +315,7 @@ function StepToken(_props: StepProps) {
             onChange={(e) => setTokenInput(e.target.value)}
             placeholder="vct_…"
             className="h-8 text-xs font-mono flex-1"
-            autoComplete="off"
+            autoComplete="new-password"
           />
           <Button
             type="button"
@@ -591,6 +595,12 @@ function ServiceConnectionCard({
 }
 
 function StepMode({ onValidityChange }: StepProps) {
+  // `configured=false` (sem VECTORA_TOKEN) é o estado Free — mesma fonte de
+  // admin-tab.tsx (GET /license/status). O modo "Completo" (Postgres+Qdrant+
+  // Redis) é recurso exclusivo do Pro; Free fica preso ao Lite (SQLite +
+  // LanceDB + NATS embutido).
+  const { status: license } = useLicenseStatus();
+  const isFree = !license?.configured;
   const [mode, setMode] = useState<"lite" | "complete">("lite");
   const [saving, setSaving] = useState(false);
   const [connected, setConnected] = useState<Record<string, boolean>>({});
@@ -680,6 +690,7 @@ function StepMode({ onValidityChange }: StepProps) {
   }, []);
 
   const handleSelect = async (next: "lite" | "complete") => {
+    if (next === "complete" && isFree) return;
     setMode(next);
     setSaving(true);
     try {
@@ -715,15 +726,25 @@ function StepMode({ onValidityChange }: StepProps) {
         </button>
         <button
           onClick={() => handleSelect("complete")}
+          disabled={isFree}
+          aria-disabled={isFree}
           className={`text-left p-3 rounded-md border transition-colors ${
             mode === "complete"
               ? "border-primary bg-primary/10"
               : "border-border text-muted-foreground hover:text-foreground"
-          }`}
+          } ${isFree ? "opacity-60 cursor-not-allowed hover:text-muted-foreground" : ""}`}
         >
-          <p className="text-xs font-medium">
-            {m.onboarding_mode_complete_title()}
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium">
+              {m.onboarding_mode_complete_title()}
+            </p>
+            {isFree && (
+              <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                <Lock className="w-3 h-3" />
+                {m.onboarding_mode_complete_locked()}
+              </span>
+            )}
+          </div>
           <p className="text-[11px] mt-1">
             {m.onboarding_mode_complete_desc()}
           </p>
@@ -823,8 +844,12 @@ function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
 
   return (
     <>
-      <ScrollArea className="max-h-60">
-        <div className="space-y-1 pr-3 py-2">
+      {/* Div nativa em vez de ScrollArea (Radix): o wrapper interno do
+          Viewport vira `display: table` e mede a largura pelo conteúdo mais
+          largo — um path do Windows sem espaços/barras pra quebrar linha
+          força a coluna inteira a crescer, vazando pra fora do modal. */}
+      <div className="max-h-60 overflow-y-auto overflow-x-hidden">
+        <div className="space-y-1 pr-3 py-2 w-full min-w-0">
           <button
             type="button"
             onClick={() => handleSelect(null)}
@@ -893,7 +918,7 @@ function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
             {m.workspace_add_folder()}
           </button>
         </div>
-      </ScrollArea>
+      </div>
 
       <WorkspaceTrustDialog
         open={trustOpen}
@@ -1019,6 +1044,10 @@ function StepApiKeys(_props: StepProps) {
           if (data[id]?.configured) {
             next[id] = {
               ...next[id],
+              // Popula `value` direto com a env real mascarada — o campo
+              // mostra a chave já configurada em vez do placeholder
+              // genérico (que só faz sentido quando não há nada salvo).
+              value: data[id].masked,
               masked: data[id].masked,
               configured: true,
               status: "testing",
@@ -1070,25 +1099,26 @@ function StepApiKeys(_props: StepProps) {
   }
 
   async function handleBlur(id: ApiKeyProvider, value: string): Promise<void> {
-    if (!value.trim()) return;
-    await saveKey(id, value);
-    await testKey(id, value);
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    // Campo ainda mostra a env mascarada (usuário não editou) — não
+    // sobrescreve a chave real salva com o texto mascarado exibido.
+    if (trimmed === keys[id].masked) return;
+    await saveKey(id, trimmed);
+    await testKey(id, trimmed);
   }
 
   return (
-    <div className="space-y-4 py-2">
-      <p className="text-sm text-muted-foreground">
+    <div className="space-y-2.5 py-2">
+      <p className="text-xs text-muted-foreground">
         {m.onboarding_api_keys_body()}
       </p>
 
       {PROVIDERS.map((prov) => {
         const state = keys[prov.id];
         const isVisible = show[prov.id];
-        const displayValue = isVisible
-          ? state.value
-          : state.value || (state.configured ? state.masked : "");
         return (
-          <div key={prov.id} className="space-y-1">
+          <div key={prov.id} className="space-y-0.5">
             <div className="flex items-center justify-between gap-2">
               <label className="text-xs font-medium text-foreground">
                 {(m[prov.labelKey] as () => string)()}
@@ -1120,15 +1150,15 @@ function StepApiKeys(_props: StepProps) {
                 </a>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground leading-snug">
+            <p className="text-[11px] text-muted-foreground leading-snug">
               {(m[prov.descKey] as () => string)()}
             </p>
             <div className="flex gap-1.5">
               <Input
                 type={isVisible ? "text" : "password"}
-                value={displayValue}
+                value={state.value}
                 placeholder={prov.placeholder}
-                className="h-8 text-xs font-mono flex-1"
+                className="h-7 text-xs font-mono flex-1"
                 autoComplete="off"
                 onChange={(e) =>
                   setKeys((prev) => ({
@@ -1146,7 +1176,7 @@ function StepApiKeys(_props: StepProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-8 px-2"
+                className="h-7 px-2"
                 onClick={() =>
                   setShow((prev) => ({ ...prev, [prov.id]: !prev[prov.id] }))
                 }
