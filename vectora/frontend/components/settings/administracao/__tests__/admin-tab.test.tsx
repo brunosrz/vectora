@@ -7,9 +7,10 @@
  * pousa nela por padrão.
  */
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, cleanup, act } from "@testing-library/react";
 import type { LicenseStatus } from "@/lib/hooks/use-license-status";
+import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
 const { useLicenseStatusMock } = vi.hoisted(() => ({
   useLicenseStatusMock: vi.fn(),
@@ -71,9 +72,14 @@ function mockAdminFetch(): void {
   );
 }
 
+beforeEach(() => {
+  overwriteGetLocale(() => "pt");
+});
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  overwriteGetLocale(() => baseLocale);
 });
 
 describe("AdminTab — filtro de abas por tier", () => {

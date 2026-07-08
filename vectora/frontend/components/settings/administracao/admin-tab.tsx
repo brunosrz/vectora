@@ -476,7 +476,7 @@ function UsersPanel() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm("Deletar este usuário? Esta ação é irreversível.")) return;
+    if (!confirm(m.admin_users_confirm_delete())) return;
     await api.users.delete(userId);
     setUsers((prev) => prev.filter((u) => u.id !== userId));
   };
@@ -493,8 +493,7 @@ function UsersPanel() {
     <div className="space-y-2">
       <InvitesSection />
       <p className="text-xs text-muted-foreground mb-3">
-        {users.length} usuário{users.length !== 1 ? "s" : ""} cadastrado
-        {users.length !== 1 ? "s" : ""}
+        {m.admin_users_total({ count: users.length })}
       </p>
       {users.map((u) => (
         <div key={u.id} className="space-y-1">
@@ -502,9 +501,10 @@ function UsersPanel() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{u.email}</p>
               <p className="text-[10px] text-muted-foreground">
-                desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+                {m.admin_users_since()}{" "}
+                {new Date(u.created_at).toLocaleDateString("pt-BR")}
                 {u.last_login_at &&
-                  ` · último acesso ${new Date(u.last_login_at).toLocaleDateString("pt-BR")}`}
+                  ` · ${m.admin_users_last_login()} ${new Date(u.last_login_at).toLocaleDateString("pt-BR")}`}
               </p>
             </div>
 
@@ -529,7 +529,7 @@ function UsersPanel() {
               size="sm"
               className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
               onClick={() => setOpenTools(openTools === u.id ? null : u.id)}
-              title="Tools"
+              title={m.admin_tab_tools()}
             >
               <Wrench className="w-3.5 h-3.5" />
             </Button>
@@ -593,7 +593,7 @@ function ToolsPanel() {
               <span className="text-xs font-mono font-medium">{t.name}</span>
               {t.destructive && (
                 <Badge variant="destructive" className="text-[9px] h-3.5 px-1">
-                  destrutiva
+                  {m.admin_tools_destructive()}
                 </Badge>
               )}
             </div>
@@ -639,10 +639,10 @@ function SystemPanel() {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         {[
-          ["Versão", info.version],
-          ["Plataforma", info.platform],
-          ["Python", info.python_version.split(" ")[0]],
-          ["Spans recentes", String(info.recent_spans_count)],
+          [m.admin_system_label_version(), info.version],
+          [m.admin_system_label_platform(), info.platform],
+          [m.admin_system_label_python(), info.python_version.split(" ")[0]],
+          [m.admin_system_label_spans(), String(info.recent_spans_count)],
         ].map(([label, value]) => (
           <div key={label} className="rounded-lg border bg-card p-2.5">
             <p className="text-[10px] text-muted-foreground">{label}</p>
@@ -652,7 +652,7 @@ function SystemPanel() {
       </div>
 
       <div className="pt-3 border-t space-y-3">
-        <p className="text-xs font-medium">Configurações</p>
+        <p className="text-xs font-medium">{m.admin_system_config_heading()}</p>
         <ConfigSection />
       </div>
     </div>
@@ -718,16 +718,16 @@ function ConfigSection() {
           <p className="text-sm font-medium">VECTORA_TOKEN</p>
           {config.vectora_token_configured ? (
             <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-              configurado
+              {m.admin_config_token_configured()}
             </span>
           ) : (
             <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30">
-              ausente
+              {m.admin_config_token_absent()}
             </span>
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Token de licença do produto. Obtenha em{" "}
+          {m.admin_config_token_desc()}{" "}
           <a
             href="https://vectora.company/dashboard"
             target="_blank"
@@ -740,7 +740,7 @@ function ConfigSection() {
         </p>
         {config.vectora_token_configured && (
           <p className="text-xs text-muted-foreground font-mono">
-            atual: {config.vectora_token_masked}
+            {m.admin_config_token_current()} {config.vectora_token_masked}
           </p>
         )}
         <div className="flex gap-1.5">
@@ -750,7 +750,7 @@ function ConfigSection() {
             onChange={(e) => setTokenInput(e.target.value)}
             placeholder={
               config.vectora_token_configured
-                ? "Digite para substituir…"
+                ? m.admin_config_token_placeholder_replace()
                 : "vct_…"
             }
             className="h-8 text-xs font-mono flex-1"
@@ -762,18 +762,24 @@ function ConfigSection() {
             variant="ghost"
             className="h-8 px-2"
             onClick={() => setShowToken((v) => !v)}
-            aria-label={showToken ? "Ocultar token" : "Mostrar token"}
+            aria-label={
+              showToken
+                ? m.admin_config_token_hide_aria()
+                : m.admin_config_token_show_aria()
+            }
           >
-            {showToken ? "Ocultar" : "Mostrar"}
+            {showToken
+              ? m.admin_config_token_hide()
+              : m.admin_config_token_show()}
           </Button>
         </div>
       </div>
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium">Signup público</p>
+          <p className="text-sm font-medium">{m.admin_config_signup_title()}</p>
           <p className="text-xs text-muted-foreground">
-            Permite novos usuários se cadastrarem sem convite
+            {m.admin_config_signup_desc()}
           </p>
         </div>
         <Switch
@@ -785,7 +791,7 @@ function ConfigSection() {
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-medium">Modelo padrão</p>
+        <p className="text-sm font-medium">{m.admin_config_model_title()}</p>
         <Select
           value={config.default_model}
           onValueChange={(v) =>
@@ -793,7 +799,7 @@ function ConfigSection() {
           }
         >
           <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder="ex: gemini-2.5-flash" />
+            <SelectValue placeholder={m.admin_config_model_placeholder()} />
           </SelectTrigger>
           <SelectContent>
             {getAllowedModels().map((modelId) => (
@@ -806,7 +812,9 @@ function ConfigSection() {
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-medium">Limite de recursão</p>
+        <p className="text-sm font-medium">
+          {m.admin_config_recursion_title()}
+        </p>
         <Input
           type="number"
           value={config.max_recursion}
@@ -828,7 +836,7 @@ function ConfigSection() {
 
       <Button size="sm" onClick={handleSave} disabled={saving}>
         {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
-        {saved ? "Salvo!" : "Salvar alterações"}
+        {saved ? m.admin_config_saved() : m.toolpolicy_save()}
       </Button>
     </div>
   );
@@ -890,7 +898,9 @@ function SafeRootsPanel() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.detail ?? `Falha (${res.status})`);
+        setError(
+          data.detail ?? m.admin_saferoots_add_failed({ status: res.status }),
+        );
       } else {
         setNewPath("");
         setNewLabel("");
@@ -930,27 +940,26 @@ function SafeRootsPanel() {
   return (
     <div className="space-y-4">
       <div className="text-xs text-muted-foreground">
-        Usuários comuns só podem criar workspaces dentro destas pastas. A
-        entrada builtin (Documents/vectora) não pode ser removida.
+        {m.admin_saferoots_desc()}
       </div>
 
       {/* Adicionar nova */}
       <div className="rounded-md border border-border/60 p-3 space-y-2">
         <div className="text-xs font-medium text-foreground">
-          Adicionar pasta segura
+          {m.admin_saferoots_add_title()}
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Input
             value={newPath}
             onChange={(e) => setNewPath(e.target.value)}
-            placeholder="/caminho/absoluto/da/pasta"
+            placeholder={m.admin_saferoots_path_placeholder()}
             autoComplete="off"
             className="font-mono text-xs"
           />
           <Input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="Rótulo (opcional)"
+            placeholder={m.admin_saferoots_label_placeholder()}
             autoComplete="off"
             className="text-xs sm:w-48"
           />
@@ -962,7 +971,7 @@ function SafeRootsPanel() {
             {creating ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              "Adicionar"
+              m.admin_saferoots_add_button()
             )}
           </Button>
         </div>
@@ -972,11 +981,11 @@ function SafeRootsPanel() {
       {/* Lista */}
       {loading ? (
         <div className="text-xs text-muted-foreground flex items-center gap-2">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Carregando…
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> {m.admin_loading()}
         </div>
       ) : roots.length === 0 ? (
         <div className="text-xs text-muted-foreground">
-          Nenhuma pasta configurada.
+          {m.admin_saferoots_empty()}
         </div>
       ) : (
         <div className="rounded-md border border-border/60 divide-y divide-border/60">
@@ -1005,7 +1014,7 @@ function SafeRootsPanel() {
                     {r.label}
                     {r.builtin && (
                       <Badge variant="secondary" className="text-[10px] py-0">
-                        builtin
+                        {m.admin_saferoots_builtin_badge()}
                       </Badge>
                     )}
                   </div>
@@ -1021,7 +1030,7 @@ function SafeRootsPanel() {
                   setEditingId(r.id);
                   setEditLabel(r.label);
                 }}
-                title="Renomear"
+                title={m.admin_saferoots_rename_title()}
               >
                 <Pencil className="w-3.5 h-3.5" />
               </Button>
@@ -1031,7 +1040,9 @@ function SafeRootsPanel() {
                 onClick={() => handleRemove(r.id)}
                 disabled={r.builtin}
                 title={
-                  r.builtin ? "Pasta builtin não pode ser removida" : "Remover"
+                  r.builtin
+                    ? m.admin_saferoots_builtin_no_remove()
+                    : m.admin_saferoots_remove_title()
                 }
                 className="text-destructive hover:text-destructive disabled:opacity-30"
               >
@@ -1045,9 +1056,9 @@ function SafeRootsPanel() {
       {/* Confirmação de remoção de safe-root (Radix Dialog — C.12) */}
       <ConfirmDialog
         open={removeConfirmId !== null}
-        title="Remover pasta segura?"
-        description="Workspaces existentes não são afetados."
-        confirmLabel="Remover"
+        title={m.admin_saferoots_confirm_title()}
+        description={m.admin_saferoots_confirm_desc()}
+        confirmLabel={m.admin_saferoots_remove_title()}
         variant="destructive"
         onConfirm={handleRemoveConfirmed}
         onCancel={() => setRemoveConfirmId(null)}
@@ -1144,7 +1155,7 @@ function StorageTestResultLine({ result }: { result: StorageTestResult }) {
       {result.ok ? (
         <>
           <CheckCircle2 className="w-3.5 h-3.5" />
-          Conexão OK
+          {m.admin_storage_test_ok()}
           {result.latency_ms !== undefined && (
             <span className="text-muted-foreground">
               ({result.latency_ms}ms)
@@ -1154,7 +1165,7 @@ function StorageTestResultLine({ result }: { result: StorageTestResult }) {
       ) : (
         <>
           <XCircle className="w-3.5 h-3.5" />
-          {result.error ?? "Falha na conexão"}
+          {result.error ?? m.admin_storage_test_fail()}
         </>
       )}
     </div>
@@ -1261,7 +1272,7 @@ function BackendConfigCard({
           {testing ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            "Testar"
+            m.admin_storage_test_button()
           )}
         </Button>
         <Button
@@ -1270,7 +1281,11 @@ function BackendConfigCard({
           disabled={saving || !hasInput}
           className="h-7 text-xs"
         >
-          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Salvar"}
+          {saving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            m.admin_storage_save_button()
+          )}
         </Button>
       </div>
       {testResult && <StorageTestResultLine result={testResult} />}
@@ -1322,9 +1337,9 @@ function StoragePanel() {
     key: "checkpointer" | "store" | "lancedb";
     label: string;
   }[] = [
-    { key: "checkpointer", label: "Checkpointer (SQLite)" },
-    { key: "store", label: "BaseStore (AsyncSqliteStore)" },
-    { key: "lancedb", label: "LanceDB (VectorStore)" },
+    { key: "checkpointer", label: m.admin_storage_backend_checkpointer() },
+    { key: "store", label: m.admin_storage_backend_store() },
+    { key: "lancedb", label: m.admin_storage_backend_lancedb() },
   ];
 
   return (
@@ -1332,7 +1347,7 @@ function StoragePanel() {
       {/* Header com refresh */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">
-          Status dos backends de storage
+          {m.admin_storage_header()}
         </span>
         <button
           onClick={fetchHealth}
@@ -1340,17 +1355,17 @@ function StoragePanel() {
           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
           <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
-          Atualizar
+          {m.admin_storage_refresh()}
         </button>
       </div>
 
       {/* Modo de armazenamento */}
       <div className="space-y-1.5 rounded border px-3 py-2">
-        <span className="text-xs font-medium">Modo de armazenamento</span>
+        <span className="text-xs font-medium">
+          {m.admin_storage_mode_title()}
+        </span>
         <p className="text-xs text-muted-foreground">
-          "Lite" usa SQLite + LanceDB local — funciona sem nenhuma infra externa
-          e é o padrão. "Completo" liga Postgres, Redis e Qdrant — exige
-          configurar as conexões abaixo antes de ativar.
+          {m.admin_storage_mode_desc()}
         </p>
         <div className="flex items-center gap-2">
           <Select
@@ -1362,8 +1377,12 @@ function StoragePanel() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="lite">Lite (padrão)</SelectItem>
-              <SelectItem value="complete">Completo</SelectItem>
+              <SelectItem value="lite">
+                {m.admin_storage_mode_lite()}
+              </SelectItem>
+              <SelectItem value="complete">
+                {m.admin_storage_mode_complete()}
+              </SelectItem>
             </SelectContent>
           </Select>
           {savingMode && (
@@ -1400,50 +1419,49 @@ function StoragePanel() {
       {storageMode === "complete" && (
         <div className="space-y-2 pt-2 border-t">
           <span className="text-xs font-medium text-muted-foreground">
-            Backends do modo completo
+            {m.admin_storage_complete_backends()}
           </span>
           <div className="grid grid-cols-1 gap-2">
             <BackendConfigCard
-              title="Postgres"
+              title={m.admin_storage_postgres_title()}
               status={health?.postgres}
               testBackend="postgres"
               fields={[
                 {
                   key: "postgres_dsn",
                   testKey: "dsn",
-                  placeholder:
-                    "postgresql+asyncpg://user:pass@host:5432/vectora",
+                  placeholder: m.admin_storage_postgres_placeholder(),
                 },
               ]}
               onSave={(v) => patchStorage(v)}
             />
             <BackendConfigCard
-              title="Redis"
+              title={m.admin_storage_redis_title()}
               status={health?.redis}
               testBackend="redis"
               fields={[
                 {
                   key: "redis_url",
                   testKey: "url",
-                  placeholder: "redis://localhost:6379/0",
+                  placeholder: m.admin_storage_redis_placeholder(),
                 },
               ]}
               onSave={(v) => patchStorage(v)}
             />
             <BackendConfigCard
-              title="Qdrant"
+              title={m.admin_storage_qdrant_title()}
               status={undefined}
               testBackend="qdrant"
               fields={[
                 {
                   key: "qdrant_url",
                   testKey: "url",
-                  placeholder: "http://localhost:6333",
+                  placeholder: m.admin_storage_qdrant_url_placeholder(),
                 },
                 {
                   key: "qdrant_api_key",
                   testKey: "api_key",
-                  placeholder: "API key (opcional)",
+                  placeholder: m.admin_storage_field_api_key_optional(),
                   type: "password",
                 },
               ]}
@@ -1460,29 +1478,39 @@ function StoragePanel() {
 // Componente principal
 // ---------------------------------------------------------------------------
 
-const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
-  { id: "users", label: "Usuários", icon: <Users className="w-3.5 h-3.5" /> },
-  {
-    id: "tools",
-    label: "Ferramentas",
-    icon: <Wrench className="w-3.5 h-3.5" />,
-  },
-  {
-    id: "safe-roots",
-    label: "Pastas Seguras",
-    icon: <FolderLock className="w-3.5 h-3.5" />,
-  },
-  {
-    id: "system",
-    label: "Sistema",
-    icon: <Cpu className="w-3.5 h-3.5" />,
-  },
-  {
-    id: "storage",
-    label: "Storage",
-    icon: <Database className="w-3.5 h-3.5" />,
-  },
-];
+function getSubTabs(): {
+  id: AdminSubTab;
+  label: string;
+  icon: React.ReactNode;
+}[] {
+  return [
+    {
+      id: "users",
+      label: m.admin_tab_users(),
+      icon: <Users className="w-3.5 h-3.5" />,
+    },
+    {
+      id: "tools",
+      label: m.admin_tab_tools(),
+      icon: <Wrench className="w-3.5 h-3.5" />,
+    },
+    {
+      id: "safe-roots",
+      label: m.admin_tab_saferoots(),
+      icon: <FolderLock className="w-3.5 h-3.5" />,
+    },
+    {
+      id: "system",
+      label: m.admin_tab_system(),
+      icon: <Cpu className="w-3.5 h-3.5" />,
+    },
+    {
+      id: "storage",
+      label: m.admin_tab_storage(),
+      icon: <Database className="w-3.5 h-3.5" />,
+    },
+  ];
+}
 
 export function AdminTab() {
   const [active, setActive] = useState<AdminSubTab>("users");
@@ -1493,9 +1521,10 @@ export function AdminTab() {
   // conta Pro ele só mostraria uma lista vazia, sem caminho pra ativar.
   const { status: license } = useLicenseStatus();
   const isFree = !license?.configured;
+  const subTabs = getSubTabs();
   const visibleTabs = isFree
-    ? SUB_TABS.filter((tab) => tab.id !== "users")
-    : SUB_TABS;
+    ? subTabs.filter((tab) => tab.id !== "users")
+    : subTabs;
 
   useEffect(() => {
     if (isFree) setActive((prev) => (prev === "users" ? "system" : prev));
@@ -1524,7 +1553,7 @@ export function AdminTab() {
       <div className="flex items-center gap-2">
         <Shield className="w-4 h-4 text-amber-500" />
         <span className="text-xs text-muted-foreground">
-          Painel de administração — apenas root e admin
+          {m.admin_header_desc()}
         </span>
       </div>
 
