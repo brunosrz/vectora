@@ -11,6 +11,7 @@ empurra para uma ``asyncio.Queue`` consumida pelo handler WS.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import platform
@@ -73,7 +74,11 @@ class PtySession:
         self.workspace_id = workspace_id
         self.thread_id = thread_id
         self._proc = proc
-        self._queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=4096)
+        # Fan-out: cada WS que abre este terminal ganha sua própria fila via
+        # subscribe() — o read-loop faz broadcast pra todas. Sem isso, 2 abas
+        # no mesmo terminal_id competiam pelos itens de uma fila única (cada
+        # chunk ia pra só um dos dois consumidores, nunca pros dois).
+        self._subscribers: list[asyncio.Queue[bytes | None]] = []
         self._closed = False
         self._read_task: asyncio.Task | None = None
 
@@ -153,15 +158,27 @@ class PtySession:
                 if isinstance(data, str):
                     data = data.encode("utf-8", errors="replace")
                 try:
-                    await self._queue.put(data)
+                    await self._broadcast(data)
                 except asyncio.CancelledError:
                     return
         finally:
-            await self._queue.put(None)
+            await self._broadcast(None)
 
-    async def read(self) -> bytes | None:
-        """Devolve o próximo bloco de saída do PTY, ou None quando encerra."""
-        return await self._queue.get()
+    async def _broadcast(self, data: bytes | None) -> None:
+        for q in self._subscribers:
+            with contextlib.suppress(asyncio.QueueFull):
+                q.put_nowait(data)
+
+    def subscribe(self) -> asyncio.Queue[bytes | None]:
+        """Registra um novo consumidor — cada WS conectado a este terminal
+        chama isso pra ganhar sua própria fila (broadcast, não round-robin)."""
+        q: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=4096)
+        self._subscribers.append(q)
+        return q
+
+    def unsubscribe(self, q: asyncio.Queue[bytes | None]) -> None:
+        with contextlib.suppress(ValueError):
+            self._subscribers.remove(q)
 
     def write(self, data: bytes) -> None:
         if self._closed:

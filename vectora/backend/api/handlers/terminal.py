@@ -134,11 +134,15 @@ async def terminal_ws(ws: WebSocket) -> None:
 
     await ws.send_text(json.dumps({"type": "connected", "terminal_id": terminal_id}))
 
-    # PTY → WS pump
+    # PTY → WS pump. subscribe() dá a esta conexão sua própria fila — se
+    # outra aba já tiver o mesmo terminal_id aberto, as duas recebem cada
+    # chunk (broadcast), nenhuma "rouba" o output da outra.
+    out_queue = session.subscribe()
+
     async def pump_out() -> None:
         try:
             while True:
-                data = await session.read()
+                data = await out_queue.get()
                 if data is None:
                     break
                 await ws.send_bytes(data)
@@ -146,6 +150,8 @@ async def terminal_ws(ws: WebSocket) -> None:
             return
         except Exception:
             logger.debug("terminal: erro no pump_out %s", terminal_id)
+        finally:
+            session.unsubscribe(out_queue)
         with contextlib.suppress(Exception):
             await ws.send_text(json.dumps({"type": "closed"}))
 
