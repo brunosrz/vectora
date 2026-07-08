@@ -122,25 +122,45 @@ async def _extract_user(request: Request) -> Any:
     elif "vectora_access" in request.cookies:
         token = request.cookies["vectora_access"]
 
-    if not token:
-        return None
+    user: Any = None
+    if token:
+        try:
+            payload = decode_access_token(token)
+            user_id: str = payload.get("sub", "")
+            if user_id:
+                # Expõe o `exp` (epoch seconds) do access token via
+                # request.state para que /auth/me possa devolvê-lo ao
+                # frontend — o cookie é httpOnly (JS não enxerga o JWT
+                # bruto), então sem isso o cliente não sabe quando renovar.
+                request.state.token_exp = payload.get("exp")
+                user = await get_user_by_id(user_id)
+        except JWTError:
+            user = None
+        except Exception as exc:
+            logger.debug("auth middleware: erro ao validar token: %s", exc)
+            user = None
 
-    try:
-        payload = decode_access_token(token)
-        user_id: str = payload.get("sub", "")
-        if not user_id:
-            return None
-        # UX-21 — expõe o `exp` (epoch seconds) do access token via
-        # request.state para que /auth/me possa devolvê-lo ao frontend.
-        # Sem isso o cliente não tem como saber quando renovar (cookie
-        # httpOnly: o JS não enxerga o JWT bruto).
-        request.state.token_exp = payload.get("exp")
-        return await get_user_by_id(user_id)
-    except JWTError:
-        return None
-    except Exception as exc:
-        logger.debug("auth middleware: erro ao validar token: %s", exc)
-        return None
+    if user is None and not _auth_enabled():
+        return _get_virtual_local_user()
+    return user
+
+
+def _get_virtual_local_user() -> Any:
+    """Retorna um objeto User virtual representando o usuário local gratuito."""
+    from datetime import UTC, datetime
+
+    from backend.rbac.auth import User
+    from backend.settings import settings as settings_singleton
+
+    name = settings_singleton.local_user_name or "Local User"
+    return User(
+        id="local",
+        email="local@vectora.internal",
+        role="root",
+        name=name,
+        env_overrides={},
+        created_at=datetime.now(UTC).isoformat(),
+    )
 
 
 class AuthMiddleware(BaseHTTPMiddleware):

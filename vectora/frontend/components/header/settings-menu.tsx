@@ -48,15 +48,17 @@ export function SettingsMenu() {
     router.replace("/auth/signin");
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
-  // Nome tem prioridade quando existe; fallback para o e-mail.
-  const displayName = user.name?.trim() || user.email;
-  const initial = Array.from(displayName)[0]?.toUpperCase() ?? "?";
-  const roleLabel = ROLE_LABELS[user.role] ?? user.role;
-  const roleColor = ROLE_COLORS[user.role] ?? "text-muted-foreground";
+  // O backend sempre injeta um usuário em /auth/me (real no Pro, virtual
+  // "local" no Free — ver _get_virtual_local_user em
+  // backend/api/middleware/auth.py) — o botão nunca depende de isAuthenticated.
+  // Só o botão "Sair" distingue conta real de usuário local virtual (abaixo).
+  const displayName = user?.name?.trim() || user?.email || "Vectora";
+  const initial = Array.from(displayName)[0]?.toUpperCase() ?? "V";
+  const roleLabel = user ? (ROLE_LABELS[user.role] ?? user.role) : "Local";
+  const roleColor = user
+    ? (ROLE_COLORS[user.role] ?? "text-muted-foreground")
+    : "text-muted-foreground";
+  const isRealAccount = isAuthenticated && user?.id !== "local";
 
   return (
     <>
@@ -75,7 +77,6 @@ export function SettingsMenu() {
         {/* Dropdown */}
         {open && (
           <div className="absolute right-0 top-10 z-[80] w-64 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-top-2">
-            {/* Info do usuário */}
             <div className="px-4 py-3 border-b border-border/60">
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/20 text-primary font-semibold text-base select-none">
@@ -85,7 +86,7 @@ export function SettingsMenu() {
                   <p className="text-sm font-medium text-foreground truncate">
                     {displayName}
                   </p>
-                  {user.name && user.name.trim() && (
+                  {user?.name?.trim() && user.email && (
                     <p className="text-xs text-muted-foreground truncate">
                       {user.email}
                     </p>
@@ -121,7 +122,7 @@ export function SettingsMenu() {
                 Ambiente
               </button>
 
-              {(user.role === "root" || user.role === "admin") && (
+              {(user?.role === "root" || user?.role === "admin") && (
                 <button
                   className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
                   onClick={() => {
@@ -134,13 +135,15 @@ export function SettingsMenu() {
                 </button>
               )}
 
-              <button
-                className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4 shrink-0" />
-                Sair
-              </button>
+              {isRealAccount && (
+                <button
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4 shrink-0" />
+                  Sair
+                </button>
+              )}
             </div>
           </div>
         )}

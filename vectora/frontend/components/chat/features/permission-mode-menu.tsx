@@ -6,87 +6,78 @@
  * Chip + dropdown com os 5 modos de permissão. A escolha persiste no
  * settings-store (campo permissionMode) e é enviada em cada request como
  * config.permission_mode, consumida pelo hitl_check no backend.
+ *
+ * Popover com portal (mesmo padrão do ModelSelector, ver model-selector.tsx)
+ * — escapa da stacking context do composer; um `absolute` comum renderizava
+ * atrás da sidebar mesmo com z-index nominal maior, porque um ancestral do
+ * composer forma sua própria stacking context.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronDown, ShieldCheck } from "lucide-react";
 
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   useSettingsStore,
   PERMISSION_MODES,
-  type PermissionMode,
 } from "@/lib/stores/settings-store";
 import { m as msg } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
-/** Cor do chip por modo — quanto mais permissivo, mais "quente". */
-const MODE_TONE: Record<PermissionMode, string> = {
-  ask: "text-muted-foreground",
-  accept_edits: "text-blue-400",
-  plan: "text-violet-400",
-  auto: "text-amber-400",
-  bypass: "text-orange-500",
-};
 
 export function PermissionModeMenu() {
   const mode = useSettingsStore((s) => s.permissionMode);
   const setMode = useSettingsStore((s) => s.setPermissionMode);
-
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    }
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, []);
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 min-w-0 max-w-[160px] px-2.5 py-1.5 rounded-md text-xs hover:bg-muted/50 transition-colors select-none ${MODE_TONE[mode]}`}
-        title={msg.permission_title()}
-        aria-expanded={open}
-      >
-        <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-        <span className="truncate font-medium">
-          {mDyn(`permission.mode.${mode}`)}
-        </span>
-        <ChevronDown className="w-3 h-3 shrink-0" />
-      </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="flex items-center gap-1.5 min-w-0 max-w-[160px] px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors select-none"
+          title={msg.permission_title()}
+          aria-expanded={open}
+        >
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate font-medium">
+            {mDyn(`permission.mode.${mode}`)}
+          </span>
+          <ChevronDown className="w-3 h-3 shrink-0" />
+        </button>
+      </PopoverTrigger>
 
-      {open && (
-        <div className="absolute right-0 bottom-9 z-50 w-72 max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-y-auto rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-bottom-2">
-          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {msg.permission_title()}
-          </div>
-          {PERMISSION_MODES.map((m) => (
-            <button
-              key={m}
-              className="w-full flex items-start gap-2 px-3 py-2 text-sm hover:bg-accent text-left transition-colors"
-              onClick={() => {
-                setMode(m);
-                setOpen(false);
-              }}
-            >
-              <span className="w-4 shrink-0 pt-0.5">
-                {m === mode && <Check className="w-4 h-4 text-primary" />}
-              </span>
-              <span className="min-w-0">
-                <span className={`block font-medium ${MODE_TONE[m]}`}>
-                  {mDyn(`permission.mode.${m}`)}
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  {mDyn(`permission.desc.${m}`)}
-                </span>
-              </span>
-            </button>
-          ))}
+      <PopoverContent
+        align="end"
+        side="top"
+        sideOffset={6}
+        className="z-50 w-56 rounded-lg border border-border bg-background shadow-xl p-0 py-1"
+      >
+        <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {msg.permission_title()}
         </div>
-      )}
-    </div>
+        {PERMISSION_MODES.map((m) => (
+          <button
+            key={m}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-left transition-colors"
+            onClick={() => {
+              setMode(m);
+              setOpen(false);
+            }}
+          >
+            {m === mode ? (
+              <Check className="w-4 h-4 shrink-0 text-primary" />
+            ) : (
+              <span className="w-4 h-4 shrink-0" />
+            )}
+            <span className="truncate font-medium text-foreground">
+              {mDyn(`permission.mode.${m}`)}
+            </span>
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }

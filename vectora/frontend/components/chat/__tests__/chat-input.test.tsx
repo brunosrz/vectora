@@ -27,16 +27,19 @@ const mockSettings = {
   fastMode: false,
   historyLimit: 50,
   showToolCalls: false,
+  permissionMode: "ask" as const,
   setVerbosity: vi.fn(),
   setReasoningEffort: vi.fn(),
   setFastMode: vi.fn(),
   setHistoryLimit: vi.fn(),
   setShowToolCalls: vi.fn(),
+  setPermissionMode: vi.fn(),
 };
 
 vi.mock("@/lib/stores/settings-store", () => ({
   useSettingsStore: (selector?: (s: typeof mockSettings) => unknown) =>
     selector ? selector(mockSettings) : mockSettings,
+  PERMISSION_MODES: ["ask", "accept_edits", "plan", "auto", "bypass"],
 }));
 
 const mockWsState = {

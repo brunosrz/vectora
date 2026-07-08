@@ -112,16 +112,17 @@ export function FileEditor({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-7 shrink-0 items-center justify-between border-b border-border/60 bg-muted/30 px-2">
-        <span className="flex items-center gap-1.5 truncate text-[11px] font-mono text-muted-foreground">
-          {dirty && (
-            <span
-              className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
-              title={m.workbench_files_unsaved()}
-            />
-          )}
-          {path}
-        </span>
+      <div className="flex h-7 shrink-0 items-center justify-end border-b border-border/60 bg-muted/30 px-2">
+        {/* Sem o nome do arquivo aqui: já aparece na aba/barra de título de
+            quem monta este editor (FileWindow, DockedEditor) — repetir vira
+            ruído. Só o indicador de "não salvo" e o botão Salvar, que não
+            existem em nenhum outro lugar. */}
+        {dirty && (
+          <span
+            className="mr-auto h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+            title={m.workbench_files_unsaved()}
+          />
+        )}
         {!readOnly && (
           <button
             onClick={() => void handleSave()}
@@ -140,6 +141,8 @@ export function FileEditor({
       </div>
       <div className="min-h-0 flex-1">
         <MonacoEditor
+          height="100%"
+          width="100%"
           value={value}
           language={languageFromPath(path)}
           theme={isDark ? "vs-dark" : "vs"}

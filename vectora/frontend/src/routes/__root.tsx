@@ -20,13 +20,14 @@ import { TitleBar } from "@/components/layout/title-bar";
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/", "/onboarding"];
 
-// UX-19 — `Lang` é de granularidade de idioma ("pt" cobre pt-BR/pt-PT…),
-// mas o atributo `lang` do HTML quer um código BCP-47 específico. O Vectora
-// só atende português brasileiro, então "pt" mapeia para "pt-BR".
+// Cada `Lang` cobre todas as variantes regionais do idioma (mesmo padrão
+// do `en`, que atende EUA/Reino Unido/Índia/etc sem distinção) — por isso
+// o atributo `lang` do HTML usa o código BCP-47 genérico, sem região,
+// para as três opções.
 const HTML_LANG_BY_SETTING: Record<Lang, string> = {
   en: "en",
   es: "es",
-  pt: "pt-BR",
+  pt: "pt",
 };
 
 const AUTH_REQUIRED =
@@ -76,9 +77,10 @@ async function isAuthRequired(): Promise<boolean> {
   }
 }
 
-async function ensureAuthenticated(currentPath: string): Promise<void> {
+export async function ensureAuthenticated(currentPath: string): Promise<void> {
   if (isPublicPath(currentPath)) return;
-  if (!(await isAuthRequired())) return;
+
+  const authRequired = await isAuthRequired();
 
   // Aguarda o rehydrate do persist antes de inspecionar o store: o
   // contrato do `persist` em Zustand é assíncrono e ler o estado vazio
@@ -105,32 +107,41 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
   const store = useAuthStore.getState();
 
   // Primeiro acesso (backend sem usuários) → wizard de identidade/modo
-  // (local vs VPS), não mais direto pro signup — só quem escolhe VPS chega
-  // no signup de verdade, a partir do próprio wizard.
-  try {
-    const hasUsersRes = await fetch("/auth/has-users", {
-      credentials: "include",
-    });
-    if (hasUsersRes.ok) {
-      const data = (await hasUsersRes.json()) as { exists?: boolean };
-      if (data.exists === false) {
-        store.clearUser();
-        throw redirect({ to: "/onboarding" });
+  // (local vs VPS). Só verificado quando auth é exigido: depois do wizard
+  // rodar (`POST /auth/setup-local`), auth_required vira false e o modo
+  // local nunca cria linha em `users` — checar has-users incondicionalmente
+  // prenderia toda visita local num loop de volta pro onboarding.
+  if (authRequired) {
+    try {
+      const hasUsersRes = await fetch("/auth/has-users", {
+        credentials: "include",
+      });
+      if (hasUsersRes.ok) {
+        const data = (await hasUsersRes.json()) as { exists?: boolean };
+        if (data.exists === false) {
+          store.clearUser();
+          throw redirect({ to: "/onboarding" });
+        }
       }
+    } catch (err) {
+      if (err && typeof err === "object" && "to" in err) throw err;
+      // Backend offline — não interrompe. O fetch abaixo vai falhar igual.
     }
-  } catch (err) {
-    if (err && typeof err === "object" && "to" in err) throw err;
-    // Backend offline — não interrompe. O fetch abaixo vai falhar igual.
   }
 
+  // Busca /auth/me incondicionalmente — mesmo com auth_required=false o
+  // backend sempre devolve alguém (conta real no Pro, usuário virtual
+  // "local" no Free — ver _get_virtual_local_user em
+  // backend/api/middleware/auth.py). Sem isso o store nunca populava
+  // `user` no modo Free e a UI (nome no SettingsMenu, botão Administração)
+  // ficava vazia mesmo com sessão local válida.
   let meRes: Response;
   try {
     meRes = await fetch("/auth/me", { credentials: "include" });
   } catch {
-    // ECONNREFUSED ou rede offline: limpa store local para evitar
-    // renderização com dados stale e manda para a tela de login.
     store.clearUser();
-    redirectToSignin(currentPath);
+    if (authRequired) redirectToSignin(currentPath);
+    return;
   }
 
   if (meRes.ok) {
@@ -147,7 +158,8 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
       /* corpo inválido — cai no clear+redirect abaixo */
     }
     store.clearUser();
-    redirectToSignin(currentPath);
+    if (authRequired) redirectToSignin(currentPath);
+    return;
   }
 
   if (meRes.status === 401) {
@@ -163,10 +175,10 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
         if (retry.ok) {
           try {
             useAuthStore.getState().setUser(await retry.json());
+            return;
           } catch {
             /* idem */
           }
-          return;
         }
       }
     } catch {
@@ -175,7 +187,7 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
   }
 
   store.clearUser();
-  redirectToSignin(currentPath);
+  if (authRequired) redirectToSignin(currentPath);
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
@@ -187,15 +199,14 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootComponent() {
   const location = useLocation();
-  // UX-19 — `lang` refletia "pt-BR" hardcoded; agora segue a preferência
-  // persistida em settings-store (idioma de fato escolhido pelo usuário).
+  // Idioma persistido em settings-store — reflete a preferência de fato
+  // escolhida pelo usuário no atributo `lang` do HTML.
   const language = useSettingsStore((s) => s.language);
-  // UX-22 — `class="dark"` vinha hardcoded no index.html; agora segue a
-  // preferência persistida em settings-store (light/dark/system), com
-  // reatividade imediata como já ocorre para o idioma acima.
+  // Tema persistido em settings-store (light/dark/system), com reatividade
+  // imediata refletida na classe do `<html>`.
   const theme = useSettingsStore((s) => s.theme);
-  // UX-21 — agenda o aviso "sessão expira em breve" perto da raiz, uma
-  // única vez por árvore (não por tela).
+  // Agenda o aviso "sessão expira em breve" perto da raiz, uma única vez
+  // por árvore (não por tela).
   useSessionExpiry();
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -224,9 +235,9 @@ function RootComponent() {
     apply(theme === "dark");
   }, [theme]);
 
-  // UX-23 — paleta de cores (presets inspirados em temas do VS Code ou
-  // customização do usuário) sobrepõe os tokens de cor via CSS custom
-  // properties em :root, independente de claro/escuro/sistema acima.
+  // Paleta de cores (presets inspirados em temas do VS Code ou customização
+  // do usuário) sobrepõe os tokens de cor via CSS custom properties em
+  // :root, independente de claro/escuro/sistema acima.
   const themePreset = useSettingsStore((s) => s.themePreset);
   const customThemeColors = useSettingsStore((s) => s.customThemeColors);
   useEffect(() => {

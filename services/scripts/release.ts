@@ -180,22 +180,11 @@ interface StoredConfig {
 
 function readConfig(): StoredConfig {
   try {
-    const args = [
-      "wrangler",
-      "kv",
-      "key",
-      "get",
-      "config",
-      "--binding=KV",
-      "--remote",
-    ];
-    if (process.env.CLOUDFLARE_ACCOUNT_ID) {
-      args.push(`--account-id=${process.env.CLOUDFLARE_ACCOUNT_ID}`);
-    }
-    const raw = execFileSync("npx", args, {
-      encoding: "utf-8",
-      env: process.env,
-    });
+    const raw = execFileSync(
+      "npx",
+      ["wrangler", "kv", "key", "get", "config", "--binding=KV", "--remote"],
+      { encoding: "utf-8", env: process.env, shell: true },
+    );
     const parsed = JSON.parse(raw) as Partial<StoredConfig>;
     return {
       channels: parsed.channels ?? {},
@@ -208,20 +197,20 @@ function readConfig(): StoredConfig {
 }
 
 function writeConfig(config: StoredConfig) {
-  const args = [
-    "wrangler",
-    "kv",
-    "key",
-    "put",
-    "config",
-    JSON.stringify(config),
-    "--binding=KV",
-    "--remote",
-  ];
-  if (process.env.CLOUDFLARE_ACCOUNT_ID) {
-    args.push(`--account-id=${process.env.CLOUDFLARE_ACCOUNT_ID}`);
-  }
-  execFileSync("npx", args, { stdio: "inherit", env: process.env });
+  execFileSync(
+    "npx",
+    [
+      "wrangler",
+      "kv",
+      "key",
+      "put",
+      "config",
+      JSON.stringify(config),
+      "--binding=KV",
+      "--remote",
+    ],
+    { stdio: "inherit", env: process.env, shell: true },
+  );
 }
 
 /**

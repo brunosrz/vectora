@@ -17,8 +17,10 @@ const config = defineConfig({
       strategy: ["url", "cookie", "baseLocale"],
     }),
     nitro({
-      preset: process.env.NITRO_PRESET ?? "node-server",
-      rollupConfig: { external: [/^@sentry\//] },
+      config: {
+        preset: process.env.NITRO_PRESET ?? "node-server",
+        rollupConfig: { external: [/^@sentry\//] },
+      },
     }),
     tailwindcss(),
     tanstackStart(),

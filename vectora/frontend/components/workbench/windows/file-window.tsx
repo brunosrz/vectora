@@ -50,7 +50,7 @@ export function FileWindow({ win }: { win: FileWindowState }) {
       }
       className="pointer-events-auto"
     >
-      <div className="flex flex-col h-full rounded-lg border border-border bg-card shadow-2xl overflow-hidden">
+      <div className="flex flex-col h-full rounded-lg border border-border bg-sidebar shadow-2xl overflow-hidden">
         {/* Barra de título */}
         <div
           className={`${TITLE_BAR_CLASS} flex items-center gap-2 px-2 h-8 shrink-0 bg-muted/40 border-b border-border/60 cursor-move select-none`}
