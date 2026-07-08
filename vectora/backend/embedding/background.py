@@ -390,6 +390,12 @@ class BackgroundEmbeddingWorker:
                     self.processed_count += 1
                     # Embedding bem-sucedido: limpa flag de rate limit
                     self.rate_limit_active = False
+                    if record.job_id:
+                        from backend.api.handlers.workspaces import (
+                            _maybe_emit_job_event,
+                        )
+
+                        await _maybe_emit_job_event(str(record.job_id))
 
                     logger.info(
                         "embedding_processed_success",
@@ -453,6 +459,12 @@ class BackgroundEmbeddingWorker:
                                 "reason": str(e),
                             },
                         )
+                        if record.job_id:
+                            from backend.api.handlers.workspaces import (
+                                _maybe_emit_job_event,
+                            )
+
+                            await _maybe_emit_job_event(str(record.job_id))
 
     async def _trip_rate_limit_breaker(self, queue: Any) -> None:
         """Pausa o worker e arquiva a fila ao detectar rate limit / quota.

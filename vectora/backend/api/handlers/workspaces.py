@@ -3086,6 +3086,11 @@ class RagJobStatus(BaseModel):
 _RAG_JOBS: dict[str, dict[str, Any]] = {}
 # Mantém referência às tasks de enqueue em andamento (evita GC prematuro).
 _RAG_TASKS: set[Any] = set()
+# Última assinatura "status:faixa_de_progresso" emitida por job — evita
+# reemitir o mesmo evento em toda escrita da fila (mark_success dispara a
+# cada chunk, mas só interessa notificar em mudanças de status ou saltos de
+# ~5% de progresso).
+_RAG_LAST_EMITTED_STATUS: dict[str, str] = {}
 
 
 def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
@@ -3118,6 +3123,57 @@ def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
         failed=failed,
         status=status,
         error_reason=reason if paused else None,
+    )
+
+
+async def _maybe_emit_job_event(job_id: str) -> None:
+    """Recomputa o status agregado do job e emite via SSE (provider=`rag`) só
+    quando muda em relação à última emissão — chamado nos pontos onde
+    progresso real acontece na fila (worker grava sucesso/DLQ) ou o enqueue
+    termina. O frontend troca o polling de 1.2s em `rag-jobs-store.ts` por
+    esse evento (mesma ponte cross-réplica de `webhooks.py::_emit_sse_event`,
+    já usada por `background_tasks.py` pras Tarefas do workbench).
+
+    A dedupe usa status + faixa de 5% de progresso (não só status) — senão a
+    barra de progresso ficaria congelada do início ao fim do "indexing" e só
+    pularia pra "done", perdendo a granularidade que o polling tinha.
+    """
+    if job_id not in _RAG_JOBS:
+        return
+    from backend.embedding.queue import get_embedding_queue
+    from backend.settings import settings
+
+    try:
+        queue = await get_embedding_queue(settings.embedding_queue_dsn)
+        stats = await queue.get_job_stats(job_id)
+    except Exception:
+        logger.warning("rag_job_event_stats_failed", extra={"job_id": job_id})
+        return
+
+    status_obj = _rag_job_status(job_id, stats)
+    done_count = status_obj.processed + status_obj.failed
+    progress_bucket = (
+        (done_count * 20) // status_obj.total if status_obj.total > 0 else 0
+    )
+    signature = f"{status_obj.status}:{progress_bucket}"
+    if _RAG_LAST_EMITTED_STATUS.get(job_id) == signature:
+        return
+    _RAG_LAST_EMITTED_STATUS[job_id] = signature
+
+    from backend.api.handlers.webhooks import _emit_sse_event
+
+    _emit_sse_event(
+        "rag",
+        f"rag_job.{status_obj.status}",
+        {
+            "job_id": job_id,
+            "workspace_id": _RAG_JOBS.get(job_id, {}).get("workspace_id"),
+            "total": status_obj.total,
+            "processed": status_obj.processed,
+            "failed": status_obj.failed,
+            "status": status_obj.status,
+            "error_reason": status_obj.error_reason,
+        },
     )
 
 
@@ -3171,6 +3227,7 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
             meta = _RAG_JOBS.get(job_id)
             if meta is not None:
                 meta["enqueue_done"] = True
+            await _maybe_emit_job_event(job_id)
 
     task = _asyncio.create_task(_run())
     _RAG_TASKS.add(task)

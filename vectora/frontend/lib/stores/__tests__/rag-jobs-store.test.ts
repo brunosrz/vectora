@@ -54,6 +54,46 @@ describe("rag-jobs-store", () => {
     expect(() => useRagJobsStore.getState().dismiss("nope")).not.toThrow();
   });
 
+  it("applyEvent atualiza progresso de um job existente (evento SSE)", () => {
+    useRagJobsStore.setState({ jobs: { j1: job("j1") } });
+    useRagJobsStore.getState().applyEvent({
+      job_id: "j1",
+      total: 10,
+      processed: 4,
+      failed: 0,
+      status: "indexing",
+    });
+    const updated = useRagJobsStore.getState().jobs.j1;
+    expect(updated.processed).toBe(4);
+    expect(updated.status).toBe("indexing");
+  });
+
+  it("applyEvent para job desconhecido não cria entrada nova", () => {
+    useRagJobsStore.getState().applyEvent({
+      job_id: "fantasma",
+      total: 1,
+      processed: 1,
+      failed: 0,
+      status: "done",
+    });
+    expect("fantasma" in useRagJobsStore.getState().jobs).toBe(false);
+  });
+
+  it("applyEvent com status terminal guarda o motivo de erro", () => {
+    useRagJobsStore.setState({ jobs: { j1: job("j1") } });
+    useRagJobsStore.getState().applyEvent({
+      job_id: "j1",
+      total: 10,
+      processed: 3,
+      failed: 7,
+      status: "failed",
+      error_reason: "Cohere 429",
+    });
+    const updated = useRagJobsStore.getState().jobs.j1;
+    expect(updated.status).toBe("failed");
+    expect(updated.errorReason).toBe("Cohere 429");
+  });
+
   it("guarda o motivo quando o job está pausado (rate limit)", () => {
     useRagJobsStore.setState({
       jobs: {

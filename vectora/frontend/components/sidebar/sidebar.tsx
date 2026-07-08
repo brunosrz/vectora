@@ -7,6 +7,7 @@ import type { Thread } from "@/lib/hooks/threads";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
+import { useWebhookEvents } from "@/lib/hooks/use-webhook-events";
 import { groupThreads, groupThreadsByWorkspace } from "./sidebar-utils";
 import { CollapsedSidebar } from "./collapsed-sidebar";
 import { SidebarHeader } from "./sidebar-header";
@@ -51,6 +52,21 @@ export const Sidebar = memo(function Sidebar({
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const chatMode = useSettingsStore((s) => s.chatMode);
   const ragJobs = useRagJobsStore((s) => s.jobs);
+  const applyRagEvent = useRagJobsStore((s) => s.applyEvent);
+
+  // Progresso de indexação RAG chega via SSE (bridge cross-réplica de
+  // webhooks.py) em vez de depender só do polling de baixa frequência.
+  const onWebhook = useCallback(
+    (evt: { provider: string; data: Record<string, unknown> }) => {
+      if (evt.provider === "rag") {
+        applyRagEvent(
+          evt.data as unknown as Parameters<typeof applyRagEvent>[0],
+        );
+      }
+    },
+    [applyRagEvent],
+  );
+  useWebhookEvents(onWebhook);
 
   // Chat e Dev são pools separados: a sidebar mostra só as sessões do modo ativo.
   // Sessões legadas sem modo são tratadas como "dev".

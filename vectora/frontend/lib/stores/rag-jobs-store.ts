@@ -3,9 +3,13 @@ import { create } from "zustand";
 /**
  * rag-jobs-store — acompanha jobs de indexação RAG disparados pela UI.
  *
- * `start()` chama `POST /workspaces/{id}/rag/ingest` e passa a pollar
- * `GET /rag/jobs/{job_id}` até concluir. O modal de indexação e a aba Memory
- * leem daqui, então a indexação continua visível mesmo após "Minimizar".
+ * `start()` chama `POST /workspaces/{id}/rag/ingest`. A atualização de
+ * progresso chega principalmente via SSE (`applyEvent`, alimentado pelo
+ * bridge `vectora:sse` — ver `sidebar.tsx`, que assina `useWebhookEvents`
+ * filtrando `provider === "rag"`); o polling aqui é só uma rede de segurança
+ * de baixa frequência para o caso do evento se perder (aba que perdeu
+ * conexão SSE momentaneamente). O modal de indexação e a aba Memory leem
+ * daqui, então a indexação continua visível mesmo após "Minimizar".
  */
 
 export type RagJobStatus =
@@ -38,9 +42,19 @@ interface RagJobsState {
   ) => Promise<string | null>;
   /** Remove um job da lista (não cancela o processamento no backend). */
   dismiss: (jobId: string) => void;
+  /** Aplica um evento SSE (`provider: "rag"`) recebido pelo bridge de webhooks. */
+  applyEvent: (data: {
+    job_id: string;
+    total: number;
+    processed: number;
+    failed: number;
+    status: RagJobStatus;
+    error_reason?: string | null;
+  }) => void;
 }
 
-const POLL_MS = 1200;
+// Rede de segurança — o caminho principal é o evento SSE (`applyEvent`).
+const POLL_MS = 5000;
 const timers: Record<string, ReturnType<typeof setInterval>> = {};
 
 function stopPoll(jobId: string) {
@@ -148,5 +162,32 @@ export const useRagJobsStore = create<RagJobsState>((set) => ({
       delete next[jobId];
       return { jobs: next };
     });
+  },
+
+  applyEvent: (data) => {
+    set((s) => {
+      const prev = s.jobs[data.job_id];
+      if (!prev) return s;
+      return {
+        jobs: {
+          ...s.jobs,
+          [data.job_id]: {
+            ...prev,
+            total: data.total,
+            processed: data.processed,
+            failed: data.failed,
+            status: data.status,
+            errorReason: data.error_reason ?? undefined,
+          },
+        },
+      };
+    });
+    if (
+      data.status === "done" ||
+      data.status === "failed" ||
+      data.status === "paused"
+    ) {
+      stopPoll(data.job_id);
+    }
   },
 }));

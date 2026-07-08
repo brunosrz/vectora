@@ -17,7 +17,11 @@ vi.mock("@/lib/stores/settings-store", () => ({
   useSettingsStore: (sel: (s: unknown) => unknown) => sel({ chatMode: false }),
 }));
 vi.mock("@/lib/stores/rag-jobs-store", () => ({
-  useRagJobsStore: (sel: (s: unknown) => unknown) => sel({ jobs: {} }),
+  useRagJobsStore: (sel: (s: unknown) => unknown) =>
+    sel({ jobs: {}, applyEvent: () => {} }),
+}));
+vi.mock("@/lib/hooks/use-webhook-events", () => ({
+  useWebhookEvents: () => {},
 }));
 vi.mock("../sidebar-utils", () => ({
   groupThreads: () => [],
