@@ -46,6 +46,15 @@ function themeForPreset(id: string): Theme {
   return id === "light" || id.endsWith("-light") ? "light" : "dark";
 }
 
+/** Rótulo do tema selecionado, resolvido explicitamente (não deixado pro
+ * registro interno do Radix Select) — sem isso o trigger mostra vazio no
+ * primeiro paint, antes do `SelectItem` correspondente montar. */
+export function themeLabel(id: string): string {
+  if (id === "system") return m.prefs_theme_system();
+  if (id === "custom") return m.prefs_theme_palette_custom();
+  return THEME_PRESETS.find((preset) => preset.id === id)?.label ?? id;
+}
+
 const CUSTOM_COLOR_FIELDS: { key: keyof BaseThemeColors; labelKey: string }[] =
   [
     { key: "background", labelKey: "prefs.custom_color.background" },
@@ -274,7 +283,7 @@ export function PreferenciasTab() {
         <Label htmlFor="theme">{m.prefs_theme()}</Label>
         <Select value={selectedTheme} onValueChange={handleThemeChange}>
           <SelectTrigger id="theme">
-            <SelectValue />
+            <SelectValue>{themeLabel(selectedTheme)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="system">{m.prefs_theme_system()}</SelectItem>
@@ -324,7 +333,10 @@ export function PreferenciasTab() {
         <Label htmlFor="language">{m.prefs_language()}</Label>
         <Select value={language} onValueChange={(v) => setLanguage(v as Lang)}>
           <SelectTrigger id="language">
-            <SelectValue />
+            <SelectValue>
+              {SUPPORTED_LANGS.find((l) => l.value === language)?.label ??
+                language}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {SUPPORTED_LANGS.map(({ value, label }) => (
