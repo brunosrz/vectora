@@ -485,7 +485,7 @@
   "admin_storage_not_configured": "no configurado",
   "admin_storage_error": "error",
   "admin_dialog_title": "Administración",
-  "admin_dialog_desc": " tools",
+  "admin_dialog_desc": "Administración del servidor — usuarios",
   "admin_loading": "Cargando…",
   "settings_group_preferencias": "Preferencias",
   "settings_group_environment": "Entorno",

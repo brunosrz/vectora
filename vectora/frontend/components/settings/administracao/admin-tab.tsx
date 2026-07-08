@@ -34,6 +34,7 @@ import {
   useAdministracaoDialogStore,
   type AdminSubTab,
 } from "@/lib/stores/administracao-dialog-store";
+import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1486,6 +1487,24 @@ const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
 export function AdminTab() {
   const [active, setActive] = useState<AdminSubTab>("users");
 
+  // `configured=false` (sem VECTORA_TOKEN) é o estado Free — ver
+  // license-banner.tsx, mesma fonte (GET /license/status). "Usuários"
+  // é recurso multi-usuário puro (convites, roles de outras contas): sem
+  // conta Pro ele só mostraria uma lista vazia, sem caminho pra ativar.
+  const { status: license } = useLicenseStatus();
+  const isFree = !license?.configured;
+  const visibleTabs = isFree
+    ? SUB_TABS.filter((tab) => tab.id !== "users")
+    : SUB_TABS;
+
+  useEffect(() => {
+    if (isFree) setActive((prev) => (prev === "users" ? "system" : prev));
+  }, [isFree]);
+  // Deriva a aba efetiva a partir de `isFree`, em vez de depender só do
+  // efeito acima — sem isso o primeiro render (antes do efeito rodar)
+  // ainda mostrava UsersPanel com a aba "Usuários" já escondida.
+  const effectiveActive = isFree && active === "users" ? "system" : active;
+
   // Deep-link: outros lugares (license-banner, etc.) usam
   // `useAdministracaoDialogStore.openAt("system")`. Quando o store recebe `subTab`,
   // sincronizamos com o `active` local e limpamos o slot para que
@@ -1511,11 +1530,11 @@ export function AdminTab() {
 
       {/* Sub-tabs */}
       <div className="flex gap-1 border-b pb-0">
-        {SUB_TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActive(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-t-md border-b-2 transition-colors ${active === tab.id ? "border-foreground text-foreground font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-t-md border-b-2 transition-colors ${effectiveActive === tab.id ? "border-foreground text-foreground font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}
           >
             {tab.icon}
             {tab.label}
@@ -1525,11 +1544,11 @@ export function AdminTab() {
 
       {/* Conteúdo */}
       <div className="min-h-[200px]">
-        {active === "users" && <UsersPanel />}
-        {active === "tools" && <ToolsPanel />}
-        {active === "safe-roots" && <SafeRootsPanel />}
-        {active === "system" && <SystemPanel />}
-        {active === "storage" && <StoragePanel />}
+        {effectiveActive === "users" && <UsersPanel />}
+        {effectiveActive === "tools" && <ToolsPanel />}
+        {effectiveActive === "safe-roots" && <SafeRootsPanel />}
+        {effectiveActive === "system" && <SystemPanel />}
+        {effectiveActive === "storage" && <StoragePanel />}
       </div>
     </div>
   );
