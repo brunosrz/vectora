@@ -536,7 +536,7 @@ class BackgroundEmbeddingWorker:
         # minutos e saturando o pool (travava o backend inteiro). Com 0, o 429
         # propaga na hora e o circuit breaker do worker assume.
         embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
+            cohere_api_key=api_key,
             model=self.config.embedding_model,
             max_retries=0,
         )

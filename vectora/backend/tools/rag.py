@@ -88,7 +88,7 @@ def _build_voyage_reranker() -> Any:
     if not key:
         return None
     return VoyageAIRerank(
-        voyage_api_key=key,  # ty: ignore[unknown-argument]
+        voyage_api_key=key,
         model=settings.voyage_rerank_model,
         top_k=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
     )
@@ -305,7 +305,7 @@ async def vector_search(
         # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
         # not the actual value, causing a 401 from Cohere.
         embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
+            cohere_api_key=api_key,
             model=settings.embedding_model,
         )
 

@@ -194,7 +194,7 @@ def _build_index(embedding_model: str | None) -> Any:
         # NOTE: CohereEmbeddings stubs exigem client/async_client que são
         # opcionais em runtime. Mesmo padrão de src/services/background.py.
         _embeddings = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=_key,  # ty: ignore[invalid-argument-type]
+            cohere_api_key=_key,
             model=_model,
         )
 

@@ -71,7 +71,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
 
             return ChatOpenAI(
                 model=model_name,
-                api_key=get_env("OPENAI_API_KEY"),  # ty: ignore[invalid-argument-type]
+                api_key=get_env("OPENAI_API_KEY"),
                 temperature=temperature,
             )
         case "anthropic":
@@ -85,7 +85,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             betas = ["prompt-caching-2024-07-31"] if prompt_cache else []
             return ChatAnthropic(  # ty: ignore[missing-argument]
                 model=model_name,  # ty: ignore[unknown-argument]
-                api_key=get_env("ANTHROPIC_API_KEY"),  # ty: ignore[invalid-argument-type]
+                api_key=get_env("ANTHROPIC_API_KEY"),
                 temperature=temperature,
                 betas=betas,
             )
@@ -99,7 +99,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             # NÃO usar SecretStr: o get_from_dict_or_env do langchain-core faz
             # str(SecretStr) → "**********", causando 401 na API do Cohere.
             return ChatCohere(
-                cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
+                cohere_api_key=api_key,
                 model=model_name,
                 temperature=temperature,
             )
@@ -126,7 +126,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             # nunca colidem com o split por ":" de model_id em load_llm().
             return ChatOpenAI(
                 model=model_name,
-                api_key=api_key,  # ty: ignore[invalid-argument-type]
+                api_key=api_key,
                 base_url="https://openrouter.ai/api/v1",
                 temperature=temperature,
             )

@@ -131,7 +131,7 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
         from langchain_anthropic import ChatAnthropic
 
         return ChatAnthropic(  # ty: ignore[missing-argument]
-            api_key=api_key,  # ty: ignore[invalid-argument-type]
+            api_key=api_key,
             model=model,  # ty: ignore[unknown-argument]
         )
 
@@ -140,7 +140,7 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
 
         # NÃO usar SecretStr — causa 401 (langchain-core str(SecretStr) → "**********").
         return ChatCohere(
-            cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
+            cohere_api_key=api_key,
             model=model,
         )
 

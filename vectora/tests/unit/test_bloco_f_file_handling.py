@@ -83,7 +83,7 @@ class TestAttachmentSchema:
 
         with pytest.raises(ValidationError):
             Attachment(
-                kind="video",  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]  # tipo inválido
+                kind="video",  # type: ignore[arg-type]  # tipo inválido
                 name="clip.mp4",
                 mime_type="video/mp4",
                 base64_data="abc",

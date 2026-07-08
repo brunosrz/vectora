@@ -39,7 +39,7 @@ class MockLLM(BaseLLM):
         else:
             response = ai_message_text("I don't understand that input.")
 
-        return LLMResult(generations=[[response]])  # ty: ignore[invalid-argument-type]
+        return LLMResult(generations=[[response]])
 
     def _match_pattern(self: Self, text: str, messages: list[BaseMessage]) -> AIMessage:
         """Match input text against patterns and return appropriate response."""

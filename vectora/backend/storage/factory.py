@@ -216,7 +216,7 @@ def _build_cohere_embeddings() -> Any:
             return None
 
         return CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=key,  # ty: ignore[invalid-argument-type]
+            cohere_api_key=key,
             model=model,
         )
     except Exception:
@@ -280,7 +280,7 @@ def _build_openrouter_embeddings() -> Any:
             return None
 
         return OpenAIEmbeddings(
-            api_key=key,  # ty: ignore[invalid-argument-type]
+            api_key=key,
             base_url="https://openrouter.ai/api/v1",
             model=model,
         )
