@@ -5,6 +5,8 @@ Valida:
   por padrão).
 - Modelo Ollama registrado via /gateways/ollama/registered aparece em
   `dynamic_models` como "ollama:<tag>".
+- Modelo OpenRouter registrado via /gateways/openrouter/registered aparece em
+  `dynamic_models` como "openrouter:<tag>", junto (não em vez) do Ollama.
 """
 
 from __future__ import annotations
@@ -50,3 +52,29 @@ class TestModelsProviders:
         assert f"ollama:{tag}" in ids
 
         client.delete(f"/gateways/ollama/registered/{model_id}")
+
+    def test_registered_openrouter_model_appears_alongside_ollama(self, client):
+        ollama_tag = "providers-test-ollama-tag"
+        openrouter_tag = "providers-test-openrouter/model"
+        for existing in client.get("/gateways/ollama/registered").json():
+            if existing["tag"] == ollama_tag:
+                client.delete(f"/gateways/ollama/registered/{existing['id']}")
+        for existing in client.get("/gateways/openrouter/registered").json():
+            if existing["tag"] == openrouter_tag:
+                client.delete(f"/gateways/openrouter/registered/{existing['id']}")
+
+        ollama_id = client.post(
+            "/gateways/ollama/registered", json={"tag": ollama_tag}
+        ).json()["id"]
+        openrouter_id = client.post(
+            "/gateways/openrouter/registered", json={"tag": openrouter_tag}
+        ).json()["id"]
+
+        resp = client.get("/models/providers")
+        assert resp.status_code == 200
+        ids = [m["id"] for m in resp.json()["dynamic_models"]]
+        assert f"ollama:{ollama_tag}" in ids
+        assert f"openrouter:{openrouter_tag}" in ids
+
+        client.delete(f"/gateways/ollama/registered/{ollama_id}")
+        client.delete(f"/gateways/openrouter/registered/{openrouter_id}")

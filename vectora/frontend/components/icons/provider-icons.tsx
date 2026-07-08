@@ -107,6 +107,28 @@ export function OllamaIcon({ className }: { className?: string }) {
   );
 }
 
+export function OpenRouterIcon({ className }: { className?: string }) {
+  // Sem ícone de marca oficial simplificado — proxy multi-provider
+  // representado como setas convergindo pra um nó central (roteamento).
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+      <path
+        d="M12 9.5V4M12 14.5V20M9.5 12H4M14.5 12H20M7.6 7.6 4 4M16.4 7.6 20 4M7.6 16.4 4 20M16.4 16.4 20 20"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 import type { ModelConfig } from "@/lib/config/deployment-config";
 
 const PROVIDER_ICONS: Record<
@@ -118,6 +140,7 @@ const PROVIDER_ICONS: Record<
   anthropic: AnthropicIcon,
   cohere: CohereIcon,
   ollama: OllamaIcon,
+  openrouter: OpenRouterIcon,
 };
 
 /** Ícone do provedor para um dado provider — usado no seletor de modelo. */

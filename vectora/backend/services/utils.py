@@ -39,6 +39,7 @@ _PROVIDER_SPEC: dict[str, tuple[str, str]] = {
     "anthropic": ("ANTHROPIC_MODEL", "claude-opus-4-1"),
     "cohere": ("COHERE_CHAT_MODEL", "command-a-03-2025"),
     "ollama": ("OLLAMA_MODEL", "gpt-oss:20b"),
+    "openrouter": ("OPENROUTER_MODEL", "openrouter/auto"),
 }
 
 
@@ -113,10 +114,26 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 ),
                 temperature=temperature,
             )
+        case "openrouter":
+            from langchain_openai import ChatOpenAI
+
+            api_key = get_env("OPENROUTER_API_KEY")
+            if not api_key:
+                msg = "OPENROUTER_API_KEY não configurado. Adicione ao seu .env para usar o provider openrouter."
+                raise ValueError(msg)
+            # OpenRouter expõe uma API compatível com OpenAI — mesmo cliente,
+            # só troca o base_url. Ids de modelo usam "/" (ex.: "openai/gpt-4o"),
+            # nunca colidem com o split por ":" de model_id em load_llm().
+            return ChatOpenAI(
+                model=model_name,
+                api_key=api_key,  # ty: ignore[invalid-argument-type]
+                base_url="https://openrouter.ai/api/v1",
+                temperature=temperature,
+            )
         case _:
             msg = (
                 f"Provider de LLM desconhecido: {provider!r}. Suportados: "
-                "google_genai, openai, anthropic, cohere, ollama"
+                "google_genai, openai, anthropic, cohere, ollama, openrouter"
             )
             raise ValueError(msg)
 

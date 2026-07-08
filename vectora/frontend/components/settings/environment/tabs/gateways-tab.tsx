@@ -1,19 +1,27 @@
 "use client";
 
 /**
- * GatewaysTab — modelos de LLM locais/dinâmicos (hoje: Ollama).
+ * GatewaysTab — modelos de LLM locais/dinâmicos (Ollama, OpenRouter).
  *
- * Descoberta via GET /gateways/ollama/models (consulta {base_url}/api/tags
- * do host configurado — nunca digitação livre de nome de modelo, evita erro
- * de digitação virar falha silenciosa no chat). Modelos registrados via
- * POST /gateways/ollama/registered aparecem no ModelSelector do composer
- * (GET /models/providers agrega o catálogo estático com os registrados).
+ * Ollama: descoberta via GET /gateways/ollama/models (consulta
+ * {base_url}/api/tags do host configurado — nunca digitação livre de nome de
+ * modelo, evita erro de digitação virar falha silenciosa no chat).
+ *
+ * OpenRouter: exige API key (validada contra /auth/key antes de persistir via
+ * POST /gateways/openrouter/key), depois permite buscar no catálogo público
+ * (GET /gateways/openrouter/models?q=, cacheado ~1h no backend) e registrar
+ * os modelos desejados.
+ *
+ * Em ambos os casos, modelos registrados (POST .../registered) aparecem no
+ * ModelSelector do composer (GET /models/providers agrega o catálogo
+ * estático com os registrados de cada gateway).
  */
 
-import { Loader2, Plus, RefreshCw, Server, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Search, Server, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { m } from "@/lib/paraglide/messages";
 
 interface OllamaModelInfo {
@@ -28,6 +36,17 @@ interface RegisteredModel {
   created_at: string;
 }
 
+interface OpenRouterStatus {
+  configured: boolean;
+  masked: string;
+}
+
+interface OpenRouterModelInfo {
+  id: string;
+  name: string;
+  context_length: number | null;
+}
+
 async function discoverModels(): Promise<{
   reachable: boolean;
   models: OllamaModelInfo[];
@@ -37,14 +56,19 @@ async function discoverModels(): Promise<{
   return res.json();
 }
 
-async function fetchRegistered(): Promise<RegisteredModel[]> {
-  const res = await fetch("/gateways/ollama/registered");
+async function fetchRegistered(
+  gateway: "ollama" | "openrouter",
+): Promise<RegisteredModel[]> {
+  const res = await fetch(`/gateways/${gateway}/registered`);
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
 
-async function registerModel(tag: string): Promise<void> {
-  const res = await fetch("/gateways/ollama/registered", {
+async function registerModel(
+  gateway: "ollama" | "openrouter",
+  tag: string,
+): Promise<void> {
+  const res = await fetch(`/gateways/${gateway}/registered`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ tag }),
@@ -52,14 +76,103 @@ async function registerModel(tag: string): Promise<void> {
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
-async function unregisterModel(id: string): Promise<void> {
-  const res = await fetch(`/gateways/ollama/registered/${id}`, {
+async function unregisterModel(
+  gateway: "ollama" | "openrouter",
+  id: string,
+): Promise<void> {
+  const res = await fetch(`/gateways/${gateway}/registered/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
-export function GatewaysTab() {
+async function fetchOpenRouterStatus(): Promise<OpenRouterStatus> {
+  const res = await fetch("/gateways/openrouter/status");
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  return res.json();
+}
+
+async function saveOpenRouterKey(apiKey: string): Promise<OpenRouterStatus> {
+  const res = await fetch("/gateways/openrouter/key", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ api_key: apiKey }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: "" }));
+    throw new Error(body.detail || `Erro ${res.status}`);
+  }
+  return res.json();
+}
+
+async function removeOpenRouterKey(): Promise<void> {
+  const res = await fetch("/gateways/openrouter/key", { method: "DELETE" });
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+}
+
+async function searchOpenRouterCatalog(
+  q: string,
+): Promise<OpenRouterModelInfo[]> {
+  const res = await fetch(
+    `/gateways/openrouter/models${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+  );
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  const data = await res.json();
+  return data.models;
+}
+
+function RegisteredModelsList({
+  registered,
+  loading,
+  removingId,
+  onRemove,
+}: {
+  registered: RegisteredModel[];
+  loading: boolean;
+  removingId: string | null;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-2 pt-2 border-t">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        {m.gateways_registered_title()}
+      </p>
+      {loading ? (
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      ) : registered.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {m.gateways_registered_empty()}
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {registered.map((model) => (
+            <div
+              key={model.id}
+              className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2"
+            >
+              <span className="text-sm font-mono truncate">{model.tag}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
+                onClick={() => onRemove(model.id)}
+                disabled={removingId === model.id}
+              >
+                {removingId === model.id ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OllamaSection() {
   const [registered, setRegistered] = useState<RegisteredModel[]>([]);
   const [loadingRegistered, setLoadingRegistered] = useState(true);
   const [discovered, setDiscovered] = useState<OllamaModelInfo[] | null>(null);
@@ -72,7 +185,7 @@ export function GatewaysTab() {
   const loadRegistered = useCallback(async () => {
     setLoadingRegistered(true);
     try {
-      setRegistered(await fetchRegistered());
+      setRegistered(await fetchRegistered("ollama"));
     } catch {
       setError(m.gateways_error_load());
     } finally {
@@ -104,7 +217,7 @@ export function GatewaysTab() {
     setRegisteringTag(tag);
     setError(null);
     try {
-      await registerModel(tag);
+      await registerModel("ollama", tag);
       await loadRegistered();
     } catch {
       setError(m.gateways_error_register());
@@ -117,7 +230,7 @@ export function GatewaysTab() {
     setRemovingId(id);
     setError(null);
     try {
-      await unregisterModel(id);
+      await unregisterModel("ollama", id);
       setRegistered((prev) => prev.filter((model) => model.id !== id));
     } catch {
       setError(m.gateways_error_remove());
@@ -205,43 +318,272 @@ export function GatewaysTab() {
         )}
       </div>
 
-      {/* Registrados */}
-      <div className="space-y-2 pt-2 border-t">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {m.gateways_registered_title()}
+      <RegisteredModelsList
+        registered={registered}
+        loading={loadingRegistered}
+        removingId={removingId}
+        onRemove={(id) => void handleRemove(id)}
+      />
+    </div>
+  );
+}
+
+function OpenRouterSection() {
+  const [status, setStatus] = useState<OpenRouterStatus | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+  const [keyInput, setKeyInput] = useState("");
+  const [savingKey, setSavingKey] = useState(false);
+  const [removingKey, setRemovingKey] = useState(false);
+  const [query, setQuery] = useState("");
+  const [catalog, setCatalog] = useState<OpenRouterModelInfo[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [registered, setRegistered] = useState<RegisteredModel[]>([]);
+  const [loadingRegistered, setLoadingRegistered] = useState(true);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    setLoadingStatus(true);
+    try {
+      setStatus(await fetchOpenRouterStatus());
+    } catch {
+      setError(m.gateways_openrouter_error_status());
+    } finally {
+      setLoadingStatus(false);
+    }
+  }, []);
+
+  const loadRegistered = useCallback(async () => {
+    setLoadingRegistered(true);
+    try {
+      setRegistered(await fetchRegistered("openrouter"));
+    } catch {
+      setError(m.gateways_error_load());
+    } finally {
+      setLoadingRegistered(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStatus();
+    void loadRegistered();
+  }, [loadStatus, loadRegistered]);
+
+  // Busca com debounce — catálogo é cacheado no backend (~1h), seguro
+  // consultar a cada pausa de digitação em vez de exigir um botão.
+  useEffect(() => {
+    if (!status?.configured) return;
+    const handle = setTimeout(() => {
+      setSearching(true);
+      searchOpenRouterCatalog(query)
+        .then(setCatalog)
+        .catch(() => setError(m.gateways_openrouter_error_catalog()))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [query, status?.configured]);
+
+  const handleSaveKey = async () => {
+    if (!keyInput.trim()) return;
+    setSavingKey(true);
+    setError(null);
+    try {
+      setStatus(await saveOpenRouterKey(keyInput.trim()));
+      setKeyInput("");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : m.gateways_openrouter_error_key_save(),
+      );
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
+  const handleRemoveKey = async () => {
+    setRemovingKey(true);
+    setError(null);
+    try {
+      await removeOpenRouterKey();
+      setStatus({ configured: false, masked: "" });
+      setCatalog([]);
+    } catch {
+      setError(m.gateways_openrouter_error_key_remove());
+    } finally {
+      setRemovingKey(false);
+    }
+  };
+
+  const handleRegister = async (id: string) => {
+    setRegisteringId(id);
+    setError(null);
+    try {
+      await registerModel("openrouter", id);
+      await loadRegistered();
+    } catch {
+      setError(m.gateways_error_register());
+    } finally {
+      setRegisteringId(null);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    setRemovingId(id);
+    setError(null);
+    try {
+      await unregisterModel("openrouter", id);
+      setRegistered((prev) => prev.filter((model) => model.id !== id));
+    } catch {
+      setError(m.gateways_error_remove());
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const registeredTags = new Set(registered.map((model) => model.tag));
+
+  return (
+    <div className="space-y-4 pt-4 border-t">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium flex items-center gap-1.5">
+          <Server className="w-3.5 h-3.5 text-muted-foreground" />
+          {m.gateways_openrouter_title()}
         </p>
-        {loadingRegistered ? (
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        ) : registered.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            {m.gateways_registered_empty()}
-          </p>
-        ) : (
-          <div className="space-y-1.5">
-            {registered.map((model) => (
-              <div
-                key={model.id}
-                className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2"
-              >
-                <span className="text-sm font-mono truncate">{model.tag}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
-                  onClick={() => void handleRemove(model.id)}
-                  disabled={removingId === model.id}
-                >
-                  {removingId === model.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
-                  )}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
+        <p className="text-xs text-muted-foreground max-w-[360px]">
+          {m.gateways_openrouter_subtitle()}
+        </p>
       </div>
+
+      {error && (
+        <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+          {error}
+        </p>
+      )}
+
+      {/* Key */}
+      {loadingStatus ? (
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      ) : status?.configured ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+              {m.gateways_openrouter_key_configured()}
+            </span>
+            <span className="font-mono text-muted-foreground">
+              {status.masked}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
+            onClick={() => void handleRemoveKey()}
+            disabled={removingKey}
+          >
+            {removingKey ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              m.gateways_openrouter_key_remove()
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div className="flex gap-1.5">
+          <Input
+            type="password"
+            value={keyInput}
+            onChange={(e) => setKeyInput(e.target.value)}
+            placeholder={m.gateways_openrouter_key_placeholder()}
+            className="h-8 text-xs font-mono flex-1"
+            autoComplete="off"
+          />
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={() => void handleSaveKey()}
+            disabled={savingKey || !keyInput.trim()}
+          >
+            {savingKey ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              m.gateways_openrouter_key_save()
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Catálogo */}
+      {status?.configured && (
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={m.gateways_openrouter_search_placeholder()}
+              className="h-8 text-xs pl-8"
+              autoComplete="off"
+            />
+            {searching && (
+              <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-muted-foreground" />
+            )}
+          </div>
+
+          {catalog.length > 0 && (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {catalog.map((model) => {
+                const already = registeredTags.has(model.id);
+                return (
+                  <div
+                    key={model.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2"
+                  >
+                    <span className="text-sm font-mono truncate">
+                      {model.id}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs shrink-0"
+                      onClick={() => void handleRegister(model.id)}
+                      disabled={already || registeringId === model.id}
+                    >
+                      {registeringId === model.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : already ? (
+                        m.gateways_already_registered()
+                      ) : (
+                        <>
+                          <Plus className="w-3.5 h-3.5 mr-1" />
+                          {m.gateways_register()}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <RegisteredModelsList
+        registered={registered}
+        loading={loadingRegistered}
+        removingId={removingId}
+        onRemove={(id) => void handleRemove(id)}
+      />
+    </div>
+  );
+}
+
+export function GatewaysTab() {
+  return (
+    <div className="space-y-4">
+      <OllamaSection />
+      <OpenRouterSection />
     </div>
   );
 }

@@ -32,7 +32,13 @@ export const CONFIG_STORAGE = {
 export interface ModelConfig {
   id: string;
   name: string;
-  provider: "google-genai" | "openai" | "anthropic" | "cohere" | "ollama";
+  provider:
+    | "google-genai"
+    | "openai"
+    | "anthropic"
+    | "cohere"
+    | "ollama"
+    | "openrouter";
   description?: string;
 }
 
@@ -319,9 +325,12 @@ export function isModelAllowed(modelId: ModelOption): boolean {
 export function getModelDisplayName(modelId: string): string {
   const model = Object.values(MODELS).find((m) => m.id === modelId);
   if (model) return model.name;
-  // "ollama:qwen3:8b" → "qwen3:8b" (tag crua, mais legível que o id completo).
+  // "ollama:qwen3:8b" → "qwen3:8b"; "openrouter:openai/gpt-4o" → "openai/gpt-4o"
+  // (tag/id crus, mais legíveis que o id completo com prefixo de gateway).
   // Outros ids desconhecidos (fora do catálogo estático) caem no id completo.
   if (modelId.startsWith("ollama:")) return modelId.slice("ollama:".length);
+  if (modelId.startsWith("openrouter:"))
+    return modelId.slice("openrouter:".length);
   return modelId;
 }
 
@@ -329,6 +338,7 @@ export function getModelProvider(modelId: string): ModelConfig["provider"] {
   const model = Object.values(MODELS).find((m) => m.id === modelId);
   if (model) return model.provider;
   if (modelId.startsWith("ollama:")) return "ollama";
+  if (modelId.startsWith("openrouter:")) return "openrouter";
   return "google-genai";
 }
 

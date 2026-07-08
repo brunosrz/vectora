@@ -74,6 +74,7 @@ def _provider_has_key(provider: str) -> bool:
         "google-genai": settings.google_api_key,
         "anthropic": settings.anthropic_api_key,
         "cohere": settings.cohere_api_key,
+        "openrouter": settings.openrouter_api_key,
     }
     return bool(keymap.get(provider))
 

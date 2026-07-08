@@ -99,6 +99,31 @@ class TestIsTransientError:
 
 
 # ---------------------------------------------------------------------------
+# _provider_has_key
+# ---------------------------------------------------------------------------
+
+
+class TestProviderHasKey:
+    def test_ollama_always_true(self):
+        assert pf._provider_has_key("ollama") is True
+
+    def test_openrouter_true_when_key_configured(self):
+        from backend.settings import settings
+
+        with patch.object(settings, "openrouter_api_key", "sk-or-v1-abc"):
+            assert pf._provider_has_key("openrouter") is True
+
+    def test_openrouter_false_when_key_absent(self):
+        from backend.settings import settings
+
+        with patch.object(settings, "openrouter_api_key", None):
+            assert pf._provider_has_key("openrouter") is False
+
+    def test_unknown_provider_false(self):
+        assert pf._provider_has_key("does-not-exist") is False
+
+
+# ---------------------------------------------------------------------------
 # get_fallback_chain
 # ---------------------------------------------------------------------------
 

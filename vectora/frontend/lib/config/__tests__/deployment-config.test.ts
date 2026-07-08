@@ -34,6 +34,16 @@ describe("getModelDisplayName", () => {
   it("modelo desconhecido cai no próprio id", () => {
     expect(getModelDisplayName("xyz:abc" as ModelOption)).toBe("xyz:abc");
   });
+
+  it("modelo ollama dinâmico mostra a tag crua, sem o prefixo", () => {
+    expect(getModelDisplayName("ollama:qwen3:8b")).toBe("qwen3:8b");
+  });
+
+  it("modelo openrouter dinâmico mostra o id cru, sem o prefixo", () => {
+    expect(getModelDisplayName("openrouter:openai/gpt-4o")).toBe(
+      "openai/gpt-4o",
+    );
+  });
 });
 
 describe("getModelProvider", () => {
@@ -45,6 +55,14 @@ describe("getModelProvider", () => {
 
   it("id desconhecido cai no provider default google-genai", () => {
     expect(getModelProvider("xyz:abc" as ModelOption)).toBe("google-genai");
+  });
+
+  it("id ollama:* infere provider ollama", () => {
+    expect(getModelProvider("ollama:qwen3:8b")).toBe("ollama");
+  });
+
+  it("id openrouter:* infere provider openrouter", () => {
+    expect(getModelProvider("openrouter:openai/gpt-4o")).toBe("openrouter");
   });
 });
 

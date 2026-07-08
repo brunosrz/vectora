@@ -39,9 +39,9 @@ class Settings(BaseSettings):
     # LLM PROVIDER & MODEL CONFIGURATION
     # ============================================================================
 
-    llm_provider: Literal["google-genai", "openai", "anthropic", "ollama", "cohere"] = (
-        "google-genai"
-    )
+    llm_provider: Literal[
+        "google-genai", "openai", "anthropic", "ollama", "cohere", "openrouter"
+    ] = "google-genai"
     """Active LLM provider (auto-detected from API keys if not set)."""
 
     # Google Generative AI
@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     # Ollama (local)
     ollama_base_url: str | None = None
     ollama_model: str = "llama2"
+
+    # OpenRouter (proxy multi-provider via API compatível com OpenAI)
+    openrouter_api_key: str | None = None
+    openrouter_model: str = "openrouter/auto"
 
     # Cohere Chat (command-* series)
     # Nota: cohere_api_key (seção EMBEDDINGS abaixo) é reutilizado para ChatCohere.
@@ -766,7 +770,8 @@ class Settings(BaseSettings):
         1. anthropic_api_key
         2. openai_api_key
         3. google_api_key
-        4. ollama_base_url
+        4. openrouter_api_key
+        5. ollama_base_url
         """
         if self.anthropic_api_key:
             self.llm_provider = "anthropic"
@@ -774,6 +779,8 @@ class Settings(BaseSettings):
             self.llm_provider = "openai"
         elif self.google_api_key:
             self.llm_provider = "google-genai"
+        elif self.openrouter_api_key:
+            self.llm_provider = "openrouter"
         elif self.ollama_base_url:
             self.llm_provider = "ollama"
 
@@ -803,6 +810,7 @@ class Settings(BaseSettings):
             "anthropic": self.anthropic_model,
             "ollama": self.ollama_model,
             "cohere": self.cohere_chat_model,
+            "openrouter": self.openrouter_model,
         }
         return model_map.get(self.llm_provider, self.google_model)
 
@@ -818,6 +826,7 @@ class Settings(BaseSettings):
             "anthropic": self.anthropic_api_key,
             "ollama": None,  # Ollama doesn't require API key
             "cohere": self.cohere_api_key,
+            "openrouter": self.openrouter_api_key,
         }
         return key_map.get(self.llm_provider)
 
@@ -836,6 +845,8 @@ class Settings(BaseSettings):
             providers.append("anthropic")
         if self.get_cohere_api_key():
             providers.append("cohere")
+        if self.openrouter_api_key:
+            providers.append("openrouter")
         if getattr(self, "ollama_base_url", ""):
             providers.append("ollama")
         return providers
@@ -875,19 +886,29 @@ class Settings(BaseSettings):
             available.append("ollama")
         if self.cohere_api_key:
             available.append("cohere")
+        if self.openrouter_api_key:
+            available.append("openrouter")
         return available
 
     def set_model(self, provider: str, model: str) -> None:
         """Update model for a specific provider.
 
         Args:
-            provider: LLM provider ("google-genai", "openai", "anthropic", "ollama")
+            provider: LLM provider ("google-genai", "openai", "anthropic", "ollama",
+                "cohere", "openrouter")
             model: Model name
 
         Raises:
             ValueError: If provider is unknown
         """
-        if provider not in ["google-genai", "openai", "anthropic", "ollama", "cohere"]:
+        if provider not in [
+            "google-genai",
+            "openai",
+            "anthropic",
+            "ollama",
+            "cohere",
+            "openrouter",
+        ]:
             raise ValueError(f"Unknown LLM provider: {provider}")
 
         if provider == "google-genai":
@@ -900,6 +921,8 @@ class Settings(BaseSettings):
             self.ollama_model = model
         elif provider == "cohere":
             self.cohere_chat_model = model
+        elif provider == "openrouter":
+            self.openrouter_model = model
 
         logger.info(f"Model updated: {provider}={model}")
 
@@ -1028,6 +1051,7 @@ PROVIDER_API_KEY_ENV: dict[str, str | None] = {
     "anthropic": "ANTHROPIC_API_KEY",
     "ollama": None,
     "cohere": "COHERE_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
 }
 
 # Variável de ambiente do modelo ativo por provider.
@@ -1037,6 +1061,7 @@ PROVIDER_MODEL_ENV: dict[str, str] = {
     "anthropic": "ANTHROPIC_MODEL",
     "ollama": "OLLAMA_MODEL",
     "cohere": "COHERE_CHAT_MODEL",
+    "openrouter": "OPENROUTER_MODEL",
 }
 
 # Nome amigável para exibição no TUI / setup wizard.
@@ -1046,6 +1071,7 @@ PROVIDER_DISPLAY: dict[str, str] = {
     "anthropic": "Anthropic",
     "ollama": "Ollama",
     "cohere": "Cohere",
+    "openrouter": "OpenRouter",
 }
 
 # URL para obtenção de API key (mostrada pelo setup wizard).
@@ -1054,6 +1080,7 @@ PROVIDER_KEY_URL: dict[str, str] = {
     "openai": "https://platform.openai.com/api-keys",
     "anthropic": "https://console.anthropic.com/",
     "cohere": "https://dashboard.cohere.com/api-keys",
+    "openrouter": "https://openrouter.ai/keys",
 }
 
 
