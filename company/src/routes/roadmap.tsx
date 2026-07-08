@@ -24,7 +24,17 @@ const SHIPPED = [
     label: "Agente principal — arquitetura deep-agent (LangGraph + deepagents)",
   },
   { label: "Coder Agent + Search Agent — arquivos, terminal, git, web, RAG" },
-  { label: "RAG híbrido — Cohere Embed + LanceDB + BM25/denso + reranker" },
+  {
+    label:
+      "RAG — embeddings via Cohere, Voyage, Ollama ou OpenRouter + LanceDB (denso; híbrido com BM25 no modo Completo) + reranker opcional",
+  },
+  {
+    label: "Ollama gateway — descoberta e registro de modelos locais no chat",
+  },
+  {
+    label:
+      "OpenRouter gateway — catálogo de modelos via API key própria do usuário",
+  },
   { label: "MCP server sempre-ativo — Claude Code, Claude Desktop e outros" },
   { label: "Chat web multi-usuário (plano Pro)" },
   { label: "docs.vectora.company — documentação completa" },
@@ -49,13 +59,6 @@ const PLANNED = [
       "REST API pública completa — auth, threads/chat, workspaces, git, terminal, RAG, tasks, webhooks e settings via API (hoje só classify/extract/jobs são públicos)",
   },
   { label: "Integração nativa com VS Code e JetBrains via ACP" },
-  {
-    label:
-      "Ollama gateway — modelos locais custom (inclusive remotos) registrados pelo usuário",
-  },
-  {
-    label: "OpenRouter gateway — modelos custom via API key própria do usuário",
-  },
   { label: "SDK Python — pacote PyPI oficial (plugins/extensões do Vectora)" },
   { label: "SDK TypeScript/Node — pacote NPM oficial (plugins/extensões)" },
   { label: "GitHub Actions integration — run Vectora directly from CI" },

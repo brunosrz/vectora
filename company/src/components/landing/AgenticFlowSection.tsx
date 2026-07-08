@@ -52,7 +52,8 @@ function AgenticDiagram() {
         </span>
       </div>
 
-      {/* Linhas de conexão: azul → Coder, roxo → Search, verde → RAG */}
+      {/* Linhas de conexão: azul → Coder, roxo → Search (subagentes reais —
+          RAG não é um terceiro subagente, é ferramenta do Search Agent) */}
       <svg
         className="h-8 w-full"
         viewBox="0 0 300 32"
@@ -61,7 +62,7 @@ function AgenticDiagram() {
         <line
           x1="150"
           y1="2"
-          x2="50"
+          x2="100"
           y2="30"
           stroke="var(--primary)"
           strokeWidth="1.95"
@@ -69,17 +70,9 @@ function AgenticDiagram() {
         <line
           x1="150"
           y1="2"
-          x2="150"
+          x2="200"
           y2="30"
           stroke="var(--accent-purple)"
-          strokeWidth="1.95"
-        />
-        <line
-          x1="150"
-          y1="2"
-          x2="250"
-          y2="30"
-          stroke="var(--accent-green)"
           strokeWidth="1.95"
         />
       </svg>
@@ -94,11 +87,6 @@ function AgenticDiagram() {
           title="Search Agent"
           sub="web · RAG · curadoria"
           color="var(--accent-purple)"
-        />
-        <AgentBox
-          title="RAG Subgraph"
-          sub="expand · rerank · inject"
-          color="var(--accent-green)"
         />
       </div>
     </div>

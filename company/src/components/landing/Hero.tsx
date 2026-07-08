@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { Clock } from "lucide-react";
+import { useState } from "react";
 import { m } from "#/paraglide/messages";
 import Logo from "#/components/shared/Logo";
 
@@ -22,6 +24,8 @@ function Eyebrow() {
 }
 
 export default function Hero() {
+  const [gifFailed, setGifFailed] = useState(false);
+
   return (
     <section className="flex flex-col items-center px-4 py-[23px] sm:px-6 lg:px-8">
       {/* Container interno — max 1024 px conforme Figma */}
@@ -78,14 +82,22 @@ export default function Hero() {
                 "0px 10px 15px -3px rgba(121,184,255,0.25), 0px 4px 6px -4px rgba(121,184,255,0.25)",
             }}
           >
-            <img
-              src="/gifs/showcase-chat.gif"
-              alt={m.hero_gif_alt()}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover gif-skeleton"
-              onLoad={(e) => (e.currentTarget.style.background = "none")}
-            />
+            {gifFailed ? (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-card/60 text-muted-foreground">
+                <Clock className="h-6 w-6" />
+                <span className="text-[13px]">{m.showcase_preview_soon()}</span>
+              </div>
+            ) : (
+              <img
+                src="/gifs/showcase-chat.gif"
+                alt={m.hero_gif_alt()}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover gif-skeleton"
+                onLoad={(e) => (e.currentTarget.style.background = "none")}
+                onError={() => setGifFailed(true)}
+              />
+            )}
           </div>
         </div>
       </div>

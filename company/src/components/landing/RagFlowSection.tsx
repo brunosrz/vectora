@@ -1,15 +1,13 @@
 import { m } from "#/paraglide/messages";
 
 const BULLETS = [
-  "PDF, DOCX, TXT, Markdown e código-fonte",
-  "Embeddings via Cohere (assimétrico: search_document / search_query)",
-  "Busca híbrida: densa (Cohere) + esparsa (BM25) com fusão RRF",
-  "Multi-query: o LLM gera variantes da pergunta para mais recall",
-  "HyDE: documento hipotético quando o score inicial é baixo",
-  "Reranker Cohere para ordenar por relevância antes de responder",
-  "Indexação em segundo plano: o worker de embeddings processa sem travar o chat",
-  "Curador automático resume a base indexada no MANIFEST do workspace",
-  "Citação da fonte em cada resposta",
+  m.rag_bullet_formats,
+  m.rag_bullet_embeddings,
+  m.rag_bullet_search,
+  m.rag_bullet_rerank,
+  m.rag_bullet_indexing,
+  m.rag_bullet_curator,
+  m.rag_bullet_citation,
 ];
 
 function RagDiagram() {
@@ -26,7 +24,7 @@ function RagDiagram() {
         {/* Left column: Documento → Chunking → LanceDB */}
         {[
           { y: 30, label: "Documento", sub: "PDF · MD · código" },
-          { y: 100, label: "Chunking", sub: "→ Cohere Embed" },
+          { y: 100, label: "Chunking", sub: "→ embeddings" },
         ].map((item) => (
           <g key={item.label}>
             <rect
@@ -130,15 +128,15 @@ function RagDiagram() {
           {
             y: 30,
             label: "Query",
-            sub: "multi-query expand",
+            sub: "pergunta do usuário",
             fill: "color-mix(in srgb, var(--accent-purple) 16%, var(--node-surface))",
             stroke: "var(--accent-purple)",
             textFill: "var(--accent-purple)",
           },
           {
             y: 100,
-            label: "Hybrid Search",
-            sub: "dense + BM25 + RRF",
+            label: "Busca vetorial",
+            sub: "densa · +BM25 no Completo",
             fill: "var(--node-surface)",
             stroke: "var(--primary)",
             textFill: "var(--primary)",
@@ -146,7 +144,7 @@ function RagDiagram() {
           {
             y: 170,
             label: "Reranker",
-            sub: "Cohere rerank",
+            sub: "Cohere/Voyage (opcional)",
             fill: "color-mix(in srgb, var(--accent-amber) 16%, var(--node-surface))",
             stroke: "var(--accent-amber)",
             textFill: "var(--accent-amber)",
@@ -269,7 +267,7 @@ export default function RagFlowSection() {
             {m.rag_heading()}
           </h2>
           <ul className="flex flex-col">
-            {BULLETS.map((text, i) => (
+            {BULLETS.map((fn, i) => (
               <li
                 key={i}
                 className={`flex items-start gap-[10px] text-[14px] leading-5 text-muted-foreground${i > 0 ? " pt-[10px]" : ""}`}
@@ -277,7 +275,7 @@ export default function RagFlowSection() {
                 <span className="flex w-[6px] shrink-0 pt-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 </span>
-                {text}
+                {fn()}
               </li>
             ))}
           </ul>

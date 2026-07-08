@@ -10,7 +10,7 @@ const FAQ_DATA = {
     {
       question: "O que é o Vectora?",
       answer:
-        "Vectora é um agente de IA self-hosted com RAG híbrido, Context Graph nativo e chat web multi-usuário — roda no seu próprio computador ou servidor, nunca numa nuvem da Vectora.",
+        "Vectora é um agente de IA self-hosted com RAG, Context Graph nativo e chat web multi-usuário — roda no seu próprio computador ou servidor, nunca numa nuvem da Vectora.",
     },
     {
       question: "Como funciona o self-hosting?",
@@ -20,7 +20,7 @@ const FAQ_DATA = {
     {
       question: "Preciso de GPU para rodar?",
       answer:
-        "Não. O Vectora usa LLMs e embeddings via API (Anthropic, OpenAI, Google, Cohere) ou Ollama local. Pra uso individual, qualquer notebook recente roda bem; num VPS de time, 2 vCPUs e 4 GB RAM já são suficientes.",
+        "Não. O Vectora usa LLMs e embeddings via API (Google, Anthropic, OpenAI, Cohere, Voyage, OpenRouter) ou Ollama local. Pra uso individual, qualquer notebook recente roda bem; num VPS de time, 2 vCPUs e 4 GB RAM já são suficientes.",
     },
   ],
   Instalação: [
@@ -44,7 +44,7 @@ const FAQ_DATA = {
     {
       question: "Qual a diferença entre Free e Pro?",
       answer:
-        "Free é grátis pra sempre e não exige conta: CLI, MCP, Desktop e RAG local ilimitado, tudo rodando na sua máquina. Pro (R$24/mês) exige conta e adiciona o que só faz sentido em time: chat web multi-usuário, convites de membro ilimitados, SSO/SAML, storage escalável (Postgres/Qdrant/Redis), webhooks, rate limit maior na REST API e suporte prioritário.",
+        "Free é grátis pra sempre e não exige conta: CLI operacional, MCP, Desktop e RAG ilimitado (via Cohere/Voyage/Ollama), tudo rodando na sua máquina. Pro (R$24/mês) exige conta e adiciona o que só faz sentido em time: chat web multi-usuário, convites de membro ilimitados, SSO/SAML, storage escalável (Postgres/Qdrant/Redis), webhooks, rate limit maior na REST API e suporte prioritário.",
     },
     {
       question: "Preciso criar conta para usar o Vectora?",
@@ -78,12 +78,12 @@ const FAQ_DATA = {
     {
       question: "Quais LLMs são suportados?",
       answer:
-        "Anthropic, OpenAI, Cohere, Ollama (local) e qualquer provedor compatível com OpenAI API.",
+        "Google Gemini (padrão), Anthropic, OpenAI, Cohere, Ollama (local), OpenRouter (proxy com centenas de modelos) e qualquer provedor compatível com a API da OpenAI.",
     },
     {
       question: "Como funciona o RAG?",
       answer:
-        "Hybrid RAG com embeddings Cohere, LanceDB como vector store, BM25 + dense retrieval com RRF merge e reranker Cohere.",
+        "Embeddings via Cohere, Voyage, Ollama ou OpenRouter (local ou hospedado), LanceDB como vector store padrão com busca vetorial densa e reranking opcional (Cohere/Voyage). No modo Completo (self-hosted com Postgres + Qdrant), a busca passa a ser híbrida (densa + BM25).",
     },
     {
       question: "Existe API pública?",
