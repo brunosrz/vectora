@@ -413,6 +413,20 @@ function SessionPage() {
     void navigate({ to: "/" });
   }, [navigate]);
 
+  // A 1ª mensagem de uma thread nova falhou antes de qualquer token chegar
+  // (conexão nunca alcançou o backend) — a thread nunca foi persistida
+  // (`_upsert_session` só roda quando a requisição de fato chega), então o
+  // otimista inserido no cache antes do envio (handleThreadUpdate com
+  // lastMessage="") fica sendo uma sessão fantasma só local. Remove.
+  const handleThreadPersistFailed = useCallback((id: string) => {
+    queryClient.setQueryData<{ threads: VectoraThread[] }>(
+      threadsQueryKey,
+      (old) => ({
+        threads: (old?.threads ?? []).filter((th) => th.id !== id),
+      }),
+    );
+  }, []);
+
   const handleThreadUpdate = useCallback(
     (id: string, title: string, lastMessage?: string) => {
       // Chamada otimista do envio da 1ª mensagem (lastMessage vazio): a thread
@@ -648,6 +662,7 @@ function SessionPage() {
                   agentConfig={agentConfig}
                   onAgentConfigChange={setAgentConfig}
                   onThreadUpdate={handleThreadUpdate}
+                  onThreadPersistFailed={handleThreadPersistFailed}
                   onThreadNotFound={handleThreadNotFound}
                   inputLocked={inputLocked}
                   isNewThread={isNew(threadId)}
@@ -754,6 +769,7 @@ function SessionPage() {
                         agentConfig={agentConfig}
                         onAgentConfigChange={setAgentConfig}
                         onThreadUpdate={handleThreadUpdate}
+                        onThreadPersistFailed={handleThreadPersistFailed}
                         onThreadNotFound={handleThreadNotFound}
                         inputLocked={inputLocked}
                         isNewThread={isNew(threadId)}

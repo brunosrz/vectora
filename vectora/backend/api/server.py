@@ -331,6 +331,10 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         from backend.api.handlers.threads import cleanup_empty_threads
 
         async def _thread_cleanup_loop() -> None:
+            # Roda uma vez já no boot (não só após 1h de sleep) — sem isso,
+            # threads fantasma de uma sessão anterior (crash/cancelamento
+            # antes do 1º envio) ficavam visíveis por até 1h a cada restart.
+            await cleanup_empty_threads()
             while True:
                 await asyncio.sleep(3600)
                 await cleanup_empty_threads()

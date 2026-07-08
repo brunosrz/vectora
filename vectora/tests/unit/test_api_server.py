@@ -79,6 +79,32 @@ class TestLifespan:
             "enfileirados ficariam pending e o RAG não recuperaria nada."
         )
 
+    def test_lifespan_runs_thread_cleanup_immediately_at_boot(
+        self, headless_app, monkeypatch
+    ):
+        """Regressão: o loop de limpeza de threads vazias só rodava a
+        primeira vez após 1h de sleep — threads fantasma de uma sessão
+        anterior (crash/cancelamento antes do 1º envio) ficavam visíveis
+        até essa 1ª execução tardia a cada restart do backend."""
+        import backend.api.handlers.threads as threads_handler
+
+        call_count = {"value": 0}
+
+        async def _fake_cleanup(*_a, **_k) -> int:
+            call_count["value"] += 1
+            return 0
+
+        monkeypatch.setattr(threads_handler, "cleanup_empty_threads", _fake_cleanup)
+
+        with TestClient(headless_app, raise_server_exceptions=False):
+            pass
+
+        assert call_count["value"] >= 1, (
+            "cleanup_empty_threads não rodou no boot — o loop só chama "
+            "após o primeiro asyncio.sleep(3600), deixando threads "
+            "fantasma visíveis por até 1h a cada restart."
+        )
+
 
 class TestHealth:
     def test_health_ok(self, client):

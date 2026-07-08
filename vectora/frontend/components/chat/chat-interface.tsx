@@ -72,6 +72,11 @@ interface ChatInterfaceProps {
     messageCount?: number,
   ) => void;
   onThreadNotFound?: () => void;
+  /** Chamado quando a 1ª mensagem de uma thread nova falha antes de
+   * qualquer token chegar (conexão nunca alcançou o backend) — o
+   * otimista inserido na sidebar antes do envio nunca virou uma thread
+   * real, então precisa ser removido do cache local. */
+  onThreadPersistFailed?: (threadId: string) => void;
   agentConfig?: AgentConfig;
   onAgentConfigChange?: (config: AgentConfig) => void;
   isNewThread?: boolean;
@@ -105,6 +110,7 @@ export function ChatInterface({
   threadId,
   onThreadUpdate,
   onThreadNotFound,
+  onThreadPersistFailed,
   initialMessage,
   customTitle,
   agentConfig,
@@ -595,6 +601,10 @@ export function ChatInterface({
   // Process a single message (used for both immediate send and queue processing)
   const processMessage = useCallback(
     async (content: string, files: ImageAttachment[], userMessage: Message) => {
+      // Capturado antes de qualquer setMessages — se essa era a 1ª mensagem
+      // da thread e a conexão nunca chegar a estabelecer (ver checagem após
+      // processStream), o otimista da sidebar precisa ser desfeito.
+      const isFirstMessageOfThread = messages.length === 0;
       uiDispatch({ type: "START_SEND" });
       useStreamingStore.getState().setStreaming(threadId);
       // START_SEND zera o input no reducer; descarta também o rascunho
@@ -611,6 +621,17 @@ export function ChatInterface({
           assistantMessageId,
           files,
         );
+
+        // processStream nunca relança (absorve queda de transporte/erro de
+        // app internamente) — quando a 1ª mensagem de uma thread nova não
+        // gera NENHUM token, a conexão nunca chegou a alcançar o backend, e
+        // a thread nunca foi persistida (`_upsert_session` só roda quando a
+        // requisição é de fato recebida). O otimista inserido antes do envio
+        // (onThreadUpdate com lastMessage="") fica então como uma sessão
+        // fantasma só no cache local — desfaz aqui.
+        if (isFirstMessageOfThread && !assistantContent) {
+          onThreadPersistFailed?.(threadId);
+        }
 
         // C.22 — Notificação OS quando resposta chega com aba oculta e >15s
         const streamDuration = Date.now() - streamStart;
@@ -708,6 +729,7 @@ export function ChatInterface({
     [
       threadId,
       onThreadUpdate,
+      onThreadPersistFailed,
       processStream,
       messages,
       customTitle,
