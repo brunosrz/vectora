@@ -37,6 +37,19 @@ async def test_start_cache_sync_registra_subscribers() -> None:
 
 
 @pytest.mark.asyncio
+async def test_start_cache_sync_registra_bridge_sse() -> None:
+    """O bridge de SSE cross-réplica (webhooks.CHANNEL_SSE) precisa se
+    inscrever ANTES do primeiro kv.start() — start_cache_sync é o único
+    ponto que chama isso, então é onde essa inscrição precisa acontecer
+    (registrar depois não teria efeito: o reader já capturou os canais)."""
+    from backend.api.handlers.webhooks import CHANNEL_SSE
+
+    await cache_sync.start_cache_sync()
+    kv = await get_kv()
+    assert CHANNEL_SSE in kv._subs
+
+
+@pytest.mark.asyncio
 async def test_tools_changed_avanca_versao_e_dropa_cache() -> None:
     await cache_sync.start_cache_sync()
     plugins._mcp_tools_cache["u1"] = (0, ["tool_antiga"])

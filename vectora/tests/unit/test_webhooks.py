@@ -21,6 +21,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.api.handlers.webhooks import (
+    CHANNEL_SSE,
     _emit_sse_event,
     _sse_queues,
     _verify_github,
@@ -28,6 +29,7 @@ from backend.api.handlers.webhooks import (
     _verify_linear,
     _verify_mailgun,
     _verify_slack,
+    on_remote_sse_event,
     router,
 )
 
@@ -265,31 +267,91 @@ class TestWebhookEndpoint:
 
 
 class TestSSEBridge:
-    def test_emit_sse_event_entrega_para_filas(self) -> None:
+    """`_emit_sse_event` publica no KV (cross-réplica); `on_remote_sse_event`
+    (o subscriber, registrado em cache_sync.start_cache_sync) é quem de fato
+    escreve em `_sse_queues`. As duas pontas são testadas separadamente e
+    depois juntas de ponta a ponta via um MemoryKV real."""
+
+    def test_emit_sse_event_publica_no_canal_kv(self) -> None:
+        with patch("backend.persistence.kv.publish_soon") as mock_publish:
+            _emit_sse_event("github", "push", {"ref": "main"})
+
+        assert mock_publish.call_count == 1
+        channel, payload = mock_publish.call_args[0]
+        assert channel == CHANNEL_SSE
+        event = json.loads(payload)
+        assert event["provider"] == "github"
+        assert event["event_type"] == "push"
+        assert event["data"]["ref"] == "main"
+
+    def test_on_remote_sse_event_entrega_para_filas(self) -> None:
         import asyncio
 
         q: asyncio.Queue = asyncio.Queue()
         _sse_queues.append(q)
         try:
-            _emit_sse_event("github", "push", {"ref": "main"})
+            payload = json.dumps(
+                {
+                    "type": "webhook_event",
+                    "provider": "github",
+                    "event_type": "push",
+                    "data": {"ref": "main"},
+                }
+            )
+            on_remote_sse_event(payload)
             assert not q.empty()
             event = q.get_nowait()
             assert event["provider"] == "github"
-            assert event["event_type"] == "push"
             assert event["data"]["ref"] == "main"
         finally:
             _sse_queues.remove(q)
 
-    def test_emit_sse_event_fila_cheia_nao_levanta(self) -> None:
+    def test_on_remote_sse_event_fila_cheia_nao_levanta(self) -> None:
         import asyncio
 
         q: asyncio.Queue = asyncio.Queue(maxsize=1)
         q.put_nowait({"dummy": True})
         _sse_queues.append(q)
         try:
-            _emit_sse_event("github", "push", {})  # fila cheia — não deve levantar
+            on_remote_sse_event(json.dumps({"provider": "github"}))
         finally:
             _sse_queues.remove(q)
+
+    def test_on_remote_sse_event_payload_invalido_nao_levanta(self) -> None:
+        # Erro: payload que não é JSON válido — não deve propagar exceção
+        # (viria de outra réplica via KV, fora do nosso controle de forma).
+        on_remote_sse_event("isso não é json")
+
+    @pytest.mark.asyncio
+    async def test_emit_sse_event_ponta_a_ponta_via_kv_real(self) -> None:
+        """Publica via `_emit_sse_event` e confirma que chega em
+        `_sse_queues` passando pelo roundtrip real do KV (MemoryKV em modo
+        lite) — prova que a ponte publish→subscribe funciona de fato, não
+        só que cada metade foi chamada com os argumentos certos."""
+        import asyncio
+
+        from backend.persistence import kv as kv_module
+
+        kv_module.reset_kv()
+        try:
+            kv = await kv_module.get_kv()
+            kv.subscribe(CHANNEL_SSE, on_remote_sse_event)
+            await kv.start()
+
+            q: asyncio.Queue = asyncio.Queue()
+            _sse_queues.append(q)
+            try:
+                _emit_sse_event("linear", "issue.created", {"id": "ISS-1"})
+                # publish_soon agenda uma task no loop corrente — cede o
+                # controle uma vez pra ela rodar antes de checar a fila.
+                await asyncio.sleep(0)
+                event = await asyncio.wait_for(q.get(), timeout=1.0)
+                assert event["provider"] == "linear"
+                assert event["data"]["id"] == "ISS-1"
+            finally:
+                _sse_queues.remove(q)
+        finally:
+            kv_module.reset_kv()
 
 
 # ---------------------------------------------------------------------------

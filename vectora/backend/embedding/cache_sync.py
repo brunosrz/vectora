@@ -4,10 +4,17 @@ Cada réplica mantém caches in-memory (L1): tools MCP resolvidas, LLM bindado,
 política de tools e workspace ativo. Quando uma réplica muda algo, publica no
 KV (Redis pub/sub em modo complete); as demais aplicam a mudança localmente.
 
+Também é o bootstrap único de pub/sub do KV pro processo inteiro — o backend
+(`get_kv()`) só inicia o reader (`kv.start()`) na 1ª chamada; canais
+inscritos depois disso são ignorados silenciosamente. Por isso o bridge de
+SSE cross-réplica (`backend/api/handlers/webhooks.py::CHANNEL_SSE`) também
+se registra aqui, não no próprio módulo de webhooks.
+
 Canais:
     vectora:tools      {"user_id", "version"}  → plugins + llm_tools
     vectora:policy     {"user_id", "version"}  → tool_policy + llm_tools
     vectora:ws-active  {"user_id", "workspace_id"} → workspace_registry
+    vectora:sse        WebhookEvent serializado → SSE de background_tasks/RAG
 
 Em modo lite (MemoryKV) o publish entrega no próprio processo — inofensivo.
 """
@@ -69,10 +76,13 @@ def _on_ws_active_changed(payload: str) -> None:
 
 async def start_cache_sync() -> None:
     """Registra os subscribers e inicia o reader (chamado no lifespan)."""
+    from backend.api.handlers.webhooks import CHANNEL_SSE, on_remote_sse_event
+
     kv = await get_kv()
     kv.subscribe(CHANNEL_TOOLS, _on_tools_changed)
     kv.subscribe(CHANNEL_POLICY, _on_policy_changed)
     kv.subscribe(CHANNEL_WS_ACTIVE, _on_ws_active_changed)
+    kv.subscribe(CHANNEL_SSE, on_remote_sse_event)
     await kv.start()
     logger.info("cache_sync: subscribers registrados (%s)", type(kv).__name__)
 

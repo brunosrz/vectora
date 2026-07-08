@@ -304,14 +304,28 @@ _HANDLERS: dict[str, WebhookHandler] = {
 
 # ---------------------------------------------------------------------------
 # SSE bridge — emite WebhookEvent para clientes conectados
+#
+# Cross-réplica: `_emit_sse_event` publica no KV (`CHANNEL_SSE` — Redis em
+# modo complete, sidecar NATS por padrão, local em modo lite) em vez de
+# escrever direto em `_sse_queues`. Cada réplica está inscrita nesse canal
+# (registro em `backend/embedding/cache_sync.py::start_cache_sync`, que já é
+# o bootstrap único de pub/sub do KV) e só ela entrega pros seus próprios
+# clientes SSE via `_on_remote_sse_event` — sem isso, um evento de
+# background_tasks/RAG processado na réplica A nunca chegava a um cliente
+# conectado na réplica B (o `_sse_queues` sempre foi local ao processo).
+# Em modo lite (MemoryKV), o publish entrega no mesmo processo — o
+# comportamento observável não muda, só passa a existir a ponte pronta pra
+# quando há mais de uma réplica.
 # ---------------------------------------------------------------------------
+
+CHANNEL_SSE = "vectora:sse"
 
 # Fila global de eventos webhook SSE (asyncio.Queue por conexão aberta)
 _sse_queues: list[Any] = []
 
 
 def _emit_sse_event(provider: str, event_type: str, data: dict[str, Any]) -> None:
-    import asyncio
+    from backend.persistence.kv import publish_soon
 
     event = {
         "type": "webhook_event",
@@ -319,6 +333,17 @@ def _emit_sse_event(provider: str, event_type: str, data: dict[str, Any]) -> Non
         "event_type": event_type,
         "data": data,
     }
+    publish_soon(CHANNEL_SSE, json.dumps(event))
+
+
+def on_remote_sse_event(payload: str) -> None:
+    """Callback do KV — entrega um evento (desta réplica ou de outra) pros
+    clientes SSE conectados NESTA réplica. Única gravadora de `_sse_queues`.
+    """
+    try:
+        event = json.loads(payload)
+    except json.JSONDecodeError:
+        return
     for q in _sse_queues:
         with contextlib.suppress(Exception):
             q.put_nowait(event)
