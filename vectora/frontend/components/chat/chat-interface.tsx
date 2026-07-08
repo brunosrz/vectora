@@ -1239,8 +1239,19 @@ export function ChatInterface({
       <main className="h-full flex flex-col overflow-hidden relative">
         {isNewChat ? (
           <EmptyStateHeader
-            onSelect={(prompt) => setInput(prompt)}
-            workspaceId={activeWorkspaceId}
+            // Seletor Chat/Sessão de código (onStartChat/onStartCode) e chips
+            // de sugestão de projeto são mutuamente exclusivos: enquanto essa
+            // thread nova ainda não escolheu modo/workspace, mostra só o
+            // seletor — os chips (que dependem do workspace ativo global, não
+            // do que essa thread específica escolheu) só aparecem depois.
+            onSelect={
+              onStartChat || onStartCode
+                ? undefined
+                : (prompt) => setInput(prompt)
+            }
+            workspaceId={
+              onStartChat || onStartCode ? undefined : activeWorkspaceId
+            }
             onStartChat={onStartChat}
             onStartCode={onStartCode}
           />
