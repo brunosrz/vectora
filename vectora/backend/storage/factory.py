@@ -175,8 +175,11 @@ async def get_langchain_vector_store(
     if cache_key in _lc_vector_stores:
         return _lc_vector_stores[cache_key]
 
-    # Embeddings compartilhados (Cohere quando disponível, ou None para lite)
+    # Embeddings compartilhados (Cohere/Voyage/Ollama/OpenRouter conforme
+    # credenciais + embedding_provider — None se nenhum configurado).
     embeddings = _build_lc_embeddings()
+    if embeddings is not None:
+        await _check_embedding_dimension(collection, embeddings)
 
     if effective_mode == "lite":
         vs = _build_lancedb_vs(
@@ -240,18 +243,88 @@ def _build_voyage_embeddings() -> Any:
         return None
 
 
-def _build_lc_embeddings() -> Any:
-    """Embeddings com fallback Cohere↔Voyage.
+def _build_ollama_embeddings() -> Any:
+    """``OllamaEmbeddings`` se ``ollama_embedding_model`` estiver configurado.
 
-    Com ambos configurados, devolve ``FallbackEmbeddings`` (usa Cohere; troca para
-    Voyage em quota esgotada, em runtime). Com só um, devolve esse. Só devolve None
-    (modo sem embeddings) quando nenhum dos dois tem credencial.
+    Sem key (Ollama roda local) — o modelo é o próprio gate: None por default,
+    nunca assume um modelo instalado no host do usuário."""
+    try:
+        from langchain_ollama import OllamaEmbeddings
+
+        from backend.settings import settings as _s
+
+        model = _s.ollama_embedding_model
+        if not model:
+            return None
+
+        return OllamaEmbeddings(
+            model=model,
+            base_url=_s.ollama_base_url or "http://127.0.0.1:11434",
+        )
+    except Exception:
+        return None
+
+
+def _build_openrouter_embeddings() -> Any:
+    """``OpenAIEmbeddings`` apontando pro base_url da OpenRouter (API
+    compatível com OpenAI — mesmo cliente usado pro chat em
+    ``services/utils.py::_build_concrete_model``)."""
+    try:
+        from langchain_openai import OpenAIEmbeddings
+
+        from backend.settings import settings as _s
+
+        key = _s.openrouter_api_key
+        model = _s.openrouter_embedding_model
+        if not key or not model:
+            return None
+
+        return OpenAIEmbeddings(
+            api_key=key,  # ty: ignore[invalid-argument-type]
+            base_url="https://openrouter.ai/api/v1",
+            model=model,
+        )
+    except Exception:
+        return None
+
+
+def _build_lc_embeddings() -> Any:
+    """Embeddings com preferência configurável + fallback Cohere↔Voyage↔local.
+
+    Ordem de resolução:
+    1. ``settings.embedding_provider`` explícito, se buildável (credencial/
+       modelo presentes) — respeita a escolha do usuário mesmo quando outro
+       provider também está configurado.
+    2. Cohere + Voyage juntos → ``FallbackEmbeddings`` (troca automática em
+       quota esgotada, em runtime).
+    3. Só um dos dois → esse.
+    4. Nenhum dos dois → Ollama, depois OpenRouter (embeddings locais/gateway,
+       sem custo de API hospedada — mas sem rerank: Cohere/Voyage-only).
+    5. Nada configurado → None (modo sem embeddings).
     """
+    from backend.settings import settings as _s
+
+    builders: dict[str, Any] = {
+        "cohere": _build_cohere_embeddings,
+        "voyage": _build_voyage_embeddings,
+        "ollama": _build_ollama_embeddings,
+        "openrouter": _build_openrouter_embeddings,
+    }
+    preference = _s.embedding_provider
+    if preference in builders:
+        preferred = builders[preference]()
+        if preferred is not None:
+            return preferred
+        logger.warning(
+            "storage/factory: embedding_provider=%r configurado mas sem "
+            "credencial/modelo — caindo no fallback padrão",
+            preference,
+        )
+
     cohere = _build_cohere_embeddings()
     voyage = _build_voyage_embeddings()
     if cohere is not None and voyage is not None:
         from backend.llm.fallback_embeddings import FallbackEmbeddings
-        from backend.settings import settings as _s
 
         return FallbackEmbeddings(
             cohere,
@@ -259,7 +332,82 @@ def _build_lc_embeddings() -> Any:
             primary_id=f"cohere:{_s.embedding_model}",
             secondary_id=f"voyage:{_s.voyage_embedding_model}",
         )
-    return cohere or voyage
+    if cohere or voyage:
+        return cohere or voyage
+
+    return _build_ollama_embeddings() or _build_openrouter_embeddings()
+
+
+# ---------------------------------------------------------------------------
+# Guard de dimensão — troca de embedding_provider sem reindex quebraria
+# similarity search silenciosamente (vetores de dimensões diferentes na
+# mesma coleção). Probe leve (uma chamada embed) na primeira construção do
+# VectorStore por processo/coleção, comparado contra a dimensão persistida.
+# ---------------------------------------------------------------------------
+
+
+class EmbeddingDimensionMismatchError(Exception):
+    """A coleção foi indexada com um embedding de dimensão diferente da
+    configurada agora — reindexação necessária antes de buscar/inserir."""
+
+
+async def _embedding_meta_db() -> Any:
+    from backend.api.handlers.threads import _get_db as _threads_db
+
+    return await _threads_db()
+
+
+async def _ensure_embedding_meta_table(db: Any) -> None:
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS embedding_index_meta (
+            collection TEXT PRIMARY KEY,
+            provider   TEXT NOT NULL,
+            dimension  INTEGER NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    await db.commit()
+
+
+async def _check_embedding_dimension(collection: str, embeddings: Any) -> None:
+    """Levanta ``EmbeddingDimensionMismatchError`` se a coleção já foi
+    indexada com uma dimensão diferente da do embedding atual. Na primeira
+    vez (sem registro), persiste a dimensão atual."""
+    from datetime import UTC, datetime
+
+    from backend.settings import settings as _s
+
+    probe = await embeddings.aembed_query("dimension probe")
+    dimension = len(probe)
+    provider = _s.embedding_provider or "auto"
+
+    db = await _embedding_meta_db()
+    await _ensure_embedding_meta_table(db)
+    async with db.execute(
+        "SELECT provider, dimension FROM embedding_index_meta WHERE collection = ?",
+        (collection,),
+    ) as cur:
+        row = await cur.fetchone()
+
+    if row is None:
+        await db.execute(
+            "INSERT INTO embedding_index_meta (collection, provider, dimension, updated_at) "
+            "VALUES (?, ?, ?, ?)",
+            (collection, provider, dimension, datetime.now(UTC).isoformat()),
+        )
+        await db.commit()
+        return
+
+    existing_provider, existing_dimension = row
+    if existing_dimension != dimension:
+        msg = (
+            f"Coleção {collection!r} foi indexada com embeddings de "
+            f"{existing_dimension} dimensões (provider {existing_provider!r}), "
+            f"mas o embedding configurado agora tem {dimension} dimensões "
+            f"(provider {provider!r}). Reindexe a coleção (apague e reconstrua) "
+            "antes de continuar, ou volte ao provider de embedding anterior."
+        )
+        raise EmbeddingDimensionMismatchError(msg)
 
 
 def _build_lancedb_vs(

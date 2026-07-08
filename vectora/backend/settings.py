@@ -323,6 +323,21 @@ class Settings(BaseSettings):
     embedding_dims: int = 1024
     """Cohere v3 retorna vetores de 1024 dimensões."""
 
+    embedding_provider: Literal["cohere", "voyage", "ollama", "openrouter"] | None = (
+        None
+    )
+    """Preferência explícita de provider de embedding. None = fallback padrão
+    (Cohere↔Voyage se alguma key configurada; senão Ollama/OpenRouter local)."""
+
+    ollama_embedding_model: str | None = None
+    """Modelo de embedding no host Ollama (ex.: "qwen3-embedding:0.6b"). None
+    desabilita embeddings via Ollama, mesmo com ollama_base_url configurado —
+    o usuário escolhe o modelo explicitamente (sem digitação livre no chat)."""
+
+    openrouter_embedding_model: str | None = None
+    """Modelo de embedding via OpenRouter (ex.: "qwen/qwen3-embedding-0.6b").
+    None desabilita embeddings via OpenRouter, mesmo com key configurada."""
+
     embedding_queue_enabled: bool = True
     """Enable asynchronous embedding queue processing."""
 

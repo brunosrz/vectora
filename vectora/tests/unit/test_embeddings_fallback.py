@@ -4,7 +4,12 @@ Contrato:
 - FallbackEmbeddings usa o primário; em quota error troca para o secundário e
   registra record_switch. Erro não-quota propaga sem troca.
 - Cobre embed_query/embed_documents (sync) e aembed_query/aembed_documents (async).
-- _build_lc_embeddings: ambos → FallbackEmbeddings; só um → esse; nenhum → None.
+- _build_lc_embeddings: preferência explícita (embedding_provider) vence se
+  buildável; senão Cohere+Voyage → FallbackEmbeddings; só um → esse; nenhum
+  dos dois → Ollama, depois OpenRouter (embeddings locais/gateway); nada
+  configurado → None.
+- _build_ollama_embeddings/_build_openrouter_embeddings: None sem modelo
+  configurado (o modelo é o próprio gate — nunca assume um default).
 """
 
 from __future__ import annotations
@@ -154,5 +159,117 @@ class TestBuildLcEmbeddings:
         with (
             patch.object(factory, "_build_cohere_embeddings", lambda: None),
             patch.object(factory, "_build_voyage_embeddings", lambda: None),
+            patch.object(factory, "_build_ollama_embeddings", lambda: None),
+            patch.object(factory, "_build_openrouter_embeddings", lambda: None),
         ):
             assert factory._build_lc_embeddings() is None
+
+    def test_neither_cohere_nor_voyage_falls_back_to_ollama(self):
+        from backend.storage import factory
+
+        ollama = _FakeEmb(tag=3.0)
+        with (
+            patch.object(factory, "_build_cohere_embeddings", lambda: None),
+            patch.object(factory, "_build_voyage_embeddings", lambda: None),
+            patch.object(factory, "_build_ollama_embeddings", lambda: ollama),
+        ):
+            assert factory._build_lc_embeddings() is ollama
+
+    def test_neither_cohere_nor_voyage_nor_ollama_falls_back_to_openrouter(self):
+        from backend.storage import factory
+
+        openrouter = _FakeEmb(tag=4.0)
+        with (
+            patch.object(factory, "_build_cohere_embeddings", lambda: None),
+            patch.object(factory, "_build_voyage_embeddings", lambda: None),
+            patch.object(factory, "_build_ollama_embeddings", lambda: None),
+            patch.object(factory, "_build_openrouter_embeddings", lambda: openrouter),
+        ):
+            assert factory._build_lc_embeddings() is openrouter
+
+    def test_explicit_preference_wins_even_with_cohere_configured(self):
+        from backend.settings import settings
+        from backend.storage import factory
+
+        ollama = _FakeEmb(tag=5.0)
+        cohere = _FakeEmb(tag=1.0)
+        with (
+            patch.object(settings, "embedding_provider", "ollama"),
+            patch.object(factory, "_build_cohere_embeddings", lambda: cohere),
+            patch.object(factory, "_build_ollama_embeddings", lambda: ollama),
+        ):
+            assert factory._build_lc_embeddings() is ollama
+
+    def test_preference_without_credential_falls_back_to_default_chain(self):
+        from backend.settings import settings
+        from backend.storage import factory
+
+        cohere = _FakeEmb(tag=1.0)
+        with (
+            patch.object(settings, "embedding_provider", "ollama"),
+            patch.object(factory, "_build_ollama_embeddings", lambda: None),
+            patch.object(factory, "_build_cohere_embeddings", lambda: cohere),
+            patch.object(factory, "_build_voyage_embeddings", lambda: None),
+        ):
+            assert factory._build_lc_embeddings() is cohere
+
+
+class TestBuildOllamaOpenRouterEmbeddings:
+    def test_ollama_without_model_returns_none(self):
+        from backend.settings import settings
+        from backend.storage import factory
+
+        with patch.object(settings, "ollama_embedding_model", None):
+            assert factory._build_ollama_embeddings() is None
+
+    def test_ollama_with_model_builds_embeddings(self):
+        from langchain_ollama import OllamaEmbeddings
+
+        from backend.settings import settings
+        from backend.storage import factory
+
+        with (
+            patch.object(settings, "ollama_embedding_model", "qwen3-embedding:0.6b"),
+            patch.object(settings, "ollama_base_url", "http://127.0.0.1:11434"),
+        ):
+            emb = factory._build_ollama_embeddings()
+        assert isinstance(emb, OllamaEmbeddings)
+        assert emb.model == "qwen3-embedding:0.6b"
+
+    def test_openrouter_without_key_returns_none(self):
+        from backend.settings import settings
+        from backend.storage import factory
+
+        with (
+            patch.object(settings, "openrouter_api_key", None),
+            patch.object(
+                settings, "openrouter_embedding_model", "qwen/qwen3-embedding-0.6b"
+            ),
+        ):
+            assert factory._build_openrouter_embeddings() is None
+
+    def test_openrouter_without_model_returns_none(self):
+        from backend.settings import settings
+        from backend.storage import factory
+
+        with (
+            patch.object(settings, "openrouter_api_key", "sk-or-v1-abc"),
+            patch.object(settings, "openrouter_embedding_model", None),
+        ):
+            assert factory._build_openrouter_embeddings() is None
+
+    def test_openrouter_with_key_and_model_builds_embeddings(self):
+        from langchain_openai import OpenAIEmbeddings
+
+        from backend.settings import settings
+        from backend.storage import factory
+
+        with (
+            patch.object(settings, "openrouter_api_key", "sk-or-v1-abc"),
+            patch.object(
+                settings, "openrouter_embedding_model", "qwen/qwen3-embedding-0.6b"
+            ),
+        ):
+            emb = factory._build_openrouter_embeddings()
+        assert isinstance(emb, OpenAIEmbeddings)
+        assert emb.model == "qwen/qwen3-embedding-0.6b"
