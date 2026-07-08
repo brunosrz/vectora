@@ -66,15 +66,6 @@ export default function Footer() {
             <Link to="/terms" className={linkClass}>
               {m.footer_terms()}
             </Link>
-            <Link to="/cookies" className={linkClass}>
-              {m.footer_cookies()}
-            </Link>
-            <Link to="/sla" className={linkClass}>
-              {m.footer_sla()}
-            </Link>
-            <Link to="/dpa" className={linkClass}>
-              {m.footer_dpa()}
-            </Link>
           </div>
         </div>
       </div>

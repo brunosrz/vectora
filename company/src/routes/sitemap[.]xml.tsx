@@ -11,9 +11,6 @@ const PUBLIC_ROUTES = [
   { path: "/roadmap", priority: "0.5", changefreq: "monthly" },
   { path: "/privacy", priority: "0.3", changefreq: "monthly" },
   { path: "/terms", priority: "0.3", changefreq: "monthly" },
-  { path: "/cookies", priority: "0.3", changefreq: "monthly" },
-  { path: "/sla", priority: "0.3", changefreq: "monthly" },
-  { path: "/dpa", priority: "0.3", changefreq: "monthly" },
 ];
 
 function localeUrl(path: string, locale: string) {

@@ -16,7 +16,7 @@ export const Route = createFileRoute("/terms")({
 
 function TermsPage() {
   return (
-    <LegalPage title="Termos de Uso" lastUpdated="2026-07-04">
+    <LegalPage title="Termos de Uso" lastUpdated="2026-07-08">
       <h2>1. Aceitação</h2>
       <p>
         Ao criar uma conta ou usar o Vectora, você concorda com estes Termos de
@@ -55,7 +55,32 @@ function TermsPage() {
         de dados, interrupções de serviço ou danos indiretos decorrentes do uso.
       </p>
 
-      <h2>6. Contato</h2>
+      <h2 id="acordo-de-nivel-de-servico-sla">
+        6. Acordo de nível de serviço (SLA)
+      </h2>
+      <p>
+        <strong>Suporte</strong> — os tempos de resposta variam por plano: Free
+        recebe email em até 48 horas úteis; Pro recebe email prioritário em até
+        24 horas úteis.
+      </p>
+      <p>
+        <strong>Disponibilidade da plataforma de licença</strong> — a Vectora
+        garante 99,5% de uptime mensal para os serviços de autenticação, licença
+        e cobrança. O software self-hosted roda na infra do cliente;
+        disponibilidade depende do ambiente do cliente.
+      </p>
+      <p>
+        <strong>Exclusões</strong> — o SLA não cobre indisponibilidades causadas
+        por manutenções programadas (comunicadas com 48h de antecedência),
+        eventos de força maior ou falhas na infra do cliente.
+      </p>
+      <p>
+        <strong>Créditos</strong> — em caso de violação do SLA, o cliente pode
+        solicitar crédito proporcional ao período de indisponibilidade. Créditos
+        são aplicados na próxima fatura.
+      </p>
+
+      <h2>7. Contato</h2>
       <p>
         <a href="mailto:legal@vectora.company">legal@vectora.company</a>
       </p>

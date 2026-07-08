@@ -60,7 +60,8 @@ export default function CookieConsent() {
           </Link>
           {" · "}
           <Link
-            to="/cookies"
+            to="/privacy"
+            hash="cookies-e-analytics"
             className="underline underline-offset-2 transition-colors hover:text-foreground"
           >
             {m.cookie_policy_link()}
