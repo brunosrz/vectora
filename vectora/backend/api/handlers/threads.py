@@ -147,7 +147,16 @@ async def _get_db() -> Any:
         db_path = Path.home() / ".vectora" / "checkpoints.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         _db_conn = await aiosqlite.connect(str(db_path))
-        await _db_conn.execute("PRAGMA journal_mode=WAL")
+        # Sem busy_timeout, escritas concorrentes de outras conexões abertas
+        # pro mesmo checkpoints.db (agent_factory.py, rbac/auth.py, etc.)
+        # batem em "database is locked" na hora em vez de esperar — mesmos
+        # PRAGMAs do pool hardened de backend/storage/sqlite/pool.py e do
+        # checkpointer em agent_factory.py (D2).
+        await _db_conn.executescript(
+            "PRAGMA journal_mode=WAL;"
+            "PRAGMA busy_timeout=30000;"
+            "PRAGMA synchronous=NORMAL;"
+        )
         await _ensure_schema(_db_conn)
     return _db_conn
 

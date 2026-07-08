@@ -220,7 +220,13 @@ async def _get_db() -> Any:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     _db_conn = await aiosqlite.connect(str(db_path))
     _db_conn.row_factory = aiosqlite.Row
-    await _db_conn.execute("PRAGMA journal_mode=WAL")
+    # Mesmos PRAGMAs de threads.py::_get_db() e do checkpointer em
+    # agent_factory.py (D2) — sem busy_timeout, escritas concorrentes de
+    # outra conexão pro mesmo checkpoints.db batem em "database is locked"
+    # na hora em vez de esperar.
+    await _db_conn.executescript(
+        "PRAGMA journal_mode=WAL;PRAGMA busy_timeout=30000;PRAGMA synchronous=NORMAL;"
+    )
     await _ensure_schema(_db_conn)
     return _db_conn
 
