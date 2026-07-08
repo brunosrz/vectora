@@ -42,6 +42,7 @@ from backend.api.handlers.background import router as background_router
 from backend.api.handlers.chat import router as chat_router
 from backend.api.handlers.context_graph import router as graph_router
 from backend.api.handlers.flags import router as flags_router
+from backend.api.handlers.gateways import router as gateways_router
 from backend.api.handlers.license import router as license_router
 from backend.api.handlers.mcp_marketplace import router as mcp_marketplace_router
 from backend.api.handlers.memory import router as memory_router
@@ -514,6 +515,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(license_router)
     app.include_router(tools_router)
     app.include_router(models_router)
+    app.include_router(gateways_router)
     app.include_router(rag_router)
     app.include_router(terminal_router)
     app.include_router(background_router)

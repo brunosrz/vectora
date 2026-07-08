@@ -32,7 +32,7 @@ export const CONFIG_STORAGE = {
 export interface ModelConfig {
   id: string;
   name: string;
-  provider: "google-genai" | "openai" | "anthropic" | "cohere";
+  provider: "google-genai" | "openai" | "anthropic" | "cohere" | "ollama";
   description?: string;
 }
 
@@ -313,16 +313,23 @@ export function isModelAllowed(modelId: ModelOption): boolean {
   return getAllowedModels().includes(modelId);
 }
 
-export function getModelDisplayName(modelId: ModelOption): string {
+/** Aceita `string` (não só `ModelOption`) porque modelos dinâmicos de
+ * gateways (Ollama/OpenRouter, registrados em runtime pelo usuário) nunca
+ * entram no catálogo estático `MODELS` — o fallback abaixo cobre esses ids. */
+export function getModelDisplayName(modelId: string): string {
   const model = Object.values(MODELS).find((m) => m.id === modelId);
-  return model?.name ?? modelId;
+  if (model) return model.name;
+  // "ollama:qwen3:8b" → "qwen3:8b" (tag crua, mais legível que o id completo).
+  // Outros ids desconhecidos (fora do catálogo estático) caem no id completo.
+  if (modelId.startsWith("ollama:")) return modelId.slice("ollama:".length);
+  return modelId;
 }
 
-export function getModelProvider(
-  modelId: ModelOption,
-): ModelConfig["provider"] {
+export function getModelProvider(modelId: string): ModelConfig["provider"] {
   const model = Object.values(MODELS).find((m) => m.id === modelId);
-  return model?.provider ?? "google-genai";
+  if (model) return model.provider;
+  if (modelId.startsWith("ollama:")) return "ollama";
+  return "google-genai";
 }
 
 /**

@@ -72,6 +72,41 @@ export function CohereIcon({ className }: { className?: string }) {
   );
 }
 
+export function OllamaIcon({ className }: { className?: string }) {
+  // Sem ícone de marca oficial simplificado — servidor local genérico
+  // (Ollama roda no host do usuário, não é um provider de nuvem).
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect
+        x="3"
+        y="4"
+        width="18"
+        height="7"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <rect
+        x="3"
+        y="13"
+        width="18"
+        height="7"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="7" cy="7.5" r="1" fill="currentColor" />
+      <circle cx="7" cy="16.5" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 import type { ModelConfig } from "@/lib/config/deployment-config";
 
 const PROVIDER_ICONS: Record<
@@ -82,6 +117,7 @@ const PROVIDER_ICONS: Record<
   openai: OpenAiIcon,
   anthropic: AnthropicIcon,
   cohere: CohereIcon,
+  ollama: OllamaIcon,
 };
 
 /** Ícone do provedor para um dado provider — usado no seletor de modelo. */

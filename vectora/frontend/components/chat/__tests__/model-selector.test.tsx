@@ -118,4 +118,50 @@ describe("ModelSelector", () => {
       ).toBeGreaterThan(0);
     });
   });
+
+  it("mostra modelos dinâmicos (Ollama) mesmo sem provider configurado", async () => {
+    const value = getAllowedModels()[0];
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              providers: [],
+              dynamic_models: [{ id: "ollama:qwen3:8b", label: "qwen3:8b" }],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        ),
+      ),
+    );
+
+    render(<ModelSelector value={value} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+
+    // Registro dinâmico é o próprio gate de acesso — não passa pelo filtro
+    // de "provider configurado" que esconde modelos estáticos sem key.
+    await waitFor(() => {
+      expect(screen.getAllByText("qwen3:8b").length).toBeGreaterThan(0);
+    });
+  });
+
+  it("erro no fetch de /models/providers não quebra a lista (mantém só estáticos)", async () => {
+    const value = getAllowedModels()[0];
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(new Error("network down"))),
+    );
+
+    render(<ModelSelector value={value} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(getModelDisplayName(value)).length,
+      ).toBeGreaterThan(0);
+    });
+  });
 });

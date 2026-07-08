@@ -1,10 +1,13 @@
 """Informações de modelos LLM para o frontend (model selector).
 
 Endpoint (exige auth via middleware):
-    GET /models/providers — providers de LLM com credencial configurada.
+    GET /models/providers — providers de LLM com credencial configurada +
+    modelos dinâmicos registrados (gateways — hoje só Ollama).
 
 O frontend usa isto para esconder do model selector os modelos cujo provider não
-tem API key (ex.: sem chave OpenAI/Anthropic, GPT/Claude não aparecem).
+tem API key (ex.: sem chave OpenAI/Anthropic, GPT/Claude não aparecem) e para
+mesclar os modelos Ollama que o usuário registrou (backend/api/handlers/
+gateways.py) no catálogo estático de deployment-config.ts.
 """
 
 from __future__ import annotations
@@ -16,7 +19,15 @@ router = APIRouter(prefix="/models", tags=["models"])
 
 @router.get("/providers")
 async def get_configured_providers() -> dict:
-    """Lista os providers de LLM com credencial configurada."""
+    """Providers de LLM com credencial configurada + modelos dinâmicos."""
+    from backend.api.handlers.gateways import list_registered_ollama_models
     from backend.settings import settings
 
-    return {"providers": settings.configured_llm_providers()}
+    dynamic_models = [
+        {"id": f"ollama:{m.tag}", "label": m.tag}
+        for m in await list_registered_ollama_models()
+    ]
+    return {
+        "providers": settings.configured_llm_providers(),
+        "dynamic_models": dynamic_models,
+    }

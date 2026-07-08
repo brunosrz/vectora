@@ -9,6 +9,7 @@
  *   - Envs        — variáveis de ambiente por usuário
  *   - Skills      — skills instaladas
  *   - Plugins     — plugins/MCP servers + política de ferramentas
+ *   - Gateways    — modelos de LLM locais/dinâmicos (Ollama)
  *   - Integrações — conectores externos
  *
  * "Preferências" (Conta/Preferências/Memória) e "Administração" (root/admin)
@@ -53,6 +54,10 @@ const IntegracoesTab = lazyWithRetry(
       default: m.IntegracoesTab,
     })),
   "integracoes-tab",
+);
+const GatewaysTab = lazyWithRetry(
+  () => import("./tabs/gateways-tab").then((m) => ({ default: m.GatewaysTab })),
+  "gateways-tab",
 );
 
 function TabFallback() {
@@ -100,6 +105,9 @@ export function EnvironmentDialog() {
             <TabsTrigger value="plugins" className="rounded-md text-xs">
               Plugins
             </TabsTrigger>
+            <TabsTrigger value="gateways" className="rounded-md text-xs">
+              Gateways
+            </TabsTrigger>
             <TabsTrigger value="integracoes" className="rounded-md text-xs">
               Integrações
             </TabsTrigger>
@@ -116,6 +124,9 @@ export function EnvironmentDialog() {
                 </TabsContent>
                 <TabsContent value="plugins" className="mt-0">
                   <PluginsTab />
+                </TabsContent>
+                <TabsContent value="gateways" className="mt-0">
+                  <GatewaysTab />
                 </TabsContent>
                 <TabsContent value="integracoes" className="mt-0">
                   <IntegracoesTab />

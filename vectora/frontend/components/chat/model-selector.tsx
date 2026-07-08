@@ -34,6 +34,11 @@ interface ModelSelectorProps {
   compact?: boolean;
 }
 
+interface DynamicModel {
+  id: string;
+  label: string;
+}
+
 export function ModelSelector({
   value,
   onChange,
@@ -47,16 +52,29 @@ export function ModelSelector({
   const [configuredProviders, setConfiguredProviders] = useState<
     string[] | null
   >(null);
+  // Modelos registrados via gateway (Ollama local, hoje) — nunca fazem parte
+  // do catálogo estático de deployment-config.ts, só existem em runtime.
+  const [dynamicModels, setDynamicModels] = useState<DynamicModel[]>([]);
 
   useEffect(() => {
     if (typeof fetch === "undefined") return;
     let alive = true;
     fetch("/models/providers")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: { providers?: string[] } | null) => {
-        if (alive && Array.isArray(data?.providers))
-          setConfiguredProviders(data.providers);
-      })
+      .then(
+        (
+          data: {
+            providers?: string[];
+            dynamic_models?: DynamicModel[];
+          } | null,
+        ) => {
+          if (!alive) return;
+          if (Array.isArray(data?.providers))
+            setConfiguredProviders(data.providers);
+          if (Array.isArray(data?.dynamic_models))
+            setDynamicModels(data.dynamic_models);
+        },
+      )
       .catch(() => {});
     return () => {
       alive = false;
@@ -65,14 +83,18 @@ export function ModelSelector({
 
   // Esconde modelos cujo provider não tem credencial. Mantém sempre o modelo
   // ativo visível (mesmo sem key) para não sumir com a seleção atual.
-  const visibleModels =
-    configuredProviders && configuredProviders.length > 0
+  // Modelos dinâmicos (Ollama) não passam por esse filtro — não exigem key,
+  // só existem na lista se o usuário já os registrou explicitamente.
+  const visibleModels: string[] = [
+    ...(configuredProviders && configuredProviders.length > 0
       ? allowedModels.filter(
           (model) =>
             model === value ||
             configuredProviders.includes(getModelProvider(model)),
         )
-      : allowedModels;
+      : allowedModels),
+    ...dynamicModels.map((dm) => dm.id),
+  ];
 
   const activeLabel = getModelDisplayName(value as ModelOption) || value;
 
