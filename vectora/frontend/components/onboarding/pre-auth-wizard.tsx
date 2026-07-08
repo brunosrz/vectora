@@ -44,13 +44,13 @@ import {
 
 type Step = "identity" | "mode" | "vps-token";
 
-const VPS_FEATURE_KEYS = [
-  "onboarding_pre_vps_feature_1",
-  "onboarding_pre_vps_feature_2",
-  "onboarding_pre_vps_feature_3",
-  "onboarding_pre_vps_feature_4",
-  "onboarding_pre_vps_feature_5",
-] as const;
+const VPS_FEATURE_LABELS = [
+  m.onboarding_pre_vps_feature_1,
+  m.onboarding_pre_vps_feature_2,
+  m.onboarding_pre_vps_feature_3,
+  m.onboarding_pre_vps_feature_4,
+  m.onboarding_pre_vps_feature_5,
+];
 
 function openExternal(url: string): void {
   if (typeof window !== "undefined" && window.vectora?.openExternal) {
@@ -62,15 +62,12 @@ function openExternal(url: string): void {
 
 const THEME_OPTIONS: {
   value: Theme;
-  labelKey:
-    | "onboarding_pre_theme_system"
-    | "onboarding_pre_theme_dark"
-    | "onboarding_pre_theme_light";
+  label: () => string;
   icon: typeof Laptop;
 }[] = [
-  { value: "system", labelKey: "onboarding_pre_theme_system", icon: Laptop },
-  { value: "dark", labelKey: "onboarding_pre_theme_dark", icon: Moon },
-  { value: "light", labelKey: "onboarding_pre_theme_light", icon: Sun },
+  { value: "system", label: m.onboarding_pre_theme_system, icon: Laptop },
+  { value: "dark", label: m.onboarding_pre_theme_dark, icon: Moon },
+  { value: "light", label: m.onboarding_pre_theme_light, icon: Sun },
 ];
 
 export function PreAuthWizard() {
@@ -243,13 +240,13 @@ export function PreAuthWizard() {
                   {m.onboarding_pre_theme_label()}
                 </label>
                 <div className="flex rounded-md border border-border overflow-hidden">
-                  {THEME_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
+                  {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
                     <button
                       key={value}
                       type="button"
                       onClick={() => setTheme(value)}
-                      title={m[labelKey]()}
-                      aria-label={m[labelKey]()}
+                      title={label()}
+                      aria-label={label()}
                       aria-pressed={theme === value}
                       className={`flex-1 flex items-center justify-center py-2 transition-colors ${
                         theme === value
@@ -343,13 +340,13 @@ export function PreAuthWizard() {
                 {m.onboarding_pre_vps_features_title()}
               </p>
               <ul className="space-y-1">
-                {VPS_FEATURE_KEYS.map((key) => (
+                {VPS_FEATURE_LABELS.map((label, idx) => (
                   <li
-                    key={key}
+                    key={idx}
                     className="flex items-center gap-1.5 text-xs text-foreground"
                   >
                     <Check className="w-3.5 h-3.5 shrink-0 text-primary" />
-                    {(m[key] as () => string)()}
+                    {label()}
                   </li>
                 ))}
               </ul>

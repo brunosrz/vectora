@@ -946,30 +946,30 @@ type ApiKeyProvider = "google" | "cohere" | "tavily";
 
 const PROVIDERS: {
   id: ApiKeyProvider;
-  labelKey: keyof typeof m;
-  descKey: keyof typeof m;
-  urlKey: keyof typeof m;
+  label: () => string;
+  desc: () => string;
+  url: () => string;
   placeholder: string;
 }[] = [
   {
     id: "google",
-    labelKey: "onboarding_api_keys_google_label",
-    descKey: "onboarding_api_keys_google_desc",
-    urlKey: "onboarding_api_keys_google_url",
+    label: m.onboarding_api_keys_google_label,
+    desc: m.onboarding_api_keys_google_desc,
+    url: m.onboarding_api_keys_google_url,
     placeholder: "AIza…",
   },
   {
     id: "cohere",
-    labelKey: "onboarding_api_keys_cohere_label",
-    descKey: "onboarding_api_keys_cohere_desc",
-    urlKey: "onboarding_api_keys_cohere_url",
+    label: m.onboarding_api_keys_cohere_label,
+    desc: m.onboarding_api_keys_cohere_desc,
+    url: m.onboarding_api_keys_cohere_url,
     placeholder: "…",
   },
   {
     id: "tavily",
-    labelKey: "onboarding_api_keys_tavily_label",
-    descKey: "onboarding_api_keys_tavily_desc",
-    urlKey: "onboarding_api_keys_tavily_url",
+    label: m.onboarding_api_keys_tavily_label,
+    desc: m.onboarding_api_keys_tavily_desc,
+    url: m.onboarding_api_keys_tavily_url,
     placeholder: "tvly-…",
   },
 ];
@@ -1121,7 +1121,7 @@ function StepApiKeys(_props: StepProps) {
           <div key={prov.id} className="space-y-0.5">
             <div className="flex items-center justify-between gap-2">
               <label className="text-xs font-medium text-foreground">
-                {(m[prov.labelKey] as () => string)()}
+                {prov.label()}
               </label>
               <div className="flex items-center gap-1.5">
                 <KeyStatusIcon status={state.status} />
@@ -1141,7 +1141,7 @@ function StepApiKeys(_props: StepProps) {
                   </span>
                 )}
                 <a
-                  href={(m[prov.urlKey] as () => string)()}
+                  href={prov.url()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-primary hover:underline"
@@ -1151,7 +1151,7 @@ function StepApiKeys(_props: StepProps) {
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground leading-snug">
-              {(m[prov.descKey] as () => string)()}
+              {prov.desc()}
             </p>
             <div className="flex gap-1.5">
               <Input
