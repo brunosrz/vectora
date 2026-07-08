@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import type { RouterContext } from "../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSessionExpiry } from "@/lib/hooks/use-session-expiry";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import {
@@ -208,6 +209,19 @@ function RootComponent() {
   // Agenda o aviso "sessão expira em breve" perto da raiz, uma única vez
   // por árvore (não por tela).
   useSessionExpiry();
+  // `workspaces` do useWorkspacesStore não é persistido (só `active_id`
+  // é — ver partialize do store), então precisa ser buscado a cada carga
+  // do app. Antes, o único gatilho era o useEffect de mount do
+  // WorkspaceSelector (removido da AppBar do chat no commit 84f07292),
+  // deixando `workspaces` vazio na maioria das sessões — a sidebar então
+  // caía no fallback de agrupamento por data em vez da árvore por
+  // workspace. Roda aqui (raiz, monta antes de qualquer sidebar) em vez
+  // de depender de qual componente específico está montado.
+  useEffect(() => {
+    if (isPublicPath(location.pathname)) return;
+    const { workspaces, hydrate } = useWorkspacesStore.getState();
+    if (workspaces.length === 0) void hydrate();
+  }, [location.pathname]);
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.lang = HTML_LANG_BY_SETTING[language] ?? "en";

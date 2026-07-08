@@ -6,23 +6,35 @@
  * buscar `/auth/me`, deixando o auth-store vazio.
  */
 
+import type { ComponentType } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, cleanup } from "@testing-library/react";
 
-const { redirectSpy } = vi.hoisted(() => ({
+const { redirectSpy, currentPathname } = vi.hoisted(() => ({
   redirectSpy: vi.fn((opts: { to: string }) => {
     throw { ...opts, __isRedirect: true };
   }),
+  currentPathname: { value: "/" },
 }));
 
 vi.mock("@tanstack/react-router", () => ({
   Outlet: () => null,
-  useLocation: () => ({ pathname: "/" }),
+  useLocation: () => ({ pathname: currentPathname.value }),
   createRootRouteWithContext: () => (opts: unknown) => opts,
   redirect: redirectSpy,
 }));
 
+// TitleBar/NetworkStatusBanner/Toaster puxam bridges/contexto irrelevantes
+// pro teste do hydrate de workspaces — stubs simples.
+vi.mock("@/components/layout/title-bar", () => ({ TitleBar: () => null }));
+vi.mock("@/components/layout/network-status-banner", () => ({
+  NetworkStatusBanner: () => null,
+}));
+vi.mock("@/components/ui/toaster", () => ({ Toaster: () => null }));
+
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { ensureAuthenticated } from "../__root";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { ensureAuthenticated, Route } from "../__root";
 
 function jsonRes(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: async () => body } as unknown as Response;
@@ -42,9 +54,27 @@ const VIRTUAL_LOCAL_USER = {
 beforeEach(() => {
   useAuthStore.setState({ user: null, isAuthenticated: false });
   redirectSpy.mockClear();
+  currentPathname.value = "/";
+  useWorkspacesStore.setState({ workspaces: [], active_id: null });
+  // RootComponent reage a `prefers-color-scheme` quando o tema é "system"
+  // (default) — jsdom não implementa matchMedia.
+  window.matchMedia =
+    window.matchMedia ??
+    ((query: string) =>
+      ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }) as unknown as MediaQueryList);
 });
 
 afterEach(() => {
+  cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -141,5 +171,63 @@ describe("ensureAuthenticated — auth_required=true (primeiro acesso / Pro)", (
     expect(useAuthStore.getState().user).toEqual(proUser);
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(redirectSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================================
+// RootComponent — hydrate de workspaces (fix da sidebar caindo no
+// agrupamento por data em vez da árvore por workspace)
+// ============================================================================
+describe("RootComponent — hydrate de workspaces", () => {
+  it("hidrata workspaces ao montar numa rota protegida", async () => {
+    const hydrateSpy = vi
+      .spyOn(useWorkspacesStore.getState(), "hydrate")
+      .mockResolvedValue(undefined);
+    currentPathname.value = "/session/abc";
+
+    const Component = (Route as unknown as { component: ComponentType })
+      .component;
+    render(<Component />);
+
+    expect(hydrateSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("não hidrata em rotas públicas (/auth, /share, /onboarding)", async () => {
+    const hydrateSpy = vi
+      .spyOn(useWorkspacesStore.getState(), "hydrate")
+      .mockResolvedValue(undefined);
+
+    for (const path of ["/auth/signin", "/share/abc", "/onboarding"]) {
+      currentPathname.value = path;
+      const Component = (Route as unknown as { component: ComponentType })
+        .component;
+      const { unmount } = render(<Component />);
+      unmount();
+    }
+
+    expect(hydrateSpy).not.toHaveBeenCalled();
+  });
+
+  it("erro: não re-hidrata se workspaces já foram carregados", async () => {
+    useWorkspacesStore.setState({
+      workspaces: [
+        {
+          id: "w1",
+          name: "vectora",
+          cwd: "/home/vectora",
+          is_git_repo: true,
+        },
+      ] as never,
+    });
+    const hydrateSpy = vi
+      .spyOn(useWorkspacesStore.getState(), "hydrate")
+      .mockResolvedValue(undefined);
+    currentPathname.value = "/session/abc";
+
+    const Component = (Route as unknown as { component: ComponentType })
+      .component;
+    render(<Component />);
+
+    expect(hydrateSpy).not.toHaveBeenCalled();
   });
 });

@@ -180,14 +180,24 @@ class TestOpenRouterKey:
 
 
 class TestOpenRouterCatalog:
-    def _reset_cache(self):
+    @staticmethod
+    def _reset_cache() -> None:
         from backend.api.handlers.gateways import _catalog_cache
 
         _catalog_cache["fetched_at"] = 0.0
         _catalog_cache["models"] = []
 
-    def test_catalog_returns_models(self, client):
+    @pytest.fixture(autouse=True)
+    def _isolated_cache(self):
+        # Reseta antes E depois — o fixture `client` deste arquivo é
+        # module-scoped (mesmo TestClient/app pra todos os testes), então
+        # qualquer estado deixado em `_catalog_cache` por este teste não
+        # pode vazar pro próximo, seja qual for a ordem de execução.
         self._reset_cache()
+        yield
+        self._reset_cache()
+
+    def test_catalog_returns_models(self, client):
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = {
@@ -210,7 +220,6 @@ class TestOpenRouterCatalog:
         assert ids == ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"]
 
     def test_catalog_filters_by_q(self, client):
-        self._reset_cache()
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = {
@@ -233,7 +242,6 @@ class TestOpenRouterCatalog:
         assert ids == ["anthropic/claude-3.5-sonnet"]
 
     def test_catalog_network_error_returns_empty_not_500(self, client):
-        self._reset_cache()
         with patch("httpx.AsyncClient", side_effect=Exception("network down")):
             resp = client.get("/gateways/openrouter/models")
         assert resp.status_code == 200
