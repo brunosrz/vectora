@@ -17,9 +17,30 @@
 
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2, Check, Monitor, Server } from "lucide-react";
+import {
+  Loader2,
+  Check,
+  Monitor,
+  Server,
+  Moon,
+  Sun,
+  Laptop,
+} from "lucide-react";
 import { m } from "@/lib/paraglide/messages";
 import { signalVpsGatePassed } from "@/lib/stores/onboarding-signal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useSettingsStore,
+  SUPPORTED_LANGS,
+  type Lang,
+  type Theme,
+} from "@/lib/stores/settings-store";
 
 type Step = "identity" | "mode" | "vps-token";
 
@@ -39,8 +60,25 @@ function openExternal(url: string): void {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+const THEME_OPTIONS: {
+  value: Theme;
+  labelKey:
+    | "onboarding_pre_theme_system"
+    | "onboarding_pre_theme_dark"
+    | "onboarding_pre_theme_light";
+  icon: typeof Laptop;
+}[] = [
+  { value: "system", labelKey: "onboarding_pre_theme_system", icon: Laptop },
+  { value: "dark", labelKey: "onboarding_pre_theme_dark", icon: Moon },
+  { value: "light", labelKey: "onboarding_pre_theme_light", icon: Sun },
+];
+
 export function PreAuthWizard() {
   const navigate = useNavigate();
+  const language = useSettingsStore((s) => s.language);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const theme = useSettingsStore((s) => s.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
   const [step, setStep] = useState<Step>("identity");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
@@ -102,7 +140,7 @@ export function PreAuthWizard() {
         setTokenError(
           data.error === "not_pro_tier"
             ? m.onboarding_pre_vps_token_invalid()
-            : data.error ?? m.onboarding_pre_vps_token_invalid(),
+            : (data.error ?? m.onboarding_pre_vps_token_invalid()),
         );
         return;
       }
@@ -175,6 +213,55 @@ export function PreAuthWizard() {
                 placeholder={m.onboarding_pre_company_ph()}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-foreground">
+                  {m.onboarding_pre_language_label()}
+                </label>
+                <Select
+                  value={language}
+                  onValueChange={(v) => setLanguage(v as Lang)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {SUPPORTED_LANGS.find((l) => l.value === language)
+                        ?.label ?? language}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUPPORTED_LANGS.map(({ value, label }) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-foreground">
+                  {m.onboarding_pre_theme_label()}
+                </label>
+                <div className="flex rounded-md border border-border overflow-hidden">
+                  {THEME_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setTheme(value)}
+                      title={m[labelKey]()}
+                      aria-label={m[labelKey]()}
+                      aria-pressed={theme === value}
+                      className={`flex-1 flex items-center justify-center py-2 transition-colors ${
+                        theme === value
+                          ? "bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             <button
               type="button"
