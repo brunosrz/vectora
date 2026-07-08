@@ -27,12 +27,12 @@ function AgenticDiagram() {
       aria-hidden
     >
       <span className="text-[12px] leading-4 text-muted-foreground">
-        Resposta
+        {m.agentic_diagram_response()}
       </span>
       <span className="text-[14px] leading-none text-muted-foreground">↑</span>
 
       <div className="rounded-xl border border-border bg-card px-5 py-2 text-[14px] leading-5 text-muted-foreground">
-        Usuário
+        {m.agentic_diagram_user()}
       </div>
 
       <span className="text-[14px] leading-none text-muted-foreground">↓</span>
@@ -45,10 +45,10 @@ function AgenticDiagram() {
         }}
       >
         <span className="text-[14px] font-semibold leading-5 text-primary">
-          Orchestrator
+          {m.agentic_diagram_orchestrator_title()}
         </span>
         <span className="text-[11px] leading-4 text-primary opacity-90">
-          decide · delega · paraleliza
+          {m.agentic_diagram_orchestrator_sub()}
         </span>
       </div>
 
@@ -79,13 +79,13 @@ function AgenticDiagram() {
 
       <div className="flex w-full gap-[25px]">
         <AgentBox
-          title="Coder Agent"
-          sub="fs · terminal · git"
+          title={m.agentic_diagram_coder_title()}
+          sub={m.agentic_diagram_coder_sub()}
           color="var(--primary)"
         />
         <AgentBox
-          title="Search Agent"
-          sub="web · RAG · curadoria"
+          title={m.agentic_diagram_search_title()}
+          sub={m.agentic_diagram_search_sub()}
           color="var(--accent-purple)"
         />
       </div>

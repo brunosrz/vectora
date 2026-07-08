@@ -23,8 +23,16 @@ function RagDiagram() {
       >
         {/* Left column: Documento → Chunking → LanceDB */}
         {[
-          { y: 30, label: "Documento", sub: "PDF · MD · código" },
-          { y: 100, label: "Chunking", sub: "→ embeddings" },
+          {
+            y: 30,
+            label: m.rag_diagram_document_title(),
+            sub: m.rag_diagram_document_sub(),
+          },
+          {
+            y: 100,
+            label: m.rag_diagram_chunking_title(),
+            sub: m.rag_diagram_chunking_sub(),
+          },
         ].map((item) => (
           <g key={item.label}>
             <rect
@@ -93,7 +101,7 @@ function RagDiagram() {
           fontSize="11"
           fontWeight="700"
         >
-          LanceDB
+          {m.rag_diagram_lancedb_title()}
         </text>
         <text
           x="90"
@@ -102,7 +110,7 @@ function RagDiagram() {
           fill="var(--accent-green)"
           fontSize="9"
         >
-          vector store
+          {m.rag_diagram_lancedb_sub()}
         </text>
 
         {/* Left connectors */}
@@ -127,24 +135,24 @@ function RagDiagram() {
         {[
           {
             y: 30,
-            label: "Query",
-            sub: "pergunta do usuário",
+            label: m.rag_diagram_query_title(),
+            sub: m.rag_diagram_query_sub(),
             fill: "color-mix(in srgb, var(--accent-purple) 16%, var(--node-surface))",
             stroke: "var(--accent-purple)",
             textFill: "var(--accent-purple)",
           },
           {
             y: 100,
-            label: "Busca vetorial",
-            sub: "densa · +BM25 no Completo",
+            label: m.rag_diagram_search_title(),
+            sub: m.rag_diagram_search_sub(),
             fill: "var(--node-surface)",
             stroke: "var(--primary)",
             textFill: "var(--primary)",
           },
           {
             y: 170,
-            label: "Reranker",
-            sub: "Cohere/Voyage (opcional)",
+            label: m.rag_diagram_reranker_title(),
+            sub: m.rag_diagram_reranker_sub(),
             fill: "color-mix(in srgb, var(--accent-amber) 16%, var(--node-surface))",
             stroke: "var(--accent-amber)",
             textFill: "var(--accent-amber)",
@@ -231,7 +239,7 @@ function RagDiagram() {
           fontSize="11"
           fontWeight="700"
         >
-          LLM
+          {m.rag_diagram_llm_title()}
         </text>
         <text
           x="200"
@@ -240,7 +248,7 @@ function RagDiagram() {
           fill="var(--primary)"
           fontSize="9"
         >
-          contexto + resposta
+          {m.rag_diagram_llm_sub()}
         </text>
 
         {/* Reranker → LLM */}
