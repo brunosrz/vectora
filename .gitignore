@@ -359,3 +359,4 @@ env.gha
 *.xml
 /docs/.docusaurus
 *.zip
+/vectora/frontend/project.inlang
