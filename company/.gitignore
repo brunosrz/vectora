@@ -14,5 +14,8 @@ __unconfig*
 todos.json
 /agent
 .vercel
+/src/routeTree.gen.ts
+# paraglide i18n compilado (gerado pelo plugin no dev/build)
+/src/paraglide
 
 .vercel
