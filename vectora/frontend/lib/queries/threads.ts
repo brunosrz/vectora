@@ -41,6 +41,10 @@ function toSidebarThread(t: VectoraThread, userId: string): Thread {
     updated_at: t.updated_at,
     metadata: { user_id: userId, title: t.title ?? "" },
     workspace_id: t.workspace_id,
+    // Propaga o modo da sessão (backend: "code" | "chat"). Sem isso o filtro de
+    // pool da sidebar trata tudo como código e sessões de chat vazam pro pool
+    // errado (OUTRAS CONVERSAS). Default "code" alinha ao _normalize_mode.
+    mode: t.mode ?? "code",
   };
 }
 
@@ -58,6 +62,11 @@ export function useThreadsQuery(
     select: (data) => data.threads.map((t) => toSidebarThread(t, userId ?? "")),
     enabled: !!userId,
     staleTime: 30_000,
+    // Cold-start: enquanto o `userId` do auth-store não assenta, a query fica
+    // desabilitada e um cache vazio poderia grudar. Refetch em todo mount
+    // garante que a lista real aparece assim que o auth resolve, sem depender
+    // de uma mutação (1ª mensagem) pra invalidar.
+    refetchOnMount: "always",
   });
 }
 

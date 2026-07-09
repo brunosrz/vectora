@@ -69,6 +69,26 @@ export function groupThreads(threads: Thread[]): GroupedThreads {
   return { today, yesterday, last7Days, older };
 }
 
+/**
+ * Placeholder de workspace para sessões de código cujo `workspace_id` ainda
+ * não achou match na lista (lista não hidratou no boot, ou workspace removido).
+ * Regra de negócio: "OUTRAS CONVERSAS" é exclusiva de sessões de chat — uma
+ * sessão de código NUNCA vira órfã. O grupo sintético se auto-corrige assim
+ * que a lista real hidrata (o `workspace_id` passa a bater com o real).
+ */
+function placeholderWorkspace(id: string): WorkspaceInfo {
+  return {
+    id,
+    name: "",
+    cwd: id,
+    trusted: false,
+    is_git_repo: false,
+    git_remote: null,
+    git_current_branch: null,
+    git_default_branch: null,
+  };
+}
+
 export function groupThreadsByWorkspace(
   threads: Thread[],
   workspaces: WorkspaceInfo[],
@@ -76,27 +96,24 @@ export function groupThreadsByWorkspace(
   const byWorkspace = new Map<string, Thread[]>();
   const orphans: Thread[] = [];
 
+  // Sessão COM workspace_id sempre entra num grupo de workspace (real ou
+  // sintético); só sessões sem workspace_id (chat) caem em orphans.
   threads.forEach((thread) => {
-    const ws = thread.workspace_id
-      ? workspaces.find((w) => w.id === thread.workspace_id)
-      : undefined;
-    if (ws) {
-      const list = byWorkspace.get(ws.id);
+    if (thread.workspace_id) {
+      const list = byWorkspace.get(thread.workspace_id);
       if (list) list.push(thread);
-      else byWorkspace.set(ws.id, [thread]);
+      else byWorkspace.set(thread.workspace_id, [thread]);
     } else {
       orphans.push(thread);
     }
   });
 
-  const groups: WorkspaceThreadGroup[] = workspaces
-    .filter((ws) => byWorkspace.has(ws.id))
-    .map((ws) => {
-      const list = (byWorkspace.get(ws.id) ?? []).toSorted(
-        (a, b) => activityOf(b) - activityOf(a),
-      );
-      return { workspace: ws, threads: list };
-    })
+  const byId = new Map(workspaces.map((w) => [w.id, w]));
+  const groups: WorkspaceThreadGroup[] = [...byWorkspace.entries()]
+    .map(([wsId, list]) => ({
+      workspace: byId.get(wsId) ?? placeholderWorkspace(wsId),
+      threads: list.toSorted((a, b) => activityOf(b) - activityOf(a)),
+    }))
     .toSorted((a, b) => activityOf(b.threads[0]) - activityOf(a.threads[0]));
 
   return { groups, orphans };

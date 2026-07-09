@@ -71,8 +71,10 @@ export const Sidebar = memo(function Sidebar({
   // Chat e Dev são pools separados: a sidebar mostra só as sessões do modo ativo.
   // Sessões legadas sem modo são tratadas como "dev".
   const modeThreads = useMemo(() => {
-    const wanted = chatMode ? "chat" : "dev";
-    return threads.filter((t) => (t.mode ?? "dev") === wanted);
+    // Pools separados: chat vs código. O backend normaliza o modo em
+    // "chat"|"code" (_normalize_mode); sessões legadas sem modo são "code".
+    const wanted = chatMode ? "chat" : "code";
+    return threads.filter((t) => (t.mode ?? "code") === wanted);
   }, [threads, chatMode]);
 
   const filteredThreads = useMemo(() => {
