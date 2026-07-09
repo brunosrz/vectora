@@ -37,9 +37,8 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 function UsageRing({ pct }: { pct: number }) {
   const clamped = Math.min(100, Math.max(0, pct));
   const offset = RING_CIRCUMFERENCE * (1 - clamped / 100);
-  // Minimalista estilo Claude Code: anel pequeno (mesma altura do texto ao
-  // lado) e sempre azul — o nível de uso (verde/âmbar/vermelho) fica na barra
-  // do popover, não no anel da appbar.
+  // Anel de progresso do uso da janela de contexto: sempre azul; o nível
+  // (verde/âmbar/vermelho) aparece na barra dentro do popover.
   return (
     <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 -rotate-90" aria-hidden>
       <circle

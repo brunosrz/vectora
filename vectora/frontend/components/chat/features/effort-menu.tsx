@@ -1,13 +1,12 @@
 "use client";
 
 /**
- * EffortMenu — botão de esforço de raciocínio na appbar (estilo Claude Code).
+ * EffortMenu — seletor de esforço de raciocínio na appbar.
  *
- * Único parâmetro "por resposta" que fica na appbar, ao lado do seletor de
- * modelo (substitui o antigo ChatParamsMenu). A escolha persiste no
- * settings-store (reasoningEffort) e vai em cada request como
- * config.reasoning_effort. Mesmo padrão de Popover com portal do
- * PermissionModeMenu (escapa da stacking context do composer).
+ * Mostra o nível atual (reasoningEffort) e a lista de níveis; a escolha
+ * persiste no settings-store e vai em cada request como config.reasoning_effort.
+ * Usa Popover com portal para escapar da stacking context do composer — um
+ * `absolute` comum renderiza atrás da sidebar.
  */
 
 import { useState } from "react";

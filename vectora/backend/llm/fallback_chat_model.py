@@ -8,8 +8,8 @@ recarregando o LLM via ``load_llm`` e registrando a troca em
 É um ``BaseChatModel`` (não ``with_fallbacks``) porque o deep-agent chama
 ``bind_tools`` no modelo — ``RunnableWithFallbacks`` não expõe ``bind_tools``.
 
-Invariante de streaming (regressão crítica, não quebrar): ``_astream`` delega
-DIRETO no ``_astream``/``_agenerate`` internos do provider (desembrulhando o
+Invariante de streaming: ``_astream`` delega DIRETO no
+``_astream``/``_agenerate`` internos do provider (desembrulhando o
 ``RunnableBinding`` do bind_tools), nunca no ``.astream()``/``.ainvoke()``
 públicos. O caminho público instrumenta um SEGUNDO run "chat_model" aninhado
 no ``astream_events`` — cada token sai duas vezes no SSE (um do wrapper, um do

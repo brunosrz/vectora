@@ -70,11 +70,10 @@ export function groupThreads(threads: Thread[]): GroupedThreads {
 }
 
 /**
- * Placeholder de workspace para sessões de código cujo `workspace_id` ainda
- * não achou match na lista (lista não hidratou no boot, ou workspace removido).
- * Regra de negócio: "OUTRAS CONVERSAS" é exclusiva de sessões de chat — uma
- * sessão de código NUNCA vira órfã. O grupo sintético se auto-corrige assim
- * que a lista real hidrata (o `workspace_id` passa a bater com o real).
+ * Placeholder de workspace para uma sessão de código cujo `workspace_id` não
+ * está na lista carregada (ainda hidratando, ou workspace removido). Invariante:
+ * "OUTRAS CONVERSAS" contém só sessões de chat — uma sessão de código nunca é
+ * órfã. O grupo sintético dá lugar ao real quando a lista carrega.
  */
 function placeholderWorkspace(id: string): WorkspaceInfo {
   return {

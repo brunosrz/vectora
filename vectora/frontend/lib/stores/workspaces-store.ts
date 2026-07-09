@@ -512,12 +512,10 @@ export const useWorkspacesStore = create<WorkspacesState>()(
               removeItem: () => {},
             },
       ),
-      // Persiste `active_id` E a lista de `workspaces` (stale-while-revalidate).
-      // A lista precisa estar disponível no 1º paint: o agrupamento da sidebar
-      // (groupThreadsByWorkspace) casa cada sessão de código ao seu workspace
-      // por id; com a lista vazia no boot, as sessões de código "saltavam" pra
-      // OUTRAS CONVERSAS até `/workspaces` responder. `hydrate()` revalida
-      // imediatamente, então o risco de workspace stale é uma janela mínima.
+      // Persiste `active_id` e a lista de `workspaces` (stale-while-revalidate).
+      // A lista precisa existir no 1º paint: `groupThreadsByWorkspace` casa cada
+      // sessão de código ao seu workspace por id. `hydrate()` revalida logo, então
+      // a janela de dado stale é mínima.
       partialize: (state) => ({
         active_id: state.active_id,
         workspaces: state.workspaces,

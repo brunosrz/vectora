@@ -1,16 +1,11 @@
 """E2E do pipeline de streaming: FallbackChatModel → astream_events → adapt_stream.
 
-Regressão do bug crítico "cada token duplicado, cada ocorrência em linha
-própria": os testes unitários anteriores chamavam ``fcm._astream`` direto com
-fakes duck-typed e ficavam verdes mesmo com o produto quebrado, porque nunca
-exercitavam a instrumentação real de callbacks do ``astream_events`` (que é
-onde o run aninhado do provider interno duplicava cada ``on_chat_model_stream``).
-
-Aqui o caminho é o de produção: um ``BaseChatModel`` REAL (GenericFakeChatModel)
+Percorre o caminho de produção: um ``BaseChatModel`` real (GenericFakeChatModel)
 por baixo do ``FallbackChatModel``, invocado via ``ainvoke`` dentro de um
 runnable (como o nó `model` do LangGraph faz), com os eventos do
-``astream_events`` v2 alimentando o ``adapt_stream`` — exatamente o SSE que o
-frontend consome.
+``astream_events`` v2 alimentando o ``adapt_stream`` — o mesmo SSE que o
+frontend consome. Verifica que cada token sai exatamente uma vez, sem
+``message_break`` espúrio entre tokens do mesmo segmento.
 """
 
 from __future__ import annotations
@@ -114,17 +109,15 @@ class TestStreamDedupE2E:
         out = await _tokens_via_pipeline("Olá tudo bem")
         tokens = [e["content"] for e in out if e["type"] == "token"]
         assert "".join(tokens) == "Olá tudo bem"
-        # A regressão duplicava cada token (um do wrapper, um do provider
-        # interno aninhado) — aqui garantimos unicidade token a token.
+        # Um token = um evento no SSE, na ordem original.
         assert tokens == ["Olá", " ", "tudo", " ", "bem"], (
             f"tokens duplicados ou fora de ordem: {tokens}"
         )
 
     @pytest.mark.asyncio
     async def test_nenhum_message_break_espurio(self):
-        # A duplicação vinha acompanhada de um message_break entre cada par
-        # (o nó emissor alternava wrapper ↔ provider), que o frontend
-        # renderizava como quebra de linha a cada token.
+        # Um único emissor de tokens não deve produzir message_break entre eles
+        # (o frontend renderiza message_break como quebra de segmento).
         out = await _tokens_via_pipeline("Olá tudo bem")
         assert not any(e["type"] == "message_break" for e in out)
 
@@ -143,14 +136,13 @@ class TestStreamDedupE2E:
 
     @pytest.mark.asyncio
     async def test_texto_longo_sem_duplicacao(self):
-        # >50 tokens — a duplicação escalava com o tamanho; texto longo é o
-        # cenário onde o bug era mais gritante.
+        # >50 tokens: unicidade token a token vale em resposta longa.
         words = " ".join(f"palavra{i}" for i in range(60))
         out = await _tokens_via_pipeline(words)
         joined = "".join(_token_contents(out))
         assert joined == words
         assert not any(e["type"] == "message_break" for e in out)
-        # Nenhum token repetido consecutivamente (assinatura da duplicação).
+        # Nenhum token não-vazio repetido consecutivamente.
         toks = _token_contents(out)
         assert all(a != b for a, b in pairwise(toks) if a.strip())
 
@@ -218,9 +210,9 @@ class TestStreamDedupE2E:
 
     @pytest.mark.asyncio
     async def test_replay_com_reasoning_no_historico_streama_limpo(self):
-        # Integração end-to-end do _strip_reasoning_blocks: histórico com um
-        # AIMessage do Command A+ (content = lista reasoning+text) não pode
-        # quebrar o stream do turno seguinte (era o crash do langchain_cohere).
+        # _strip_reasoning_blocks end-to-end: um AIMessage do Command A+ no
+        # histórico (content = lista reasoning+text) não pode quebrar o stream
+        # do turno seguinte no langchain_cohere.
         history: list[BaseMessage] = [
             HumanMessage(content="Olá"),
             AIMessage(

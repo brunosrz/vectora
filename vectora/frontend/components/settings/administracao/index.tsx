@@ -52,9 +52,8 @@ export function AdminDialog() {
         className="p-6 gap-4"
       >
         <SettingsGroupTabs active="admin" />
-        {/* Título só pra leitor de tela: as tabs (SettingsGroupTabs) já
-            rotulam "Administração" visualmente; o DialogTitle continua
-            presente por acessibilidade (Radix exige), mas oculto. */}
+        {/* DialogHeader oculto: o Radix Dialog exige um título acessível; o
+            rótulo visível vem das tabs. */}
         <DialogHeader className="sr-only">
           <DialogTitle>{msg.admin_dialog_title()}</DialogTitle>
           <DialogDescription>{msg.admin_dialog_desc()}</DialogDescription>

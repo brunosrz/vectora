@@ -372,8 +372,7 @@ export function PreferenciasTab() {
         </Select>
       </div>
 
-      {/* Mostrar tool calls no chat (antes ficava no menu de parâmetros do
-          composer, agora exclusivo das preferências). */}
+      {/* Exibe as chamadas de tool na interface do chat. */}
       <div className="flex items-center justify-between gap-3">
         <Label htmlFor="show-tool-calls" className="cursor-pointer">
           {m.settings_chat_show_tool_calls()}
