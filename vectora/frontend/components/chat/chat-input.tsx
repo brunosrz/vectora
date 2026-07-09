@@ -18,7 +18,7 @@ import {
 import { FilePreviewGrid } from "./features/file-preview-grid";
 import { VoiceInputButton } from "./features/voice-input-button";
 import { PermissionModeMenu } from "./features/permission-mode-menu";
-import { ChatParamsMenu } from "./features/chat-params-menu";
+import { EffortMenu } from "./features/effort-menu";
 import { PlusMenu } from "./features/plus-menu";
 import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
@@ -425,7 +425,7 @@ export function ChatInput({
             </div>
 
             <div className="flex items-center gap-1 min-w-0 justify-end">
-              <ChatParamsMenu />
+              <EffortMenu />
               {agentConfig && onAgentConfigChange && (
                 <ModelSelector
                   value={agentConfig.model}

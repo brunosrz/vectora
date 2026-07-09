@@ -236,10 +236,7 @@ export function useStreamHandler({
       if (!settings.chatMode && activeWorkspaceId)
         config.workspace_id = activeWorkspaceId;
       config.permission_mode = settings.permissionMode;
-      // Modo rápido força esforço mínimo; senão usa o nível escolhido.
-      config.reasoning_effort = settings.fastMode
-        ? "low"
-        : settings.reasoningEffort;
+      config.reasoning_effort = settings.reasoningEffort;
 
       // Converte ImageAttachment[] → Attachment[] para a API (F1)
       const attachments =

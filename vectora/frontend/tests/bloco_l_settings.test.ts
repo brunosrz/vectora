@@ -72,27 +72,10 @@ describe("useSettingsStore — valores padrão", () => {
     expect(useSettingsStore.getState().reasoningEffort).toBe("medium");
   });
 
-  it("fastMode deve ser false por padrão (R4)", async () => {
-    const { useSettingsStore } = await getStore();
-    expect(useSettingsStore.getState().fastMode).toBe(false);
-  });
-
-  it("verbosity deve ser 'normal' por padrão", async () => {
-    const { useSettingsStore } = await getStore();
-    const state = useSettingsStore.getState();
-    expect(state.verbosity).toBe("normal");
-  });
-
   it("theme deve ser 'system' por padrão", async () => {
     const { useSettingsStore } = await getStore();
     const state = useSettingsStore.getState();
     expect(state.theme).toBe("system");
-  });
-
-  it("historyLimit deve ser 50 por padrão", async () => {
-    const { useSettingsStore } = await getStore();
-    const state = useSettingsStore.getState();
-    expect(state.historyLimit).toBe(50);
   });
 
   it("customSystemPrompt deve ser string vazia por padrão", async () => {
@@ -120,18 +103,6 @@ describe("useSettingsStore — mutações de estado", () => {
     expect(useSettingsStore.getState().requireHitl).toBe(true);
   });
 
-  it("setVerbosity aceita 'concise'", async () => {
-    const { useSettingsStore } = await getStore();
-    useSettingsStore.getState().setVerbosity("concise");
-    expect(useSettingsStore.getState().verbosity).toBe("concise");
-  });
-
-  it("setVerbosity aceita 'detailed'", async () => {
-    const { useSettingsStore } = await getStore();
-    useSettingsStore.getState().setVerbosity("detailed");
-    expect(useSettingsStore.getState().verbosity).toBe("detailed");
-  });
-
   it("setTheme aceita 'dark'", async () => {
     const { useSettingsStore } = await getStore();
     useSettingsStore.getState().setTheme("dark");
@@ -142,12 +113,6 @@ describe("useSettingsStore — mutações de estado", () => {
     const { useSettingsStore } = await getStore();
     useSettingsStore.getState().setTheme("light");
     expect(useSettingsStore.getState().theme).toBe("light");
-  });
-
-  it("setHistoryLimit altera historyLimit", async () => {
-    const { useSettingsStore } = await getStore();
-    useSettingsStore.getState().setHistoryLimit(100);
-    expect(useSettingsStore.getState().historyLimit).toBe(100);
   });
 
   it("setCustomSystemPrompt altera customSystemPrompt", async () => {
@@ -177,12 +142,6 @@ describe("useSettingsStore — mutações de estado", () => {
     useSettingsStore.getState().setReasoningEffort("high");
     expect(useSettingsStore.getState().reasoningEffort).toBe("high");
   });
-
-  it("setFastMode altera fastMode (R4)", async () => {
-    const { useSettingsStore } = await getStore();
-    useSettingsStore.getState().setFastMode(true);
-    expect(useSettingsStore.getState().fastMode).toBe(true);
-  });
 });
 
 describe("useSettingsStore — reset", () => {
@@ -198,12 +157,9 @@ describe("useSettingsStore — reset", () => {
     // Modifica vários campos
     s.setShowToolCalls(true);
     s.setTheme("dark");
-    s.setVerbosity("detailed");
-    s.setHistoryLimit(200);
     s.setCustomSystemPrompt("Seja breve.");
     s.setPermissionMode("bypass");
     s.setReasoningEffort("max");
-    s.setFastMode(true);
 
     // Reset
     useSettingsStore.getState().resetSettings();
@@ -211,13 +167,10 @@ describe("useSettingsStore — reset", () => {
     const after = useSettingsStore.getState();
     expect(after.showToolCalls).toBe(false);
     expect(after.requireHitl).toBe(true);
-    expect(after.verbosity).toBe("normal");
     expect(after.theme).toBe("system");
-    expect(after.historyLimit).toBe(50);
     expect(after.customSystemPrompt).toBe("");
     expect(after.permissionMode).toBe("ask");
     expect(after.reasoningEffort).toBe("medium");
-    expect(after.fastMode).toBe(false);
   });
 });
 

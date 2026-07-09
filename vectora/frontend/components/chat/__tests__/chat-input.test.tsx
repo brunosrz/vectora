@@ -16,22 +16,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ChatInput } from "../chat-input";
 import { m } from "@/lib/paraglide/messages";
 
-// Estado mockável para o settings store — cobre ChatInput e ChatParamsMenu.
+// Estado mockável para o settings store — cobre ChatInput e EffortMenu.
 const mockSettings = {
   chatMode: false,
   setChatMode: vi.fn(),
   ideMode: false,
   setIdeMode: vi.fn(),
-  verbosity: "normal" as const,
   reasoningEffort: "medium" as const,
-  fastMode: false,
-  historyLimit: 50,
   showToolCalls: false,
   permissionMode: "ask" as const,
-  setVerbosity: vi.fn(),
   setReasoningEffort: vi.fn(),
-  setFastMode: vi.fn(),
-  setHistoryLimit: vi.fn(),
   setShowToolCalls: vi.fn(),
   setPermissionMode: vi.fn(),
 };
@@ -40,6 +34,7 @@ vi.mock("@/lib/stores/settings-store", () => ({
   useSettingsStore: (selector?: (s: typeof mockSettings) => unknown) =>
     selector ? selector(mockSettings) : mockSettings,
   PERMISSION_MODES: ["ask", "accept_edits", "plan", "auto", "bypass"],
+  REASONING_EFFORTS: ["low", "medium", "high", "max"],
 }));
 
 const mockWsState = {

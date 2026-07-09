@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 
-import {
-  formatTokens,
-  usageBarColor,
-  usageLevel,
-  usageRingColor,
-} from "@/lib/utils/usage";
+import { formatTokens, usageBarColor, usageLevel } from "@/lib/utils/usage";
 import {
   getContextWindow,
   type ModelOption,
@@ -42,13 +37,11 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 function UsageRing({ pct }: { pct: number }) {
   const clamped = Math.min(100, Math.max(0, pct));
   const offset = RING_CIRCUMFERENCE * (1 - clamped / 100);
-  const color = usageRingColor(usageLevel(pct));
+  // Minimalista estilo Claude Code: anel pequeno (mesma altura do texto ao
+  // lado) e sempre azul — o nível de uso (verde/âmbar/vermelho) fica na barra
+  // do popover, não no anel da appbar.
   return (
-    <svg
-      viewBox="0 0 20 20"
-      className="h-[18px] w-[18px] -rotate-90"
-      aria-hidden
-    >
+    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 -rotate-90" aria-hidden>
       <circle
         cx="10"
         cy="10"
@@ -68,7 +61,7 @@ function UsageRing({ pct }: { pct: number }) {
         stroke="currentColor"
         strokeDasharray={RING_CIRCUMFERENCE}
         strokeDashoffset={offset}
-        className={`${color} transition-all duration-300`}
+        className="text-blue-500 transition-all duration-300"
       />
     </svg>
   );

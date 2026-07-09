@@ -15,7 +15,6 @@ import { getDefaultModel } from "@/lib/config/deployment-config";
 // Tipos
 // ---------------------------------------------------------------------------
 
-export type Verbosity = "concise" | "normal" | "detailed";
 export type Theme = "light" | "dark" | "system";
 /** "default" = paleta padrão do Vectora; "custom" = `customThemeColors`;
  *  qualquer outro valor é o `id` de um item em `THEME_PRESETS`. */
@@ -75,16 +74,12 @@ export interface SettingsState {
   showToolCalls: boolean;
   /** Solicitar confirmação antes de ações destrutivas (HITL antecipado) */
   requireHitl: boolean;
-  /** Nível de detalhe das respostas */
-  verbosity: Verbosity;
   /** Tema da interface (claro/escuro/sistema) */
   theme: Theme;
   /** Paleta de cores aplicada por cima do tema (presets ou customizada) */
   themePreset: ThemePreset;
   /** Cores base da paleta customizada (quando themePreset === "custom") */
   customThemeColors: BaseThemeColors | null;
-  /** Limite de mensagens exibidas no histórico */
-  historyLimit: number;
   /** Instrução personalizada prefixada ao system prompt */
   customSystemPrompt: string;
   /** Blocos de instrução de treinamento adicionais (um item por bloco) */
@@ -95,8 +90,6 @@ export interface SettingsState {
   permissionMode: PermissionMode;
   /** Esforço de raciocínio do modelo (R4) */
   reasoningEffort: ReasoningEffort;
-  /** Modo rápido — desliga reasoning/thinking para latência mínima (R4) */
-  fastMode: boolean;
   /** Largura da sidebar em px (desktop), arrastável pela borda direita. */
   sidebarWidth: number;
   /** Lado da sidebar de sessões; workbench fica no lado oposto. */
@@ -115,17 +108,14 @@ export interface SettingsState {
   // Ações
   setShowToolCalls: (v: boolean) => void;
   setRequireHitl: (v: boolean) => void;
-  setVerbosity: (v: Verbosity) => void;
   setTheme: (v: Theme) => void;
   setThemePreset: (v: ThemePreset) => void;
   setCustomThemeColors: (v: BaseThemeColors | null) => void;
-  setHistoryLimit: (v: number) => void;
   setCustomSystemPrompt: (v: string) => void;
   setTrainingInstructions: (v: string[]) => void;
   setLanguage: (v: Lang) => void;
   setPermissionMode: (v: PermissionMode) => void;
   setReasoningEffort: (v: ReasoningEffort) => void;
-  setFastMode: (v: boolean) => void;
   setSidebarWidth: (v: number) => void;
   setSidebarPosition: (v: SidebarPosition) => void;
   setChatMode: (v: boolean) => void;
@@ -146,17 +136,14 @@ const SIDEBAR_MAX_WIDTH = 480;
 const DEFAULTS = {
   showToolCalls: false,
   requireHitl: true,
-  verbosity: "normal" as Verbosity,
   theme: "system" as Theme,
   themePreset: "default" as ThemePreset,
   customThemeColors: null as BaseThemeColors | null,
-  historyLimit: 50,
   customSystemPrompt: "",
   trainingInstructions: [] as string[],
   language: "en" as Lang, // Sobrescrito pelo detectLanguage() no create()
   permissionMode: "ask" as PermissionMode,
   reasoningEffort: "medium" as ReasoningEffort,
-  fastMode: false,
   sidebarWidth: 224,
   sidebarPosition: "left" as SidebarPosition,
   chatMode: false,
@@ -191,11 +178,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       setShowToolCalls: (v) => set({ showToolCalls: v }),
       setRequireHitl: (v) => set({ requireHitl: v }),
-      setVerbosity: (v) => set({ verbosity: v }),
       setTheme: (v) => set({ theme: v }),
       setThemePreset: (v) => set({ themePreset: v }),
       setCustomThemeColors: (v) => set({ customThemeColors: v }),
-      setHistoryLimit: (v) => set({ historyLimit: v }),
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
       setTrainingInstructions: (v) => set({ trainingInstructions: v }),
       setLanguage: (v) => {
@@ -210,7 +195,6 @@ export const useSettingsStore = create<SettingsState>()(
       },
       setPermissionMode: (v) => set({ permissionMode: v }),
       setReasoningEffort: (v) => set({ reasoningEffort: v }),
-      setFastMode: (v) => set({ fastMode: v }),
       setSidebarWidth: (v) =>
         set({
           sidebarWidth: Math.max(
@@ -245,17 +229,14 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({
         showToolCalls: state.showToolCalls,
         requireHitl: state.requireHitl,
-        verbosity: state.verbosity,
         theme: state.theme,
         themePreset: state.themePreset,
         customThemeColors: state.customThemeColors,
-        historyLimit: state.historyLimit,
         customSystemPrompt: state.customSystemPrompt,
         trainingInstructions: state.trainingInstructions,
         language: state.language,
         permissionMode: state.permissionMode,
         reasoningEffort: state.reasoningEffort,
-        fastMode: state.fastMode,
         sidebarWidth: state.sidebarWidth,
         chatMode: state.chatMode,
         ideMode: state.ideMode,

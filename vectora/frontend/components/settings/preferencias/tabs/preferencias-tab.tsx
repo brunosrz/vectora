@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   useSettingsStore,
   SUPPORTED_LANGS,
@@ -226,6 +227,8 @@ export function PreferenciasTab() {
     setLanguage,
     sidebarPosition,
     setSidebarPosition,
+    showToolCalls,
+    setShowToolCalls,
     setCustomSystemPrompt,
     setTrainingInstructions,
   } = useSettingsStore();
@@ -367,6 +370,19 @@ export function PreferenciasTab() {
             </SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Mostrar tool calls no chat (antes ficava no menu de parâmetros do
+          composer, agora exclusivo das preferências). */}
+      <div className="flex items-center justify-between gap-3">
+        <Label htmlFor="show-tool-calls" className="cursor-pointer">
+          {m.settings_chat_show_tool_calls()}
+        </Label>
+        <Switch
+          id="show-tool-calls"
+          checked={showToolCalls}
+          onCheckedChange={setShowToolCalls}
+        />
       </div>
 
       {/* System prompt personalizado */}
