@@ -8,11 +8,15 @@ recarregando o LLM via ``load_llm`` e registrando a troca em
 É um ``BaseChatModel`` (não ``with_fallbacks``) porque o deep-agent chama
 ``bind_tools`` no modelo — ``RunnableWithFallbacks`` não expõe ``bind_tools``.
 
-Streaming preservado: ``_astream`` apenas re-yielda os ``ChatGenerationChunk`` do
-modelo interno; a base ``BaseChatModel.astream`` dispara ``on_llm_new_token`` por
-chunk (o que alimenta ``on_chat_model_stream`` consumido pelo handler de chat).
-A troca só ocorre se a quota estourar **antes** do primeiro chunk — depois disso
-o stream já começou e não dá para reiniciar.
+Invariante de streaming (regressão crítica, não quebrar): ``_astream`` delega
+DIRETO no ``_astream``/``_agenerate`` internos do provider (desembrulhando o
+``RunnableBinding`` do bind_tools), nunca no ``.astream()``/``.ainvoke()``
+públicos. O caminho público instrumenta um SEGUNDO run "chat_model" aninhado
+no ``astream_events`` — cada token sai duas vezes no SSE (um do wrapper, um do
+provider), com ``message_break`` espúrio entre eles (o nó emissor alterna),
+que o frontend renderiza como token duplicado em linha própria. O run único é
+o deste wrapper: o ``_agenerate_with_cache`` da base dispara ``on_llm_new_token``
+por chunk re-yieldado, exatamente uma vez.
 """
 
 from __future__ import annotations
@@ -21,8 +25,9 @@ from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import BaseMessage
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from langchain_core.messages import AIMessage, BaseMessage
+from langchain_core.outputs import ChatGenerationChunk, ChatResult
+from langchain_core.runnables import RunnableBinding
 
 
 async def _emit_switch(from_model: str, to_model: str) -> None:
@@ -40,6 +45,70 @@ async def _emit_switch(from_model: str, to_model: str) -> None:
         )
     except Exception:
         pass
+
+
+def _unwrap_binding(inner: Any) -> tuple[Any, dict[str, Any]]:
+    """Desembrulha ``RunnableBinding`` aninhados até o BaseChatModel concreto.
+
+    ``bind_tools`` devolve ``RunnableBinding(bound=<modelo>, kwargs={tools...})``;
+    os kwargs de bind precisam voltar como kwargs de chamada quando invocamos o
+    ``_astream``/``_agenerate`` internos diretamente.
+    """
+    bind_kwargs: dict[str, Any] = {}
+    while isinstance(inner, RunnableBinding):
+        bind_kwargs = {**inner.kwargs, **bind_kwargs}
+        inner = inner.bound
+    return inner, bind_kwargs
+
+
+def _is_reasoning_block(block: Any) -> bool:
+    return isinstance(block, dict) and block.get("type") == "reasoning"
+
+
+def _text_of(block: Any) -> str | None:
+    """Texto do bloco se for um bloco ``text``; None caso contrário."""
+    if isinstance(block, dict) and block.get("type") == "text":
+        return str(block.get("text", ""))
+    return None
+
+
+def _strip_reasoning_blocks(messages: list[BaseMessage]) -> list[BaseMessage]:
+    """Sanitiza o content de AIMessages do histórico antes do replay.
+
+    Modelos com raciocínio (ex.: Cohere Command A+) devolvem o content como
+    lista de blocos incluindo ``{"type": "reasoning", ...}`` e blocos ``text``
+    com metadados de streaming (``index``). O checkpointer persiste a mensagem
+    como veio; no turno seguinte, o replay quebra o provider de dois jeitos:
+
+    - ``reasoning`` não existe no schema do ``langchain_cohere``
+      (ValidationError em ``AssistantChatMessageV2``);
+    - o campo extra ``index`` dos blocos ``text`` vaza pro request e a API da
+      Cohere rejeita com 422 ``unknown field: parameter 'index'``.
+
+    Regras: remove blocos ``reasoning`` (raciocínio de turnos passados não
+    precisa voltar); se o que sobra é só texto, colapsa pra string simples
+    (formato que todo provider aceita sem risco de campos extras); se sobra
+    mistura (tool_use/thinking + text), mantém a lista mas reduz os blocos
+    ``text`` a ``{"type", "text"}``. Blocos ``thinking`` (Anthropic, exigidos
+    no replay de tool-use) ficam intactos.
+    """
+    out: list[BaseMessage] = []
+    for msg in messages:
+        sanitized = msg
+        if isinstance(msg, AIMessage) and isinstance(msg.content, list):
+            kept = [b for b in msg.content if not _is_reasoning_block(b)]
+            texts = [_text_of(b) for b in kept]
+            if all(t is not None for t in texts):
+                new_content: str | list[Any] = "".join(t or "" for t in texts)
+            else:
+                new_content = [
+                    b if _text_of(b) is None else {"type": "text", "text": _text_of(b)}
+                    for b in kept
+                ]
+            if new_content != msg.content:
+                sanitized = msg.model_copy(update={"content": new_content})
+        out.append(sanitized)
+    return out
 
 
 class FallbackChatModel(BaseChatModel):
@@ -98,20 +167,22 @@ class FallbackChatModel(BaseChatModel):
             record_switch,
         )
 
+        messages = _strip_reasoning_blocks(messages)
         candidates = self._candidates()
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidates):
-            inner = self._inner(mid)
+            model, bind_kwargs = _unwrap_binding(self._inner(mid))
             streamed = False
             try:
-                # Passa o run_manager filho para o modelo interno ligar a hierarquia de callbacks
-                # e permitir a deduplicação automática de streams no adapters.py.
-                inner_callbacks = run_manager.get_child() if run_manager else None
-                async for msg_chunk in inner.astream(
-                    messages, stop=stop, callbacks=inner_callbacks, **kwargs
+                # _astream interno direto, com run_manager=None: o provider só
+                # yielda chunks (implementações internas não emitem callbacks
+                # sem run_manager) e o run/eventos ficam exclusivamente por
+                # conta deste wrapper — um token = um on_chat_model_stream.
+                async for chunk in model._astream(
+                    messages, stop=stop, **{**bind_kwargs, **kwargs}
                 ):
                     streamed = True
-                    yield ChatGenerationChunk(message=msg_chunk)
+                    yield chunk
                 return
             except Exception as exc:
                 # Troca em quota ou falha transiente (timeout/conexão), mas
@@ -143,16 +214,17 @@ class FallbackChatModel(BaseChatModel):
             record_switch,
         )
 
+        messages = _strip_reasoning_blocks(messages)
         candidates = self._candidates()
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidates):
-            inner = self._inner(mid)
+            model, bind_kwargs = _unwrap_binding(self._inner(mid))
             try:
-                inner_callbacks = run_manager.get_child() if run_manager else None
-                msg = await inner.ainvoke(
-                    messages, stop=stop, callbacks=inner_callbacks, **kwargs
+                # Mesmo invariante do _astream: _agenerate interno direto, sem
+                # segundo run público instrumentado.
+                return await model._agenerate(
+                    messages, stop=stop, **{**bind_kwargs, **kwargs}
                 )
-                return ChatResult(generations=[ChatGeneration(message=msg)])
             except Exception as exc:
                 if not (is_quota_error(exc) or is_transient_error(exc)):
                     raise
@@ -172,5 +244,6 @@ class FallbackChatModel(BaseChatModel):
         **kwargs: Any,
     ) -> ChatResult:
         # Caminho síncrono (raro no chat) — usa o primário, sem fallback.
-        msg = self._inner(self.primary_model_id).invoke(messages, stop=stop, **kwargs)
-        return ChatResult(generations=[ChatGeneration(message=msg)])
+        messages = _strip_reasoning_blocks(messages)
+        model, bind_kwargs = _unwrap_binding(self._inner(self.primary_model_id))
+        return model._generate(messages, stop=stop, **{**bind_kwargs, **kwargs})
