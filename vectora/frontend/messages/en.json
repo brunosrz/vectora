@@ -516,7 +516,6 @@
   "settings_group_environment": "Environment",
   "settings_group_admin": "Administration",
   "admin_menu_label": "Administration",
-  "admin_header_desc": "Administration panel — root and admin only",
   "admin_tab_users": "Users",
   "admin_tab_tools": "Tools",
   "admin_tab_saferoots": "Safe Folders",

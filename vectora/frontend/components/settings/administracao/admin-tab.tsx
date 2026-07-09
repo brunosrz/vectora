@@ -21,7 +21,6 @@ import {
   Loader2,
   Pencil,
   RefreshCw,
-  Shield,
   Trash2,
   UserPlus,
   Users,
@@ -1549,14 +1548,6 @@ export function AdminTab() {
 
   return (
     <div className="space-y-4">
-      {/* Header com badge de aviso */}
-      <div className="flex items-center gap-2">
-        <Shield className="w-4 h-4 text-amber-500" />
-        <span className="text-xs text-muted-foreground">
-          {m.admin_header_desc()}
-        </span>
-      </div>
-
       {/* Sub-tabs */}
       <div className="flex gap-1 border-b pb-0">
         {visibleTabs.map((tab) => (

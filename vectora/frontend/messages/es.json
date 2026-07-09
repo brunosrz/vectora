@@ -516,7 +516,6 @@
   "settings_group_environment": "Entorno",
   "settings_group_admin": "Administración",
   "admin_menu_label": "Administración",
-  "admin_header_desc": "Panel de administración — solo root y admin",
   "admin_tab_users": "Usuarios",
   "admin_tab_tools": "Herramientas",
   "admin_tab_saferoots": "Carpetas Seguras",
