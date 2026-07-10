@@ -8,3 +8,5 @@ resources/
 
 # Ambiente local
 .env.local
+
+.vercel

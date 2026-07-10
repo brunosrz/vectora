@@ -1,3 +1,11 @@
+# Artefatos de deploy — podem conter tokens/credenciais (Vercel grava
+# .vercel/ ao deployar; wrangler lê .dev.vars). Ignorar globalmente, em
+# qualquer subdir, para que `git add .` nunca os stageie e o hook
+# detect-private-key nunca tropece neles.
+.vercel/
+.dev.vars
+.dev.vars.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
