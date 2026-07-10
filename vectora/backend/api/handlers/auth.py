@@ -155,6 +155,7 @@ async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
     """
     from backend.cli.keys import upsert_env_key
     from backend.rbac.auth import has_users
+    from backend.services.local_user import write_local_user
 
     if await has_users():
         raise HTTPException(
@@ -167,16 +168,13 @@ async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
         raise HTTPException(status_code=422, detail="Nome é obrigatório.")
     company = body.company.strip()
 
+    # No .env vai só o flag de modo (config de runtime). Nome/empresa do
+    # usuário local são dados não-secretos → store app-owned, nunca no .env.
     env_file = _env_file()
     upsert_env_key(env_file, "VECTORA_AUTH_REQUIRED", "false")
-    upsert_env_key(env_file, "VECTORA_LOCAL_USER_NAME", name)
-    if company:
-        upsert_env_key(env_file, "VECTORA_LOCAL_USER_COMPANY", company)
+    write_local_user(name, company)
 
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
-    os.environ["VECTORA_LOCAL_USER_NAME"] = name
-    if company:
-        os.environ["VECTORA_LOCAL_USER_COMPANY"] = company
 
     from backend.settings import settings as settings_singleton
 
