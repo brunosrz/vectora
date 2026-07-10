@@ -7,6 +7,11 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import type { AuthUser } from "@/lib/types/auth";
 import { m } from "@/lib/paraglide/messages";
 import { consumeVpsGatePassed } from "@/lib/stores/onboarding-signal";
+import {
+  slugifyUsername,
+  checkUsername,
+  type UsernameStatus,
+} from "@/lib/api/username";
 
 /** Tamanho mínimo de senha — espelha a validação do backend. */
 const PASSWORD_MIN = 8;
@@ -50,6 +55,16 @@ function SignUpPage() {
   );
 
   const [name, setName] = useState(nameFromUrl ?? "");
+  const [username, setUsername] = useState(() =>
+    slugifyUsername(nameFromUrl ?? ""),
+  );
+  // Enquanto o usuário não editar o username manualmente, ele segue o slug do
+  // nome. Após a primeira edição, para de auto-sincronizar.
+  const [usernameEdited, setUsernameEdited] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus | null>(
+    null,
+  );
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -116,10 +131,55 @@ function SignUpPage() {
     };
   }, [navigate, inviteFromUrl]);
 
+  // Auto-preenche o username a partir do nome enquanto não houver edição manual.
+  useEffect(() => {
+    if (!usernameEdited) setUsername(slugifyUsername(name));
+  }, [name, usernameEdited]);
+
+  // Checagem de disponibilidade com debounce — reflete o backend ao vivo.
+  useEffect(() => {
+    const u = username.trim();
+    if (!u) {
+      setUsernameStatus(null);
+      setCheckingUsername(false);
+      return;
+    }
+    setCheckingUsername(true);
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      void checkUsername(u).then((status) => {
+        if (cancelled) return;
+        setUsernameStatus(status);
+        setCheckingUsername(false);
+      });
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [username]);
+
+  function applySuggestion() {
+    if (!usernameStatus) return;
+    setUsernameEdited(true);
+    setUsername(usernameStatus.suggestion);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setServerError(null);
     setErrors({});
+
+    if (!username.trim()) {
+      setErrors({ username: m.auth_signup_username_required() });
+      return;
+    }
+    // Bloqueia envio quando o backend já sabe que está em uso (o 409 é o
+    // backstop de corrida; aqui é UX imediata).
+    if (usernameStatus && !usernameStatus.available) {
+      setErrors({ username: m.auth_signup_username_taken() });
+      return;
+    }
 
     const result = schema.safeParse({ name, email, password, confirm });
     if (!result.success) {
@@ -140,6 +200,7 @@ function SignUpPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          username: username.trim(),
           email,
           password,
           invite_token: inviteToken,
@@ -243,6 +304,59 @@ function SignUpPage() {
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name}</p>
             )}
+          </div>
+
+          <div className="space-y-1">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="username"
+            >
+              {m.auth_signup_username()}
+            </label>
+            <div className="flex items-center rounded-md border border-border bg-background px-3 focus-within:ring-2 focus-within:ring-primary/60">
+              <span className="text-sm text-muted-foreground select-none">
+                @
+              </span>
+              <input
+                id="username"
+                type="text"
+                autoComplete="off"
+                value={username}
+                onChange={(e) => {
+                  setUsernameEdited(true);
+                  setUsername(e.target.value);
+                }}
+                required
+                className="w-full bg-transparent py-2 pl-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                placeholder={m.auth_signup_username_ph()}
+              />
+            </div>
+            {errors.username ? (
+              <p className="text-xs text-destructive">{errors.username}</p>
+            ) : checkingUsername ? (
+              <p className="text-xs text-muted-foreground">
+                {m.auth_signup_username_checking()}
+              </p>
+            ) : usernameStatus && username.trim() ? (
+              usernameStatus.available ? (
+                <p className="text-xs text-green-500">
+                  {m.auth_signup_username_available()}
+                </p>
+              ) : (
+                <p className="text-xs text-destructive">
+                  {m.auth_signup_username_taken()}{" "}
+                  <button
+                    type="button"
+                    onClick={applySuggestion}
+                    className="text-primary hover:underline"
+                  >
+                    {m.auth_signup_username_use_suggestion({
+                      suggestion: usernameStatus.suggestion,
+                    })}
+                  </button>
+                </p>
+              )
+            ) : null}
           </div>
 
           <div className="space-y-1">
