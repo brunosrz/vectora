@@ -40,6 +40,7 @@ from backend.api.schemas import (
     UpdateProfileRequest,
     UpdateRoleRequest,
     UserListResponse,
+    UsernameAvailableResponse,
     UserResponse,
 )
 
@@ -135,6 +136,25 @@ async def has_users_endpoint() -> HasUsersResponse:
     return HasUsersResponse(exists=await has_users())
 
 
+@router.get("/username-available", response_model=UsernameAvailableResponse)
+async def username_available_endpoint(username: str) -> UsernameAvailableResponse:
+    """Checa disponibilidade de um username para o wizard de criação de conta.
+
+    Rota pública (o wizard consulta antes do login) — ``/auth/*`` já é whitelist
+    no AuthMiddleware. Devolve a forma normalizada, se está livre, e uma
+    sugestão (o próprio normalizado quando livre; ``base#NNNN`` quando em uso).
+    """
+    from backend.rbac.auth import suggest_username, username_taken
+    from backend.rbac.username import normalize_username
+
+    normalized = normalize_username(username)
+    taken = await username_taken(normalized)
+    suggestion = normalized if not taken else await suggest_username(normalized)
+    return UsernameAvailableResponse(
+        normalized=normalized, available=not taken, suggestion=suggestion
+    )
+
+
 def _env_file() -> Path:
     p = Path.home() / ".vectora" / ".env"
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -228,8 +248,14 @@ async def signup_endpoint(
 
     try:
         user, access_token, refresh_token = await auth_svc.signup(
-            body.email, body.password, role=invite_role, name=body.name
+            body.email,
+            body.password,
+            role=invite_role,
+            name=body.name,
+            username=body.username,
         )
+    except auth_svc.UsernameTakenError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

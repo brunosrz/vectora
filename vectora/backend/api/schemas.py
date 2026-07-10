@@ -429,7 +429,20 @@ class SignupRequest(BaseModel):
     email: str
     password: str
     name: str = ""
+    # Identidade do app (Sprint G). Vazio → derivado do nome no backend.
+    username: str = ""
     invite_token: str = ""
+
+
+class UsernameAvailableResponse(BaseModel):
+    """Disponibilidade de um username para o wizard de criação de conta."""
+
+    # Forma canônica do que foi consultado (minúsculas, sem acento).
+    normalized: str
+    available: bool
+    # Sugestão livre quando o consultado está em uso (ex.: "bruno#4821");
+    # igual a `normalized` quando já está livre.
+    suggestion: str
 
 
 class InviteValidationResponse(BaseModel):
