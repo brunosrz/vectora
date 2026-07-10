@@ -16,6 +16,12 @@ const workerOptions = {
       STRIPE_PRICE_PRO_USD: "price_test_fake",
       ASAAS_API_KEY: "test-asaas-key",
       ASAAS_API_URL: "https://api.asaas.com/v3",
+      // Turnstile desligado nos testes: verifyTurnstile só dispensa a checagem
+      // com secret vazio/ausente. Fixar aqui mantém os testes herméticos — sem
+      // este pin, o TURNSTILE_SECRET_KEY real do `.env` do dev vaza pro worker
+      // de teste e a verificação do token fake ("test-token") bate no
+      // siteverify e falha (signup/login/issues/waitlist viram 400).
+      TURNSTILE_SECRET_KEY: "",
       // workerd SQLite permanece bloqueado no Windows após o fetch ao DO,
       // impedindo o cleanup do isolated storage. Marca para skip seletivo.
       TEST_IS_WINDOWS: process.platform === "win32" ? "1" : "0",
