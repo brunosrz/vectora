@@ -323,12 +323,28 @@ function backendPath(): string {
   return path.join(resources, "vectora-core", exe);
 }
 
+/**
+ * Resolve o binário nats-server empacotado (extraResources → resources/), pra
+ * passar ao backend via VECTORA_NATS_BINARY. Retorna null se ausente (dev sem
+ * `scons nats`) — aí o backend cai no PATH/resource ou no fallback em memória.
+ * Override por env em dev: VECTORA_NATS_BINARY já tem prioridade no backend.
+ */
+function natsBinaryPath(): string | null {
+  if (process.env.VECTORA_NATS_BINARY) return process.env.VECTORA_NATS_BINARY;
+  const resources = process.resourcesPath || path.join(__dirname, "..");
+  const exe = process.platform === "win32" ? "nats-server.exe" : "nats-server";
+  const p = path.join(resources, exe);
+  return fs.existsSync(p) ? p : null;
+}
+
 async function startBackend(): Promise<void> {
   backendPort = await getFreePort();
+  const natsBin = natsBinaryPath();
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     VECTORA_PORT: String(backendPort),
     VECTORA_DESKTOP: "1",
+    ...(natsBin ? { VECTORA_NATS_BINARY: natsBin } : {}),
   };
   backend = spawn(backendPath(), ["start"], {
     env,

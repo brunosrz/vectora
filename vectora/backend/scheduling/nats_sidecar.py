@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import os
 import shutil
 import socket
 from pathlib import Path
@@ -39,7 +40,17 @@ def _free_port() -> int:
 
 
 def _resolve_binary() -> str | None:
-    """Localiza o binário ``nats-server`` — PATH (dev) ou resource embutido (build)."""
+    """Localiza o binário ``nats-server``.
+
+    Ordem: override explícito (``VECTORA_NATS_BINARY``, apontado pelo Electron
+    pro binário empacotado via ``extraResources``) → PATH (dev, ex.:
+    ``choco/brew install nats-server``) → resource embutido ao lado do binário
+    Nuitka (``resources/nats-server``).
+    """
+    override = os.getenv("VECTORA_NATS_BINARY")
+    if override and Path(override).is_file():
+        return override
+
     from_path = shutil.which("nats-server")
     if from_path:
         return from_path

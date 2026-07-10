@@ -34,6 +34,23 @@ async def test_ensure_nats_sidecar_returns_none_when_binary_not_found():
     assert nats_sidecar._proc is None
 
 
+def test_resolve_binary_honra_override_env(tmp_path, monkeypatch):
+    """VECTORA_NATS_BINARY (apontado pelo Electron pro binário empacotado) tem
+    prioridade sobre PATH/resource, e só vale se o arquivo existir."""
+    fake = tmp_path / "nats-server"
+    fake.write_text("")  # arquivo existe
+
+    monkeypatch.setenv("VECTORA_NATS_BINARY", str(fake))
+    # Mesmo com um nats-server no PATH, o override vence.
+    monkeypatch.setattr(nats_sidecar.shutil, "which", lambda _n: "/usr/bin/nats-server")
+    assert nats_sidecar._resolve_binary() == str(fake)
+
+    # Par de erro: override apontando pra arquivo inexistente é ignorado (cai
+    # no PATH), nunca devolve um caminho quebrado.
+    monkeypatch.setenv("VECTORA_NATS_BINARY", str(tmp_path / "nao-existe"))
+    assert nats_sidecar._resolve_binary() == "/usr/bin/nats-server"
+
+
 def _fake_ready_proc(ready_line: bytes = b"Server is ready\n") -> MagicMock:
     proc = MagicMock()
     proc.stdout.readline = AsyncMock(return_value=ready_line)

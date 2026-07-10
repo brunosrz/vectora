@@ -54,6 +54,13 @@ files:
 extraResources:
   - from: ../../dist/vectora
     to: vectora-core
+  # Sidecar nats-server (fila/KV persistente): baixado por `scons nats` (dep do
+  # release). O backend recebe o caminho via VECTORA_NATS_BINARY no spawn
+  # (electron/src/main.ts). Glob cobre nats-server e nats-server.exe.
+  - from: ../resources
+    to: .
+    filter:
+      - nats-server*
   - from: ../frontend/public/favicon-32x32.png
     to: tray-icon.png
   - from: ../frontend/public/vectora.ico

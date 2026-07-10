@@ -789,9 +789,13 @@ _cmd("frontend", _action_build_chat)
 _build_chat    = _node("build-chat",      _action_build_chat)
 _build_nuitka  = _node("build-nuitka",    _action_build_nuitka,   deps=[_build_chat])
 _inst_desktop  = _node("install-desktop", _action_install_desktop)
-_build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_desktop])
+# O binário nats-server precisa estar em vectora/resources/ ANTES do electron-
+# builder rodar (extraResources copia a pasta pro app empacotado) — sem esta
+# dependência o release saía sem o sidecar de fila/KV, caindo pra memória.
+_fetch_nats    = _node("fetch-nats",      _action_fetch_nats)
+_build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_desktop, _fetch_nats])
 
-_FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
+_FULL_DEPS = [_build_chat, _build_nuitka, _fetch_nats, _build_desktop]
 
 _cmd("release", lambda target, source, env: _action_package(target, source, env), deps=_FULL_DEPS)
 
