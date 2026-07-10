@@ -38,6 +38,21 @@ _VALID_THEMES = ("dark", "light", "system")
 # Idiomas válidos da TUI (ver `src/ui/i18n`: csv `key,en,es,pt-BR`).
 _VALID_LANGUAGES = ("en", "es", "pt-BR")
 
+# Preferências do frontend web sincronizadas com o backend (fonte de verdade,
+# CLAUDE.md §8) — os demais campos do settings-store do frontend continuam só
+# em cache local (localStorage), sem persistência cross-device/cross-reinstall.
+_ALLOWED_FRONTEND_PREF_KEYS = frozenset(
+    {
+        "selectedModel",
+        "theme",
+        "language",
+        "chatMode",
+        "permissionMode",
+        "reasoningEffort",
+        "sidebarPosition",
+    }
+)
+
 
 class RuntimeSettings:
     """Thin JSON store para preferências de runtime não-secretas.
@@ -268,6 +283,52 @@ class RuntimeSettings:
             mapping[cwd] = thread_id
             self._data["last_session_by_dir"] = mapping
             self._save()
+
+    def get_frontend_prefs(self, user_id: str) -> dict[str, object]:
+        """Preferências do frontend web persistidas para ``user_id``.
+
+        Chave por usuário — numa instância multi-usuário (VPS), as
+        preferências de um usuário não vazam pra outro.
+        """
+        all_prefs = self.get("frontend_prefs", {})
+        if not isinstance(all_prefs, dict):
+            return {}
+        user_prefs = all_prefs.get(user_id)
+        if not isinstance(user_prefs, dict):
+            return {}
+        return {str(k): v for k, v in user_prefs.items()}
+
+    def set_frontend_prefs(
+        self, user_id: str, changes: dict[str, object]
+    ) -> dict[str, object]:
+        """Mescla ``changes`` nas preferências do frontend de ``user_id`` e persiste.
+
+        Chaves fora de ``_ALLOWED_FRONTEND_PREF_KEYS`` são ignoradas
+        silenciosamente (forward-compat — um frontend mais novo pode mandar
+        campos que este backend ainda não reconhece). Devolve o estado final
+        mesclado do usuário.
+        """
+        allowed = {
+            k: v for k, v in changes.items() if k in _ALLOWED_FRONTEND_PREF_KEYS
+        }
+        with self._lock:
+            all_prefs_raw = self._data.get("frontend_prefs", {})
+            all_prefs: dict[str, object] = (
+                {str(k): v for k, v in all_prefs_raw.items()}
+                if isinstance(all_prefs_raw, dict)
+                else {}
+            )
+            existing = all_prefs.get(user_id)
+            user_prefs: dict[str, object] = (
+                {str(k): v for k, v in existing.items()}
+                if isinstance(existing, dict)
+                else {}
+            )
+            user_prefs.update(allowed)
+            all_prefs[user_id] = user_prefs
+            self._data["frontend_prefs"] = all_prefs
+            self._save()
+        return user_prefs
 
 
 # Singleton — único por processo

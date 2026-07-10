@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   Outlet,
   createRootRouteWithContext,
@@ -9,7 +9,11 @@ import type { RouterContext } from "../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSessionExpiry } from "@/lib/hooks/use-session-expiry";
-import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
+import {
+  useSettingsStore,
+  hydrateFromBackend,
+  type Lang,
+} from "@/lib/stores/settings-store";
 import {
   THEME_PRESETS,
   buildThemeTokens,
@@ -222,6 +226,16 @@ function RootComponent() {
     if (isPublicPath(location.pathname)) return;
     const { workspaces, hydrate } = useWorkspacesStore.getState();
     if (workspaces.length === 0) void hydrate();
+  }, [location.pathname]);
+  // Aplica as preferências durável do backend (fonte de verdade) por cima do
+  // cache local — uma vez por sessão, depois que a rota deixa de ser pública
+  // (usuário resolvido). Ver settings-store.ts::hydrateFromBackend.
+  const prefsHydratedRef = useRef(false);
+  useEffect(() => {
+    if (isPublicPath(location.pathname)) return;
+    if (prefsHydratedRef.current) return;
+    prefsHydratedRef.current = true;
+    void hydrateFromBackend();
   }, [location.pathname]);
   useEffect(() => {
     if (typeof document !== "undefined") {

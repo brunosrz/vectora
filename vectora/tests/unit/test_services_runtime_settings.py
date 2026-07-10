@@ -256,3 +256,44 @@ class TestRagSettings:
         rs2 = RuntimeSettings(path=tmp_settings_path)
         assert rs2.rag_settings["reranker_top_k"] == 20
         assert rs2.rag_settings["ingest_file_types"] == ["code"]
+
+
+class TestFrontendPrefs:
+    """frontend_prefs: preferências do web app sincronizadas com o backend."""
+
+    def test_defaults_vazio(self, rs) -> None:
+        assert rs.get_frontend_prefs("u1") == {}
+
+    def test_set_merge_e_leitura(self, rs) -> None:
+        rs.set_frontend_prefs("u1", {"selectedModel": "cohere:command-a-plus"})
+        rs.set_frontend_prefs("u1", {"theme": "dark"})
+        assert rs.get_frontend_prefs("u1") == {
+            "selectedModel": "cohere:command-a-plus",
+            "theme": "dark",
+        }
+
+    def test_ignora_chaves_fora_da_whitelist(self, rs) -> None:
+        rs.set_frontend_prefs("u1", {"theme": "dark", "chave_desconhecida": "x"})
+        prefs = rs.get_frontend_prefs("u1")
+        assert prefs == {"theme": "dark"}
+
+    def test_isola_por_usuario(self, rs) -> None:
+        rs.set_frontend_prefs("u1", {"theme": "dark"})
+        rs.set_frontend_prefs("u2", {"theme": "light"})
+        assert rs.get_frontend_prefs("u1") == {"theme": "dark"}
+        assert rs.get_frontend_prefs("u2") == {"theme": "light"}
+
+    def test_persiste_apos_reload(self, tmp_settings_path) -> None:
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs1 = RuntimeSettings(path=tmp_settings_path)
+        rs1.set_frontend_prefs("u1", {"selectedModel": "google-genai:gemini-2.5-flash"})
+        rs2 = RuntimeSettings(path=tmp_settings_path)
+        assert rs2.get_frontend_prefs("u1") == {
+            "selectedModel": "google-genai:gemini-2.5-flash"
+        }
+
+    def test_retorno_do_set_e_o_estado_mesclado_final(self, rs) -> None:
+        rs.set_frontend_prefs("u1", {"theme": "dark"})
+        result = rs.set_frontend_prefs("u1", {"language": "pt"})
+        assert result == {"theme": "dark", "language": "pt"}

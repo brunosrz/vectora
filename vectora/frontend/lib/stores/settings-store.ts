@@ -10,6 +10,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { BaseThemeColors } from "@/lib/theme/presets";
 import { getDefaultModel } from "@/lib/config/deployment-config";
+import { fetchPrefs, pushPrefs } from "@/lib/api/settings-prefs";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -178,13 +179,17 @@ export const useSettingsStore = create<SettingsState>()(
 
       setShowToolCalls: (v) => set({ showToolCalls: v }),
       setRequireHitl: (v) => set({ requireHitl: v }),
-      setTheme: (v) => set({ theme: v }),
+      setTheme: (v) => {
+        set({ theme: v });
+        void pushPrefs({ theme: v });
+      },
       setThemePreset: (v) => set({ themePreset: v }),
       setCustomThemeColors: (v) => set({ customThemeColors: v }),
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
       setTrainingInstructions: (v) => set({ trainingInstructions: v }),
       setLanguage: (v) => {
         set({ language: v });
+        void pushPrefs({ language: v });
         // Sincroniza o locale do Paraglide (recarrega para aplicar o idioma
         // a todas as mensagens m.* renderizadas).
         void import("@/lib/paraglide/runtime").then(
@@ -193,8 +198,14 @@ export const useSettingsStore = create<SettingsState>()(
           },
         );
       },
-      setPermissionMode: (v) => set({ permissionMode: v }),
-      setReasoningEffort: (v) => set({ reasoningEffort: v }),
+      setPermissionMode: (v) => {
+        set({ permissionMode: v });
+        void pushPrefs({ permissionMode: v });
+      },
+      setReasoningEffort: (v) => {
+        set({ reasoningEffort: v });
+        void pushPrefs({ reasoningEffort: v });
+      },
       setSidebarWidth: (v) =>
         set({
           sidebarWidth: Math.max(
@@ -202,12 +213,21 @@ export const useSettingsStore = create<SettingsState>()(
             Math.min(SIDEBAR_MAX_WIDTH, Math.round(v)),
           ),
         }),
-      setSidebarPosition: (v) => set({ sidebarPosition: v }),
-      setChatMode: (v) => set({ chatMode: v }),
+      setSidebarPosition: (v) => {
+        set({ sidebarPosition: v });
+        void pushPrefs({ sidebarPosition: v });
+      },
+      setChatMode: (v) => {
+        set({ chatMode: v });
+        void pushPrefs({ chatMode: v });
+      },
       setIdeMode: (v) => set({ ideMode: v }),
       setChatSidebarWidth: (v) =>
         set({ chatSidebarWidth: Math.max(240, Math.min(800, Math.round(v))) }),
-      setSelectedModel: (v) => set({ selectedModel: v }),
+      setSelectedModel: (v) => {
+        set({ selectedModel: v });
+        void pushPrefs({ selectedModel: v });
+      },
       resetSettings: () =>
         set({
           ...DEFAULTS,
@@ -258,4 +278,26 @@ export function loadUserSettings(userId?: string): void {
   const key = getStorageKey(userId);
   useSettingsStore.persist.setOptions({ name: key });
   void useSettingsStore.persist.rehydrate();
+}
+
+/**
+ * Aplica as preferências durável do backend por cima do cache local.
+ * Backend é fonte de verdade (CLAUDE.md §8): sobrevive a reinstalar o app ou
+ * limpar o cache do navegador — era o caminho pelo qual `selectedModel`
+ * "sobrevivia" ao repositório inteiro ser apagado (localStorage é por
+ * origem do browser, não por instalação do app). Chamar uma vez no boot,
+ * depois que o usuário estiver resolvido (ver `__root.tsx`).
+ */
+export async function hydrateFromBackend(): Promise<void> {
+  const prefs = await fetchPrefs();
+  const s = useSettingsStore.getState();
+  if (prefs.selectedModel) s.setSelectedModel(prefs.selectedModel);
+  if (prefs.theme) s.setTheme(prefs.theme as Theme);
+  if (prefs.language) s.setLanguage(prefs.language as Lang);
+  if (typeof prefs.chatMode === "boolean") s.setChatMode(prefs.chatMode);
+  if (prefs.permissionMode) s.setPermissionMode(prefs.permissionMode as PermissionMode);
+  if (prefs.reasoningEffort)
+    s.setReasoningEffort(prefs.reasoningEffort as ReasoningEffort);
+  if (prefs.sidebarPosition)
+    s.setSidebarPosition(prefs.sidebarPosition as SidebarPosition);
 }
