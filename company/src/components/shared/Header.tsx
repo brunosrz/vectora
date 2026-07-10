@@ -7,7 +7,7 @@ import { getLocale, locales, setLocale } from "#/paraglide/runtime";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
-const LOCALE_LABELS: Record<string, string> = {
+const LOCALE_LABELS: Partial<Record<string, string>> = {
   pt: "PT",
   en: "EN",
   es: "ES",

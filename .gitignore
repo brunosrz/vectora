@@ -360,3 +360,4 @@ env.gha
 /docs/.docusaurus
 *.zip
 /vectora/frontend/project.inlang
+/docs/_vendor

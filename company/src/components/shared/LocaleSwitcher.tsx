@@ -1,7 +1,7 @@
 import { getLocale, locales, setLocale } from "#/paraglide/runtime";
 import { m } from "#/paraglide/messages";
 
-const LOCALE_LABELS: Record<string, string> = {
+const LOCALE_LABELS: Partial<Record<string, string>> = {
   pt: "PT",
   en: "EN",
   es: "ES",

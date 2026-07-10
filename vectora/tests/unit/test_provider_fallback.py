@@ -10,9 +10,11 @@ Contrato:
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import patch
 
 import pytest
+from langchain_core.language_models.chat_models import BaseChatModel
 
 from backend.llm import provider_fallback as pf
 
@@ -303,39 +305,52 @@ class TestTryWithFallback:
 # ---------------------------------------------------------------------------
 
 
-class _FakeLLM:
-    """LLM fake: astream/ainvoke configuráveis para simular quota/sucesso."""
+class _FakeLLM(BaseChatModel):
+    """Chat model fake (BaseChatModel real) com ``_astream``/``_agenerate``
+    configuráveis para simular quota/timeout/sucesso do provider interno.
 
-    def __init__(
-        self,
-        *,
-        chunks: list[str] | None = None,
-        stream_error: Exception | None = None,
-        error_after: int = 0,
-        invoke_result: object = None,
-        invoke_error: Exception | None = None,
-    ) -> None:
-        self._chunks = chunks or []
-        self._stream_error = stream_error
-        self._error_after = error_after
-        self._invoke_result = invoke_result
-        self._invoke_error = invoke_error
-        self.bound_with: object = None
+    O FallbackChatModel delega nos ``_astream``/``_agenerate`` INTERNOS do
+    provider; por isso o fake os implementa (um fake duck-typed de métodos
+    públicos não percorre esse caminho).
+    """
 
-    async def astream(self, messages, stop=None, **kwargs):
+    model_config = {"arbitrary_types_allowed": True}
+
+    chunks: list[str] = []
+    stream_error: Exception | None = None
+    error_after: int = 0
+    invoke_result: Any = None
+    invoke_error: Exception | None = None
+    bound_with: Any = None
+
+    @property
+    def _llm_type(self) -> str:
+        return "fake"
+
+    async def _astream(self, messages, stop=None, run_manager=None, **kwargs):
         from langchain_core.messages import AIMessageChunk
+        from langchain_core.outputs import ChatGenerationChunk
 
-        for i, c in enumerate(self._chunks):
-            if self._stream_error is not None and i >= self._error_after:
-                raise self._stream_error
-            yield AIMessageChunk(content=c)
-        if self._stream_error is not None and self._error_after >= len(self._chunks):
-            raise self._stream_error
+        for i, c in enumerate(self.chunks):
+            if self.stream_error is not None and i >= self.error_after:
+                raise self.stream_error
+            yield ChatGenerationChunk(message=AIMessageChunk(content=c))
+        if self.stream_error is not None and self.error_after >= len(self.chunks):
+            raise self.stream_error
 
-    async def ainvoke(self, messages, stop=None, **kwargs):
-        if self._invoke_error is not None:
-            raise self._invoke_error
-        return self._invoke_result
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        from langchain_core.outputs import ChatGeneration, ChatResult
+
+        if self.invoke_error is not None:
+            raise self.invoke_error
+        return ChatResult(generations=[ChatGeneration(message=self.invoke_result)])
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        from langchain_core.outputs import ChatGeneration, ChatResult
+
+        if self.invoke_error is not None:
+            raise self.invoke_error
+        return ChatResult(generations=[ChatGeneration(message=self.invoke_result)])
 
     def bind_tools(self, tools, **kwargs):
         self.bound_with = tools
