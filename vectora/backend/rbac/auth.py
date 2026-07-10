@@ -46,7 +46,10 @@ class User(BaseModel):
     """Usuário autenticado — saída segura (sem password_hash)."""
 
     id: str
-    email: str
+    # Identidade do app é por username; email é opcional (pertence ao
+    # company/services, não ao app local).
+    username: str = ""
+    email: str = ""
     role: Role
     name: str = ""
     env_overrides: dict[str, str] = Field(default_factory=dict)
@@ -152,6 +155,7 @@ def create_access_token(user: User) -> str:
     now = datetime.now(UTC)
     payload = {
         "sub": user.id,
+        "username": user.username,
         "email": user.email,
         "role": user.role,
         "iat": now,
@@ -301,8 +305,11 @@ def _row_to_user(row: Any) -> UserInDB:
         name = row["name"] or ""
     except (IndexError, KeyError):
         name = ""
+    from backend.rbac.username import slugify_username
+
     return UserInDB(
         id=row["id"],
+        username=slugify_username(name) if name else "",
         email=row["email"],
         role=row["role"],
         name=name,

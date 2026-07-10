@@ -4,7 +4,10 @@ export type Role = "root" | "admin" | "member" | "viewer";
 
 export interface AuthUser {
   id: string;
-  email: string;
+  /** Identidade do app (ex.: "bruno"; colisão vira "bruno#1234"). */
+  username?: string;
+  /** Opcional — o app local não usa email (pertence ao company/services). */
+  email?: string;
   role: Role;
   /** Nome de exibição do usuário (UTF-8 livre, espaços permitidos). */
   name?: string;

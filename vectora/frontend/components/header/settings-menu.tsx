@@ -52,7 +52,7 @@ export function SettingsMenu() {
   // "local" no Free — ver _get_virtual_local_user em
   // backend/api/middleware/auth.py) — o botão nunca depende de isAuthenticated.
   // Só o botão "Sair" distingue conta real de usuário local virtual (abaixo).
-  const displayName = user?.name?.trim() || user?.email || "Vectora";
+  const displayName = user?.name?.trim() || user?.username || "Vectora";
   const initial = Array.from(displayName)[0]?.toUpperCase() ?? "V";
   const roleLabel = user ? (ROLE_LABELS[user.role] ?? user.role) : "Local";
   const roleColor = user
@@ -86,9 +86,9 @@ export function SettingsMenu() {
                   <p className="text-sm font-medium text-foreground truncate">
                     {displayName}
                   </p>
-                  {user?.name?.trim() && user.email && (
+                  {user?.name?.trim() && user.username && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {user.email}
+                      @{user.username}
                     </p>
                   )}
                   <p className={`text-xs font-medium ${roleColor}`}>

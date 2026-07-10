@@ -483,7 +483,8 @@ class ChangePasswordRequest(BaseModel):
 
 class UserResponse(BaseModel):
     id: str
-    email: str
+    username: str = ""
+    email: str = ""
     role: str
     name: str = ""
     created_at: str
@@ -498,7 +499,8 @@ class UserResponse(BaseModel):
     def from_user(cls, user: Any, token_expires_at: int | None = None) -> UserResponse:
         return cls(
             id=user.id,
-            email=user.email,
+            username=getattr(user, "username", "") or "",
+            email=getattr(user, "email", "") or "",
             role=user.role,
             name=getattr(user, "name", "") or "",
             created_at=user.created_at,

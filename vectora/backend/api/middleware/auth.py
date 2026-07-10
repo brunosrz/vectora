@@ -150,12 +150,14 @@ def _get_virtual_local_user() -> Any:
     from datetime import UTC, datetime
 
     from backend.rbac.auth import User
+    from backend.rbac.username import slugify_username
     from backend.settings import settings as settings_singleton
 
     name = settings_singleton.local_user_name or "Local User"
     return User(
         id="local",
-        email="local@vectora.internal",
+        username=slugify_username(name),
+        email="",
         role="root",
         name=name,
         env_overrides={},
