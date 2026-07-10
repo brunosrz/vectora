@@ -563,7 +563,7 @@
   "admin_storage_header": "Estado de los backends de almacenamiento",
   "admin_storage_refresh": "Actualizar",
   "admin_storage_mode_title": "Modo de almacenamiento",
-  "admin_storage_mode_desc": "\"Lite\" usa SQLite + LanceDB local — funciona sin ninguna infraestructura externa y es el predeterminado. \"Completo\" activa Postgres, Redis y Qdrant — requiere configurar las conexiones abajo antes de activar.",
+  "admin_storage_mode_desc": "\"Lite\" usa SQLite + LanceDB local, con NATS embebido cubriendo colas y pub/sub — funciona sin ninguna infraestructura externa y es el predeterminado. \"Completo\" activa Postgres, Redis y Qdrant — requiere configurar las conexiones abajo antes de activar.",
   "admin_storage_mode_lite": "Lite (predeterminado)",
   "admin_storage_mode_complete": "Completo",
   "admin_storage_backend_checkpointer": "Checkpointer (SQLite)",
