@@ -687,8 +687,82 @@ def _action_help(target, source, env):
                            company, services) + hugo mod (docs)
     scons update --latest  idem, mas ignora ranges/lockfiles (major bumps) —
                            só antes de migração grande, com revisão manual depois
+    scons nats             baixa o binário nats-server pra vectora/resources/
+                           (sidecar de fila/KV com JetStream; precisa de rede)
 """)
     sys.stdout.flush()
+
+
+_NATS_VERSION = "2.10.22"
+
+
+def _nats_asset() -> tuple[str, str, str]:
+    """``(url, membro_no_archive, ext)`` do nats-server para esta plataforma.
+
+    Releases em github.com/nats-io/nats-server. Asset:
+    ``nats-server-v{V}-{os}-{arch}.{zip|tar.gz}``; dentro fica
+    ``nats-server-v{V}-{os}-{arch}/nats-server[.exe]``.
+    """
+    import platform as _plat
+
+    sysname = {"windows": "windows", "linux": "linux", "darwin": "darwin"}.get(
+        _plat.system().lower(), ""
+    )
+    if not sysname:
+        raise RuntimeError(f"plataforma não suportada: {_plat.system()}")
+    machine = _plat.machine().lower()
+    arch = "arm64" if machine in ("arm64", "aarch64") else "amd64"
+    ext = "zip" if sysname == "windows" else "tar.gz"
+    stem = f"nats-server-v{_NATS_VERSION}-{sysname}-{arch}"
+    url = (
+        "https://github.com/nats-io/nats-server/releases/download/"
+        f"v{_NATS_VERSION}/{stem}.{ext}"
+    )
+    binary = "nats-server.exe" if sysname == "windows" else "nats-server"
+    return url, f"{stem}/{binary}", ext
+
+
+def _action_fetch_nats(target, source, env):
+    """Baixa o binário nats-server para vectora/resources/ (sidecar de fila/KV).
+
+    Idempotente (pula se já existe). O sidecar (nats_sidecar._resolve_binary)
+    procura exatamente esse caminho; sem o binário, cai pro fallback em memória
+    e nada persiste. Precisa de rede.
+    """
+    import io
+    import platform as _plat
+    import tarfile
+    import urllib.request
+    import zipfile
+
+    is_win = _plat.system().lower() == "windows"
+    dest_dir = os.path.join(VECTORA, "resources")
+    dest = os.path.join(dest_dir, "nats-server.exe" if is_win else "nats-server")
+    if os.path.isfile(dest):
+        print(f">> nats-server já presente em {dest}")
+        return
+    os.makedirs(dest_dir, exist_ok=True)
+
+    url, member, ext = _nats_asset()
+    print(f">> baixando nats-server: {url}")
+    with urllib.request.urlopen(url) as resp:  # noqa: S310 — release fixo do github
+        data = resp.read()
+
+    if ext == "zip":
+        with zipfile.ZipFile(io.BytesIO(data)) as zf, zf.open(member) as src:
+            payload = src.read()
+    else:
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tf:
+            src = tf.extractfile(member)
+            if src is None:
+                raise RuntimeError(f"membro {member} ausente no archive")
+            payload = src.read()
+
+    with open(dest, "wb") as out:
+        out.write(payload)
+    if not is_win:
+        os.chmod(dest, 0o755)
+    print(f">> nats-server instalado em {dest}")
 
 
 # ── Alvos SCons ───────────────────────────────────────────────────────────────
@@ -728,6 +802,7 @@ _cmd("coverage",      _action_coverage)
 _cmd("tests-storage", _action_tests_storage)
 _cmd("lint",          _action_lint)
 _cmd("update",        _action_update)
+_cmd("nats",          _action_fetch_nats)
 _cmd("clean",         _action_clean)
 _cmd("help",          _action_help)
 _cmd("docker",        _action_docker)

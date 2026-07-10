@@ -361,3 +361,4 @@ env.gha
 *.zip
 /vectora/frontend/project.inlang
 /docs/_vendor
+/vectora/resources
