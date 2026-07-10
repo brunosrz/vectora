@@ -85,6 +85,26 @@ async def test_two_concurrent_sessions_write_same_db_without_locking_errors(tmp_
 
 
 @pytest.mark.asyncio
+async def test_hardened_connection_has_busy_timeout_and_wal(tmp_path):
+    """Confirma os PRAGMAs de fato aplicados na conexão — não só inferidos por
+    ausência de "database is locked" nos testes de concorrência acima."""
+    db_path = str(tmp_path / "checkpoints.db")
+    saver, ctx = await _open_hardened(db_path)
+    try:
+        cur = await saver.conn.execute("PRAGMA busy_timeout")
+        row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 30000
+
+        cur = await saver.conn.execute("PRAGMA journal_mode")
+        row = await cur.fetchone()
+        assert row is not None
+        assert row[0].lower() == "wal"
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+
+@pytest.mark.asyncio
 async def test_three_concurrent_sessions_same_thread_no_exception(tmp_path):
     """Edge — 3 conexões concorrentes na MESMA thread (pior caso de contenção)."""
     db_path = str(tmp_path / "checkpoints.db")

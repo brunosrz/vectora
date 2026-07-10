@@ -29,7 +29,12 @@ class TestStoragePool:
 
     @pytest.mark.asyncio
     async def test_pool_lite_pragma_wal(self, tmp_path):
-        """Pool abre com WAL e retorna conexão funcional."""
+        """Pool abre com WAL + busy_timeout=30000 e retorna conexão funcional.
+
+        busy_timeout explícito (não só inferido por ausência de "database is
+        locked" num teste de concorrência) — consulta o PRAGMA de volta na
+        conexão de verdade que o pool entrega, não uma réplica do script.
+        """
         from backend.storage.sqlite.pool import AsyncConnectionPool
 
         db_path = str(tmp_path / "test.db")
@@ -41,6 +46,11 @@ class TestStoragePool:
                 row = await cur.fetchone()
                 assert row is not None
                 assert row[0].lower() == "wal"
+
+                cur = await conn.execute("PRAGMA busy_timeout")
+                row = await cur.fetchone()
+                assert row is not None
+                assert row[0] == 30000
         finally:
             await pool.close()
 
