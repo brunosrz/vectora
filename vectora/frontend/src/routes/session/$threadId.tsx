@@ -64,10 +64,7 @@ import {
   BROADCAST_WORKSPACES,
 } from "@/lib/hooks/use-broadcast-sync";
 import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
-import {
-  SetupWizard,
-  isOnboardingDone,
-} from "@/components/onboarding/setup-wizard";
+import { isOnboardingDone } from "@/components/onboarding/setup-wizard";
 import { m } from "@/lib/paraglide/messages";
 export const Route = createFileRoute("/session/$threadId")({
   // Prefetch em paralelo: lista de threads (sidebar) + histórico da thread ativa.
@@ -289,9 +286,6 @@ function SessionPage() {
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(
-    () => !!userId && !isOnboardingDone(userId),
-  );
   const [inputLocked, setInputLocked] = useState(false);
   // `model` reflete `selectedModel` do settings-store (persistido) — o
   // restante de AgentConfig (repos, etc.) é local/efêmero por thread.
@@ -777,7 +771,7 @@ function SessionPage() {
                           hydrated &&
                           isNewRoute &&
                           !isWorkspaceChosen(threadId) &&
-                          !showOnboarding
+                          (!userId || isOnboardingDone(userId))
                             ? handleStartChatFromWelcome
                             : undefined
                         }
@@ -785,7 +779,7 @@ function SessionPage() {
                           hydrated &&
                           isNewRoute &&
                           !isWorkspaceChosen(threadId) &&
-                          !showOnboarding
+                          (!userId || isOnboardingDone(userId))
                             ? () => setShowNewChatDialog(true)
                             : undefined
                         }
@@ -808,17 +802,6 @@ function SessionPage() {
                 </div>
               )}
             </div>
-
-            {/* Wizard de primeiro acesso — aparece uma vez por usuário */}
-            {showOnboarding && userId && (
-              <SetupWizard
-                userId={userId}
-                onComplete={(workspaceId) => {
-                  setShowOnboarding(false);
-                  if (!chatMode) void handleConfirmNewChat(workspaceId);
-                }}
-              />
-            )}
 
             {/* Dialogs globais */}
             <KeyboardShortcutsDialog

@@ -50,10 +50,20 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
     usuário (i18n no cliente). O ``message`` é um resumo limpo (sem o JSON cru
     do provedor) usado como fallback.
 
-    Códigos: ``RATE_LIMIT`` (429 / quota esgotada), ``AUTH`` (chave inválida /
-    401 / 403), ``STREAM_ERROR`` (genérico).
+    Códigos: ``RATE_LIMIT`` (429 / quota esgotada), ``MISSING_KEYS`` (chave de
+    API não configurada), ``AUTH`` (chave inválida / 401 / 403),
+    ``STREAM_ERROR`` (genérico).
     """
     text = f"{type(exc).__name__}: {exc}".lower()
+    # MISSING_KEYS antes de AUTH: a falta de chave cita "api key" (que casaria
+    # com AUTH). O GetEnvError pode chegar cru ou embrulhado num AttributeError
+    # pelo langchain ("'GetEnvError' object has no attribute 'generations'").
+    if (
+        "getenverror" in text
+        or "coheremissingerror" in text
+        or ("env variable" in text and "does not exist" in text)
+    ):
+        return "MISSING_KEYS", "Configure suas chaves de API para usar o Vectora."
     if (
         "429" in text
         or "too many requests" in text

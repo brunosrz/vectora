@@ -889,6 +889,7 @@
   "chat_retry": "Try again",
   "chat_error_rate_limit": "This model's usage limit has been reached. Try again shortly or switch models.",
   "chat_error_auth": "Authentication with the model provider failed. Check the API key in settings.",
+  "chat_error_missing_keys": "Configure your API keys in settings to use Vectora.",
   "chat_error_timeout": "The connection to the model timed out. Try again.",
   "chat_error_model_no_vision": "This model can't process images — switch models or remove the attachment.",
   "chat_error_generic": "An error occurred while generating the response. Try again.",

@@ -889,6 +889,7 @@
   "chat_retry": "Tentar novamente",
   "chat_error_rate_limit": "O limite de uso deste modelo foi atingido. Tente novamente em instantes ou troque de modelo.",
   "chat_error_auth": "Falha de autenticação com o provedor do modelo. Verifique a chave de API nas configurações.",
+  "chat_error_missing_keys": "Configure suas chaves de API nas configurações para usar o Vectora.",
   "chat_error_timeout": "A conexão com o modelo expirou. Tente novamente.",
   "chat_error_model_no_vision": "Esse modelo não processa imagens — troque de modelo ou remova o anexo.",
   "chat_error_generic": "Ocorreu um erro ao gerar a resposta. Tente novamente.",

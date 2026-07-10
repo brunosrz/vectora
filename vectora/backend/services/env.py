@@ -8,7 +8,13 @@ import os
 from typing import Literal, overload
 
 
-class GetEnvError(BaseException): ...
+class GetEnvError(Exception):
+    """Configuração ausente (env var obrigatória não setada).
+
+    É um ``Exception`` (não ``BaseException``) para ser capturável pelos
+    handlers defensivos do pipeline de stream e classificável como
+    ``MISSING_KEYS`` — em vez de escapar cru e virar um crash genérico.
+    """
 
 
 class CohereMissingError(GetEnvError):

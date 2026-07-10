@@ -104,6 +104,8 @@ export function streamErrorMessage(code?: string): string {
   switch (code) {
     case "RATE_LIMIT":
       return msg.chat_error_rate_limit();
+    case "MISSING_KEYS":
+      return msg.chat_error_missing_keys();
     case "AUTH":
       return msg.chat_error_auth();
     case "TIMEOUT":

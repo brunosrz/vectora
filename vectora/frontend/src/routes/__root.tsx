@@ -18,6 +18,7 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
 import { TitleBar } from "@/components/layout/title-bar";
+import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/", "/onboarding"];
 
@@ -285,6 +286,7 @@ function RootComponent() {
         <Outlet />
       </div>
       <Toaster />
+      <OnboardingGate />
     </div>
   );
 }
