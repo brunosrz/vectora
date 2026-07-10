@@ -42,6 +42,10 @@ _ALGORITHM = "HS256"
 Role = Literal["root", "admin", "member", "viewer"]
 
 
+class UsernameTakenError(ValueError):
+    """Username já em uso — distinto de email duplicado (mapeia pra HTTP 409)."""
+
+
 class User(BaseModel):
     """Usuário autenticado — saída segura (sem password_hash)."""
 
@@ -285,12 +289,59 @@ async def _ensure_schema(db: Any) -> None:
     # capturamos o erro de coluna duplicada.
     with contextlib.suppress(Exception):
         await db.execute("ALTER TABLE users ADD COLUMN name TEXT NOT NULL DEFAULT ''")
+    with contextlib.suppress(Exception):
+        await db.execute(
+            "ALTER TABLE users ADD COLUMN username TEXT NOT NULL DEFAULT ''"
+        )
     await db.commit()
+    # Identidade por username (Sprint G): backfill das rows sem username e
+    # índice único parcial (ignora '' — só existe transitoriamente antes do
+    # backfill; a partir daqui todo usuário tem username preenchido).
+    await _backfill_usernames(db)
+    with contextlib.suppress(Exception):
+        await db.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username "
+            "ON users(username) WHERE username != ''"
+        )
+    await db.commit()
+
+
+async def _backfill_usernames(db: Any) -> None:
+    """Preenche ``username`` para rows que ainda não têm (banco pré-Sprint-G).
+
+    Deriva do ``name`` (ou do local-part do email), garantindo unicidade dentro
+    do próprio backfill — colisão vira ``base#NNNN``, o mesmo formato do signup.
+    """
+    from backend.rbac.username import unique_username
+
+    async with db.execute("SELECT id, name, email, username FROM users") as cur:
+        rows = await cur.fetchall()
+
+    taken = {r["username"] for r in rows if r["username"]}
+    changed = False
+    for r in rows:
+        if r["username"]:
+            continue
+        base = r["name"] or ((r["email"] or "").split("@")[0])
+        uname = unique_username(base, lambda u: u in taken)
+        taken.add(uname)
+        await db.execute("UPDATE users SET username = ? WHERE id = ?", (uname, r["id"]))
+        changed = True
+    if changed:
+        await db.commit()
 
 
 # ---------------------------------------------------------------------------
 # Helpers internos de banco
 # ---------------------------------------------------------------------------
+
+
+def _col(row: Any, key: str) -> str:
+    """Lê uma coluna textual da row tolerando ausência (rows legadas/parciais)."""
+    try:
+        return row[key] or ""
+    except (IndexError, KeyError):
+        return ""
 
 
 def _row_to_user(row: Any) -> UserInDB:
@@ -307,9 +358,18 @@ def _row_to_user(row: Any) -> UserInDB:
         name = ""
     from backend.rbac.username import slugify_username
 
+    # username é coluna persistida (Sprint G); para rows legadas ainda sem o
+    # backfill aplicado, cai no slug do nome como fallback de leitura.
+    try:
+        username = row["username"] or ""
+    except (IndexError, KeyError):
+        username = ""
+    if not username and name:
+        username = slugify_username(name)
+
     return UserInDB(
         id=row["id"],
-        username=slugify_username(name) if name else "",
+        username=username,
         email=row["email"],
         role=row["role"],
         name=name,
@@ -338,12 +398,43 @@ async def has_users() -> bool:
     return await _count_users(db) > 0
 
 
+async def username_taken(username: str) -> bool:
+    """True se o username (normalizado) já pertence a algum usuário."""
+    from backend.rbac.username import normalize_username
+
+    norm = normalize_username(username)
+    db = await _get_db()
+    async with db.execute(
+        "SELECT 1 FROM users WHERE username = ? LIMIT 1", (norm,)
+    ) as cur:
+        return await cur.fetchone() is not None
+
+
+async def _taken_usernames(db: Any) -> set[str]:
+    async with db.execute("SELECT username FROM users") as cur:
+        rows = await cur.fetchall()
+    return {r["username"] for r in rows if r["username"]}
+
+
+async def suggest_username(base: str) -> str:
+    """Sugere um username livre a partir de ``base`` (nome ou username digitado).
+
+    Devolve o slug de ``base`` se estiver livre; senão ``base#NNNN``.
+    """
+    from backend.rbac.username import unique_username
+
+    db = await _get_db()
+    taken = await _taken_usernames(db)
+    return unique_username(base, lambda u: u in taken)
+
+
 async def signup(
     email: str,
     password: str,
     *,
     role: Role | None = None,
     name: str = "",
+    username: str | None = None,
 ) -> tuple[User, str, str]:
     """Cria um novo usuário.
 
@@ -353,10 +444,15 @@ async def signup(
     ``name`` aceita qualquer caractere UTF-8 imprimível (espaços e
     acentuação inclusos); limitado a 100 caracteres para evitar abuso.
 
+    ``username`` é a identidade do app. Quando informado, é normalizado e
+    precisa estar livre (senão ``UsernameTakenError``); quando ausente, é
+    derivado do nome com sufixo de colisão ``#NNNN``.
+
     Returns:
         (user, access_token, refresh_token)
 
     Raises:
+        UsernameTakenError: username informado já em uso
         ValueError: email já cadastrado ou validação falhou
     """
     if len(password) < 8:
@@ -372,24 +468,39 @@ async def signup(
     elif role is None:
         role = "member"
 
+    from backend.rbac.username import normalize_username, unique_username
+
+    taken = await _taken_usernames(db)
+    if username is not None and username.strip():
+        uname = normalize_username(username)
+        if uname in taken:
+            raise UsernameTakenError(f"Nome de usuário '{uname}' já está em uso.")
+    else:
+        base = name_clean or ((email or "").split("@")[0])
+        uname = unique_username(base, lambda u: u in taken)
+
     now = datetime.now(UTC).isoformat()
     user_id = str(uuid.uuid4())
     ph = hash_password(password)
 
     try:
         await db.execute(
-            "INSERT INTO users (id, email, password_hash, role, name, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (user_id, email.lower().strip(), ph, role, name_clean, now),
+            "INSERT INTO users (id, email, username, password_hash, role, name, "
+            "created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, email.lower().strip(), uname, ph, role, name_clean, now),
         )
         await db.commit()
     except Exception as exc:
-        if "UNIQUE constraint failed" in str(exc):
+        msg = str(exc)
+        if "users.username" in msg or "idx_users_username" in msg:
+            raise UsernameTakenError("Nome de usuário já está em uso.") from exc
+        if "UNIQUE constraint failed" in msg:
             raise ValueError("E-mail já cadastrado.") from exc
         raise
 
     user = User(
         id=user_id,
+        username=uname,
         email=email.lower().strip(),
         role=role,
         name=name_clean,
@@ -437,6 +548,7 @@ async def signin(email: str, password: str, *, ip: str = "") -> tuple[User, str,
 
     user = User(
         id=user_in_db.id,
+        username=user_in_db.username,
         email=user_in_db.email,
         role=user_in_db.role,
         name=user_in_db.name,
@@ -489,8 +601,10 @@ async def refresh_tokens(refresh_token: str) -> tuple[User, str, str]:
     user_in_db = _row_to_user(user_row)
     user = User(
         id=user_in_db.id,
+        username=user_in_db.username,
         email=user_in_db.email,
         role=user_in_db.role,
+        name=user_in_db.name,
         env_overrides=user_in_db.env_overrides,
         created_at=user_in_db.created_at,
         last_login_at=user_in_db.last_login_at,
@@ -523,6 +637,7 @@ async def get_user_by_id(user_id: str) -> User | None:
     u = _row_to_user(row)
     return User(
         id=u.id,
+        username=u.username,
         email=u.email,
         role=u.role,
         name=u.name,
@@ -647,8 +762,10 @@ async def list_users() -> list[User]:
     return [
         User(
             id=r["id"],
+            username=_col(r, "username"),
             email=r["email"],
             role=r["role"],
+            name=_col(r, "name"),
             env_overrides={},
             created_at=r["created_at"],
             last_login_at=r["last_login_at"],

@@ -22,6 +22,21 @@ def slugify_username(name: str) -> str:
     return slug or "user"
 
 
+def normalize_username(raw: str) -> str:
+    """Normaliza um username *digitado* pelo usuário para a forma canônica.
+
+    Diferente de :func:`slugify_username` (que deriva de um nome livre e nunca
+    contém ``#``), aqui preservamos o ``#`` porque ele é o separador do sufixo
+    de colisão (``bruno#4821``) — um username sugerido pelo sistema precisa
+    sobreviver ao ir e voltar do campo editável do wizard. Minúsculas, sem
+    acento, só ``[a-z0-9#]``. Entrada vazia cai em ``"user"``.
+    """
+    normalized = unicodedata.normalize("NFKD", raw)
+    ascii_only = normalized.encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r"[^a-z0-9#]", "", ascii_only.lower())
+    return slug or "user"
+
+
 def unique_username(base: str, is_taken: Callable[[str], bool]) -> str:
     """Garante um username livre a partir de ``base``.
 
