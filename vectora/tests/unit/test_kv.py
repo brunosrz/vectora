@@ -11,7 +11,7 @@ from backend.persistence.kv import MemoryKV, RedisKV, get_kv, publish_soon, rese
 
 
 @pytest.fixture(autouse=True)
-def _reset_singleton():
+def _reset_singleton(_no_nats_sidecar):
     reset_kv()
     yield
     reset_kv()

@@ -295,7 +295,8 @@ export async function hydrateFromBackend(): Promise<void> {
   if (prefs.theme) s.setTheme(prefs.theme as Theme);
   if (prefs.language) s.setLanguage(prefs.language as Lang);
   if (typeof prefs.chatMode === "boolean") s.setChatMode(prefs.chatMode);
-  if (prefs.permissionMode) s.setPermissionMode(prefs.permissionMode as PermissionMode);
+  if (prefs.permissionMode)
+    s.setPermissionMode(prefs.permissionMode as PermissionMode);
   if (prefs.reasoningEffort)
     s.setReasoningEffort(prefs.reasoningEffort as ReasoningEffort);
   if (prefs.sidebarPosition)

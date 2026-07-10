@@ -10,7 +10,7 @@ from backend.scheduling.mq import MemoryMQ, RedisMQ, StreamMessage, get_mq, rese
 
 
 @pytest.fixture(autouse=True)
-def _reset_singleton():
+def _reset_singleton(_no_nats_sidecar):
     reset_mq()
     yield
     reset_mq()

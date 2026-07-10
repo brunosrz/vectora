@@ -38,7 +38,9 @@ export function EffortMenu() {
           aria-expanded={open}
         >
           <Gauge className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate font-medium">{mDyn(`effort.${effort}`)}</span>
+          <span className="truncate font-medium">
+            {mDyn(`effort.${effort}`)}
+          </span>
           <ChevronDown className="w-3 h-3 shrink-0" />
         </button>
       </PopoverTrigger>

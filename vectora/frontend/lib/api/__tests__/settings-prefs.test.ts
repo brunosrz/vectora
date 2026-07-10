@@ -11,7 +11,10 @@ describe("fetchPrefs", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ theme: "dark", selectedModel: "cohere:command-a" }),
+        json: async () => ({
+          theme: "dark",
+          selectedModel: "cohere:command-a",
+        }),
       }),
     );
     const prefs = await fetchPrefs();

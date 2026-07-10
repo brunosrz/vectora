@@ -308,9 +308,7 @@ class RuntimeSettings:
         campos que este backend ainda não reconhece). Devolve o estado final
         mesclado do usuário.
         """
-        allowed = {
-            k: v for k, v in changes.items() if k in _ALLOWED_FRONTEND_PREF_KEYS
-        }
+        allowed = {k: v for k, v in changes.items() if k in _ALLOWED_FRONTEND_PREF_KEYS}
         with self._lock:
             all_prefs_raw = self._data.get("frontend_prefs", {})
             all_prefs: dict[str, object] = (

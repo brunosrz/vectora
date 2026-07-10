@@ -9,7 +9,7 @@ from backend.persistence.kv import reset_kv
 
 
 @pytest.fixture(autouse=True)
-def _reset():
+def _reset(_no_nats_sidecar):
     reset_kv()
     yield
     reset_kv()

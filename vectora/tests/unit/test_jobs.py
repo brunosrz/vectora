@@ -13,7 +13,7 @@ from backend.services import jobs
 
 
 @pytest.fixture(autouse=True)
-def _reset():
+def _reset(_no_nats_sidecar):
     reset_mq()  # garante MemoryMQ limpo (sem redis_url nos testes)
     jobs._handlers.clear()
     yield

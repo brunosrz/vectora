@@ -155,9 +155,7 @@ def _get_virtual_local_user() -> Any:
     from backend.settings import settings as settings_singleton
 
     name = (
-        read_local_user()["name"]
-        or settings_singleton.local_user_name
-        or "Local User"
+        read_local_user()["name"] or settings_singleton.local_user_name or "Local User"
     )
     return User(
         id="local",
