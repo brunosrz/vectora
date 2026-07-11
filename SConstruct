@@ -867,15 +867,19 @@ def _cmd(name: str, action, deps: list | None = None):
 _cmd("frontend", _action_build_chat)
 
 _build_chat    = _node("build-chat",      _action_build_chat)
-_build_nuitka  = _node("build-nuitka",    _action_build_nuitka,   deps=[_build_chat])
-_inst_desktop  = _node("install-desktop", _action_install_desktop)
-# O binário nats-server precisa estar em vectora/resources/ ANTES do electron-
-# builder rodar (extraResources copia a pasta pro app empacotado) — sem esta
-# dependência o release saía sem o sidecar de fila/KV, caindo pra memória.
+# O binário nats-server precisa estar em vectora/resources/ ANTES tanto do
+# PyInstaller (build-hybrid.py agora embute via --add-binary numa pasta
+# nats/, pro standalone/VPS) quanto do electron-builder (extraResources, pro
+# desktop) — sem esta dependência os dois builds saem sem o sidecar de
+# fila/KV, caindo pra memória. _build_nuitka e _build_desktop dependem
+# explicitamente, não só como irmãos em _FULL_DEPS (SCons não garante ordem
+# entre irmãos sem edge de dependência).
 _fetch_nats    = _node("fetch-nats",      _action_fetch_nats)
+_build_nuitka  = _node("build-nuitka",    _action_build_nuitka,   deps=[_build_chat, _fetch_nats])
+_inst_desktop  = _node("install-desktop", _action_install_desktop)
 _build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_desktop, _fetch_nats])
 
-_FULL_DEPS = [_build_chat, _build_nuitka, _fetch_nats, _build_desktop]
+_FULL_DEPS = [_build_chat, _fetch_nats, _build_nuitka, _build_desktop]
 
 _cmd("release", lambda target, source, env: _action_package(target, source, env), deps=_FULL_DEPS)
 

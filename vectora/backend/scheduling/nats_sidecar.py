@@ -6,13 +6,26 @@ pra achar o sinal de "pronto", encerra limpo no shutdown) — aqui é o backend
 Python que sobe o ``nats-server`` como SEU PRÓPRIO sidecar, um nível abaixo,
 disponível igualmente em desktop e em modo servidor/VPS.
 
-O binário ``nats-server`` (Go, ~15-20MB, sem dependências) é embutido no
-build de distribuição do mesmo jeito que ``frontend/dist`` — baixado uma vez
-no CI e colocado ao lado do binário Nuitka. Em dev, ``shutil.which`` resolve
-uma instalação local (ex.: ``choco install nats-server`` / ``brew install
-nats-server``); sem o binário disponível, o sidecar não sobe e
-``get_mq()``/``get_kv()`` caem pro fallback em memória — nunca impede o
-backend de iniciar.
+O binário ``nats-server`` (Go, ~15-20MB, sem dependências) é baixado por
+``scons nats`` pra ``vectora/resources/`` e embutido no executável final por
+DOIS empacotadores diferentes, então precisa de DOIS caminhos de resolução em
+runtime — mesma resolução de bundle congelado que ``server.py::
+_chat_static_root`` já usa pro ``frontend/dist``:
+
+- Electron (``electron-builder`` ``extraResources``): resource fica ao lado
+  do app empacotado; o processo Electron passa o caminho explícito via
+  ``VECTORA_NATS_BINARY``.
+- Standalone/VPS (``build-hybrid.py``: Nuitka compila o backend, PyInstaller
+  empacota em ``--onedir``): o binário entra via ``--add-binary`` numa pasta
+  ``nats/`` dentro do bundle, achado em runtime por ``sys._MEIPASS`` (onedir/
+  onefile do PyInstaller) ou ``sys.__compiled__.containing_dir``/
+  ``NUITKA_ONEFILE_PARENT`` (onefile do Nuitka puro, sem PyInstaller).
+
+Em dev, ``shutil.which`` resolve uma instalação local (ex.: ``choco install
+nats-server`` / ``brew install nats-server``) ou o resource baixado em
+``vectora/resources/`` por ``scons nats``. Sem o binário disponível em
+NENHUM desses caminhos, o sidecar não sobe e ``get_mq()``/``get_kv()`` caem
+pro fallback em memória — nunca impede o backend de iniciar.
 """
 
 from __future__ import annotations
@@ -23,6 +36,7 @@ import logging
 import os
 import shutil
 import socket
+import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -39,30 +53,55 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
+def _exe_name() -> str:
+    return "nats-server.exe" if sys.platform == "win32" else "nats-server"
+
+
+def _frozen_bundle_bases() -> list[Path]:
+    """Diretórios-raiz de bundle congelado onde ``build-hybrid.py`` pode ter
+    colocado a pasta ``nats/`` — mesma fonte que ``_chat_static_root`` usa."""
+    bases: list[Path] = []
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        bases.append(Path(meipass))
+    compiled = getattr(sys, "__compiled__", None)
+    if compiled is not None and hasattr(compiled, "containing_dir"):
+        bases.append(Path(compiled.containing_dir))
+    nuitka_parent = os.environ.get("NUITKA_ONEFILE_PARENT")
+    if nuitka_parent:
+        bases.append(Path(nuitka_parent))
+    return bases
+
+
 def _resolve_binary() -> str | None:
     """Localiza o binário ``nats-server``.
 
     Ordem: override explícito (``VECTORA_NATS_BINARY``, apontado pelo Electron
-    pro binário empacotado via ``extraResources``) → PATH (dev, ex.:
-    ``choco/brew install nats-server``) → resource embutido ao lado do binário
-    Nuitka (``resources/nats-server``).
+    pro binário empacotado via ``extraResources``) → bundle congelado
+    (PyInstaller/Nuitka onefile, pasta ``nats/`` embutida por
+    ``build-hybrid.py`` — vence o PATH pra nunca rodar uma versão desalinhada
+    instalada à parte na máquina) → PATH (dev, ex.: ``choco/brew install
+    nats-server``) → árvore-fonte (``vectora/resources/``, baixado por
+    ``scons nats``).
     """
     override = os.getenv("VECTORA_NATS_BINARY")
     if override and Path(override).is_file():
         return override
 
+    exe_name = _exe_name()
+
+    for base in _frozen_bundle_bases():
+        candidate = base / "nats" / exe_name
+        if candidate.is_file():
+            return str(candidate)
+
     from_path = shutil.which("nats-server")
     if from_path:
         return from_path
 
-    # Build de distribuição: binário embutido ao lado do executável Nuitka,
-    # mesmo mecanismo de resource extra do frontend/dist.
-    bundled = (
-        Path(__file__).resolve().parent.parent.parent / "resources" / "nats-server"
-    )
-    for candidate in (bundled, bundled.with_suffix(".exe")):
-        if candidate.is_file():
-            return str(candidate)
+    bundled = Path(__file__).resolve().parent.parent.parent / "resources" / exe_name
+    if bundled.is_file():
+        return str(bundled)
     return None
 
 

@@ -100,6 +100,21 @@ def main() -> None:
         sys.exit(f"backend.{ext} não gerado")
     print(f"OK: {pyd}")
 
+    # nats-server precisa estar em vectora/resources/ ANTES do PyInstaller
+    # rodar (baixado por `scons nats`/_fetch_nats) — sem ele, o binário
+    # standalone sobe sem sidecar de fila/KV e get_mq()/get_kv() degradam pro
+    # fallback em memória (nunca falha o boot, mas silenciosamente perde
+    # persistência em produção). backend.scheduling.nats_sidecar resolve o
+    # binário embutido em runtime via sys._MEIPASS (mesmo mecanismo do
+    # chat_static abaixo).
+    nats_exe = "nats-server.exe" if sys.platform == "win32" else "nats-server"
+    nats_binary = VECTORA / "resources" / nats_exe
+    if not nats_binary.is_file():
+        sys.exit(
+            f"{nats_binary} não encontrado. Rode `scons nats` antes do build "
+            "(baixa o binário nats-server pra vectora/resources/)."
+        )
+
     # Fase 2 — PyInstaller: launcher + backend.pyd + libs -> vectora.exe
     collect: list[str] = []
     for pkg in COLLECT_ALL:
@@ -140,6 +155,8 @@ def main() -> None:
             f"--specpath={ROOT / 'build'}",
             "--add-binary",
             f"{pyd}{SEP}.",
+            "--add-binary",
+            f"{nats_binary}{SEP}nats",
             "--add-data",
             f"{VECTORA / 'frontend' / 'dist'}{SEP}chat_static",
             "--add-data",
@@ -161,6 +178,15 @@ def main() -> None:
     if not exe.exists():
         sys.exit(f"{exe} não gerado")
     dist_dir = ROOT / "dist" / "vectora"
+
+    # Confere que o nats-server embutido sobreviveu ao empacotamento — sem
+    # isso o build "passa" mas o sidecar de fila/KV degrada silenciosamente
+    # pra memória em produção (ver nats_sidecar._frozen_bundle_bases).
+    if not any(dist_dir.rglob(f"nats/{nats_exe}")):
+        sys.exit(
+            f"nats/{nats_exe} não apareceu em {dist_dir} após o PyInstaller "
+            "— o sidecar de fila/KV vai degradar pra memória em produção."
+        )
     total_mb = (
         sum(f.stat().st_size for f in dist_dir.rglob("*") if f.is_file()) / 1048576
     )

@@ -51,6 +51,50 @@ def test_resolve_binary_honra_override_env(tmp_path, monkeypatch):
     assert nats_sidecar._resolve_binary() == "/usr/bin/nats-server"
 
 
+def test_resolve_binary_usa_bundle_pyinstaller_antes_do_path(tmp_path, monkeypatch):
+    """No binário congelado (build-hybrid.py empacota vectora/resources/
+    nats-server via PyInstaller --add-binary em ``nats/``), sys._MEIPASS deve
+    vencer o PATH — senão um nats-server desalinhado instalado na máquina do
+    usuário (versão diferente da testada) seria usado em produção."""
+    monkeypatch.delenv("VECTORA_NATS_BINARY", raising=False)
+    nats_dir = tmp_path / "nats"
+    nats_dir.mkdir()
+    bundled = nats_dir / nats_sidecar._exe_name()
+    bundled.write_text("")
+
+    monkeypatch.setattr(nats_sidecar.sys, "_MEIPASS", str(tmp_path), raising=False)
+    monkeypatch.setattr(nats_sidecar.shutil, "which", lambda _n: "/usr/bin/nats-server")
+
+    assert nats_sidecar._resolve_binary() == str(bundled)
+
+
+def test_resolve_binary_meipass_sem_arquivo_cai_no_path(tmp_path, monkeypatch):
+    """Borda: _MEIPASS setado mas sem nats/nats-server dentro (build sem
+    `scons nats` antes do PyInstaller) — não trava, degrada pro PATH."""
+    monkeypatch.delenv("VECTORA_NATS_BINARY", raising=False)
+    monkeypatch.setattr(nats_sidecar.sys, "_MEIPASS", str(tmp_path), raising=False)
+    monkeypatch.setattr(nats_sidecar.shutil, "which", lambda _n: "/usr/bin/nats-server")
+
+    assert nats_sidecar._resolve_binary() == "/usr/bin/nats-server"
+
+
+def test_resolve_binary_usa_nuitka_compiled_containing_dir(tmp_path, monkeypatch):
+    """Onefile Nuitka expõe sys.__compiled__.containing_dir — mesma resolução
+    usada por server.py::_chat_static_root para o bundle do frontend."""
+    monkeypatch.delenv("VECTORA_NATS_BINARY", raising=False)
+    monkeypatch.delattr(nats_sidecar.sys, "_MEIPASS", raising=False)
+    nats_dir = tmp_path / "nats"
+    nats_dir.mkdir()
+    bundled = nats_dir / nats_sidecar._exe_name()
+    bundled.write_text("")
+
+    fake_compiled = type("FakeCompiled", (), {"containing_dir": str(tmp_path)})()
+    monkeypatch.setattr(nats_sidecar.sys, "__compiled__", fake_compiled, raising=False)
+    monkeypatch.setattr(nats_sidecar.shutil, "which", lambda _n: None)
+
+    assert nats_sidecar._resolve_binary() == str(bundled)
+
+
 def _fake_ready_proc(ready_line: bytes = b"Server is ready\n") -> MagicMock:
     proc = MagicMock()
     proc.stdout.readline = AsyncMock(return_value=ready_line)
