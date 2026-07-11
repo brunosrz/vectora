@@ -676,10 +676,50 @@ def _check_wrangler_auth() -> None:
         raise SystemExit(1)
 
 
+def _check_vercel_link(folder: str, expected_project: str) -> None:
+    """Falha cedo se a pasta não estiver linkada ao projeto Vercel CORRETO.
+
+    `vercel --prod` publica no projeto gravado em `.vercel/project.json`
+    (gitignored, um link por máquina de dev). Se a pasta foi linkada ao projeto
+    errado — ex.: `company` em vez de `vectora-company`, o que acontece se você
+    aceitar o autolink pelo nome da pasta em `vercel link` — o deploy vai pro
+    lugar errado E o `scons prod` termina "sem erros", enquanto o domínio de
+    produção (vectora.company / docs.vectora.company) segue servindo o deploy
+    antigo/quebrado do projeto certo. Este preflight garante o alvo certo.
+    """
+    import json
+
+    rel = os.path.relpath(folder, ROOT)
+    link_path = os.path.join(folder, ".vercel", "project.json")
+    if not os.path.isfile(link_path):
+        print(
+            f"\n[scons prod] {rel}/ não está linkado a nenhum projeto Vercel.\n"
+            f"  Rode DENTRO de {rel}/:  vercel link\n"
+            f"  e selecione o projeto '{expected_project}' (não o autolink pelo\n"
+            f"  nome da pasta).\n"
+        )
+        raise SystemExit(1)
+    with open(link_path, encoding="utf-8") as f:  # noqa: PTH123
+        linked = json.load(f).get("projectName", "")
+    if linked != expected_project:
+        print(
+            f"\n[scons prod] {rel}/ linkado ao projeto Vercel ERRADO.\n"
+            f"  Linkado:   '{linked}'\n"
+            f"  Esperado:  '{expected_project}'\n"
+            f"  O deploy iria pro projeto errado e o domínio de produção\n"
+            f"  continuaria servindo o deploy antigo. Corrija DENTRO de {rel}/:\n"
+            f"    vercel link    (selecione '{expected_project}')\n"
+        )
+        raise SystemExit(1)
+
+
 def _action_prod(target, source, env):
-    # Preflight Cloudflare ANTES de publicar no Vercel — não deixa docs/company
-    # irem pro ar e o Worker ficar pra trás por credencial inválida.
+    # Preflights ANTES de publicar qualquer coisa: credencial Cloudflare válida
+    # e cada pasta linkada ao projeto Vercel certo — senão o deploy vai pro
+    # lugar errado / o Worker fica pra trás, sem erro visível no scons.
     _check_wrangler_auth()
+    _check_vercel_link(DOCS, "vectora-docs")
+    _check_vercel_link(COMPANY, "vectora-company")
     with _open_log("prod") as log:
         _run([VERCEL, "--prod", "--yes"], log=log, cwd=DOCS)
         _run([VERCEL, "--prod", "--yes"], log=log, cwd=COMPANY)
