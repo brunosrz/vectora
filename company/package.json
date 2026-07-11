@@ -47,7 +47,7 @@
     "@tanstack/store": "latest",
     "dotenv-cli": "^11.0.0",
     "lucide-react": "^1.23.0",
-    "nitro": "npm:nitro-nightly@4.0.0-20251010-091516-7cafddba",
+    "nitro": "^3.0.260610-beta",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "satori": "^0.26.0",
