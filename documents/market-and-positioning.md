@@ -632,14 +632,20 @@ transparência + ARPU baixo).
 | Streaming resiliente a erro no meio    | ✅ `adapt_stream` + classify_stream_error                    |
 | Auto mode bloqueia git/terraform       | 🔄 permission modes (HITL) — falta a lista de bloqueio       |
 
-**Hermes Agent (open-source local-first):** referência de transparência
-e local-first radical; o que observar é a ergonomia de configuração
-zero-cloud. Já cobrimos o eixo local-first; monitorar features de
-extensibilidade.
+**Hermes Agent (Nous Research, self-hosted, v0.18.0 jul/2026):**
+referência de transparência e local-first radical, com learning loop
+auto-melhorável (skills a partir da experiência + modelo do usuário),
+Mixture-of-Agents, proxy OpenAI-compatível e worktree-per-task. Features
+acionáveis destiladas em
+[`competitor-assimilation-backlog.md`](./competitor-assimilation-backlog.md)
+(H-1..H-3).
 
-**Paperclip:** ainda **não coberto** neste doc — abrir análise dedicada
-(Tier a definir) antes de priorizar assimilação. _TODO de pesquisa:
-mapear proposta, público e feature-set._
+**Paperclip (paperclipai, MIT, 2026):** orquestração de _times_ de
+agentes — org chart, budgets/governança, ticketing com heartbeats e
+**Company Artifacts indexados** (semente de rag-library). Features
+acionáveis no mesmo backlog (P-1..P-4). Público é "rodar empresa com
+agentes"; assimilamos as **primitivas** (artefatos indexados, budgets,
+gates de PR), **não** o "zero-human company" (anti-Devin).
 
 **Regra de ouro (anti-Devin):** qualquer feature de escala (swarm,
 workflows, background pesado) entra **com HITL e workspace visível**.
