@@ -647,11 +647,17 @@ def _check_wrangler_auth() -> None:
     já ter publicado docs+company no Vercel. Este preflight checa `whoami`
     antes de qualquer passo Cloudflare.
     """
+    # encoding/errors explícitos: o wrangler imprime emoji (⛅️) em UTF-8, e o
+    # `text=True` sozinho decodifica no code page do Windows (cp1252) — estoura
+    # UnicodeDecodeError na thread de leitura do subprocess. Só olhamos o
+    # returncode aqui, então errors="replace" basta.
     result = subprocess.run(
         [WRANGLER, "whoami"],
         cwd=SERVICES,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
         print(
