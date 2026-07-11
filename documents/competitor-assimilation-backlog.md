@@ -235,18 +235,164 @@ chat web multi-usuário.
 
 ---
 
+## Claude Code / Anthropic Platform (jul/2026)
+
+> Destilado do CHANGELOG do Claude Code (série 2.1.x) e das release notes da
+> Claude Platform/API. Anthropic é **um** provider no nosso multi-LLM — então
+> assimilamos os **padrões** (não a API específica), garantindo fallback para
+> providers que não suportem.
+
+### C-1 🎯 Memória hierárquica navegável (paths/depth)
+
+**O que é.** O memory tool da Anthropic evoluiu para **memory stores
+hierárquicos**: memórias organizadas por caminho (`path_prefix`), listáveis
+com profundidade limitada (`depth`) e ordem estável.
+
+**Por que pro Vectora.** Nosso `save_memory`/`get_memory` hoje é
+chave-valor plano. Caminhos (`projeto/decisões/…`, `usuário/preferências/…`)
+dão memória **navegável, escopável por workspace/usuário e recuperável** —
+upgrade direto do BaseStore e destino natural do que o H-1 destila.
+
+**Como implementar.**
+
+- O LangGraph `BaseStore` já suporta **namespace em tupla** + `key` — usar a
+  tupla como segmentos de path. Nada de schema novo no lite (SQLite) nem no
+  complete (Postgres/Qdrant).
+- Nova tool `list_memory(path_prefix, depth)` + `save_memory(path=..., ...)`;
+  o Memory tab do workbench ganha uma **árvore** navegável.
+- Migração: memórias planas atuais → path `default/`.
+- Fecha com RAG: paths viram filtros de retrieval (memória escopada por
+  projeto entra no contexto certo).
+
+**Esforço.** Médio. **Dependências:** BaseStore (existe, já tem namespaces),
+Memory tab (existe).
+
+### C-2. `response_inclusion`: higiene de contexto nas web/RAG tools
+
+**O que é.** As web search/fetch tools ganharam `response_inclusion` para
+**dropar do contexto os result blocks já consumidos** — economiza token em
+loops agenticos longos.
+
+**Por que pro Vectora.** Em sessão longa, resultados antigos de web/RAG
+incham o histórico e desfocam o modelo. Barato e alto valor.
+
+**Como implementar.**
+
+- Nas tools `backend/tools/web.py` e nas de RAG: depois que um resultado é
+  citado numa resposta, **compactar** o bloco bruto no histórico deixando só
+  a citação `[N]` + fonte (a resposta segue auditável, o contexto encolhe).
+- Integra com a compaction de contexto do LangGraph (middleware). Opt-in,
+  ligado por padrão em execuções longas/background.
+
+**Esforço.** Médio. **Dependências:** web/RAG tools (existem), middleware de
+contexto.
+
+### C-3 🎯 Hook `post-session`
+
+**O que é.** Lifecycle hook que roda **após a sessão concluir**, antes de
+limpar o workspace.
+
+**Por que pro Vectora.** É o **gatilho canônico do H-1** (destilar
+skills/memória ao fim da sessão) e também serve auto-commit, telemetria e
+cleanup.
+
+**Como implementar.**
+
+- Estender o sistema de hooks (Frente B, já feito: pre/post tool) com o ponto
+  `post-session`, disparado no encerramento da thread (`/end`, idle timeout ou
+  fechar a sessão). Roda hooks de `.vectora/hooks/` (shell/skill).
+- O H-1 registra aqui um hook que enfileira o job de destilação (NATS).
+
+**Esforço.** Baixo-médio. **Dependências:** hooks (existe), jobs NATS (existe).
+
+### C-4. Sandbox de código stateful (REPL) + programmatic tool calling
+
+**O que é.** O code execution tool ganhou **estado de REPL persistente** entre
+chamadas e **programmatic tool calling** (o agente escreve código que
+orquestra várias tools de uma vez).
+
+**Por que pro Vectora.** Complementa o PTY (shell interativo) com um REPL de
+linguagem **com estado** — ideal para análise de dados/RAG: manter dataframes
+e variáveis entre passos sem re-executar tudo. Programmatic calling reduz
+overhead quando são muitas tool calls.
+
+**Como implementar.**
+
+- Kernel Python persistente por sessão (`thread_id` → namespace vivo), tool
+  `code_exec(code)` que preserva o estado entre chamadas. Isolar: só em
+  workspace **confiado**, timeout por célula, **sem acesso a credenciais**
+  (espelha `sandbox.credentials` do Claude Code).
+- Distinto do terminal (PTY): este é REPL de linguagem, não shell.
+- Anti-Devin: efeitos colaterais (escrita/rede) passam por HITL.
+
+**Esforço.** Alto. **Dependências:** workspace trust (existe), infra de
+sandbox/jobs. **Risco:** segurança do sandbox — avaliar isolamento (subprocess
+
+- limites de OS) antes.
+
+### C-5. Lista de bloqueio no permission mode (comandos irreversíveis)
+
+**O que é.** O auto mode do Claude Code **bloqueia git/IaC destrutivos**
+(`push --force`, `reset --hard`, `terraform destroy`) sem pedido explícito,
+mesmo em modo autônomo.
+
+**Por que pro Vectora.** Fecha nossos modes `auto`/`bypass` com rede de
+segurança — assimila a escala **sem virar Devin**. Hoje o `auto` não pausa
+nada; uma denylist de comandos irreversíveis é o meio-termo.
+
+**Como implementar.**
+
+- No middleware HITL: além dos modes, uma **denylist de padrões** que
+  **sempre** exigem confirmação, mesmo em `auto` (`git push --force`,
+  `git reset --hard`, `rm -rf`, `terraform destroy`, `DROP TABLE`, etc.).
+- Classificador leve nos tools `terminal`/git antes de executar; config em
+  `.vectora/gates.toml` (reusa o arquivo do P-3).
+
+**Esforço.** Médio. **Dependências:** HITL middleware (existe), permission
+modes (existem).
+
+### C-6. System message mid-sessão preservando prompt cache
+
+**O que é.** O Opus 4.8 aceita mensagens `role: "system"` **no meio** da
+conversa, mudando instruções sem invalidar o prompt cache.
+
+**Por que pro Vectora.** Sessões longas (workbench aberto horas) mudam
+contexto (troca de workspace, skill nova, permission mode) — hoje isso pode
+invalidar o `cache_llm`. Injetar a mudança mid-sessão mantém o cache hit e
+reduz custo/latência.
+
+**Como implementar.**
+
+- No engine de chat (`backend/nodes/`), quando o contexto de sistema muda no
+  meio da sessão, inserir um bloco `system` **no meio** do array em vez de
+  reconstruir o system prompt no topo.
+- Depende de suporte do provider (Anthropic sim); **fallback** para providers
+  sem suporte = rebuild no topo (degrada só o cache, não a correção). Integra
+  com o `cache_llm` (Redis/InMemory) pra manter o hit.
+
+**Esforço.** Médio. **Dependências:** chat engine (existe), cache_llm
+(existe), capability do provider (parcial).
+
+---
+
 ## Priorização sugerida (impacto × proximidade do norte)
 
 1. **P-1** 🎯 Biblioteca de artefatos indexada — semente da rag-library.
 2. **H-1** 🎯 Learning loop — skills/memória auto-melhoráveis.
-3. **P-3** Gates de PR — baixo custo, alto valor de confiança, reusa hooks.
-4. **H-2** Proxy OpenAI-compatível — amplia integração sem lock-in.
-5. **H-3** Worktree-per-task — destrava swarm/paralelo com segurança.
-6. **P-4** Ticketing/heartbeats — depende do H-3.
-7. **P-2** Governança/budgets — feature Enterprise, modo servidor.
+3. **C-1** 🎯 Memória hierárquica (paths/depth) — upgrade do BaseStore, base do H-1.
+4. **C-3** 🎯 Hook `post-session` — gatilho canônico do H-1 (barato, destrava).
+5. **P-3 + C-5** Gates de PR + denylist de comandos irreversíveis — baratos,
+   reusam hooks/HITL, fecham o fluxo com segurança.
+6. **C-2** `response_inclusion` — higiene de contexto, barato, melhora loops.
+7. **H-2** Proxy OpenAI-compatível — amplia integração sem lock-in.
+8. **H-3** Worktree-per-task — destrava swarm/paralelo com segurança.
+9. **P-4** Ticketing/heartbeats — depende do H-3.
+10. **C-4** REPL sandbox stateful — capacidade nova, exige análise de segurança.
+11. **C-6** System message mid-sessão — economia em sessão longa (Anthropic-first).
+12. **P-2** Governança/budgets — feature Enterprise, modo servidor.
 
-> Tudo **pós-1.0** salvo P-3 (barato) — a rag-library tem precedência sobre
-> qualquer item que compita pelo mesmo tempo de engenharia.
+> Tudo **pós-1.0** salvo os baratos (P-3, C-5, C-3) — a rag-library tem
+> precedência sobre qualquer item que compita pelo mesmo tempo de engenharia.
 
 ## Fontes
 
@@ -254,5 +400,10 @@ chat web multi-usuário.
   `github.com/NousResearch/hermes-agent`, `hermes-agent.nousresearch.com/docs`.
 - Paperclip (paperclipai) — repo/docs (MIT, 2026):
   `github.com/paperclipai/paperclip`, `paperclip.ing`.
+- Claude Code — CHANGELOG (série 2.1.x):
+  `github.com/anthropics/claude-code/blob/main/CHANGELOG.md`.
+- Claude Platform / API — release notes:
+  `platform.claude.com/docs/en/release-notes/api`.
 - Consultado em jul/2026. Confirmar detalhes de API antes de implementar (as
-  release notes evoluem).
+  release notes evoluem). Nota: features da Anthropic são assimiladas como
+  **padrões** (multi-LLM), com fallback para providers que não suportem.
