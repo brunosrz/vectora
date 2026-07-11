@@ -228,6 +228,20 @@ que adotamos), MCP first-class, Plan mode profundo, slash commands
 hierárquicos, hooks (`pre-tool-use`/`post-tool-use`/`stop`), background
 tasks com notificação, documentação forte, integração com IDE.
 
+**Atualização jul/2026 (Claude Code v2.1.x — fonte: CHANGELOG oficial):**
+o fosso de UX cresceu. Destaques novos: **navegador embutido no próprio
+app** — antes dependia de subir uma instância do Chrome com a extensão
+ativa (o que travava o uso do computador: se o usuário mexesse em algo, a
+integração parava), agora é um pane nativo que lê DOM/console/network e
+**detecta dev servers via `.claude/launch.json`**; **dynamic workflows**
+(orquestra dezenas-a-centenas de subagentes numa sessão); subagentes em
+**background por padrão** e **aninhados até 5 níveis**; **checkpoints
+automáticos** com `/rewind` (Esc-Esc) — snapshot antes de cada mudança;
+**fallback model chain**; streaming preserva a saída parcial em erro no
+meio; auto mode **bloqueia git/terraform destrutivos** sem pedido
+explícito; Claude Code na web (delega do browser conectando repo do
+GitHub). Modelos: Opus 4.8 com fast mode a custo reduzido.
+
 **Fraquezas:** lock-in total a Claude (nenhum outro LLM mesmo via MCP),
 cloud-only (código sempre passa pela Anthropic), sem chat web
 multi-usuário, RAG fraco (depende de re-leitura de arquivos), caro
@@ -237,7 +251,15 @@ pública.
 **O que Vectora aprende:** adotar `.skill.md` (já fazemos), hooks
 (roadmap), Plan mode explícito, slash commands hierárquicos (parcial),
 status line custom no chat web, background tasks com notificação, CLI
-paridade `mcp add/remove/list`.
+paridade `mcp add/remove/list`; **navegador embutido de preview/QA no
+workbench** — evolução do A2 (Playwright): um pane que carrega o dev
+server, lê DOM/console/network e detecta servers via config, **sem travar
+o computador do usuário** (a dor exata da abordagem por extensão do
+Chrome); **checkpoints + rewind por sessão** (snapshot antes de cada
+mudança, além do checkpointer LangGraph que já temos); **agent swarm
+opcional** para tarefas grandes — sempre sob HITL e com o workspace
+visível, assimilar a escala **sem virar Devin**. Fallback chain já
+temos (`FallbackChatModel`); streaming resiliente a erro no meio idem.
 
 **O que Vectora NÃO copia:** lock-in a LLM único (princípio
 fundacional), cloud-managed (somos local-first), pricing alto, foco
@@ -558,13 +580,15 @@ Oportunidades de diferenciação:
 | Plan mode explícito           |    🔄    |     ✅      |   ❌   | Parc. |    ❌    |   ❌    |   ✅    |   ❌    |
 | Custom slash commands hier.   |    🔄    |     ✅      | Parc.  | Parc. |    ✅    |   ❌    |   ❌    |   ❌    |
 | Auto-commit por mudança       |    📋    |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Live preview embedded         |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ✅    |   ❌    |
+| Live preview embedded         |    🔄    |     ✅³     |   ❌   |  ❌   |    ❌    |   ❌    |   ✅    |   ❌    |
 | Architect/coder split         |    📋    |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Programa beta formal          |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Custo                         | $7–20/mo |   $20+/mo   | $20/mo | Free  |   Free   | $60+/mo | $500/mo | $19/mo  |
 
 ¹ Self-hosted é Sourcegraph Enterprise pago
 ² Claude Code é cliente MCP, não server (não pode ser delegado-a)
+³ Claude Code ganhou navegador embutido + detecção de dev server em
+v2.1.x (jul/2026) — vira paridade a assimilar, ver Radar abaixo
 🔄 Em desenvolvimento · 📋 Planejado (não documentado formalmente ainda)
 
 ### Aprendizados consolidados (lista priorizada)
@@ -582,6 +606,48 @@ supervisão é bandeira vermelha — preferimos HITL + workspace visível);
 não copiar vibe coding (público diferente, anti-positioning
 estratégico); não copiar pricing enterprise opaco (preferimos
 transparência + ARPU baixo).
+
+### Radar de assimilação — jul/2026
+
+> **O norte não muda: RAG.** O maior poder do Vectora sempre será a
+> recuperação (RAG híbrido + Context Graph), e a **rag-library** é o
+> objetivo central pós-lançamento — retriever como produto, indexação
+> incremental, biblioteca de conhecimento compartilhável. Tudo neste
+> radar é **paridade secundária**: assimilamos o que os concorrentes
+> fazem bem para não ficar atrás em UX de agente, mas nunca à custa do
+> diferencial de RAG. Priorização = (impacto no usuário) × (distância do
+> nosso norte); features que competem com o tempo da rag-library ficam
+> pós-1.0.
+
+**Claude Code (v2.1.x) — o benchmark de UX de agente:**
+
+| Feature deles                          | Status no Vectora                                            |
+| -------------------------------------- | ------------------------------------------------------------ |
+| Navegador embutido (DOM/console/net)   | 📋 evoluir o A2/Playwright → pane de preview/QA no workbench |
+| Detecção de dev server (`launch.json`) | 📋 config `preview` + auto-start no workbench                |
+| Checkpoints + `/rewind` por sessão     | 📋 snapshot pré-mudança sobre o checkpointer LangGraph       |
+| Dynamic workflows / agent swarm        | 📋 opcional, sempre sob HITL + workspace visível             |
+| Subagentes em background por padrão    | ✅ background tasks + fila NATS (jobs)                       |
+| Fallback model chain                   | ✅ `FallbackChatModel`                                       |
+| Streaming resiliente a erro no meio    | ✅ `adapt_stream` + classify_stream_error                    |
+| Auto mode bloqueia git/terraform       | 🔄 permission modes (HITL) — falta a lista de bloqueio       |
+
+**Hermes Agent (open-source local-first):** referência de transparência
+e local-first radical; o que observar é a ergonomia de configuração
+zero-cloud. Já cobrimos o eixo local-first; monitorar features de
+extensibilidade.
+
+**Paperclip:** ainda **não coberto** neste doc — abrir análise dedicada
+(Tier a definir) antes de priorizar assimilação. _TODO de pesquisa:
+mapear proposta, público e feature-set._
+
+**Regra de ouro (anti-Devin):** qualquer feature de escala (swarm,
+workflows, background pesado) entra **com HITL e workspace visível**.
+Escala sem supervisão é anti-positioning — ver "Top 3 não fazer".
+
+_Fonte da intel: CHANGELOG oficial do Claude Code + anthropic.com/news,
+consultados em jul/2026. Reavaliar a cada release relevante (política do
+Checklist de coerência acima)._
 
 ---
 
