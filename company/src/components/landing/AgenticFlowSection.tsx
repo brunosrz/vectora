@@ -1,94 +1,157 @@
 import { m } from "#/paraglide/messages";
+import {
+  DiagramArc,
+  DiagramArrowDefs,
+  DiagramNodeView,
+  DiagramPanelBg,
+} from "#/components/landing/diagram-kit";
+import type { DiagramNode } from "#/components/landing/diagram-kit";
 
-interface AgentBoxProps {
-  title: string;
-  sub: string;
-  color: string;
-}
-
-function AgentBox({ title, sub, color }: AgentBoxProps) {
-  return (
-    <div
-      className="flex flex-1 flex-col items-center justify-center rounded-xl py-2 text-center"
-      style={{ border: `0.666667px solid ${color}`, color }}
+/** Ícones de linha originais (traçado próprio) — um por agente do grafo. */
+const ICONS = {
+  user: (color: string) => (
+    <g fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="0" cy="-4" r="3.2" />
+      <path d="M-6,7 C-6,1 6,1 6,7" />
+    </g>
+  ),
+  hub: (color: string) => (
+    <g stroke={color} fill="none">
+      <circle cx="0" cy="0" r="2.6" fill={color} />
+      <circle cx="0" cy="-10" r="2.4" strokeWidth="1.5" />
+      <circle cx="9" cy="6" r="2.4" strokeWidth="1.5" />
+      <circle cx="-9" cy="6" r="2.4" strokeWidth="1.5" />
+      <line x1="0" y1="-2.4" x2="0" y2="-7.6" strokeWidth="1.3" />
+      <line x1="1.9" y1="1.6" x2="7.4" y2="4.6" strokeWidth="1.3" />
+      <line x1="-1.9" y1="1.6" x2="-7.4" y2="4.6" strokeWidth="1.3" />
+    </g>
+  ),
+  code: (color: string) => (
+    <g
+      fill="none"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      <span className="w-full text-[14px] font-semibold leading-5">
-        {title}
-      </span>
-      <span className="w-full text-[11px] leading-4">{sub}</span>
-    </div>
+      <path d="M-3,-7 L-8,0 L-3,7" />
+      <path d="M3,-7 L8,0 L3,7" />
+    </g>
+  ),
+  globe: (color: string) => (
+    <g fill="none" stroke={color} strokeWidth="1.3">
+      <circle cx="0" cy="0" r="7.5" />
+      <ellipse cx="0" cy="0" rx="3.2" ry="7.5" />
+      <line x1="-7.5" y1="0" x2="7.5" y2="0" />
+    </g>
+  ),
+} as const;
+
+/** Retângulo opaco atrás de um texto solto (não preso a um nó) — mesma
+ * técnica do diagram-kit, aqui só pro label "Resposta" perto da seta. */
+function FloatingLabel({
+  cx,
+  cy,
+  text,
+}: {
+  cx: number;
+  cy: number;
+  text: string;
+}) {
+  const w = text.length * 11 * 0.62 + 6;
+  return (
+    <g>
+      <rect
+        x={cx - w / 2}
+        y={cy - 8}
+        width={w}
+        height={13}
+        fill="var(--card)"
+      />
+      <text
+        x={cx}
+        y={cy + 3}
+        textAnchor="middle"
+        fill="var(--muted-foreground)"
+        fontSize="11"
+        fontWeight="600"
+      >
+        {text}
+      </text>
+    </g>
   );
 }
 
 function AgenticDiagram() {
+  const usuario: DiagramNode = {
+    cx: 230,
+    cy: 34,
+    r: 16,
+    icon: ICONS.user,
+    color: "muted",
+    title: m.agentic_diagram_user(),
+    sub: "",
+  };
+  const orchestrator: DiagramNode = {
+    cx: 230,
+    cy: 122,
+    r: 24,
+    icon: ICONS.hub,
+    color: "primary",
+    title: m.agentic_diagram_orchestrator_title(),
+    sub: m.agentic_diagram_orchestrator_sub(),
+  };
+  const coder: DiagramNode = {
+    cx: 130,
+    cy: 236,
+    r: 19,
+    icon: ICONS.code,
+    color: "cyan",
+    title: m.agentic_diagram_coder_title(),
+    sub: m.agentic_diagram_coder_sub(),
+  };
+  const search: DiagramNode = {
+    cx: 330,
+    cy: 236,
+    r: 19,
+    icon: ICONS.globe,
+    color: "purple",
+    title: m.agentic_diagram_search_title(),
+    sub: m.agentic_diagram_search_sub(),
+  };
+
   return (
     <div
-      className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-border bg-card/40 p-6"
+      className="flex h-full items-center justify-center overflow-hidden rounded-2xl border border-border p-6"
       aria-hidden
     >
-      <span className="text-[12px] leading-4 text-muted-foreground">
-        {m.agentic_diagram_response()}
-      </span>
-      <span className="text-[14px] leading-none text-muted-foreground">↑</span>
-
-      <div className="rounded-xl border border-border bg-card px-5 py-2 text-[14px] leading-5 text-muted-foreground">
-        {m.agentic_diagram_user()}
-      </div>
-
-      <span className="text-[14px] leading-none text-muted-foreground">↓</span>
-
-      <div
-        className="flex flex-col items-center rounded-xl border-2 px-6 py-2 text-center"
-        style={{
-          borderColor: "var(--primary)",
-          background: "var(--node-surface)",
-        }}
-      >
-        <span className="text-[14px] font-semibold leading-5 text-primary">
-          {m.agentic_diagram_orchestrator_title()}
-        </span>
-        <span className="text-[11px] leading-4 text-primary opacity-90">
-          {m.agentic_diagram_orchestrator_sub()}
-        </span>
-      </div>
-
-      {/* Linhas de conexão: azul → Coder, roxo → Search (subagentes reais —
-          RAG não é um terceiro subagente, é ferramenta do Search Agent) */}
       <svg
-        className="h-8 w-full"
-        viewBox="0 0 300 32"
-        preserveAspectRatio="none"
+        viewBox="0 0 460 300"
+        className="w-full"
+        style={{ fontFamily: "inherit" }}
       >
-        <line
-          x1="150"
-          y1="2"
-          x2="100"
-          y2="30"
-          stroke="var(--primary)"
-          strokeWidth="1.95"
-        />
-        <line
-          x1="150"
-          y1="2"
-          x2="200"
-          y2="30"
-          stroke="var(--accent-purple)"
-          strokeWidth="1.95"
-        />
-      </svg>
+        <DiagramArrowDefs />
+        <DiagramPanelBg width={460} height={300} />
 
-      <div className="flex w-full gap-[25px]">
-        <AgentBox
-          title={m.agentic_diagram_coder_title()}
-          sub={m.agentic_diagram_coder_sub()}
-          color="var(--primary)"
+        {/* Usuário ⇄ Orchestrator — UMA linha só, seta nos dois lados (mão
+         * dupla: pedido desce, resposta sobe). Duas curvas separadas aqui
+         * ficavam redundantes/confusas numa distância tão curta. */}
+        <DiagramArc
+          from={usuario}
+          to={orchestrator}
+          colorKey="primary"
+          bow={0}
+          bidirectional
         />
-        <AgentBox
-          title={m.agentic_diagram_search_title()}
-          sub={m.agentic_diagram_search_sub()}
-          color="var(--accent-purple)"
-        />
-      </div>
+        <FloatingLabel cx={300} cy={78} text={m.agentic_diagram_response()} />
+
+        <DiagramArc from={orchestrator} to={coder} colorKey="cyan" />
+        <DiagramArc from={orchestrator} to={search} colorKey="purple" />
+
+        {[usuario, orchestrator, coder, search].map((node) => (
+          <DiagramNodeView key={node.title} node={node} />
+        ))}
+      </svg>
     </div>
   );
 }

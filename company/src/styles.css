@@ -84,6 +84,8 @@
   --accent-purple: #b392f0;
   --accent-amber: #e2c08d;
   --accent-red: #f97583;
+  --accent-cyan: #56b6c2;
+  --accent-pink: #ff79c6;
 
   color-scheme: dark;
 }
@@ -126,6 +128,8 @@
   --accent-purple: #6f42c1;
   --accent-amber: #b07d2b;
   --accent-red: #d32f2f;
+  --accent-cyan: #0891b2;
+  --accent-pink: #be185d;
 
   color-scheme: light;
 }
@@ -170,6 +174,8 @@
   --color-accent-purple: var(--accent-purple);
   --color-accent-amber: var(--accent-amber);
   --color-accent-red: var(--accent-red);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-pink: var(--accent-pink);
 
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;

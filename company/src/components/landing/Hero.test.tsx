@@ -49,4 +49,28 @@ describe("Hero", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("showcase_preview_soon")).toBeInTheDocument();
   });
+
+  it("mostra o placeholder quando o gif já falhou antes da hidratação (evento error perdido)", () => {
+    // O SSR entrega o <img> puro; se o GIF já 404 nesse meio-tempo, o
+    // navegador dispara "error" antes do React anexar o onError — o
+    // handler nunca roda. complete=true + naturalWidth=0 é o estado que o
+    // navegador expõe nesse caso; sem o fallback via useEffect, a imagem
+    // quebrada ficaria visível pra sempre (bug relatado em produção).
+    const completeSpy = vi
+      .spyOn(window.HTMLImageElement.prototype, "complete", "get")
+      .mockReturnValue(true);
+    const widthSpy = vi
+      .spyOn(window.HTMLImageElement.prototype, "naturalWidth", "get")
+      .mockReturnValue(0);
+
+    render(<Hero />);
+
+    expect(
+      screen.queryByRole("img", { name: "hero_gif_alt" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("showcase_preview_soon")).toBeInTheDocument();
+
+    completeSpy.mockRestore();
+    widthSpy.mockRestore();
+  });
 });

@@ -1,4 +1,11 @@
 import { m } from "#/paraglide/messages";
+import {
+  DiagramArc,
+  DiagramArrowDefs,
+  DiagramNodeView,
+  DiagramPanelBg,
+} from "#/components/landing/diagram-kit";
+import type { DiagramNode } from "#/components/landing/diagram-kit";
 
 const BULLETS = [
   m.rag_bullet_formats,
@@ -10,256 +17,176 @@ const BULLETS = [
   m.rag_bullet_citation,
 ];
 
+/** Ícones de linha originais (traçado próprio) — um por tipo de nó do grafo. */
+const ICONS = {
+  document: (color: string) => (
+    <g fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round">
+      <path d="M-7,-9 L3,-9 L7,-5 L7,9 L-7,9 Z" />
+      <path d="M3,-9 L3,-5 L7,-5" />
+      <line x1="-4" y1="-1" x2="4" y2="-1" strokeWidth="1.3" />
+      <line x1="-4" y1="3" x2="4" y2="3" strokeWidth="1.3" />
+    </g>
+  ),
+  chunking: (color: string) => (
+    <g fill="none" stroke={color} strokeWidth="1.4">
+      <rect x="-9" y="-4" width="5" height="8" rx="1" />
+      <rect x="-2.5" y="-4" width="5" height="8" rx="1" />
+      <rect x="4" y="-4" width="5" height="8" rx="1" />
+    </g>
+  ),
+  lancedb: (color: string) => (
+    <g fill="none" stroke={color} strokeWidth="1.4">
+      <ellipse cx="0" cy="-5" rx="8" ry="3" />
+      <path d="M-8,-5 L-8,5 A8,3 0 0,0 8,5 L8,-5" />
+    </g>
+  ),
+  query: (color: string) => (
+    <g>
+      <rect
+        x="-8"
+        y="-7"
+        width="16"
+        height="11"
+        rx="4"
+        fill="none"
+        stroke={color}
+        strokeWidth="1.4"
+      />
+      <path
+        d="M-2,4 L-4,9 L1,4"
+        fill="none"
+        stroke={color}
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <text
+        x="0"
+        y="0.5"
+        textAnchor="middle"
+        fontSize="8"
+        fontWeight="700"
+        fill={color}
+      >
+        ?
+      </text>
+    </g>
+  ),
+  search: (color: string) => (
+    <g fill="none" stroke={color}>
+      <circle cx="-2" cy="-2" r="6" strokeWidth="1.5" />
+      <line
+        x1="3"
+        y1="3"
+        x2="8"
+        y2="8"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </g>
+  ),
+  reranker: (color: string) => (
+    <path
+      d="M-8,-7 L8,-7 L2,2 L2,8 L-2,8 L-2,2 Z"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.4"
+      strokeLinejoin="round"
+    />
+  ),
+  llm: (color: string) => (
+    <path
+      d="M0,-9 C1,-3 3,-1 9,0 C3,1 1,3 0,9 C-1,3 -3,1 -9,0 C-3,-1 -1,-3 0,-9 Z"
+      fill={color}
+      opacity="0.9"
+    />
+  ),
+} as const;
+
 function RagDiagram() {
+  const documento: DiagramNode = {
+    cx: 95,
+    cy: 46,
+    icon: ICONS.document,
+    color: "primary",
+    title: m.rag_diagram_document_title(),
+    sub: m.rag_diagram_document_sub(),
+  };
+  const chunking: DiagramNode = {
+    cx: 95,
+    cy: 150,
+    icon: ICONS.chunking,
+    color: "cyan",
+    title: m.rag_diagram_chunking_title(),
+    sub: m.rag_diagram_chunking_sub(),
+  };
+  const lancedb: DiagramNode = {
+    cx: 95,
+    cy: 254,
+    icon: ICONS.lancedb,
+    color: "green",
+    title: m.rag_diagram_lancedb_title(),
+    sub: m.rag_diagram_lancedb_sub(),
+  };
+  const consulta: DiagramNode = {
+    cx: 365,
+    cy: 46,
+    icon: ICONS.query,
+    color: "purple",
+    title: m.rag_diagram_query_title(),
+    sub: m.rag_diagram_query_sub(),
+  };
+  const busca: DiagramNode = {
+    cx: 365,
+    cy: 150,
+    icon: ICONS.search,
+    color: "pink",
+    title: m.rag_diagram_search_title(),
+    sub: m.rag_diagram_search_sub(),
+  };
+  const reranker: DiagramNode = {
+    cx: 365,
+    cy: 254,
+    icon: ICONS.reranker,
+    color: "amber",
+    title: m.rag_diagram_reranker_title(),
+    sub: m.rag_diagram_reranker_sub(),
+  };
+  const llm: DiagramNode = {
+    cx: 230,
+    cy: 316,
+    r: 26,
+    icon: ICONS.llm,
+    color: "red",
+    title: m.rag_diagram_llm_title(),
+    sub: m.rag_diagram_llm_sub(),
+  };
+
   return (
     <div
-      className="flex h-full items-center justify-center rounded-2xl border border-border bg-card/40 p-6"
+      className="flex h-full items-center justify-center overflow-hidden rounded-2xl border border-border p-6"
       aria-hidden
     >
       <svg
-        viewBox="0 0 400 280"
+        viewBox="0 0 460 395"
         className="w-full"
         style={{ fontFamily: "inherit" }}
       >
-        {/* Left column: Documento → Chunking → LanceDB */}
-        {[
-          {
-            y: 30,
-            label: m.rag_diagram_document_title(),
-            sub: m.rag_diagram_document_sub(),
-          },
-          {
-            y: 100,
-            label: m.rag_diagram_chunking_title(),
-            sub: m.rag_diagram_chunking_sub(),
-          },
-        ].map((item) => (
-          <g key={item.label}>
-            <rect
-              x="35"
-              y={item.y - 18}
-              width="110"
-              height="38"
-              rx="8"
-              fill="var(--node-surface)"
-              stroke="var(--primary)"
-              strokeWidth="1.9"
-            />
-            <text
-              x="90"
-              y={item.y - 2}
-              textAnchor="middle"
-              fill="var(--primary)"
-              fontSize="11"
-              fontWeight="700"
-            >
-              {item.label}
-            </text>
-            <text
-              x="90"
-              y={item.y + 11}
-              textAnchor="middle"
-              fill="var(--primary)"
-              fontSize="9"
-            >
-              {item.sub}
-            </text>
-          </g>
-        ))}
+        <DiagramArrowDefs />
+        <DiagramPanelBg width={460} height={395} />
 
-        {/* LanceDB — cylinder (vector store) */}
-        <ellipse
-          cx="90"
-          cy="160"
-          rx="55"
-          ry="9"
-          fill="color-mix(in srgb, var(--accent-green) 18%, var(--node-surface))"
-          stroke="var(--accent-green)"
-          strokeWidth="1.9"
-        />
-        <rect
-          x="35"
-          y="160"
-          width="110"
-          height="26"
-          fill="color-mix(in srgb, var(--accent-green) 18%, var(--node-surface))"
-        />
-        <ellipse
-          cx="90"
-          cy="186"
-          rx="55"
-          ry="9"
-          fill="color-mix(in srgb, var(--accent-green) 18%, var(--node-surface))"
-          stroke="var(--accent-green)"
-          strokeWidth="1.9"
-        />
-        <text
-          x="90"
-          y="174"
-          textAnchor="middle"
-          fill="var(--accent-green)"
-          fontSize="11"
-          fontWeight="700"
-        >
-          {m.rag_diagram_lancedb_title()}
-        </text>
-        <text
-          x="90"
-          y="186"
-          textAnchor="middle"
-          fill="var(--accent-green)"
-          fontSize="9"
-        >
-          {m.rag_diagram_lancedb_sub()}
-        </text>
+        <DiagramArc from={documento} to={chunking} colorKey="primary" />
+        <DiagramArc from={chunking} to={lancedb} colorKey="cyan" />
+        <DiagramArc from={consulta} to={busca} colorKey="purple" />
+        <DiagramArc from={busca} to={reranker} colorKey="pink" />
+        <DiagramArc from={lancedb} to={busca} colorKey="green" dashed />
+        <DiagramArc from={lancedb} to={llm} colorKey="green" />
+        <DiagramArc from={reranker} to={llm} colorKey="amber" />
 
-        {/* Left connectors */}
-        <line
-          x1="90"
-          y1="50"
-          x2="90"
-          y2="82"
-          stroke="var(--primary)"
-          strokeWidth="1.9"
-        />
-        <line
-          x1="90"
-          y1="120"
-          x2="90"
-          y2="151"
-          stroke="var(--primary)"
-          strokeWidth="1.9"
-        />
-
-        {/* Right column: Query → Hybrid Search → Reranker */}
-        {[
-          {
-            y: 30,
-            label: m.rag_diagram_query_title(),
-            sub: m.rag_diagram_query_sub(),
-            fill: "color-mix(in srgb, var(--accent-purple) 16%, var(--node-surface))",
-            stroke: "var(--accent-purple)",
-            textFill: "var(--accent-purple)",
-          },
-          {
-            y: 100,
-            label: m.rag_diagram_search_title(),
-            sub: m.rag_diagram_search_sub(),
-            fill: "var(--node-surface)",
-            stroke: "var(--primary)",
-            textFill: "var(--primary)",
-          },
-          {
-            y: 170,
-            label: m.rag_diagram_reranker_title(),
-            sub: m.rag_diagram_reranker_sub(),
-            fill: "color-mix(in srgb, var(--accent-amber) 16%, var(--node-surface))",
-            stroke: "var(--accent-amber)",
-            textFill: "var(--accent-amber)",
-          },
-        ].map((item) => (
-          <g key={item.label}>
-            <rect
-              x="185"
-              y={item.y - 18}
-              width="120"
-              height="38"
-              rx="8"
-              fill={item.fill}
-              stroke={item.stroke}
-              strokeWidth="1.9"
-            />
-            <text
-              x="245"
-              y={item.y - 2}
-              textAnchor="middle"
-              fill={item.textFill}
-              fontSize="11"
-              fontWeight="700"
-            >
-              {item.label}
-            </text>
-            <text
-              x="245"
-              y={item.y + 11}
-              textAnchor="middle"
-              fill={item.textFill}
-              fontSize="9"
-            >
-              {item.sub}
-            </text>
-          </g>
-        ))}
-
-        {/* Right connectors */}
-        <line
-          x1="245"
-          y1="50"
-          x2="245"
-          y2="82"
-          stroke="var(--accent-purple)"
-          strokeWidth="1.9"
-        />
-        <line
-          x1="245"
-          y1="120"
-          x2="245"
-          y2="152"
-          stroke="var(--primary)"
-          strokeWidth="1.9"
-        />
-
-        {/* Bridge: LanceDB → Hybrid Search (dashed green) */}
-        <line
-          x1="145"
-          y1="167"
-          x2="185"
-          y2="112"
-          stroke="var(--accent-green)"
-          strokeWidth="1.27"
-          strokeDasharray="4,3"
-        />
-
-        {/* LLM box */}
-        <rect
-          x="140"
-          y="218"
-          width="120"
-          height="42"
-          rx="8"
-          fill="var(--node-surface)"
-          stroke="var(--primary)"
-          strokeWidth="2.53"
-        />
-        <text
-          x="200"
-          y="236"
-          textAnchor="middle"
-          fill="var(--primary)"
-          fontSize="11"
-          fontWeight="700"
-        >
-          {m.rag_diagram_llm_title()}
-        </text>
-        <text
-          x="200"
-          y="250"
-          textAnchor="middle"
-          fill="var(--primary)"
-          fontSize="9"
-        >
-          {m.rag_diagram_llm_sub()}
-        </text>
-
-        {/* Reranker → LLM */}
-        <line
-          x1="245"
-          y1="190"
-          x2="240"
-          y2="218"
-          stroke="var(--accent-amber)"
-          strokeWidth="1.9"
-        />
+        {[documento, chunking, lancedb, consulta, busca, reranker, llm].map(
+          (node) => (
+            <DiagramNodeView key={node.title} node={node} />
+          ),
+        )}
       </svg>
     </div>
   );

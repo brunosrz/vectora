@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { m } from "#/paraglide/messages";
 import Logo from "#/components/shared/Logo";
 
@@ -25,6 +25,19 @@ function Eyebrow() {
 
 export default function Hero() {
   const [gifFailed, setGifFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // O SSR entrega o <img> antes do React hidratar; se o GIF já 404 nesse
+  // meio-tempo, o navegador dispara o "error" nativo antes do onError do
+  // React estar anexado — o listener nunca roda e a imagem quebrada fica
+  // visível pra sempre. `complete && naturalWidth === 0` detecta esse caso
+  // já resolvido no mount, sem depender de o evento disparar de novo.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth === 0) {
+      setGifFailed(true);
+    }
+  }, []);
 
   return (
     <section className="flex flex-col items-center px-4 py-[23px] sm:px-6 lg:px-8">
@@ -89,6 +102,7 @@ export default function Hero() {
               </div>
             ) : (
               <img
+                ref={imgRef}
                 src="/gifs/showcase-chat.gif"
                 alt={m.hero_gif_alt()}
                 loading="lazy"
