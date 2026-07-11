@@ -639,7 +639,41 @@ def _action_clean(target, source, env):
 # (`.vercel/project.json` — gitignored, um link por máquina de dev).
 
 
+def _check_wrangler_auth() -> None:
+    """Falha cedo e claro se o wrangler não estiver autenticado na Cloudflare.
+
+    Sem isto, um CLOUDFLARE_API_TOKEN inválido/sem escopo só estoura no meio do
+    deploy (no `d1 migrations apply`), com erro críptico da API — e depois de
+    já ter publicado docs+company no Vercel. Este preflight checa `whoami`
+    antes de qualquer passo Cloudflare.
+    """
+    result = subprocess.run(
+        [WRANGLER, "whoami"],
+        cwd=SERVICES,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print(
+            "\n[scons prod] wrangler não autenticado na Cloudflare.\n"
+            "  O deploy do Worker (services) precisa de credencial válida com\n"
+            "  permissão D1:Edit + Workers Scripts:Edit + R2:Edit.\n"
+            "  Opções:\n"
+            "    1) Regenere o CLOUDFLARE_API_TOKEN em\n"
+            "       dash.cloudflare.com > My Profile > API Tokens (template\n"
+            "       'Edit Cloudflare Workers' + adicione D1:Edit) e reexporte.\n"
+            "    2) Ou rode `wrangler login` (OAuth) e REMOVA\n"
+            "       CLOUDFLARE_API_TOKEN do ambiente (o env var tem prioridade\n"
+            "       e sombreia o login).\n"
+            "  Confirme com `wrangler whoami` antes de repetir `scons prod`.\n"
+        )
+        raise SystemExit(1)
+
+
 def _action_prod(target, source, env):
+    # Preflight Cloudflare ANTES de publicar no Vercel — não deixa docs/company
+    # irem pro ar e o Worker ficar pra trás por credencial inválida.
+    _check_wrangler_auth()
     with _open_log("prod") as log:
         _run([VERCEL, "--prod", "--yes"], log=log, cwd=DOCS)
         _run([VERCEL, "--prod", "--yes"], log=log, cwd=COMPANY)

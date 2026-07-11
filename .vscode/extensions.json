@@ -3,6 +3,7 @@
     "astral-sh.ty",
     "charliermarsh.ruff",
     "ms-python.vscode-pylance",
-    "ms-python.python"
+    "ms-python.python",
+    "esbenp.prettier-vscode"
   ]
 }
