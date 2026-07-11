@@ -161,16 +161,21 @@ export function DiagramArc({
   const tr = to.r ?? 22;
   const dx = to.cx - from.cx;
   const dy = to.cy - from.cy;
+  // Math.hypot não garante o mesmo último bit entre o V8 do servidor (SSR) e
+  // o do browser — a string do "d" saía com um dígito diferente em cada
+  // lado, causando hydration mismatch. Arredondar pra 2 casas elimina a
+  // divergência (SVG não precisa de mais precisão que essa de qualquer jeito).
+  const round = (n: number) => Math.round(n * 100) / 100;
   const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len;
   const uy = dy / len;
   const startPad = bidirectional ? fr + 6 : fr;
-  const x1 = from.cx + ux * startPad;
-  const y1 = from.cy + uy * startPad;
-  const x2 = to.cx - ux * (tr + 6);
-  const y2 = to.cy - uy * (tr + 6);
-  const mx = (x1 + x2) / 2 - uy * bow;
-  const my = (y1 + y2) / 2 + ux * bow;
+  const x1 = round(from.cx + ux * startPad);
+  const y1 = round(from.cy + uy * startPad);
+  const x2 = round(to.cx - ux * (tr + 6));
+  const y2 = round(to.cy - uy * (tr + 6));
+  const mx = round((x1 + x2) / 2 - uy * bow);
+  const my = round((y1 + y2) / 2 + ux * bow);
   return (
     <path
       d={`M${x1},${y1} Q${mx},${my} ${x2},${y2}`}
