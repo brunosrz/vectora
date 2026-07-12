@@ -462,6 +462,15 @@ def _run_full_suite(log, *, coverage: bool):
     # vitest importa os messages compilados. O plugin Vite só compila em dev/build.
     _run([PNPM, "--dir", "vectora/frontend", "run", "i18n:compile"], log=log)
 
+    # i18n:compile reescreve lib/paraglide/ do zero a cada chamada. O cache de
+    # transform do Vite (node_modules/.vite) não invalida de forma confiável
+    # quando o conteúdo muda por fora do próprio Vite — sobrava transform
+    # velho pra alguns arquivos de mensagem, o vitest quebrava com "Failed to
+    # resolve import ../runtime.js" de forma intermitente (reproduzido e
+    # confirmado: limpar o cache resolve). Barato, então limpa sempre.
+    frontend_vite_cache = os.path.join(VECTORA, "frontend", "node_modules", ".vite")
+    shutil.rmtree(frontend_vite_cache, ignore_errors=True)
+
     vitest_cmd = [PNPM, "--dir", "vectora/frontend", "exec", "vitest", "run"]
     if coverage:
         vitest_cmd.append("--coverage")
