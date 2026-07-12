@@ -1,20 +1,21 @@
 # vectora-services
 
-Worker único no Cloudflare que unifica os antigos `relay/` e
-`update-server/` com auth/billing/license/GDPR/api-keys/issues/rag-library/
-registry — que antes dependiam do Supabase da `company/` (ver
-`documents/plan.md` Bloco K para o histórico da migração). Domínios:
+Worker único no Cloudflare que serve `relay/`, `updates/` e
+auth/billing/license/GDPR/api-keys/issues/rag-library/registry. Domínios:
 
 - `relay.vectora.chat` + `{token}.vectora.chat` — proxy WebSocket
   bidirecional de OAuth/webhooks pro app desktop (`src/relay/`). O cliente
   Python do desktop já tem essas URLs hardcoded — não mexer sem atualizar
   os dois lados.
-- `update.vectora.company` — distribuição de releases pro `electron-updater`
-  e download público de primeira instalação (`src/updates/`).
-- `services.vectora.company` — auth/billing/license/GDPR/api-keys/issues/
-  rag-library/registry, todos montados em `src/index.ts`.
+- `services.vectora.company` — tudo o mais montado num único Hono app em
+  `src/index.ts`: auth/billing/license/GDPR/api-keys/issues/rag-library/
+  registry/telemetry **e** updates (distribuição de releases pro
+  `electron-updater` + download público de primeira instalação,
+  `src/updates/`) — mesclado na raiz via `.route("/", updatesApp)`, sem
+  domínio próprio.
 
-Dispatch por hostname em `src/index.ts`.
+Dispatch por hostname em `src/index.ts`: só relay tem host dedicado; qualquer
+outro host cai no app único de `services.vectora.company`.
 
 ## Rotas
 
@@ -33,7 +34,7 @@ Dispatch por hostname em `src/index.ts`.
 de terceiros (GitHub etc.) — encaminhados pro backend local via WebSocket se
 conectado, ou enfileirados (TTL 10min) se offline.
 
-**updates** (`update.vectora.company`):
+**updates** (`services.vectora.company`, mesclado na raiz — sem prefixo):
 
 - `GET /updates/:channel/:os/:arch/latest.yml` — manifesto do
   electron-updater (sem token — Free não tem conta).

@@ -37,14 +37,27 @@ describe("fetch dispatch by hostname", () => {
     expect(res.status).toBe(200);
   });
 
-  it("routes update.vectora.company to the updates app", async () => {
+  it("routes an unrecognized host to the services app", async () => {
     const ctx = createExecutionContext();
-    const req = new Request("https://update.vectora.company/health");
+    const req = new Request("https://services.vectora.company/health");
     const res = await worker.fetch(req, env, ctx);
     await waitOnExecutionContext(ctx);
     expect(res.status).toBe(200);
     const body = await res.json<{ server: string }>();
-    expect(body.server).toBe("vectora-services/updates");
+    expect(body.server).toBe("vectora-services");
+  });
+
+  it("routes /download to the merged updates app on the default host", async () => {
+    const ctx = createExecutionContext();
+    // Corpo "unknown channel" só vem do updates app — prova que a rota
+    // chegou lá, sem precisar simular um download completo.
+    const req = new Request(
+      "https://services.vectora.company/download/latest/win/x64/exe",
+    );
+    const res = await worker.fetch(req, env, ctx);
+    await waitOnExecutionContext(ctx);
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe("unknown channel");
   });
 
   it("routes any other host to the services app", async () => {

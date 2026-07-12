@@ -27,7 +27,8 @@ binding = "RELAY_METRICS"
 id = "f38a1de6901643c89d02a69cd5b529e2"
 
 # updates/ (Fase A) — distribuição de releases (electron-updater + download
-# público de primeira instalação). Domínio update.vectora.company.
+# público de primeira instalação). Sem domínio próprio — mesclado na raiz de
+# services.vectora.company (src/index.ts).
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "vectora-r2"

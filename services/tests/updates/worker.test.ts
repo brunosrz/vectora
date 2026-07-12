@@ -268,22 +268,6 @@ describe("GET /updates/:channel/:os/:arch/:version/:filename", () => {
   });
 });
 
-describe("GET /health", () => {
-  it("returns ok", async () => {
-    const env = {
-      KV: { get: async () => null, put: async () => {} },
-      R2: { get: async () => null },
-    };
-    const res = await app.request("/health", {}, env as never);
-    expect(res.status).toBe(200);
-    const body = await res.json<{ ok: boolean; server: string }>();
-    expect(body).toMatchObject({
-      ok: true,
-      server: "vectora-services/updates",
-    });
-  });
-});
-
 describe("POST /telemetry/update-result", () => {
   it("só enfileira um job update_telemetry, não toca no KV direto", async () => {
     const jobsSend = vi.fn(async () => undefined);

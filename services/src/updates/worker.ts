@@ -32,14 +32,6 @@ interface RuntimeConfig {
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.get("/health", (c) =>
-  c.json({
-    ok: true,
-    server: "vectora-services/updates",
-    timestamp: Date.now(),
-  }),
-);
-
 /** Hash determinístico estável → bucket [0..99] para rollout faseado. */
 export function rolloutBucket(token: string): number {
   let h = 0;

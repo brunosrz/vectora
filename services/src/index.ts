@@ -1,13 +1,14 @@
 /**
- * vectora-services — Worker único que substitui `relay/`, `update-server/`
- * e o backend Supabase da company. Dispatch por hostname:
+ * vectora-services — Worker único que serve `relay/`, `updates/` e o
+ * backend da company. Dispatch por hostname:
  *
  * - `relay.vectora.chat` e `{token}.vectora.chat` → relay (WebSocket
  *   bidirecional de OAuth/webhooks pro app desktop — protocolo já embutido
  *   no cliente Python, domínio não muda).
- * - `update.vectora.company` → updates (electron-updater + download público).
- * - Qualquer outro host (`services.vectora.company`) → auth/profile/billing/
- *   license/gdpr/api-keys/issues/rag-library/registry/telemetry.
+ * - Qualquer outro host → um único Hono app com auth/profile/billing/
+ *   license/gdpr/api-keys/issues/rag-library/registry/telemetry e updates
+ *   (electron-updater + download público, `src/updates/worker.ts`, mesclado
+ *   na raiz via `.route("/", ...)`) — sem domínio dedicado.
  *
  * `queue()` processa as duas filas do Worker (`vectora-email`, `vectora-jobs`
  * — ver src/queue-consumer.ts e wrangler.toml).
@@ -55,6 +56,9 @@ servicesApp.route("/issues", issues);
 servicesApp.route("/rag-library", ragLibrary);
 servicesApp.route("/registry", registry);
 servicesApp.route("/telemetry", telemetry);
+// updates/worker.ts mesclado na raiz, sem prefixo: /download/*, /updates/*,
+// /telemetry/update-result somam às rotas acima.
+servicesApp.route("/", updatesApp);
 servicesApp.get("/health", (c) =>
   c.json({ ok: true, server: "vectora-services" }),
 );
@@ -68,9 +72,6 @@ export default {
     const { hostname } = new URL(request.url);
     if (isRelayHost(hostname)) {
       return relayHandler.fetch(request, env);
-    }
-    if (hostname === "update.vectora.company") {
-      return updatesApp.fetch(request, env, ctx);
     }
     return servicesApp.fetch(request, env, ctx);
   },

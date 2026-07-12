@@ -1,19 +1,19 @@
-# electron-builder config — Bloco T.12.6
+# electron-builder config
 #
 # Gera instaladores nativos assinados (Win .msi/.exe, macOS .dmg notarized,
 # Linux .AppImage/.deb/.rpm). Cada instalador empacota a shell Electron
-# + o binário Nuitka como extraResource (T.12.4).
+# + o binário Nuitka como extraResource.
 #
 # Pre-req:
 # - Win: CSC_LINK + CSC_KEY_PASSWORD (cert EV Azure Trusted Signing).
 # - macOS: APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID.
 # - Linux: nada (não assinamos AppImage).
 #
-# Publish: update-server (Cloudflare Worker + R2), não GitHub Releases — o
+# Publish: vectora-services (Cloudflare Worker + R2), não GitHub Releases — o
 # repo é privado (Vectora é vendido, não open source) e o Free precisa baixar
 # e atualizar sem conta. `${os}`/`${arch}` resolvem por build (mesmo macro do
 # artifactName), então cada instalador aponta pro seu próprio
-# /updates/latest/<os>/<arch>/latest.yml no worker (update-server/src/worker.ts).
+# /updates/latest/<os>/<arch>/latest.yml no worker (services/src/updates/worker.ts).
 
 appId: company.vectora.desktop
 productName: Vectora
@@ -66,12 +66,12 @@ extraResources:
   - from: ../frontend/public/vectora.ico
     to: vectora.ico
 
-# Janela de update aponta pro update-server público (sem token — Free não
-# tem conta). ${os}/${arch} resolvem por build, batendo com a rota
+# Janela de update aponta pro vectora-services público (sem token — Free
+# não tem conta). ${os}/${arch} resolvem por build, batendo com a rota
 # GET /updates/:channel/:os/:arch/latest.yml do worker.
 publish:
   - provider: generic
-    url: https://update.vectora.company/updates/latest/${os}/${arch}
+    url: https://services.vectora.company/updates/latest/${os}/${arch}
     channel: latest
 
 win:
