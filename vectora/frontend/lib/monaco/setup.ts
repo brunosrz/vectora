@@ -69,7 +69,7 @@ export function languageFromPath(path: string): string {
   if (base.startsWith(".env")) return "ini"; // .env, .env.local, .env.production
   if (base.startsWith("dockerfile")) return "dockerfile"; // Dockerfile.dev
 
-  const ext = base.includes(".") ? base.split(".").pop() ?? "" : "";
+  const ext = base.includes(".") ? (base.split(".").pop() ?? "") : "";
   const map: Record<string, string> = {
     ts: "typescript",
     tsx: "typescript",

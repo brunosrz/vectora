@@ -1791,6 +1791,7 @@ Remover (deps fantasma confirmadas em `documents/agent-core-roadmap.md`):
    `runtime.context` ou `runtime.server_info.user.identity`.
 
 6. **Long-term memory é filesystem, não tabela.** Tudo via `StoreBackend`
+
    - `memory=["AGENTS.md"]`. Semantic search nativa.
 
 7. **LangSmith é a observabilidade default.** Não temos motivo para

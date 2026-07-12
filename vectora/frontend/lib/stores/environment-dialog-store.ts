@@ -14,11 +14,7 @@
 import { create } from "zustand";
 
 export type EnvironmentTab =
-  | "envs"
-  | "skills"
-  | "plugins"
-  | "gateways"
-  | "integracoes";
+  "envs" | "skills" | "plugins" | "gateways" | "integracoes";
 
 interface EnvironmentDialogState {
   open: boolean;

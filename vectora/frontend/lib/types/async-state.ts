@@ -70,8 +70,7 @@ export const UNKNOWN_ASYNC_ERROR = "Falha inesperada. Tente novamente.";
  *   if (!result.ok) showFieldError(result.field, result.error);
  */
 export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; field?: string };
+  { ok: true; data: T } | { ok: false; error: string; field?: string };
 
 export function toErrorMessage(
   err: unknown,

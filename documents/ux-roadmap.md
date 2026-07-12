@@ -342,8 +342,7 @@ Erro de **sistema** (rede, servidor) → toast.
 ```typescript
 // Retorno tipado nos stores:
 type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; field?: string };
+  { ok: true; data: T } | { ok: false; error: string; field?: string };
 
 // Componente:
 const result = await create(path);

@@ -120,9 +120,8 @@ describe("useWebhookEvents", () => {
   });
 
   it("múltiplos handlers via onWebhookEvent recebem o mesmo evento", async () => {
-    const { useWebhookEvents, onWebhookEvent } = await import(
-      "../use-webhook-events"
-    );
+    const { useWebhookEvents, onWebhookEvent } =
+      await import("../use-webhook-events");
     const a: string[] = [];
     const b: string[] = [];
 

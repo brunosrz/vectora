@@ -16,10 +16,7 @@ export const ISSUE_FILE_LIMITS: Record<string, number> = {
 export const ISSUE_FILE_ACCEPT = Object.keys(ISSUE_FILE_LIMITS).join(",");
 
 export type IssueFileError =
-  | "invalid_type"
-  | "too_large"
-  | "video_too_long"
-  | "too_many";
+  "invalid_type" | "too_large" | "video_too_long" | "too_many";
 
 export function isVideoType(type: string): boolean {
   return type.startsWith("video/");

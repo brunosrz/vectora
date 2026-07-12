@@ -89,7 +89,7 @@ export function FileIcon({
   className?: string;
 }) {
   const ext = name.includes(".")
-    ? name.split(".").pop()?.toLowerCase() ?? ""
+    ? (name.split(".").pop()?.toLowerCase() ?? "")
     : "";
   const spec = EXT_MAP[ext];
   const Icon = spec?.icon ?? File;

@@ -7,8 +7,9 @@ import { GripHorizontal, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDialogSizeStore } from "@/lib/stores/dialog-size-store";
 
-interface ResizableDialogContentProps
-  extends React.ComponentProps<typeof DialogPrimitive.Content> {
+interface ResizableDialogContentProps extends React.ComponentProps<
+  typeof DialogPrimitive.Content
+> {
   defaultWidth?: number;
   defaultHeight?: number;
   minWidth?: number;

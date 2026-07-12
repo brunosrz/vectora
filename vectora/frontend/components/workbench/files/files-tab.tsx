@@ -177,7 +177,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     async (force = false) => {
       if (!wsId || !openPath) return;
       setSaving(true);
-      const sha = force ? null : openContent?.sha256 ?? null;
+      const sha = force ? null : (openContent?.sha256 ?? null);
       const result = await apiUpdateFile(wsId, openPath, editContent, sha);
       setSaving(false);
       if (result.ok) {

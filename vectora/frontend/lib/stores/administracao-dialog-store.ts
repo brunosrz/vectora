@@ -14,11 +14,7 @@ import { create } from "zustand";
 
 /** Sub-abas internas do painel de Administração. */
 export type AdminSubTab =
-  | "users"
-  | "tools"
-  | "system"
-  | "safe-roots"
-  | "storage";
+  "users" | "tools" | "system" | "safe-roots" | "storage";
 
 interface AdminDialogState {
   open: boolean;

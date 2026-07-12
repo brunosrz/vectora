@@ -13,11 +13,10 @@
 
 import type { ImgHTMLAttributes } from "react";
 
-interface NextImageProps
-  extends Omit<
-    ImgHTMLAttributes<HTMLImageElement>,
-    "src" | "alt" | "width" | "height"
-  > {
+interface NextImageProps extends Omit<
+  ImgHTMLAttributes<HTMLImageElement>,
+  "src" | "alt" | "width" | "height"
+> {
   src: string | { src: string; width?: number; height?: number };
   alt: string;
   width?: number | string;

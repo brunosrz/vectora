@@ -9,8 +9,7 @@ declare global {
 }
 
 export const GA4_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID as
-  | string
-  | undefined;
+  string | undefined;
 
 export function trackEvent(
   eventName: string,

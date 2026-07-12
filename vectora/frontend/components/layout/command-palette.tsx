@@ -83,8 +83,7 @@ export function CommandPalette({
   // Scroll do item ativo para a viewport.
   useEffect(() => {
     const li = listRef.current?.children[activeIndex] as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     li?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 

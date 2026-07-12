@@ -36,7 +36,4 @@ export interface RagReindexJob {
 }
 
 export type JobMessage =
-  | UpdateTelemetryJob
-  | GdprDeleteUserJob
-  | TelemetryIngestJob
-  | RagReindexJob;
+  UpdateTelemetryJob | GdprDeleteUserJob | TelemetryIngestJob | RagReindexJob;

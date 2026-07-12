@@ -13,12 +13,7 @@ import { create } from "zustand";
  */
 
 export type RagJobStatus =
-  | "starting"
-  | "indexing"
-  | "done"
-  | "failed"
-  | "paused"
-  | "no_files";
+  "starting" | "indexing" | "done" | "failed" | "paused" | "no_files";
 
 export interface RagJob {
   jobId: string;

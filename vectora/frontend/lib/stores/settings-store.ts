@@ -25,11 +25,7 @@ export type Lang = "en" | "es" | "pt";
 export type SidebarPosition = "left" | "right";
 /** Modos de permissão (R2) — espelham o permission_mode do backend. */
 export type PermissionMode =
-  | "ask"
-  | "accept_edits"
-  | "plan"
-  | "auto"
-  | "bypass";
+  "ask" | "accept_edits" | "plan" | "auto" | "bypass";
 /** Nível de esforço de raciocínio do modelo (R4). */
 export type ReasoningEffort = "low" | "medium" | "high" | "max";
 
