@@ -1,12 +1,20 @@
 "use client";
 
 /**
- * RagSettingsPanel — gear + popover de configuração do RAG na aba de memória.
+ * RagSettingsPanel — gear + painel de configuração do RAG na aba de memória.
  *
  * Controla (persistido no backend via /rag/settings): reranker on/off + top_k,
  * providers de rerank/embedding, tipos de arquivo a ingerir. Lista as coleções
  * (/rag/collections) com botão de apagar. Caso de uso paralelo ao Context Graph:
  * usar o RAG para código enquanto o grafo cuida dos markdowns.
+ *
+ * `useRagSettings` centraliza o estado; `RagSettingsButton` (gatilho inline,
+ * ex.: ao lado da busca) e `RagSettingsSlidePanel` (conteúdo, largura cheia)
+ * são exportados separados para o consumidor controlar onde cada um entra no
+ * layout — o painel precisa ocupar a largura total da workbench numa linha
+ * própria abaixo do gatilho, nunca dividir espaço com ele na mesma linha
+ * flex (senão o conteúdo do formulário força a linha a estourar a largura).
+ * `RagSettingsPanel` compõe os dois com o hook embutido, para uso standalone.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -43,7 +51,7 @@ const DEFAULTS: RagSettings = {
 
 const PROVIDERS = ["auto", "cohere", "voyage"] as const;
 
-export function RagSettingsPanel() {
+export function useRagSettings() {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<RagSettings>(DEFAULTS);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -112,163 +120,213 @@ export function RagSettingsPanel() {
     }
   }, []);
 
+  return {
+    open,
+    toggle: () => setOpen((v) => !v),
+    close: () => setOpen(false),
+    settings,
+    collections,
+    patch,
+    loadCollections,
+    deleteCollection,
+  };
+}
+
+type RagSettingsState = ReturnType<typeof useRagSettings>;
+
+export function RagSettingsButton({
+  open,
+  onToggle,
+}: {
+  open: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-label={m.rag_settings_title()}
-        title={m.rag_settings_title()}
-        aria-expanded={open}
-        data-testid="rag-settings-btn"
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-      >
-        <Settings2 className="h-3.5 w-3.5" />
-      </button>
+    <button
+      onClick={onToggle}
+      aria-label={m.rag_settings_title()}
+      title={m.rag_settings_title()}
+      aria-expanded={open}
+      data-testid="rag-settings-btn"
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+    >
+      <Settings2 className="h-3.5 w-3.5" />
+    </button>
+  );
+}
 
-      <WorkbenchSlidePanel
-        open={open}
-        onClose={() => setOpen(false)}
-        title={m.rag_settings_title()}
-        testId="rag-settings-panel"
-      >
-        <div className="space-y-3 text-xs">
-          {/* Reranker on/off + top_k */}
-          <label className="flex items-center justify-between gap-2 cursor-pointer select-none">
-            <span className="text-foreground">{m.rag_reranker_enabled()}</span>
-            <input
-              type="checkbox"
-              checked={settings.reranker_enabled}
-              onChange={(e) =>
-                void patch({ reranker_enabled: e.target.checked })
-              }
-              className="accent-[var(--color-primary)]"
-            />
-          </label>
-          <p className="-mt-1.5 text-[10px] text-muted-foreground">
-            {m.rag_reranker_help()}
+export function RagSettingsSlidePanel({
+  open,
+  close,
+  settings,
+  collections,
+  patch,
+  loadCollections,
+  deleteCollection,
+}: Pick<
+  RagSettingsState,
+  | "open"
+  | "close"
+  | "settings"
+  | "collections"
+  | "patch"
+  | "loadCollections"
+  | "deleteCollection"
+>) {
+  return (
+    <WorkbenchSlidePanel
+      open={open}
+      onClose={close}
+      title={m.rag_settings_title()}
+      testId="rag-settings-panel"
+    >
+      <div className="space-y-3 text-xs">
+        {/* Reranker on/off + top_k */}
+        <label className="flex items-center justify-between gap-2 cursor-pointer select-none">
+          <span className="text-foreground">{m.rag_reranker_enabled()}</span>
+          <input
+            type="checkbox"
+            checked={settings.reranker_enabled}
+            onChange={(e) => void patch({ reranker_enabled: e.target.checked })}
+            className="accent-[var(--color-primary)]"
+          />
+        </label>
+        <p className="-mt-1.5 text-[10px] text-muted-foreground">
+          {m.rag_reranker_help()}
+        </p>
+        <label className="flex items-center justify-between gap-2">
+          <span className="text-foreground">{m.rag_reranker_top_k()}</span>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={settings.reranker_top_k}
+            disabled={!settings.reranker_enabled}
+            onChange={(e) =>
+              void patch({
+                reranker_top_k: Math.max(1, Number(e.target.value) || 1),
+              })
+            }
+            className="w-16 bg-background border border-border/60 rounded px-1.5 py-0.5 text-right disabled:opacity-40"
+          />
+        </label>
+
+        {/* Providers */}
+        <label className="flex items-center justify-between gap-2">
+          <span className="text-foreground">{m.rag_rerank_provider()}</span>
+          <ProviderSelect
+            value={settings.rerank_provider}
+            onChange={(v) => void patch({ rerank_provider: v })}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-2">
+          <span className="text-foreground">{m.rag_embed_provider()}</span>
+          <ProviderSelect
+            value={settings.embed_provider}
+            onChange={(v) => void patch({ embed_provider: v })}
+          />
+        </label>
+
+        {/* Tipos de arquivo a ingerir */}
+        <div>
+          <p className="font-medium text-foreground">
+            {m.graph_settings_filetypes()}
           </p>
-          <label className="flex items-center justify-between gap-2">
-            <span className="text-foreground">{m.rag_reranker_top_k()}</span>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={settings.reranker_top_k}
-              disabled={!settings.reranker_enabled}
-              onChange={(e) =>
-                void patch({
-                  reranker_top_k: Math.max(1, Number(e.target.value) || 1),
-                })
-              }
-              className="w-16 bg-background border border-border/60 rounded px-1.5 py-0.5 text-right disabled:opacity-40"
-            />
-          </label>
-
-          {/* Providers */}
-          <label className="flex items-center justify-between gap-2">
-            <span className="text-foreground">{m.rag_rerank_provider()}</span>
-            <ProviderSelect
-              value={settings.rerank_provider}
-              onChange={(v) => void patch({ rerank_provider: v })}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-2">
-            <span className="text-foreground">{m.rag_embed_provider()}</span>
-            <ProviderSelect
-              value={settings.embed_provider}
-              onChange={(v) => void patch({ embed_provider: v })}
-            />
-          </label>
-
-          {/* Tipos de arquivo a ingerir */}
-          <div>
-            <p className="font-medium text-foreground">
-              {m.graph_settings_filetypes()}
-            </p>
-            <div className="mt-1 space-y-1">
-              {ALL_GRAPH_FILE_TYPES.map((t: GraphFileType) => (
-                <label
-                  key={t}
-                  className="flex items-center gap-2 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={
-                      settings.ingest_file_types.length === 0 ||
-                      settings.ingest_file_types.includes(t)
-                    }
-                    onChange={() => {
-                      const cur =
-                        settings.ingest_file_types.length === 0
-                          ? [...ALL_GRAPH_FILE_TYPES]
-                          : settings.ingest_file_types;
-                      const next = cur.includes(t)
-                        ? cur.filter((x) => x !== t)
-                        : [...cur, t];
-                      void patch({ ingest_file_types: next });
-                    }}
-                    className="accent-[var(--color-primary)]"
-                  />
-                  <span className="text-foreground">
-                    {t === "code"
-                      ? m.graph_filetype_code()
-                      : t === "document"
-                        ? m.graph_filetype_document()
-                        : m.graph_filetype_paper()}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Coleções */}
-          <div className="border-t border-border/60 pt-2">
-            <div className="flex items-center justify-between">
-              <p className="font-medium text-foreground">
-                {m.rag_collections_title()}
-              </p>
-              <button
-                onClick={() => void loadCollections()}
-                aria-label="reload"
-                className="text-muted-foreground hover:text-foreground"
+          <div className="mt-1 space-y-1">
+            {ALL_GRAPH_FILE_TYPES.map((t: GraphFileType) => (
+              <label
+                key={t}
+                className="flex items-center gap-2 cursor-pointer select-none"
               >
-                <RefreshCw className="h-3 w-3" />
-              </button>
-            </div>
-            {collections.length === 0 ? (
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {m.rag_collections_empty()}
-              </p>
-            ) : (
-              <ul className="mt-1 space-y-1">
-                {collections.map((c) => (
-                  <li
-                    key={c.name}
-                    className="flex items-center justify-between gap-2 rounded border border-border/60 px-2 py-1"
-                  >
-                    <span className="min-w-0 truncate text-foreground">
-                      {c.name}
-                      {c.count != null && (
-                        <span className="ml-1 text-[10px] text-muted-foreground">
-                          {m.rag_collection_count({ n: c.count })}
-                        </span>
-                      )}
-                    </span>
-                    <button
-                      onClick={() => void deleteCollection(c.name)}
-                      aria-label={m.rag_collection_delete()}
-                      title={m.rag_collection_delete()}
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                <input
+                  type="checkbox"
+                  checked={
+                    settings.ingest_file_types.length === 0 ||
+                    settings.ingest_file_types.includes(t)
+                  }
+                  onChange={() => {
+                    const cur =
+                      settings.ingest_file_types.length === 0
+                        ? [...ALL_GRAPH_FILE_TYPES]
+                        : settings.ingest_file_types;
+                    const next = cur.includes(t)
+                      ? cur.filter((x) => x !== t)
+                      : [...cur, t];
+                    void patch({ ingest_file_types: next });
+                  }}
+                  className="accent-[var(--color-primary)]"
+                />
+                <span className="text-foreground">
+                  {t === "code"
+                    ? m.graph_filetype_code()
+                    : t === "document"
+                      ? m.graph_filetype_document()
+                      : m.graph_filetype_paper()}
+                </span>
+              </label>
+            ))}
           </div>
         </div>
-      </WorkbenchSlidePanel>
+
+        {/* Coleções */}
+        <div className="border-t border-border/60 pt-2">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-foreground">
+              {m.rag_collections_title()}
+            </p>
+            <button
+              onClick={() => void loadCollections()}
+              aria-label="reload"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </button>
+          </div>
+          {collections.length === 0 ? (
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {m.rag_collections_empty()}
+            </p>
+          ) : (
+            <ul className="mt-1 space-y-1">
+              {collections.map((c) => (
+                <li
+                  key={c.name}
+                  className="flex items-center justify-between gap-2 rounded border border-border/60 px-2 py-1"
+                >
+                  <span className="min-w-0 truncate text-foreground">
+                    {c.name}
+                    {c.count != null && (
+                      <span className="ml-1 text-[10px] text-muted-foreground">
+                        {m.rag_collection_count({ n: c.count })}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    onClick={() => void deleteCollection(c.name)}
+                    aria-label={m.rag_collection_delete()}
+                    title={m.rag_collection_delete()}
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </WorkbenchSlidePanel>
+  );
+}
+
+/** Composição standalone (botão + painel juntos) — para uso fora de layouts
+ * que precisem posicionar os dois em linhas separadas (ver `MemoryTab`). */
+export function RagSettingsPanel() {
+  const state = useRagSettings();
+  return (
+    <>
+      <RagSettingsButton open={state.open} onToggle={state.toggle} />
+      <RagSettingsSlidePanel {...state} />
     </>
   );
 }

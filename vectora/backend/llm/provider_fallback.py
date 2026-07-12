@@ -26,6 +26,16 @@ _TRANSIENT_MARKERS = (
     "connection error",
     "connection refused",
 )
+_PROVIDER_INCOMPATIBLE_MARKERS = (
+    # Cohere Command A+ (e variantes): `_get_message_cohere_format_v2` do
+    # langchain_cohere sempre inclui `tool_plan` ao serializar um AIMessage
+    # com tool_calls no histórico — alguns deployments do modelo rejeitam
+    # esse campo com 400. Nunca resolve no MESMO provider (retry idêntico
+    # falha sempre), mas o próximo da cadeia de fallback processa a mesma
+    # mensagem sem problema.
+    "tool plan` cannot be used with this model",
+    "tool_plan",
+)
 
 
 class QuotaExhaustedError(Exception):
@@ -57,6 +67,15 @@ def is_transient_error(exc: BaseException) -> bool:
     """True se a exceção indica falha transiente (timeout, conexão) — vale tentar o próximo provider."""
     msg = str(exc).lower()
     return any(marker in msg for marker in _TRANSIENT_MARKERS)
+
+
+def is_provider_incompatible_error(exc: BaseException) -> bool:
+    """True se o provider rejeitou a request por incompatibilidade permanente
+    entre o histórico e o schema do modelo (ex.: Cohere recusando `tool_plan`).
+    Não é transiente (o MESMO provider falha sempre com a mesma mensagem),
+    mas ainda vale trocar pro próximo da cadeia — a mensagem em si é válida."""
+    msg = str(exc).lower()
+    return any(marker in msg for marker in _PROVIDER_INCOMPATIBLE_MARKERS)
 
 
 def _provider_of(model_id: str) -> str:

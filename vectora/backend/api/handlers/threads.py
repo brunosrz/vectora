@@ -529,6 +529,15 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
     digitando) nunca chegam nem perto de 1h sem a primeira mensagem, então
     o cutoff é seguro. `ListThreads` já filtra `message_count > 0`, então
     isso é higiene do banco, não uma correção de comportamento visível.
+
+    Segunda passada: remove também threads com `message_count > 0` mas sem
+    nenhum checkpoint real do LangGraph (tabela `checkpoints`, gerenciada
+    pelo `AsyncSqliteSaver`) — sinal inequívoco de que o grafo nunca chegou
+    a rodar pra essa thread (ex.: `message_count` incrementado antes do
+    agente inicializar, bug histórico de `stream_chat`). Sem essa passada,
+    threads assim ficam fantasma pra sempre: passam no filtro de
+    `message_count > 0` do `ListThreads` e a primeira passada só olha
+    `message_count = 0`.
     """
     from datetime import timedelta
 
@@ -540,6 +549,27 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
     )
     await db.commit()
     deleted = cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+
+    try:
+        async with db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='checkpoints'"
+        ) as cur2:
+            has_checkpoints_table = await cur2.fetchone() is not None
+        if has_checkpoints_table:
+            cur3 = await db.execute(
+                "DELETE FROM vectora_sessions "
+                "WHERE message_count > 0 AND created_at < ? "
+                "AND thread_id NOT IN (SELECT DISTINCT thread_id FROM checkpoints)",
+                (cutoff,),
+            )
+            await db.commit()
+            orphaned = cur3.rowcount if cur3.rowcount and cur3.rowcount > 0 else 0
+            deleted += orphaned
+    except Exception:
+        logger.warning(
+            "threads: falha ao checar threads órfãs sem checkpoint", exc_info=True
+        )
+
     if deleted:
         logger.info("threads: %d thread(s) vazia(s) removida(s) por hygiene", deleted)
     return deleted

@@ -101,6 +101,41 @@ class TestIsTransientError:
 
 
 # ---------------------------------------------------------------------------
+# is_provider_incompatible_error
+# ---------------------------------------------------------------------------
+
+
+class TestIsProviderIncompatibleError:
+    def test_cohere_tool_plan_rejected(self):
+        msg = (
+            "invalid request: invalid message provided at index 3: "
+            "`tool plan` cannot be used with this model."
+        )
+        assert pf.is_provider_incompatible_error(Exception(msg)) is True
+
+    def test_tool_plan_marker_case_insensitive(self):
+        assert (
+            pf.is_provider_incompatible_error(Exception("TOOL_PLAN rejected")) is True
+        )
+
+    def test_quota_not_incompatible(self):
+        assert (
+            pf.is_provider_incompatible_error(Exception("429 quota exceeded")) is False
+        )
+
+    def test_transient_not_incompatible(self):
+        assert (
+            pf.is_provider_incompatible_error(Exception("connection refused")) is False
+        )
+
+    def test_unrelated_value_error(self):
+        assert pf.is_provider_incompatible_error(ValueError("bad input")) is False
+
+    def test_empty(self):
+        assert pf.is_provider_incompatible_error(Exception("")) is False
+
+
+# ---------------------------------------------------------------------------
 # _provider_has_key
 # ---------------------------------------------------------------------------
 
@@ -423,6 +458,40 @@ class TestFallbackChatModel:
         ):
             with pytest.raises(Exception, match="429"):
                 _ = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+
+    async def test_provider_incompatible_before_first_chunk_switches(self):
+        """Bug reproduzido ao vivo: Cohere Command A+ rejeita `tool_plan` no
+        replay de um AIMessage com tool_calls (ex.: turno anterior chamou
+        save_memory) com 400 "tool plan cannot be used with this model".
+        Não é quota nem timeout, mas o próximo provider da cadeia processa a
+        mesma mensagem sem erro — deve trocar em vez de propagar como crash
+        pro usuário ('Ocorreu um erro ao gerar a resposta')."""
+        from langchain_core.messages import HumanMessage
+
+        from backend.llm.fallback_chat_model import FallbackChatModel
+
+        pf.drain_switches()
+        primary = _FakeLLM(
+            chunks=[],
+            stream_error=Exception(
+                "invalid message provided at index 3: "
+                "`tool plan` cannot be used with this model."
+            ),
+        )
+        fb = _FakeLLM(chunks=["ok"])
+        fcm = FallbackChatModel(primary_model_id="cohere:command-a-03-2025")
+        with (
+            patch(
+                "backend.services.utils.load_llm",
+                _loader({"cohere:command-a-03-2025": primary, "openai:gpt-4o": fb}),
+            ),
+            patch.object(pf, "get_fallback_chain", return_value=["openai:gpt-4o"]),
+        ):
+            out = [c async for c in fcm._astream([HumanMessage(content="hi")])]
+        assert "".join(str(c.message.content) for c in out) == "ok"
+        assert pf.drain_switches() == [
+            {"from": "cohere:command-a-03-2025", "to": "openai:gpt-4o"}
+        ]
 
     async def test_non_quota_reraises_immediately(self):
         from langchain_core.messages import HumanMessage

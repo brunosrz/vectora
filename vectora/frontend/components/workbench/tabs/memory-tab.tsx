@@ -22,7 +22,11 @@ import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { MarkdownView } from "@/components/workbench/markdown-view";
-import { RagSettingsPanel } from "@/components/workbench/rag-settings-panel";
+import {
+  RagSettingsButton,
+  RagSettingsSlidePanel,
+  useRagSettings,
+} from "@/components/workbench/rag-settings-panel";
 import { m } from "@/lib/paraglide/messages";
 
 interface WorkspaceRagCollection {
@@ -211,6 +215,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
   const jobs = useRagJobsStore((s) => s.jobs);
   const workspaceSummary = useWorkspaceRagSummary(activeWorkspaceId);
   const search = useRagSearch(activeWorkspaceId);
+  const ragSettings = useRagSettings();
 
   // Jobs de indexação RAG do workspace ativo (atividade ao vivo).
   const ragJobs = useMemo(
@@ -310,8 +315,12 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
       <div className="flex h-full flex-col">
         <div className="flex shrink-0 items-center gap-2 px-3 pt-3">
           <MemorySearchBox query={search.query} onChange={search.setQuery} />
-          <RagSettingsPanel />
+          <RagSettingsButton
+            open={ragSettings.open}
+            onToggle={ragSettings.toggle}
+          />
         </div>
+        <RagSettingsSlidePanel {...ragSettings} />
         {searchSection ? (
           <div className="flex-1 space-y-4 overflow-auto px-3 py-3">
             {searchSection}
@@ -341,8 +350,12 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
     <div className="flex h-full flex-col">
       <div className="flex shrink-0 items-center gap-2 px-3 pt-3">
         <MemorySearchBox query={search.query} onChange={search.setQuery} />
-        <RagSettingsPanel />
+        <RagSettingsButton
+          open={ragSettings.open}
+          onToggle={ragSettings.toggle}
+        />
       </div>
+      <RagSettingsSlidePanel {...ragSettings} />
       <div className="flex-1 space-y-4 overflow-auto px-3 pb-3 pt-3">
         {searchSection}
         {hasActivity && (

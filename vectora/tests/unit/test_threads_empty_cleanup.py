@@ -92,3 +92,86 @@ class TestCleanupEmptyThreads:
         deleted = await cleanup_empty_threads(max_age_hours=1.0)
 
         assert deleted == 0
+
+
+class TestCleanupOrphanedThreadsWithoutCheckpoint:
+    """message_count > 0 sem nenhum checkpoint real do LangGraph — sinal de
+    que o grafo nunca rodou pra essa thread (bug histórico do stream_chat:
+    message_count incrementado antes do agente inicializar). Sem essa
+    passada extra, essas threads ficam fantasma pra sempre — passam no
+    filtro `message_count > 0` do ListThreads e a 1ª passada do cleanup só
+    olha `message_count = 0`."""
+
+    @staticmethod
+    async def _create_checkpoints_table(db) -> None:
+        await db.execute(
+            "CREATE TABLE checkpoints (thread_id TEXT, checkpoint_id TEXT)"
+        )
+        await db.commit()
+
+    @staticmethod
+    async def _insert_checkpoint(db, thread_id: str) -> None:
+        await db.execute(
+            "INSERT INTO checkpoints (thread_id, checkpoint_id) VALUES (?, ?)",
+            (thread_id, "cp1"),
+        )
+        await db.commit()
+
+    @pytest.mark.asyncio
+    async def test_deletes_old_thread_with_message_count_but_no_checkpoint(
+        self, mem_db
+    ):
+        await self._create_checkpoints_table(mem_db)
+        old = (datetime.now(UTC) - timedelta(hours=2)).isoformat()
+        await _insert_session(mem_db, "phantom-old", 1, old)
+
+        deleted = await cleanup_empty_threads(max_age_hours=1.0)
+
+        async with mem_db.execute("SELECT thread_id FROM vectora_sessions") as cur:
+            remaining = {row[0] for row in await cur.fetchall()}
+        assert deleted == 1
+        assert remaining == set()
+
+    @pytest.mark.asyncio
+    async def test_keeps_old_thread_with_real_checkpoint(self, mem_db):
+        await self._create_checkpoints_table(mem_db)
+        old = (datetime.now(UTC) - timedelta(hours=2)).isoformat()
+        await _insert_session(mem_db, "real-old-cp", 1, old)
+        await self._insert_checkpoint(mem_db, "real-old-cp")
+
+        deleted = await cleanup_empty_threads(max_age_hours=1.0)
+
+        async with mem_db.execute("SELECT thread_id FROM vectora_sessions") as cur:
+            remaining = {row[0] for row in await cur.fetchall()}
+        assert deleted == 0
+        assert remaining == {"real-old-cp"}
+
+    @pytest.mark.asyncio
+    async def test_keeps_recent_thread_without_checkpoint(self, mem_db):
+        """Não apaga sessão recente sem checkpoint — pode estar no meio do
+        1º turno (grafo ainda rodando, checkpoint ainda não commitado)."""
+        await self._create_checkpoints_table(mem_db)
+        recent = (datetime.now(UTC) - timedelta(minutes=1)).isoformat()
+        await _insert_session(mem_db, "in-flight", 1, recent)
+
+        deleted = await cleanup_empty_threads(max_age_hours=1.0)
+
+        async with mem_db.execute("SELECT thread_id FROM vectora_sessions") as cur:
+            remaining = {row[0] for row in await cur.fetchall()}
+        assert deleted == 0
+        assert remaining == {"in-flight"}
+
+    @pytest.mark.asyncio
+    async def test_no_checkpoints_table_does_not_crash(self, mem_db):
+        """Sem a tabela `checkpoints` (ex.: banco novo, agente nunca rodou),
+        a 2ª passada é pulada de forma segura — não derruba a 1ª passada."""
+        old = (datetime.now(UTC) - timedelta(hours=2)).isoformat()
+        await _insert_session(mem_db, "empty-old", 0, old)
+        await _insert_session(mem_db, "has-count-old", 1, old)
+
+        deleted = await cleanup_empty_threads(max_age_hours=1.0)
+
+        async with mem_db.execute("SELECT thread_id FROM vectora_sessions") as cur:
+            remaining = {row[0] for row in await cur.fetchall()}
+        assert deleted == 1
+        assert remaining == {"has-count-old"}

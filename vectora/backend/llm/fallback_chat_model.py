@@ -162,6 +162,7 @@ class FallbackChatModel(BaseChatModel):
     ) -> AsyncIterator[ChatGenerationChunk]:
         from backend.llm.provider_fallback import (
             QuotaExhaustedError,
+            is_provider_incompatible_error,
             is_quota_error,
             is_transient_error,
             record_switch,
@@ -185,9 +186,18 @@ class FallbackChatModel(BaseChatModel):
                     yield chunk
                 return
             except Exception as exc:
-                # Troca em quota ou falha transiente (timeout/conexão), mas
-                # nunca depois de já ter streamado chunks (resposta parcial).
-                if not (is_quota_error(exc) or is_transient_error(exc)) or streamed:
+                # Troca em quota, falha transiente (timeout/conexão) ou
+                # incompatibilidade permanente de provider (ex.: Cohere
+                # rejeitando `tool_plan`) — mas nunca depois de já ter
+                # streamado chunks (resposta parcial).
+                if (
+                    not (
+                        is_quota_error(exc)
+                        or is_transient_error(exc)
+                        or is_provider_incompatible_error(exc)
+                    )
+                    or streamed
+                ):
                     raise
                 last_exc = exc
                 if i + 1 < len(candidates):
@@ -209,6 +219,7 @@ class FallbackChatModel(BaseChatModel):
     ) -> ChatResult:
         from backend.llm.provider_fallback import (
             QuotaExhaustedError,
+            is_provider_incompatible_error,
             is_quota_error,
             is_transient_error,
             record_switch,
@@ -226,7 +237,11 @@ class FallbackChatModel(BaseChatModel):
                     messages, stop=stop, **{**bind_kwargs, **kwargs}
                 )
             except Exception as exc:
-                if not (is_quota_error(exc) or is_transient_error(exc)):
+                if not (
+                    is_quota_error(exc)
+                    or is_transient_error(exc)
+                    or is_provider_incompatible_error(exc)
+                ):
                     raise
                 last_exc = exc
                 if i + 1 < len(candidates):
