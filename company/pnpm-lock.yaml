@@ -170,7 +170,7 @@ importers:
         specifier: ^29.1.1
         version: 29.1.1
       prettier:
-        specifier: ^3.9.4
+        specifier: 3.9.4
         version: 3.9.4
       tsx:
         specifier: ^4.23.0

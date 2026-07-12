@@ -126,7 +126,7 @@
     },
     "Test-Path": true
   },
-  "// prettier é a fonte de verdade (pre-commit roda prettier 3.8.3)": "Formatar no save com prettier em todos os tipos que ele controla — senão o format-on-save do editor diverge do hook e o commit fica num ping-pong de reformatação.",
+  "// prettier é a fonte de verdade (pre-commit roda prettier 3.9.4, pinado em package.json de cada subprojeto)": "Formatar no save com prettier em todos os tipos que ele controla — senão o format-on-save do editor diverge do hook e o commit fica num ping-pong de reformatação.",
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
