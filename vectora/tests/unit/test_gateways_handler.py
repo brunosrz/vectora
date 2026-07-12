@@ -13,9 +13,12 @@ Valida:
 
 from __future__ import annotations
 
+import functools
 import os
+from collections.abc import Callable
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -197,22 +200,40 @@ class TestOpenRouterCatalog:
         yield
         self._reset_cache()
 
-    def test_catalog_returns_models(self, client):
-        mock_response = MagicMock()
-        mock_response.raise_for_status = MagicMock()
-        mock_response.json.return_value = {
-            "data": [
-                {"id": "openai/gpt-4o", "name": "GPT-4o", "context_length": 128000},
-                {"id": "anthropic/claude-3.5-sonnet", "name": "Claude 3.5 Sonnet"},
-            ]
-        }
-        with patch("httpx.AsyncClient") as mock_httpx:
-            mock_ctx = AsyncMock()
-            mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
-            mock_ctx.__aexit__ = AsyncMock(return_value=False)
-            mock_ctx.get = AsyncMock(return_value=mock_response)
-            mock_httpx.return_value = mock_ctx
+    @staticmethod
+    def _mock_async_client(
+        handler: Callable[[httpx.Request], httpx.Response],
+    ) -> functools.partial[httpx.AsyncClient]:
+        """`httpx.AsyncClient` real, só trocando o transporte por
+        `httpx.MockTransport` — em vez de simular o protocolo de context
+        manager assíncrono (`__aenter__`/`__aexit__`) na mão com MagicMock,
+        que é frágil entre implementações de event loop diferentes (uvloop
+        no CI Linux vs asyncio puro no Windows). Isso exercita o client HTTP
+        de verdade, só a rede é falsa."""
+        return functools.partial(
+            httpx.AsyncClient, transport=httpx.MockTransport(handler)
+        )
 
+    def test_catalog_returns_models(self, client):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={
+                    "data": [
+                        {
+                            "id": "openai/gpt-4o",
+                            "name": "GPT-4o",
+                            "context_length": 128000,
+                        },
+                        {
+                            "id": "anthropic/claude-3.5-sonnet",
+                            "name": "Claude 3.5 Sonnet",
+                        },
+                    ]
+                },
+            )
+
+        with patch("httpx.AsyncClient", self._mock_async_client(handler)):
             resp = client.get("/gateways/openrouter/models")
 
         assert resp.status_code == 200
@@ -220,21 +241,21 @@ class TestOpenRouterCatalog:
         assert ids == ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"]
 
     def test_catalog_filters_by_q(self, client):
-        mock_response = MagicMock()
-        mock_response.raise_for_status = MagicMock()
-        mock_response.json.return_value = {
-            "data": [
-                {"id": "openai/gpt-4o", "name": "GPT-4o"},
-                {"id": "anthropic/claude-3.5-sonnet", "name": "Claude 3.5 Sonnet"},
-            ]
-        }
-        with patch("httpx.AsyncClient") as mock_httpx:
-            mock_ctx = AsyncMock()
-            mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
-            mock_ctx.__aexit__ = AsyncMock(return_value=False)
-            mock_ctx.get = AsyncMock(return_value=mock_response)
-            mock_httpx.return_value = mock_ctx
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={
+                    "data": [
+                        {"id": "openai/gpt-4o", "name": "GPT-4o"},
+                        {
+                            "id": "anthropic/claude-3.5-sonnet",
+                            "name": "Claude 3.5 Sonnet",
+                        },
+                    ]
+                },
+            )
 
+        with patch("httpx.AsyncClient", self._mock_async_client(handler)):
             resp = client.get("/gateways/openrouter/models", params={"q": "claude"})
 
         assert resp.status_code == 200
@@ -242,7 +263,10 @@ class TestOpenRouterCatalog:
         assert ids == ["anthropic/claude-3.5-sonnet"]
 
     def test_catalog_network_error_returns_empty_not_500(self, client):
-        with patch("httpx.AsyncClient", side_effect=Exception("network down")):
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("network down")
+
+        with patch("httpx.AsyncClient", self._mock_async_client(handler)):
             resp = client.get("/gateways/openrouter/models")
         assert resp.status_code == 200
         assert resp.json() == {"models": []}
