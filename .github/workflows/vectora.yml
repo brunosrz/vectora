@@ -282,9 +282,13 @@ jobs:
         # build-hybrid.py falha rápido se vectora/resources/nats-server
         # (ou .exe) não existir — o sidecar de fila/KV precisa vir embutido
         # no build standalone, não só no desktop Electron. `scons nats`
-        # baixa o binário certo pra plataforma do runner atual.
+        # baixa o binário certo pra plataforma do runner atual. `scons` só
+        # existe dentro do venv que o `uv sync` cria em vectora/ (setup-uv
+        # roda com working-directory: vectora) — nunca vai pro PATH do
+        # shell. `uv run --project vectora` resolve esse venv mantendo o
+        # cwd na raiz do monorepo, onde o SConstruct está.
         working-directory: .
-        run: scons nats
+        run: uv run --project vectora scons nats
         shell: bash
       - name: Build hybrid (Nuitka backend.pyd + PyInstaller onedir)
         # Mesmo pipeline que `scons release` roda localmente
