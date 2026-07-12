@@ -52,7 +52,7 @@ describe("fetch dispatch by hostname", () => {
     // Corpo "unknown channel" só vem do updates app — prova que a rota
     // chegou lá, sem precisar simular um download completo.
     const req = new Request(
-      "https://services.vectora.company/download/latest/win/x64/exe",
+      "https://services.vectora.company/download/latest/win-x64.exe",
     );
     const res = await worker.fetch(req, env, ctx);
     await waitOnExecutionContext(ctx);

@@ -6,7 +6,7 @@ import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
 
 // vectora-services (Cloudflare Worker + R2). Rota pública sem token:
-// GET /download/:channel/:os/:arch/:ext (services/src/updates/worker.ts).
+// GET /download/:channel/:os-:arch.:ext (services/src/updates/worker.ts).
 const UPDATE_SERVER = "https://services.vectora.company";
 const CHANNEL = "latest";
 
@@ -29,7 +29,7 @@ interface Platform {
 }
 
 function href(osToken: string, arch: string, ext: string): string {
-  return `${UPDATE_SERVER}/download/${CHANNEL}/${osToken}/${arch}/${ext}`;
+  return `${UPDATE_SERVER}/download/${CHANNEL}/${osToken}-${arch}.${ext}`;
 }
 
 const PLATFORMS: Platform[] = [

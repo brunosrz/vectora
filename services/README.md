@@ -39,8 +39,9 @@ conectado, ou enfileirados (TTL 10min) se offline.
 - `GET /updates/:channel/:os/:arch/latest.yml` — manifesto do
   electron-updater (sem token — Free não tem conta).
 - `GET /updates/:channel/:os/:arch/:version/:filename` — binário/blockmap.
-- `GET /download/:channel/:os/:arch/:ext` — download de primeira instalação
-  (sem token, sem rollout — sempre a versão estável do canal).
+- `GET /download/:channel/:target` (`:target` = `win-x64.exe`, `mac-arm64.dmg`
+  etc.) — download de primeira instalação (sem token, sem rollout — sempre a
+  versão estável do canal).
 - `POST /telemetry/update-result` — só enfileira (job `update_telemetry`); a
   contagem de sucesso/falha e a quarentena automática após 3 falhas em 1h
   rodam no consumer da fila `vectora-jobs` (`processUpdateTelemetry`).

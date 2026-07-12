@@ -3,6 +3,7 @@ import app, {
   rolloutBucket,
   resolveVersion,
   installerFilename,
+  parseDownloadTarget,
   processUpdateTelemetry,
 } from "../../src/updates/worker";
 
@@ -82,7 +83,28 @@ describe("installerFilename", () => {
   });
 });
 
-describe("GET /download/:channel/:os/:arch/:ext", () => {
+describe("parseDownloadTarget", () => {
+  it("separa os-arch.ext em campos", () => {
+    expect(parseDownloadTarget("win-x64.exe")).toEqual({
+      os: "win",
+      arch: "x64",
+      ext: "exe",
+    });
+    expect(parseDownloadTarget("mac-arm64.dmg")).toEqual({
+      os: "mac",
+      arch: "arm64",
+      ext: "dmg",
+    });
+  });
+
+  it("formato inválido (sem hífen, sem extensão, segmentos extras) → null", () => {
+    for (const t of ["winx64.exe", "win-x64", "win-x64-extra.exe", ""]) {
+      expect(parseDownloadTarget(t)).toBeNull();
+    }
+  });
+});
+
+describe("GET /download/:channel/:target", () => {
   function fakeEnv(opts: { config?: object; fileBody?: string }) {
     const configJson = opts.config ? JSON.stringify(opts.config) : null;
     const KV = {
@@ -112,7 +134,7 @@ describe("GET /download/:channel/:os/:arch/:ext", () => {
     });
 
     const res = await app.request(
-      "/download/latest/win/x64/exe",
+      "/download/latest/win-x64.exe",
       {},
       env as never,
     );
@@ -124,13 +146,26 @@ describe("GET /download/:channel/:os/:arch/:ext", () => {
     );
   });
 
+  it("target em formato inválido → 400", async () => {
+    const env = fakeEnv({
+      config: {
+        channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+        quarantined: [],
+      },
+      fileBody: "binario-fake",
+    });
+
+    const res = await app.request("/download/latest/win-x64", {}, env as never);
+    expect(res.status).toBe(400);
+  });
+
   it("canal desconhecido → 404", async () => {
     const env = fakeEnv({
       config: { channels: {}, quarantined: [] },
     });
 
     const res = await app.request(
-      "/download/beta/win/x64/exe",
+      "/download/beta/win-x64.exe",
       {},
       env as never,
     );
@@ -147,7 +182,7 @@ describe("GET /download/:channel/:os/:arch/:ext", () => {
     });
 
     const res = await app.request(
-      "/download/latest/win/x64/exe",
+      "/download/latest/win-x64.exe",
       {},
       env as never,
     );
@@ -164,7 +199,7 @@ describe("GET /download/:channel/:os/:arch/:ext", () => {
     });
 
     const res = await app.request(
-      "/download/latest/win/x64/exe",
+      "/download/latest/win-x64.exe",
       {},
       env as never,
     );

@@ -117,12 +117,26 @@ export function installerFilename(
   return `Vectora-${version}-${os}-${arch}.${ext}`;
 }
 
+/** Parseia "win-x64.exe" → {os, arch, ext}; null se o formato não bater. */
+export function parseDownloadTarget(
+  target: string,
+): { os: string; arch: string; ext: string } | null {
+  const m = /^([a-z0-9]+)-([a-z0-9]+)\.([a-z0-9]+)$/i.exec(target);
+  if (!m?.[1] || !m[2] || !m[3]) return null;
+  return { os: m[1], arch: m[2], ext: m[3] };
+}
+
 // Download de primeira instalação — sem token (o visitante do site ainda não
 // tem app nem conta) e sem participar do rollout gradual (esse é só pra quem
 // já tem o app e está checando update; quem baixa pela primeira vez recebe a
 // versão estável do canal direto, ignorando quarentena/rollout_percent).
-app.get("/download/:channel/:os/:arch/:ext", async (c) => {
-  const { channel, os, arch, ext } = c.req.param();
+// URL no formato /download/:channel/win-x64.exe (um segmento de arquivo, não
+// /os/arch/ext separados).
+app.get("/download/:channel/:target", async (c) => {
+  const { channel, target } = c.req.param();
+  const parsed = parseDownloadTarget(target);
+  if (!parsed) return c.text("invalid target", 400);
+  const { os, arch, ext } = parsed;
   const config = await getConfig(c.env.KV);
   const ch = config.channels[channel];
   if (!ch) return c.text("unknown channel", 404);
