@@ -4,7 +4,7 @@ Dois streams por job:
 
 - ``jobs`` — fila de trabalho; ``run_jobs_worker`` consome e despacha por
   ``kind`` para o handler registrado em ``register_job``.
-- ``jobs:events:<request_id>`` — eventos de progresso/resultado; ``stream_job_events``
+- ``jobs_events_<request_id>`` — eventos de progresso/resultado; ``stream_job_events``
   consome e devolve ao cliente (SSE).
 
 Cada handler publica eventos com ``publish_event`` e encerra com um evento
@@ -45,7 +45,10 @@ def registered_kinds() -> list[str]:
 
 
 def _events_stream(request_id: str) -> str:
-    return f"jobs:events:{request_id}"
+    # `:` quebra o NatsMQ (nats_sidecar.py grava o stream em arquivo — Windows
+    # reserva `:` para letra de drive) e stream names do NATS JetStream não
+    # aceitam `.` (reservado pra hierarquia de subject) — `_` é seguro nos dois.
+    return f"jobs_events_{request_id}"
 
 
 async def submit_job(kind: str, payload: dict | None = None) -> str:

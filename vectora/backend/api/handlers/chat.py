@@ -417,27 +417,6 @@ async def stream_chat(
                     workspace_id,
                 )
 
-    # Registra thread em vectora_sessions para que ListThreads a inclua
-    # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
-    # separadamente e não é consultado pelo endpoint de listagem). Persiste o
-    # workspace e o modo (chat/dev) para que a sidebar filtre e restaure a pasta.
-    try:
-        from backend.api.handlers.threads import (
-            _increment_message_count,
-            _upsert_session,
-        )
-
-        await _upsert_session(
-            thread_id,
-            workspace_id=workspace_id or None,
-            mode="chat" if chat_mode else "code",
-        )
-        await _increment_message_count(thread_id)
-    except Exception as exc:
-        logger.warning(
-            "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
-        )
-
     user_name = _user_name_from_request(http_request)
 
     # Planning mode: /plan prefix ativa instrução de planejamento multi-step
@@ -477,6 +456,32 @@ async def stream_chat(
     except Exception as exc:
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    # Registra thread em vectora_sessions para que ListThreads a inclua
+    # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
+    # separadamente e não é consultado pelo endpoint de listagem). Persiste o
+    # workspace e o modo (chat/dev) para que a sidebar filtre e restaure a pasta.
+    # Só roda DEPOIS do grafo inicializar com sucesso: se `get_user_agent`
+    # falhar (ex.: fresh install sem provider configurado), a thread não pode
+    # ficar marcada como "real" (message_count=1) sem nenhuma mensagem de
+    # verdade — ela nunca seria pega por `cleanup_empty_threads` (que só olha
+    # message_count=0) nem filtrada por `list_threads`, virando sessão fantasma.
+    try:
+        from backend.api.handlers.threads import (
+            _increment_message_count,
+            _upsert_session,
+        )
+
+        await _upsert_session(
+            thread_id,
+            workspace_id=workspace_id or None,
+            mode="chat" if chat_mode else "code",
+        )
+        await _increment_message_count(thread_id)
+    except Exception as exc:
+        logger.warning(
+            "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
+        )
 
     from backend.services.usage import usage_tracker
 

@@ -361,6 +361,79 @@ class TestStreamChatRegistersThread:
         thread_id_used = upsert_calls[0]
         assert len(thread_id_used) > 0, "thread_id gerado não deve ser vazio"
 
+    @pytest.mark.asyncio
+    async def test_stream_chat_does_not_upsert_when_agent_init_fails(self):
+        """Bug: numa instalação sem provider configurado, `get_user_agent`
+        falha (GetEnvError) e ANTES do fix `_upsert_session` +
+        `_increment_message_count` já tinham rodado — a thread ficava com
+        message_count=1 sem nenhuma mensagem real, passava pelo filtro de
+        `list_threads` (message_count > 0) e nunca era pega por
+        `cleanup_empty_threads` (que só olha message_count=0): sessão fantasma
+        pra sempre. O registro em vectora_sessions só pode acontecer DEPOIS do
+        grafo inicializar com sucesso."""
+        upsert_calls: list[str] = []
+
+        async def mock_upsert(
+            thread_id: str,
+            title: str = "",
+            workspace_id: str | None = None,
+            mode: str | None = None,
+        ) -> None:
+            upsert_calls.append(thread_id)
+
+        increment_calls: list[str] = []
+
+        async def mock_increment(thread_id: str) -> None:
+            increment_calls.append(thread_id)
+
+        from backend.api.schemas import StreamChatRequest
+
+        mock_ws3 = MagicMock()
+        mock_ws3.id = "test-ws-fail"
+        mock_registry3 = MagicMock()
+        mock_registry3.get.return_value = None
+        mock_registry3.get_active.return_value = None
+        mock_registry3.get_or_create_session_workspace.return_value = mock_ws3
+
+        with (
+            patch(
+                "backend.services.agent_factory.get_user_agent",
+                new=AsyncMock(side_effect=RuntimeError("sem provider configurado")),
+            ),
+            patch(
+                "backend.api.handlers.threads._upsert_session",
+                side_effect=mock_upsert,
+            ),
+            patch(
+                "backend.api.handlers.threads._increment_message_count",
+                side_effect=mock_increment,
+            ),
+            patch(
+                "backend.workspace.workspace.workspace_registry",
+                mock_registry3,
+            ),
+        ):
+            import importlib
+
+            from fastapi import HTTPException
+
+            import backend.api.handlers.chat as chat_mod
+
+            importlib.reload(chat_mod)
+
+            request = StreamChatRequest(content="oi", thread_id="failed-init-thread")
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            with pytest.raises(HTTPException):
+                await chat_mod.stream_chat(request, http_request)
+
+        assert upsert_calls == [], (
+            "_upsert_session não pode rodar se o grafo falhou ao inicializar"
+        )
+        assert increment_calls == [], (
+            "_increment_message_count não pode rodar se o grafo falhou ao inicializar"
+        )
+
 
 # ---------------------------------------------------------------------------
 # 3. UpdateThread endpoint

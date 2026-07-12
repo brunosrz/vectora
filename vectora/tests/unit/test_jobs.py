@@ -30,6 +30,18 @@ async def test_submit_retorna_request_id() -> None:
     assert isinstance(rid, str) and len(rid) == 32
 
 
+def test_events_stream_name_e_seguro_pra_nats_e_windows() -> None:
+    # NatsMQ.enqueue usa o nome do stream como path de arquivo
+    # (nats_sidecar.py grava o store em disco) — `:` é reservado no Windows
+    # (letra de drive) e quebrava `js.add_stream` com "error creating store
+    # for stream". Stream names do NATS JetStream também rejeitam `.`, `*`,
+    # `>` e espaço (reservados pra hierarquia/wildcard de subject).
+    name = jobs._events_stream("abc123")
+    invalid_chars = set(':\\/*?"<>| \t.')
+    assert not (invalid_chars & set(name)), name
+    assert name == "jobs_events_abc123"
+
+
 async def test_job_echo_ponta_a_ponta() -> None:
     async def echo(request_id: str, payload: dict) -> None:
         await jobs.publish_event(request_id, "running", {"received": payload})
