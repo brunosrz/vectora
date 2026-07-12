@@ -191,7 +191,7 @@ class TestOpenRouterCatalog:
     def _reset_cache() -> None:
         from backend.api.handlers.gateways import _catalog_cache
 
-        _catalog_cache["fetched_at"] = 0.0
+        _catalog_cache["fetched_at"] = float("-inf")
         _catalog_cache["models"] = []
 
     @pytest.fixture(autouse=True)
@@ -209,16 +209,12 @@ class TestOpenRouterCatalog:
         self, app, handler: Callable[[httpx.Request], httpx.Response]
     ) -> Iterator[None]:
         """Troca o client HTTP do endpoint via dependency override do
-        FastAPI (não `unittest.mock.patch("httpx.AsyncClient", ...)`).
-
-        `TestClient` despacha a app ASGI numa portal/thread própria — um
-        patch no atributo global `httpx.AsyncClient` já se mostrou frágil
-        contra timing de event loop entre implementações diferentes
-        (reproduzido só em CI Linux, nunca localmente no Windows: a request
-        real de rede saía antes do patch valer, caindo no fallback de "erro
-        de rede" e retornando lista vazia). `dependency_overrides` é
-        resolvido pelo próprio FastAPI dentro do mesmo contexto async da
-        request — sem essa classe de corrida por construção.
+        FastAPI — mais correto/idiomático que `unittest.mock.patch
+        ("httpx.AsyncClient", ...)`, resolvido pelo próprio FastAPI dentro
+        do mesmo contexto async da request em vez de mutar um atributo
+        global. (O flake real do catálogo em CI era outro — ver
+        `test_catalog_stale_sentinel_survives_low_monotonic_clock` — mas
+        dependency override continua a forma certa de mockar isso.)
         """
         from backend.api.handlers.gateways import _get_http_client
 
@@ -290,6 +286,35 @@ class TestOpenRouterCatalog:
             resp = client.get("/gateways/openrouter/models")
         assert resp.status_code == 200
         assert resp.json() == {"models": []}
+
+    def test_catalog_stale_sentinel_survives_low_monotonic_clock(
+        self, app, client, monkeypatch
+    ):
+        """Bug real reproduzido só em CI (Linux, VM efêmera recém-bootada),
+        nunca localmente: `time.monotonic()` não conta a partir de zero —
+        reflete o uptime da máquina. Numa VM com menos de
+        `_OPENROUTER_CATALOG_TTL_S` (3600s) de uptime, `now` já é menor que
+        o TTL sozinho; um sentinela `fetched_at=0.0` faz `now - 0.0 > TTL`
+        dar falso, então o cache "resetado" parece recém-buscado e o
+        endpoint devolve a lista vazia direto, sem nunca tentar buscar —
+        exatamente o `assert [] == [...]` visto na CI. Simula esse uptime
+        baixo aqui: se o sentinela correto (`-inf`) estiver em uso, o fetch
+        acontece de qualquer forma."""
+        import time as time_mod
+
+        monkeypatch.setattr(time_mod, "monotonic", lambda: 45.0)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200, json={"data": [{"id": "openai/gpt-4o", "name": "GPT-4o"}]}
+            )
+
+        with self._mocked_http_client(app, handler):
+            resp = client.get("/gateways/openrouter/models")
+
+        assert resp.status_code == 200
+        ids = [m["id"] for m in resp.json()["models"]]
+        assert ids == ["openai/gpt-4o"]
 
 
 class TestOpenRouterRegisteredModels:

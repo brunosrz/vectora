@@ -298,7 +298,14 @@ async def clear_openrouter_key() -> OpenRouterStatus:
     return OpenRouterStatus(configured=False, masked="")
 
 
-_catalog_cache: dict[str, Any] = {"fetched_at": 0.0, "models": []}
+# `fetched_at` usa `-inf`, não `0.0`, como sentinela de "nunca buscado":
+# `time.monotonic()` não conta a partir de zero, reflete o uptime da
+# máquina — numa VM efêmera de CI recém-bootada, `now` pode ser menor que
+# `_OPENROUTER_CATALOG_TTL_S`, e `0.0` faria `now - fetched_at > TTL` dar
+# falso (cache "resetado" pareceria recém-buscado, pulando o fetch e
+# devolvendo lista vazia direto). `-inf` garante `now - fetched_at == +inf`
+# sempre, não importa o uptime da máquina.
+_catalog_cache: dict[str, Any] = {"fetched_at": float("-inf"), "models": []}
 
 
 @router.get("/openrouter/models")
