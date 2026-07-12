@@ -35,28 +35,33 @@ import {
   type EnvironmentTab,
 } from "@/lib/stores/environment-dialog-store";
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
+import { m } from "@/lib/paraglide/messages";
 
 const EnvsTab = lazyWithRetry(
-  () => import("./tabs/envs-tab").then((m) => ({ default: m.EnvsTab })),
+  () => import("./tabs/envs-tab").then((mod) => ({ default: mod.EnvsTab })),
   "envs-tab",
 );
 const SkillsTab = lazyWithRetry(
-  () => import("./tabs/skills-tab").then((m) => ({ default: m.SkillsTab })),
+  () => import("./tabs/skills-tab").then((mod) => ({ default: mod.SkillsTab })),
   "skills-tab",
 );
 const PluginsTab = lazyWithRetry(
-  () => import("./tabs/plugins-tab").then((m) => ({ default: m.PluginsTab })),
+  () =>
+    import("./tabs/plugins-tab").then((mod) => ({ default: mod.PluginsTab })),
   "plugins-tab",
 );
 const IntegracoesTab = lazyWithRetry(
   () =>
-    import("./tabs/integracoes-tab").then((m) => ({
-      default: m.IntegracoesTab,
+    import("./tabs/integracoes-tab").then((mod) => ({
+      default: mod.IntegracoesTab,
     })),
   "integracoes-tab",
 );
 const GatewaysTab = lazyWithRetry(
-  () => import("./tabs/gateways-tab").then((m) => ({ default: m.GatewaysTab })),
+  () =>
+    import("./tabs/gateways-tab").then((mod) => ({
+      default: mod.GatewaysTab,
+    })),
   "gateways-tab",
 );
 
@@ -83,11 +88,11 @@ export function EnvironmentDialog() {
         className="p-6 gap-4"
       >
         <SettingsGroupTabs active="environment" />
-        <DialogHeader>
-          <DialogTitle>Ambiente</DialogTitle>
-          <DialogDescription className="sr-only">
-            Gerencie variáveis de ambiente, skills, plugins e integrações.
-          </DialogDescription>
+        {/* DialogHeader oculto: o Radix Dialog exige um título acessível; o
+            rótulo visível vem do SettingsGroupTabs acima. */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>{m.environment_dialog_title()}</DialogTitle>
+          <DialogDescription>{m.environment_dialog_desc()}</DialogDescription>
         </DialogHeader>
 
         <Tabs

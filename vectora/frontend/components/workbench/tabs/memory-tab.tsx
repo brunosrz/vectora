@@ -192,8 +192,8 @@ function MemorySearchBox({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="relative px-3 pt-2">
-      <Search className="pointer-events-none absolute left-5.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    <div className="relative min-w-0 flex-1">
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
       <input
         type="text"
         value={query}
@@ -308,8 +308,10 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
   if (isEmpty) {
     return (
       <div className="flex h-full flex-col">
-        <RagSettingsPanel />
-        <MemorySearchBox query={search.query} onChange={search.setQuery} />
+        <div className="flex shrink-0 items-center gap-2 px-3 pt-3">
+          <MemorySearchBox query={search.query} onChange={search.setQuery} />
+          <RagSettingsPanel />
+        </div>
         {searchSection ? (
           <div className="flex-1 space-y-4 overflow-auto px-3 py-3">
             {searchSection}
@@ -337,8 +339,10 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <RagSettingsPanel />
-      <MemorySearchBox query={search.query} onChange={search.setQuery} />
+      <div className="flex shrink-0 items-center gap-2 px-3 pt-3">
+        <MemorySearchBox query={search.query} onChange={search.setQuery} />
+        <RagSettingsPanel />
+      </div>
       <div className="flex-1 space-y-4 overflow-auto px-3 pb-3 pt-3">
         {searchSection}
         {hasActivity && (

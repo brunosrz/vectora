@@ -35,19 +35,21 @@ import {
   type PreferenciasTab,
 } from "@/lib/stores/preferencias-dialog-store";
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
+import { m } from "@/lib/paraglide/messages";
 
 const ContaTab = lazyWithRetry(
-  () => import("./tabs/conta-tab").then((m) => ({ default: m.ContaTab })),
+  () => import("./tabs/conta-tab").then((mod) => ({ default: mod.ContaTab })),
   "conta-tab",
 );
 const MemoriaTab = lazyWithRetry(
-  () => import("./tabs/memoria-tab").then((m) => ({ default: m.MemoriaTab })),
+  () =>
+    import("./tabs/memoria-tab").then((mod) => ({ default: mod.MemoriaTab })),
   "memoria-tab",
 );
 const PreferenciasTab = lazyWithRetry(
   () =>
-    import("./tabs/preferencias-tab").then((m) => ({
-      default: m.PreferenciasTab,
+    import("./tabs/preferencias-tab").then((mod) => ({
+      default: mod.PreferenciasTab,
     })),
   "preferencias-tab",
 );
@@ -75,11 +77,11 @@ export function PreferenciasDialog() {
         className="p-6 gap-4"
       >
         <SettingsGroupTabs active="preferencias" />
-        <DialogHeader>
-          <DialogTitle>Preferências</DialogTitle>
-          <DialogDescription className="sr-only">
-            Gerencie sua conta, preferências e memória.
-          </DialogDescription>
+        {/* DialogHeader oculto: o Radix Dialog exige um título acessível; o
+            rótulo visível vem do SettingsGroupTabs acima. */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>{m.preferencias_dialog_title()}</DialogTitle>
+          <DialogDescription>{m.preferencias_dialog_desc()}</DialogDescription>
         </DialogHeader>
 
         <Tabs

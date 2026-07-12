@@ -1518,8 +1518,10 @@ export function AdminTab() {
   // license-banner.tsx, mesma fonte (GET /license/status). "Usuários"
   // é recurso multi-usuário puro (convites, roles de outras contas): sem
   // conta Pro ele só mostraria uma lista vazia, sem caminho pra ativar.
-  const { status: license } = useLicenseStatus();
-  const isFree = !license?.configured;
+  // Enquanto `loading`, `license` é `null` — tratar como free aqui forçaria
+  // toda conta (inclusive Pro) pra "Sistema" no primeiro render, sem volta.
+  const { status: license, loading: licenseLoading } = useLicenseStatus();
+  const isFree = !licenseLoading && !license?.configured;
   const subTabs = getSubTabs();
   const visibleTabs = isFree
     ? subTabs.filter((tab) => tab.id !== "users")

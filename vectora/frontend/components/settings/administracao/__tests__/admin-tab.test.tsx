@@ -111,4 +111,24 @@ describe("AdminTab — filtro de abas por tier", () => {
     ).toBeInTheDocument();
     await act(async () => {});
   });
+
+  it("durante o loading inicial (status ainda null) não força a aba pra Sistema", async () => {
+    // `useLicenseStatus` retorna `status: null` + `loading: true` até o
+    // primeiro fetch assentar — `isFree` não pode tratar esse estado como
+    // free, senão toda conta (inclusive Pro) pousa em "Sistema" no primeiro
+    // render e nunca mais volta pra "Usuários".
+    useLicenseStatusMock.mockReturnValue({
+      status: null,
+      loading: true,
+      refetch: vi.fn(),
+    });
+    mockAdminFetch();
+
+    render(<AdminTab />);
+
+    expect(screen.getByRole("button", { name: "Usuários" })).toHaveClass(
+      "border-foreground",
+    );
+    await act(async () => {});
+  });
 });

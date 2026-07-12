@@ -59,7 +59,7 @@ export function AdminDialog() {
           <DialogDescription>{msg.admin_dialog_desc()}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pt-2">
+        <div className="flex-1 overflow-y-auto">
           <ErrorBoundary>
             <Suspense fallback={<AdminFallback />}>
               <AdminTab />
