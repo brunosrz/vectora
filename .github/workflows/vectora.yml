@@ -273,6 +273,19 @@ jobs:
           key: ccache-${{ matrix.target }}-${{ matrix.arch }}-${{ hashFiles('vectora/backend/**') }}
           restore-keys: |
             ccache-${{ matrix.target }}-${{ matrix.arch }}-
+      - name: Cache nats-server binary
+        uses: actions/cache@v6
+        with:
+          path: vectora/resources/nats-server*
+          key: nats-server-${{ matrix.target }}-${{ matrix.arch }}
+      - name: Fetch nats-server binary
+        # build-hybrid.py falha rápido se vectora/resources/nats-server
+        # (ou .exe) não existir — o sidecar de fila/KV precisa vir embutido
+        # no build standalone, não só no desktop Electron. `scons nats`
+        # baixa o binário certo pra plataforma do runner atual.
+        working-directory: .
+        run: scons nats
+        shell: bash
       - name: Build hybrid (Nuitka backend.pyd + PyInstaller onedir)
         # Mesmo pipeline que `scons release` roda localmente
         # (build-hybrid.py, na raiz do monorepo — não em vectora/): Nuitka
