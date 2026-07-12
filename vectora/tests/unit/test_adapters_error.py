@@ -97,3 +97,35 @@ def test_missing_key_takes_precedence_over_auth():
 
     code, _ = classify_stream_error(GetEnvError("api_key not configured"))
     assert code == "MISSING_KEYS"
+
+
+def test_model_incompatible_not_confused_with_real_quota():
+    """Bug reproduzido ao vivo: Cohere Command A+ rejeita `tool_plan` em
+    TODOS os candidatos da cadeia de fallback (langchain-cohere ainda não
+    suporta os modelos mais novos da Cohere) — o fallback esgota e levanta
+    QuotaExhaustedError, cuja mensagem contém a palavra "quota" e casava
+    com o classificador RATE_LIMIT, mentindo pro usuário que o limite de
+    uso foi atingido quando na verdade é incompatibilidade de schema."""
+    from backend.llm.provider_fallback import QuotaExhaustedError
+
+    root_cause = Exception(
+        "invalid request: invalid message provided at index 3: "
+        "`tool plan` cannot be used with this model."
+    )
+    try:
+        raise QuotaExhaustedError(
+            "Todos os providers esgotaram a quota (último: cohere:command-a-plus-05-2026)."
+        ) from root_cause
+    except QuotaExhaustedError as exc:
+        code, message = classify_stream_error(exc)
+
+    assert code == "MODEL_INCOMPATIBLE"
+    assert "limite de uso" not in message.lower()
+    assert "quota" not in message.lower()
+
+
+def test_direct_provider_incompatible_error_classified():
+    code, _ = classify_stream_error(
+        Exception("`tool plan` cannot be used with this model.")
+    )
+    assert code == "MODEL_INCOMPATIBLE"

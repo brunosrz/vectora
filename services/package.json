@@ -14,23 +14,23 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.1081.0",
-    "@aws-sdk/lib-storage": "^3.1081.0",
-    "@cloudflare/vitest-pool-workers": "^0.18.2",
-    "@cloudflare/workers-types": "^5.20260708.1",
+    "@aws-sdk/client-s3": "^3.1085.0",
+    "@aws-sdk/lib-storage": "^3.1085.0",
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@cloudflare/workers-types": "^5.20260711.1",
     "@vitest/coverage-istanbul": "^4.1.10",
-    "prettier": "3.9.4",
+    "prettier": "3.9.5",
     "tsx": "^4.23.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10",
-    "wrangler": "^4.107.1"
+    "wrangler": "^4.110.0"
   },
   "dependencies": {
-    "@react-email/render": "^2.0.10",
-    "hono": "^4.12.28",
+    "@react-email/render": "^2.1.0",
+    "hono": "^4.12.29",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "stripe": "^22.3.0",
+    "stripe": "^22.3.1",
     "yaml": "^2.9.0"
   }
 }

@@ -365,3 +365,9 @@ class TestMcpProtocol:
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 proc.kill()
+            # terminate()/wait() encerram o processo mas não fecham os
+            # arquivos de pipe (stdin/stdout/stderr) que o Popen abriu pra
+            # falar com ele — ficam pendurados até o GC coletar.
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    stream.close()

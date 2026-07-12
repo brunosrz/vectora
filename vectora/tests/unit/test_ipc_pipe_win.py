@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import gc
 import sys
 
 import pytest
@@ -227,6 +228,14 @@ async def test_serve_pipe_inicia_e_cancela():
         await task
 
     assert task.done()
+    # `srv.close()` no finally do serve_pipe fecha o listener da pipe de forma
+    # assíncrona (IOCP) — sem dar tempo ao loop pra completar antes do teste
+    # acabar, o transport sobrevive com o handle já inválido até o GC rodar,
+    # e aí o __del__ do ProactorBasePipeTransport explode DURANTE outro teste
+    # qualquer (PytestUnraisableExceptionWarning). Dá tempo + força o GC aqui,
+    # onde o loop ainda está de pé.
+    await asyncio.sleep(0.1)
+    gc.collect()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="named pipe só no Windows")
@@ -278,9 +287,23 @@ async def test_serve_pipe_proxies_http():
 
     transport.close()
     transport2.close()
+    # close() num transport de named pipe do ProactorEventLoop é assíncrono
+    # (agenda call_connection_lost via IOCP) — sem esperar, o teste retorna
+    # e o event loop desta função é destruído antes do fechamento real
+    # terminar. O objeto do transport sobrevive (GC ainda não rodou) com o
+    # handle do pipe já inválido; quando o GC finalmente coleta — durante um
+    # teste completamente diferente — o __del__ tenta logar um warning e
+    # `fileno()` explode com "I/O operation on closed pipe" no MEIO daquele
+    # outro teste (PytestUnraisableExceptionWarning).
+    await asyncio.sleep(0.1)
     pipe_task.cancel()
     tcp_server.close()
     with contextlib.suppress(asyncio.CancelledError):
         await pipe_task
+    # Dá tempo pro lado servidor (transports internos do serve_pipe pra cada
+    # conexão aceita) também terminar o close assíncrono, e força o GC aqui —
+    # onde o loop ainda está de pé — em vez de deixar pra depois.
+    await asyncio.sleep(0.1)
+    gc.collect()
 
     assert any(b"200" in chunk for chunk in received)

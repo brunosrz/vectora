@@ -52,7 +52,9 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
 
     Códigos: ``RATE_LIMIT`` (429 / quota esgotada), ``MISSING_KEYS`` (chave de
     API não configurada), ``AUTH`` (chave inválida / 401 / 403),
-    ``STREAM_ERROR`` (genérico).
+    ``MODEL_INCOMPATIBLE`` (provider rejeitou o histórico da conversa em
+    todos os candidatos da cadeia de fallback — não é quota), ``STREAM_ERROR``
+    (genérico).
     """
     text = f"{type(exc).__name__}: {exc}".lower()
     # MISSING_KEYS antes de AUTH: a falta de chave cita "api key" (que casaria
@@ -64,6 +66,23 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
         or ("env variable" in text and "does not exist" in text)
     ):
         return "MISSING_KEYS", "Configure suas chaves de API para usar o Vectora."
+    # Checa a causa raiz encadeada ANTES do match genérico de "quota":
+    # QuotaExhaustedError é levantado `from last_exc` quando a cadeia de
+    # fallback se esgota — se TODOS os candidatos falharam pela MESMA
+    # incompatibilidade de provider (ex.: langchain-cohere ainda sem
+    # suporte a um modelo novo da Cohere, que rejeita `tool_plan`), a
+    # palavra "quota" aparece na mensagem mas é falsa: não é limite de uso,
+    # é o histórico da conversa incompatível com o schema do modelo.
+    from backend.llm.provider_fallback import is_provider_incompatible_error
+
+    cause = exc.__cause__
+    if is_provider_incompatible_error(exc) or (
+        cause is not None and is_provider_incompatible_error(cause)
+    ):
+        return (
+            "MODEL_INCOMPATIBLE",
+            "Este modelo não conseguiu processar o histórico desta conversa.",
+        )
     if (
         "429" in text
         or "too many requests" in text

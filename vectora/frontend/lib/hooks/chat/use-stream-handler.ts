@@ -112,6 +112,8 @@ export function streamErrorMessage(code?: string): string {
       return msg.chat_error_timeout();
     case "MODEL_NO_VISION":
       return msg.chat_error_model_no_vision();
+    case "MODEL_INCOMPATIBLE":
+      return msg.chat_error_model_incompatible();
     default:
       return msg.chat_error_generic();
   }

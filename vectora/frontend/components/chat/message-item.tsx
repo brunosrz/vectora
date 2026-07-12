@@ -1016,13 +1016,13 @@ export const MessageItem = memo(
                           variant="ghost"
                           size="icon"
                           onClick={() => onCopy(message.content, message.id)}
-                          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                          className="h-5 w-5 text-muted-foreground hover:text-foreground"
                           aria-label={m.chat_copy()}
                         >
                           {copiedId === message.id ? (
-                            <Check className="w-3 h-3" />
+                            <Check className="w-2.5 h-2.5" />
                           ) : (
-                            <Copy className="w-3 h-3" />
+                            <Copy className="w-2.5 h-2.5" />
                           )}
                         </Button>
                       </TooltipTrigger>
@@ -1039,10 +1039,10 @@ export const MessageItem = memo(
                             variant="ghost"
                             size="icon"
                             onClick={() => setRewindOpen(true)}
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            className="h-5 w-5 text-muted-foreground hover:text-foreground"
                             aria-label={m.chat_rewind()}
                           >
-                            <RotateCcw className="w-3 h-3" />
+                            <RotateCcw className="w-2.5 h-2.5" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>{m.chat_rewind()}</TooltipContent>

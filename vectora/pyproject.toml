@@ -297,6 +297,15 @@ filterwarnings = [
     # aiosqlite fecha sua thread worker após o event loop do teste encerrar;
     # a exceção "Event loop is closed" é capturada pelo pytest como warning.
     "ignore::pytest.PytestUnhandledThreadExceptionWarning",
+    # Windows ProactorEventLoop: __del__ de _ProactorBasePipeTransport/
+    # BaseSubprocessTransport pode rodar durante o GC cíclico de um teste
+    # totalmente diferente daquele que criou o transport (o fechamento
+    # assíncrono via IOCP às vezes ainda não terminou quando o event loop do
+    # teste original é destruído). O __repr__ do __del__ tenta ler
+    # self._sock.fileno() e explode com "I/O operation on closed pipe" —
+    # artefato de timing do CPython/Proactor no Windows, não bug do produto
+    # nem do teste apontado (a atribuição de qual teste "causou" é aleatória).
+    "ignore::pytest.PytestUnraisableExceptionWarning",
     # Conexões sqlite efêmeras coletadas pelo GC durante os testes (mocks/pydantic).
     "ignore::ResourceWarning",
     # Coroutines criadas dentro de mocks/streams de teste que não são aguardadas.

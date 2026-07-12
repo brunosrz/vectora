@@ -27,13 +27,10 @@ vi.mock("@/lib/api/vectora-client", () => ({
   getStackHint: vi.fn(),
 }));
 
-vi.mock("next/image", () => ({
-  default: ({ alt, ...rest }: { alt: string } & Record<string, unknown>) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img alt={alt} {...(rest as React.ImgHTMLAttributes<HTMLImageElement>)} />
-  ),
-}));
-
+// `next/image` resolve via o alias real de vitest.config.ts (src/shims/next-image.tsx)
+// — não mockar aqui: um mock local ingênuo que espalha `...rest` direto no
+// `<img>` reintroduz `priority` (boolean) como atributo DOM inválido, que o
+// shim de verdade filtra corretamente.
 import { EmptyStateHeader } from "../empty-state-header";
 
 afterEach(cleanup);
