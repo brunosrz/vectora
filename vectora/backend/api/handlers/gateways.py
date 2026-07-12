@@ -28,16 +28,35 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/gateways", tags=["gateways"])
+
+
+async def _get_http_client() -> AsyncIterator[Any]:
+    """Dependency do client HTTP usado pelas chamadas de descoberta/catálogo.
+
+    Injeção via FastAPI (`Depends`) em vez de `httpx.AsyncClient()` direto —
+    testes trocam o client com `app.dependency_overrides`, resolvido pelo
+    próprio FastAPI dentro do mesmo contexto async da request. Evita a classe
+    de flake de `unittest.mock.patch("httpx.AsyncClient", ...)` em cima do
+    `TestClient` (que despacha a app ASGI numa portal/thread própria — o
+    patch pode não estar mais em vigor quando o handler roda, dependendo de
+    timing do event loop; reproduzido só em CI Linux, nunca localmente).
+    """
+    import httpx
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        yield client
+
 
 _DISCOVERY_TIMEOUT_S = 2.5
 _OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
@@ -283,19 +302,18 @@ _catalog_cache: dict[str, Any] = {"fetched_at": 0.0, "models": []}
 
 
 @router.get("/openrouter/models")
-async def discover_openrouter_models(q: str = "") -> OpenRouterCatalogResponse:
+async def discover_openrouter_models(
+    client: Annotated[Any, Depends(_get_http_client)], q: str = ""
+) -> OpenRouterCatalogResponse:
     """Catálogo público de modelos da OpenRouter (não exige key). Cacheado em
     memória por _OPENROUTER_CATALOG_TTL_S — a lista muda pouco e evita bater
     na API a cada tecla digitada na busca do frontend."""
-    import httpx
-
     now = time.monotonic()
     if now - _catalog_cache["fetched_at"] > _OPENROUTER_CATALOG_TTL_S:
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                resp = await client.get(f"{_OPENROUTER_BASE_URL}/models")
-                resp.raise_for_status()
-                data = resp.json()
+            resp = await client.get(f"{_OPENROUTER_BASE_URL}/models")
+            resp.raise_for_status()
+            data = resp.json()
             _catalog_cache["models"] = [
                 OpenRouterModelInfo(
                     id=m["id"],

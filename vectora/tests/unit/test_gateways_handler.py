@@ -13,9 +13,9 @@ Valida:
 
 from __future__ import annotations
 
-import functools
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -24,11 +24,15 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module")
-def client():
+def app():
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
     from backend.api.server import create_app
 
-    app = create_app(serve_static=False)
+    return create_app(serve_static=False)
+
+
+@pytest.fixture(scope="module")
+def client(app):
     return TestClient(app, raise_server_exceptions=False)
 
 
@@ -200,21 +204,37 @@ class TestOpenRouterCatalog:
         yield
         self._reset_cache()
 
-    @staticmethod
-    def _mock_async_client(
-        handler: Callable[[httpx.Request], httpx.Response],
-    ) -> functools.partial[httpx.AsyncClient]:
-        """`httpx.AsyncClient` real, só trocando o transporte por
-        `httpx.MockTransport` — em vez de simular o protocolo de context
-        manager assíncrono (`__aenter__`/`__aexit__`) na mão com MagicMock,
-        que é frágil entre implementações de event loop diferentes (uvloop
-        no CI Linux vs asyncio puro no Windows). Isso exercita o client HTTP
-        de verdade, só a rede é falsa."""
-        return functools.partial(
-            httpx.AsyncClient, transport=httpx.MockTransport(handler)
-        )
+    @contextmanager
+    def _mocked_http_client(
+        self, app, handler: Callable[[httpx.Request], httpx.Response]
+    ) -> Iterator[None]:
+        """Troca o client HTTP do endpoint via dependency override do
+        FastAPI (não `unittest.mock.patch("httpx.AsyncClient", ...)`).
 
-    def test_catalog_returns_models(self, client):
+        `TestClient` despacha a app ASGI numa portal/thread própria — um
+        patch no atributo global `httpx.AsyncClient` já se mostrou frágil
+        contra timing de event loop entre implementações diferentes
+        (reproduzido só em CI Linux, nunca localmente no Windows: a request
+        real de rede saía antes do patch valer, caindo no fallback de "erro
+        de rede" e retornando lista vazia). `dependency_overrides` é
+        resolvido pelo próprio FastAPI dentro do mesmo contexto async da
+        request — sem essa classe de corrida por construção.
+        """
+        from backend.api.handlers.gateways import _get_http_client
+
+        async def _fake_client():
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(handler)
+            ) as client:
+                yield client
+
+        app.dependency_overrides[_get_http_client] = _fake_client
+        try:
+            yield
+        finally:
+            app.dependency_overrides.pop(_get_http_client, None)
+
+    def test_catalog_returns_models(self, app, client):
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
                 200,
@@ -233,14 +253,14 @@ class TestOpenRouterCatalog:
                 },
             )
 
-        with patch("httpx.AsyncClient", self._mock_async_client(handler)):
+        with self._mocked_http_client(app, handler):
             resp = client.get("/gateways/openrouter/models")
 
         assert resp.status_code == 200
         ids = [m["id"] for m in resp.json()["models"]]
         assert ids == ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"]
 
-    def test_catalog_filters_by_q(self, client):
+    def test_catalog_filters_by_q(self, app, client):
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
                 200,
@@ -255,18 +275,18 @@ class TestOpenRouterCatalog:
                 },
             )
 
-        with patch("httpx.AsyncClient", self._mock_async_client(handler)):
+        with self._mocked_http_client(app, handler):
             resp = client.get("/gateways/openrouter/models", params={"q": "claude"})
 
         assert resp.status_code == 200
         ids = [m["id"] for m in resp.json()["models"]]
         assert ids == ["anthropic/claude-3.5-sonnet"]
 
-    def test_catalog_network_error_returns_empty_not_500(self, client):
+    def test_catalog_network_error_returns_empty_not_500(self, app, client):
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.ConnectError("network down")
 
-        with patch("httpx.AsyncClient", self._mock_async_client(handler)):
+        with self._mocked_http_client(app, handler):
             resp = client.get("/gateways/openrouter/models")
         assert resp.status_code == 200
         assert resp.json() == {"models": []}
