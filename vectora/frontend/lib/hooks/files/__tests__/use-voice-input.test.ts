@@ -163,10 +163,13 @@ describe("useVoiceInput — Web Speech API funcionando (Chrome/Edge)", () => {
 
   beforeEach(() => {
     recognitionInstance = new FakeSpeechRecognition();
-    vi.stubGlobal(
-      "webkitSpeechRecognition",
-      vi.fn(() => recognitionInstance),
-    );
+    // vi.fn() não é utilizável com `new` no Vitest (ao contrário do Jest) —
+    // precisa de uma function declaration de verdade, que retorna o objeto
+    // explicitamente (semântica padrão de JS: `new` usa o retorno quando é
+    // um objeto, em vez do `this` recém-criado).
+    vi.stubGlobal("webkitSpeechRecognition", function MockSpeechRecognition() {
+      return recognitionInstance;
+    });
   });
 
   it("isSupported é true quando webkitSpeechRecognition existe", () => {
@@ -218,10 +221,13 @@ describe("useVoiceInput — Web Speech API presente mas quebrada (Electron/Chrom
 
   beforeEach(() => {
     recognitionInstance = new FakeSpeechRecognition();
-    vi.stubGlobal(
-      "webkitSpeechRecognition",
-      vi.fn(() => recognitionInstance),
-    );
+    // vi.fn() não é utilizável com `new` no Vitest (ao contrário do Jest) —
+    // precisa de uma function declaration de verdade, que retorna o objeto
+    // explicitamente (semântica padrão de JS: `new` usa o retorno quando é
+    // um objeto, em vez do `this` recém-criado).
+    vi.stubGlobal("webkitSpeechRecognition", function MockSpeechRecognition() {
+      return recognitionInstance;
+    });
     stubBackendRecordingSupport();
     mockedTranscribeAudio.mockReset();
   });
