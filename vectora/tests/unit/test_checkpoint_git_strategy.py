@@ -212,3 +212,47 @@ class TestListGitCheckpoints:
         assert "b1" not in messages_a
         assert "b1" in messages_b
         assert "a1" not in messages_b
+
+
+# ---------------------------------------------------------------------------
+# GitCommandNotFound — git não instalado no sistema (máquina limpa)
+# ---------------------------------------------------------------------------
+
+
+class TestGitCommandNotFound:
+    def test_create_checkpoint_com_git_nao_instalado_nao_propaga(self) -> None:
+        from unittest.mock import MagicMock
+
+        not_found = git.GitCommandNotFound("git", FileNotFoundError("sumiu"))
+        repo = MagicMock()
+        repo.head.commit.hexsha = "deadbeef"
+        repo.git.rev_parse.side_effect = not_found
+        repo.git.read_tree.side_effect = not_found
+
+        result = create_git_checkpoint(repo, "thread-1", "checkpoint")
+
+        assert result["status"] == "error"
+
+    def test_restore_checkpoint_com_git_nao_instalado_nao_propaga(self) -> None:
+        from unittest.mock import MagicMock
+
+        repo = MagicMock()
+        repo.git.restore.side_effect = git.GitCommandNotFound(
+            "git", FileNotFoundError("sumiu")
+        )
+
+        result = restore_git_checkpoint(repo, "0" * 40)
+
+        assert result["status"] == "error"
+
+    def test_list_checkpoints_com_git_nao_instalado_retorna_lista_vazia(self) -> None:
+        from unittest.mock import MagicMock
+
+        repo = MagicMock()
+        repo.iter_commits.side_effect = git.GitCommandNotFound(
+            "git", FileNotFoundError("sumiu")
+        )
+
+        result = list_git_checkpoints(repo, "thread-1")
+
+        assert result == {"status": "ok", "checkpoints": []}

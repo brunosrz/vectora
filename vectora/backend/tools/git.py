@@ -17,7 +17,13 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import os
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Annotated, Any
+
+# GitPython roda Git.refresh() em `import git` e levanta ImportError se não
+# achar o executável git no PATH — precisa disso antes do import abaixo.
+os.environ.setdefault("GIT_PYTHON_REFRESH", "quiet")
 
 import git
 from langchain.tools import tool
@@ -83,6 +89,27 @@ def _open_repo(workspace_id: str | None, config: RunnableConfig | None) -> Any:
         )
     except Exception as exc:
         return None, json.dumps({"status": "error", "message": str(exc)})
+
+
+def _safe_call(fn: Callable[[], dict]) -> dict:
+    """Executa uma operação git e nunca deixa exceção escapar pra tool.
+
+    ``_open_repo`` já blinda a abertura do repositório, mas as operações git
+    de verdade (`repo.git.xxx`, `repo.active_branch`, `repo.untracked_files`)
+    só falham quando de fato executadas — e a maioria dos ``_git_*_impl`` só
+    trata ``git.GitCommandError``, não ``git.GitCommandNotFound`` (executável
+    git ausente do sistema, caso comum numa máquina limpa).
+    """
+    try:
+        return fn()
+    except git.GitCommandNotFound:
+        return {
+            "status": "git_not_found",
+            "message": "git não está instalado ou não foi encontrado no PATH.",
+        }
+    except Exception as exc:
+        logger.exception("tools/git: falha inesperada")
+        return {"status": "error", "message": str(exc)}
 
 
 # ---------------------------------------------------------------------------
@@ -545,7 +572,7 @@ async def git_status(
     repo, err = _open_repo(workspace_id, config)
     if err:
         return err
-    return json.dumps(_git_status_impl(repo))
+    return json.dumps(_safe_call(lambda: _git_status_impl(repo)))
 
 
 @tool(
@@ -572,7 +599,7 @@ async def git_log(
     repo, err = _open_repo(workspace_id, config)
     if err:
         return err
-    return json.dumps(_git_log_impl(repo, n=n, branch=branch))
+    return json.dumps(_safe_call(lambda: _git_log_impl(repo, n=n, branch=branch)))
 
 
 @tool(
@@ -597,7 +624,7 @@ async def git_diff(
     repo, err = _open_repo(workspace_id, config)
     if err:
         return err
-    return json.dumps(_git_diff_impl(repo, ref=ref))
+    return json.dumps(_safe_call(lambda: _git_diff_impl(repo, ref=ref)))
 
 
 @tool(
@@ -624,7 +651,9 @@ async def git_branch(
     repo, err = _open_repo(workspace_id, config)
     if err:
         return err
-    return json.dumps(_git_branch_impl(repo, action=action, name=name))
+    return json.dumps(
+        _safe_call(lambda: _git_branch_impl(repo, action=action, name=name))
+    )
 
 
 @tool(
@@ -654,7 +683,7 @@ async def git_checkout(
         return err
     if not ref:
         return json.dumps({"status": "error", "message": "ref é obrigatório."})
-    return json.dumps(_git_checkout_impl(repo, ref=ref))
+    return json.dumps(_safe_call(lambda: _git_checkout_impl(repo, ref=ref)))
 
 
 @tool(
@@ -689,7 +718,9 @@ async def git_commit(
         return json.dumps(
             {"status": "error", "message": "Mensagem de commit é obrigatória."}
         )
-    return json.dumps(_git_commit_impl(repo, message=message, all=all))
+    return json.dumps(
+        _safe_call(lambda: _git_commit_impl(repo, message=message, all=all))
+    )
 
 
 @tool(
@@ -720,7 +751,11 @@ async def git_push(
     repo, err = _open_repo(workspace_id, config)
     if err:
         return err
-    return json.dumps(_git_push_impl(repo, remote=remote, branch=branch, force=force))
+    return json.dumps(
+        _safe_call(
+            lambda: _git_push_impl(repo, remote=remote, branch=branch, force=force)
+        )
+    )
 
 
 @tool(
@@ -748,7 +783,9 @@ async def git_pull(
     repo, err = _open_repo(workspace_id, config)
     if err:
         return err
-    return json.dumps(_git_pull_impl(repo, remote=remote, branch=branch))
+    return json.dumps(
+        _safe_call(lambda: _git_pull_impl(repo, remote=remote, branch=branch))
+    )
 
 
 @tool(
@@ -776,7 +813,9 @@ async def git_stash(
     repo, err = _open_repo(workspace_id, config)
     if err:
         return err
-    return json.dumps(_git_stash_impl(repo, action=action, name=name))
+    return json.dumps(
+        _safe_call(lambda: _git_stash_impl(repo, action=action, name=name))
+    )
 
 
 @tool(
@@ -802,7 +841,7 @@ async def git_init(
     ws = _resolve_workspace(workspace_id, config)
     if ws is None:
         return json.dumps({"status": "error", "message": "Workspace não encontrado."})
-    return json.dumps(git_init_repo(ws.cwd))
+    return json.dumps(_safe_call(lambda: git_init_repo(ws.cwd)))
 
 
 @tool(
@@ -836,7 +875,11 @@ async def git_worktree(
     if err:
         return err
     return json.dumps(
-        _git_worktree_impl(repo, ws.id, action=action, name=name, branch=branch)
+        _safe_call(
+            lambda: _git_worktree_impl(
+                repo, ws.id, action=action, name=name, branch=branch
+            )
+        )
     )
 
 
@@ -867,7 +910,7 @@ async def git_stage(
         return err
     if not path:
         return json.dumps({"status": "error", "message": "path é obrigatório."})
-    return json.dumps(_git_stage_impl(repo, path=path))
+    return json.dumps(_safe_call(lambda: _git_stage_impl(repo, path=path)))
 
 
 @tool(
@@ -895,7 +938,7 @@ async def git_unstage(
         return err
     if not path:
         return json.dumps({"status": "error", "message": "path é obrigatório."})
-    return json.dumps(_git_unstage_impl(repo, path=path))
+    return json.dumps(_safe_call(lambda: _git_unstage_impl(repo, path=path)))
 
 
 # Sincroniza .extras → .metadata para compatibilidade com testes e endpoint GetTools

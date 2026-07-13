@@ -249,3 +249,76 @@ def test_git_pull_tem_invalidates_files_e_diff():
     tabs = meta.get("invalidates", [])
     assert "diff" in tabs
     assert "files" in tabs
+
+
+# ---------------------------------------------------------------------------
+# GitCommandNotFound — git não instalado no sistema
+#
+# Além de git.GitCommandError, as tools precisam sobreviver a
+# git.GitCommandNotFound (executável git ausente do PATH) — caso comum numa
+# máquina limpa. Antes de _safe_call existir, os `_git_*_impl` só tratavam
+# GitCommandError e deixavam essa exceção escapar direto pro chamador da tool.
+# ---------------------------------------------------------------------------
+
+
+class TestGitCommandNotFound:
+    @pytest.mark.asyncio
+    async def test_git_diff_com_git_nao_instalado_nao_propaga(self, mock_ws):
+        import git as gitpy
+
+        mock_repo = MagicMock()
+        mock_repo.git.diff.side_effect = gitpy.GitCommandNotFound(
+            "git", FileNotFoundError("git não encontrado")
+        )
+        with patch("backend.tools.git.git.Repo", return_value=mock_repo):
+            from backend.tools.git import git_diff
+
+            result_raw = await git_diff.ainvoke(
+                {"workspace_id": mock_ws.id}, config=_make_config(mock_ws.id)
+            )
+        result = json.loads(result_raw)
+        assert result["status"] == "git_not_found"
+
+    @pytest.mark.asyncio
+    async def test_git_log_com_git_nao_instalado_nao_propaga(self, mock_ws):
+        import git as gitpy
+
+        mock_repo = MagicMock()
+        mock_repo.iter_commits.side_effect = gitpy.GitCommandNotFound(
+            "git", FileNotFoundError("git não encontrado")
+        )
+        with patch("backend.tools.git.git.Repo", return_value=mock_repo):
+            from backend.tools.git import git_log
+
+            result_raw = await git_log.ainvoke(
+                {"workspace_id": mock_ws.id}, config=_make_config(mock_ws.id)
+            )
+        result = json.loads(result_raw)
+        assert result["status"] == "git_not_found"
+
+    def test_safe_call_converte_git_command_not_found(self):
+        import git as gitpy
+
+        from backend.tools.git import _safe_call
+
+        def _boom():
+            raise gitpy.GitCommandNotFound("git", FileNotFoundError("sumiu"))
+
+        result = _safe_call(_boom)
+        assert result["status"] == "git_not_found"
+
+    def test_safe_call_converte_excecao_generica(self):
+        from backend.tools.git import _safe_call
+
+        def _boom():
+            raise RuntimeError("algo inesperado")
+
+        result = _safe_call(_boom)
+        assert result["status"] == "error"
+        assert "algo inesperado" in result["message"]
+
+    def test_safe_call_repassa_resultado_de_sucesso(self):
+        from backend.tools.git import _safe_call
+
+        result = _safe_call(lambda: {"status": "ok", "value": 42})
+        assert result == {"status": "ok", "value": 42}

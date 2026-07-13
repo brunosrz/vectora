@@ -18,11 +18,20 @@ Configuração (operacional, para VPS via SSH):
 
 from __future__ import annotations
 
+import os
+
+# GitPython chama Git.refresh() na importação (`import git`) e, por padrão,
+# levanta ImportError se não achar o executável git no PATH — sem isso, o
+# processo inteiro crasha no boot em qualquer máquina sem git instalado.
+# Precisa rodar antes do primeiro `import git` transitivo (tools/git.py,
+# persistence/checkpoint.py); tools de git degradam de forma limpa quando
+# chamadas sem o binário disponível.
+os.environ.setdefault("GIT_PYTHON_REFRESH", "quiet")
+
 import argparse
 import asyncio
 import contextlib
 import logging
-import os
 import signal
 import socket
 import sys

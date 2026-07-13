@@ -16,6 +16,7 @@ Expõe duas estratégias de "checkpoint de workspace" usadas pelo rewind:
   GC periódico mantém cap de tamanho/quantidade."""
 
 import logging
+import os
 import tarfile
 import tempfile
 import uuid
@@ -24,6 +25,10 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+# GitPython roda Git.refresh() em `import git` e levanta ImportError se não
+# achar o executável git no PATH — precisa disso antes do import abaixo.
+os.environ.setdefault("GIT_PYTHON_REFRESH", "quiet")
 
 import git
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -125,13 +130,13 @@ def create_git_checkpoint(
     """
     try:
         head_sha: str | None = repo.head.commit.hexsha
-    except (ValueError, git.GitCommandError):
+    except (ValueError, git.GitCommandError, git.GitCommandNotFound):
         head_sha = None
 
     ref = checkpoint_ref(thread_id)
     try:
         parent_sha = repo.git.rev_parse(ref).strip()
-    except git.GitCommandError:
+    except (git.GitCommandError, git.GitCommandNotFound):
         parent_sha = head_sha
 
     try:
@@ -150,7 +155,7 @@ def create_git_checkpoint(
             commit_sha = repo.git.commit_tree(*commit_args, env=env).strip()
 
             repo.git.update_ref(ref, commit_sha)
-    except git.GitCommandError as exc:
+    except (git.GitCommandError, git.GitCommandNotFound) as exc:
         return {"status": "error", "message": str(exc)}
 
     return {"status": "ok", "sha": commit_sha, "tree": tree_sha}
@@ -167,7 +172,7 @@ def restore_git_checkpoint(repo: git.Repo, sha: str) -> dict[str, Any]:
     """
     try:
         repo.git.restore("--source", sha, "--worktree", "--staged", "--", ".")
-    except git.GitCommandError as exc:
+    except (git.GitCommandError, git.GitCommandNotFound) as exc:
         return {"status": "error", "message": str(exc)}
     return {"status": "ok", "sha": sha}
 
@@ -177,7 +182,7 @@ def list_git_checkpoints(repo: git.Repo, thread_id: str, n: int = 50) -> dict[st
     ref = checkpoint_ref(thread_id)
     try:
         commits = list(repo.iter_commits(ref, max_count=n))
-    except git.GitCommandError:
+    except (git.GitCommandError, git.GitCommandNotFound):
         return {"status": "ok", "checkpoints": []}
 
     return {
