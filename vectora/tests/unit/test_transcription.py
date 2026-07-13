@@ -1,4 +1,4 @@
-"""transcribe_audio — STT de anexos de áudio via OpenAI Whisper API."""
+"""transcribe_audio — STT via OpenAI Whisper, com fallback pra Gemini."""
 
 from __future__ import annotations
 
@@ -36,8 +36,11 @@ class TestTranscribeAudio:
         assert kwargs["files"]["file"][0] == "memo.mp3"
 
     @pytest.mark.asyncio
-    async def test_raises_when_api_key_missing(self) -> None:
-        with patch("backend.llm.transcription.settings.openai_api_key", None):
+    async def test_raises_when_no_key_configured(self) -> None:
+        with (
+            patch("backend.llm.transcription.settings.openai_api_key", None),
+            patch("backend.llm.transcription.settings.google_api_key", None),
+        ):
             with pytest.raises(TranscriptionError, match="openai_api_key"):
                 await transcribe_audio(b"audio-bytes", "memo.mp3", "audio/mpeg")
 
@@ -56,3 +59,76 @@ class TestTranscribeAudio:
         ):
             with pytest.raises(TranscriptionError):
                 await transcribe_audio(b"audio-bytes", "memo.mp3", "audio/mpeg")
+
+
+class TestTranscribeAudioGeminiFallback:
+    @pytest.mark.asyncio
+    async def test_falls_back_to_gemini_when_openai_key_missing(self) -> None:
+        fake_response = MagicMock()
+        fake_response.text = "  transcrição via gemini  "
+
+        fake_models = AsyncMock()
+        fake_models.generate_content = AsyncMock(return_value=fake_response)
+        fake_client = MagicMock()
+        fake_client.aio.models = fake_models
+
+        with (
+            patch("backend.llm.transcription.settings.openai_api_key", None),
+            patch(
+                "backend.llm.transcription.settings.google_api_key",
+                "google-test-key",
+            ),
+            patch("google.genai.Client", return_value=fake_client) as mock_cls,
+        ):
+            text = await transcribe_audio(b"audio-bytes", "ditado.webm", "audio/webm")
+
+        assert text == "transcrição via gemini"
+        mock_cls.assert_called_once_with(api_key="google-test-key")
+        fake_models.generate_content.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_gemini_failure_raises_transcription_error(self) -> None:
+        fake_models = AsyncMock()
+        fake_models.generate_content = AsyncMock(side_effect=RuntimeError("api down"))
+        fake_client = MagicMock()
+        fake_client.aio.models = fake_models
+
+        with (
+            patch("backend.llm.transcription.settings.openai_api_key", None),
+            patch(
+                "backend.llm.transcription.settings.google_api_key",
+                "google-test-key",
+            ),
+            patch("google.genai.Client", return_value=fake_client),
+        ):
+            with pytest.raises(TranscriptionError):
+                await transcribe_audio(b"audio-bytes", "ditado.webm", "audio/webm")
+
+    @pytest.mark.asyncio
+    async def test_openai_key_presente_ignora_gemini(self) -> None:
+        """Com as duas chaves configuradas, OpenAI continua sendo a primária."""
+        response = MagicMock()
+        response.json.return_value = {"text": "via whisper"}
+        response.raise_for_status = MagicMock()
+
+        mock_http_client = AsyncMock()
+        mock_http_client.post = AsyncMock(return_value=response)
+        mock_http_client.__aenter__ = AsyncMock(return_value=mock_http_client)
+        mock_http_client.__aexit__ = AsyncMock(return_value=False)
+
+        with (
+            patch("backend.llm.transcription.settings.openai_api_key", "sk-test"),
+            patch(
+                "backend.llm.transcription.settings.google_api_key",
+                "google-test-key",
+            ),
+            patch(
+                "backend.llm.transcription.httpx.AsyncClient",
+                return_value=mock_http_client,
+            ),
+            patch("google.genai.Client") as mock_gemini_cls,
+        ):
+            text = await transcribe_audio(b"audio-bytes", "memo.mp3", "audio/mpeg")
+
+        assert text == "via whisper"
+        mock_gemini_cls.assert_not_called()
