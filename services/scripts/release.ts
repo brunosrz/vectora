@@ -21,7 +21,8 @@
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { execFileSync } from "node:child_process";
-import { createReadStream, readdirSync } from "node:fs";
+import { createReadStream, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -197,20 +198,31 @@ function readConfig(): StoredConfig {
 }
 
 function writeConfig(config: StoredConfig) {
-  execFileSync(
-    "npx",
-    [
-      "wrangler",
-      "kv",
-      "key",
-      "put",
-      "config",
-      JSON.stringify(config),
-      "--binding=KV",
-      "--remote",
-    ],
-    { stdio: "inherit", env: process.env, shell: true },
-  );
+  // O JSON passa por arquivo (--path), não como argv direto: no Windows,
+  // execFileSync com shell:true roda via cmd.exe, que engole as aspas duplas
+  // de uma string grande no argumento — corrompe o JSON antes de chegar no
+  // wrangler (config gravada sem nenhuma aspa, JSON.parse quebra no worker).
+  const tmpFile = join(tmpdir(), `vectora-release-config-${Date.now()}.json`);
+  writeFileSync(tmpFile, JSON.stringify(config));
+  try {
+    execFileSync(
+      "npx",
+      [
+        "wrangler",
+        "kv",
+        "key",
+        "put",
+        "config",
+        "--path",
+        tmpFile,
+        "--binding=KV",
+        "--remote",
+      ],
+      { stdio: "inherit", env: process.env, shell: true },
+    );
+  } finally {
+    rmSync(tmpFile, { force: true });
+  }
 }
 
 /**
