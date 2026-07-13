@@ -1,11 +1,13 @@
 /**
  * Voice Input Hook
  *
- * Ditado de voz pro composer. No browser puro usa a Web Speech API
- * (client-side, sem chamada ao backend). No desktop (Electron/Chromium)
- * a Web Speech API sempre falha com erro de rede — o Chromium vendored
- * não embarca a chave de voz proprietária do Google que o Chrome tem —
- * então usa MediaRecorder + transcrição via backend (Whisper) como fallback.
+ * Ditado de voz pro composer. Usa a Web Speech API do navegador quando ela
+ * está disponível e funciona (Chrome, Edge, e qualquer Chromium com a chave
+ * de voz do Google embutida). Quando não está disponível — Firefox/Zen (não
+ * implementam a API) ou Electron/Chromium vendored (implementa a API mas
+ * sempre falha com erro de rede por não ter a chave proprietária do Google)
+ * — cai pra gravação via MediaRecorder + transcrição no backend (Whisper ou
+ * Gemini, ver `backend/llm/transcription.py`).
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
@@ -55,8 +57,12 @@ export interface UseVoiceInputReturn {
   toggleListening: () => void;
 }
 
-function isDesktopEnvironment(): boolean {
-  return typeof window !== "undefined" && Boolean(window.vectora);
+function hasBackendRecordingSupport(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    Boolean(navigator.mediaDevices?.getUserMedia) &&
+    typeof MediaRecorder !== "undefined"
+  );
 }
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -77,7 +83,7 @@ function blobToBase64(blob: Blob): Promise<string> {
 
 /**
  * Hook de ditado de voz. Mesma interface (`UseVoiceInputReturn`) independente
- * do backend usado — quem consome (`VoiceInputButton`, `chat-interface.tsx`)
+ * do motor usado — quem consome (`VoiceInputButton`, `chat-interface.tsx`)
  * não precisa saber se é Web Speech API ou gravação + transcrição via backend.
  *
  * @param onTranscript - Called with finalized transcript text
@@ -96,8 +102,6 @@ export function useVoiceInput({
   const [isSupported, setIsSupported] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
 
-  const isDesktop = isDesktopEnvironment();
-
   const onTranscriptRef = useRef(onTranscript);
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
@@ -108,12 +112,17 @@ export function useVoiceInput({
     langRef.current = lang;
   }, [lang]);
 
-  // ── Backend (MediaRecorder + Whisper) — desktop ──────────────────────────
+  // ── Gravação + transcrição via backend — fallback quando o navegador não
+  //    tem (ou não consegue de fato usar) a Web Speech API ────────────────
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  /** true a partir do momento em que sabemos que a Web Speech API não
+   * está disponível ou não funciona neste ambiente (setado no mount se o
+   * construtor nem existe, ou em runtime no primeiro erro "network"). */
+  const useBackendRef = useRef(false);
 
-  const startDesktopRecording = useCallback(async () => {
+  const startBackendRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -171,142 +180,143 @@ export function useVoiceInput({
     }
   }, []);
 
-  const stopDesktopRecording = useCallback(() => {
+  const stopBackendRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
     mediaRecorderRef.current = null;
   }, []);
 
-  useEffect(() => {
-    if (!isDesktop) return;
-    setIsSupported(
-      typeof navigator !== "undefined" &&
-        Boolean(navigator.mediaDevices?.getUserMedia) &&
-        typeof MediaRecorder !== "undefined",
-    );
-    return () => {
-      mediaRecorderRef.current?.stop();
-      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Web Speech API — browser ─────────────────────────────────────────────
+  // ── Web Speech API — navegador ───────────────────────────────────────────
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isStartingRef = useRef(false);
 
   useEffect(() => {
-    if (isDesktop) return;
-
     const SpeechRecognitionAPI =
       typeof window !== "undefined"
         ? window.SpeechRecognition || window.webkitSpeechRecognition
         : null;
 
-    setIsSupported(!!SpeechRecognitionAPI);
+    const backendSupported = hasBackendRecordingSupport();
+    setIsSupported(Boolean(SpeechRecognitionAPI) || backendSupported);
 
-    if (SpeechRecognitionAPI && !recognitionRef.current) {
-      const recognition = new SpeechRecognitionAPI();
-      // Use non-continuous mode for better compatibility
-      // User can click again to continue recording
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = langRef.current;
-      // @ts-expect-error - maxAlternatives exists but not in types
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        isStartingRef.current = false;
-        setIsListening(true);
-        setError(null);
-        setInterimTranscript("");
+    if (!SpeechRecognitionAPI) {
+      // Firefox/Zen — a API nem existe. Vai direto pro fallback via backend.
+      useBackendRef.current = true;
+      return () => {
+        mediaRecorderRef.current?.stop();
+        mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
       };
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let interim = "";
-        let final = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          const transcript = result[0].transcript;
-
-          if (result.isFinal) {
-            final += transcript;
-          } else {
-            interim += transcript;
-          }
-        }
-
-        setInterimTranscript(interim);
-
-        if (final) {
-          onTranscriptRef.current(final);
-          setInterimTranscript("");
-        }
-      };
-
-      recognition.addEventListener("error", (event: Event) => {
-        const errEvent = event as SpeechRecognitionErrorEvent;
-        isStartingRef.current = false;
-
-        // "aborted" is expected when user stops listening or component unmounts
-        if (errEvent.error === "aborted") {
-          setIsListening(false);
-          return;
-        }
-
-        console.error("Speech recognition error:", errEvent.error);
-
-        let errorMessage: string;
-        switch (errEvent.error) {
-          case "no-speech":
-            errorMessage = "No speech detected. Please try again.";
-            break;
-          case "audio-capture":
-            errorMessage = "No microphone found. Please check your microphone.";
-            break;
-          case "not-allowed":
-            errorMessage =
-              "Microphone access denied. Please allow microphone access.";
-            break;
-          case "network":
-            errorMessage =
-              "Speech recognition unavailable. Try Chrome or Edge, or check browser privacy settings.";
-            break;
-          default:
-            errorMessage = `Error: ${errEvent.error}`;
-        }
-
-        setError(errorMessage);
-        setIsListening(false);
-
-        // Auto-dismiss error after 5 seconds
-        setTimeout(() => setError(null), 5000);
-      });
-
-      recognition.onend = () => {
-        isStartingRef.current = false;
-        setIsListening(false);
-      };
-
-      recognitionRef.current = recognition;
     }
 
-    // Cleanup on unmount
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
+    const recognition = new SpeechRecognitionAPI();
+    // Use non-continuous mode for better compatibility
+    // User can click again to continue recording
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = langRef.current;
+    // @ts-expect-error - maxAlternatives exists but not in types
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      isStartingRef.current = false;
+      setIsListening(true);
+      setError(null);
+      setInterimTranscript("");
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = "";
+      let final = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const transcript = result[0].transcript;
+
+        if (result.isFinal) {
+          final += transcript;
+        } else {
+          interim += transcript;
+        }
       }
+
+      setInterimTranscript(interim);
+
+      if (final) {
+        onTranscriptRef.current(final);
+        setInterimTranscript("");
+      }
+    };
+
+    recognition.addEventListener("error", (event: Event) => {
+      const errEvent = event as SpeechRecognitionErrorEvent;
+      isStartingRef.current = false;
+
+      // "aborted" is expected when user stops listening or component unmounts
+      if (errEvent.error === "aborted") {
+        setIsListening(false);
+        return;
+      }
+
+      if (errEvent.error === "network" && backendSupported) {
+        // Chromium/Electron sem a chave de voz do Google — a API existe mas
+        // nunca funciona. Marca o fallback permanente pra esta sessão e já
+        // retoma via backend, sem incomodar o usuário com erro.
+        useBackendRef.current = true;
+        setIsListening(false);
+        void startBackendRecording();
+        return;
+      }
+
+      console.error("Speech recognition error:", errEvent.error);
+
+      let errorMessage: string;
+      switch (errEvent.error) {
+        case "no-speech":
+          errorMessage = "No speech detected. Please try again.";
+          break;
+        case "audio-capture":
+          errorMessage = "No microphone found. Please check your microphone.";
+          break;
+        case "not-allowed":
+          errorMessage =
+            "Microphone access denied. Please allow microphone access.";
+          break;
+        case "network":
+          errorMessage =
+            "Speech recognition unavailable. Try Chrome or Edge, or check browser privacy settings.";
+          break;
+        default:
+          errorMessage = `Error: ${errEvent.error}`;
+      }
+
+      setError(errorMessage);
+      setIsListening(false);
+
+      // Auto-dismiss error after 5 seconds
+      setTimeout(() => setError(null), 5000);
+    });
+
+    recognition.onend = () => {
+      isStartingRef.current = false;
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognitionRef.current?.abort();
+      mediaRecorderRef.current?.stop();
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount - callbacks are handled via refs
 
-  // ── API pública — despacha pro backend certo ─────────────────────────────
+  // ── API pública — despacha pro motor certo a cada chamada ────────────────
 
   const startListening = useCallback(() => {
-    if (isDesktop) {
+    if (useBackendRef.current || !recognitionRef.current) {
       if (!isListening && !isStartingRef.current) {
         isStartingRef.current = true;
-        void startDesktopRecording().finally(() => {
+        void startBackendRecording().finally(() => {
           isStartingRef.current = false;
         });
       }
@@ -314,7 +324,7 @@ export function useVoiceInput({
     }
 
     // Prevent double-start with ref (more reliable than state for rapid clicks)
-    if (recognitionRef.current && !isListening && !isStartingRef.current) {
+    if (!isListening && !isStartingRef.current) {
       isStartingRef.current = true;
       setError(null);
       // Reaplica o idioma atual — o usuário pode tê-lo trocado desde o mount.
@@ -326,23 +336,21 @@ export function useVoiceInput({
         isStartingRef.current = false;
       }
     }
-  }, [isDesktop, isListening, startDesktopRecording]);
+  }, [isListening, startBackendRecording]);
 
   const stopListening = useCallback(() => {
-    if (isDesktop) {
-      stopDesktopRecording();
+    if (useBackendRef.current || !recognitionRef.current) {
+      stopBackendRecording();
       return;
     }
 
-    if (recognitionRef.current) {
-      isStartingRef.current = false;
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // Ignore errors when stopping
-      }
+    isStartingRef.current = false;
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      // Ignore errors when stopping
     }
-  }, [isDesktop, stopDesktopRecording]);
+  }, [stopBackendRecording]);
 
   const toggleListening = useCallback(() => {
     if (isListening || isStartingRef.current) {

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 /**
- * useVoiceInput: no browser usa Web Speech API; no desktop (window.vectora
- * presente) usa MediaRecorder + transcrição via backend, porque a Web Speech
- * API sempre falha com erro de rede no Electron/Chromium.
+ * useVoiceInput: usa a Web Speech API quando o construtor existe E funciona.
+ * Cai pra MediaRecorder + backend quando a API nem existe (Firefox/Zen) ou
+ * quando existe mas falha com erro "network" em runtime (Electron/Chromium
+ * sem a chave de voz do Google).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -37,12 +38,16 @@ class FakeSpeechRecognition extends EventTarget {
   interimResults = false;
   lang = "en-US";
   onresult: ((event: unknown) => void) | null = null;
-  onerror: ((event: unknown) => void) | null = null;
   onend: (() => void) | null = null;
   onstart: (() => void) | null = null;
   start = vi.fn(() => this.onstart?.());
   stop = vi.fn(() => this.onend?.());
   abort = vi.fn();
+  emitError(error: string) {
+    const ev = new Event("error") as Event & { error: string };
+    ev.error = error;
+    this.dispatchEvent(ev);
+  }
 }
 
 function fakeStream(): MediaStream {
@@ -57,24 +62,26 @@ function setMediaDevices(value: unknown) {
   });
 }
 
+function stubBackendRecordingSupport() {
+  vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+  setMediaDevices({ getUserMedia: vi.fn().mockResolvedValue(fakeStream()) });
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   setMediaDevices(undefined);
-  delete (window as { vectora?: unknown }).vectora;
   delete (window as { webkitSpeechRecognition?: unknown })
     .webkitSpeechRecognition;
 });
 
-describe("useVoiceInput — desktop (MediaRecorder + backend)", () => {
+describe("useVoiceInput — sem Web Speech API (Firefox/Zen)", () => {
   beforeEach(() => {
-    (window as { vectora?: unknown }).vectora = {};
-    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
-    setMediaDevices({ getUserMedia: vi.fn().mockResolvedValue(fakeStream()) });
+    stubBackendRecordingSupport();
     mockedTranscribeAudio.mockReset();
   });
 
-  it("isSupported é true quando getUserMedia + MediaRecorder existem", () => {
+  it("isSupported é true via fallback de gravação, mesmo sem SpeechRecognition", () => {
     const { result } = renderHook(() =>
       useVoiceInput({ onTranscript: vi.fn() }),
     );
@@ -141,9 +148,17 @@ describe("useVoiceInput — desktop (MediaRecorder + backend)", () => {
     });
     expect(result.current.isListening).toBe(false);
   });
+
+  it("sem SpeechRecognition e sem getUserMedia, isSupported é false", () => {
+    setMediaDevices(undefined);
+    const { result } = renderHook(() =>
+      useVoiceInput({ onTranscript: vi.fn() }),
+    );
+    expect(result.current.isSupported).toBe(false);
+  });
 });
 
-describe("useVoiceInput — browser (Web Speech API)", () => {
+describe("useVoiceInput — Web Speech API funcionando (Chrome/Edge)", () => {
   let recognitionInstance: FakeSpeechRecognition;
 
   beforeEach(() => {
@@ -184,5 +199,74 @@ describe("useVoiceInput — browser (Web Speech API)", () => {
     });
 
     expect(onTranscript).toHaveBeenCalledWith("oi");
+  });
+
+  it("erro 'not-allowed' mostra mensagem e não usa fallback de backend", () => {
+    const { result } = renderHook(() =>
+      useVoiceInput({ onTranscript: vi.fn() }),
+    );
+    act(() => {
+      recognitionInstance.emitError("not-allowed");
+    });
+    expect(result.current.error).not.toBeNull();
+    expect(result.current.isListening).toBe(false);
+  });
+});
+
+describe("useVoiceInput — Web Speech API presente mas quebrada (Electron/Chromium)", () => {
+  let recognitionInstance: FakeSpeechRecognition;
+
+  beforeEach(() => {
+    recognitionInstance = new FakeSpeechRecognition();
+    vi.stubGlobal(
+      "webkitSpeechRecognition",
+      vi.fn(() => recognitionInstance),
+    );
+    stubBackendRecordingSupport();
+    mockedTranscribeAudio.mockReset();
+  });
+
+  it("erro 'network' cai automaticamente pro backend, sem mostrar erro genérico", async () => {
+    mockedTranscribeAudio.mockResolvedValue({ text: "ditado via backend" });
+    const onTranscript = vi.fn();
+    const { result } = renderHook(() => useVoiceInput({ onTranscript }));
+
+    act(() => {
+      recognitionInstance.emitError("network");
+    });
+
+    // startBackendRecording foi disparado — getUserMedia + MediaRecorder.start
+    await waitFor(() => {
+      expect(FakeMediaRecorder.isTypeSupported).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(result.current.isListening).toBe(true);
+    });
+  });
+
+  it("depois do erro 'network', toggleListening subsequente usa o backend direto", async () => {
+    mockedTranscribeAudio.mockResolvedValue({ text: "" });
+    const { result } = renderHook(() =>
+      useVoiceInput({ onTranscript: vi.fn() }),
+    );
+
+    act(() => {
+      recognitionInstance.emitError("network");
+    });
+    // A primeira tentativa (auto-retry) já deixou algo gravando; para via stop.
+    await waitFor(() => expect(result.current.isListening).toBe(true));
+    act(() => {
+      result.current.stopListening();
+    });
+    await waitFor(() => expect(result.current.isListening).toBe(false));
+
+    recognitionInstance.start.mockClear();
+
+    act(() => {
+      result.current.startListening();
+    });
+    await waitFor(() => expect(result.current.isListening).toBe(true));
+
+    expect(recognitionInstance.start).not.toHaveBeenCalled();
   });
 });
