@@ -12,6 +12,8 @@ login/signup (modo local, sem conta) sem precisar de rebuild.
 
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter, HTTPException, Request
 
 from backend.api.middleware.auth import _auth_enabled
@@ -23,8 +25,12 @@ router = APIRouter(prefix="/settings", tags=["flags"])
 @router.get("/flags")
 async def get_flags() -> dict:
     settings = get_settings()
+    # Electron propaga VECTORA_DEV pro processo do backend quando o app
+    # desktop roda em modo dev — nesse caso as beta flags (Context Graph,
+    # IDE mode) ficam ligadas independente do valor configurado.
+    dev_mode = os.environ.get("VECTORA_DEV") == "1"
     return {
-        "enable_features_beta": settings.enable_features_beta,
+        "enable_features_beta": settings.enable_features_beta or dev_mode,
         "auth_required": _auth_enabled(),
     }
 
