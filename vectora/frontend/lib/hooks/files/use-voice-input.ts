@@ -1,11 +1,15 @@
 /**
  * Voice Input Hook
  *
- * Provides speech-to-text functionality using the Web Speech API.
- * Streams recognized speech in real-time to the provided callback.
+ * Ditado de voz pro composer. No browser puro usa a Web Speech API
+ * (client-side, sem chamada ao backend). No desktop (Electron/Chromium)
+ * a Web Speech API sempre falha com erro de rede — o Chromium vendored
+ * não embarca a chave de voz proprietária do Google que o Chrome tem —
+ * então usa MediaRecorder + transcrição via backend (Whisper) como fallback.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { transcribeAudio } from "@/lib/api/vectora-client";
 
 // ============================================================================
 // Types
@@ -51,23 +55,33 @@ export interface UseVoiceInputReturn {
   toggleListening: () => void;
 }
 
+function isDesktopEnvironment(): boolean {
+  return typeof window !== "undefined" && Boolean(window.vectora);
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    });
+    reader.addEventListener("error", () => reject(reader.error));
+    reader.readAsDataURL(blob);
+  });
+}
+
 // ============================================================================
 // Hook
 // ============================================================================
 
 /**
- * Hook for voice-to-text input using the Web Speech API.
- * Provides real-time interim results and final transcripts.
+ * Hook de ditado de voz. Mesma interface (`UseVoiceInputReturn`) independente
+ * do backend usado — quem consome (`VoiceInputButton`, `chat-interface.tsx`)
+ * não precisa saber se é Web Speech API ou gravação + transcrição via backend.
  *
  * @param onTranscript - Called with finalized transcript text
  * @returns Voice input state and controls
- *
- * @example
- * ```tsx
- * const { isListening, interimTranscript, toggleListening } = useVoiceInput({
- *   onTranscript: (text) => appendToInput(text),
- * })
- * ```
  */
 export function useVoiceInput({
   onTranscript,
@@ -82,23 +96,107 @@ export function useVoiceInput({
   const [isSupported, setIsSupported] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const isStartingRef = useRef(false);
+  const isDesktop = isDesktopEnvironment();
 
-  // Use ref for callback to avoid recreating recognition on every render
   const onTranscriptRef = useRef(onTranscript);
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
   }, [onTranscript]);
 
-  // Idioma via ref — aplicado a cada start, permitindo troca sem recriar o objeto
   const langRef = useRef(lang);
   useEffect(() => {
     langRef.current = lang;
   }, [lang]);
 
-  // Check for browser support on mount
+  // ── Backend (MediaRecorder + Whisper) — desktop ──────────────────────────
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const startDesktopRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      mediaStreamRef.current = stream;
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "";
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e: BlobEvent) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+        setIsListening(false);
+
+        const blob = new Blob(chunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
+        chunksRef.current = [];
+        if (blob.size === 0) return;
+
+        void (async () => {
+          try {
+            const base64 = await blobToBase64(blob);
+            const { text } = await transcribeAudio(
+              base64,
+              blob.type || "audio/webm",
+            );
+            if (text) onTranscriptRef.current(text);
+          } catch {
+            setError(
+              "Falha ao transcrever o áudio. Verifique sua conexão e tente novamente.",
+            );
+            setTimeout(() => setError(null), 5000);
+          }
+        })();
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setError(null);
+      setIsListening(true);
+    } catch {
+      setError(
+        "Acesso ao microfone negado. Permita o acesso ao microfone nas configurações do sistema.",
+      );
+      setTimeout(() => setError(null), 5000);
+    }
+  }, []);
+
+  const stopDesktopRecording = useCallback(() => {
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+  }, []);
+
   useEffect(() => {
+    if (!isDesktop) return;
+    setIsSupported(
+      typeof navigator !== "undefined" &&
+        Boolean(navigator.mediaDevices?.getUserMedia) &&
+        typeof MediaRecorder !== "undefined",
+    );
+    return () => {
+      mediaRecorderRef.current?.stop();
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Web Speech API — browser ─────────────────────────────────────────────
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isStartingRef = useRef(false);
+
+  useEffect(() => {
+    if (isDesktop) return;
+
     const SpeechRecognitionAPI =
       typeof window !== "undefined"
         ? window.SpeechRecognition || window.webkitSpeechRecognition
@@ -202,7 +300,19 @@ export function useVoiceInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount - callbacks are handled via refs
 
+  // ── API pública — despacha pro backend certo ─────────────────────────────
+
   const startListening = useCallback(() => {
+    if (isDesktop) {
+      if (!isListening && !isStartingRef.current) {
+        isStartingRef.current = true;
+        void startDesktopRecording().finally(() => {
+          isStartingRef.current = false;
+        });
+      }
+      return;
+    }
+
     // Prevent double-start with ref (more reliable than state for rapid clicks)
     if (recognitionRef.current && !isListening && !isStartingRef.current) {
       isStartingRef.current = true;
@@ -211,14 +321,19 @@ export function useVoiceInput({
       recognitionRef.current.lang = langRef.current;
       try {
         recognitionRef.current.start();
-      } catch (err) {
+      } catch {
         // Recognition might already be running - silently ignore
         isStartingRef.current = false;
       }
     }
-  }, [isListening]);
+  }, [isDesktop, isListening, startDesktopRecording]);
 
   const stopListening = useCallback(() => {
+    if (isDesktop) {
+      stopDesktopRecording();
+      return;
+    }
+
     if (recognitionRef.current) {
       isStartingRef.current = false;
       try {
@@ -227,10 +342,9 @@ export function useVoiceInput({
         // Ignore errors when stopping
       }
     }
-  }, []);
+  }, [isDesktop, stopDesktopRecording]);
 
   const toggleListening = useCallback(() => {
-    // Use both state and ref to determine current status
     if (isListening || isStartingRef.current) {
       stopListening();
     } else {

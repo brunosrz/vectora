@@ -412,6 +412,14 @@ export function ChatInput({
                 disabled={!userId || offline}
                 onAddFiles={onFileButtonClick}
               />
+              {isVoiceSupported && onVoiceToggle && (
+                <VoiceInputButton
+                  isListening={isVoiceListening ?? false}
+                  disabled={!userId || offline}
+                  onClick={onVoiceToggle}
+                  size="sm"
+                />
+              )}
               <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
               {/* O workspace é escolhido só no modal de nova conversa e é imutável
                   depois disso — por isso não há seletor de workspace na appbar. */}
@@ -435,14 +443,6 @@ export function ChatInput({
               )}
               {modelId && (
                 <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
-              )}
-              {isVoiceSupported && onVoiceToggle && (
-                <VoiceInputButton
-                  isListening={isVoiceListening ?? false}
-                  disabled={!userId || offline}
-                  onClick={onVoiceToggle}
-                  size="sm"
-                />
               )}
             </div>
           </div>

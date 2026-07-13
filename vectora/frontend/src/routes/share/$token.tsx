@@ -29,7 +29,7 @@ function SharePage() {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-full bg-background flex flex-col">
       {/* Header mínimo */}
       <header className="border-b border-border/60 h-14 flex items-center px-4 gap-2 shrink-0">
         <img src="/vectora.svg" alt="Vectora" width={24} height={24} />

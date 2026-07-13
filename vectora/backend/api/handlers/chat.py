@@ -37,6 +37,8 @@ from backend.api.schemas import (
     StreamChatRequest,
     ThreadEvent,
     ToolSchema,
+    TranscribeAudioRequest,
+    TranscribeAudioResponse,
     encode_event,
 )
 from backend.services import agent_factory
@@ -660,3 +662,34 @@ async def get_tools(http_request: Request) -> GetToolsResponse:
         )
 
     return GetToolsResponse(tools=tools)
+
+
+# ---------------------------------------------------------------------------
+# TranscribeAudio
+# ---------------------------------------------------------------------------
+
+
+@router.post("/vectora.chat.v1.ChatService/TranscribeAudio")
+async def transcribe_audio_endpoint(
+    request: TranscribeAudioRequest,
+) -> TranscribeAudioResponse:
+    """Transcreve um dictado de voz gravado no cliente (MediaRecorder).
+
+    Fallback pro ditado quando a Web Speech API do browser não está
+    disponível — caso do Electron/Chromium, que não embarca a chave de voz
+    proprietária do Google que o Chrome tem.
+    """
+    from backend.llm.transcription import TranscriptionError, transcribe_audio
+
+    try:
+        audio_bytes = base64.b64decode(request.audio_base64)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail="áudio em base64 inválido") from exc
+
+    try:
+        text = await transcribe_audio(audio_bytes, request.filename, request.mime_type)
+    except TranscriptionError as exc:
+        logger.exception("chat: falha ao transcrever ditado de voz")
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return TranscribeAudioResponse(text=text)

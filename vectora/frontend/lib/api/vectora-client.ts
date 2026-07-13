@@ -310,6 +310,19 @@ export const createThread = (workspaceId?: string | null): Promise<Thread> =>
     workspace_id: workspaceId ?? "",
   });
 
+/** Transcreve um dictado de voz gravado no cliente (MediaRecorder) — fallback
+ * usado quando a Web Speech API do browser não está disponível (desktop). */
+export const transcribeAudio = (
+  audioBase64: string,
+  mimeType: string,
+  filename = "recording.webm",
+): Promise<{ text: string }> =>
+  postRpc("/vectora.chat.v1.ChatService/TranscribeAudio", {
+    audio_base64: audioBase64,
+    mime_type: mimeType,
+    filename,
+  });
+
 export const getThread = (thread_id: string): Promise<Thread> =>
   postRpc("/vectora.chat.v1.ThreadService/GetThread", { thread_id });
 

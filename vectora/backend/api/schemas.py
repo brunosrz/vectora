@@ -80,6 +80,20 @@ class ResumeChatRequest(BaseModel):
     decision: str  # "approve" | "reject" | "edit:<args_json>"
 
 
+class TranscribeAudioRequest(BaseModel):
+    """Dictado de voz gravado no cliente (MediaRecorder) — usado quando a
+    Web Speech API do browser não está disponível (Electron/Chromium sem
+    a chave de voz do Google embutida)."""
+
+    audio_base64: str
+    mime_type: str
+    filename: str = "recording.webm"
+
+
+class TranscribeAudioResponse(BaseModel):
+    text: str
+
+
 class CreateThreadRequest(BaseModel):
     """`workspace_id` vazio deixa o backend criar o workspace dedicado da
     sessão (`~/Documents/vectora/<thread_id>`) na primeira mensagem."""

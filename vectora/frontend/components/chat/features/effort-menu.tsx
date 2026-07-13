@@ -49,7 +49,7 @@ export function EffortMenu() {
         align="end"
         side="top"
         sideOffset={6}
-        className="z-50 w-48 rounded-lg border border-border bg-background shadow-xl p-0 py-1"
+        className="z-50 w-32 rounded-lg border border-border bg-background shadow-xl p-0 py-1"
       >
         <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
           {msg.effort_title()}
