@@ -70,8 +70,19 @@ class TestIsPublicRoute:
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture
+def _isolated_runtime_settings(tmp_path, monkeypatch):
+    """Isola _auth_enabled()/runtime_settings de cada teste (nunca toca o real)."""
+    from backend.workspace import runtime_settings as rs_module
+    from backend.workspace.runtime_settings import RuntimeSettings
+
+    fresh = RuntimeSettings(path=tmp_path / "checkpoints.db")
+    monkeypatch.setattr(rs_module, "runtime_settings", fresh)
+    return fresh
+
+
 class TestAuthEnabled:
-    def test_true_by_default(self, monkeypatch):
+    def test_true_by_default(self, monkeypatch, _isolated_runtime_settings):
         from backend.api.middleware import auth as m
 
         monkeypatch.delenv("VECTORA_AUTH_REQUIRED", raising=False)
@@ -100,6 +111,52 @@ class TestAuthEnabled:
 
         monkeypatch.setenv("VECTORA_AUTH_REQUIRED", "FALSE")
         assert m._auth_enabled() is False
+
+    def test_sem_env_var_cai_no_runtime_settings(
+        self, monkeypatch, _isolated_runtime_settings
+    ):
+        """Sem VECTORA_AUTH_REQUIRED no ambiente, o valor persistido pelo
+        wizard (setup-local) em app_settings é a fonte de verdade — não mais
+        o .env."""
+        from backend.api.middleware import auth as m
+
+        monkeypatch.delenv("VECTORA_AUTH_REQUIRED", raising=False)
+        _isolated_runtime_settings.auth_required = False
+        assert m._auth_enabled() is False
+
+    def test_env_var_tem_prioridade_sobre_runtime_settings(
+        self, monkeypatch, _isolated_runtime_settings
+    ):
+        """Env var é override de operador (Docker/CI/testes) — ganha mesmo
+        se app_settings diz o contrário."""
+        from backend.api.middleware import auth as m
+
+        _isolated_runtime_settings.auth_required = False
+        monkeypatch.setenv("VECTORA_AUTH_REQUIRED", "true")
+        assert m._auth_enabled() is True
+
+
+# ---------------------------------------------------------------------------
+# _get_virtual_local_user
+# ---------------------------------------------------------------------------
+
+
+class TestGetVirtualLocalUser:
+    def test_sem_nome_configurado_usa_fallback(self, _isolated_runtime_settings):
+        from backend.api.middleware.auth import _get_virtual_local_user
+
+        user = _get_virtual_local_user()
+        assert user.name == "Local User"
+        assert user.id == "local"
+        assert user.role == "root"
+
+    def test_usa_nome_persistido_em_runtime_settings(self, _isolated_runtime_settings):
+        from backend.api.middleware.auth import _get_virtual_local_user
+
+        _isolated_runtime_settings.set_local_user("Bruno", "Vectora")
+        user = _get_virtual_local_user()
+        assert user.name == "Bruno"
+        assert user.username == "bruno"
 
 
 # ---------------------------------------------------------------------------

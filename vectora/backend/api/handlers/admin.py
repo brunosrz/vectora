@@ -1032,11 +1032,9 @@ async def update_storage_config(request: Request) -> dict:
             )
         runtime_settings.storage_mode = mode
 
-        from backend.cli.keys import upsert_env_key
         from backend.settings import settings as _s
 
         _s.storage_mode = mode  # type: ignore[assignment]
-        upsert_env_key(_env_file(), "STORAGE_MODE", mode)
         updated["storage_mode"] = mode
 
     if "postgres_dsn" in body:

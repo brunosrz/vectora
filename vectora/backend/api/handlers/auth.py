@@ -19,8 +19,6 @@ Endpoints:
 from __future__ import annotations
 
 import logging
-import os
-from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
@@ -155,27 +153,21 @@ async def username_available_endpoint(username: str) -> UsernameAvailableRespons
     )
 
 
-def _env_file() -> Path:
-    p = Path.home() / ".vectora" / ".env"
-    p.parent.mkdir(parents=True, exist_ok=True)
-    return p
-
-
 @router.post("/setup-local", response_model=SetupLocalResponse)
 async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
     """Configura a instância pra modo local (uso no próprio PC, sem conta).
 
     Só permitido no primeiro acesso (instância ainda sem nenhum usuário) —
     evita que a rota pública sirva de vetor pra desligar auth numa instância
-    multi-usuário já configurada. Persiste ``VECTORA_AUTH_REQUIRED=false`` em
-    ``~/.vectora/.env`` (mesmo mecanismo de `admin.py::patch_api_keys`) e o
-    nome/empresa do usuário local, sem criar linha na tabela `users` — daqui
-    pra frente o `AuthMiddleware` libera todas as rotas e os handlers usam o
-    fallback `"local"` (ver `chat.py::_user_id_from_request`) como user_id.
+    multi-usuário já configurada. Persiste ``auth_required=false`` e o
+    nome/empresa do usuário local em ``app_settings`` (SQLite,
+    `backend/workspace/runtime_settings.py`) — nunca no ``.env``, que fica só
+    pra segredos. Não cria linha na tabela `users` — daqui pra frente o
+    `AuthMiddleware` libera todas as rotas e os handlers usam o fallback
+    `"local"` (ver `chat.py::_user_id_from_request`) como user_id.
     """
-    from backend.cli.keys import upsert_env_key
     from backend.rbac.auth import has_users
-    from backend.services.local_user import write_local_user
+    from backend.workspace.runtime_settings import runtime_settings
 
     if await has_users():
         raise HTTPException(
@@ -188,18 +180,8 @@ async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
         raise HTTPException(status_code=422, detail="Nome é obrigatório.")
     company = body.company.strip()
 
-    # No .env vai só o flag de modo (config de runtime). Nome/empresa do
-    # usuário local são dados não-secretos → store app-owned, nunca no .env.
-    env_file = _env_file()
-    upsert_env_key(env_file, "VECTORA_AUTH_REQUIRED", "false")
-    write_local_user(name, company)
-
-    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
-
-    from backend.settings import settings as settings_singleton
-
-    object.__setattr__(settings_singleton, "local_user_name", name)
-    object.__setattr__(settings_singleton, "local_user_company", company)
+    runtime_settings.auth_required = False
+    runtime_settings.set_local_user(name, company)
 
     logger.info(
         "auth/setup-local: instância configurada em modo local (auth desabilitado)"

@@ -1,15 +1,18 @@
-"""RuntimeSettings — Preferências de runtime persistidas em ~/.vectora/settings.json.
+"""RuntimeSettings — Preferências de runtime persistidas em ~/.vectora/checkpoints.db.
 
 Separação clara de responsabilidades:
-  ~/.vectora/.env      → segredos (API keys, tokens) — NÃO versionar
-  ~/.vectora/settings.json → preferências não-secretas (provider ativo, model, debug)
+  ~/.vectora/.env          → segredos (API keys, tokens) — NÃO versionar
+  ~/.vectora/checkpoints.db → preferências não-secretas (provider ativo, model,
+                              storage_mode, auth_required, nome do usuário local
+                              etc.), tabela ``app_settings`` — mesmo SQLite de
+                              users/secrets (backend/rbac/auth.py::_get_db()).
 
 Diferente do Settings (pydantic, lido na startup), o RuntimeSettings pode ser
 atualizado em tempo de execução via /model, /debug, etc., e as mudanças são
 imediatamente persistidas e aplicadas sem reiniciar.
 
 Uso:
-    from vectora.services.runtime_settings import runtime_settings
+    from backend.workspace.runtime_settings import runtime_settings
     runtime_settings.set_active_model("google-genai", "gemini-2.5-flash")
     print(runtime_settings.active_provider)  # "google-genai"
 """
@@ -17,13 +20,15 @@ Uso:
 import json
 import logging
 import os
+import sqlite3
 import threading
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
-_SETTINGS_FILE = Path.home() / ".vectora" / "settings.json"
+_DB_PATH = Path.home() / ".vectora" / "checkpoints.db"
 
 _DEFAULTS: dict = {
     "active_provider": "google-genai",
@@ -55,66 +60,90 @@ _ALLOWED_FRONTEND_PREF_KEYS = frozenset(
 
 
 class RuntimeSettings:
-    """Thin JSON store para preferências de runtime não-secretas.
+    """Store key-value em SQLite para preferências de runtime não-secretas.
 
-    Thread-safe: leituras são lock-free (snapshot atômico do dict Python);
-    escritas usam threading.Lock para evitar race condition quando múltiplos
+    Thread-safe: leituras batem no cache em memória (lock-free, GIL garante
+    atomicidade do dict.get()); escritas usam threading.Lock e persistem no
+    SQLite antes de atualizar o cache — evita race condition quando múltiplos
     threads (ex: UI thread + background worker) chamam set() simultaneamente.
     """
 
-    def __init__(self, path: Path = _SETTINGS_FILE) -> None:
+    def __init__(self, path: Path = _DB_PATH) -> None:
         self._path = path
         self._data: dict = {}
         self._lock = threading.Lock()
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._conn = sqlite3.connect(str(self._path), check_same_thread=False)
+        # Mesmos PRAGMAs de rbac/auth.py::_get_db() — WAL + busy_timeout
+        # permitem essa conexão síncrona conviver com a conexão aiosqlite
+        # assíncrona que o backend abre no mesmo arquivo.
+        self._conn.executescript(
+            "PRAGMA journal_mode=WAL;PRAGMA busy_timeout=30000;PRAGMA synchronous=NORMAL;"
+        )
+        self._ensure_schema()
         self._load()
 
     # ─── I/O ────────────────────────────────────────────────────────────────
 
-    def _load(self) -> None:
-        """Carrega do disco; silencia erros e usa defaults."""
-        if self._path.exists():
-            try:
-                self._data = json.loads(self._path.read_text(encoding="utf-8"))
-                logger.debug("runtime_settings: carregado de %s", self._path)
-            except Exception as e:
-                logger.warning(
-                    "runtime_settings: erro ao carregar (%s) — usando defaults", e
-                )
-                self._data = {}
-        else:
-            self._data = {}
+    def _ensure_schema(self) -> None:
+        self._conn.execute(
+            "CREATE TABLE IF NOT EXISTS app_settings ("
+            "key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL)"
+        )
+        self._conn.commit()
 
-    def _save(self) -> None:
-        """Persiste para disco; silencia erros (nunca trava o runtime)."""
+    def _load(self) -> None:
+        """Carrega todas as chaves do SQLite pro cache em memória; silencia erros."""
         try:
-            self._path.parent.mkdir(parents=True, exist_ok=True)
-            self._path.write_text(
-                json.dumps(self._data, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-            logger.debug("runtime_settings: salvo em %s", self._path)
+            rows = self._conn.execute("SELECT key, value FROM app_settings").fetchall()
         except Exception as e:
-            logger.warning("runtime_settings: erro ao salvar (%s)", e)
+            logger.warning(
+                "runtime_settings: erro ao carregar (%s) — usando defaults", e
+            )
+            self._data = {}
+            return
+        data: dict = {}
+        for key, raw in rows:
+            try:
+                data[key] = json.loads(raw)
+            except (TypeError, ValueError):
+                logger.warning(
+                    "runtime_settings: valor inválido pra %r, ignorando", key
+                )
+        self._data = data
+        logger.debug("runtime_settings: carregado de %s", self._path)
+
+    def _persist(self, key: str, value: object) -> None:
+        """Grava uma chave no SQLite. Chamar só dentro de `self._lock`."""
+        now = datetime.now(UTC).isoformat()
+        payload = json.dumps(value, ensure_ascii=False)
+        try:
+            self._conn.execute(
+                "INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                (key, payload, now),
+            )
+            self._conn.commit()
+            logger.debug("runtime_settings: salvo %r em %s", key, self._path)
+        except Exception as e:
+            logger.warning("runtime_settings: erro ao salvar %r (%s)", key, e)
 
     def reload(self) -> None:
-        """Recarrega do disco (útil após mudanças externas)."""
+        """Recarrega do SQLite (útil após mudanças externas)."""
         with self._lock:
             self._load()
 
     # ─── Acesso genérico ─────────────────────────────────────────────────────
 
     def get(self, key: str, default: object = None) -> object:
-        """Retorna valor do settings.json, com fallback para _DEFAULTS.
-
-        Leitura é lock-free: Python GIL garante atomicidade do dict.get().
-        """
+        """Retorna valor do cache em memória, com fallback para _DEFAULTS."""
         return self._data.get(key, _DEFAULTS.get(key, default))
 
     def set(self, key: str, value: object) -> None:
-        """Persiste um valor de forma thread-safe."""
+        """Persiste um valor de forma thread-safe (SQLite + cache em memória)."""
         with self._lock:
             self._data[key] = value
-            self._save()
+            self._persist(key, value)
 
     # ─── Properties tipadas ───────────────────────────────────────────────────
 
@@ -141,6 +170,35 @@ class RuntimeSettings:
         """
         raw = str(self.get("language", "en"))
         return raw if raw in _VALID_LANGUAGES else "en"
+
+    # ─── Identidade local (nome/empresa) ──────────────────────────────────────
+
+    @property
+    def local_user_name(self) -> str:
+        return str(self.get("local_user_name", ""))
+
+    @property
+    def local_user_company(self) -> str:
+        return str(self.get("local_user_company", ""))
+
+    def set_local_user(self, name: str, company: str) -> None:
+        """Define nome/empresa do usuário local (modo sem conta) e persiste."""
+        with self._lock:
+            self._data["local_user_name"] = name
+            self._persist("local_user_name", name)
+            self._data["local_user_company"] = company
+            self._persist("local_user_company", company)
+
+    # ─── Auth ─────────────────────────────────────────────────────────────────
+
+    @property
+    def auth_required(self) -> bool:
+        """False no modo local sem conta (setado por `POST /auth/setup-local`)."""
+        return bool(self.get("auth_required", True))
+
+    @auth_required.setter
+    def auth_required(self, value: bool) -> None:
+        self.set("auth_required", bool(value))
 
     # ─── Métodos de negócio ───────────────────────────────────────────────────
 
@@ -191,14 +249,15 @@ class RuntimeSettings:
                 "start_command": start_command,
             }
             self._data["storage_services"] = services
-            self._save()
+            self._persist("storage_services", services)
 
     def set_active_model(self, provider: str, model: str) -> None:
         """Troca provider + model ativos e persiste (thread-safe)."""
         with self._lock:
             self._data["active_provider"] = provider
+            self._persist("active_provider", provider)
             self._data["active_model"] = model
-            self._save()
+            self._persist("active_model", model)
         logger.info("runtime_settings: provider=%s model=%s", provider, model)
 
     def set_theme(self, theme: str) -> None:
@@ -206,7 +265,7 @@ class RuntimeSettings:
 
         Valores fora de `_VALID_THEMES` caem em 'dark' — mantém o arquivo
         consistente mesmo se um valor inválido chegar via edição manual
-        do settings.json ou de uma versão futura/antiga do app.
+        ou de uma versão futura/antiga do app.
         """
         self.set("theme", theme if theme in _VALID_THEMES else "dark")
 
@@ -282,7 +341,7 @@ class RuntimeSettings:
             mapping = dict(self.last_session_by_dir)
             mapping[cwd] = thread_id
             self._data["last_session_by_dir"] = mapping
-            self._save()
+            self._persist("last_session_by_dir", mapping)
 
     def get_frontend_prefs(self, user_id: str) -> dict[str, object]:
         """Preferências do frontend web persistidas para ``user_id``.
@@ -325,7 +384,7 @@ class RuntimeSettings:
             user_prefs.update(allowed)
             all_prefs[user_id] = user_prefs
             self._data["frontend_prefs"] = all_prefs
-            self._save()
+            self._persist("frontend_prefs", all_prefs)
         return user_prefs
 
 
@@ -347,10 +406,10 @@ def _invalidate_default_graph() -> None:
 
 
 def apply_model_change(provider: str, model: str) -> None:
-    """Aplica troca de provider/model: settings.json + os.environ + Settings em memória + singletons LLM."""
+    """Aplica troca de provider/model: SQLite + os.environ + Settings em memória + singletons LLM."""
     from backend.settings import PROVIDER_MODEL_ENV, settings
 
-    # 1. Persiste em settings.json
+    # 1. Persiste no SQLite (app_settings)
     runtime_settings.set_active_model(provider, model)
 
     # 2. Atualiza os.environ (efeito imediato para load_llm())

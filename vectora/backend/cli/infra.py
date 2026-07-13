@@ -116,7 +116,10 @@ def run_qdrant(url: str, api_key: str | None) -> None:
     upsert_env_key(env_file, "QDRANT_URL", url)
     if api_key:
         upsert_env_key(env_file, "QDRANT_API_KEY", api_key)
-    upsert_env_key(env_file, "STORAGE_MODE", "complete")
+
+    from backend.workspace.runtime_settings import runtime_settings
+
+    runtime_settings.storage_mode = "complete"
 
     console.print(f"[green]✓ Qdrant conectado e salvo em {env_file}[/green]")
 

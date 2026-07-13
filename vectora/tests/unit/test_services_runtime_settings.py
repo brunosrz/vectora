@@ -1,9 +1,8 @@
-"""Tests for src/services/runtime_settings.py"""
+"""Tests for backend/workspace/runtime_settings.py (backing SQLite, não JSON)."""
 
 from __future__ import annotations
 
-import json
-import tempfile
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -17,8 +16,8 @@ from backend.workspace.runtime_settings import RuntimeSettings
 
 @pytest.fixture
 def tmp_settings_path(tmp_path: Path) -> Path:
-    """Retorna um caminho temporário para settings.json (ainda não existe)."""
-    return tmp_path / "settings.json"
+    """Retorna um caminho temporário pro SQLite de settings (ainda não existe)."""
+    return tmp_path / "checkpoints.db"
 
 
 @pytest.fixture
@@ -114,33 +113,36 @@ class TestSetActiveModel:
 
 
 class TestFaultTolerance:
-    def test_corrupt_json_falls_back_to_defaults(self, tmp_settings_path: Path) -> None:
+    def test_arquivo_nao_sqlite_no_caminho_falha_alto_e_claro(
+        self, tmp_settings_path: Path
+    ) -> None:
+        """Um arquivo que não é SQLite de verdade no caminho de checkpoints.db
+        é o mesmo cenário de corrupção que já afeta users/auth nesse arquivo
+        (rbac/auth.py::_get_db() também não se recupera disso) — falha alto e
+        claro em vez de mascarar com defaults, não degradação silenciosa."""
         tmp_settings_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_settings_path.write_text("{ invalid json !!!}", encoding="utf-8")
+        tmp_settings_path.write_text("isto nao e um banco sqlite", encoding="utf-8")
 
-        rs = RuntimeSettings(path=tmp_settings_path)
-        # Não deve levantar exceção — usa defaults
-        assert rs.active_provider == "google-genai"
-        assert rs.active_model == "gemini-2.5-flash"
+        with pytest.raises(sqlite3.DatabaseError):
+            RuntimeSettings(path=tmp_settings_path)
 
     def test_empty_file_falls_back_to_defaults(self, tmp_settings_path: Path) -> None:
+        """SQLite trata um arquivo de 0 bytes como banco novo válido."""
         tmp_settings_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_settings_path.write_text("", encoding="utf-8")
 
         rs = RuntimeSettings(path=tmp_settings_path)
         assert rs.active_provider == "google-genai"
 
-    def test_partial_file_uses_defaults_for_missing_keys(
+    def test_partial_state_uses_defaults_for_missing_keys(
         self, tmp_settings_path: Path
     ) -> None:
-        tmp_settings_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_settings_path.write_text(
-            json.dumps({"active_provider": "openai"}), encoding="utf-8"
-        )
+        rs1 = RuntimeSettings(path=tmp_settings_path)
+        rs1.set("active_provider", "openai")
 
-        rs = RuntimeSettings(path=tmp_settings_path)
-        assert rs.active_provider == "openai"
-        assert rs.active_model == "gemini-2.5-flash"  # fallback to default
+        rs2 = RuntimeSettings(path=tmp_settings_path)
+        assert rs2.active_provider == "openai"
+        assert rs2.active_model == "gemini-2.5-flash"  # fallback to default
 
 
 # ---------------------------------------------------------------------------
@@ -182,12 +184,8 @@ class TestFallbackOrder:
         rs2 = RuntimeSettings(path=tmp_settings_path)
         assert rs2.fallback_order == ["openai:gpt-4o"]
 
-    def test_invalid_type_in_file_returns_empty(self, tmp_settings_path: Path) -> None:
-        tmp_settings_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_settings_path.write_text(
-            json.dumps({"llm_fallback_order": "not-a-list"}), encoding="utf-8"
-        )
-        rs = RuntimeSettings(path=tmp_settings_path)
+    def test_invalid_type_in_store_returns_empty(self, rs: RuntimeSettings) -> None:
+        rs.set("llm_fallback_order", "not-a-list")
         assert rs.fallback_order == []
 
     def test_overwrite_replaces(self, rs: RuntimeSettings) -> None:
@@ -210,12 +208,15 @@ class TestReload:
         rs = RuntimeSettings(path=tmp_settings_path)
         rs.set("key", "original")
 
-        # Modificar arquivo externamente
-        data = json.loads(tmp_settings_path.read_text(encoding="utf-8"))
-        data["key"] = "updated"
-        tmp_settings_path.write_text(json.dumps(data), encoding="utf-8")
+        # Modifica o SQLite por uma conexão externa (simula outro processo).
+        with sqlite3.connect(str(tmp_settings_path)) as conn:
+            conn.execute(
+                "UPDATE app_settings SET value = ? WHERE key = ?",
+                ('"updated"', "key"),
+            )
+            conn.commit()
 
-        # Antes do reload — valor antigo em memória
+        # Antes do reload — valor antigo em memória (cache não invalidado)
         assert rs.get("key") == "original"
 
         rs.reload()
@@ -297,3 +298,45 @@ class TestFrontendPrefs:
         rs.set_frontend_prefs("u1", {"theme": "dark"})
         result = rs.set_frontend_prefs("u1", {"language": "pt"})
         assert result == {"theme": "dark", "language": "pt"}
+
+
+class TestAuthRequired:
+    """auth_required — substitui VECTORA_AUTH_REQUIRED no .env (setup-local)."""
+
+    def test_default_true(self, rs: RuntimeSettings) -> None:
+        assert rs.auth_required is True
+
+    def test_setter_persiste(self, rs: RuntimeSettings) -> None:
+        rs.auth_required = False
+        assert rs.auth_required is False
+
+    def test_persiste_apos_reload(self, tmp_settings_path: Path) -> None:
+        rs1 = RuntimeSettings(path=tmp_settings_path)
+        rs1.auth_required = False
+        rs2 = RuntimeSettings(path=tmp_settings_path)
+        assert rs2.auth_required is False
+
+
+class TestLocalUser:
+    """Nome/empresa do usuário local — substitui ~/.vectora/local_user.json."""
+
+    def test_defaults_vazio(self, rs: RuntimeSettings) -> None:
+        assert rs.local_user_name == ""
+        assert rs.local_user_company == ""
+
+    def test_set_local_user_roundtrip(self, rs: RuntimeSettings) -> None:
+        rs.set_local_user("Bruno", "Vectora")
+        assert rs.local_user_name == "Bruno"
+        assert rs.local_user_company == "Vectora"
+
+    def test_company_vazia_e_valida(self, rs: RuntimeSettings) -> None:
+        rs.set_local_user("Ada", "")
+        assert rs.local_user_name == "Ada"
+        assert rs.local_user_company == ""
+
+    def test_persiste_apos_reload(self, tmp_settings_path: Path) -> None:
+        rs1 = RuntimeSettings(path=tmp_settings_path)
+        rs1.set_local_user("Bruno", "Vectora")
+        rs2 = RuntimeSettings(path=tmp_settings_path)
+        assert rs2.local_user_name == "Bruno"
+        assert rs2.local_user_company == "Vectora"

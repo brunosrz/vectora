@@ -1,39 +1,31 @@
 """Testes de POST /auth/setup-local.
 
 Cobre: configura a instância pra modo local (sem conta) só no primeiro acesso.
-No .env vai só VECTORA_AUTH_REQUIRED (config de runtime); nome/empresa do
-usuário local são dados não-secretos e vão pro store app-owned via
-write_local_user. upsert_env_key/write_local_user/_env_file mockados (não toca
-disco), mesmo padrão de test_admin.py::test_patch_api_keys_calls_upsert.
+Persiste auth_required=false e nome/empresa do usuário local em app_settings
+(SQLite, via runtime_settings) — nunca no .env, que fica só pra segredos.
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
-from unittest.mock import MagicMock, patch
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
 
 from backend.api.handlers.auth import SetupLocalRequest, setup_local_endpoint
+from backend.workspace.runtime_settings import RuntimeSettings
 
 
 @pytest.fixture(autouse=True)
-def _cleanup_env():
-    """Restaura VECTORA_AUTH_REQUIRED e as envs locais entre testes."""
-    keys = (
-        "VECTORA_AUTH_REQUIRED",
-        "VECTORA_LOCAL_USER_NAME",
-        "VECTORA_LOCAL_USER_COMPANY",
-    )
-    before = {k: os.environ.get(k) for k in keys}
-    yield
-    for k, v in before.items():
-        if v is None:
-            os.environ.pop(k, None)
-        else:
-            os.environ[k] = v
+def _isolated_runtime_settings(tmp_path: Path, monkeypatch):
+    """Isola cada teste com um RuntimeSettings próprio (nunca toca o real)."""
+    from backend.workspace import runtime_settings as rs_module
+
+    fresh = RuntimeSettings(path=tmp_path / "checkpoints.db")
+    monkeypatch.setattr(rs_module, "runtime_settings", fresh)
+    yield fresh
 
 
 def _async_bool(value: bool):
@@ -57,38 +49,30 @@ def test_setup_local_nome_obrigatorio():
     assert exc.value.status_code == 422
 
 
-def test_setup_local_persiste_e_desabilita_auth():
-    with (
-        patch("backend.rbac.auth.has_users", lambda: _async_bool(False)),
-        patch("backend.cli.keys.upsert_env_key") as mock_upsert,
-        patch("backend.services.local_user.write_local_user") as mock_write_user,
-        patch("backend.api.handlers.auth._env_file", return_value=MagicMock()),
-    ):
+def test_setup_local_persiste_e_desabilita_auth(_isolated_runtime_settings):
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
         result = asyncio.run(
             setup_local_endpoint(SetupLocalRequest(name="Bruno", company="Vectora"))
         )
 
     assert result.ok is True
-    assert os.environ["VECTORA_AUTH_REQUIRED"] == "false"
-
-    # No .env vai SÓ o flag de modo — nome/empresa nunca (dado não-secreto).
-    written = {call.args[1]: call.args[2] for call in mock_upsert.call_args_list}
-    assert written == {"VECTORA_AUTH_REQUIRED": "false"}
-    assert "VECTORA_LOCAL_USER_NAME" not in written
-    assert "VECTORA_LOCAL_USER_COMPANY" not in written
-
-    # Nome/empresa vão pro store app-owned (~/.vectora/local_user.json).
-    mock_write_user.assert_called_once_with("Bruno", "Vectora")
+    assert _isolated_runtime_settings.auth_required is False
+    assert _isolated_runtime_settings.local_user_name == "Bruno"
+    assert _isolated_runtime_settings.local_user_company == "Vectora"
 
 
-def test_setup_local_empresa_opcional_vai_pro_store():
-    with (
-        patch("backend.rbac.auth.has_users", lambda: _async_bool(False)),
-        patch("backend.cli.keys.upsert_env_key"),
-        patch("backend.services.local_user.write_local_user") as mock_write_user,
-        patch("backend.api.handlers.auth._env_file", return_value=MagicMock()),
-    ):
+def test_setup_local_nao_toca_env_file(_isolated_runtime_settings, tmp_path: Path):
+    """auth_required e nome/empresa vão só pro app_settings — nada no .env."""
+    env_file = tmp_path / ".env"
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
+        asyncio.run(setup_local_endpoint(SetupLocalRequest(name="Bruno")))
+    assert not env_file.exists()
+
+
+def test_setup_local_empresa_opcional_vai_pro_store(_isolated_runtime_settings):
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
         result = asyncio.run(setup_local_endpoint(SetupLocalRequest(name="Bruno")))
 
     assert result.ok is True
-    mock_write_user.assert_called_once_with("Bruno", "")
+    assert _isolated_runtime_settings.local_user_name == "Bruno"
+    assert _isolated_runtime_settings.local_user_company == ""

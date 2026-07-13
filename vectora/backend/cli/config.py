@@ -156,7 +156,6 @@ def _apply_set_values(set_values: list[str]) -> None:
                 print("❌ storage_mode deve ser 'lite' ou 'complete'.")
                 sys.exit(1)
             runtime_settings.set("storage_mode", value)
-            _write_env("STORAGE_MODE", value)
             print(f"✓ storage_mode={value}")
 
         elif key == "active_model":

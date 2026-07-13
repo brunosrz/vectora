@@ -69,13 +69,19 @@ import os as _os
 def _auth_enabled() -> bool:
     """Lê VECTORA_AUTH_REQUIRED em tempo de request (não em import-time).
 
-    Isso permite que testes unitários definam a variável antes de criar o app.
+    A env var é um override de operador (Docker/systemd/CI/testes) e tem
+    prioridade — isso permite que testes unitários definam a variável antes
+    de criar o app. Sem override no ambiente, cai no valor persistido pelo
+    wizard (`POST /auth/setup-local`) em `app_settings` (SQLite), não mais
+    no `.env` — ver `backend/workspace/runtime_settings.py`.
     """
-    return _os.getenv("VECTORA_AUTH_REQUIRED", "true").lower() not in {
-        "false",
-        "0",
-        "no",
-    }
+    raw = _os.getenv("VECTORA_AUTH_REQUIRED")
+    if raw is not None:
+        return raw.lower() not in {"false", "0", "no"}
+
+    from backend.workspace.runtime_settings import runtime_settings
+
+    return runtime_settings.auth_required
 
 
 def _is_public_route(path: str) -> bool:
@@ -151,12 +157,9 @@ def _get_virtual_local_user() -> Any:
 
     from backend.rbac.auth import User
     from backend.rbac.username import slugify_username
-    from backend.services.local_user import read_local_user
-    from backend.settings import settings as settings_singleton
+    from backend.workspace.runtime_settings import runtime_settings
 
-    name = (
-        read_local_user()["name"] or settings_singleton.local_user_name or "Local User"
-    )
+    name = runtime_settings.local_user_name or "Local User"
     return User(
         id="local",
         username=slugify_username(name),

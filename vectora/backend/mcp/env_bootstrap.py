@@ -2,8 +2,11 @@
 
 Quando o Vectora é instalado via MCP registry (Smithery, mcp.so, etc.), o cliente
 MCP passa as API keys como variáveis de ambiente do processo antes de iniciar o
-servidor. Este módulo detecta esse cenário e persiste as keys em ~/.vectora/.env
-para que o chat interativo (`vectora`) também funcione sem precisar do wizard.
+servidor. Este módulo detecta esse cenário e persiste os segredos em
+~/.vectora/.env para que o chat interativo (`vectora`) também funcione sem
+precisar do wizard. ``LLM_PROVIDER`` não é segredo — vai pra ``app_settings``
+(SQLite, `backend/workspace/runtime_settings.py`), tratado à parte de
+``_MCP_ENV_KEYS``.
 
 Fluxo:
   1. MCP client instala vectora e coleta COHERE_API_KEY, TAVILY_API_KEY, etc.
@@ -21,14 +24,10 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Keys que o server.json declara em environmentVariables.
+# Keys secretas que o server.json declara em environmentVariables.
 # Ordem importa: aparecerão nessa ordem no .env gerado.
 _MCP_ENV_KEYS: list[tuple[str, str]] = [
     # (env var name, comentário descritivo)
-    (
-        "LLM_PROVIDER",
-        "LLM provider (google-genai | openai | anthropic | cohere | ollama)",
-    ),
     ("GOOGLE_API_KEY", "Google Gemini API key"),
     ("OPENAI_API_KEY", "OpenAI API key"),
     ("ANTHROPIC_API_KEY", "Anthropic API key"),
@@ -40,6 +39,22 @@ _MCP_ENV_KEYS: list[tuple[str, str]] = [
 ]
 
 _ENV_FILE = Path.home() / ".vectora" / ".env"
+
+
+def _bootstrap_llm_provider_from_mcp() -> bool:
+    """Persiste LLM_PROVIDER do ambiente MCP em app_settings (SQLite), se ainda
+    não houver um provider configurado. Não é segredo — não vai pro ``.env``.
+    """
+    provider = os.environ.get("LLM_PROVIDER")
+    if not provider:
+        return False
+    from backend.workspace.runtime_settings import runtime_settings
+
+    if runtime_settings.get("active_provider"):
+        return False
+    runtime_settings.set("active_provider", provider)
+    logger.info("env_bootstrap: LLM_PROVIDER=%s persistido em app_settings", provider)
+    return True
 
 
 def _read_existing_keys(env_file: Path) -> set[str]:
@@ -56,20 +71,23 @@ def _read_existing_keys(env_file: Path) -> set[str]:
 
 
 def bootstrap_env_from_mcp() -> bool:
-    """Detecta keys no ambiente do processo e persiste em ~/.vectora/.env.
+    """Detecta keys no ambiente do processo e persiste (segredos em ~/.vectora/.env,
+    LLM_PROVIDER em app_settings/SQLite).
 
     Só age se houver pelo menos uma key reconhecida em os.environ.
-    Nunca sobrescreve valores já existentes no .env.
+    Nunca sobrescreve valores já existentes.
 
     Returns:
         True se alguma key foi escrita, False caso contrário.
     """
+    provider_written = _bootstrap_llm_provider_from_mcp()
+
     # Coleta keys presentes no ambiente do processo
     available = {
         key: os.environ[key] for key, _ in _MCP_ENV_KEYS if os.environ.get(key)
     }
     if not available:
-        return False
+        return provider_written
 
     _ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
 
@@ -83,7 +101,7 @@ def bootstrap_env_from_mcp() -> bool:
 
     if not new_entries:
         logger.debug("env_bootstrap: nenhuma key nova para persistir")
-        return False
+        return provider_written
 
     # Append (ou cria) o arquivo
     separator = (

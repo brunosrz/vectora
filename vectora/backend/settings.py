@@ -274,12 +274,6 @@ class Settings(BaseSettings):
     """Habilita features em desenvolvimento (OAuth, Context Graph, Background Tasks).
     False = oculta features ainda não prontas para produção."""
 
-    local_user_name: str = ""
-    """Nome do usuário local (modo sem login, preenchido no wizard)."""
-
-    local_user_company: str = ""
-    """Empresa do usuário local (opcional, preenchida no wizard)."""
-
     max_context_tokens: int = 8000
     """Maximum tokens to keep in message history (sliding window)."""
 
@@ -646,32 +640,33 @@ class Settings(BaseSettings):
         except (FileNotFoundError, TypeError, ModuleNotFoundError, AttributeError):
             logger.debug("defaults.env not found (normal for development)")
 
-        # Level 3: Load ~/.vectora/settings.json (preferências de runtime não-secretas)
-        # Contém: active_provider, active_model — NÃO contém API keys.
-        # override=False (setdefault) para que o projeto .env ainda possa sobrescrever.
-        _settings_json = Path.home() / ".vectora" / "settings.json"
-        if _settings_json.exists():
-            try:
-                import json as _json
+        # Level 3: Load runtime settings (tabela app_settings em
+        # ~/.vectora/checkpoints.db — RuntimeSettings, backend/workspace/
+        # runtime_settings.py). Contém: active_provider, active_model,
+        # storage_mode, auth_required — NÃO contém API keys. Import local
+        # (não no topo do módulo) porque runtime_settings importa
+        # backend.settings dentro de funções, evitando ciclo na inicialização.
+        # override=False (setdefault) para que o projeto .env ainda possa
+        # sobrescrever.
+        try:
+            from backend.workspace.runtime_settings import runtime_settings as _rt
 
-                _rt = _json.loads(_settings_json.read_text(encoding="utf-8"))
-                _provider = _rt.get("active_provider")
-                _model = _rt.get("active_model")
-                if _provider:
-                    os.environ.setdefault("LLM_PROVIDER", _provider)
-                if _model and _provider:
-                    _model_env_map = {
-                        "google-genai": "GOOGLE_MODEL",
-                        "openai": "OPENAI_MODEL",
-                        "anthropic": "ANTHROPIC_MODEL",
-                        "ollama": "OLLAMA_MODEL",
-                        "cohere": "COHERE_CHAT_MODEL",
-                    }
-                    if _env_var := _model_env_map.get(_provider):
-                        os.environ.setdefault(_env_var, _model)
-                logger.debug(f"Loaded runtime settings from {_settings_json}")
-            except Exception as _e:
-                logger.debug(f"Could not load settings.json: {_e}")
+            if _provider := _rt.active_provider:
+                os.environ.setdefault("LLM_PROVIDER", _provider)
+            if (_model := _rt.active_model) and _provider:
+                _model_env_map = {
+                    "google-genai": "GOOGLE_MODEL",
+                    "openai": "OPENAI_MODEL",
+                    "anthropic": "ANTHROPIC_MODEL",
+                    "ollama": "OLLAMA_MODEL",
+                    "cohere": "COHERE_CHAT_MODEL",
+                }
+                if _env_var := _model_env_map.get(_provider):
+                    os.environ.setdefault(_env_var, _model)
+            os.environ.setdefault("STORAGE_MODE", _rt.storage_mode)
+            logger.debug("Loaded runtime settings from app_settings (SQLite)")
+        except Exception as _e:
+            logger.debug(f"Could not load runtime settings: {_e}")
 
         # Level 3b: Load ~/.vectora/config.toml [server] (config admin persistida —
         # allow_public_signup, default_model, max_recursion). Mesmo arquivo onde

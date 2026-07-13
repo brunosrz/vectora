@@ -349,7 +349,8 @@ async def run_setup() -> None:
 
     console.print(
         Panel(
-            "[green]✓ Configuração salva em ~/.vectora/.env[/green]",
+            "[green]✓ API keys salvas em ~/.vectora/.env, "
+            "provider/model em app_settings[/green]",
             title="[bold]Setup Completo[/bold]",
             style="green",
             expand=False,
