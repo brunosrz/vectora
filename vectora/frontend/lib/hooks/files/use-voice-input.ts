@@ -161,7 +161,7 @@ export function useVoiceInput({
             if (text) onTranscriptRef.current(text);
           } catch {
             setError(
-              "Falha ao transcrever o áudio. Verifique sua conexão e tente novamente.",
+              "Falha ao transcrever o áudio. Serviço temporariamente indisponível — tente novamente em instantes.",
             );
             setTimeout(() => setError(null), 5000);
           }

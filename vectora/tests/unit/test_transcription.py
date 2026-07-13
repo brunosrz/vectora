@@ -105,6 +105,61 @@ class TestTranscribeAudioGeminiFallback:
                 await transcribe_audio(b"audio-bytes", "ditado.webm", "audio/webm")
 
     @pytest.mark.asyncio
+    async def test_gemini_503_retenta_e_recupera(self) -> None:
+        """503 UNAVAILABLE (alta demanda) é transitório — retenta antes de falhar."""
+        from google.genai.errors import ServerError
+
+        overloaded = ServerError(503, {"error": {"message": "high demand"}}, None)
+        fake_response = MagicMock()
+        fake_response.text = "recuperou na segunda tentativa"
+
+        fake_models = AsyncMock()
+        fake_models.generate_content = AsyncMock(
+            side_effect=[overloaded, fake_response]
+        )
+        fake_client = MagicMock()
+        fake_client.aio.models = fake_models
+
+        with (
+            patch("backend.llm.transcription.settings.openai_api_key", None),
+            patch(
+                "backend.llm.transcription.settings.google_api_key",
+                "google-test-key",
+            ),
+            patch("google.genai.Client", return_value=fake_client),
+            patch("backend.llm.transcription.asyncio.sleep", AsyncMock()),
+        ):
+            text = await transcribe_audio(b"audio-bytes", "ditado.webm", "audio/webm")
+
+        assert text == "recuperou na segunda tentativa"
+        assert fake_models.generate_content.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_gemini_503_persistente_esgota_tentativas(self) -> None:
+        from google.genai.errors import ServerError
+
+        overloaded = ServerError(503, {"error": {"message": "high demand"}}, None)
+        fake_models = AsyncMock()
+        fake_models.generate_content = AsyncMock(side_effect=overloaded)
+        fake_client = MagicMock()
+        fake_client.aio.models = fake_models
+
+        with (
+            patch("backend.llm.transcription.settings.openai_api_key", None),
+            patch(
+                "backend.llm.transcription.settings.google_api_key",
+                "google-test-key",
+            ),
+            patch("google.genai.Client", return_value=fake_client),
+            patch("backend.llm.transcription.asyncio.sleep", AsyncMock()) as mock_sleep,
+        ):
+            with pytest.raises(TranscriptionError):
+                await transcribe_audio(b"audio-bytes", "ditado.webm", "audio/webm")
+
+        assert fake_models.generate_content.await_count == 3
+        assert mock_sleep.await_count == 2
+
+    @pytest.mark.asyncio
     async def test_openai_key_presente_ignora_gemini(self) -> None:
         """Com as duas chaves configuradas, OpenAI continua sendo a primária."""
         response = MagicMock()

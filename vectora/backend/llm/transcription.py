@@ -12,6 +12,7 @@ Tenta OpenAI Whisper primeiro (mais preciso pra transcrição pura); sem
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import httpx
@@ -28,6 +29,11 @@ _GEMINI_TRANSCRIPTION_PROMPT = (
     "formatação — devolva só o texto falado."
 )
 _TIMEOUT_S = 60.0
+#: 503 UNAVAILABLE ("high demand") do Gemini é documentado como transitório —
+#: o SDK já retenta internamente (curto, via tenacity), mas o pico costuma
+#: durar mais que esse retry embutido cobre. Retentamos de novo, mais espaçado.
+_GEMINI_MAX_ATTEMPTS = 3
+_GEMINI_RETRY_DELAY_S = 2.0
 
 
 class TranscriptionError(Exception):
@@ -76,20 +82,39 @@ async def _transcribe_openai(data: bytes, filename: str, mime_type: str) -> str:
 
 
 async def _transcribe_gemini(data: bytes, mime_type: str) -> str:
-    try:
-        from google import genai
-        from google.genai import types
+    from google import genai
+    from google.genai import types
+    from google.genai.errors import ServerError
 
-        client = genai.Client(api_key=settings.google_api_key)
-        response = await client.aio.models.generate_content(
-            model=_GEMINI_TRANSCRIPTION_MODEL,
-            contents=[
-                _GEMINI_TRANSCRIPTION_PROMPT,
-                types.Part.from_bytes(data=data, mime_type=mime_type),
-            ],
-        )
-    except Exception as exc:
-        logger.exception("transcribe_audio: falha na chamada à API Gemini")
-        raise TranscriptionError(str(exc)) from exc
+    client = genai.Client(api_key=settings.google_api_key)
 
-    return (response.text or "").strip()
+    last_exc: Exception = TranscriptionError("Gemini indisponível")
+    for attempt in range(1, _GEMINI_MAX_ATTEMPTS + 1):
+        try:
+            response = await client.aio.models.generate_content(
+                model=_GEMINI_TRANSCRIPTION_MODEL,
+                contents=[
+                    _GEMINI_TRANSCRIPTION_PROMPT,
+                    types.Part.from_bytes(data=data, mime_type=mime_type),
+                ],
+            )
+            return (response.text or "").strip()
+        except ServerError as exc:
+            last_exc = exc
+            logger.warning(
+                "transcribe_audio: Gemini indisponível (tentativa %d/%d): %s",
+                attempt,
+                _GEMINI_MAX_ATTEMPTS,
+                exc,
+            )
+            if attempt < _GEMINI_MAX_ATTEMPTS:
+                await asyncio.sleep(_GEMINI_RETRY_DELAY_S * attempt)
+        except Exception as exc:
+            logger.exception("transcribe_audio: falha na chamada à API Gemini")
+            raise TranscriptionError(str(exc)) from exc
+
+    logger.error(
+        "transcribe_audio: Gemini indisponível após %d tentativas",
+        _GEMINI_MAX_ATTEMPTS,
+    )
+    raise TranscriptionError(str(last_exc)) from last_exc

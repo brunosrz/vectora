@@ -40,7 +40,7 @@ export function VoiceInputButton({
           className={`
             group ${dimensions} p-0 mb-0.5 rounded-full flex-shrink-0
             transition-all duration-200 hover:scale-105 active:scale-95 border-0
-            ${isListening ? "bg-muted text-primary hover:text-primary hover:bg-muted/80 border-2 border-primary" : "bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary"}
+            ${isListening ? "bg-muted text-primary hover:text-primary hover:bg-muted/80 border-2 border-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/60"}
           `}
           type="button"
           aria-label={tooltipText}
