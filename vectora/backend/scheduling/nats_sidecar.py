@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 _proc: asyncio.subprocess.Process | None = None
 _url: str | None = None
+_spawn_lock = asyncio.Lock()
 
 _READY_TIMEOUT_S = 10.0
 
@@ -112,47 +113,52 @@ async def ensure_nats_sidecar() -> str | None:
     binário não estiver disponível ou o processo falhar ao iniciar — nesse
     caso o chamador (``get_mq``/``get_kv``) deve degradar pro fallback de
     memória, nunca impedir o backend de subir.
+
+    ``_spawn_lock`` serializa chamadas concorrentes — sem ele, duas corridas
+    passariam pelo check ``_proc is None`` antes de qualquer uma setar
+    ``_proc``, subindo dois ``nats-server`` em portas diferentes.
     """
     global _proc, _url
 
-    if _proc is not None and _proc.returncode is None:
+    async with _spawn_lock:
+        if _proc is not None and _proc.returncode is None:
+            return _url
+
+        binary = _resolve_binary()
+        if binary is None:
+            logger.info(
+                "nats_sidecar: binário nats-server não encontrado — sem persistência de fila"
+            )
+            return None
+
+        store_dir = Path.home() / ".vectora" / "nats"
+        store_dir.mkdir(parents=True, exist_ok=True)
+        port = _free_port()
+
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                binary,
+                "-js",
+                "-sd",
+                str(store_dir),
+                "-p",
+                str(port),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
+        except Exception:
+            logger.warning("nats_sidecar: falha ao spawnar nats-server", exc_info=True)
+            return None
+
+        ready = await _wait_ready(proc)
+        if not ready:
+            with_kill(proc)
+            return None
+
+        _proc = proc
+        _url = f"nats://127.0.0.1:{port}"
+        logger.info("nats_sidecar: pronto em %s (store=%s)", _url, store_dir)
         return _url
-
-    binary = _resolve_binary()
-    if binary is None:
-        logger.info(
-            "nats_sidecar: binário nats-server não encontrado — sem persistência de fila"
-        )
-        return None
-
-    store_dir = Path.home() / ".vectora" / "nats"
-    store_dir.mkdir(parents=True, exist_ok=True)
-    port = _free_port()
-
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            binary,
-            "-js",
-            "-sd",
-            str(store_dir),
-            "-p",
-            str(port),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-    except Exception:
-        logger.warning("nats_sidecar: falha ao spawnar nats-server", exc_info=True)
-        return None
-
-    ready = await _wait_ready(proc)
-    if not ready:
-        with_kill(proc)
-        return None
-
-    _proc = proc
-    _url = f"nats://127.0.0.1:{port}"
-    logger.info("nats_sidecar: pronto em %s (store=%s)", _url, store_dir)
-    return _url
 
 
 async def _wait_ready(proc: asyncio.subprocess.Process) -> bool:

@@ -5,24 +5,32 @@ arquivo sobe o `nats-server` real via `ensure_nats_sidecar()` e valida o
 CONTRATO da interface (tipo do id retornado, atributos do StreamMessage,
 round-trip get/set) — não conteúdo fixo. Mesmo padrão de
 `test_storage_qdrant.py` (`@pytest.mark.storage`, skip limpo sem o serviço
-disponível). Requer `nats-server` instalado localmente (`choco install
-nats-server` / `brew install nats-server`); no CI sem o binário, skip.
+disponível).
+
+O skip-guard usa a MESMA resolução (`_resolve_binary()`) que o sidecar usa em
+produção — PATH (``choco install nats-server`` / ``brew install
+nats-server``) ou o binário baixado em ``vectora/resources/`` por
+``scons nats``. Um guard que só olhasse PATH (como uma versão anterior deste
+arquivo fazia) pula sempre mesmo com o binário bundlado presente.
 """
 
 from __future__ import annotations
 
 import asyncio
-import shutil
 
 import pytest
 
 from backend.persistence.kv import NatsKV
 from backend.scheduling.mq import NatsMQ, StreamMessage
-from backend.scheduling.nats_sidecar import ensure_nats_sidecar, stop_nats_sidecar
+from backend.scheduling.nats_sidecar import (
+    _resolve_binary,
+    ensure_nats_sidecar,
+    stop_nats_sidecar,
+)
 
 pytestmark = pytest.mark.skipif(
-    shutil.which("nats-server") is None,
-    reason="nats-server não instalado localmente — instale para rodar esta suíte",
+    _resolve_binary() is None,
+    reason="nats-server não encontrado (PATH nem vectora/resources/) — rode `scons nats`",
 )
 
 
