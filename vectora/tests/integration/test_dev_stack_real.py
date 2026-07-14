@@ -82,9 +82,13 @@ def test_stack_status_com_docker_de_pe_nunca_lanca_e_lista_todos_os_servicos():
 
 
 def test_stack_down_sem_containers_existentes_e_noop_sem_lancar():
-    """Edge case: derrubar uma stack que nunca foi criada não deve lançar —
-    stack_down() trata cada serviço ausente como "nada a fazer"."""
+    """Edge case: derrubar uma stack que nunca foi criada não deve lançar.
+
+    Com docker-compose.yml presente no repo, stack_down() sempre usa
+    `docker compose down` (1 mensagem agregada) — o loop por-serviço com
+    "não existe — nada a fazer" só roda no fallback sem compose file, que
+    não é o caminho exercitado aqui."""
     result = stack_down()
 
     assert result.ok is True
-    assert len(result.messages) == len(SERVICES)
+    assert len(result.messages) == 1
