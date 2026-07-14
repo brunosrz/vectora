@@ -257,6 +257,21 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
         await awarm_graph()
 
+    # Electron-first em dev: sobe como sidecar (mesmo padrão do NATS) quando
+    # backend/main.py::_run_start já decidiu, cedo (antes do uvicorn subir,
+    # porque também define o transporte IPC), que este processo deve se
+    # autoeleger — sinalizado via VECTORA_SPAWN_ELECTRON. O spawn em si só
+    # roda aqui, dentro do event loop do FastAPI já rodando, não do
+    # bootstrap síncrono da CLI — mantém `vectora start` leve pra quem só
+    # quer a API REST (o sidecar nunca sobe se essa env não estiver setada).
+    if os.environ.get("VECTORA_SPAWN_ELECTRON"):
+        try:
+            from backend.services.electron_sidecar import ensure_electron_sidecar
+
+            await ensure_electron_sidecar()
+        except Exception as exc:
+            logger.warning("api/server: falha ao subir sidecar Electron: %s", exc)
+
     # Validação de licença: uma no boot (não-bloqueante) + revalidação a cada
     # 6h (TTL do cache). O launcher CLI valida antes do uvicorn, mas deploys
     # via docker/uvicorn direto não passam pelo launcher — sem este loop o
@@ -407,6 +422,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             await stop_nats_sidecar()
         except Exception:
             logger.debug("api/server: erro ao encerrar sidecar NATS")
+
+        try:
+            from backend.services.electron_sidecar import stop_electron_sidecar
+
+            await stop_electron_sidecar()
+        except Exception:
+            logger.debug("api/server: erro ao encerrar sidecar Electron")
         from backend.api.handlers.chat import aclose_graph
         from backend.services.pty_registry import pty_registry
 

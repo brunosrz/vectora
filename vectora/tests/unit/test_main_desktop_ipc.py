@@ -275,7 +275,12 @@ def test_desktop_windows_no_tcp_host() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Electron-first em dev — auto-eleição + spawn (Fase 1)
+# Electron-first em dev — auto-eleição (Fase 1). O SPAWN em si não mora mais
+# aqui — saiu de `_run_start` (bootstrap síncrono da CLI) pra dentro do
+# lifespan async do FastAPI (`backend/services/electron_sidecar.py`, mesmo
+# padrão do NATS — ver test_electron_sidecar.py). `_run_start` só decide
+# (via `should_spawn_electron()`) e sinaliza pro sidecar via env vars —
+# esses testes cobrem só essa decisão + sinalização.
 # ---------------------------------------------------------------------------
 
 
@@ -292,22 +297,19 @@ def _base_args(*, headless: bool = False) -> Any:
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="branch exercitado é o do Windows")
-def test_autoeleicao_spawna_electron_quando_resolvido() -> None:
-    """Sem VECTORA_DESKTOP/--headless, com display e build de Electron
-    resolvido, o processo se autoelege e spawna o Electron com os env vars
-    esperados — e o transporte cai no mesmo caminho IPC que VECTORA_DESKTOP
-    já usa (reuso, não caminho novo)."""
+def test_autoeleicao_sinaliza_env_vars_pro_sidecar_quando_deve_spawnar() -> None:
+    """Quando `should_spawn_electron()` diz sim, `_run_start` seta
+    VECTORA_DESKTOP + VECTORA_SPAWN_ELECTRON + VECTORA_PORT — o sinal que o
+    lifespan do FastAPI usa pra decidir subir o sidecar. `_run_start` em si
+    não spawna nada (não há mock de subprocess/asyncio.create_subprocess_exec
+    aqui — se ele tentasse, o teste falharia por chamada não mockada)."""
     env = {k: v for k, v in os.environ.items() if k != "VECTORA_DESKTOP"}
-    fake_electron = MagicMock()
-    fake_electron.pid = 4242
-    fake_electron.poll.return_value = None
 
     with (
         patch.dict(os.environ, env, clear=True),
-        patch("backend.services.tray.has_display", return_value=True),
         patch(
-            "backend.services.electron_launcher.resolve_electron_launch",
-            return_value=("C:\\fake\\electron.exe", ["C:\\fake\\main.js"]),
+            "backend.services.electron_sidecar.should_spawn_electron",
+            return_value=True,
         ),
         patch("backend.api.server.create_app", return_value=MagicMock()),
         patch("backend.main._start_vite_dev", return_value=None, create=True),
@@ -317,110 +319,40 @@ def test_autoeleicao_spawna_electron_quando_resolvido() -> None:
             "uvicorn.Server", return_value=MagicMock(serve=AsyncMock(return_value=None))
         ),
         patch("asyncio.run"),
-        patch("subprocess.Popen", return_value=fake_electron) as mock_popen,
     ):
         from backend.main import _run_start
 
         _run_start(_base_args())
 
         assert os.environ.get("VECTORA_DESKTOP") == "1"
-
-    mock_popen.assert_called_once()
-    call_args, call_kwargs = mock_popen.call_args
-    spawned_cmd = call_args[0]
-    assert spawned_cmd == ["C:\\fake\\electron.exe", "C:\\fake\\main.js"]
-    spawned_env = call_kwargs["env"]
-    assert spawned_env["VECTORA_EXTERNAL_BACKEND"] == "1"
-    assert spawned_env["VECTORA_PORT"] == "8080"
-    assert "VECTORA_IPC_PIPE" in spawned_env
+        assert os.environ.get("VECTORA_SPAWN_ELECTRON") == "1"
+        assert os.environ.get("VECTORA_PORT") == "8080"
 
 
-def test_autoeleicao_nao_ocorre_em_headless() -> None:
-    """--headless preserva o comportamento atual (bandeja/servidor puro,
-    sem Electron) mesmo com display e build resolvíveis."""
+def test_autoeleicao_nao_sinaliza_quando_should_spawn_electron_diz_nao() -> None:
+    """Par de erro/edge case: `should_spawn_electron()` retornando False
+    (headless, sem display, ou sem build resolvível — cobertos nos testes
+    dedicados de `electron_sidecar.py`) não seta nenhum dos dois env vars —
+    `_run_start` cai no caminho de servidor puro/bandeja de sempre."""
     env = {k: v for k, v in os.environ.items() if k != "VECTORA_DESKTOP"}
 
     with (
         patch.dict(os.environ, env, clear=True),
-        patch("backend.services.tray.has_display", return_value=True) as mock_display,
         patch(
-            "backend.services.electron_launcher.resolve_electron_launch"
-        ) as mock_resolve,
+            "backend.services.electron_sidecar.should_spawn_electron",
+            return_value=False,
+        ) as mock_should_spawn,
         patch("backend.api.server.create_app", return_value=MagicMock()),
         patch("backend.main._start_vite_dev", return_value=None, create=True),
         patch("backend.services.tray.run_server_with_tray"),
         patch("uvicorn.Config", return_value=MagicMock()),
         patch("uvicorn.Server", return_value=MagicMock()),
-        patch("subprocess.Popen") as mock_popen,
-        patch("os._exit"),
-    ):
-        from backend.main import _run_start
-
-        _run_start(_base_args(headless=True))
-
-    mock_display.assert_not_called()
-    mock_resolve.assert_not_called()
-    mock_popen.assert_not_called()
-    assert "VECTORA_DESKTOP" not in os.environ
-
-
-def test_autoeleicao_nao_ocorre_sem_display() -> None:
-    """Par de erro/edge case: sem display (VPS/Docker/CI), a auto-eleição
-    nem chega a resolver o build do Electron — cai direto no caminho atual."""
-    env = {k: v for k, v in os.environ.items() if k != "VECTORA_DESKTOP"}
-
-    with (
-        patch.dict(os.environ, env, clear=True),
-        patch("backend.services.tray.has_display", return_value=False),
-        patch(
-            "backend.services.electron_launcher.resolve_electron_launch"
-        ) as mock_resolve,
-        patch("backend.api.server.create_app", return_value=MagicMock()),
-        patch("backend.main._start_vite_dev", return_value=None, create=True),
-        patch("backend.services.tray.run_server_with_tray"),
-        patch("uvicorn.Config", return_value=MagicMock()),
-        patch("uvicorn.Server", return_value=MagicMock()),
-        patch("subprocess.Popen") as mock_popen,
         patch("os._exit"),
     ):
         from backend.main import _run_start
 
         _run_start(_base_args())
 
-    mock_resolve.assert_not_called()
-    mock_popen.assert_not_called()
+    mock_should_spawn.assert_called_once()
     assert "VECTORA_DESKTOP" not in os.environ
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="branch exercitado é o do Windows")
-def test_spawn_do_electron_falhando_nao_derruba_o_backend() -> None:
-    """Par de erro: Popen falhando ao spawnar o Electron (ex.: binário
-    corrompido) não impede o backend de subir — segue sem janela. Com
-    electron_launch resolvido no Windows, a auto-eleição cai no mesmo branch
-    de named-pipe que VECTORA_DESKTOP externo já usa."""
-    env = {k: v for k, v in os.environ.items() if k != "VECTORA_DESKTOP"}
-
-    with (
-        patch.dict(os.environ, env, clear=True),
-        patch("backend.services.tray.has_display", return_value=True),
-        patch(
-            "backend.services.electron_launcher.resolve_electron_launch",
-            return_value=("C:\\fake\\electron.exe", ["C:\\fake\\main.js"]),
-        ),
-        patch("backend.api.server.create_app", return_value=MagicMock()),
-        patch("backend.main._start_vite_dev", return_value=None, create=True),
-        patch("backend.services.ipc_pipe_win.serve_pipe", AsyncMock()),
-        patch("uvicorn.Config", return_value=MagicMock()),
-        patch(
-            "uvicorn.Server", return_value=MagicMock(serve=AsyncMock(return_value=None))
-        ),
-        patch("asyncio.run") as mock_asyncio_run,
-        patch("subprocess.Popen", side_effect=OSError("binário corrompido")),
-    ):
-        from backend.main import _run_start
-
-        _run_start(_base_args())
-
-    # O servidor sobe normalmente mesmo com o spawn do Electron falhando —
-    # não propaga a exceção do Popen, só loga e segue sem janela.
-    mock_asyncio_run.assert_called_once()
+    assert "VECTORA_SPAWN_ELECTRON" not in os.environ
