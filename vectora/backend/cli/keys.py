@@ -1,8 +1,11 @@
 """``vectora config keys`` — configuração interativa de API keys e LLM provider.
 
 Fluxo em 3 etapas:
-  1. Cohere API key  — obrigatório (embeddings + reranking RAG)
-  2. Tavily API key  — obrigatório (busca web em tempo real)
+  1. Cohere API key  — opcional (embeddings + reranking RAG; sem ela, Ollama
+                       cobre embeddings — ver backend/storage/factory.py —
+                       e o RAG roda sem reranking)
+  2. Tavily API key  — opcional (busca web em tempo real; sem ela, cai no
+                       fallback sem chave via backend/browser/search_fallback.py)
   3. LLM provider    — Gemini (free), Cohere (free, usa key acima), OpenAI (paid),
                        Anthropic (paid), Ollama (local, sem key)
      └─ Ollama: pede o nome do model que o usuário já tem instalado
@@ -196,37 +199,41 @@ async def _test_connection(
 
 
 async def _step_cohere_key(console: Console) -> str:
-    """Coleta a Cohere API key, obrigatória para embeddings e reranking."""
+    """Coleta a Cohere API key, opcional (embeddings + reranking do RAG)."""
     console.print(
         Rule("[bold cyan]Passo 1 de 3 — Cohere API Key[/bold cyan]", style="cyan")
     )
     console.print(
-        "\n[bold]Cohere é obrigatório[/bold] — fornece os embeddings e o reranker "
-        "usados pelo RAG (busca vetorial semântica).\n"
+        "\n[bold]Cohere é opcional[/bold] — fornece os embeddings e o reranker "
+        "usados pelo RAG (busca vetorial semântica). Deixe em branco para "
+        "pular — se você for usar [bold]Ollama[/bold] no próximo passo, ele "
+        "cobre os embeddings sozinho (sem reranking).\n"
         "Plano gratuito: [cyan]https://dashboard.cohere.com/api-keys[/cyan]\n"
     )
-    api_key = getpass.getpass("Cohere API key (oculta): ").strip()
+    api_key = getpass.getpass("Cohere API key (oculta, Enter para pular): ").strip()
     if not api_key:
-        console.print("[red]Cohere API key é obrigatória.[/red]")
-        sys.exit(1)
+        console.print("[yellow]○ Cohere pulado.[/yellow]\n")
+        return ""
     console.print("[green]✓ Cohere key recebida.[/green]\n")
     return api_key
 
 
 async def _step_tavily_key(console: Console) -> str:
-    """Coleta a Tavily API key, obrigatória para busca web."""
+    """Coleta a Tavily API key, opcional (busca web em tempo real)."""
     console.print(
         Rule("[bold cyan]Passo 2 de 3 — Tavily API Key[/bold cyan]", style="cyan")
     )
     console.print(
-        "\n[bold]Tavily é obrigatório[/bold] — busca web em tempo real e extração "
-        "de conteúdo de URLs.\n"
+        "\n[bold]Tavily é opcional[/bold] — busca web em tempo real e extração "
+        "de conteúdo de URLs. Deixe em branco para pular — o Vectora cai num "
+        "fallback sem chave (API do DuckDuckGo + Chromium para extração de "
+        "URLs), com cobertura menor que o Tavily.\n"
         "Plano gratuito: [cyan]https://tavily.com[/cyan]\n"
     )
-    api_key = getpass.getpass("Tavily API key (oculta): ").strip()
+    api_key = getpass.getpass("Tavily API key (oculta, Enter para pular): ").strip()
     if not api_key:
-        console.print("[red]Tavily API key é obrigatória.[/red]")
-        sys.exit(1)
+        console.print("[yellow]○ Tavily pulado — usando fallback sem chave.[/yellow]\n")
+        return ""
     console.print("[green]✓ Tavily key recebida.[/green]\n")
     return api_key
 

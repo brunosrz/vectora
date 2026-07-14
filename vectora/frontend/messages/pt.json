@@ -385,6 +385,7 @@
   "onboarding_step6_title": "O que é RAG?",
   "onboarding_step7_title": "Tudo pronto!",
   "onboarding_api_keys_body": "Configure as chaves para o modelo de IA e as ferramentas de busca (todas com plano gratuito). Pode pular e adicionar depois em Admin → Configurações.",
+  "onboarding_api_keys_ollama_hint": "Prefere 100% local, sem chaves de nuvem? Pule esta etapa e configure o Ollama depois em Configurações → Ambiente → Gateways — ele cobre o modelo e os embeddings, e a busca web cai automaticamente num modo sem chave.",
   "onboarding_api_keys_google_label": "Google / Gemini",
   "onboarding_api_keys_google_desc": "Modelo principal — código, raciocínio e chat.",
   "onboarding_api_keys_google_url": "https://aistudio.google.com/app/apikey",

@@ -379,4 +379,14 @@ describe("StepApiKeys", () => {
       expect(fetchMock.mock.calls.length).toBe(countBefore);
     });
   });
+
+  it("mostra a alternativa 100% local via Ollama sem exigir preencher nenhuma chave", async () => {
+    mockApiKeysFetch();
+    await renderAtStepApiKeys();
+    expect(screen.getByText(/Ollama/)).toBeInTheDocument();
+    expect(screen.getByText(/Gateways/)).toBeInTheDocument();
+    // Par de erro/edge case: nenhum campo preenchido não bloqueia o avanço
+    // do wizard — Cohere/Tavily continuam opcionais mesmo com a nova copy.
+    expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled();
+  });
 });

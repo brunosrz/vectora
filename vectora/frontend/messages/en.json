@@ -385,6 +385,7 @@
   "onboarding_step6_title": "What is RAG?",
   "onboarding_step7_title": "All set!",
   "onboarding_api_keys_body": "Configure keys for the AI model and search tools (all have a free tier). You can skip and add them later in Admin → Settings.",
+  "onboarding_api_keys_ollama_hint": "Prefer 100% local, no cloud keys? Skip this step and set up Ollama afterwards in Settings → Environment → Gateways — it covers the model and embeddings, and web search falls back automatically without a key.",
   "onboarding_api_keys_google_label": "Google / Gemini",
   "onboarding_api_keys_google_desc": "Main model — code, reasoning and chat.",
   "onboarding_api_keys_google_url": "https://aistudio.google.com/app/apikey",

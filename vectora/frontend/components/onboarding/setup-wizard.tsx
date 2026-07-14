@@ -1113,6 +1113,9 @@ function StepApiKeys(_props: StepProps) {
       <p className="text-xs text-muted-foreground">
         {m.onboarding_api_keys_body()}
       </p>
+      <p className="text-[11px] text-muted-foreground/80 leading-snug rounded-md border border-border/60 bg-muted/30 px-2 py-1.5">
+        {m.onboarding_api_keys_ollama_hint()}
+      </p>
 
       {PROVIDERS.map((prov) => {
         const state = keys[prov.id];
