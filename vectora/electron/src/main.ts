@@ -47,6 +47,7 @@ import {
   pingBackendHttp,
   waitForBackendReady,
   killBackendTree,
+  resolveExternalBackendConnection,
 } from "./backend-lifecycle.js";
 
 interface UpdateStatus {
@@ -294,6 +295,19 @@ const _resourcesPath = (): string =>
   process.resourcesPath || path.join(__dirname, "..");
 
 async function startBackend(): Promise<void> {
+  // Electron-first em dev (Fase 1): quando o backend Python já é o processo
+  // primário (`uv run vectora start` rodado direto, fora do Electron) e se
+  // autoelegeu, é ELE quem nos spawna — inverte a direção de controle que em
+  // produção é sempre Electron→backend. Nesse modo não somos donos do
+  // processo: não spawnamos nada, não escrevemos PID file, e `backend` fica
+  // `null` pra sempre — o que já faz `restartBackend`/`before-quit`
+  // no-oparem sozinhos (ambos são keyed em `backend?.pid`).
+  const external = resolveExternalBackendConnection(process.env);
+  if (external) {
+    backendPort = external.port;
+    backendPipePath = external.pipePath;
+    return;
+  }
   backendPort = await getFreePort();
   const natsBin = natsBinaryPath(
     process.env,

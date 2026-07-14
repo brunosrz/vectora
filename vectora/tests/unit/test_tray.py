@@ -1,6 +1,6 @@
 """Testes para backend/services/tray.py.
 
-Cobre: _has_display, _build_icon_image (ícone real + fallback), _enable_dark_mode_win32,
+Cobre: has_display, _build_icon_image (ícone real + fallback), _enable_dark_mode_win32,
 e run_server_with_tray (caminhos de degradação sem display/pystray/Pillow e sob Electron).
 """
 
@@ -15,49 +15,49 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # ---------------------------------------------------------------------------
-# _has_display
+# has_display
 # ---------------------------------------------------------------------------
 
 
 def test_has_display_windows_sempre_true(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "win32")
-    from backend.services.tray import _has_display
+    from backend.services.tray import has_display
 
-    assert _has_display() is True
+    assert has_display() is True
 
 
 def test_has_display_darwin_sempre_true(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "darwin")
-    from backend.services.tray import _has_display
+    from backend.services.tray import has_display
 
-    assert _has_display() is True
+    assert has_display() is True
 
 
 def test_has_display_linux_sem_env_false(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.delenv("DISPLAY", raising=False)
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
-    from backend.services.tray import _has_display
+    from backend.services.tray import has_display
 
-    assert _has_display() is False
+    assert has_display() is False
 
 
 def test_has_display_linux_com_display_true(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setenv("DISPLAY", ":0")
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
-    from backend.services.tray import _has_display
+    from backend.services.tray import has_display
 
-    assert _has_display() is True
+    assert has_display() is True
 
 
 def test_has_display_linux_com_wayland_true(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.delenv("DISPLAY", raising=False)
     monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-0")
-    from backend.services.tray import _has_display
+    from backend.services.tray import has_display
 
-    assert _has_display() is True
+    assert has_display() is True
 
 
 # ---------------------------------------------------------------------------

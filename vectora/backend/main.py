@@ -34,6 +34,7 @@ import contextlib
 import logging
 import signal
 import socket
+import subprocess  # nosec B404
 import sys
 import warnings
 from pathlib import Path
@@ -325,6 +326,30 @@ def _run_start(args: argparse.Namespace) -> None:
     port = args.port or int(os.environ.get("VECTORA_PORT") or 0) or 8080
     uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
 
+    # Electron-first mesmo em dev: em produção é o Electron quem spawna o
+    # backend (VECTORA_DESKTOP=1 já vem setado por ele). Quando rodado direto
+    # (`uv run vectora start`/binário fora do Electron) e nenhum dos dois já
+    # está setado, o próprio processo se autoelege "primário" — spawna o
+    # Electron dev build ele mesmo, invertendo a direção só nesse caso — e
+    # reusa o transporte IPC (unix socket/named pipe) que VECTORA_DESKTOP já
+    # decide mais abaixo, em vez de inventar um caminho novo. Sem display
+    # (VPS/Docker/CI) ou sem o build de dev do Electron disponível, cai no
+    # caminho de hoje sem nenhuma mudança de comportamento.
+    electron_launch: tuple[str, list[str]] | None = None
+    if not os.environ.get("VECTORA_DESKTOP") and not args.headless:
+        from backend.services.tray import has_display
+
+        if has_display():
+            from backend.services.electron_launcher import resolve_electron_launch
+
+            electron_launch = resolve_electron_launch()
+            if electron_launch is not None:
+                os.environ["VECTORA_DESKTOP"] = "1"
+                logger.info(
+                    "Electron (dev) resolvido — este processo vai spawná-lo "
+                    "após subir o backend"
+                )
+
     # TLS opcional — CLI tem prioridade; settings (env SSL_CERTFILE/SSL_KEYFILE
     # ou ~/.vectora/.env) é o fallback. Com cert+key o uvicorn serve https://,
     # necessário para Secure Context (crypto.randomUUID etc.) via IP de LAN.
@@ -388,6 +413,29 @@ def _run_start(args: argparse.Namespace) -> None:
         )
     server = uvicorn.Server(config)
 
+    def _spawn_electron(extra_env: dict[str, str]) -> subprocess.Popen[bytes] | None:
+        """Spawna o Electron (dev) resolvido acima, se houver. Nunca lança —
+        falha aqui só significa "sem janela", o servidor segue de pé."""
+        if electron_launch is None:
+            return None
+        exe, exe_args = electron_launch
+        env = {**os.environ, **extra_env, "VECTORA_EXTERNAL_BACKEND": "1"}
+        try:
+            proc = subprocess.Popen([exe, *exe_args], env=env)  # noqa: S603  # nosec B603
+        except Exception:
+            logger.exception("Falha ao spawnar Electron (dev) — seguindo sem janela")
+            return None
+        logger.info("Electron (dev) spawnado, pid=%d", proc.pid)
+        return proc
+
+    def _terminate_electron(proc: subprocess.Popen[bytes] | None) -> None:
+        if proc is None or proc.poll() is not None:
+            return
+        with contextlib.suppress(Exception):
+            proc.terminate()
+            with contextlib.suppress(subprocess.TimeoutExpired):
+                proc.wait(timeout=5)
+
     # Windows + VECTORA_DESKTOP: named pipe em vez de TCP — nenhuma porta TCP é
     # exposta ao SO. O Electron conecta via \\.\pipe\vectora-<pid>, lido de stdout.
     if sys.platform == "win32" and os.environ.get("VECTORA_DESKTOP"):
@@ -396,6 +444,10 @@ def _run_start(args: argparse.Namespace) -> None:
         _pipe = pipe_name()
         os.environ[PIPE_ENV_VAR] = _pipe
         print(f"{PIPE_ENV_VAR}={_pipe}", flush=True)
+
+        electron_proc = _spawn_electron(
+            {"VECTORA_PORT": str(port), PIPE_ENV_VAR: _pipe}
+        )
 
         async def _run_win() -> None:
             pipe_task = asyncio.create_task(serve_pipe(_pipe, "127.0.0.1", port))
@@ -406,7 +458,10 @@ def _run_start(args: argparse.Namespace) -> None:
                 with contextlib.suppress(asyncio.CancelledError):
                     await pipe_task
 
-        asyncio.run(_run_win())
+        try:
+            asyncio.run(_run_win())
+        finally:
+            _terminate_electron(electron_proc)
         return
 
     # Sobe o servidor e, quando há display, a bandeja do sistema (Python). Sem
@@ -418,12 +473,16 @@ def _run_start(args: argparse.Namespace) -> None:
     if sys.stdin.isatty() and not os.environ.get("VECTORA_DESKTOP"):
         _install_terminal_signals(server, icon_ref)
 
-    run_server_with_tray(
-        server,
-        f"{scheme}://localhost:{port}",
-        headless=args.headless,
-        icon_ref=icon_ref,
-    )
+    electron_proc = _spawn_electron({"VECTORA_PORT": str(port)})
+    try:
+        run_server_with_tray(
+            server,
+            f"{scheme}://localhost:{port}",
+            headless=args.headless,
+            icon_ref=icon_ref,
+        )
+    finally:
+        _terminate_electron(electron_proc)
 
     # Retorno do tray/servidor = shutdown concluído. No Windows, threads
     # não-daemon de libs externas (langsmith, httpx, SQLite do tracer, Cohere

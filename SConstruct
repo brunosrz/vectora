@@ -873,7 +873,19 @@ def _cmd(name: str, action, deps: list | None = None):
     return t
 
 
-_cmd("frontend", _action_build_chat)
+def _action_build_chat_and_electron(target, source, env):
+    """`scons frontend` builda a SPA e também o dev build do Electron
+    (`pnpm --dir electron install` + `build`, gerando `electron/dist/main.js`
+    e baixando o binário real do pacote npm `electron`). Electron-first em
+    dev (`backend/services/electron_launcher.py`) depende dos dois
+    existirem pro backend conseguir se autoeleger e spawnar o Electron
+    sozinho quando `uv run vectora start` roda direto, fora do Electron."""
+    _action_build_chat(target, source, env)
+    _action_install_desktop(target, source, env)
+    _action_build_desktop(target, source, env)
+
+
+_cmd("frontend", _action_build_chat_and_electron)
 
 _build_chat    = _node("build-chat",      _action_build_chat)
 # O binário nats-server precisa estar em vectora/resources/ ANTES tanto do

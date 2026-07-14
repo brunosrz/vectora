@@ -64,6 +64,31 @@ export function backendPath(
 }
 
 /**
+ * Resolução de conexão pra Electron-first em dev (Fase 1): quando o backend
+ * Python já é o processo primário e nos spawnou (invertendo a direção usual
+ * Electron→backend), ele sinaliza isso via `VECTORA_EXTERNAL_BACKEND=1` e já
+ * conhece porta/pipe de antemão — retorna `null` no caminho normal
+ * (produção, Electron spawna o backend) pra `startBackend()` seguir seu
+ * fluxo de sempre.
+ */
+export interface ExternalBackendConnection {
+  port: number | null;
+  pipePath: string | null;
+}
+
+export function resolveExternalBackendConnection(env: {
+  VECTORA_EXTERNAL_BACKEND?: string;
+  VECTORA_PORT?: string;
+  VECTORA_IPC_PIPE?: string;
+}): ExternalBackendConnection | null {
+  if (env.VECTORA_EXTERNAL_BACKEND !== "1") return null;
+  return {
+    port: Number(env.VECTORA_PORT) || null,
+    pipePath: env.VECTORA_IPC_PIPE ?? null,
+  };
+}
+
+/**
  * Resolve o binário nats-server empacotado (extraResources → resources/).
  * `existsFn` é injetável só pra testes puros sem tocar o filesystem real
  * (produção sempre passa `fs.existsSync`).

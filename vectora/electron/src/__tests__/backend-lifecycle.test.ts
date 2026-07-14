@@ -11,6 +11,7 @@ import {
   killBackendTree,
   backendPath,
   natsBinaryPath,
+  resolveExternalBackendConnection,
 } from "../backend-lifecycle.js";
 
 const DUMMY_BACKEND = path.join(__dirname, "fixtures", "dummy-backend.js");
@@ -101,6 +102,47 @@ describe("natsBinaryPath", () => {
   it("retorna o path quando o binário existe no resourcesPath", () => {
     const p = natsBinaryPath({}, "win32", "C:\\resources", () => true);
     expect(p).toBe(path.join("C:\\resources", "nats-server.exe"));
+  });
+});
+
+describe("resolveExternalBackendConnection", () => {
+  it("retorna null sem VECTORA_EXTERNAL_BACKEND=1 (caminho normal, produção)", () => {
+    expect(resolveExternalBackendConnection({})).toBeNull();
+    expect(
+      resolveExternalBackendConnection({ VECTORA_PORT: "8080" }),
+    ).toBeNull();
+  });
+
+  it("resolve porta e pipe quando o backend já é o processo primário", () => {
+    const result = resolveExternalBackendConnection({
+      VECTORA_EXTERNAL_BACKEND: "1",
+      VECTORA_PORT: "8080",
+      VECTORA_IPC_PIPE: "\\\\.\\pipe\\vectora-1234",
+    });
+    expect(result).toEqual({
+      port: 8080,
+      pipePath: "\\\\.\\pipe\\vectora-1234",
+    });
+  });
+
+  it("edge case: sem VECTORA_IPC_PIPE (Linux/macOS, usa unix socket fixo), pipePath fica null", () => {
+    const result = resolveExternalBackendConnection({
+      VECTORA_EXTERNAL_BACKEND: "1",
+      VECTORA_PORT: "8080",
+    });
+    expect(result).toEqual({ port: 8080, pipePath: null });
+  });
+
+  it("edge case: VECTORA_PORT ausente ou não-numérico vira null, não NaN", () => {
+    expect(
+      resolveExternalBackendConnection({ VECTORA_EXTERNAL_BACKEND: "1" })?.port,
+    ).toBeNull();
+    expect(
+      resolveExternalBackendConnection({
+        VECTORA_EXTERNAL_BACKEND: "1",
+        VECTORA_PORT: "not-a-number",
+      })?.port,
+    ).toBeNull();
   });
 });
 

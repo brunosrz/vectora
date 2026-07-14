@@ -134,7 +134,7 @@ def test_tray_exposes_icon_via_icon_ref() -> None:
 
     with (
         patch.dict("sys.modules", {"pystray": pystray_mock}),
-        patch("backend.services.tray._has_display", return_value=True),
+        patch("backend.services.tray.has_display", return_value=True),
         patch("backend.services.tray._build_icon_image", return_value=MagicMock()),
         patch("backend.services.tray._enable_dark_mode_win32"),
         patch("backend.services.tray.threading.Thread") as mock_thread,

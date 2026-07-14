@@ -37,7 +37,7 @@ _PURPLE = (124, 58, 237)
 _WHITE = (255, 255, 255)
 
 
-def _has_display() -> bool:
+def has_display() -> bool:
     """Heurística: existe um ambiente gráfico capaz de exibir uma bandeja?
 
     Windows e macOS sempre têm; em Linux/Unix exige X11 ou Wayland (``DISPLAY``
@@ -123,7 +123,7 @@ def run_server_with_tray(
         server.run()
         return
 
-    if not _has_display():
+    if not has_display():
         logger.info("tray: sem display — servidor puro")
         server.run()
         return
