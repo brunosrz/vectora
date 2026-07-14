@@ -325,6 +325,7 @@ markers = [
     "lifecycle: testes de ciclo de vida sequenciais na session 1212",
     "stress: testes de carga e concorrência — sem APIs externas, apenas infra local",
     "storage: testes de integração de storage — Postgres, Redis, Qdrant, SQLite, LanceDB (sobe docker automaticamente)",
+    "browser: testes que sobem Chromium real via Playwright — requer 'playwright install chromium'",
 ]
 
 [dependency-groups]
