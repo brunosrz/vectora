@@ -423,6 +423,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         except Exception:
             logger.debug("api/server: erro ao encerrar sessões de browser")
 
+        try:
+            from backend.browser.search_fallback import close_search_fallback_browser
+
+            close_search_fallback_browser()
+        except Exception:
+            logger.debug("api/server: erro ao encerrar Chromium do fallback de busca")
+
         # Ordem lógica: parar workers que podem estar usando o grafo ANTES de
         # fechar o checkpointer. Mas como ambos têm `try/except` internos e são
         # independentes na prática, rodamos em paralelo via `gather` para

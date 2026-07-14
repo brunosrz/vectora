@@ -72,6 +72,55 @@ def _is_quota_error(err: str) -> bool:
     )
 
 
+def _search_via_fallback(query: str) -> str:
+    """Fallback sem API key: API JSON oficial do DuckDuckGo (sem chave).
+
+    Nunca propaga — qualquer falha (rede, DNS) vira o mesmo erro textual
+    que já existia sem Tavily configurado.
+    """
+    try:
+        from backend.browser.search_fallback import search_fallback
+
+        results = search_fallback(query)
+        logger.info(
+            "web_search fallback completed",
+            extra={"query": query, "num_results": len(results)},
+        )
+        return json.dumps(results)
+    except Exception:
+        logger.exception("web_search fallback failed", extra={"query": query})
+        return json.dumps(
+            {
+                "status": "error",
+                "error": (
+                    "TAVILY_API_KEY not configured and the fallback search "
+                    "failed (network error). Set TAVILY_API_KEY to retry via "
+                    "Tavily."
+                ),
+            }
+        )
+
+
+def _fetch_via_fallback(url: str) -> str:
+    """Fallback sem API key para `fetch_url`: Chromium real (Playwright).
+    Mesmo contrato de `_search_via_fallback` — nunca propaga."""
+    try:
+        from backend.browser.search_fallback import fetch_fallback
+
+        content = fetch_fallback(url)
+        logger.info(
+            "fetch_url fallback completed",
+            extra={"url": url, "content_length": len(content)},
+        )
+        return content
+    except Exception:
+        logger.exception("fetch_url fallback failed", extra={"url": url})
+        return (
+            "Error: TAVILY_API_KEY not configured and the Chromium fallback "
+            "failed. Set TAVILY_API_KEY or run `playwright install chromium`."
+        )
+
+
 @tool(
     extras={
         "render_hint": "search_results",
@@ -110,13 +159,8 @@ def web_search(
         )
 
     if not settings.tavily_api_key:
-        logger.error("TAVILY_API_KEY not configured")
-        return json.dumps(
-            {
-                "status": "error",
-                "error": "TAVILY_API_KEY not configured. Set TAVILY_API_KEY environment variable.",
-            }
-        )
+        logger.warning("TAVILY_API_KEY not configured — usando fallback via Chromium")
+        return _search_via_fallback(query)
 
     logger.info("web_search tool called", extra={"query": query, "topic": topic})
 
@@ -167,15 +211,11 @@ def web_search(
                 status="error",
             )
         if _is_quota_error(err):
-            return json.dumps(
-                {
-                    "status": "quota_error",
-                    "error": (
-                        "**Tavily: quota/rate limit atingido.**\n"
-                        "Aguarde alguns minutos ou verifique seu plano em app.tavily.com."
-                    ),
-                }
+            logger.warning(
+                "Tavily quota/rate limit atingido — usando fallback via Chromium",
+                extra={"query": query},
             )
+            return _search_via_fallback(query)
         # TavilySearch levanta ToolException quando não há resultados —
         # para o cascading isso é uma lista vazia, não um erro.
         if "no search results found" in err.lower():
@@ -214,8 +254,8 @@ def fetch_url(url: str) -> str:
         return "Error: langchain-tavily não instalado. Cannot fetch URL."
 
     if not settings.tavily_api_key:
-        logger.error("TAVILY_API_KEY not configured")
-        return "Error: TAVILY_API_KEY not configured. Cannot fetch URL."
+        logger.warning("TAVILY_API_KEY not configured — usando fallback via Chromium")
+        return _fetch_via_fallback(url)
 
     logger.info("fetch_url tool called", extra={"url": url})
 
@@ -269,10 +309,11 @@ def fetch_url(url: str) -> str:
                 status="error",
             )
         if _is_quota_error(err):
-            return (
-                "**Tavily: quota/rate limit atingido.**\n"
-                "Aguarde alguns minutos ou verifique seu plano em app.tavily.com."
+            logger.warning(
+                "Tavily quota/rate limit atingido — usando fallback via Chromium",
+                extra={"url": url},
             )
+            return _fetch_via_fallback(url)
         if "no extracted results" in err.lower():
             return f"No content found at {url}"
         return "Error occurred fetching URL. Please check logs."
