@@ -25,7 +25,7 @@ def _isolated_runtime_settings(tmp_path: Path, monkeypatch):
 
     fresh = RuntimeSettings(path=tmp_path / "checkpoints.db")
     monkeypatch.setattr(rs_module, "runtime_settings", fresh)
-    yield fresh
+    return fresh
 
 
 def _async_bool(value: bool):

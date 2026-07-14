@@ -416,6 +416,9 @@ def _action_lint(target, source, env):
         _pnpm_install_if_needed("company", log)
         _run([PNPM, "--dir", "company", "run", "lint"], log=log)
         _run([PNPM, "--dir", "company", "run", "typecheck"], log=log)
+        # ── electron (main process, TS puro — sem oxlint/eslint configurado) ────
+        _pnpm_install_if_needed("vectora/electron", log)
+        _run([PNPM, "--dir", "vectora/electron", "exec", "tsc", "--noEmit"], log=log)
         # ── docs (Hugo + Hextra) ─────────────────────────────────────────────
         # Sem typecheck TS aqui — o gate é o próprio build do site. `hugo build`
         # já resolve o módulo Hextra pinado em go.mod sozinho — não rodar

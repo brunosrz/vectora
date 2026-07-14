@@ -45,9 +45,19 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
-async def _wait_port_open(port: int, timeout: float) -> None:
+_background_tasks: set[asyncio.Task[None]] = set()
+
+
+def _track(task: asyncio.Task[None]) -> None:
+    """Guarda referência forte à task — sem isso o event loop pode coletar
+    a task antes dela terminar (footgun documentado do asyncio.create_task)."""
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+
+
+async def _wait_port_open(port: int, timeout_s: float) -> None:
     loop = asyncio.get_event_loop()
-    deadline = loop.time() + timeout
+    deadline = loop.time() + timeout_s
     last_error: OSError | None = None
     while loop.time() < deadline:
         try:
@@ -60,13 +70,13 @@ async def _wait_port_open(port: int, timeout: float) -> None:
         await writer.wait_closed()
         return
     raise TimeoutError(
-        f"porta {port} não abriu em {timeout}s (último erro: {last_error})"
+        f"porta {port} não abriu em {timeout_s}s (último erro: {last_error})"
     )
 
 
-async def _wait_port_closed(port: int, timeout: float) -> None:
+async def _wait_port_closed(port: int, timeout_s: float) -> None:
     loop = asyncio.get_event_loop()
-    deadline = loop.time() + timeout
+    deadline = loop.time() + timeout_s
     while loop.time() < deadline:
         try:
             _, writer = await asyncio.open_connection("127.0.0.1", port)
@@ -75,7 +85,7 @@ async def _wait_port_closed(port: int, timeout: float) -> None:
         writer.close()
         await writer.wait_closed()
         await asyncio.sleep(0.2)
-    raise TimeoutError(f"porta {port} não fechou em {timeout}s")
+    raise TimeoutError(f"porta {port} não fechou em {timeout_s}s")
 
 
 async def _drain(stream: asyncio.StreamReader | None) -> None:
@@ -109,8 +119,8 @@ async def _spawn_backend(vectora_home: Path, port: int) -> asyncio.subprocess.Pr
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    asyncio.create_task(_drain(proc.stdout))
-    asyncio.create_task(_drain(proc.stderr))
+    _track(asyncio.create_task(_drain(proc.stdout)))
+    _track(asyncio.create_task(_drain(proc.stderr)))
     return proc
 
 
@@ -119,7 +129,7 @@ async def _spawned_backend(tmp_path: Path):
     port = _free_port()
     proc = await _spawn_backend(tmp_path, port)
     try:
-        await _wait_port_open(port, timeout=60.0)
+        await _wait_port_open(port, timeout_s=60.0)
         yield proc, port
     finally:
         if proc.returncode is None:
@@ -160,4 +170,4 @@ async def test_encerrar_o_processo_libera_a_porta_de_verdade(_spawned_backend):
     await asyncio.wait_for(proc.wait(), timeout=15.0)
 
     assert proc.returncode is not None
-    await _wait_port_closed(port, timeout=10.0)
+    await _wait_port_closed(port, timeout_s=10.0)

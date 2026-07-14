@@ -14,7 +14,7 @@ from backend.browser import session as browser_session
 
 
 def _chromium_available() -> bool:
-    import os
+    from pathlib import Path
 
     try:
         from playwright.sync_api import sync_playwright
@@ -23,7 +23,7 @@ def _chromium_available() -> bool:
 
     try:
         with sync_playwright() as p:
-            return os.path.isfile(p.chromium.executable_path)
+            return Path(p.chromium.executable_path).is_file()
     except Exception:
         return False
 

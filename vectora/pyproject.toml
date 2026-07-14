@@ -327,6 +327,7 @@ markers = [
     "storage: testes de integração de storage — Postgres, Redis, Qdrant, SQLite, LanceDB (sobe docker automaticamente)",
     "browser: testes que sobem Chromium real via Playwright — requer 'playwright install chromium'",
     "frontend_build: testes que sobem o backend real servindo frontend/dist — requer 'pnpm --dir frontend build'",
+    "electron_dev: testes que sobem o Electron dev build real — requer 'scons frontend' (ou 'pnpm --dir electron install && build')",
 ]
 
 [dependency-groups]

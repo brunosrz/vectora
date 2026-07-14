@@ -43,9 +43,21 @@ logger = logging.getLogger(__name__)
 
 _proc: asyncio.subprocess.Process | None = None
 _url: str | None = None
-_spawn_lock = asyncio.Lock()
+# Criado sob demanda (não no import) — um asyncio.Lock() de módulo, criado
+# antes de qualquer event loop rodar, fica "preso" ao primeiro loop que o
+# tocar; um segundo teste/processo com event loop novo (comum na suíte
+# pytest-asyncio, um loop por teste) levanta "Lock is bound to a different
+# event loop". Lazy-init garante que o lock sempre pertence ao loop atual.
+_spawn_lock: asyncio.Lock | None = None
 
 _READY_TIMEOUT_S = 10.0
+
+
+def _get_spawn_lock() -> asyncio.Lock:
+    global _spawn_lock
+    if _spawn_lock is None:
+        _spawn_lock = asyncio.Lock()
+    return _spawn_lock
 
 
 def _free_port() -> int:
@@ -120,7 +132,7 @@ async def ensure_nats_sidecar() -> str | None:
     """
     global _proc, _url
 
-    async with _spawn_lock:
+    async with _get_spawn_lock():
         if _proc is not None and _proc.returncode is None:
             return _url
 
@@ -187,7 +199,13 @@ def with_kill(proc: asyncio.subprocess.Process) -> None:
 
 async def stop_nats_sidecar() -> None:
     """Encerra o sidecar, se estiver rodando. Idempotente."""
-    global _proc, _url
+    global _proc, _url, _spawn_lock
+
+    # Solta a referência ao lock também quando não há processo rodando —
+    # entre testes (cada um com seu próprio event loop via pytest-asyncio),
+    # sem isso o lock ficaria preso ao loop do teste anterior e o próximo
+    # `_get_spawn_lock()` levantaria "Lock is bound to a different event loop".
+    _spawn_lock = None
 
     if _proc is None:
         return
