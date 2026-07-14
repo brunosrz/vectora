@@ -1,0 +1,163 @@
+"""Ciclo de vida completo do sidecar de frontend: build real servido por um
+backend spawnado como processo real — o mesmo caminho que o Electron usa em
+produção (``VECTORA_DESKTOP=1``, subprocess, health-check por HTTP).
+
+Diferente do resto da suíte (``TestClient``/``AsyncClient`` in-process contra
+a mesma app instanciada no processo de teste), aqui é um
+``python -m backend.main start`` de verdade, pego pra capturar bugs que só
+aparecem no boundary processo-a-processo: parsing de argumentos, resolução
+de porta, bind de host, serving de estático fora do event loop do teste.
+Skip limpo sem ``frontend/dist/index.html`` (roda ``pnpm --dir frontend
+build`` antes).
+"""
+
+from __future__ import annotations
+
+import asyncio
+import os
+import socket
+import sys
+from pathlib import Path
+
+import httpx
+import pytest
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_FRONTEND_DIST = _REPO_ROOT / "frontend" / "dist"
+
+
+def _frontend_dist_available() -> bool:
+    return (_FRONTEND_DIST / "index.html").is_file()
+
+
+pytestmark = [
+    pytest.mark.frontend_build,
+    pytest.mark.skipif(
+        not _frontend_dist_available(),
+        reason="frontend/dist ausente — rode `pnpm --dir frontend build` antes",
+    ),
+]
+
+
+def _free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+async def _wait_port_open(port: int, timeout: float) -> None:
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    last_error: OSError | None = None
+    while loop.time() < deadline:
+        try:
+            _, writer = await asyncio.open_connection("127.0.0.1", port)
+        except OSError as exc:
+            last_error = exc
+            await asyncio.sleep(0.2)
+            continue
+        writer.close()
+        await writer.wait_closed()
+        return
+    raise TimeoutError(
+        f"porta {port} não abriu em {timeout}s (último erro: {last_error})"
+    )
+
+
+async def _wait_port_closed(port: int, timeout: float) -> None:
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        try:
+            _, writer = await asyncio.open_connection("127.0.0.1", port)
+        except OSError:
+            return
+        writer.close()
+        await writer.wait_closed()
+        await asyncio.sleep(0.2)
+    raise TimeoutError(f"porta {port} não fechou em {timeout}s")
+
+
+async def _drain(stream: asyncio.StreamReader | None) -> None:
+    """Consome stdout/stderr do processo pra não travar o pipe do SO."""
+    if stream is None:
+        return
+    while not stream.at_eof():
+        await stream.read(4096)
+
+
+async def _spawn_backend(vectora_home: Path, port: int) -> asyncio.subprocess.Process:
+    env = dict(os.environ)
+    env["VECTORA_HOME"] = str(vectora_home)
+    # Mesmo caminho usado pelo Electron em produção: sem tray/GUI, servidor
+    # puro na main thread — evita popup de bandeja real durante o teste.
+    env["VECTORA_DESKTOP"] = "1"
+    env["VECTORA_UVICORN_LOG_LEVEL"] = "warning"
+    env.pop("VECTORA_SKIP_STATIC", None)  # garante que frontend/dist é servido
+
+    proc = await asyncio.create_subprocess_exec(
+        sys.executable,
+        "-m",
+        "backend.main",
+        "start",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        str(port),
+        cwd=str(_REPO_ROOT),
+        env=env,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    asyncio.create_task(_drain(proc.stdout))
+    asyncio.create_task(_drain(proc.stderr))
+    return proc
+
+
+@pytest.fixture
+async def _spawned_backend(tmp_path: Path):
+    port = _free_port()
+    proc = await _spawn_backend(tmp_path, port)
+    try:
+        await _wait_port_open(port, timeout=60.0)
+        yield proc, port
+    finally:
+        if proc.returncode is None:
+            proc.terminate()
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=10.0)
+            except TimeoutError:
+                proc.kill()
+                await proc.wait()
+
+
+async def test_backend_spawnado_serve_a_spa_real_e_responde_health(_spawned_backend):
+    _proc, port = _spawned_backend
+
+    async with httpx.AsyncClient(
+        base_url=f"http://127.0.0.1:{port}", timeout=10.0
+    ) as client:
+        health = await client.get("/health")
+        assert health.status_code == 200
+        assert health.json()["status"] == "ok"
+
+        index = await client.get("/")
+        assert index.status_code == 200
+        assert "<html" in index.text.lower()
+
+        # Par de erro: rota inexistente sob o catch-all da SPA cai no
+        # index.html (roteamento client-side no browser), não em 404 puro —
+        # comportamento documentado em server.py::_spa_or_static.
+        missing = await client.get("/uma-rota-que-nao-existe-no-backend")
+        assert missing.status_code == 200
+        assert missing.text == index.text
+
+
+async def test_encerrar_o_processo_libera_a_porta_de_verdade(_spawned_backend):
+    proc, port = _spawned_backend
+
+    proc.terminate()
+    await asyncio.wait_for(proc.wait(), timeout=15.0)
+
+    assert proc.returncode is not None
+    await _wait_port_closed(port, timeout=10.0)
