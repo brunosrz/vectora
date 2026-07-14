@@ -1,7 +1,0 @@
-allowBuilds:
-  electron: true
-  electron-winstaller: true
-minimumReleaseAgeExclude:
-  - "@opentelemetry/core@2.8.0"
-overrides:
-  "@opentelemetry/core@<2.8.0": ^2.8.0

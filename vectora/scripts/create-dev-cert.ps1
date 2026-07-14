@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Gera um certificado auto-assinado (RSA 2048, SHA-256, 3 anos) e exporta como PFX
-    em vectora/electron/build-resources/dev-cert.pfx.
+    em vectora/frontend/electron/build-resources/dev-cert.pfx.
 
     Quando executado como Administrador, também registra o certificado nos stores
     Root e TrustedPublisher (LocalMachine), eliminando o aviso do SmartScreen em
@@ -36,7 +36,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $scriptDir       = Split-Path -Parent $MyInvocation.MyCommand.Path
-$buildResources  = Join-Path $scriptDir "..\vectora\electron\build-resources"
+$buildResources  = Join-Path $scriptDir "..\frontend\electron\build-resources"
 New-Item -ItemType Directory -Force -Path $buildResources | Out-Null
 
 $pfxPath        = Join-Path $buildResources "dev-cert.pfx"

@@ -326,22 +326,22 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.VECTORA_RELEASES_TOKEN }}
         run: |
-          pnpm --dir electron install --frozen-lockfile
-          pnpm --dir electron build
-          pnpm --dir electron exec electron-builder --${{ matrix.target }} --publish always
+          pnpm --dir vectora/frontend install --frozen-lockfile
+          pnpm --dir vectora/frontend run electron:build
+          pnpm --dir vectora/frontend exec electron-builder --config electron/electron-builder.yml --${{ matrix.target }} --publish always
       - name: Upload installers
         uses: actions/upload-artifact@v7
         with:
           name: vectora-${{ matrix.target }}-${{ matrix.arch }}
           path: |
-            vectora/electron/dist-electron/*.exe
-            vectora/electron/dist-electron/*.msi
-            vectora/electron/dist-electron/*.dmg
-            vectora/electron/dist-electron/*.AppImage
-            vectora/electron/dist-electron/*.deb
-            vectora/electron/dist-electron/*.rpm
-            vectora/electron/dist-electron/latest*.yml
-            vectora/electron/dist-electron/*.blockmap
+            vectora/frontend/dist-electron/*.exe
+            vectora/frontend/dist-electron/*.msi
+            vectora/frontend/dist-electron/*.dmg
+            vectora/frontend/dist-electron/*.AppImage
+            vectora/frontend/dist-electron/*.deb
+            vectora/frontend/dist-electron/*.rpm
+            vectora/frontend/dist-electron/latest*.yml
+            vectora/frontend/dist-electron/*.blockmap
           if-no-files-found: warn
           retention-days: 30
 

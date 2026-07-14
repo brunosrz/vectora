@@ -148,7 +148,7 @@ Pipeline executado em sequência (encadeado automaticamente por `release`):
 
 ```
 build frontend (Vite)  -->  build híbrido do backend  -->  Electron + electron-builder
-frontend/dist/               dist/vectora/vectora(.exe)    electron/dist-electron/
+frontend/dist/               dist/vectora/vectora(.exe)    frontend/dist-electron/
 ```
 
 O "build híbrido" (`build-hybrid.py`, chamado pelo `scons`) compila **só o pacote `backend/`** em C via `Nuitka --mode=package` (gera `backend.pyd`) e depois usa **PyInstaller** para empacotar o launcher + `backend.pyd` + libs Python num único `vectora.exe`. Compilar só o backend (em vez de onefile puro) evita OOM ao compilar dependências gigantes (`google.genai.types`, LanceDB) para C. O pipeline de CI (GitHub Actions) ainda usa Nuitka onefile direto para as builds nativas de release — os dois caminhos convivem hoje.
@@ -160,7 +160,7 @@ scons tests            Suíte completa: pytest tests/ (unit+integration+e2e+stre
 scons coverage          Mesma suíte com relatório de cobertura
 scons lint              ruff + ty + bandit (Python) + tsc + oxlint (TypeScript)
 scons tests-storage     Só testes de storage (Postgres/Redis/Qdrant — sobe docker automaticamente)
-scons clean             Remove dist/ frontend/dist/ electron/dist*
+scons clean             Remove dist/ frontend/dist/ frontend/electron/dist*
 scons help              Lista completa com descrições
 ```
 

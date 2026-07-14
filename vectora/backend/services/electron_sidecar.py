@@ -40,8 +40,8 @@ def should_spawn_electron() -> bool:
     """True quando este processo deve se autoeleger e subir o Electron:
     não já rodando sob Electron (``VECTORA_DESKTOP`` setado externamente),
     sem ``--headless``, com display disponível, e o build de dev do
-    Electron resolvível (``scons frontend``/``pnpm --dir electron build``
-    já rodou). Chamada por ``_run_start`` (decide transporte IPC cedo) e
+    Electron resolvível (``scons frontend``/``pnpm --dir frontend run
+    electron:build`` já rodou). Chamada por ``_run_start`` (decide transporte IPC cedo) e
     reaproveitada aqui só como referência — a decisão real de spawnar
     chega via env (``VECTORA_SPAWN_ELECTRON``), setado por quem chamou
     esta função primeiro.

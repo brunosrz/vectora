@@ -24,7 +24,7 @@ Subprojetos cobertos por `scons lint` e `scons tests`:
 - `vectora/` — Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
 - `services/` — TypeScript (tsc, vitest) — relay + updates unificados
 - `company/` — TypeScript (eslint, tsc, vitest)
-- `vectora/electron/` — TypeScript (vitest — funções puras: cookie-utils)
+- `vectora/frontend/electron/` — TypeScript (vitest — funções puras: cookie-utils, lifecycle). Fundido no `package.json` do frontend (sem pacote npm próprio); só o `tsconfig.json` de compilação (Node/NodeNext) segue separado.
 - `docs/` — TypeScript (tsc) — sem testes
 
 Rodar teste específico (Python — a partir da raiz):
@@ -128,7 +128,7 @@ Vite + React + TanStack Router. SPA servida pelo FastAPI em produção (`StaticF
 
 ### Desktop
 
-Electron em `electron/`. Comunica com o backend via IPC (named pipe/unix socket), nunca TCP. `VECTORA_DESKTOP=1` ativa o modo desktop.
+Electron em `frontend/electron/` (fundido no `package.json` do frontend, sem pacote npm próprio). Comunica com o backend via IPC (named pipe/unix socket), nunca TCP. `VECTORA_DESKTOP=1` ativa o modo desktop.
 
 ### Docker (dev)
 

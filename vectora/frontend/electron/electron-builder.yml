@@ -39,10 +39,14 @@ protocols:
 
 directories:
   output: dist-electron
-  buildResources: build-resources
+  buildResources: electron/build-resources
 
+# Config carregado com `--config electron/electron-builder.yml`, executado com
+# cwd em vectora/frontend/ (pnpm --dir) — todo path relativo abaixo resolve
+# contra vectora/frontend/, não contra a pasta deste arquivo.
 files:
   - dist/**/*
+  - electron/dist/**/*
   - package.json
   - "!node_modules/**/{CHANGELOG.md,README.md,*.d.ts,test,tests}"
 
@@ -52,7 +56,7 @@ files:
 # electron-updater: arquivos não-alterados ficam byte-idênticos entre versões.
 # O app spawna resources/vectora-core/vectora.exe (electron/src/main.ts).
 extraResources:
-  - from: ../../dist/vectora
+  - from: ../dist/vectora
     to: vectora-core
   # Sidecar nats-server (fila/KV persistente): baixado por `scons nats` (dep do
   # release). O backend recebe o caminho via VECTORA_NATS_BINARY no spawn
@@ -61,9 +65,9 @@ extraResources:
     to: .
     filter:
       - nats-server*
-  - from: ../frontend/public/favicon-32x32.png
+  - from: public/favicon-32x32.png
     to: tray-icon.png
-  - from: ../frontend/public/vectora.ico
+  - from: public/vectora.ico
     to: vectora.ico
 
 # Janela de update aponta pro vectora-services público (sem token — Free
@@ -80,7 +84,7 @@ win:
       arch: [x64, arm64]
     - target: msi
       arch: [x64]
-  icon: ../frontend/public/vectora.ico
+  icon: public/vectora.ico
   # Sem opções de assinatura fixas: o electron-builder assina automaticamente
   # quando CSC_LINK + CSC_KEY_PASSWORD estão no env (CI, cert EV em base64) e
   # gera build NÃO-assinado quando não estão (dev local). Fixar
@@ -93,7 +97,7 @@ mac:
       arch: [arm64]
   # electron-builder gera o .icns a partir de um .svg/.png — .ico não é
   # aceito nesse pipeline (icon-tool.js só lê .png/.svg/.icns).
-  icon: ../frontend/public/vectora.svg
+  icon: public/vectora.svg
   category: public.app-category.developer-tools
   hardenedRuntime: true
   gatekeeperAssess: false
@@ -124,7 +128,7 @@ linux:
       arch: [x64, arm64]
     - target: rpm
       arch: [x64]
-  icon: ../frontend/public/favicon-600x600.png
+  icon: public/favicon-600x600.png
   category: Development
   # electron-builder 26: as chaves do .desktop ficam sob `desktop.entry`.
   desktop:
@@ -148,8 +152,8 @@ deb:
     - libdrm2
     - libgbm1
   priority: optional
-  afterInstall: build-resources/linux-after-install.sh
-  afterRemove: build-resources/linux-after-remove.sh
+  afterInstall: electron/build-resources/linux-after-install.sh
+  afterRemove: electron/build-resources/linux-after-remove.sh
 
 # Sem LICENSE no repo (produto proprietário, sem texto de licença definido
 # ainda) — electron-builder falha o build do AppImage se `license:` apontar
@@ -168,8 +172,8 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  installerIcon: ../frontend/public/vectora.ico
-  uninstallerIcon: ../frontend/public/vectora.ico
+  installerIcon: public/vectora.ico
+  uninstallerIcon: public/vectora.ico
   shortcutName: Vectora
   uninstallDisplayName: Vectora
   createDesktopShortcut: true

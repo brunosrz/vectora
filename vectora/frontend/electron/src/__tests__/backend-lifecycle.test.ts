@@ -14,7 +14,9 @@ import {
   resolveExternalBackendConnection,
 } from "../backend-lifecycle.js";
 
-const DUMMY_BACKEND = path.join(__dirname, "fixtures", "dummy-backend.js");
+// .cjs (não .js): frontend/package.json declara "type": "module" — sem a
+// extensão explícita, Node tentaria parsear este require() puro como ESM.
+const DUMMY_BACKEND = path.join(__dirname, "fixtures", "dummy-backend.cjs");
 
 let spawned: ChildProcess[] = [];
 

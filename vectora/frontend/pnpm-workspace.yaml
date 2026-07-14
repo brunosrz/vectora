@@ -12,11 +12,19 @@ allowBuilds:
   # decisão explícita de não rodar o build nativo — limpa o ERR_PNPM_IGNORED_BUILDS
   # sem compilar nada (prebuilt @img/sharp-* nem é baixado).
   sharp: false
+  # electron baixa o binário real (dist/electron.exe) no postinstall; sem
+  # allowBuilds o pnpm 11 bloqueia e o launcher de dev (electron_launcher.py)
+  # nunca encontra node_modules/electron/path.txt.
+  electron: true
+  electron-winstaller: true
+minimumReleaseAgeExclude:
+  - "@opentelemetry/core@2.8.0"
 # dompurify é puxado transitivamente por monaco-editor (era 3.2.7) e acumulou
 # várias advisories de XSS/prototype-pollution. O override força a versão
 # corrigida; 3.4.11 é mesmo major, API-compatível.
 overrides:
   dompurify: ^3.4.11
+  "@opentelemetry/core@<2.8.0": ^2.8.0
 # Deprecação upstream aceita conscientemente: glob@11.1.0 é puxado transitivamente
 # por workbox-build@7.4.1 (via vite-plugin-pwa) só em build-time para gerar o
 # service worker. O mantenedor do glob deprecou os majors < 13, mas o glob 13 tem

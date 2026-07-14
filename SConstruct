@@ -21,8 +21,10 @@ Instalar SCons: pip install scons (ou uv add --dev scons)
 
 Subprojetos cobertos por lint e tests:
     vectora/        Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
+                    — inclui vectora/frontend/electron/ (Electron: cookie-utils
+                    e lifecycle puro), fundido no package.json do frontend, sem
+                    pacote npm próprio (só tsconfig de compilação separado)
     company/        TypeScript (eslint, tsc, vitest)
-    electron/       TypeScript (vitest — cookie-utils e lifecycle puro)
     docs/           Hugo + Hextra (build check via `hugo --gc --minify`) — sem
                     testes; era Docusaurus, migrado pra Hugo
     services/       TypeScript (tsc, vitest) — relay + updates unificados
@@ -269,7 +271,9 @@ def _find_signtool() -> str | None:
 
 
 def _get_dev_cert_env() -> dict[str, str] | None:
-    pfx_path = os.path.join(VECTORA, "electron", "build-resources", "dev-cert.pfx")
+    pfx_path = os.path.join(
+        VECTORA, "frontend", "electron", "build-resources", "dev-cert.pfx"
+    )
     if not os.path.isfile(pfx_path):
         return None
     password = os.environ.get("DEV_CSC_PASSWORD", "vectora-dev")
@@ -279,7 +283,9 @@ def _get_dev_cert_env() -> dict[str, str] | None:
 
 
 def _sign_binary(binary: str) -> None:
-    pfx_path = os.path.join(VECTORA, "electron", "build-resources", "dev-cert.pfx")
+    pfx_path = os.path.join(
+        VECTORA, "frontend", "electron", "build-resources", "dev-cert.pfx"
+    )
     if not os.path.isfile(pfx_path) or not os.path.isfile(binary):
         return
     signtool = _find_signtool()
@@ -292,11 +298,16 @@ def _sign_binary(binary: str) -> None:
 
 
 def _action_install_desktop(target, source, env):
-    _run([PNPM, "--dir", "vectora/electron", "install", "--frozen-lockfile"])
+    # Electron não tem package.json próprio — fundido em vectora/frontend/
+    # (ver electron_launcher.py). Instalar aqui é o mesmo install do frontend;
+    # existe como node separado só pra manter a árvore de dependências do
+    # SConstruct explícita (_build_desktop depende deste node, não do
+    # build-chat, que pode não ter rodado no pipeline de release).
+    _run([PNPM, "--dir", "vectora/frontend", "install", "--frozen-lockfile"])
 
 
 def _action_build_desktop(target, source, env):
-    _run([PNPM, "--dir", "vectora/electron", "build"])
+    _run([PNPM, "--dir", "vectora/frontend", "run", "electron:build"])
 
 
 def _free_desktop_dist() -> None:
@@ -308,7 +319,7 @@ def _free_desktop_dist() -> None:
         stderr=subprocess.DEVNULL,
         check=False,
     )
-    unpacked = os.path.join(VECTORA, "electron", "dist-electron", "win-unpacked")
+    unpacked = os.path.join(VECTORA, "frontend", "dist-electron", "win-unpacked")
     if os.path.isdir(unpacked):
         shutil.rmtree(unpacked, ignore_errors=True)
         print(">> limpou win-unpacked travado (lock prevention)")
@@ -331,7 +342,10 @@ def _action_package(target, source, env, platform=""):
     os.makedirs(out_dir, exist_ok=True)
 
     flag = {"win": "--win", "mac": "--mac", "linux": "--linux"}.get(platform)
-    cmd = [PNPM, "--dir", "vectora/electron", "exec", "electron-builder"]
+    cmd = [
+        PNPM, "--dir", "vectora/frontend", "exec", "electron-builder",
+        "--config", "electron/electron-builder.yml",
+    ]
     if flag:
         cmd.append(flag)
     cmd.append(f"-c.directories.output={out_dir}")
@@ -354,7 +368,7 @@ def _action_package(target, source, env, platform=""):
             build_env["CSC_IDENTITY_AUTO_DISCOVERY"] = "false"
     _run(cmd, env=build_env or None)
 
-    dest = os.path.join(VECTORA, "electron", "dist-electron")
+    dest = os.path.join(VECTORA, "frontend", "dist-electron")
     os.makedirs(dest, exist_ok=True)
     patterns = (
         "*.exe", "*.msi", "*.dmg", "*.AppImage", "*.deb", "*.rpm",
@@ -416,9 +430,13 @@ def _action_lint(target, source, env):
         _pnpm_install_if_needed("company", log)
         _run([PNPM, "--dir", "company", "run", "lint"], log=log)
         _run([PNPM, "--dir", "company", "run", "typecheck"], log=log)
-        # ── electron (main process, TS puro — sem oxlint/eslint configurado) ────
-        _pnpm_install_if_needed("vectora/electron", log)
-        _run([PNPM, "--dir", "vectora/electron", "exec", "tsc", "--noEmit"], log=log)
+        # ── electron (main process, TS puro — sem oxlint/eslint configurado).
+        # Fundido no package.json do frontend (mesmo node_modules); só o
+        # tsconfig de compilação (Node/NodeNext) segue separado. ───────────
+        _run(
+            [PNPM, "--dir", "vectora/frontend", "exec", "tsc", "-p", "electron/tsconfig.json", "--noEmit"],
+            log=log,
+        )
         # ── docs (Hugo + Hextra) ─────────────────────────────────────────────
         # Sem typecheck TS aqui — o gate é o próprio build do site. `hugo build`
         # já resolve o módulo Hextra pinado em go.mod sozinho — não rodar
@@ -452,8 +470,8 @@ def _action_tests_storage(target, source, env):
 
 
 def _run_full_suite(log, *, coverage: bool):
-    """Suíte completa: vectora (vitest + pytest) + company + electron
-    + services (vitest — relay + updates unificados).
+    """Suíte completa: vectora (vitest + pytest, inclui electron fundido no
+    frontend) + company + services (vitest — relay + updates unificados).
 
     docs não tem testes — coberto só pelo lint (typecheck).
 
@@ -474,6 +492,9 @@ def _run_full_suite(log, *, coverage: bool):
     frontend_vite_cache = os.path.join(VECTORA, "frontend", "node_modules", ".vite")
     shutil.rmtree(frontend_vite_cache, ignore_errors=True)
 
+    # electron/src/__tests__/*.test.ts (cookie-utils, lifecycle puro) roda
+    # junto — fundido no package.json do frontend, sem invocação separada;
+    # vitest pega esses arquivos pelo include default (**/*.test.ts).
     vitest_cmd = [PNPM, "--dir", "vectora/frontend", "exec", "vitest", "run"]
     if coverage:
         vitest_cmd.append("--coverage")
@@ -492,10 +513,6 @@ def _run_full_suite(log, *, coverage: bool):
     # ── company ───────────────────────────────────────────────────────────────
     _pnpm_install_if_needed("company", log)
     _run([PNPM, "--dir", "company", "run", "test"], log=log)
-
-    # ── electron (cookie-utils e lifecycle puro) ───────────────────────────
-    _pnpm_install_if_needed("vectora/electron", log)
-    _run([PNPM, "--dir", "vectora/electron", "run", "test"], log=log)
 
     # ── services (relay + updates unificados; worker.ts + scripts/release.ts) ─
     _pnpm_install_if_needed("services", log)
@@ -623,8 +640,8 @@ def _action_clean(target, source, env):
         "vectora/frontend/dist",
         "vectora/frontend/.next",
         "vectora/frontend/out",
-        "vectora/electron/dist",
-        "vectora/electron/dist-electron",
+        "vectora/frontend/electron/dist",
+        "vectora/frontend/dist-electron",
         "docs/public",
         "docs/resources",
     ]
@@ -878,11 +895,12 @@ def _cmd(name: str, action, deps: list | None = None):
 
 def _action_build_chat_and_electron(target, source, env):
     """`scons frontend` builda a SPA e também o dev build do Electron
-    (`pnpm --dir electron install` + `build`, gerando `electron/dist/main.js`
-    e baixando o binário real do pacote npm `electron`). Electron-first em
-    dev (`backend/services/electron_launcher.py`) depende dos dois
-    existirem pro backend conseguir se autoeleger e spawnar o Electron
-    sozinho quando `uv run vectora start` roda direto, fora do Electron."""
+    (`pnpm --dir frontend install` + `run electron:build`, gerando
+    `frontend/electron/dist/main.js` e baixando o binário real do pacote npm
+    `electron` pro node_modules do frontend). Electron-first em dev
+    (`backend/services/electron_launcher.py`) depende dos dois existirem pro
+    backend conseguir se autoeleger e spawnar o Electron sozinho quando
+    `uv run vectora start` roda direto, fora do Electron."""
     _action_build_chat(target, source, env)
     _action_install_desktop(target, source, env)
     _action_build_desktop(target, source, env)

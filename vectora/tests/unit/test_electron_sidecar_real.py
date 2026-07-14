@@ -25,7 +25,8 @@ from backend.services.electron_launcher import resolve_electron_launch
 pytestmark = pytest.mark.skipif(
     resolve_electron_launch() is None,
     reason="build de dev do Electron ausente — rode `scons frontend` (ou "
-    "`pnpm --dir electron install && pnpm --dir electron build`)",
+    "`pnpm --dir vectora/frontend install && pnpm --dir vectora/frontend run "
+    "electron:build`)",
 )
 
 

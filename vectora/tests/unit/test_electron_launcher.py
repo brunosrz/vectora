@@ -14,20 +14,28 @@ import pytest
 from backend.services import electron_launcher
 
 _ELECTRON_DEV_UNAVAILABLE_REASON = (
-    "build de dev do Electron ausente — rode `pnpm --dir electron install && "
-    "pnpm --dir electron build` (ou `scons frontend`)"
+    "build de dev do Electron ausente — rode `pnpm --dir vectora/frontend "
+    "install && pnpm --dir vectora/frontend run electron:build` (ou "
+    "`scons frontend`)"
 )
+
+
+def _patch_dirs(monkeypatch, frontend_dir: Path, electron_dir: Path) -> None:
+    """node_modules/electron/ vive em frontend_dir (pacote único); dist/main.js
+    vive em electron_dir (tsconfig próprio, ver electron_launcher.py)."""
+    monkeypatch.setattr(electron_launcher, "_frontend_dir", lambda: frontend_dir)
+    monkeypatch.setattr(electron_launcher, "_electron_dir", lambda: electron_dir)
 
 
 class TestResolveElectronLaunch:
     def test_sem_main_js_retorna_none(self, tmp_path: Path, monkeypatch):
-        monkeypatch.setattr(electron_launcher, "_electron_dir", lambda: tmp_path)
+        _patch_dirs(monkeypatch, tmp_path, tmp_path)
         assert electron_launcher.resolve_electron_launch() is None
 
     def test_sem_path_txt_retorna_none(self, tmp_path: Path, monkeypatch):
         (tmp_path / "dist").mkdir()
         (tmp_path / "dist" / "main.js").write_text("// main", encoding="utf-8")
-        monkeypatch.setattr(electron_launcher, "_electron_dir", lambda: tmp_path)
+        _patch_dirs(monkeypatch, tmp_path, tmp_path)
         assert electron_launcher.resolve_electron_launch() is None
 
     def test_path_txt_vazio_retorna_none(self, tmp_path: Path, monkeypatch):
@@ -36,7 +44,7 @@ class TestResolveElectronLaunch:
         node_electron = tmp_path / "node_modules" / "electron"
         node_electron.mkdir(parents=True)
         (node_electron / "path.txt").write_text("", encoding="utf-8")
-        monkeypatch.setattr(electron_launcher, "_electron_dir", lambda: tmp_path)
+        _patch_dirs(monkeypatch, tmp_path, tmp_path)
         assert electron_launcher.resolve_electron_launch() is None
 
     def test_binario_referenciado_nao_existe_retorna_none(
@@ -49,14 +57,16 @@ class TestResolveElectronLaunch:
         node_electron = tmp_path / "node_modules" / "electron"
         node_electron.mkdir(parents=True)
         (node_electron / "path.txt").write_text("electron.exe", encoding="utf-8")
-        monkeypatch.setattr(electron_launcher, "_electron_dir", lambda: tmp_path)
+        _patch_dirs(monkeypatch, tmp_path, tmp_path)
         assert electron_launcher.resolve_electron_launch() is None
 
     def test_tudo_presente_resolve_executavel_e_main_js(
         self, tmp_path: Path, monkeypatch
     ):
-        (tmp_path / "dist").mkdir()
-        main_js = tmp_path / "dist" / "main.js"
+        electron_dir = tmp_path / "electron"
+        electron_dir.mkdir()
+        (electron_dir / "dist").mkdir()
+        main_js = electron_dir / "dist" / "main.js"
         main_js.write_text("// main", encoding="utf-8")
         node_electron_dist = tmp_path / "node_modules" / "electron" / "dist"
         node_electron_dist.mkdir(parents=True)
@@ -65,7 +75,7 @@ class TestResolveElectronLaunch:
         )
         exe = node_electron_dist / "electron.exe"
         exe.write_bytes(b"fake binary")
-        monkeypatch.setattr(electron_launcher, "_electron_dir", lambda: tmp_path)
+        _patch_dirs(monkeypatch, tmp_path, electron_dir)
 
         result = electron_launcher.resolve_electron_launch()
 

@@ -20,7 +20,12 @@ export default defineConfig({
     // runner do Playwright e o `@playwright/test`. Sem este exclude, o vitest
     // (include default `**/*.spec.ts`) tentaria rodá-los e o `scons tests`
     // quebraria. E2e roda à parte via `pnpm test:e2e`.
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    //
+    // electron/dist/**: saída compilada do tsc (electron/tsconfig.json inclui
+    // src/**/* inteiro, inclusive __tests__/) — sem este exclude o vitest
+    // roda os mesmos testes duas vezes (fonte .ts em electron/src/ e a cópia
+    // .js compilada em electron/dist/).
+    exclude: [...configDefaults.exclude, "e2e/**", "electron/dist/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

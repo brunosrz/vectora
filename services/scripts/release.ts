@@ -1,5 +1,5 @@
 /**
- * Publica os instaladores de `vectora/electron/dist-electron/` no R2 e atualiza
+ * Publica os instaladores de `vectora/frontend/dist-electron/` no R2 e atualiza
  * o canal de release no KV (`channels.<channel>.version`).
  *
  * Uso (depois de `scons release`, a partir de services/):
@@ -89,7 +89,7 @@ export function parseArgs(argv: string[]) {
   const version = args.version;
   const dist =
     args.dist ??
-    join(__dirname, "..", "..", "vectora", "electron", "dist-electron");
+    join(__dirname, "..", "..", "vectora", "frontend", "dist-electron");
   if (!version) {
     throw new Error("--version=X.Y.Z é obrigatório");
   }

@@ -434,6 +434,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    icon: resolveAppIcon(),
     // Titlebar customizada (estilo VS Code, ver src/components/layout/title-bar.tsx
     // no frontend) — a janela nativa não desenha min/max/close nem título; o
     // renderer é responsável pelos controles e pela região arrastável.
@@ -495,17 +496,33 @@ function createWindow(): void {
 // ---------------------------------------------------------------------------
 
 function getTrayIcon(): Electron.NativeImage {
-  // electron-builder copia ``build-resources/icon.png`` para ``resources/``;
-  // em dev usa o favicon do chat como fallback.
+  // electron-builder copia frontend/public/favicon-32x32.png pra
+  // resources/tray-icon.png (ver electron-builder.yml, extraResources); em
+  // dev usa o favicon do frontend direto da fonte como fallback.
   const candidates = [
     path.join(process.resourcesPath, "tray-icon.png"),
-    path.join(__dirname, "..", "..", "chat", "public", "favicon-32x32.png"),
+    path.join(__dirname, "..", "..", "public", "favicon-32x32.png"),
   ];
   for (const c of candidates) {
     const img = nativeImage.createFromPath(c);
     if (!img.isEmpty()) return img;
   }
   return nativeImage.createEmpty();
+}
+
+/**
+ * Ícone da janela/taskbar. Em produção o electron-builder já embute o
+ * ícone no `.exe` compilado (via `icon:` do electron-builder.yml) — mas o
+ * binário genérico do pacote npm `electron` usado em dev não tem esse
+ * embed, então sem setar `icon:` no BrowserWindow explicitamente a
+ * taskbar mostra o ícone padrão do Electron, não o da Vectora.
+ */
+function resolveAppIcon(): string | undefined {
+  const candidates = [
+    path.join(process.resourcesPath || "", "vectora.ico"), // produção (extraResources)
+    path.join(__dirname, "..", "..", "public", "vectora.ico"), // dev
+  ];
+  return candidates.find((c) => fs.existsSync(c));
 }
 
 function createTray(): void {

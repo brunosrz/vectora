@@ -101,7 +101,7 @@ handler):
 ## Publicar um release
 
 Depois de `scons release-<os>` gerar os instaladores em
-`vectora/electron/dist-electron/`:
+`vectora/frontend/dist-electron/`:
 
 ```powershell
 pnpm run release -- --version=X.Y.Z
