@@ -30,6 +30,22 @@ def _isolated_env_file(tmp_path: Path, monkeypatch):
     return env_file
 
 
+@pytest.fixture(autouse=True)
+def _clean_mcp_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Remove todas as keys MCP + LLM_PROVIDER do ambiente antes de cada teste.
+
+    Sem isso, os testes ficam dependentes do shell de quem roda (ex: LangSmith
+    tracing ligado localmente via LANGSMITH_TRACING/LANGSMITH_PROJECT) — uma
+    lista parcial mantida à mão em cada teste dessincroniza de _MCP_ENV_KEYS
+    silenciosamente quando uma key nova é adicionada lá.
+    """
+    from backend.mcp.env_bootstrap import _MCP_ENV_KEYS
+
+    for key, _ in _MCP_ENV_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+
+
 class TestBootstrapLlmProviderFromMcp:
     def test_persiste_provider_do_ambiente_em_app_settings(
         self, monkeypatch, _isolated_runtime_settings
@@ -49,7 +65,9 @@ class TestBootstrapLlmProviderFromMcp:
 
         monkeypatch.delenv("LLM_PROVIDER", raising=False)
         assert _bootstrap_llm_provider_from_mcp() is False
-        assert _isolated_runtime_settings.get("active_provider") is None
+        # get() sempre cai no default ("google-genai") — o contrato real é
+        # que a chave nunca foi explicitamente persistida.
+        assert not _isolated_runtime_settings.has("active_provider")
 
     def test_nao_sobrescreve_provider_ja_configurado(
         self, monkeypatch, _isolated_runtime_settings
@@ -72,12 +90,6 @@ class TestBootstrapEnvFromMcpDoesNotWriteLlmProviderToEnvFile:
         from backend.mcp.env_bootstrap import bootstrap_env_from_mcp
 
         monkeypatch.setenv("LLM_PROVIDER", "cohere")
-        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
-        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        monkeypatch.delenv("COHERE_API_KEY", raising=False)
-        monkeypatch.delenv("TAVILY_API_KEY", raising=False)
-        monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
 
         result = bootstrap_env_from_mcp()
 
@@ -92,13 +104,7 @@ class TestBootstrapEnvFromMcpDoesNotWriteLlmProviderToEnvFile:
     ):
         from backend.mcp.env_bootstrap import bootstrap_env_from_mcp
 
-        monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("COHERE_API_KEY", "sk-test-123")
-        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
-        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        monkeypatch.delenv("TAVILY_API_KEY", raising=False)
-        monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
 
         result = bootstrap_env_from_mcp()
 

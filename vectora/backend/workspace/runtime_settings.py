@@ -139,6 +139,15 @@ class RuntimeSettings:
         """Retorna valor do cache em memória, com fallback para _DEFAULTS."""
         return self._data.get(key, _DEFAULTS.get(key, default))
 
+    def has(self, key: str) -> bool:
+        """True se `key` foi explicitamente persistida — ignora `_DEFAULTS`.
+
+        `get()` sempre cai no default quando a chave não está em `self._data`,
+        então nunca é `None`/falsy pra chaves com default — inútil pra
+        distinguir "nunca configurado" de "configurado igual ao default".
+        """
+        return key in self._data
+
     def set(self, key: str, value: object) -> None:
         """Persiste um valor de forma thread-safe (SQLite + cache em memória)."""
         with self._lock:

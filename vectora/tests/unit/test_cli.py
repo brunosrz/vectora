@@ -136,8 +136,14 @@ def test_run_docker_falha_sai_com_erro(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_run_qdrant_ok_persiste_env(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    from backend.workspace import runtime_settings as rs_module
+    from backend.workspace.runtime_settings import RuntimeSettings
+
     monkeypatch.setattr("backend.cli.infra.Console", _null_console)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+
+    fresh = RuntimeSettings(path=tmp_path / "checkpoints.db")
+    monkeypatch.setattr(rs_module, "runtime_settings", fresh)
 
     async def _ok(url: str, api_key: str | None) -> None:
         return None
@@ -148,7 +154,8 @@ def test_run_qdrant_ok_persiste_env(
     env = (tmp_path / ".vectora" / ".env").read_text(encoding="utf-8")
     assert "QDRANT_URL=https://q.example" in env
     assert "QDRANT_API_KEY=secret" in env
-    assert "STORAGE_MODE=complete" in env
+    # storage_mode agora vive em app_settings (SQLite), não no .env.
+    assert fresh.storage_mode == "complete"
 
 
 def test_run_qdrant_sem_url_sai(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -50,7 +50,7 @@ def _bootstrap_llm_provider_from_mcp() -> bool:
         return False
     from backend.workspace.runtime_settings import runtime_settings
 
-    if runtime_settings.get("active_provider"):
+    if runtime_settings.has("active_provider"):
         return False
     runtime_settings.set("active_provider", provider)
     logger.info("env_bootstrap: LLM_PROVIDER=%s persistido em app_settings", provider)

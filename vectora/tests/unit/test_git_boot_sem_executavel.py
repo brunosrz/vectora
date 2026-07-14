@@ -20,10 +20,24 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
+def _dir_has_git_executable(dirpath: str) -> bool:
+    """True se `dirpath` contém um executável `git`/`git.exe` de verdade.
+
+    Filtrar por substring "git" no NOME do diretório só funciona no Windows
+    (`C:\\Program Files\\Git\\cmd`) — no Linux o git mora em `/usr/bin/git`,
+    um diretório cujo nome não menciona "git". Checar o arquivo real
+    funciona nas duas plataformas por construção.
+    """
+    exe_names = ("git.exe", "git") if os.name == "nt" else ("git",)
+    return any((Path(dirpath) / name).is_file() for name in exe_names)
+
+
 def _run_without_git_on_path(code: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     stripped = os.pathsep.join(
-        p for p in env.get("PATH", "").split(os.pathsep) if "git" not in p.lower()
+        p
+        for p in env.get("PATH", "").split(os.pathsep)
+        if p and not _dir_has_git_executable(p)
     )
     env["PATH"] = stripped
     env.pop("GIT_PYTHON_REFRESH", None)
