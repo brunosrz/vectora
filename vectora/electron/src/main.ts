@@ -16,7 +16,7 @@
  * Não roda lógica de negócio — é casca nativa que orquestra o backend.
  */
 
-import { spawn, spawnSync, ChildProcess } from "child_process";
+import { ChildProcess } from "child_process";
 import * as fs from "fs";
 import {
   app,
@@ -32,13 +32,22 @@ import {
 } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as http from "http";
-import * as net from "net";
 import * as os from "os";
 import * as path from "path";
 import { Readable } from "stream";
 // tree-kill ships its own types — no @types/tree-kill needed.
 import treeKill = require("tree-kill");
 import { parseSetCookieHeader, buildCookieHeader } from "./cookie-utils.js";
+import {
+  getFreePort,
+  backendPath,
+  natsBinaryPath,
+  spawnBackendProcess,
+  IpcPipeParser,
+  pingBackendHttp,
+  waitForBackendReady,
+  killBackendTree,
+} from "./backend-lifecycle.js";
 
 interface UpdateStatus {
   state:
@@ -272,94 +281,47 @@ async function forwardToBackend(request: Request): Promise<Response> {
 
 /** Health-check do backend pelo transporte IPC (UDS ou TCP). */
 function pingBackend(): Promise<boolean> {
-  return new Promise((resolve) => {
-    const req = http.request(
-      { ...backendTransport(), method: "GET", path: "/health" },
-      (res) => {
-        res.resume();
-        resolve((res.statusCode ?? 500) < 400);
-      },
-    );
-    req.on("error", () => resolve(false));
-    req.end();
-  });
+  return pingBackendHttp(backendTransport(), "/health");
 }
 
 // ---------------------------------------------------------------------------
-// Backend lifecycle
+// Backend lifecycle — spawn/path/health-check em backend-lifecycle.ts
+// (extraído pra ser testável sem `electron`); aqui só a cola com o estado
+// do processo main (backend, backendPort, backendPipePath, _backendLog).
 // ---------------------------------------------------------------------------
 
-function getFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer();
-    srv.listen(0, "127.0.0.1", () => {
-      const address = srv.address();
-      if (address && typeof address === "object") {
-        const port = address.port;
-        srv.close(() => resolve(port));
-      } else {
-        srv.close();
-        reject(new Error("Sem porta livre."));
-      }
-    });
-  });
-}
-
-/**
- * Resolve o path do binário Nuitka. Em produção: ``resources/vectora-core/``
- * (electron-builder usa ``extraResources``). Em dev: override por env
- * ``VECTORA_CORE_PATH`` para apontar a um build local.
- */
-function backendPath(): string {
-  const override = process.env.VECTORA_CORE_PATH;
-  if (override) {
-    return path.join(
-      override,
-      process.platform === "win32" ? "vectora.exe" : "vectora",
-    );
-  }
-  const resources = process.resourcesPath || path.join(__dirname, "..");
-  const exe = process.platform === "win32" ? "vectora.exe" : "vectora";
-  return path.join(resources, "vectora-core", exe);
-}
-
-/**
- * Resolve o binário nats-server empacotado (extraResources → resources/), pra
- * passar ao backend via VECTORA_NATS_BINARY. Retorna null se ausente (dev sem
- * `scons nats`) — aí o backend cai no PATH/resource ou no fallback em memória.
- * Override por env em dev: VECTORA_NATS_BINARY já tem prioridade no backend.
- */
-function natsBinaryPath(): string | null {
-  if (process.env.VECTORA_NATS_BINARY) return process.env.VECTORA_NATS_BINARY;
-  const resources = process.resourcesPath || path.join(__dirname, "..");
-  const exe = process.platform === "win32" ? "nats-server.exe" : "nats-server";
-  const p = path.join(resources, exe);
-  return fs.existsSync(p) ? p : null;
-}
+const _resourcesPath = (): string =>
+  process.resourcesPath || path.join(__dirname, "..");
 
 async function startBackend(): Promise<void> {
   backendPort = await getFreePort();
-  const natsBin = natsBinaryPath();
+  const natsBin = natsBinaryPath(
+    process.env,
+    process.platform,
+    _resourcesPath(),
+    fs.existsSync,
+  );
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     VECTORA_PORT: String(backendPort),
     VECTORA_DESKTOP: "1",
     ...(natsBin ? { VECTORA_NATS_BINARY: natsBin } : {}),
   };
-  backend = spawn(backendPath(), ["start"], {
-    env,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const exePath = backendPath(process.env, process.platform, _resourcesPath());
+  backend = spawnBackendProcess(exePath, ["start"], env);
   if (backend.pid) {
     fs.promises
       .writeFile(_BACKEND_PID_FILE, String(backend.pid), "utf-8")
       .catch(() => {});
   }
+  const pipeParser = new IpcPipeParser();
   backend.stdout?.on("data", (b: Buffer) => {
     const text = b.toString();
-    // Lê VECTORA_IPC_PIPE=<path> do stdout para usar named pipe no Windows.
-    const match = /VECTORA_IPC_PIPE=(.+)/.exec(text);
-    if (match) backendPipePath = match[1].trim();
+    // Lê VECTORA_IPC_PIPE=<path> do stdout para usar named pipe no Windows —
+    // acumula chunks até fechar linha, protegendo contra write parcial do
+    // kernel fatiar o marcador entre dois eventos "data".
+    const pipe = pipeParser.push(text);
+    if (pipe) backendPipePath = pipe;
     _backendLog.push(text);
     if (_backendLog.length > _MAX_LOG_LINES) _backendLog.shift();
     process.stdout.write(`[backend] ${text}`);
@@ -426,26 +388,17 @@ async function restartBackend(): Promise<void> {
  * Falha imediatamente se o processo backend já terminou (crash no startup).
  */
 async function waitForBackend(): Promise<void> {
-  const deadline = Date.now() + READINESS_TIMEOUT_MS;
-  let delay = HEALTH_BASE_DELAY_MS;
-  while (Date.now() < deadline) {
-    // Detecta crash de startup sem esperar o timeout completo.
-    if (backend !== null && backend.exitCode !== null) {
-      const logs = _backendLog.slice(-20).join("").trim();
-      throw new Error(
-        `Backend encerrou inesperadamente (code=${backend.exitCode}).` +
-          (logs ? `\n\nÚltimos logs:\n${logs}` : ""),
-      );
-    }
-    if (await pingBackend()) return;
-    await new Promise((r) => setTimeout(r, delay));
-    delay = Math.min(delay * 2, HEALTH_MAX_DELAY_MS);
-  }
-  const logs = _backendLog.slice(-20).join("").trim();
-  throw new Error(
-    `Backend não respondeu em ${READINESS_TIMEOUT_MS / 1000}s.` +
-      (logs ? `\n\nÚltimos logs:\n${logs}` : ""),
-  );
+  await waitForBackendReady({
+    ping: pingBackend,
+    isExited: () => ({
+      exited: backend !== null && backend.exitCode !== null,
+      code: backend?.exitCode ?? null,
+    }),
+    timeoutMs: READINESS_TIMEOUT_MS,
+    baseDelayMs: HEALTH_BASE_DELAY_MS,
+    maxDelayMs: HEALTH_MAX_DELAY_MS,
+    getRecentLogs: () => _backendLog.slice(-20).join("").trim(),
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -765,16 +718,11 @@ app.on("before-quit", () => {
   if (backend?.pid) {
     const pid = backend.pid;
     backend = null;
-    // spawnSync bloqueia até o taskkill terminar — garante que o backend
-    // está morto antes do processo Electron sair (treeKill é async e o
-    // Electron saía antes, deixando o backend órfão).
-    if (process.platform === "win32") {
-      spawnSync("taskkill", ["/T", "/F", "/PID", String(pid)], {
-        stdio: "ignore",
-      });
-    } else {
-      treeKill(pid);
-    }
+    // No Windows, killBackendTree usa spawnSync (bloqueia até o taskkill
+    // terminar) — garante que o backend está morto antes do processo
+    // Electron sair (treeKill é async e o Electron saía antes, deixando o
+    // backend órfão).
+    killBackendTree(pid, process.platform, treeKill);
   }
   try {
     fs.unlinkSync(_BACKEND_PID_FILE);
