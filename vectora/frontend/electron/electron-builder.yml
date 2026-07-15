@@ -19,9 +19,6 @@ appId: company.vectora.desktop
 productName: Vectora
 copyright: Copyright © 2026 Vectora Company
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
-# Exigido pelo FpmTarget (deb/rpm) — antes vinha de electron/package.json,
-# perdido na fusão com o package.json do frontend (que não tem esse campo).
-homepage: https://vectora.company
 
 # Toolset moderno de assinatura (electron-builder 26). O default (legacy/null)
 # baixa o pacote monolítico `winCodeSign-2.6.0.7z`, que carrega symlinks de

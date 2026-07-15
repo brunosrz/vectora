@@ -1,6 +1,9 @@
 {
   "name": "vectora",
   "version": "0.1.2",
+  "description": "Vectora — AI-first development assistant",
+  "author": "Bruno Soares <bruno@vectora.company>",
+  "homepage": "https://vectora.company",
   "private": true,
   "type": "commonjs",
   "packageManager": "pnpm@11.5.0",
