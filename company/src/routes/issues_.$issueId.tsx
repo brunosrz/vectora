@@ -4,7 +4,7 @@ import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
 import { getIssue } from "#/server/fns/issues";
 
-export const Route = createFileRoute("/issues/$issueId")({
+export const Route = createFileRoute("/issues_/$issueId")({
   head: () => ({
     meta: [{ name: "robots", content: "noindex, nofollow" }],
   }),

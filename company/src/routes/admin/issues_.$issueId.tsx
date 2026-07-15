@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { m } from "#/paraglide/messages";
 import { getIssueAdmin, respondToIssue } from "#/server/fns/admin";
 
-export const Route = createFileRoute("/admin/issues/$issueId")({
+export const Route = createFileRoute("/admin/issues_/$issueId")({
   component: AdminIssueDetailPage,
 });
 
