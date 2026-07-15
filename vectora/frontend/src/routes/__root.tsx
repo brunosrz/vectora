@@ -21,6 +21,7 @@ import {
 } from "@/lib/theme/presets";
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
+import { UpdateBanner } from "@/components/layout/update-banner";
 import { TitleBar } from "@/components/layout/title-bar";
 import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
 
@@ -291,6 +292,7 @@ function RootComponent() {
     >
       <TitleBar />
       <NetworkStatusBanner />
+      <UpdateBanner />
       {/* flex-1 min-h-0: dá altura definida pro Outlet — sem isso, rotas que
           assumem "h-full" (chat, workbench) não conseguem resolver a
           porcentagem contra um ancestral só com min-h-screen (altura
