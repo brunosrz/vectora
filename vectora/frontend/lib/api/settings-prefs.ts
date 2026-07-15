@@ -14,6 +14,7 @@ export interface FrontendPrefs {
   permissionMode?: string;
   reasoningEffort?: string;
   sidebarPosition?: string;
+  autoUpdateEnabled?: boolean;
 }
 
 /** Busca as preferências salvas no backend; `{}` em qualquer falha de rede. */

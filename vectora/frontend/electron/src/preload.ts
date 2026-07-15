@@ -37,6 +37,9 @@ export interface VectoraDesktopBridge {
   ) => () => void;
   /** Aplica update baixado e reinicia. */
   quitAndInstallUpdate: () => void;
+  /** Dispara uma checagem manual de atualização — independente do toggle
+   * de auto-update (que só gate os timers automáticos, ver main.ts). */
+  checkForUpdate: () => void;
   /** Controles da titlebar customizada (frame: false — ver main.ts). */
   windowControls: {
     minimize: () => void;
@@ -73,6 +76,7 @@ const bridge: VectoraDesktopBridge = {
     };
   },
   quitAndInstallUpdate: () => ipcRenderer.send("vectora:quit-and-install"),
+  checkForUpdate: () => ipcRenderer.send("vectora:check-for-update"),
   windowControls: {
     minimize: () => ipcRenderer.send("vectora:window-minimize"),
     maximizeToggle: () => ipcRenderer.send("vectora:window-maximize-toggle"),

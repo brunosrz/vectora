@@ -197,6 +197,43 @@ export function pingBackendHttp(
   });
 }
 
+/**
+ * GET JSON de um endpoint do backend pelo transporte IPC — usado pra ler
+ * settings antes de decidir comportamento do main process (ex.: gate de
+ * auto-update em GET /settings/prefs). `null` em qualquer falha (rede,
+ * status >= 400, JSON inválido) — o chamador decide o default nesse caso.
+ */
+export function fetchBackendJson<T = unknown>(
+  transport: http.RequestOptions,
+  urlPath: string,
+): Promise<T | null> {
+  return new Promise((resolve) => {
+    const req = http.request(
+      { ...transport, method: "GET", path: urlPath },
+      (res) => {
+        if ((res.statusCode ?? 500) >= 400) {
+          res.resume();
+          resolve(null);
+          return;
+        }
+        let body = "";
+        res.on("data", (chunk: Buffer) => {
+          body += chunk;
+        });
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(body) as T);
+          } catch {
+            resolve(null);
+          }
+        });
+      },
+    );
+    req.on("error", () => resolve(null));
+    req.end();
+  });
+}
+
 export interface WaitForBackendOptions {
   ping: () => Promise<boolean>;
   isExited: () => { exited: boolean; code: number | null };

@@ -213,6 +213,59 @@ function FallbackOrderSection() {
   );
 }
 
+/** Toggle de auto-update (Electron) + botão de checagem manual — a checagem
+ * manual funciona independente do toggle (dispara `checkForUpdates()` sob
+ * demanda mesmo com o automático desligado). Invisível no navegador/modo
+ * servidor: `window.vectora` só existe dentro do app desktop. */
+function AutoUpdateSection({
+  autoUpdateEnabled,
+  setAutoUpdateEnabled,
+}: {
+  autoUpdateEnabled: boolean;
+  setAutoUpdateEnabled: (v: boolean) => void;
+}) {
+  const [checking, setChecking] = useState(false);
+
+  if (typeof window === "undefined" || !window.vectora) return null;
+
+  const handleCheckNow = () => {
+    setChecking(true);
+    window.vectora?.checkForUpdate?.();
+    setTimeout(() => setChecking(false), 3000);
+  };
+
+  return (
+    <div className="space-y-3">
+      <Label>{m.prefs_auto_update_section()}</Label>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <Label htmlFor="auto-update-toggle" className="cursor-pointer">
+            {m.prefs_auto_update_toggle()}
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            {m.prefs_auto_update_toggle_hint()}
+          </p>
+        </div>
+        <Switch
+          id="auto-update-toggle"
+          checked={autoUpdateEnabled}
+          onCheckedChange={setAutoUpdateEnabled}
+        />
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleCheckNow}
+        disabled={checking}
+      >
+        {checking
+          ? m.prefs_auto_update_checking()
+          : m.prefs_auto_update_check_now()}
+      </Button>
+    </div>
+  );
+}
+
 export function PreferenciasTab() {
   const {
     theme,
@@ -231,6 +284,8 @@ export function PreferenciasTab() {
     setShowToolCalls,
     setCustomSystemPrompt,
     setTrainingInstructions,
+    autoUpdateEnabled,
+    setAutoUpdateEnabled,
   } = useSettingsStore();
 
   const activeCustomColors = customThemeColors ?? DEFAULT_CUSTOM_COLORS;
@@ -439,6 +494,12 @@ export function PreferenciasTab() {
           </div>
         ))}
       </div>
+
+      {/* Auto-update (só desktop) */}
+      <AutoUpdateSection
+        autoUpdateEnabled={autoUpdateEnabled}
+        setAutoUpdateEnabled={setAutoUpdateEnabled}
+      />
 
       {/* Ordem de fallback de modelos LLM */}
       <FallbackOrderSection />

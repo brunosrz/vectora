@@ -45,6 +45,7 @@ import {
   spawnBackendProcess,
   IpcPipeParser,
   pingBackendHttp,
+  fetchBackendJson,
   waitForBackendReady,
   killBackendTree,
   resolveExternalBackendConnection,
@@ -606,6 +607,31 @@ function deliverDeepLink(url: string): void {
 // Auto-updater
 // ---------------------------------------------------------------------------
 
+/**
+ * Lê `GET /settings/prefs` (mesmo endpoint que o settings-store do frontend
+ * usa via `PATCH`/`GET`, chave `autoUpdateEnabled` em
+ * `_ALLOWED_FRONTEND_PREF_KEYS`, `backend/workspace/runtime_settings.py`)
+ * pra decidir se agenda as checagens automáticas periódicas. Falha (rede,
+ * JSON inválido, campo ausente) → `true` (fail-open, mesmo default do
+ * settings-store) — nunca deixa o usuário sem update por causa de um erro
+ * de leitura transitório.
+ */
+async function isAutoUpdateEnabled(): Promise<boolean> {
+  const prefs = await fetchBackendJson<{ autoUpdateEnabled?: boolean }>(
+    backendTransport(),
+    "/settings/prefs",
+  );
+  return prefs?.autoUpdateEnabled !== false;
+}
+
+/**
+ * Registra os listeners do `electron-updater` e propaga o estado pro
+ * renderer via `vectora:update-status` (consumido em `UpdateBanner`,
+ * `frontend/components/layout/update-banner.tsx`). Sempre chamado — inclusive
+ * com auto-update desligado nas Preferências — porque uma checagem manual
+ * (`vectora:check-for-update`, ver `registerIpc()`) também precisa desses
+ * listeners pra a UI mostrar o resultado.
+ */
 function setupAutoUpdater(): void {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
@@ -632,9 +658,15 @@ function setupAutoUpdater(): void {
   autoUpdater.on("error", (err) =>
     broadcast({ state: "error", message: err.message }),
   );
+}
 
-  // Verifica updates 30s após boot (deixa o backend subir primeiro)
-  // e depois a cada 6h.
+/**
+ * Agenda as checagens automáticas periódicas: 30s após boot (deixa o backend
+ * subir primeiro) e depois a cada 6h. Só chamada quando `autoUpdateEnabled`
+ * está ligado (Preferências → Atualizações) — a checagem manual continua
+ * disponível independente disso, ver `registerIpc()`.
+ */
+function scheduleAutoUpdateChecks(): void {
   setTimeout(() => {
     autoUpdater.checkForUpdates().catch(() => undefined);
   }, 30_000);
@@ -657,6 +689,12 @@ function registerIpc(): void {
   });
   ipcMain.on("vectora:quit-and-install", () => {
     if (updateReady) autoUpdater.quitAndInstall();
+  });
+  // Checagem manual (botão "Verificar atualização agora", Preferências) —
+  // independente do toggle de auto-update, que só gate os timers
+  // periódicos em scheduleAutoUpdateChecks().
+  ipcMain.on("vectora:check-for-update", () => {
+    autoUpdater.checkForUpdates().catch(() => undefined);
   });
 
   // Controles da titlebar customizada (frame: false — ver createWindow()).
@@ -726,6 +764,9 @@ app.whenReady().then(async () => {
     createWindow();
     createTray();
     setupAutoUpdater();
+    if (await isAutoUpdateEnabled()) {
+      scheduleAutoUpdateChecks();
+    }
   } catch (err) {
     dialog.showErrorBox(
       "Vectora",

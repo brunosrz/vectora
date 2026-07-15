@@ -89,3 +89,20 @@ def test_body_nao_objeto_retorna_422():
     with pytest.raises(HTTPException) as exc:
         asyncio.run(update_prefs(_req("u1", ["nao", "e", "objeto"])))
     assert exc.value.status_code == 422
+
+
+def test_auto_update_enabled_persiste_e_convive_com_outras_prefs():
+    """autoUpdateEnabled — lido pelo Electron main process (fetchBackendJson
+    em main.ts) antes de agendar as checagens periódicas de update; precisa
+    persistir como bool real, não só "chave presente"."""
+    asyncio.run(update_prefs(_req("u1", {"theme": "dark", "autoUpdateEnabled": False})))
+    out = asyncio.run(get_prefs(_req("u1")))
+    assert out == {"theme": "dark", "autoUpdateEnabled": False}
+
+    # Par de erro/borda: o backend não valida tipo (só a allowlist de chave);
+    # o Electron trata qualquer valor != False como "ligado" (fail-open) —
+    # documentado aqui pra não haver surpresa se alguém adicionar validação
+    # de tipo depois sem revisar esse contrato.
+    asyncio.run(update_prefs(_req("u1", {"autoUpdateEnabled": "nao-eh-bool"})))
+    out = asyncio.run(get_prefs(_req("u1")))
+    assert out["autoUpdateEnabled"] == "nao-eh-bool"

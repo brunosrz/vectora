@@ -55,6 +55,7 @@ _ALLOWED_FRONTEND_PREF_KEYS = frozenset(
         "permissionMode",
         "reasoningEffort",
         "sidebarPosition",
+        "autoUpdateEnabled",
     }
 )
 

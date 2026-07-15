@@ -101,6 +101,10 @@ export interface SettingsState {
    *  restart/reload; sem isso cada mount de `$threadId.tsx` reiniciava do
    *  zero em `getDefaultModel()`, ignorando a escolha do usuário. */
   selectedModel: string;
+  /** Auto-update do app desktop (Electron) — lido pelo main process no
+   *  próximo boot (só toma efeito na próxima abertura do app, não em
+   *  runtime). Sem efeito no navegador/modo servidor. */
+  autoUpdateEnabled: boolean;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -119,6 +123,7 @@ export interface SettingsState {
   setIdeMode: (v: boolean) => void;
   setChatSidebarWidth: (v: number) => void;
   setSelectedModel: (v: string) => void;
+  setAutoUpdateEnabled: (v: boolean) => void;
   resetSettings: () => void;
 }
 
@@ -147,6 +152,7 @@ const DEFAULTS = {
   ideMode: false,
   chatSidebarWidth: 256,
   selectedModel: getDefaultModel(),
+  autoUpdateEnabled: true,
 };
 
 // ---------------------------------------------------------------------------
@@ -224,6 +230,10 @@ export const useSettingsStore = create<SettingsState>()(
         set({ selectedModel: v });
         void pushPrefs({ selectedModel: v });
       },
+      setAutoUpdateEnabled: (v) => {
+        set({ autoUpdateEnabled: v });
+        void pushPrefs({ autoUpdateEnabled: v });
+      },
       resetSettings: () =>
         set({
           ...DEFAULTS,
@@ -258,6 +268,7 @@ export const useSettingsStore = create<SettingsState>()(
         ideMode: state.ideMode,
         chatSidebarWidth: state.chatSidebarWidth,
         selectedModel: state.selectedModel,
+        autoUpdateEnabled: state.autoUpdateEnabled,
       }),
     },
   ),
@@ -297,4 +308,6 @@ export async function hydrateFromBackend(): Promise<void> {
     s.setReasoningEffort(prefs.reasoningEffort as ReasoningEffort);
   if (prefs.sidebarPosition)
     s.setSidebarPosition(prefs.sidebarPosition as SidebarPosition);
+  if (typeof prefs.autoUpdateEnabled === "boolean")
+    s.setAutoUpdateEnabled(prefs.autoUpdateEnabled);
 }

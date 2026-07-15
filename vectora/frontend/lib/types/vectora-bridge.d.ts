@@ -26,6 +26,9 @@ export interface VectoraDesktopBridge {
     handler: (status: VectoraUpdateStatus) => void,
   ) => () => void;
   quitAndInstallUpdate?: () => void;
+  /** Dispara uma checagem manual de atualização — independente do toggle
+   * de auto-update (que só gate os timers automáticos, ver main.ts). */
+  checkForUpdate?: () => void;
   windowControls?: {
     minimize: () => void;
     maximizeToggle: () => void;
