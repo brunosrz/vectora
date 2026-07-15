@@ -318,6 +318,11 @@ class RuntimeSettings:
             "reranker_top_k": top_k or 5,
             "rerank_provider": str(data.get("rerank_provider", "auto")),
             "embed_provider": str(data.get("embed_provider", "auto")),
+            # Nome do modelo de embedding quando embed_provider força ollama/
+            # openrouter — esses dois não têm um default sensato (ao contrário
+            # de Cohere/Voyage, que já têm modelo fixo em settings.py), então
+            # o usuário escolhe explicitamente (ver storage/factory.py).
+            "embed_model": str(data.get("embed_model", "")),
             "ingest_file_types": (
                 [str(x) for x in raw_types] if isinstance(raw_types, list) else []
             ),

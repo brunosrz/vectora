@@ -196,7 +196,9 @@ class TestBuildLcEmbeddings:
         with (
             patch.object(settings, "embedding_provider", "ollama"),
             patch.object(factory, "_build_cohere_embeddings", lambda: cohere),
-            patch.object(factory, "_build_ollama_embeddings", lambda: ollama),
+            patch.object(
+                factory, "_build_ollama_embeddings", lambda _model=None: ollama
+            ),
         ):
             assert factory._build_lc_embeddings() is ollama
 
@@ -207,11 +209,81 @@ class TestBuildLcEmbeddings:
         cohere = _FakeEmb(tag=1.0)
         with (
             patch.object(settings, "embedding_provider", "ollama"),
-            patch.object(factory, "_build_ollama_embeddings", lambda: None),
+            patch.object(factory, "_build_ollama_embeddings", lambda _model=None: None),
             patch.object(factory, "_build_cohere_embeddings", lambda: cohere),
             patch.object(factory, "_build_voyage_embeddings", lambda: None),
         ):
             assert factory._build_lc_embeddings() is cohere
+
+
+class TestBuildLcEmbeddingsRuntimePreference:
+    """``rag_settings.embed_provider``/``embed_model`` (PATCH /rag/settings,
+    seletor da aba de memória) precisam ser lidos por ``_build_lc_embeddings``
+    — antes eram só persistidos, nunca consultados aqui (a escolha na UI não
+    tinha efeito nenhum na seleção real de embeddings)."""
+
+    def test_runtime_ollama_com_embed_model_vence_mesmo_com_cohere_configurado(
+        self, tmp_path
+    ):
+        from backend.storage import factory
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "settings.json")
+        rs.set_rag_settings(embed_provider="ollama", embed_model="qwen3-embedding")
+        ollama = _FakeEmb(tag=6.0)
+        cohere = _FakeEmb(tag=1.0)
+
+        captured: list[str | None] = []
+
+        def _fake_ollama_builder(model: str | None = None) -> Embeddings:
+            captured.append(model)
+            return ollama
+
+        with (
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+            patch.object(factory, "_build_cohere_embeddings", lambda: cohere),
+            patch.object(factory, "_build_ollama_embeddings", _fake_ollama_builder),
+        ):
+            assert factory._build_lc_embeddings() is ollama
+        assert captured == ["qwen3-embedding"]
+
+    def test_runtime_ollama_sem_embed_model_e_sem_default_cai_pro_fallback(
+        self, tmp_path
+    ):
+        """Par de erro: usuário escolheu Ollama na UI mas não tem modelo
+        configurado (nem via UI, nem via env) — não quebra, cai pra Cohere/
+        Voyage se disponíveis (mesmo comportamento gracioso de sempre)."""
+        from backend.storage import factory
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "settings.json")
+        rs.set_rag_settings(embed_provider="ollama")
+        cohere = _FakeEmb(tag=1.0)
+
+        with (
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+            patch.object(factory, "_build_ollama_embeddings", lambda _model=None: None),
+            patch.object(factory, "_build_cohere_embeddings", lambda: cohere),
+            patch.object(factory, "_build_voyage_embeddings", lambda: None),
+        ):
+            assert factory._build_lc_embeddings() is cohere
+
+    def test_runtime_auto_usa_settings_embedding_provider_estatico(self, tmp_path):
+        """embed_provider="auto" (default) — comportamento antigo preservado:
+        cai pro ``settings.embedding_provider`` (env var), não pro runtime."""
+        from backend.settings import settings
+        from backend.storage import factory
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "settings.json")
+        voyage = _FakeEmb(tag=2.0)
+
+        with (
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+            patch.object(settings, "embedding_provider", "voyage"),
+            patch.object(factory, "_build_voyage_embeddings", lambda: voyage),
+        ):
+            assert factory._build_lc_embeddings() is voyage
 
 
 class TestBuildOllamaOpenRouterEmbeddings:

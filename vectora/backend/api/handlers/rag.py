@@ -30,6 +30,7 @@ class RagSettingsBody(BaseModel):
     reranker_top_k: int | None = None
     rerank_provider: str | None = None
     embed_provider: str | None = None
+    embed_model: str | None = None
     ingest_file_types: list[str] | None = None
 
 

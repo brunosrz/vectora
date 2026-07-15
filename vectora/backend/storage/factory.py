@@ -243,8 +243,9 @@ def _build_voyage_embeddings() -> Any:
         return None
 
 
-def _build_ollama_embeddings() -> Any:
-    """``OllamaEmbeddings`` se ``ollama_embedding_model`` estiver configurado.
+def _build_ollama_embeddings(model_override: str | None = None) -> Any:
+    """``OllamaEmbeddings`` se ``ollama_embedding_model`` (ou ``model_override``,
+    vindo de ``rag_settings.embed_model`` em runtime) estiver configurado.
 
     Sem key (Ollama roda local) — o modelo é o próprio gate: None por default,
     nunca assume um modelo instalado no host do usuário."""
@@ -253,7 +254,7 @@ def _build_ollama_embeddings() -> Any:
 
         from backend.settings import settings as _s
 
-        model = _s.ollama_embedding_model
+        model = model_override or _s.ollama_embedding_model
         if not model:
             return None
 
@@ -265,17 +266,18 @@ def _build_ollama_embeddings() -> Any:
         return None
 
 
-def _build_openrouter_embeddings() -> Any:
+def _build_openrouter_embeddings(model_override: str | None = None) -> Any:
     """``OpenAIEmbeddings`` apontando pro base_url da OpenRouter (API
     compatível com OpenAI — mesmo cliente usado pro chat em
-    ``services/utils.py::_build_concrete_model``)."""
+    ``services/utils.py::_build_concrete_model``). ``model_override`` vem de
+    ``rag_settings.embed_model`` em runtime, quando setado."""
     try:
         from langchain_openai import OpenAIEmbeddings
 
         from backend.settings import settings as _s
 
         key = _s.openrouter_api_key
-        model = _s.openrouter_embedding_model
+        model = model_override or _s.openrouter_embedding_model
         if not key or not model:
             return None
 
@@ -292,25 +294,34 @@ def _build_lc_embeddings() -> Any:
     """Embeddings com preferência configurável + fallback Cohere↔Voyage↔local.
 
     Ordem de resolução:
-    1. ``settings.embedding_provider`` explícito, se buildável (credencial/
-       modelo presentes) — respeita a escolha do usuário mesmo quando outro
-       provider também está configurado.
-    2. Cohere + Voyage juntos → ``FallbackEmbeddings`` (troca automática em
+    1. ``rag_settings.embed_provider`` em runtime (aba de memória do
+       workbench, ``PATCH /rag/settings``), se != "auto" e buildável — mesmo
+       padrão que ``_build_reranker()`` já usa pra ``rerank_provider``. Sem
+       isso a escolha do usuário na UI era só persistida, nunca lida aqui.
+    2. ``settings.embedding_provider`` (env var ``EMBEDDING_PROVIDER``),
+       se "auto"/vazio em runtime — respeita a escolha estática de quem não
+       usa a UI (VPS/CLI).
+    3. Cohere + Voyage juntos → ``FallbackEmbeddings`` (troca automática em
        quota esgotada, em runtime).
-    3. Só um dos dois → esse.
-    4. Nenhum dos dois → Ollama, depois OpenRouter (embeddings locais/gateway,
+    4. Só um dos dois → esse.
+    5. Nenhum dos dois → Ollama, depois OpenRouter (embeddings locais/gateway,
        sem custo de API hospedada — mas sem rerank: Cohere/Voyage-only).
-    5. Nada configurado → None (modo sem embeddings).
+    6. Nada configurado → None (modo sem embeddings).
     """
     from backend.settings import settings as _s
+    from backend.workspace.runtime_settings import runtime_settings
+
+    rag = runtime_settings.rag_settings
+    runtime_pref = str(rag.get("embed_provider", "auto"))
+    runtime_model = str(rag.get("embed_model") or "") or None
 
     builders: dict[str, Any] = {
         "cohere": _build_cohere_embeddings,
         "voyage": _build_voyage_embeddings,
-        "ollama": _build_ollama_embeddings,
-        "openrouter": _build_openrouter_embeddings,
+        "ollama": lambda: _build_ollama_embeddings(runtime_model),
+        "openrouter": lambda: _build_openrouter_embeddings(runtime_model),
     }
-    preference = _s.embedding_provider
+    preference = runtime_pref if runtime_pref in builders else _s.embedding_provider
     if preference in builders:
         preferred = builders[preference]()
         if preferred is not None:
@@ -376,10 +387,14 @@ async def _check_embedding_dimension(collection: str, embeddings: Any) -> None:
     from datetime import UTC, datetime
 
     from backend.settings import settings as _s
+    from backend.workspace.runtime_settings import runtime_settings
 
     probe = await embeddings.aembed_query("dimension probe")
     dimension = len(probe)
-    provider = _s.embedding_provider or "auto"
+    runtime_pref = str(runtime_settings.rag_settings.get("embed_provider", "auto"))
+    provider = (
+        runtime_pref if runtime_pref != "auto" else (_s.embedding_provider or "auto")
+    )
 
     db = await _embedding_meta_db()
     await _ensure_embedding_meta_table(db)

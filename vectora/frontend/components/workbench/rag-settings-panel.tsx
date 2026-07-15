@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { Settings2, Trash2, RefreshCw } from "lucide-react";
+import { Search, Settings2, Trash2, RefreshCw } from "lucide-react";
 
 import {
   ALL_GRAPH_FILE_TYPES,
@@ -33,6 +33,7 @@ interface RagSettings {
   reranker_top_k: number;
   rerank_provider: string;
   embed_provider: string;
+  embed_model: string;
   ingest_file_types: string[];
 }
 
@@ -46,10 +47,30 @@ const DEFAULTS: RagSettings = {
   reranker_top_k: 5,
   rerank_provider: "auto",
   embed_provider: "auto",
+  embed_model: "",
   ingest_file_types: [],
 };
 
-const PROVIDERS = ["auto", "cohere", "voyage"] as const;
+// Reranker é só Cohere/Voyage (nenhum dos dois gateways locais/dinâmicos tem
+// endpoint de rerank nativo). Embedding aceita os 4 — backend resolve em
+// storage/factory.py::_build_lc_embeddings (lê embed_provider/embed_model
+// deste mesmo /rag/settings).
+const RERANK_PROVIDERS = ["auto", "cohere", "voyage"] as const;
+const EMBED_PROVIDERS = [
+  "auto",
+  "cohere",
+  "voyage",
+  "ollama",
+  "openrouter",
+] as const;
+
+const PROVIDER_LABELS: Record<string, () => string> = {
+  auto: m.rag_provider_auto,
+  cohere: m.rag_provider_cohere,
+  voyage: m.rag_provider_voyage,
+  ollama: m.rag_provider_ollama,
+  openrouter: m.rag_provider_openrouter,
+};
 
 export function useRagSettings() {
   const [open, setOpen] = useState(false);
@@ -217,15 +238,25 @@ export function RagSettingsSlidePanel({
           <ProviderSelect
             value={settings.rerank_provider}
             onChange={(v) => void patch({ rerank_provider: v })}
+            providers={RERANK_PROVIDERS}
           />
         </label>
         <label className="flex items-center justify-between gap-2">
           <span className="text-foreground">{m.rag_embed_provider()}</span>
           <ProviderSelect
             value={settings.embed_provider}
-            onChange={(v) => void patch({ embed_provider: v })}
+            onChange={(v) => void patch({ embed_provider: v, embed_model: "" })}
+            providers={EMBED_PROVIDERS}
           />
         </label>
+        {(settings.embed_provider === "ollama" ||
+          settings.embed_provider === "openrouter") && (
+          <EmbedModelPicker
+            provider={settings.embed_provider}
+            value={settings.embed_model}
+            onChange={(v) => void patch({ embed_model: v })}
+          />
+        )}
 
         {/* Tipos de arquivo a ingerir */}
         <div>
@@ -334,9 +365,11 @@ export function RagSettingsPanel() {
 function ProviderSelect({
   value,
   onChange,
+  providers,
 }: {
   value: string;
   onChange: (v: string) => void;
+  providers: readonly string[];
 }) {
   return (
     <select
@@ -344,15 +377,116 @@ function ProviderSelect({
       onChange={(e) => onChange(e.target.value)}
       className="bg-background border border-border/60 rounded px-1.5 py-0.5 text-foreground"
     >
-      {PROVIDERS.map((p) => (
+      {providers.map((p) => (
         <option key={p} value={p}>
-          {p === "auto"
-            ? m.rag_provider_auto()
-            : p === "cohere"
-              ? m.rag_provider_cohere()
-              : m.rag_provider_voyage()}
+          {PROVIDER_LABELS[p]()}
         </option>
       ))}
     </select>
+  );
+}
+
+interface DiscoveredModel {
+  id: string;
+  label: string;
+}
+
+/** Seletor de modelo pro provider de embedding quando é Ollama/OpenRouter —
+ * nenhum dos dois tem um default sensato (ao contrário de Cohere/Voyage, que
+ * já têm modelo fixo em settings.py), então o usuário escolhe explicitamente
+ * a partir de uma lista descoberta, nunca texto livre (erro de digitação
+ * viraria falha silenciosa de embedding — mesmo motivo que o seletor de
+ * LLM em gateways-tab.tsx já evita texto livre). */
+function EmbedModelPicker({
+  provider,
+  value,
+  onChange,
+}: {
+  provider: "ollama" | "openrouter";
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [models, setModels] = useState<DiscoveredModel[]>([]);
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const loadOllama = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/gateways/ollama/models");
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        reachable: boolean;
+        models: { name: string }[];
+      };
+      setModels(data.models.map((mo) => ({ id: mo.name, label: mo.name })));
+    } catch {
+      /* Ollama fora do ar — lista fica vazia, sem quebrar o painel */
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const searchOpenRouter = useCallback(async (q: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/gateways/openrouter/models${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+      );
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        models: { id: string; name: string }[];
+      };
+      setModels(data.models.map((mo) => ({ id: mo.id, label: mo.name })));
+    } catch {
+      /* offline: mantém a lista já carregada */
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setModels([]);
+    if (provider === "ollama") void loadOllama();
+    else void searchOpenRouter("");
+  }, [provider, loadOllama, searchOpenRouter]);
+
+  return (
+    <div className="space-y-1">
+      {provider === "openrouter" && (
+        <div className="flex items-center gap-1">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void searchOpenRouter(query);
+            }}
+            placeholder={m.rag_embed_model_search_placeholder()}
+            className="flex-1 bg-background border border-border/60 rounded px-1.5 py-0.5 text-foreground"
+          />
+          <button
+            onClick={() => void searchOpenRouter(query)}
+            aria-label={m.rag_embed_model_search_placeholder()}
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <Search className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={loading}
+        className="w-full bg-background border border-border/60 rounded px-1.5 py-0.5 text-foreground disabled:opacity-40"
+      >
+        <option value="">{m.rag_embed_model_select_placeholder()}</option>
+        {models.map((mo) => (
+          <option key={mo.id} value={mo.id}>
+            {mo.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
