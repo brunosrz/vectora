@@ -420,13 +420,13 @@ export function ChatInput({
                   size="sm"
                 />
               )}
-              <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
+              <div className="hidden sm:block h-4 w-px bg-border/60" />
               {/* O workspace é escolhido só no modal de nova conversa e é imutável
                   depois disso — por isso não há seletor de workspace na appbar. */}
               {!chatMode && !ideMode && wsId && (
                 <>
                   <VscodeMenu workspaceId={wsId} />
-                  <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
+                  <div className="hidden sm:block h-4 w-px bg-border/60" />
                 </>
               )}
               <PermissionModeMenu />
