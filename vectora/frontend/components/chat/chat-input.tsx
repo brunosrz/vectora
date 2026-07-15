@@ -439,6 +439,7 @@ export function ChatInput({
                   value={agentConfig.model}
                   onChange={handleModelChange}
                   compact
+                  codeMode={!chatMode && !ideMode && !!wsId}
                 />
               )}
               {modelId && (

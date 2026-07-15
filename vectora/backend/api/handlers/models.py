@@ -24,7 +24,7 @@ async def get_configured_providers() -> dict:
         list_registered_ollama_models,
         list_registered_openrouter_models,
     )
-    from backend.settings import settings
+    from backend.settings import TOOL_CALLING_INCOMPATIBLE_MODELS, settings
 
     dynamic_models = [
         {"id": f"ollama:{m.tag}", "label": m.tag}
@@ -36,4 +36,5 @@ async def get_configured_providers() -> dict:
     return {
         "providers": settings.configured_llm_providers(),
         "dynamic_models": dynamic_models,
+        "tool_incompatible_models": sorted(TOOL_CALLING_INCOMPATIBLE_MODELS),
     }

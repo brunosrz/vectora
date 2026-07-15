@@ -42,7 +42,7 @@ from backend.api.schemas import (
     encode_event,
 )
 from backend.services import agent_factory
-from backend.settings import VISION_CAPABLE_PROVIDERS
+from backend.settings import TOOL_CALLING_INCOMPATIBLE_MODELS, VISION_CAPABLE_PROVIDERS
 from backend.vtypes.context import ctx_from_config
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,22 @@ async def _model_no_vision_stream(thread_id: str) -> AsyncGenerator[str]:
         ErrorEvent(
             message="Modelo não suporta imagens anexadas.",
             code="MODEL_NO_VISION",
+        )
+    )
+    yield encode_event(DoneEvent(thread_id=thread_id))
+
+
+async def _model_tool_incompatible_stream(thread_id: str) -> AsyncGenerator[str]:
+    """Stream de um único erro — modelo escolhido rejeita replay de tool_calls
+    no histórico (ver ``TOOL_CALLING_INCOMPATIBLE_MODELS``) e o modo atual
+    (code mode) sempre usa tools. Rejeita cedo em vez de deixar o
+    ``QuotaExhaustedError``/400 cru do provider estourar no meio do stream.
+    """
+    yield encode_event(ThreadEvent(thread_id=thread_id))
+    yield encode_event(
+        ErrorEvent(
+            message="Este modelo não suporta chamadas de ferramentas — indisponível no modo código.",
+            code="MODEL_NO_TOOL_CALLING",
         )
     )
     yield encode_event(DoneEvent(thread_id=thread_id))
@@ -438,6 +454,20 @@ async def stream_chat(
     ):
         return StreamingResponse(
             _model_no_vision_stream(thread_id),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    # Code mode sempre usa tools (ALL_TOOLS) — modelos que rejeitam replay de
+    # tool_calls no histórico nunca funcionam aqui, mesmo na primeira
+    # mensagem sem tool use ainda (a segunda falharia). Chat mode não é
+    # bloqueado (decisão de produto, ver TOOL_CALLING_INCOMPATIBLE_MODELS).
+    if (
+        not chat_mode
+        and configurable.get("model", "") in TOOL_CALLING_INCOMPATIBLE_MODELS
+    ):
+        return StreamingResponse(
+            _model_tool_incompatible_stream(thread_id),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )

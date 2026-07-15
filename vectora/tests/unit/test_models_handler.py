@@ -7,6 +7,9 @@ Valida:
   `dynamic_models` como "ollama:<tag>".
 - Modelo OpenRouter registrado via /gateways/openrouter/registered aparece em
   `dynamic_models` como "openrouter:<tag>", junto (não em vez) do Ollama.
+- `tool_incompatible_models` expõe o catálogo estático de modelos que
+  rejeitam replay de tool_calls (usado pelo frontend pra filtrar o seletor
+  no code mode).
 """
 
 from __future__ import annotations
@@ -33,6 +36,19 @@ class TestModelsProviders:
         body = resp.json()
         assert isinstance(body["providers"], list)
         assert isinstance(body["dynamic_models"], list)
+
+    def test_tool_incompatible_models_includes_cohere_command_a_plus(self, client):
+        from backend.settings import TOOL_CALLING_INCOMPATIBLE_MODELS
+
+        resp = client.get("/models/providers")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "cohere:command-a-plus-05-2026" in body["tool_incompatible_models"]
+        # Par de erro: o campo é sempre uma lista ordenada e nunca contém
+        # duplicatas (reflexo direto de um set) — nada de vazamento de tipo.
+        assert body["tool_incompatible_models"] == sorted(
+            TOOL_CALLING_INCOMPATIBLE_MODELS
+        )
 
     def test_registered_ollama_model_appears_in_dynamic_models(self, client):
         tag = "providers-test-tag"

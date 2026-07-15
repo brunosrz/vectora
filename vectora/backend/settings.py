@@ -1001,6 +1001,19 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
 # uma mensagem crua (ex.: Cohere "image content is not supported").
 VISION_CAPABLE_PROVIDERS: set[str] = {"google_genai", "openai", "anthropic"}
 
+# Modelos que rejeitam REPLAY de tool_calls no histórico da conversa — não é
+# sobre suportar bind_tools na primeira chamada, é sobre reprocessar um turno
+# anterior que já usou tools. Confirmado em produção: `command-a-plus-05-2026`
+# devolve 400 "tool plan` cannot be used with this model" porque
+# `langchain_cohere` sempre serializa `tool_plan` ao converter uma AIMessage
+# com tool_calls (ver `backend/llm/provider_fallback.py::_PROVIDER_INCOMPATIBLE_MARKERS`
+# pro detalhe reativo — isso aqui é o catálogo estático usado para nem
+# oferecer o modelo no code mode, que sempre usa tools). Escondido só no code
+# mode (`ALL_TOOLS`); no chat mode (`CHAT_TOOLS`) o modelo continua disponível
+# — decisão de produto, o chat mode também usa algumas tools mas o usuário
+# aceita o risco menor em troca de manter a opção.
+TOOL_CALLING_INCOMPATIBLE_MODELS: set[str] = {"cohere:command-a-plus-05-2026"}
+
 # Fontes públicas das janelas de contexto:
 #   Gemini: https://ai.google.dev/gemini-api/docs/models
 #   Claude: https://platform.claude.com/docs/en/about-claude/models/overview

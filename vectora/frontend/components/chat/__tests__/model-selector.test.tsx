@@ -147,6 +147,77 @@ describe("ModelSelector", () => {
     });
   });
 
+  it("esconde modelo incompatível com tool-calling no code mode, mas mantém no chat mode", async () => {
+    const models = getAllowedModels();
+    const cohere = models.find((m) => m === "cohere:command-a-plus-05-2026");
+    const value = models.find((m) => m !== cohere)!;
+    expect(cohere).toBeTruthy();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              providers: ["google-genai", "openai", "anthropic", "cohere"],
+              tool_incompatible_models: [cohere],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        ),
+      ),
+    );
+
+    const { unmount } = render(
+      <ModelSelector value={value} onChange={() => {}} codeMode />,
+    );
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    await waitFor(() => {
+      expect(
+        screen.queryByText(getModelDisplayName(cohere!)),
+      ).not.toBeInTheDocument();
+    });
+    unmount();
+
+    // Mesmo fetch, mas codeMode=false — modelo incompatível continua na lista.
+    render(<ModelSelector value={value} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(getModelDisplayName(cohere!)).length,
+      ).toBeGreaterThan(0);
+    });
+  });
+
+  it("nunca esconde o modelo incompatível se ele for o ativo, mesmo em code mode", async () => {
+    const models = getAllowedModels();
+    const cohere = models.find((m) => m === "cohere:command-a-plus-05-2026");
+    expect(cohere).toBeTruthy();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              providers: ["cohere"],
+              tool_incompatible_models: [cohere],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        ),
+      ),
+    );
+
+    render(<ModelSelector value={cohere!} onChange={() => {}} codeMode />);
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(getModelDisplayName(cohere!)).length,
+      ).toBeGreaterThan(0);
+    });
+  });
+
   it("erro no fetch de /models/providers não quebra a lista (mantém só estáticos)", async () => {
     const value = getAllowedModels()[0];
 

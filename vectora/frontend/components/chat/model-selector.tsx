@@ -32,6 +32,11 @@ interface ModelSelectorProps {
   value: string;
   onChange: (model: string) => void;
   compact?: boolean;
+  // Code mode (workspace + workbenches, ALL_TOOLS) sempre usa tools — modelos
+  // que rejeitam replay de tool_calls no histórico (ver
+  // TOOL_CALLING_INCOMPATIBLE_MODELS no backend) somem da lista. Chat mode
+  // não filtra: decisão de produto, o risco é menor lá.
+  codeMode?: boolean;
 }
 
 interface DynamicModel {
@@ -43,6 +48,7 @@ export function ModelSelector({
   value,
   onChange,
   compact = false,
+  codeMode = false,
 }: ModelSelectorProps) {
   const allowedModels = getAllowedModels();
   const [open, setOpen] = useState(false);
@@ -55,6 +61,9 @@ export function ModelSelector({
   // Modelos registrados via gateway (Ollama local, hoje) — nunca fazem parte
   // do catálogo estático de deployment-config.ts, só existem em runtime.
   const [dynamicModels, setDynamicModels] = useState<DynamicModel[]>([]);
+  const [toolIncompatibleModels, setToolIncompatibleModels] = useState<
+    string[]
+  >([]);
 
   useEffect(() => {
     if (typeof fetch === "undefined") return;
@@ -66,6 +75,7 @@ export function ModelSelector({
           data: {
             providers?: string[];
             dynamic_models?: DynamicModel[];
+            tool_incompatible_models?: string[];
           } | null,
         ) => {
           if (!alive) return;
@@ -73,6 +83,8 @@ export function ModelSelector({
             setConfiguredProviders(data.providers);
           if (Array.isArray(data?.dynamic_models))
             setDynamicModels(data.dynamic_models);
+          if (Array.isArray(data?.tool_incompatible_models))
+            setToolIncompatibleModels(data.tool_incompatible_models);
         },
       )
       .catch(() => {});
@@ -94,7 +106,10 @@ export function ModelSelector({
         )
       : allowedModels),
     ...dynamicModels.map((dm) => dm.id),
-  ];
+  ].filter(
+    (model) =>
+      model === value || !codeMode || !toolIncompatibleModels.includes(model),
+  );
 
   const activeLabel = getModelDisplayName(value as ModelOption) || value;
 

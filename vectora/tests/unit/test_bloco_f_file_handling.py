@@ -442,3 +442,69 @@ class TestStreamChatBlocksImageForNonVisionProvider:
 
         body = await _collect_sse_body(response)
         assert "MODEL_NO_VISION" not in body
+
+
+class TestStreamChatBlocksToolIncompatibleModelInCodeMode:
+    """Command A+ (cohere:command-a-plus-05-2026) rejeita replay de tool_calls
+    no histórico — code mode sempre usa tools (ALL_TOOLS), então o modelo
+    nunca funciona lá. Chat mode não é bloqueado (decisão de produto)."""
+
+    @pytest.mark.asyncio
+    async def test_code_mode_returns_model_no_tool_calling_without_calling_provider(
+        self,
+    ) -> None:
+        from backend.api.handlers import chat as chat_mod
+
+        mock_get_user_agent = AsyncMock()
+        with patch(
+            "backend.services.agent_factory.get_user_agent", mock_get_user_agent
+        ):
+            request = StreamChatRequest(
+                content="cria um jogo da cobrinha em godot",
+                config=ChatConfig(
+                    model="cohere:command-a-plus-05-2026", chat_mode=False
+                ),
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert '"code": "MODEL_NO_TOOL_CALLING"' in body
+        mock_get_user_agent.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_chat_mode_is_not_blocked(self) -> None:
+        """Mesmo modelo, chat_mode=True — não é bloqueado (o risco é aceito
+        pelo produto no modo conversacional)."""
+        from backend.api.handlers import chat as chat_mod
+
+        async def _empty_events(*_a: object, **_kw: object):
+            for _ in ():
+                yield
+
+        mock_graph = MagicMock()
+        mock_graph.astream_events = MagicMock(return_value=_empty_events())
+
+        with (
+            patch(
+                "backend.services.agent_factory.get_user_agent",
+                new=AsyncMock(return_value=mock_graph),
+            ),
+            patch(
+                "backend.api.handlers.threads._upsert_session",
+                new=AsyncMock(),
+            ),
+        ):
+            request = StreamChatRequest(
+                content="oi",
+                config=ChatConfig(
+                    model="cohere:command-a-plus-05-2026", chat_mode=True
+                ),
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert "MODEL_NO_TOOL_CALLING" not in body
