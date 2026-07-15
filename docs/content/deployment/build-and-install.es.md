@@ -9,7 +9,7 @@ El pipeline de build oficial usa [SCons](https://scons.org/) como orquestador, e
 
 ```text
 build frontend (Vite)  →  build híbrido del backend  →  Electron + electron-builder
-frontend/dist/              dist/vectora/vectora(.exe)   electron/dist-electron/
+frontend/dist/              dist/vectora/vectora(.exe)   frontend/dist-electron/
 ```
 
 El "build híbrido" compila **solo el paquete del backend** a C vía Nuitka (`--mode=package`, produciendo un `.pyd`), y luego usa **PyInstaller** para empaquetar el launcher + ese módulo compilado + las libs de Python en un único ejecutable. Compilar solo el backend (en lugar de Nuitka onefile puro) evita quedarse sin memoria al compilar dependencias gigantes (`google.genai.types`, LanceDB) directo a C.
