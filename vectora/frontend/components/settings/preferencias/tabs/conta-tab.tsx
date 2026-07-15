@@ -151,13 +151,14 @@ export function ContaTab() {
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
 
-      {/* E-mail + Role */}
+      {/* Usuário + Role — Vectora identifica a conta por username, não email
+          (email é opcional e fica vazio em modo local, sem conta). */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-            Email
+            Usuário
           </p>
-          <p className="text-sm font-mono">{user.email}</p>
+          <p className="text-sm font-mono">{user.username}</p>
         </div>
         <Badge variant={ROLE_VARIANTS[user.role] ?? "secondary"}>
           {ROLE_LABELS[user.role] ?? user.role}
