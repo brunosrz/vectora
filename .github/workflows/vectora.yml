@@ -320,15 +320,19 @@ jobs:
           echo "CSC_LINK=${{ secrets.WIN_CERTIFICATE_BASE64 }}" >> "$GITHUB_ENV"
           echo "CSC_KEY_PASSWORD=${{ secrets.WIN_CERTIFICATE_PASSWORD }}" >> "$GITHUB_ENV"
       - name: Build desktop shell + installer
+        # Sem working-directory explícito: herda o default do job/workflow
+        # (working-directory: vectora, linha 27-29) — por isso --dir aqui é
+        # relativo a vectora/, não à raiz do monorepo (--dir vectora/frontend
+        # duplicava o segmento e quebrava com ENOENT em .../vectora/vectora/...).
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.VECTORA_RELEASES_TOKEN }}
         run: |
-          pnpm --dir vectora/frontend install --frozen-lockfile
-          pnpm --dir vectora/frontend run electron:build
-          pnpm --dir vectora/frontend exec electron-builder --config electron/electron-builder.yml --${{ matrix.target }} --publish always
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend run electron:build
+          pnpm --dir frontend exec electron-builder --config electron/electron-builder.yml --${{ matrix.target }} --publish always
       - name: Upload installers
         uses: actions/upload-artifact@v7
         with:
