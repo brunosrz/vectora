@@ -4,6 +4,7 @@ import {
   submitIssue,
   submitIssueWithFiles,
   listOpenIssues,
+  getIssue,
   joinWaitlist,
 } from "./issues";
 
@@ -158,6 +159,31 @@ describe("listOpenIssues", () => {
   it("retorna array vazio quando não há issues (edge)", async () => {
     mockServicesFetch.mockResolvedValue([]);
     await expect(listOpenIssues()).resolves.toEqual([]);
+  });
+});
+
+describe("getIssue", () => {
+  it("retorna a issue com a key de anexo resolvida pra URL do worker", async () => {
+    mockServicesFetch.mockResolvedValue({
+      id: "1",
+      title: "Bug X",
+      category: "bug",
+      description: null,
+      status: "open",
+      files: ["issues/1/abc-print.png"],
+      created_at: "now",
+    });
+
+    const result = await getIssue({ data: { id: "1" } });
+    expect(result?.status).toBe("open");
+    expect(result?.files).toEqual([
+      "https://services.test/issues/files/issues/1/abc-print.png",
+    ]);
+  });
+
+  it("retorna null quando o worker responde 404 (par de erro — id inexistente)", async () => {
+    mockServicesFetch.mockRejectedValue(new Error("services_error_404"));
+    await expect(getIssue({ data: { id: "nao-existe" } })).resolves.toBeNull();
   });
 });
 

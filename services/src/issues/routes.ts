@@ -150,7 +150,8 @@ issues.get("/", async (c) => {
 });
 
 // Serve um anexo do R2. Público por design: a key contém UUID e não é
-// enumerável; quem tem a key veio da listagem pública da issue.
+// enumerável; quem tem a key veio da listagem pública da issue. Declarado
+// ANTES de GET /:id — "files" nunca deve casar com o param de id.
 issues.get("/files/*", async (c) => {
   const key = c.req.path.replace(/^.*?\/files\//, "");
   if (!key.startsWith("issues/")) return c.text("not found", 404);
@@ -163,6 +164,21 @@ issues.get("/files/*", async (c) => {
       "Cache-Control": "public, max-age=3600",
       ETag: obj.httpEtag,
     },
+  });
+});
+
+// Detalhe público de uma issue (página /issues/$issueId no company). Mesma
+// projeção sem `email` da listagem — privacidade do reporter.
+issues.get("/:id", async (c) => {
+  const row = await c.env.DB.prepare(
+    "SELECT id, title, category, description, files, status, created_at FROM issues WHERE id = ?",
+  )
+    .bind(c.req.param("id"))
+    .first<{ files: string | null } & Record<string, unknown>>();
+  if (!row) return c.json({ error: "not_found" }, 404);
+  return c.json({
+    ...row,
+    files: row.files ? (JSON.parse(row.files) as string[]) : [],
   });
 });
 

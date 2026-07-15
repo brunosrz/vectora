@@ -107,6 +107,14 @@ export function giftReceivedHtml(
   `);
 }
 
+export function issueResponseHtml(title: string, response: string): string {
+  return shell(`
+    <p style="color:${BRAND_BLUE};font-size:14px;font-weight:600">Resposta à sua issue</p>
+    <p style="color:#94a3b8;font-size:14px">Sobre "<strong>${title}</strong>":</p>
+    <p style="color:#e2e8f0;font-size:14px;white-space:pre-wrap">${response}</p>
+  `);
+}
+
 export function accountDeletedHtml(name: string, deletionDate: string): string {
   return shell(`
     <p style="color:#f87171;font-size:14px;font-weight:600">Conta agendada para exclusão</p>

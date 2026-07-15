@@ -1,5 +1,5 @@
 import { env } from "cloudflare:test";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { admin } from "../../src/admin/routes";
 import { createSession } from "../../src/auth/session";
 
@@ -288,5 +288,146 @@ describe("POST /admin/gifts", () => {
     expect(res.status).toBe(200);
     const { gifts } = await res.json<{ gifts: Array<{ email: string }> }>();
     expect(gifts.some((g) => g.email === "listed-gift@example.com")).toBe(true);
+  });
+});
+
+async function createIssue(
+  overrides: Partial<{ title: string; email: string | null }> = {},
+) {
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    "INSERT INTO issues (id, title, category, description, email) VALUES (?, ?, 'bug', 'Descrição', ?)",
+  )
+    .bind(id, overrides.title ?? "Issue de admin", overrides.email ?? null)
+    .run();
+  return id;
+}
+
+describe("GET /admin/issues e GET /admin/issues/:id", () => {
+  it("lista/mostra o email do reporter (nunca exposto na rota pública) e rejeita não-admin", async () => {
+    const { token } = await createUser("admin");
+    const id = await createIssue({ email: "reporter@example.com" });
+
+    const list = await admin.request("/issues", authed(token), env);
+    expect(list.status).toBe(200);
+    const { issues } = await list.json<{
+      issues: Array<{ id: string; email: string | null }>;
+    }>();
+    expect(issues.find((i) => i.id === id)?.email).toBe("reporter@example.com");
+
+    const detail = await admin.request(`/issues/${id}`, authed(token), env);
+    expect(detail.status).toBe(200);
+    expect((await detail.json<{ email: string | null }>()).email).toBe(
+      "reporter@example.com",
+    );
+
+    const { token: userToken } = await createUser("user");
+    expect(
+      (await admin.request("/issues", authed(userToken), env)).status,
+    ).toBe(403);
+  });
+
+  it("GET /admin/issues/:id com id inexistente → 404", async () => {
+    const { token } = await createUser("admin");
+    const res = await admin.request(
+      `/issues/${crypto.randomUUID()}`,
+      authed(token),
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /admin/issues/:id/respond", () => {
+  // Sem isso, o segundo teste re-espiona um env.EMAIL_QUEUE.send que o
+  // primeiro teste já mockou e nunca restaurou — vi.spyOn devolve o MESMO
+  // mock (com o histórico de chamadas do teste anterior já dentro).
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("grava a resposta e enfileira email pro reporter quando a issue tem email", async () => {
+    const { token } = await createUser("admin");
+    const id = await createIssue({ email: "reporter@example.com" });
+    const sendSpy = vi
+      .spyOn(env.EMAIL_QUEUE, "send")
+      .mockImplementation(async () => undefined as never);
+
+    const res = await admin.request(
+      `/issues/${id}/respond`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          response: "Já corrigimos isso!",
+          resolve: true,
+        }),
+      }),
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+
+    const detail = await admin.request(`/issues/${id}`, authed(token), env);
+    const body = await detail.json<{
+      response: string | null;
+      status: string;
+    }>();
+    expect(body.response).toBe("Já corrigimos isso!");
+    expect(body.status).toBe("resolved");
+  });
+
+  it("grava a resposta SEM enfileirar email quando a issue não tem email (par de erro)", async () => {
+    const { token } = await createUser("admin");
+    const id = await createIssue({ email: null });
+    const sendSpy = vi
+      .spyOn(env.EMAIL_QUEUE, "send")
+      .mockImplementation(async () => undefined as never);
+
+    const res = await admin.request(
+      `/issues/${id}/respond`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          response: "Resposta sem reporter",
+          resolve: false,
+        }),
+      }),
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(sendSpy).not.toHaveBeenCalled();
+
+    const detail = await admin.request(`/issues/${id}`, authed(token), env);
+    const body = await detail.json<{ status: string }>();
+    expect(body.status).toBe("open");
+  });
+
+  it("rejeita resposta vazia/curta (400) e id inexistente (404)", async () => {
+    const { token } = await createUser("admin");
+    const id = await createIssue();
+
+    const tooShort = await admin.request(
+      `/issues/${id}/respond`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: "ok" }),
+      }),
+      env,
+    );
+    expect(tooShort.status).toBe(400);
+
+    const missing = await admin.request(
+      `/issues/${crypto.randomUUID()}/respond`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: "Resposta válida" }),
+      }),
+      env,
+    );
+    expect(missing.status).toBe(404);
   });
 });

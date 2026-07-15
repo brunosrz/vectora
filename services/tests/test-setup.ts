@@ -10,6 +10,8 @@ import rbacBillingSql from "../migrations/0003_rbac_billing.sql?raw";
 import seedAdminSql from "../migrations/0004_seed_admin.sql?raw";
 // @ts-expect-error — idem.
 import issueFilesSql from "../migrations/0005_issue_files.sql?raw";
+// @ts-expect-error — idem.
+import issueResponseSql from "../migrations/0006_issue_response.sql?raw";
 
 // Guarda de rede hermética. O `queueConsumers: ["vectora-email"]` do
 // vitest.config faz o miniflare ENTREGAR de verdade os emails enfileirados
@@ -57,4 +59,5 @@ beforeAll(async () => {
   await applyMigration(rbacBillingSql as string);
   await applyMigration(seedAdminSql as string);
   await applyMigration(issueFilesSql as string);
+  await applyMigration(issueResponseSql as string);
 });

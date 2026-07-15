@@ -9,7 +9,7 @@ import { Hono } from "hono";
 import type { Env } from "../relay/types";
 import { requireAdmin } from "../auth/roles";
 import { grantSubscription } from "../billing/routes";
-import { giftReceivedHtml } from "../lib/email";
+import { giftReceivedHtml, issueResponseHtml } from "../lib/email";
 import { enqueueEmail } from "../lib/queue";
 
 export const admin = new Hono<{ Bindings: Env }>();
@@ -211,4 +211,94 @@ admin.post("/gifts", async (c) => {
   });
 
   return c.json({ ok: true, gift_id: giftId, claimed: Boolean(existingUser) });
+});
+
+interface AdminIssueRow {
+  id: string;
+  title: string;
+  category: string;
+  description: string | null;
+  email: string | null;
+  files: string | null;
+  status: string;
+  response: string | null;
+  responded_at: string | null;
+  created_at: string;
+}
+
+// Lista completa (com email — o público NUNCA vê esse campo) pro admin
+// triar/responder issues. Badge de contagem no company conta status='open'.
+admin.get("/issues", async (c) => {
+  const adminId = await requireAdmin(c);
+  if (!adminId) return c.json({ error: "forbidden" }, 403);
+
+  const limit = Math.min(Number(c.req.query("limit") ?? "50"), 200);
+  const offset = Number(c.req.query("offset") ?? "0");
+
+  const { results } = await c.env.DB.prepare(
+    "SELECT id, title, category, description, email, files, status, response, responded_at, created_at FROM issues ORDER BY created_at DESC LIMIT ? OFFSET ?",
+  )
+    .bind(limit, offset)
+    .all<AdminIssueRow>();
+
+  return c.json({
+    issues: results.map((row) => ({
+      ...row,
+      files: row.files ? (JSON.parse(row.files) as string[]) : [],
+    })),
+  });
+});
+
+admin.get("/issues/:id", async (c) => {
+  const adminId = await requireAdmin(c);
+  if (!adminId) return c.json({ error: "forbidden" }, 403);
+
+  const row = await c.env.DB.prepare(
+    "SELECT id, title, category, description, email, files, status, response, responded_at, created_at FROM issues WHERE id = ?",
+  )
+    .bind(c.req.param("id"))
+    .first<AdminIssueRow>();
+  if (!row) return c.json({ error: "not_found" }, 404);
+
+  return c.json({
+    ...row,
+    files: row.files ? (JSON.parse(row.files) as string[]) : [],
+  });
+});
+
+admin.post("/issues/:id/respond", async (c) => {
+  const adminId = await requireAdmin(c);
+  if (!adminId) return c.json({ error: "forbidden" }, 403);
+
+  const id = c.req.param("id");
+  const body = await c.req.json<{ response?: string; resolve?: boolean }>();
+  if (!body.response || body.response.trim().length < 3) {
+    return c.json({ error: "invalid_response" }, 400);
+  }
+
+  const issue = await c.env.DB.prepare(
+    "SELECT title, email FROM issues WHERE id = ?",
+  )
+    .bind(id)
+    .first<{ title: string; email: string | null }>();
+  if (!issue) return c.json({ error: "not_found" }, 404);
+
+  const newStatus = body.resolve ? "resolved" : "open";
+  await c.env.DB.prepare(
+    "UPDATE issues SET response = ?, responded_at = datetime('now'), status = ? WHERE id = ?",
+  )
+    .bind(body.response, newStatus, id)
+    .run();
+
+  // Só notifica se o reporter deixou email (opcional no formulário) — sem
+  // email, a resposta fica só visível na página pública da issue.
+  if (issue.email) {
+    await enqueueEmail(c.env, {
+      to: issue.email,
+      subject: `Resposta à sua issue: ${issue.title}`,
+      html: issueResponseHtml(issue.title, body.response),
+    });
+  }
+
+  return c.json({ ok: true });
 });

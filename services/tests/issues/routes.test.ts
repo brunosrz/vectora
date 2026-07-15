@@ -204,6 +204,44 @@ describe("POST /issues — anexos (multipart)", () => {
   });
 });
 
+describe("GET /issues/:id", () => {
+  it("retorna a issue sem email quando existe, e 404 quando não existe", async () => {
+    vi.stubGlobal("fetch", mockResendFetch());
+
+    const create = await issues.request(
+      "/",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Issue individual",
+          category: "feedback",
+          description: "Detalhe da issue",
+          email: "reporter@example.com",
+          turnstileToken: "test-token",
+        }),
+      },
+      env,
+    );
+    expect(create.status).toBe(200);
+
+    const list = await issues.request("/", {}, env);
+    const listBody = await list.json<Array<{ id: string; title: string }>>();
+    const created = listBody.find((i) => i.title === "Issue individual");
+    expect(created).toBeTruthy();
+
+    const found = await issues.request(`/${created!.id}`, {}, env);
+    expect(found.status).toBe(200);
+    const foundBody = await found.json<Record<string, unknown>>();
+    expect(foundBody.title).toBe("Issue individual");
+    expect(foundBody.status).toBe("open");
+    expect("email" in foundBody).toBe(false);
+
+    const missing = await issues.request(`/${crypto.randomUUID()}`, {}, env);
+    expect(missing.status).toBe(404);
+  });
+});
+
 describe("POST /issues/waitlist", () => {
   it("is idempotent for a duplicate email", async () => {
     vi.stubGlobal("fetch", mockResendFetch());

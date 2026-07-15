@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Paperclip, X } from "lucide-react";
@@ -271,19 +271,25 @@ function IssuesList({ issues }: { issues: IssueListItem[] }) {
               key={issue.id}
               className="rounded-xl border border-border bg-card/40 px-4 py-3"
             >
-              <div className="flex items-start justify-between gap-3">
-                <span className="text-sm font-medium text-foreground">
-                  {issue.title}
-                </span>
-                <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
-                  {CATEGORY_LABELS[issue.category]}
-                </span>
-              </div>
-              {issue.description && (
-                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                  {issue.description}
-                </p>
-              )}
+              <Link
+                to="/issues/$issueId"
+                params={{ issueId: issue.id }}
+                className="block hover:opacity-80 transition-opacity"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-sm font-medium text-foreground">
+                    {issue.title}
+                  </span>
+                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
+                    {CATEGORY_LABELS[issue.category]}
+                  </span>
+                </div>
+                {issue.description && (
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {issue.description}
+                  </p>
+                )}
+              </Link>
               {issue.files.length > 0 && (
                 <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
                   <span className="text-muted-foreground/70">

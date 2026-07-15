@@ -88,6 +88,25 @@ export const listOpenIssues = createServerFn({ method: "GET" }).handler(
   },
 );
 
+export type IssueDetail = IssueListItem & { status: "open" | "resolved" };
+
+// servicesFetch lança em qualquer resposta não-2xx (incl. 404) — null aqui
+// significa "não existe", tratado pela rota como not-found.
+export const getIssue = createServerFn({ method: "GET" })
+  .validator(z.object({ id: z.string().min(1) }))
+  .handler(async ({ data }): Promise<IssueDetail | null> => {
+    const item = await servicesFetch<
+      Omit<IssueDetail, "files"> & { files?: string[] }
+    >(`/issues/${encodeURIComponent(data.id)}`).catch(() => null);
+    if (!item) return null;
+    return {
+      ...item,
+      files: (item.files ?? []).map(
+        (key) => `${SERVICES_URL}/issues/files/${key}`,
+      ),
+    };
+  });
+
 export const joinWaitlist = createServerFn({ method: "POST" })
   .validator(
     z.object({

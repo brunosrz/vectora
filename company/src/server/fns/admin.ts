@@ -85,6 +85,62 @@ export const listGifts = createServerFn({ method: "GET" }).handler(async () => {
   return servicesFetch<{ gifts: AdminGiftRow[] }>("/admin/gifts");
 });
 
+export interface AdminIssueRow {
+  id: string;
+  title: string;
+  category: "bug" | "feedback" | "feature";
+  description: string | null;
+  email: string | null;
+  files: string[];
+  status: "open" | "resolved";
+  response: string | null;
+  responded_at: string | null;
+  created_at: string;
+}
+
+export const listIssuesAdmin = createServerFn({ method: "GET" })
+  .validator(
+    z.object({ limit: z.number().optional(), offset: z.number().optional() }),
+  )
+  .handler(async ({ data }) => {
+    const params = new URLSearchParams();
+    if (data.limit) params.set("limit", String(data.limit));
+    if (data.offset) params.set("offset", String(data.offset));
+    const qs = params.toString();
+    return servicesFetch<{ issues: AdminIssueRow[] }>(
+      `/admin/issues${qs ? `?${qs}` : ""}`,
+    );
+  });
+
+export const getIssueAdmin = createServerFn({ method: "GET" })
+  .validator(z.object({ id: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    return servicesFetch<AdminIssueRow>(
+      `/admin/issues/${encodeURIComponent(data.id)}`,
+    );
+  });
+
+const RespondToIssueSchema = z.object({
+  id: z.string().min(1),
+  response: z.string().min(3),
+  resolve: z.boolean().optional(),
+});
+
+export const respondToIssue = createServerFn({ method: "POST" })
+  .validator(RespondToIssueSchema)
+  .handler(async ({ data }) => {
+    return servicesFetch<{ ok: true }>(
+      `/admin/issues/${encodeURIComponent(data.id)}/respond`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          response: data.response,
+          resolve: data.resolve,
+        }),
+      },
+    );
+  });
+
 const CreateGiftSchema = z.object({
   email: z.string().email(),
   duration_months: z.number().int().positive().optional(),
