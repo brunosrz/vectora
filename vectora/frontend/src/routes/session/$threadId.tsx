@@ -55,9 +55,8 @@ import {
   markCreateNewWorkspace,
 } from "@/lib/stores/workspace-choice-registry";
 import {
-  signalWorkspacePreChosen,
+  signalWorkspaceChoiceForNewSession,
   consumeWorkspacePreChosen,
-  signalCreateNewWorkspacePreNav,
   consumeCreateNewWorkspacePreNav,
 } from "@/lib/stores/new-session-signal";
 import { safeRandomUUID } from "@/lib/utils/uuid";
@@ -365,11 +364,11 @@ function SessionPage() {
       // conversas vazias na sidebar. A thread só é criada (via StreamChat)
       // quando a primeira mensagem é enviada.
       useWindowsStore.getState().closeAll();
-      if (workspaceId) {
-        void useWorkspacesStore.getState().setActive(workspaceId);
-      }
       if (isNewRoute) {
         // Já em /session/new: apenas marca o workspace como escolhido (sem navegar).
+        if (workspaceId) {
+          void useWorkspacesStore.getState().setActive(workspaceId);
+        }
         markWorkspaceChosen(threadId);
         if (!workspaceId) {
           // "criar novo workspace" — threadId já é o id definitivo dessa
@@ -381,15 +380,12 @@ function SessionPage() {
           markCreateNewWorkspace(threadId);
         }
       } else {
-        // Saindo de uma sessão existente: sinaliza que workspace já foi confirmado
-        // para que o componente destino não reabra o seletor automaticamente.
-        signalWorkspacePreChosen();
-        if (!workspaceId) {
-          // Ainda não existe id da conversa nova (só nasce no destino) —
-          // mesmo problema do signalWorkspacePreChosen acima, mesma solução:
-          // sinal route-agnostic, consumido junto quando o id é gerado.
-          signalCreateNewWorkspacePreNav();
-        }
+        // Saindo de uma sessão existente — mesma decisão de sinal usada pela
+        // tela inicial (index.tsx::handleDialogConfirm), centralizada em
+        // signalWorkspaceChoiceForNewSession pra não duplicar essa lógica
+        // (uma cópia divergente foi exatamente a causa do bug de "criar
+        // novo workspace" virar "sem escolha" a partir da tela inicial).
+        signalWorkspaceChoiceForNewSession(workspaceId);
         void navigate({
           to: "/session/$threadId",
           params: { threadId: "new" },

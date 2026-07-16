@@ -1,10 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   signalWorkspacePreChosen,
   consumeWorkspacePreChosen,
   signalCreateNewWorkspacePreNav,
   consumeCreateNewWorkspacePreNav,
+  signalWorkspaceChoiceForNewSession,
 } from "../new-session-signal";
+import { useWorkspacesStore } from "../workspaces-store";
 
 beforeEach(() => {
   consumeWorkspacePreChosen();
@@ -63,5 +65,29 @@ describe("new-session-signal — 'criar novo workspace' (sinal independente)", (
     expect(consumeCreateNewWorkspacePreNav()).toBe(true);
     // o outro sinal continua pendente — consumo de um não afeta o outro
     expect(consumeWorkspacePreChosen()).toBe(true);
+  });
+});
+
+describe("signalWorkspaceChoiceForNewSession — decisão única compartilhada", () => {
+  it("workspaceId truthy: ativa o workspace via store e sinaliza pré-escolha, sem pedir workspace novo", () => {
+    const setActive = vi.fn().mockResolvedValue(undefined);
+    useWorkspacesStore.setState({ setActive });
+
+    signalWorkspaceChoiceForNewSession("ws1");
+
+    expect(setActive).toHaveBeenCalledWith("ws1");
+    expect(consumeWorkspacePreChosen()).toBe(true);
+    expect(consumeCreateNewWorkspacePreNav()).toBe(false);
+  });
+
+  it("workspaceId null ('criar novo'): sinaliza create-new-workspace, sem tocar a store (edge — era o bug real da tela inicial)", () => {
+    const setActive = vi.fn().mockResolvedValue(undefined);
+    useWorkspacesStore.setState({ setActive });
+
+    signalWorkspaceChoiceForNewSession(null);
+
+    expect(setActive).not.toHaveBeenCalled();
+    expect(consumeWorkspacePreChosen()).toBe(true);
+    expect(consumeCreateNewWorkspacePreNav()).toBe(true);
   });
 });

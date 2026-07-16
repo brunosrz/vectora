@@ -14,8 +14,10 @@ import { listThreads } from "@/lib/api/vectora-client";
 import { EmptyStateHeader } from "@/components/chat/features/empty-state-header";
 import { NewChatDialog } from "@/components/sidebar/new-chat-dialog";
 import { Header } from "@/components/header/header";
-import { signalWorkspacePreChosen } from "@/lib/stores/new-session-signal";
-import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import {
+  signalWorkspacePreChosen,
+  signalWorkspaceChoiceForNewSession,
+} from "@/lib/stores/new-session-signal";
 
 /** Largura da sidebar na tela inicial — mais larga que o normal para dar destaque. */
 const HOME_SIDEBAR_WIDTH = 280;
@@ -79,11 +81,13 @@ function HomeScreen() {
   };
 
   const handleDialogConfirm = (workspaceId: string | null) => {
-    if (workspaceId) {
-      void useWorkspacesStore.getState().setActive(workspaceId);
-    }
     setChatMode(false);
-    signalWorkspacePreChosen();
+    // Mesma decisão de sinal usada por $threadId.tsx::handleConfirmNewChat
+    // ao sair de uma sessão existente — centralizada em
+    // signalWorkspaceChoiceForNewSession pra não poder duplicar e divergir
+    // de novo (era exatamente isso que causava "criar novo workspace" na
+    // tela inicial se comportar como "sem escolha").
+    signalWorkspaceChoiceForNewSession(workspaceId);
     go(() => {
       void navigate({ to: "/session/$threadId", params: { threadId: "new" } });
     });
