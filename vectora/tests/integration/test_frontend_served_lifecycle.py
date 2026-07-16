@@ -82,8 +82,15 @@ async def _wait_port_closed(port: int, timeout_s: float) -> None:
             _, writer = await asyncio.open_connection("127.0.0.1", port)
         except OSError:
             return
-        writer.close()
-        await writer.wait_closed()
+        try:
+            writer.close()
+            await writer.wait_closed()
+        except (ConnectionResetError, ConnectionAbortedError):
+            # o processo servidor pode morrer entre o accept() do SO e o
+            # nosso close() — o SO reseta a conexão em vez de fechar limpo;
+            # isso não é evidência de porta ainda aberta, só um teardown em
+            # andamento, então tenta de novo em vez de propagar.
+            pass
         await asyncio.sleep(0.2)
     raise TimeoutError(f"porta {port} não fechou em {timeout_s}s")
 
