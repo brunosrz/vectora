@@ -25,6 +25,14 @@ _TRANSIENT_MARKERS = (
     "readtimeout",
     "connection error",
     "connection refused",
+    # Sobrecarga momentânea do provider (não é quota do usuário nem erro de
+    # app) — confirmado com um 503 real do Gemini: "This model is currently
+    # experiencing high demand. Spikes in demand are usually temporary."
+    # Anthropic usa "overloaded_error" pro mesmo cenário.
+    "503",
+    "service unavailable",
+    "overloaded",
+    "high demand",
 )
 _PROVIDER_INCOMPATIBLE_MARKERS = (
     # Cohere Command A+ (e variantes): `_get_message_cohere_format_v2` do

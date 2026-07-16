@@ -86,6 +86,23 @@ class TestIsTransientError:
     def test_case_insensitive(self):
         assert pf.is_transient_error(Exception("TIMEOUT waiting for model")) is True
 
+    def test_gemini_503_high_demand_real(self):
+        # Texto real de um ServerError do google-genai (visto em produção).
+        msg = (
+            "503 Service Unavailable. {'message': '{\\n  \"error\": {\\n    "
+            '"code": 503,\\n    "message": "This model is currently '
+            "experiencing high demand. Spikes in demand are usually "
+            'temporary. Please try again later.",\\n    "status": '
+            "\"UNAVAILABLE\"\\n  }\\n}\\n', 'status': 'Service Unavailable'}"
+        )
+        assert pf.is_transient_error(Exception(msg)) is True
+
+    def test_anthropic_overloaded(self):
+        assert pf.is_transient_error(Exception("overloaded_error: overloaded")) is True
+
+    def test_service_unavailable(self):
+        assert pf.is_transient_error(Exception("503 service unavailable")) is True
+
     # erros que NÃO são transientes
     def test_quota_not_transient(self):
         assert pf.is_transient_error(Exception("429 quota exceeded")) is False
