@@ -111,6 +111,16 @@ export function ModelSelector({
       model === value || !codeMode || !toolIncompatibleModels.includes(model),
   );
 
+  // Troca sozinho pro primeiro modelo compatível quando entra em code mode
+  // com um modelo incompatível já selecionado (herdado de sessão anterior) —
+  // nunca deixa o usuário preso num modelo que vai falhar no próximo tool
+  // call. Não roda em chat mode (o valor atual permanece na lista ali).
+  useEffect(() => {
+    if (!codeMode || !toolIncompatibleModels.includes(value)) return;
+    const fallback = visibleModels.find((model) => model !== value);
+    if (fallback) onChange(fallback);
+  }, [codeMode, toolIncompatibleModels, value, visibleModels, onChange]);
+
   const activeLabel = getModelDisplayName(value as ModelOption) || value;
 
   return (

@@ -218,6 +218,84 @@ describe("ModelSelector", () => {
     });
   });
 
+  it("troca sozinho pro primeiro modelo compatível ao entrar em code mode com um incompatível já selecionado", async () => {
+    const models = getAllowedModels();
+    const cohere = models.find((m) => m === "cohere:command-a-plus-05-2026");
+    expect(cohere).toBeTruthy();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              providers: ["google-genai", "openai", "anthropic", "cohere"],
+              tool_incompatible_models: [cohere],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        ),
+      ),
+    );
+
+    const onChange = vi.fn();
+    render(<ModelSelector value={cohere!} onChange={onChange} codeMode />);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledTimes(1);
+    });
+    expect(onChange.mock.calls[0]?.[0]).not.toBe(cohere);
+  });
+
+  it("não troca sozinho em chat mode, nem se o modelo já é compatível (edge)", async () => {
+    const models = getAllowedModels();
+    const cohere = models.find((m) => m === "cohere:command-a-plus-05-2026");
+    const compatible = models.find((m) => m !== cohere)!;
+    expect(cohere).toBeTruthy();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              providers: ["google-genai", "openai", "anthropic", "cohere"],
+              tool_incompatible_models: [cohere],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        ),
+      ),
+    );
+
+    const onChangeChatMode = vi.fn();
+    const { unmount } = render(
+      <ModelSelector value={cohere!} onChange={onChangeChatMode} />,
+    );
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(getModelDisplayName(cohere!)).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(onChangeChatMode).not.toHaveBeenCalled();
+    unmount();
+
+    const onChangeCompatible = vi.fn();
+    render(
+      <ModelSelector
+        value={compatible}
+        onChange={onChangeCompatible}
+        codeMode
+      />,
+    );
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(getModelDisplayName(compatible)).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(onChangeCompatible).not.toHaveBeenCalled();
+  });
+
   it("erro no fetch de /models/providers não quebra a lista (mantém só estáticos)", async () => {
     const value = getAllowedModels()[0];
 
