@@ -23,6 +23,9 @@ export interface ChatConfig {
   llm_provider?: string;
   recursion_limit?: number;
   workspace_id?: string;
+  /** Sinal explícito de "criar workspace dedicado pra essa conversa" —
+   * distinto de workspace_id ausente (que significa "reusa o ativo"). */
+  create_new_workspace?: boolean;
   /** Modo Chat: conversacional puro, sem workspace/tools de dev. */
   chat_mode?: boolean;
   /** L4 — instrução personalizada prefixada ao system prompt */
@@ -63,7 +66,7 @@ export interface ResumeChatRequest {
 
 /** Evento discriminado pelo campo `type` */
 export type StreamEvent =
-  | { type: "thread"; thread_id: string }
+  | { type: "thread"; thread_id: string; workspace_id?: string }
   | { type: "token"; content: string; node?: string }
   | {
       type: "tool_call";

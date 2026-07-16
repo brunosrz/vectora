@@ -52,10 +52,13 @@ import { markAsNew, isNew, clearNew } from "@/lib/stores/new-thread-registry";
 import {
   markWorkspaceChosen,
   isWorkspaceChosen,
+  markCreateNewWorkspace,
 } from "@/lib/stores/workspace-choice-registry";
 import {
   signalWorkspacePreChosen,
   consumeWorkspacePreChosen,
+  signalCreateNewWorkspacePreNav,
+  consumeCreateNewWorkspacePreNav,
 } from "@/lib/stores/new-session-signal";
 import { safeRandomUUID } from "@/lib/utils/uuid";
 import {
@@ -110,6 +113,7 @@ function SessionPage() {
     // consumeWorkspacePreChosen() lê e zera o sinal one-shot definido em
     // handleConfirmNewChat quando o workspace já foi confirmado antes da navegação.
     if (consumeWorkspacePreChosen()) markWorkspaceChosen(id);
+    if (consumeCreateNewWorkspacePreNav()) markCreateNewWorkspace(id);
     return id;
   });
   const threadId = isNewRoute ? localNewId : routeParam;
@@ -367,10 +371,25 @@ function SessionPage() {
       if (isNewRoute) {
         // Já em /session/new: apenas marca o workspace como escolhido (sem navegar).
         markWorkspaceChosen(threadId);
+        if (!workspaceId) {
+          // "criar novo workspace" — threadId já é o id definitivo dessa
+          // conversa (localNewId), dá pra marcar direto. NÃO reusa o
+          // active_id stale do store (de uma conversa anterior); sinaliza
+          // pro handler de stream que essa conversa precisa de um workspace
+          // dedicado (ChatConfig.create_new_workspace), consumido uma vez
+          // no primeiro turno.
+          markCreateNewWorkspace(threadId);
+        }
       } else {
         // Saindo de uma sessão existente: sinaliza que workspace já foi confirmado
         // para que o componente destino não reabra o seletor automaticamente.
         signalWorkspacePreChosen();
+        if (!workspaceId) {
+          // Ainda não existe id da conversa nova (só nasce no destino) —
+          // mesmo problema do signalWorkspacePreChosen acima, mesma solução:
+          // sinal route-agnostic, consumido junto quando o id é gerado.
+          signalCreateNewWorkspacePreNav();
+        }
         void navigate({
           to: "/session/$threadId",
           params: { threadId: "new" },

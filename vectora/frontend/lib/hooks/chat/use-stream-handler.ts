@@ -33,6 +33,7 @@ import { stripMarkdownEnvelope } from "../../utils/string/markdown-envelope";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { consumeCreateNewWorkspace } from "@/lib/stores/workspace-choice-registry";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useToastStore } from "@/lib/stores/toast-store";
 import { useNetworkStore } from "@/lib/hooks/use-network-status";
@@ -236,9 +237,17 @@ export function useStreamHandler({
       const settings = useSettingsStore.getState();
       // Modo Chat: conversacional puro, sem workspace/folders.
       config.chat_mode = settings.chatMode;
-      const activeWorkspaceId = useWorkspacesStore.getState().active_id;
-      if (!settings.chatMode && activeWorkspaceId)
-        config.workspace_id = activeWorkspaceId;
+      // "criar novo workspace" (modal Nova conversa) — sinal one-shot,
+      // consumido aqui: NÃO manda o active_id stale do store (workspace de
+      // outra conversa), manda create_new_workspace pro backend criar um
+      // dedicado. Ver workspace-choice-registry.ts.
+      if (!settings.chatMode && consumeCreateNewWorkspace(threadId)) {
+        config.create_new_workspace = true;
+      } else {
+        const activeWorkspaceId = useWorkspacesStore.getState().active_id;
+        if (!settings.chatMode && activeWorkspaceId)
+          config.workspace_id = activeWorkspaceId;
+      }
       config.permission_mode = settings.permissionMode;
       config.reasoning_effort = settings.reasoningEffort;
 
@@ -277,6 +286,15 @@ export function useStreamHandler({
           if (shouldInterruptRef?.current) {
             abort.abort();
             break;
+          }
+
+          if (event.type === "thread" && event.workspace_id) {
+            // Sincroniza o workspace resolvido pelo backend de volta pro
+            // store local — sem isso, um workspace criado via
+            // create_new_workspace nunca aparece no seletor/chip da UI
+            // (o backend já persistiu como ativo sozinho, isso só espelha
+            // localmente, sem POST redundante — ver syncActiveLocal).
+            useWorkspacesStore.getState().syncActiveLocal(event.workspace_id);
           }
 
           if (event.type === "token") {

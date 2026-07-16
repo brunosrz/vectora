@@ -387,7 +387,9 @@ def adapt_stream(
         # 1º evento: thread_id
         from backend.api.schemas import ThreadEvent
 
-        yield encode_event(ThreadEvent(thread_id=thread_id))
+        yield encode_event(
+            ThreadEvent(thread_id=thread_id, workspace_id=workspace_id or "")
+        )
 
         node_start_times: dict[str, float] = {}
         tool_start_times: dict[str, float] = {}

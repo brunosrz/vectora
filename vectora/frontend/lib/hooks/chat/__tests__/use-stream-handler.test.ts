@@ -14,6 +14,8 @@ import type { StreamEvent } from "@/lib/api/vectora-client";
 // Alias evita sombrear o `m` usado como nome de parâmetro em
 // `messages.find((m) => ...)` neste arquivo (convenção do projeto).
 import { m as paraglideMessages } from "@/lib/paraglide/messages";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { markCreateNewWorkspace } from "@/lib/stores/workspace-choice-registry";
 
 const streamChatMock = vi.fn();
 const resumeChatMock = vi.fn();
@@ -749,5 +751,85 @@ describe("useStreamHandler.processResume", () => {
     const hasXY = contentHistory.some((c) => c.endsWith("XY"));
     expect(hasX).toBe(true);
     expect(hasXY).toBe(true);
+  });
+});
+
+describe("useStreamHandler — workspace de sessão nova", () => {
+  let messages: Message[];
+  const setMessages = (u: Message[] | ((p: Message[]) => Message[])) => {
+    messages = typeof u === "function" ? u(messages) : u;
+  };
+
+  beforeEach(() => {
+    messages = [];
+    streamChatMock.mockReset();
+    resumeChatMock.mockReset();
+    useWorkspacesStore.setState({ active_id: null, workspaces: [] });
+  });
+
+  it("consome o sinal 'criar novo workspace': manda create_new_workspace e nunca o active_id stale", async () => {
+    // active_id stale de uma conversa anterior — sem o fix, vazaria como
+    // config.workspace_id mesmo o usuário tendo pedido um workspace novo.
+    useWorkspacesStore.setState({ active_id: "ws-antigo" });
+    markCreateNewWorkspace("t1");
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "token", content: "oi" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages }),
+    );
+    await result.current.processStream("cria um workspace novo", "a1");
+
+    const sentConfig = (
+      streamChatMock.mock.calls[0]![0] as { config: Record<string, unknown> }
+    ).config;
+    expect(sentConfig.create_new_workspace).toBe(true);
+    expect(sentConfig.workspace_id).toBeUndefined();
+  });
+
+  it("sem o sinal, comportamento antigo: manda o active_id como workspace_id (edge)", async () => {
+    useWorkspacesStore.setState({ active_id: "ws-ativo" });
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "token", content: "oi" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages }),
+    );
+    await result.current.processStream("mensagem normal", "a1");
+
+    const sentConfig = (
+      streamChatMock.mock.calls[0]![0] as { config: Record<string, unknown> }
+    ).config;
+    expect(sentConfig.workspace_id).toBe("ws-ativo");
+    expect(sentConfig.create_new_workspace).toBeUndefined();
+  });
+
+  it("sincroniza active_id ao receber o workspace_id resolvido no evento thread", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1", workspace_id: "ws-recem-criado" },
+        { type: "token", content: "oi" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages }),
+    );
+    await result.current.processStream("cria um workspace novo", "a1");
+
+    expect(useWorkspacesStore.getState().active_id).toBe("ws-recem-criado");
   });
 });

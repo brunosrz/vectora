@@ -55,6 +55,22 @@ async def test_each_chunk_emits_one_token_in_order():
 
 
 @pytest.mark.asyncio
+async def test_thread_event_carries_resolved_workspace_id():
+    """Frontend sincroniza o seletor de workspace a partir desse campo (ver
+    use-stream-handler.ts) — sem ele, um workspace criado via
+    ChatConfig.create_new_workspace nunca aparece na UI. Par de erro: sem
+    workspace_id passado pra adapt_stream, o evento vem com string vazia
+    (nunca None/ausente — o frontend faz `if (event.workspace_id)`)."""
+    out = [
+        _parse(s) async for s in adapt_stream(_agen([]), "tid", workspace_id="ws-123")
+    ]
+    assert out[0] == {"type": "thread", "thread_id": "tid", "workspace_id": "ws-123"}
+
+    out_empty = [_parse(s) async for s in adapt_stream(_agen([]), "tid")]
+    assert out_empty[0]["workspace_id"] == ""
+
+
+@pytest.mark.asyncio
 async def test_tokens_are_incremental_not_buffered():
     """Dirige o gerador passo a passo: token N sai ANTES do chunk N+1 entrar.
 

@@ -23,6 +23,12 @@ class ChatConfig(BaseModel):
     llm_provider: str = ""
     recursion_limit: int = 50
     workspace_id: str = ""
+    # Sinal explícito de "criar um workspace dedicado pra essa conversa" (modal
+    # "Nova conversa" → "criar novo workspace"). Distinto de workspace_id vazio,
+    # que hoje significa "sem opinião, reusa o workspace ativo do usuário" —
+    # sem esse campo, _resolve_workspace_id não tem como diferenciar as duas
+    # intenções e sempre reusa o workspace ativo.
+    create_new_workspace: bool = False
     chat_mode: bool = (
         False  # modo Chat: conversacional puro, sem workspace/tools de dev
     )
@@ -153,6 +159,12 @@ class GenerateTitleResponse(BaseModel):
 
 class ThreadEvent(BaseModel):
     thread_id: str
+    # Workspace resolvido pra essa sessão — populado por adapt_stream a partir
+    # do workspace_id já calculado em stream_chat. Frontend usa isso pra
+    # sincronizar o seletor de workspace quando um novo workspace é criado
+    # (create_new_workspace=True em ChatConfig), já que hoje esse id nunca
+    # volta ao cliente por nenhum outro canal.
+    workspace_id: str = ""
 
 
 class TokenEvent(BaseModel):

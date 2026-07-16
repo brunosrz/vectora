@@ -294,7 +294,9 @@ def _user_id_from_request(http_request: Request) -> str:
     return "local"
 
 
-def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
+def _resolve_workspace_id(
+    requested: str, thread_id: str, user_id: str, force_new: bool = False
+) -> str:
     """Resolve o workspace da sessão.
 
     Com ``requested``, mantém a pasta escolhida pelo cliente. Sem ela, reusa o
@@ -302,18 +304,26 @@ def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
     padrão da sessão em ``~/Documents/vectora/<thread_id>``. Degrada para
     string vazia se a resolução falhar — nesse caso as tools usam o fallback
     de diretório atual.
+
+    ``force_new`` — sinal explícito do cliente ("criar novo workspace para
+    essa conversa" no modal de nova conversa, ver ``ChatConfig
+    .create_new_workspace``). Pula o reuso do workspace ativo e vai direto
+    pra ``get_or_create_session_workspace``, mesmo que exista um ativo —
+    sem isso, ``requested`` vazio é ambíguo (sem opinião vs. "quero um novo
+    de propósito") e o reuso sempre vence.
     """
     if requested:
         return requested
     try:
         from backend.workspace.workspace import workspace_registry
 
-        # Reusa o workspace ativo do usuário em vez de registrar um por thread —
-        # caso contrário cada conversa cria um ~/Documents/vectora/<thread_id>,
-        # poluindo o seletor de workspaces.
-        active = workspace_registry.get_active(user_id)
-        if active is not None:
-            return active.id
+        if not force_new:
+            # Reusa o workspace ativo do usuário em vez de registrar um por
+            # thread — caso contrário cada conversa cria um
+            # ~/Documents/vectora/<thread_id>, poluindo o seletor.
+            active = workspace_registry.get_active(user_id)
+            if active is not None:
+                return active.id
 
         ws = workspace_registry.get_or_create_session_workspace(thread_id, user_id)
         workspace_registry.set_active(ws.id, user_id)
@@ -412,7 +422,10 @@ async def stream_chat(
         # Resolve o workspace da sessão (cria o padrão em Documents/src/<id>
         # quando o cliente não escolheu uma pasta) e fixa no config da request.
         workspace_id = _resolve_workspace_id(
-            request.config.workspace_id, thread_id, user_id
+            request.config.workspace_id,
+            thread_id,
+            user_id,
+            force_new=request.config.create_new_workspace,
         )
         request.config.workspace_id = workspace_id
 

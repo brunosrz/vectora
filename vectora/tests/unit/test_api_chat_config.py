@@ -149,6 +149,48 @@ def test_resolve_reuses_active_workspace(monkeypatch):
     assert "created" not in calls
 
 
+def test_resolve_force_new_skips_active_workspace_reuse(monkeypatch):
+    """force_new=True pula o reuso do workspace ativo e cria um dedicado —
+    par de erro: force_new=False (default) continua reusando o ativo, mesmo
+    registry fake, confirmando que o comportamento antigo não regrediu."""
+    calls = {}
+
+    class _ActiveWs:
+        id = "ws-ativo"
+
+    class _NewWs:
+        id = "ws-novo-dedicado"
+
+    class _FakeRegistry:
+        def get_active(self, user_id=None):
+            calls.setdefault("get_active_calls", 0)
+            calls["get_active_calls"] += 1
+            return _ActiveWs()
+
+        def get_or_create_session_workspace(self, thread_id, user_id=None):
+            calls["created_thread_id"] = thread_id
+            return _NewWs()
+
+        def set_active(self, ws_id, user_id=None):
+            calls["set_active"] = (ws_id, user_id)
+            return True
+
+    monkeypatch.setattr(
+        "backend.workspace.workspace.workspace_registry", _FakeRegistry()
+    )
+
+    forced = _resolve_workspace_id("", "thread1", "u", force_new=True)
+    assert forced == "ws-novo-dedicado"
+    assert calls["created_thread_id"] == "thread1"
+    assert calls["set_active"] == ("ws-novo-dedicado", "u")
+
+    calls.clear()
+    reused = _resolve_workspace_id("", "thread1", "u", force_new=False)
+    assert reused == "ws-ativo"
+    assert calls["get_active_calls"] == 1
+    assert "created_thread_id" not in calls
+
+
 def test_resolve_creates_session_workspace_when_no_active(monkeypatch):
     """Sem workspace pedido e sem ativo, deriva o padrão da sessão via registry."""
     calls = {}

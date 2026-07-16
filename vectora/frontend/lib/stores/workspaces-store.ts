@@ -133,6 +133,12 @@ interface WorkspacesState {
   // ── Async (proxy Hono) ──────────────────────────────────────────────────────
   hydrate: () => Promise<void>;
   setActive: (id: string) => Promise<void>;
+  /** Só atualiza o estado local (sem POST /workspaces/set-active) — usado
+   * quando o backend já persistiu a escolha sozinho (ex.: workspace criado
+   * via ChatConfig.create_new_workspace, sincronizado de volta pelo
+   * ThreadEvent.workspace_id). Dispara hydrate() em background pra o
+   * workspace novo aparecer na lista sem bloquear o caller. */
+  syncActiveLocal: (id: string) => void;
   create: (
     path: string,
     opts?: { trust?: boolean; git_init?: boolean },
@@ -299,6 +305,11 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ workspace_id: id }),
         });
+      },
+
+      syncActiveLocal: (id) => {
+        set({ active_id: id });
+        void get().hydrate();
       },
 
       create: async (path, opts) => {

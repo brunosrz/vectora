@@ -2,10 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   signalWorkspacePreChosen,
   consumeWorkspacePreChosen,
+  signalCreateNewWorkspacePreNav,
+  consumeCreateNewWorkspacePreNav,
 } from "../new-session-signal";
 
 beforeEach(() => {
   consumeWorkspacePreChosen();
+  consumeCreateNewWorkspacePreNav();
 });
 
 describe("new-session-signal", () => {
@@ -44,5 +47,21 @@ describe("new-session-signal", () => {
     consumeWorkspacePreChosen();
     consumeWorkspacePreChosen();
     expect(consumeWorkspacePreChosen()).toBe(false);
+  });
+});
+
+describe("new-session-signal — 'criar novo workspace' (sinal independente)", () => {
+  it("signal → consume retorna true; segundo consume retorna false (one-shot)", () => {
+    signalCreateNewWorkspacePreNav();
+    expect(consumeCreateNewWorkspacePreNav()).toBe(true);
+    expect(consumeCreateNewWorkspacePreNav()).toBe(false);
+  });
+
+  it("não interfere no sinal de workspace pré-escolhido (independentes)", () => {
+    signalWorkspacePreChosen();
+    signalCreateNewWorkspacePreNav();
+    expect(consumeCreateNewWorkspacePreNav()).toBe(true);
+    // o outro sinal continua pendente — consumo de um não afeta o outro
+    expect(consumeWorkspacePreChosen()).toBe(true);
   });
 });

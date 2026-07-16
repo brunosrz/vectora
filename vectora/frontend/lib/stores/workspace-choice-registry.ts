@@ -30,3 +30,27 @@ export function isWorkspaceChosen(threadId: string): boolean {
   }
   return true;
 }
+
+/**
+ * Sinal separado de `markWorkspaceChosen`: o usuário pediu explicitamente
+ * "criar novo workspace para essa conversa" no modal (`onConfirm(null)`).
+ * Sem isso, `use-stream-handler.ts` mandaria o `active_id` stale do
+ * Zustand store (workspace de uma conversa anterior) como `workspace_id` da
+ * request, e o backend nunca criaria o workspace dedicado pedido — ver
+ * `ChatConfig.create_new_workspace` / `_resolve_workspace_id(force_new=...)`.
+ */
+const createNew = new Map<string, number>();
+
+export function markCreateNewWorkspace(threadId: string): void {
+  createNew.set(threadId, Date.now());
+}
+
+/** Consome o sinal (remove após ler) — vale só pro primeiro turno da
+ * conversa; turnos seguintes já têm o workspace_id sincronizado de volta
+ * (ver ThreadEvent.workspace_id + syncActiveLocal). */
+export function consumeCreateNewWorkspace(threadId: string): boolean {
+  const at = createNew.get(threadId);
+  createNew.delete(threadId);
+  if (at === undefined) return false;
+  return Date.now() - at <= TTL_MS;
+}
