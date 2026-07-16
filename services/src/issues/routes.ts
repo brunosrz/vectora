@@ -139,7 +139,7 @@ issues.post("/", async (c) => {
 // reporter). `files` sai como array de keys R2 (servidas em GET /files/*).
 issues.get("/", async (c) => {
   const { results } = await c.env.DB.prepare(
-    "SELECT id, title, category, description, files, created_at FROM issues ORDER BY created_at DESC LIMIT 100",
+    "SELECT id, title, category, description, files, created_at FROM issues WHERE archived_at IS NULL ORDER BY created_at DESC LIMIT 100",
   ).all<{ files: string | null } & Record<string, unknown>>();
   return c.json(
     results.map((row) => ({
@@ -168,10 +168,12 @@ issues.get("/files/*", async (c) => {
 });
 
 // Detalhe público de uma issue (página /issues/$issueId no company). Mesma
-// projeção sem `email` da listagem — privacidade do reporter.
+// projeção sem `email` da listagem — privacidade do reporter. Arquivada
+// (soft-delete) responde 404 igual a inexistente — quem precisa ver mesmo
+// arquivada é admin, via GET /admin/issues/:id.
 issues.get("/:id", async (c) => {
   const row = await c.env.DB.prepare(
-    "SELECT id, title, category, description, files, status, created_at FROM issues WHERE id = ?",
+    "SELECT id, title, category, description, files, status, created_at FROM issues WHERE id = ? AND archived_at IS NULL",
   )
     .bind(c.req.param("id"))
     .first<{ files: string | null } & Record<string, unknown>>();

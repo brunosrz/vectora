@@ -431,3 +431,71 @@ describe("POST /admin/issues/:id/respond", () => {
     expect(missing.status).toBe(404);
   });
 });
+
+describe("POST /admin/issues/:id/archive", () => {
+  it("arquiva, some da listagem admin, mas GET /admin/issues/:id continua acessível", async () => {
+    const { token } = await createUser("admin");
+    const id = await createIssue({ title: "Vai ser arquivada" });
+
+    const archive = await admin.request(
+      `/issues/${id}/archive`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      }),
+      env,
+    );
+    expect(archive.status).toBe(200);
+
+    const list = await admin.request("/issues", authed(token), env);
+    const { issues } = await list.json<{ issues: Array<{ id: string }> }>();
+    expect(issues.some((i) => i.id === id)).toBe(false);
+
+    const detail = await admin.request(`/issues/${id}`, authed(token), env);
+    expect(detail.status).toBe(200);
+    expect(
+      (await detail.json<{ archived_at: string | null }>()).archived_at,
+    ).not.toBeNull();
+  });
+
+  it("desarquiva e volta a aparecer na listagem (par de erro: id inexistente → 404)", async () => {
+    const { token } = await createUser("admin");
+    const id = await createIssue({ title: "Vai e volta" });
+
+    await admin.request(
+      `/issues/${id}/archive`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      }),
+      env,
+    );
+    const unarchive = await admin.request(
+      `/issues/${id}/archive`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: false }),
+      }),
+      env,
+    );
+    expect(unarchive.status).toBe(200);
+
+    const list = await admin.request("/issues", authed(token), env);
+    const { issues } = await list.json<{ issues: Array<{ id: string }> }>();
+    expect(issues.some((i) => i.id === id)).toBe(true);
+
+    const missing = await admin.request(
+      `/issues/${crypto.randomUUID()}/archive`,
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      }),
+      env,
+    );
+    expect(missing.status).toBe(404);
+  });
+});

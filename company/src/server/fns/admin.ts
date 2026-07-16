@@ -95,6 +95,7 @@ export interface AdminIssueRow {
   status: "open" | "resolved";
   response: string | null;
   responded_at: string | null;
+  archived_at: string | null;
   created_at: string;
 }
 
@@ -137,6 +138,23 @@ export const respondToIssue = createServerFn({ method: "POST" })
           response: data.response,
           resolve: data.resolve,
         }),
+      },
+    );
+  });
+
+const ArchiveIssueSchema = z.object({
+  id: z.string().min(1),
+  archived: z.boolean(),
+});
+
+export const archiveIssue = createServerFn({ method: "POST" })
+  .validator(ArchiveIssueSchema)
+  .handler(async ({ data }) => {
+    return servicesFetch<{ ok: true }>(
+      `/admin/issues/${encodeURIComponent(data.id)}/archive`,
+      {
+        method: "POST",
+        body: JSON.stringify({ archived: data.archived }),
       },
     );
   });

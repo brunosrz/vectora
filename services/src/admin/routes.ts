@@ -223,11 +223,14 @@ interface AdminIssueRow {
   status: string;
   response: string | null;
   responded_at: string | null;
+  archived_at: string | null;
   created_at: string;
 }
 
 // Lista completa (com email — o público NUNCA vê esse campo) pro admin
 // triar/responder issues. Badge de contagem no company conta status='open'.
+// Arquivadas somem daqui por padrão (mesma regra da listagem pública) — pra
+// ver/desarquivar uma arquivada, o admin acessa direto por id.
 admin.get("/issues", async (c) => {
   const adminId = await requireAdmin(c);
   if (!adminId) return c.json({ error: "forbidden" }, 403);
@@ -236,7 +239,7 @@ admin.get("/issues", async (c) => {
   const offset = Number(c.req.query("offset") ?? "0");
 
   const { results } = await c.env.DB.prepare(
-    "SELECT id, title, category, description, email, files, status, response, responded_at, created_at FROM issues ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    "SELECT id, title, category, description, email, files, status, response, responded_at, archived_at, created_at FROM issues WHERE archived_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ?",
   )
     .bind(limit, offset)
     .all<AdminIssueRow>();
@@ -249,12 +252,14 @@ admin.get("/issues", async (c) => {
   });
 });
 
+// Sempre retorna, mesmo arquivada — é o único jeito do admin ver/desarquivar
+// uma issue depois que ela sumiu da listagem.
 admin.get("/issues/:id", async (c) => {
   const adminId = await requireAdmin(c);
   if (!adminId) return c.json({ error: "forbidden" }, 403);
 
   const row = await c.env.DB.prepare(
-    "SELECT id, title, category, description, email, files, status, response, responded_at, created_at FROM issues WHERE id = ?",
+    "SELECT id, title, category, description, email, files, status, response, responded_at, archived_at, created_at FROM issues WHERE id = ?",
   )
     .bind(c.req.param("id"))
     .first<AdminIssueRow>();
@@ -264,6 +269,25 @@ admin.get("/issues/:id", async (c) => {
     ...row,
     files: row.files ? (JSON.parse(row.files) as string[]) : [],
   });
+});
+
+admin.post("/issues/:id/archive", async (c) => {
+  const adminId = await requireAdmin(c);
+  if (!adminId) return c.json({ error: "forbidden" }, 403);
+
+  const id = c.req.param("id");
+  const body = await c.req.json<{ archived?: boolean }>();
+
+  const existing = await c.env.DB.prepare("SELECT id FROM issues WHERE id = ?")
+    .bind(id)
+    .first<{ id: string }>();
+  if (!existing) return c.json({ error: "not_found" }, 404);
+
+  await c.env.DB.prepare("UPDATE issues SET archived_at = ? WHERE id = ?")
+    .bind(body.archived ? new Date().toISOString() : null, id)
+    .run();
+
+  return c.json({ ok: true });
 });
 
 admin.post("/issues/:id/respond", async (c) => {

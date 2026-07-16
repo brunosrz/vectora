@@ -10,6 +10,7 @@ import {
   listIssuesAdmin,
   getIssueAdmin,
   respondToIssue,
+  archiveIssue,
 } from "./admin";
 
 const { mockServicesFetch } = vi.hoisted(() => ({
@@ -177,6 +178,27 @@ describe("respondToIssue", () => {
   it("rejeita resposta com menos de 3 caracteres antes de bater na rede (edge — validação Zod)", async () => {
     await expect(
       respondToIssue({ data: { id: "i1", response: "ok" } }),
+    ).rejects.toBeTruthy();
+    expect(mockServicesFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("archiveIssue", () => {
+  it("envia o toggle de arquivamento", async () => {
+    mockServicesFetch.mockResolvedValue({ ok: true });
+    await archiveIssue({ data: { id: "i1", archived: true } });
+    expect(mockServicesFetch).toHaveBeenCalledWith(
+      "/admin/issues/i1/archive",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ archived: true }),
+      }),
+    );
+  });
+
+  it("rejeita id vazio antes de bater na rede (edge — validação Zod)", async () => {
+    await expect(
+      archiveIssue({ data: { id: "", archived: true } }),
     ).rejects.toBeTruthy();
     expect(mockServicesFetch).not.toHaveBeenCalled();
   });

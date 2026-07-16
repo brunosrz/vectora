@@ -240,6 +240,22 @@ describe("GET /issues/:id", () => {
     const missing = await issues.request(`/${crypto.randomUUID()}`, {}, env);
     expect(missing.status).toBe(404);
   });
+
+  it("issue arquivada (soft-delete) vira 404 pro público e some da listagem", async () => {
+    const id = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO issues (id, title, category, description, archived_at) VALUES (?, 'Arquivada', 'bug', 'x', datetime('now'))",
+    )
+      .bind(id)
+      .run();
+
+    const detail = await issues.request(`/${id}`, {}, env);
+    expect(detail.status).toBe(404);
+
+    const list = await issues.request("/", {}, env);
+    const listBody = await list.json<Array<{ id: string }>>();
+    expect(listBody.some((i) => i.id === id)).toBe(false);
+  });
 });
 
 describe("POST /issues/waitlist", () => {
