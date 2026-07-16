@@ -18,10 +18,12 @@ import {
   CornerDownLeft,
   Database,
   Folder,
+  FolderPlus,
   GitBranch,
   HardDrive,
   Loader2,
   Monitor,
+  RefreshCw,
   Server,
   Upload,
 } from "lucide-react";
@@ -95,6 +97,12 @@ export function WorkspaceTrustDialog({
   const [pathInput, setPathInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // Criar nova pasta: input inline aberto sob demanda, dentro do diretório
+  // atualmente listado.
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [folderSubmitting, setFolderSubmitting] = useState(false);
+
   // Ingest (mode="ingest"): filtro de tipo + job de indexação em progresso.
   const [fileTypes, setFileTypes] = useState<"code" | "markdown" | "all">(
     "all",
@@ -130,6 +138,10 @@ export function WorkspaceTrustDialog({
   const load = useCallback(async (path?: string) => {
     setLoading(true);
     setError(null);
+    // Navegar pra outro diretório fecha um formulário de "nova pasta"
+    // pendente — ele se referia ao diretório anterior.
+    setCreatingFolder(false);
+    setNewFolderName("");
     try {
       const q = path ? `?path=${encodeURIComponent(path)}` : "";
       const res = await fetch(`/workspaces/browse${q}`, {
@@ -207,6 +219,49 @@ export function WorkspaceTrustDialog({
     const target = pathInput.trim();
     if (!target || target === lastLoadedPathRef.current) return;
     void load(target);
+  };
+
+  /** Recarrega o diretório atual — `load` não tem o guard de "path
+   * inalterado" de `handleGo`, então chamar direto já força o refetch. */
+  const handleReload = () => {
+    if (listing) void load(listing.path);
+  };
+
+  const handleCreateFolder = async () => {
+    const name = newFolderName.trim();
+    if (!listing || !name) return;
+    setFolderSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/workspaces/browse/mkdir", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: listing.path, name }),
+      });
+      if (res.status === 400) {
+        setError(m.workspace_new_folder_error_invalid_name());
+        return;
+      }
+      if (res.status === 409) {
+        setError(m.workspace_new_folder_error_conflict());
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.detail ?? `Erro ao criar pasta (${res.status}).`);
+        return;
+      }
+      const data = (await res.json()) as BrowseResult;
+      setListing(data);
+      lastLoadedPathRef.current = data.path;
+      setNewFolderName("");
+      setCreatingFolder(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha de rede.");
+    } finally {
+      setFolderSubmitting(false);
+    }
   };
 
   const handleUploadKey = async (file: File) => {
@@ -440,7 +495,76 @@ export function WorkspaceTrustDialog({
                   >
                     <CornerDownLeft className="w-3.5 h-3.5" />
                   </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2"
+                    onClick={handleReload}
+                    disabled={loading || offline || !listing}
+                    title={
+                      offline
+                        ? m.network_disabled_offline()
+                        : m.workspace_reload()
+                    }
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+                    />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2"
+                    onClick={() => setCreatingFolder((v) => !v)}
+                    disabled={loading || offline || !listing}
+                    title={
+                      offline
+                        ? m.network_disabled_offline()
+                        : m.workspace_new_folder()
+                    }
+                  >
+                    <FolderPlus className="w-3.5 h-3.5" />
+                  </Button>
                 </div>
+
+                {creatingFolder && (
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      autoComplete="off"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void handleCreateFolder();
+                        } else if (e.key === "Escape") {
+                          setCreatingFolder(false);
+                          setNewFolderName("");
+                        }
+                      }}
+                      placeholder={m.workspace_new_folder_placeholder()}
+                      spellCheck={false}
+                      className="h-8 text-xs"
+                      disabled={folderSubmitting}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-8 px-2.5 text-xs"
+                      onClick={() => void handleCreateFolder()}
+                      disabled={folderSubmitting || !newFolderName.trim()}
+                    >
+                      {folderSubmitting ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        m.workspace_new_folder_create()
+                      )}
+                    </Button>
+                  </div>
+                )}
 
                 {error && (
                   <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">

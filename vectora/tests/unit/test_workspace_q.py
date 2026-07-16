@@ -272,3 +272,52 @@ class TestWorkspaceHandlers:
         assert "beta" in names
         # Arquivos não entram — só diretórios
         assert "file.txt" not in names
+
+    @pytest.mark.asyncio
+    async def test_mkdir_creates_subdir_then_relists(self, tmp_path):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.workspaces import MkdirRequest, mkdir_dir
+
+        fake_request = SimpleNamespace(state=SimpleNamespace(user=None))
+
+        result = await mkdir_dir(
+            fake_request,  # ty: ignore[invalid-argument-type]
+            MkdirRequest(path=str(tmp_path), name="minha-pasta"),
+        )
+        assert (tmp_path / "minha-pasta").is_dir()
+        assert "minha-pasta" in {e.name for e in result.entries}
+
+        # Par de erro — nome inválido (traversal) e pasta já existente,
+        # nenhum dos dois cria/altera nada no disco.
+        with pytest.raises(HTTPException) as exc_traversal:
+            await mkdir_dir(
+                fake_request,  # ty: ignore[invalid-argument-type]
+                MkdirRequest(path=str(tmp_path), name="../fora"),
+            )
+        assert exc_traversal.value.status_code == 400
+
+        with pytest.raises(HTTPException) as exc_conflict:
+            await mkdir_dir(
+                fake_request,  # ty: ignore[invalid-argument-type]
+                MkdirRequest(path=str(tmp_path), name="minha-pasta"),
+            )
+        assert exc_conflict.value.status_code == 409
+
+    @pytest.mark.asyncio
+    async def test_mkdir_common_user_outside_safe_root_forbidden(self, tmp_path):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.workspaces import MkdirRequest, mkdir_dir
+
+        # user não-None e sem role privilegiado → usuário comum, capado
+        # pelos safe-roots configurados; tmp_path arbitrário fica fora.
+        fake_request = SimpleNamespace(
+            state=SimpleNamespace(user=SimpleNamespace(id="u1", role="member"))
+        )
+        with pytest.raises(HTTPException) as exc:
+            await mkdir_dir(
+                fake_request,  # ty: ignore[invalid-argument-type]
+                MkdirRequest(path=str(tmp_path), name="nova"),
+            )
+        assert exc.value.status_code == 403

@@ -75,6 +75,11 @@ class CreateWorkspaceRequest(BaseModel):
     git_init: bool = False
 
 
+class MkdirRequest(BaseModel):
+    path: str
+    name: str
+
+
 class CreateRemoteWorkspaceRequest(BaseModel):
     transport: str  # "ssh" | "codespace"
     name: str = ""
@@ -423,6 +428,51 @@ def _list_drives() -> list[DirEntry]:
     return out
 
 
+def _resolve_and_authorize_dir(
+    path: str, privileged: bool, registry: Any
+) -> tuple[Path, str | None]:
+    """Resolve ``path`` para um diretório existente e autoriza o acesso.
+
+    Mesmo guard de safe-root usado por ``browse_dir``: usuário comum só
+    acessa dentro das raízes configuradas (403 se pedir explicitamente
+    algo fora); privilegiado, livre. Extraído para ser reaproveitado por
+    ``mkdir_dir`` sem duplicar a lógica de autorização.
+    """
+    from fastapi import HTTPException
+
+    base = Path(path).expanduser() if path else Path.home()
+    try:
+        base = base.resolve()
+    except OSError:
+        base = Path.home()
+
+    if not base.exists() or not base.is_dir():
+        base = Path.home()
+
+    safe_root_id: str | None = None
+    if not privileged:
+        containing = registry.is_under_safe_root(str(base))
+        if containing is None:
+            if path:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Caminho fora das pastas seguras configuradas.",
+                )
+            fallback = registry.closest_safe_root_for(str(Path.home()))
+            if fallback is None:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Nenhuma pasta segura configurada. "
+                    "Peça ao admin para adicionar uma.",
+                )
+            base = Path(fallback.path)
+            safe_root_id = fallback.id
+        else:
+            safe_root_id = containing.id
+
+    return base, safe_root_id
+
+
 @router.get("/BrowseDir", response_model=BrowseResponse)
 async def browse_dir(
     request: Request,
@@ -438,8 +488,6 @@ async def browse_dir(
     Privilegiados (root/admin/CLI local): navegação livre — necessário
     para o admin escolher novas pastas a marcar como confiáveis.
     """
-    from fastapi import HTTPException
-
     from backend.rbac.safe_roots import get_safe_root_registry
 
     registry = get_safe_root_registry()
@@ -457,38 +505,7 @@ async def browse_dir(
             at_drives_root=True,
         )
 
-    base = Path(path).expanduser() if path else Path.home()
-    try:
-        base = base.resolve()
-    except OSError:
-        base = Path.home()
-
-    if not base.exists() or not base.is_dir():
-        base = Path.home()
-
-    # Cap por safe-root para usuários comuns.
-    safe_root_id: str | None = None
-    if not privileged:
-        containing = registry.is_under_safe_root(str(base))
-        if containing is None:
-            # Se o caller pediu explicitamente um path fora, recusa.
-            if path:
-                raise HTTPException(
-                    status_code=403,
-                    detail="Caminho fora das pastas seguras configuradas.",
-                )
-            # Sem path: cai no safe-root mais próximo do HOME.
-            fallback = registry.closest_safe_root_for(str(Path.home()))
-            if fallback is None:
-                raise HTTPException(
-                    status_code=403,
-                    detail="Nenhuma pasta segura configurada. "
-                    "Peça ao admin para adicionar uma.",
-                )
-            base = Path(fallback.path)
-            safe_root_id = fallback.id
-        else:
-            safe_root_id = containing.id
+    base, safe_root_id = _resolve_and_authorize_dir(path, privileged, registry)
 
     entries: list[DirEntry] = []
     try:
@@ -525,6 +542,41 @@ async def browse_dir(
         entries=entries,
         safe_root_id=safe_root_id,
     )
+
+
+@router.post("/Mkdir", response_model=BrowseResponse)
+async def mkdir_dir(request: Request, body: MkdirRequest) -> BrowseResponse:
+    """Cria uma subpasta em ``body.path`` e relista o diretório resultante.
+
+    Mesmo guard de safe-root de ``BrowseDir`` — usuário comum só cria
+    dentro das raízes configuradas. ``name`` não pode conter separadores
+    de path nem ser ``.``/``..`` (evita escapar do diretório pai via
+    traversal)."""
+    from fastapi import HTTPException
+
+    from backend.rbac.safe_roots import get_safe_root_registry
+
+    name = body.name.strip()
+    if not name or name in {".", ".."} or "/" in name or "\\" in name:
+        raise HTTPException(status_code=400, detail="Nome de pasta inválido.")
+
+    registry = get_safe_root_registry()
+    privileged = _is_privileged(request)
+    base, _ = _resolve_and_authorize_dir(body.path, privileged, registry)
+
+    new_dir = base / name
+    if new_dir.exists():
+        raise HTTPException(
+            status_code=409, detail="Já existe uma pasta com esse nome."
+        )
+    try:
+        new_dir.mkdir()
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500, detail=f"Não foi possível criar a pasta: {exc}"
+        ) from exc
+
+    return await browse_dir(request=request, path=str(base))
 
 
 @router.get("/ListSafeRoots", response_model=ListSafeRootsResponse)
@@ -671,6 +723,12 @@ async def browse_view(
     naming antigo e este alias serve a SPA do chat sem cruzar
     namespaces."""
     return await browse_dir(request=request, path=path)
+
+
+@view_router.post("/browse/mkdir", response_model=BrowseResponse)
+async def mkdir_view(request: Request, body: MkdirRequest) -> BrowseResponse:
+    """Atalho REST-friendly para ``Mkdir`` — mesmo padrão de ``browse_view``."""
+    return await mkdir_dir(request=request, body=body)
 
 
 @view_router.get("/safe-roots", response_model=ListSafeRootsResponse)
