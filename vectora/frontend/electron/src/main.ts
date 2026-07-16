@@ -22,6 +22,7 @@ import {
   app,
   BrowserWindow,
   Menu,
+  screen,
   Tray,
   dialog,
   ipcMain,
@@ -50,6 +51,7 @@ import {
   killBackendTree,
   resolveExternalBackendConnection,
 } from "./backend-lifecycle.js";
+import { computeDefaultWindowSize } from "./window-size.js";
 
 interface UpdateStatus {
   state:
@@ -428,9 +430,15 @@ function createWindow(): void {
   }
   if (backendPort === null && !backendPipePath)
     throw new Error("Backend não iniciado.");
+  // Janela nasce proporcional à tela detectada, não num tamanho fixo — numa
+  // tela 1080p+ um default fixo como 1400x900 já nasce quase em tela cheia,
+  // prejudicando o modo janela (ver computeDefaultWindowSize).
+  const { width, height } = computeDefaultWindowSize(
+    screen.getPrimaryDisplay().workAreaSize,
+  );
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width,
+    height,
     minWidth: 800,
     minHeight: 600,
     show: false,

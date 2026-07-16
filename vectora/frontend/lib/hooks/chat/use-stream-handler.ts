@@ -33,7 +33,10 @@ import { stripMarkdownEnvelope } from "../../utils/string/markdown-envelope";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-import { consumeCreateNewWorkspace } from "@/lib/stores/workspace-choice-registry";
+import {
+  consumeCreateNewWorkspace,
+  markCreateNewWorkspace,
+} from "@/lib/stores/workspace-choice-registry";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useToastStore } from "@/lib/stores/toast-store";
 import { useNetworkStore } from "@/lib/hooks/use-network-status";
@@ -240,8 +243,16 @@ export function useStreamHandler({
       // "criar novo workspace" (modal Nova conversa) — sinal one-shot,
       // consumido aqui: NÃO manda o active_id stale do store (workspace de
       // outra conversa), manda create_new_workspace pro backend criar um
-      // dedicado. Ver workspace-choice-registry.ts.
-      if (!settings.chatMode && consumeCreateNewWorkspace(threadId)) {
+      // dedicado. Ver workspace-choice-registry.ts. Se essa tentativa cair
+      // (transporte ou erro de app) antes do evento `thread` confirmar o
+      // workspace resolvido, o sinal é restaurado abaixo (catch/error) —
+      // sem isso, um retry silenciosamente reusa o active_id stale (era o
+      // bug: 1ª tentativa falha, sinal já consumido, retry cai no workspace
+      // errado mesmo com "criar novo" marcado).
+      const wantsNewWorkspace =
+        !settings.chatMode && consumeCreateNewWorkspace(threadId);
+      let newWorkspaceConfirmed = false;
+      if (wantsNewWorkspace) {
         config.create_new_workspace = true;
       } else {
         const activeWorkspaceId = useWorkspacesStore.getState().active_id;
@@ -295,6 +306,7 @@ export function useStreamHandler({
             // (o backend já persistiu como ativo sozinho, isso só espelha
             // localmente, sem POST redundante — ver syncActiveLocal).
             useWorkspacesStore.getState().syncActiveLocal(event.workspace_id);
+            newWorkspaceConfirmed = true;
           }
 
           if (event.type === "token") {
@@ -400,6 +412,14 @@ export function useStreamHandler({
           );
         }
       } finally {
+        // Restaura o sinal "criar novo workspace" se essa tentativa terminou
+        // (erro de app, queda de transporte ou abort) sem o backend nunca
+        // confirmar o workspace resolvido — sem isso, um retry reusaria o
+        // active_id stale mesmo com "criar novo" marcado (ver comentário na
+        // montagem do config, acima).
+        if (wantsNewWorkspace && !newWorkspaceConfirmed) {
+          markCreateNewWorkspace(threadId);
+        }
         // UX-18 — qualquer saída conhecida do loop desmarca a thread como
         // "streaming em andamento" (só sobra marcado o caso de aba fechada).
         markStreamEnded(threadId);

@@ -15,7 +15,10 @@ import type { StreamEvent } from "@/lib/api/vectora-client";
 // `messages.find((m) => ...)` neste arquivo (convenção do projeto).
 import { m as paraglideMessages } from "@/lib/paraglide/messages";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-import { markCreateNewWorkspace } from "@/lib/stores/workspace-choice-registry";
+import {
+  markCreateNewWorkspace,
+  consumeCreateNewWorkspace,
+} from "@/lib/stores/workspace-choice-registry";
 
 const streamChatMock = vi.fn();
 const resumeChatMock = vi.fn();
@@ -773,9 +776,12 @@ describe("useStreamHandler — workspace de sessão nova", () => {
     useWorkspacesStore.setState({ active_id: "ws-antigo" });
     markCreateNewWorkspace("t1");
 
+    // Resposta realista do backend: create_new_workspace=true sempre resolve
+    // pra um workspace_id não-vazio no evento thread (confirma o sinal —
+    // sem isso o finally de use-stream-handler re-marcaria "t1" à toa).
     streamChatMock.mockReturnValue(
       gen([
-        { type: "thread", thread_id: "t1" },
+        { type: "thread", thread_id: "t1", workspace_id: "ws-novo" },
         { type: "token", content: "oi" },
         { type: "done", thread_id: "t1" },
       ]),
@@ -831,5 +837,45 @@ describe("useStreamHandler — workspace de sessão nova", () => {
     await result.current.processStream("cria um workspace novo", "a1");
 
     expect(useWorkspacesStore.getState().active_id).toBe("ws-recem-criado");
+  });
+
+  it("restaura o sinal 'criar novo workspace' se a conexão cair antes do evento thread confirmar (bug: retry usava workspace stale)", async () => {
+    useWorkspacesStore.setState({ active_id: "ws-antigo" });
+    markCreateNewWorkspace("t1");
+
+    // Queda de transporte total — nenhum evento chega, nem o `thread` que
+    // confirmaria o workspace resolvido.
+    streamChatMock.mockReturnValue(
+      (async function* (): AsyncGenerator<StreamEvent> {
+        throw new Error("conexão perdida");
+      })(),
+    );
+
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages }),
+    );
+    await result.current.processStream("cria um workspace novo", "a1");
+
+    // O sinal deve ter voltado — um retry no mesmo thread ainda pede
+    // workspace novo, em vez de silenciosamente reusar o active_id stale.
+    expect(consumeCreateNewWorkspace("t1")).toBe(true);
+  });
+
+  it("NÃO restaura o sinal se o workspace já foi confirmado antes de um erro posterior (edge — evitaria criar workspace duplicado num retry)", async () => {
+    markCreateNewWorkspace("t1");
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1", workspace_id: "ws-recem-criado" },
+        { type: "error", message: "quota excedida", code: "RATE_LIMIT" },
+      ]),
+    );
+
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages }),
+    );
+    await result.current.processStream("cria um workspace novo", "a1");
+
+    expect(consumeCreateNewWorkspace("t1")).toBe(false);
   });
 });
