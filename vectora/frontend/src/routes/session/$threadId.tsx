@@ -48,18 +48,14 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
-import { markAsNew, isNew, clearNew } from "@/lib/stores/new-thread-registry";
+import { isNew, clearNew } from "@/lib/stores/new-thread-registry";
 import {
   markWorkspaceChosen,
   isWorkspaceChosen,
   markCreateNewWorkspace,
 } from "@/lib/stores/workspace-choice-registry";
-import {
-  signalWorkspaceChoiceForNewSession,
-  consumeWorkspacePreChosen,
-  consumeCreateNewWorkspacePreNav,
-} from "@/lib/stores/new-session-signal";
-import { safeRandomUUID } from "@/lib/utils/uuid";
+import { signalWorkspaceChoiceForNewSession } from "@/lib/stores/new-session-signal";
+import { useNewSessionId } from "@/lib/hooks/chat/use-new-session-id";
 import {
   useBroadcastSync,
   BROADCAST_THREADS,
@@ -105,16 +101,7 @@ function SessionPage() {
   // /session/new: o UUID vive só em memória; a URL só recebe o ID real quando
   // a primeira mensagem for persistida (handleThreadUpdate com lastMessage).
   const isNewRoute = routeParam === "new";
-  const [localNewId] = useState<string>(() => {
-    if (!isNewRoute) return "";
-    const id = safeRandomUUID();
-    markAsNew(id);
-    // consumeWorkspacePreChosen() lê e zera o sinal one-shot definido em
-    // handleConfirmNewChat quando o workspace já foi confirmado antes da navegação.
-    if (consumeWorkspacePreChosen()) markWorkspaceChosen(id);
-    if (consumeCreateNewWorkspacePreNav()) markCreateNewWorkspace(id);
-    return id;
-  });
+  const localNewId = useNewSessionId(routeParam);
   const threadId = isNewRoute ? localNewId : routeParam;
   const userId = useAuthStore((s) => s.user?.id);
   const pushMention = useChatInputStore((s) => s.pushMention);
