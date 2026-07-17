@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from langchain_core.messages import HumanMessage
+from pydantic import ValidationError
 
 from backend.api.schemas import (
     Attachment,
@@ -46,7 +47,7 @@ class TestAttachmentSchema:
             kind=AttachmentKind.IMAGE,
             name="photo.png",
             mime_type="image/png",
-            base64_data="abc123",
+            base64_data=_b64_bytes(b"\x89PNG\r\n\x1a\n"),
         )
         assert att.kind == AttachmentKind.IMAGE
         assert att.name == "photo.png"
@@ -56,7 +57,7 @@ class TestAttachmentSchema:
             kind=AttachmentKind.CODE,
             name="main.py",
             mime_type="text/x-python",
-            base64_data="abc",
+            base64_data=_b64("print('oi')"),
         )
         assert att.kind == AttachmentKind.CODE
 
@@ -65,7 +66,7 @@ class TestAttachmentSchema:
             kind=AttachmentKind.PDF,
             name="doc.pdf",
             mime_type="application/pdf",
-            base64_data="abc",
+            base64_data=_b64("%PDF-1.4"),
         )
         assert att.kind == AttachmentKind.PDF
 
@@ -74,19 +75,109 @@ class TestAttachmentSchema:
             kind=AttachmentKind.TEXT,
             name="readme.txt",
             mime_type="text/plain",
-            base64_data="abc",
+            base64_data=_b64("olá mundo"),
         )
         assert att.kind == AttachmentKind.TEXT
 
     def test_invalid_kind_raises(self) -> None:
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError):
             Attachment(
                 kind="video",  # type: ignore[arg-type]  # tipo inválido
                 name="clip.mp4",
                 mime_type="video/mp4",
                 base64_data="abc",
+            )
+
+
+# ===========================================================================
+# Classe 1b — Validação de conteúdo (tamanho, mimetype, base64) — regra 8
+# CLAUDE.md: o filtro do frontend (validation.ts) é só UX, a fonte de
+# verdade real é essa validação server-side.
+# ===========================================================================
+
+
+class TestAttachmentContentValidation:
+    def test_base64_within_default_limit_validates_above_limit_rejects(self) -> None:
+        ok = Attachment(
+            kind=AttachmentKind.CODE,
+            name="script.py",
+            mime_type="text/x-python",
+            base64_data=_b64_bytes(b"x" * 1024),
+        )
+        assert ok.name == "script.py"
+
+        too_big = _b64_bytes(b"x" * (10 * 1024 * 1024 + 1))
+        with pytest.raises(ValidationError, match="excede o limite"):
+            Attachment(
+                kind=AttachmentKind.CODE,
+                name="script.py",
+                mime_type="text/x-python",
+                base64_data=too_big,
+            )
+
+    def test_audio_uses_25mb_tier_instead_of_default_10mb(self) -> None:
+        ok = Attachment(
+            kind=AttachmentKind.AUDIO,
+            name="nota.mp3",
+            mime_type="audio/mpeg",
+            base64_data=_b64_bytes(b"x" * (12 * 1024 * 1024)),
+        )
+        assert ok.kind == AttachmentKind.AUDIO
+
+        too_big = _b64_bytes(b"x" * (25 * 1024 * 1024 + 1))
+        with pytest.raises(ValidationError, match="excede o limite"):
+            Attachment(
+                kind=AttachmentKind.AUDIO,
+                name="nota.mp3",
+                mime_type="audio/mpeg",
+                base64_data=too_big,
+            )
+
+    def test_har_uses_50mb_tier_by_extension_regardless_of_kind(self) -> None:
+        ok = Attachment(
+            kind=AttachmentKind.CODE,
+            name="capture.har",
+            mime_type="application/json",
+            base64_data=_b64_bytes(b"x" * (30 * 1024 * 1024)),
+        )
+        assert ok.name == "capture.har"
+
+        too_big = _b64_bytes(b"x" * (50 * 1024 * 1024 + 1))
+        with pytest.raises(ValidationError, match="excede o limite"):
+            Attachment(
+                kind=AttachmentKind.CODE,
+                name="capture.har",
+                mime_type="application/json",
+                base64_data=too_big,
+            )
+
+    def test_unsupported_type_rejected_extension_fallback_accepts(self) -> None:
+        with pytest.raises(ValidationError, match="não suportado"):
+            Attachment(
+                kind=AttachmentKind.CODE,
+                name="malware.exe",
+                mime_type="application/x-msdownload",
+                base64_data=_b64("conteudo"),
+            )
+
+        # mimetype vazio/genérico, mas extensão reconhecida — mesmo fallback
+        # do frontend (alguns navegadores não reportam mimetype pra certas
+        # extensões de texto/config).
+        ok = Attachment(
+            kind=AttachmentKind.CODE,
+            name="config.yaml",
+            mime_type="",
+            base64_data=_b64("key: value"),
+        )
+        assert ok.name == "config.yaml"
+
+    def test_invalid_base64_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="base64_data inválido"):
+            Attachment(
+                kind=AttachmentKind.CODE,
+                name="script.py",
+                mime_type="text/x-python",
+                base64_data="not-valid-base64!!!",
             )
 
 
@@ -105,7 +196,7 @@ class TestStreamChatRequestAttachments:
             kind=AttachmentKind.IMAGE,
             name="img.png",
             mime_type="image/png",
-            base64_data="abc",
+            base64_data=_b64_bytes(b"\x89PNG\r\n\x1a\n"),
         )
         req = StreamChatRequest(content="veja isso", attachments=[att])
         assert len(req.attachments) == 1

@@ -8,6 +8,8 @@ de stubs protobuf no projeto.
 
 from __future__ import annotations
 
+import base64
+import binascii
 from enum import StrEnum
 from typing import Any, Literal
 
@@ -55,6 +57,111 @@ class AttachmentKind(StrEnum):
     AUDIO = "audio"  # áudio → transcrito via STT e injetado como texto
 
 
+# Espelha frontend/lib/utils/chat/validation.ts::validateImageFile — o
+# frontend filtra o picker de arquivo com essas mesmas listas/tetos, mas é só
+# UX; sem essa validação aqui, uma chamada direta ao endpoint de stream (sem
+# passar pela UI) aceitava qualquer base64 de qualquer tamanho como qualquer
+# mimetype.
+_ATTACHMENT_MAX_SIZE_DEFAULT_BYTES = 10 * 1024 * 1024
+_ATTACHMENT_MAX_SIZE_AUDIO_BYTES = 25 * 1024 * 1024
+_ATTACHMENT_MAX_SIZE_HAR_BYTES = 50 * 1024 * 1024
+
+_ATTACHMENT_SUPPORTED_MIME_TYPES = {
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/mp4",
+    "audio/m4a",
+    "audio/x-m4a",
+    "audio/ogg",
+    "audio/webm",
+    "text/plain",
+    "text/markdown",
+    "text/x-python",
+    "text/x-java",
+    "text/x-c",
+    "text/x-c++",
+    "text/javascript",
+    "text/typescript",
+    "text/html",
+    "text/css",
+    "text/xml",
+    "application/json",
+    "application/javascript",
+    "application/typescript",
+    "application/x-python",
+    "application/x-python-code",
+    "application/x-sh",
+    "text/x-sh",
+    "text/x-log",
+    "application/pdf",
+}
+
+_ATTACHMENT_SUPPORTED_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".webp",
+    ".py",
+    ".js",
+    ".ts",
+    ".tsx",
+    ".jsx",
+    ".java",
+    ".cpp",
+    ".c",
+    ".h",
+    ".cs",
+    ".go",
+    ".rs",
+    ".rb",
+    ".php",
+    ".sh",
+    ".bash",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".xml",
+    ".html",
+    ".css",
+    ".md",
+    ".txt",
+    ".log",
+    ".sql",
+    ".graphql",
+    ".r",
+    ".swift",
+    ".kt",
+    ".scala",
+    ".har",
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".ogg",
+    ".webm",
+    ".pdf",
+}
+
+
+def _attachment_max_size_bytes(name: str, mime_type: str) -> int:
+    lowered = name.lower()
+    if lowered.endswith(".har"):
+        return _ATTACHMENT_MAX_SIZE_HAR_BYTES
+    is_audio = mime_type.startswith("audio/") or any(
+        lowered.endswith(ext) for ext in (".mp3", ".wav", ".m4a", ".ogg", ".webm")
+    )
+    if is_audio:
+        return _ATTACHMENT_MAX_SIZE_AUDIO_BYTES
+    return _ATTACHMENT_MAX_SIZE_DEFAULT_BYTES
+
+
 class Attachment(BaseModel):
     """Arquivo anexado a uma mensagem pelo usuário.
 
@@ -66,6 +173,30 @@ class Attachment(BaseModel):
     name: str
     mime_type: str
     base64_data: str
+
+    @model_validator(mode="after")
+    def _validate_content(self) -> Attachment:
+        lowered_name = self.name.lower()
+        has_valid_mimetype = self.mime_type in _ATTACHMENT_SUPPORTED_MIME_TYPES
+        has_valid_extension = any(
+            lowered_name.endswith(ext) for ext in _ATTACHMENT_SUPPORTED_EXTENSIONS
+        )
+        if not has_valid_mimetype and not has_valid_extension:
+            raise ValueError(
+                f"Tipo de arquivo não suportado: {self.name!r} ({self.mime_type!r})"
+            )
+
+        try:
+            decoded = base64.b64decode(self.base64_data, validate=True)
+        except (binascii.Error, ValueError) as exc:
+            raise ValueError("base64_data inválido") from exc
+
+        max_size = _attachment_max_size_bytes(self.name, self.mime_type)
+        if len(decoded) > max_size:
+            raise ValueError(
+                f"Arquivo {self.name!r} excede o limite de {max_size // (1024 * 1024)}MB"
+            )
+        return self
 
 
 # ---------------------------------------------------------------------------
