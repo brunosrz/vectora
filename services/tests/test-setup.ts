@@ -1,19 +1,7 @@
 import { env } from "cloudflare:test";
 import { beforeAll } from "vitest";
 // @ts-expect-error — Vite `?raw` import, resolvido em build/test time (esbuild).
-import initSql from "../migrations/0001_init.sql?raw";
-// @ts-expect-error — idem.
-import telemetryAndRagStatusSql from "../migrations/0002_telemetry_and_rag_status.sql?raw";
-// @ts-expect-error — idem.
-import rbacBillingSql from "../migrations/0003_rbac_billing.sql?raw";
-// @ts-expect-error — idem.
-import seedAdminSql from "../migrations/0004_seed_admin.sql?raw";
-// @ts-expect-error — idem.
-import issueFilesSql from "../migrations/0005_issue_files.sql?raw";
-// @ts-expect-error — idem.
-import issueResponseSql from "../migrations/0006_issue_response.sql?raw";
-// @ts-expect-error — idem.
-import issueArchiveSql from "../migrations/0007_issue_archive.sql?raw";
+import schemaSql from "../migrations/0001_schema.sql?raw";
 
 // Guarda de rede hermética. O `queueConsumers: ["vectora-email"]` do
 // vitest.config faz o miniflare ENTREGAR de verdade os emails enfileirados
@@ -56,11 +44,5 @@ async function applyMigration(sql: string): Promise<void> {
 }
 
 beforeAll(async () => {
-  await applyMigration(initSql as string);
-  await applyMigration(telemetryAndRagStatusSql as string);
-  await applyMigration(rbacBillingSql as string);
-  await applyMigration(seedAdminSql as string);
-  await applyMigration(issueFilesSql as string);
-  await applyMigration(issueResponseSql as string);
-  await applyMigration(issueArchiveSql as string);
+  await applyMigration(schemaSql as string);
 });
