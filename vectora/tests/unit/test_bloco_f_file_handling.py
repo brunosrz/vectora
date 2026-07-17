@@ -508,3 +508,146 @@ class TestStreamChatBlocksToolIncompatibleModelInCodeMode:
 
         body = await _collect_sse_body(response)
         assert "MODEL_NO_TOOL_CALLING" not in body
+
+
+class TestStreamChatEnforcesAllowedModels:
+    """`[agent].allowed_models` do vectora.toml do workspace é a fonte de
+    verdade real — antes disso a única barreira era o filtro client-side do
+    seletor de modelo (deployment-config.ts), sem checagem server-side."""
+
+    @pytest.mark.asyncio
+    async def test_model_outside_allowed_models_is_rejected_without_calling_provider(
+        self,
+    ) -> None:
+        from backend.api.handlers import chat as chat_mod
+        from backend.workspace.workspace_config import AgentSection, WorkspaceConfig
+
+        fake_ws = MagicMock(cwd="/fake/workspace")
+        mock_get_user_agent = AsyncMock()
+        with (
+            patch(
+                "backend.workspace.workspace.workspace_registry.get",
+                return_value=fake_ws,
+            ),
+            patch(
+                "backend.workspace.workspace_config.load_workspace_config",
+                return_value=WorkspaceConfig(
+                    agent=AgentSection(allowed_models=["anthropic:claude-sonnet-4-6"])
+                ),
+            ),
+            patch("backend.services.agent_factory.get_user_agent", mock_get_user_agent),
+        ):
+            request = StreamChatRequest(
+                content="oi",
+                config=ChatConfig(
+                    model="google-genai:gemini-3-flash-preview",
+                    chat_mode=False,
+                    workspace_id="/fake/workspace",
+                ),
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert '"code": "MODEL_NOT_ALLOWED"' in body
+        mock_get_user_agent.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_model_inside_allowed_models_is_accepted(self) -> None:
+        from backend.api.handlers import chat as chat_mod
+        from backend.workspace.workspace_config import AgentSection, WorkspaceConfig
+
+        fake_ws = MagicMock(cwd="/fake/workspace")
+
+        async def _empty_events(*_a: object, **_kw: object):
+            for _ in ():
+                yield
+
+        mock_graph = MagicMock()
+        mock_graph.astream_events = MagicMock(return_value=_empty_events())
+
+        with (
+            patch(
+                "backend.workspace.workspace.workspace_registry.get",
+                return_value=fake_ws,
+            ),
+            patch(
+                "backend.workspace.workspace_config.load_workspace_config",
+                return_value=WorkspaceConfig(
+                    agent=AgentSection(
+                        allowed_models=["google-genai:gemini-3-flash-preview"]
+                    )
+                ),
+            ),
+            patch(
+                "backend.services.agent_factory.get_user_agent",
+                new=AsyncMock(return_value=mock_graph),
+            ),
+            patch(
+                "backend.api.handlers.threads._upsert_session",
+                new=AsyncMock(),
+            ),
+        ):
+            request = StreamChatRequest(
+                content="oi",
+                config=ChatConfig(
+                    model="google-genai:gemini-3-flash-preview",
+                    chat_mode=False,
+                    workspace_id="/fake/workspace",
+                ),
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert "MODEL_NOT_ALLOWED" not in body
+
+    @pytest.mark.asyncio
+    async def test_workspace_without_allowed_models_accepts_any_model(self) -> None:
+        """Sem `vectora.toml` (ou sem `allowed_models` nele), comportamento
+        atual é preservado — nenhum modelo é bloqueado por essa checagem."""
+        from backend.api.handlers import chat as chat_mod
+
+        fake_ws = MagicMock(cwd="/fake/workspace")
+
+        async def _empty_events(*_a: object, **_kw: object):
+            for _ in ():
+                yield
+
+        mock_graph = MagicMock()
+        mock_graph.astream_events = MagicMock(return_value=_empty_events())
+
+        with (
+            patch(
+                "backend.workspace.workspace.workspace_registry.get",
+                return_value=fake_ws,
+            ),
+            patch(
+                "backend.workspace.workspace_config.load_workspace_config",
+                return_value=None,
+            ),
+            patch(
+                "backend.services.agent_factory.get_user_agent",
+                new=AsyncMock(return_value=mock_graph),
+            ),
+            patch(
+                "backend.api.handlers.threads._upsert_session",
+                new=AsyncMock(),
+            ),
+        ):
+            request = StreamChatRequest(
+                content="oi",
+                config=ChatConfig(
+                    model="qualquer:modelo-nao-listado",
+                    chat_mode=False,
+                    workspace_id="/fake/workspace",
+                ),
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert "MODEL_NOT_ALLOWED" not in body

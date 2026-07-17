@@ -153,6 +153,22 @@ async def _model_tool_incompatible_stream(thread_id: str) -> AsyncGenerator[str]
     yield encode_event(DoneEvent(thread_id=thread_id))
 
 
+async def _model_not_allowed_stream(thread_id: str) -> AsyncGenerator[str]:
+    """Stream de um único erro — modelo pedido não está em
+    ``[agent].allowed_models`` do ``vectora.toml`` do workspace. A única
+    barreira antes disso era o filtro client-side do seletor de modelo
+    (``deployment-config.ts``); um client modificado (ou chamada direta à
+    API) podia mandar qualquer ``model`` sem essa checagem server-side."""
+    yield encode_event(ThreadEvent(thread_id=thread_id))
+    yield encode_event(
+        ErrorEvent(
+            message="Este modelo não está na lista de modelos permitidos deste workspace.",
+            code="MODEL_NOT_ALLOWED",
+        )
+    )
+    yield encode_event(DoneEvent(thread_id=thread_id))
+
+
 def _detect_planning_mode(content: str) -> tuple[str, bool]:
     """Detecta prefixo /plan no início da mensagem.
 
@@ -343,6 +359,18 @@ def _user_name_from_request(http_request: Request) -> str:
     return str(getattr(user, "name", "") or "").strip()
 
 
+def _normalize_model_spec(spec: str) -> str:
+    """Normaliza o segmento de provider de ``"provider:model"`` pra underscore.
+
+    A UI e o ``vectora.toml`` usam hífen ("google-genai"); o
+    ``init_chat_model`` espera o provider canônico com underscore
+    ("google_genai"). Usada tanto pro ``configurable["model"]`` real quanto
+    pra comparar contra ``allowed_models`` no mesmo formato.
+    """
+    prov, sep, name = spec.partition(":")
+    return f"{prov.replace('-', '_')}:{name}" if sep else spec
+
+
 def _build_configurable(
     config: ChatConfig,
     thread_id: str,
@@ -370,9 +398,7 @@ def _build_configurable(
         # configurable troca o modelo por request. O init_chat_model espera o
         # provider canônico com underscore ("google_genai"), enquanto a UI usa
         # hífen ("google-genai") — normalizamos só o segmento de provider.
-        spec = config.model
-        prov, sep, name = spec.partition(":")
-        configurable["model"] = f"{prov.replace('-', '_')}:{name}" if sep else spec
+        configurable["model"] = _normalize_model_spec(config.model)
     if config.workspace_id:
         configurable["workspace_id"] = config.workspace_id
     if config.custom_system_prompt:
@@ -484,6 +510,31 @@ async def stream_chat(
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    # allowed_models do vectora.toml do workspace — fonte de verdade real,
+    # não só o filtro do seletor de modelo no cliente (regra 8 CLAUDE.md).
+    if not chat_mode and workspace_id:
+        from backend.workspace.workspace import workspace_registry
+        from backend.workspace.workspace_config import load_workspace_config
+
+        ws = workspace_registry.get(workspace_id)
+        if ws is not None:
+            ws_config = load_workspace_config(ws.cwd)
+            allowed_models = ws_config.agent.allowed_models if ws_config else None
+            normalized_allowed = (
+                {_normalize_model_spec(m) for m in allowed_models}
+                if allowed_models
+                else None
+            )
+            if (
+                normalized_allowed
+                and configurable.get("model", "") not in normalized_allowed
+            ):
+                return StreamingResponse(
+                    _model_not_allowed_stream(thread_id),
+                    media_type="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+                )
 
     try:
         # Troca de modelo por request: o grafo é cacheado por modelo escolhido
