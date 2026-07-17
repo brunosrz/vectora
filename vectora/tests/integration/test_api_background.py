@@ -30,12 +30,8 @@ from backend.scheduling import background_tasks as bg
 from backend.services import agent_factory
 
 _UUID = "aa844f17-7e0e-4b0a-8991-c3aab9bdcc63"
-_MIGRATION = (
-    Path(backend.__file__).parent
-    / "storage"
-    / "migrations"
-    / "sqlite"
-    / "0008_background_tasks.sql"
+_SCHEMA = (
+    Path(backend.__file__).parent / "storage" / "migrations" / "sqlite" / "schema.sql"
 )
 
 
@@ -47,7 +43,7 @@ def _req(uid: str | None = _UUID) -> Any:
 @pytest.fixture
 async def db(tmp_path, monkeypatch):
     db_path = str(tmp_path / "bg.db")
-    up_sql = _MIGRATION.read_text(encoding="utf-8").split("-- down")[0]
+    up_sql = _SCHEMA.read_text(encoding="utf-8")
 
     import aiosqlite
 

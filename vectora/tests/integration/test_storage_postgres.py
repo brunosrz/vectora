@@ -11,33 +11,33 @@ import pytest
 
 
 class TestPostgresMigrationRunner:
-    """PostgresMigrationRunner aplica e rastreia migrations Postgres."""
+    """PostgresMigrationRunner aplica e rastreia o schema Postgres único."""
 
     @pytest.mark.asyncio
     @pytest.mark.storage
-    async def test_upgrade_applies_pending(self, pg_conn):
-        """upgrade() aplica as migrations pendentes e retorna a lista de versões."""
+    async def test_upgrade_applies_schema_and_returns_true(self, pg_conn):
+        """upgrade() aplica o schema.sql inteiro e retorna True na 1ª chamada."""
         from backend.storage.migrations.postgres_runner import PostgresMigrationRunner
 
         runner = PostgresMigrationRunner(pg_conn)
         applied = await runner.upgrade()
-        assert isinstance(applied, list)
+        assert applied is True
 
     @pytest.mark.asyncio
     @pytest.mark.storage
     async def test_upgrade_idempotent(self, pg_conn):
-        """Segunda chamada a upgrade() não re-aplica migrations já aplicadas."""
+        """Segunda chamada a upgrade() é no-op (checksum já bate) — retorna False."""
         from backend.storage.migrations.postgres_runner import PostgresMigrationRunner
 
         runner = PostgresMigrationRunner(pg_conn)
         await runner.upgrade()
         second = await runner.upgrade()
-        assert second == []
+        assert second is False
 
     @pytest.mark.asyncio
     @pytest.mark.storage
     async def test_schema_migrations_table_created(self, pg_conn):
-        """Tabela schema_migrations é criada automaticamente."""
+        """Tabela de controle schema_migrations é criada automaticamente."""
         from backend.storage.migrations.postgres_runner import PostgresMigrationRunner
 
         runner = PostgresMigrationRunner(pg_conn)
@@ -51,70 +51,63 @@ class TestPostgresMigrationRunner:
 
     @pytest.mark.asyncio
     @pytest.mark.storage
-    async def test_status_lists_all_migrations(self, pg_conn):
-        """status() retorna MigrationStatus para cada arquivo .sql encontrado."""
+    async def test_status_reflects_applied_state(self, pg_conn):
+        """status() retorna um único MigrationStatus refletindo o banco."""
         from backend.storage.migrations.postgres_runner import (
             MigrationStatus,
             PostgresMigrationRunner,
         )
 
         runner = PostgresMigrationRunner(pg_conn)
-        await runner.upgrade()
-        statuses = await runner.status()
 
-        assert len(statuses) >= 1
-        assert all(isinstance(s, MigrationStatus) for s in statuses)
-        assert all(s.applied for s in statuses)
+        pending = await runner.status()
+        assert isinstance(pending, MigrationStatus)
+        assert pending.applied is False
+
+        await runner.upgrade()
+        applied = await runner.status()
+        assert applied.applied is True
+        assert applied.drift is False
+        assert applied.applied_at is not None
 
     @pytest.mark.asyncio
     @pytest.mark.storage
-    async def test_status_shows_pending_for_new_migration(self, pg_conn, tmp_path):
-        """Migration ainda não aplicada aparece como applied=False no status."""
+    async def test_reapply_after_content_change_updates_checksum(
+        self, pg_conn, tmp_path
+    ):
+        """Editar o schema.sql muda o checksum: upgrade() reaplica e status() reflete."""
+        from pathlib import Path
+
         from backend.storage.migrations.postgres_runner import PostgresMigrationRunner
 
-        sql_file = tmp_path / "0099_test_table.sql"
-        sql_file.write_text(
-            "-- up\nCREATE TABLE IF NOT EXISTS _test_pg_runner (id TEXT);\n"
-            "-- down\nDROP TABLE IF EXISTS _test_pg_runner;\n"
+        original = (
+            Path(__file__).resolve().parents[2]
+            / "backend"
+            / "storage"
+            / "migrations"
+            / "postgres"
+            / "schema.sql"
+        ).read_text(encoding="utf-8")
+
+        edited_file = tmp_path / "schema_edited.sql"
+        edited_file.write_text(
+            original + "\nCREATE TABLE IF NOT EXISTS _test_pg_marker (id TEXT);\n",
+            encoding="utf-8",
         )
 
-        runner = PostgresMigrationRunner(pg_conn, migrations_dir=tmp_path)
-        statuses = await runner.status()
-        pending = [s for s in statuses if not s.applied]
-        assert len(pending) == 1
-        assert pending[0].version == "0099"
-
-    @pytest.mark.asyncio
-    @pytest.mark.storage
-    async def test_upgrade_error_noop_on_empty_dir(self, pg_conn, tmp_path):
-        """upgrade() em diretório sem .sql retorna lista vazia sem erro."""
-        from backend.storage.migrations.postgres_runner import PostgresMigrationRunner
-
-        runner = PostgresMigrationRunner(pg_conn, migrations_dir=tmp_path)
-        applied = await runner.upgrade()
-        assert applied == []
-
-    @pytest.mark.asyncio
-    @pytest.mark.storage
-    async def test_downgrade_reverts_migration(self, pg_conn, tmp_path):
-        """downgrade() reverte a migration aplicada e remove do tracking."""
-        from backend.storage.migrations.postgres_runner import PostgresMigrationRunner
-
-        sql_file = tmp_path / "0001_temp.sql"
-        sql_file.write_text(
-            "-- up\nCREATE TABLE IF NOT EXISTS _test_downgrade (id TEXT);\n"
-            "-- down\nDROP TABLE IF EXISTS _test_downgrade;\n"
-        )
-
-        runner = PostgresMigrationRunner(pg_conn, migrations_dir=tmp_path)
-        await runner.upgrade()
-        reverted = await runner.downgrade("0001")
-        assert "0001" in reverted
+        runner = PostgresMigrationRunner(pg_conn, schema_file=edited_file)
+        first = await runner.upgrade()
+        assert first is True
 
         row = await pg_conn.fetchrow(
-            "SELECT version FROM schema_migrations WHERE version = '0001'"
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema = 'public' AND table_name = '_test_pg_marker'"
         )
-        assert row is None
+        assert row is not None
+
+        status = await runner.status()
+        assert status.applied is True
+        assert status.drift is False
 
 
 class TestPostgresPool:

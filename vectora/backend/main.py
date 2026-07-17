@@ -272,7 +272,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "  up / down          sobe/para Postgres+pgvector, Redis e Qdrant\n"
             "  test <DSN>         testa conectividade a um banco\n"
             "  wizard             configura o backend interativamente (BaaS)\n"
-            "  migrate status|upgrade|downgrade\n"
+            "  migrate status|upgrade\n"
             "  backup / restore <arquivo>"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -297,10 +297,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "subaction",
         nargs="?",
         default=None,
-        help="Sub-ação: status/upgrade/downgrade (migrate), DSN (test), arquivo (restore)",
+        help="Sub-ação: status/upgrade (migrate), DSN (test), arquivo (restore)",
     )
     storage_p.add_argument(
-        "version", nargs="?", default=None, help="Versão alvo para downgrade (ex: 0002)"
+        "version", nargs="?", default=None, help="Parâmetro extra (migrações de dados)"
     )
     storage_p.add_argument(
         "--db", metavar="PATH", default=None, help="Caminho do SQLite (settings.db_dsn)"

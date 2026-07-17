@@ -1,23 +1,26 @@
-"""Runner de schema migrations para SQLite.
+"""Runner de schema para SQLite — arquivo único, reaplicado inteiro quando muda.
 
-Substitui o padrão ``CREATE TABLE IF NOT EXISTS … ALTER TABLE suppress(Exception)``
-espalhado pelos services por um sistema declarativo e versionado.
+``sqlite/schema.sql`` é a fonte única de verdade do schema SQLite — não há
+mais migrations numeradas (``0001_*.sql``, ``0002_*.sql``...). O runner
+guarda o SHA-256 do arquivo numa tabela de controle de uma linha só; quando
+o checksum muda (o arquivo foi editado), o script inteiro é reexecutado.
 
-Cada migration é um arquivo ``NNNN_<nome>.sql`` com seções ``-- up`` e ``-- down``
-separando os comandos de upgrade e downgrade. O runner mantém a tabela interna
-``schema_migrations`` com versão, timestamp e SHA-256 do conteúdo do arquivo para
-detectar drift (arquivo modificado após aplicação).
+Todo statement do schema.sql precisa ser idempotente:
+  - ``CREATE TABLE/INDEX IF NOT EXISTS`` — no-op se já existir.
+  - ``INSERT ... OR IGNORE`` / ``ON CONFLICT DO UPDATE`` — seeds seguros.
+  - ``ALTER TABLE t ADD COLUMN c ...`` — SQLite não tem ``ADD COLUMN IF NOT
+    EXISTS``; o runner verifica ``PRAGMA table_info(t)`` antes de cada ALTER
+    e pula se a coluna já existir. É assim que uma coluna nova adicionada a
+    uma tabela existente chega em bancos já populados sem apagar dado.
 
 Uso (código):
-    runner = MigrationRunner(conn, migrations_dir)
+    runner = MigrationRunner(conn)
     status = await runner.status()
-    await runner.upgrade()           # aplica todas as pendentes
-    await runner.downgrade("0002")   # reverte até (inclusive) a versão 0002
+    await runner.apply()   # reaplica se o schema.sql mudou; no-op senão
 
 CLI:
     vectora storage migrate status
     vectora storage migrate upgrade
-    vectora storage migrate downgrade 0002
 """
 
 from __future__ import annotations
@@ -32,290 +35,151 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Schema interno de controle
-# ---------------------------------------------------------------------------
-
 _CONTROL_SCHEMA = """
 CREATE TABLE IF NOT EXISTS schema_migrations (
-    version    TEXT    PRIMARY KEY,
-    name       TEXT    NOT NULL,
-    applied_at TEXT    NOT NULL,
-    checksum   TEXT    NOT NULL
+    id         INTEGER PRIMARY KEY CHECK (id = 1),
+    checksum   TEXT    NOT NULL,
+    applied_at TEXT    NOT NULL
 );
 """
 
-# ---------------------------------------------------------------------------
-# MigrationFile — representação de um arquivo .sql
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class MigrationFile:
-    """Arquivo de migration parseado.
-
-    Attributes:
-        version:  String numérica extraída do nome (ex: ``"0001"``).
-        name:     Nome descritivo após o número (ex: ``"auth"``).
-        path:     Caminho absoluto do arquivo ``.sql``.
-        up_sql:   Comandos SQL de upgrade (seção ``-- up``).
-        down_sql: Comandos SQL de downgrade (seção ``-- down``).
-        checksum: SHA-256 do conteúdo completo do arquivo.
-    """
-
-    version: str
-    name: str
-    path: Path
-    up_sql: str
-    down_sql: str
-    checksum: str
+_ALTER_ADD_COLUMN_RE = re.compile(
+    r"^\s*ALTER\s+TABLE\s+(\S+)\s+ADD\s+COLUMN\s+(\S+)", re.IGNORECASE
+)
 
 
 @dataclass
 class MigrationStatus:
-    """Status de uma migration individual.
+    """Status do schema.sql em relação ao banco.
 
     Attributes:
-        version:     Versão da migration.
-        name:        Nome descritivo.
-        applied:     True se já foi aplicada ao banco.
-        applied_at:  ISO timestamp da aplicação (None se pendente).
-        drift:       True se o arquivo foi modificado após a aplicação.
+        applied:     True se o schema já foi aplicado alguma vez.
+        applied_at:  ISO timestamp da última aplicação (None se nunca aplicado).
+        drift:       True se o arquivo mudou desde a última aplicação (pendente).
+        checksum:    SHA-256 atual do arquivo.
     """
 
-    version: str
-    name: str
     applied: bool
     applied_at: str | None
     drift: bool
+    checksum: str
 
 
-# ---------------------------------------------------------------------------
-# Parser de arquivos .sql
-# ---------------------------------------------------------------------------
-
-_SECTION_RE = re.compile(r"^--\s*(up|down)\s*$", re.IGNORECASE | re.MULTILINE)
-
-
-def _parse_sql_file(path: Path) -> MigrationFile:
-    """Lê e parseia um arquivo `NNNN_name.sql`.
-
-    O arquivo deve conter as seções ``-- up`` e ``-- down`` separando os
-    blocos de upgrade e downgrade. Seções fora dessas marcações são ignoradas.
-
-    Raises:
-        ValueError: Se o nome do arquivo não segue o padrão ``NNNN_<nome>.sql``.
-    """
-    stem = path.stem
-    m = re.match(r"^(\d{4})_(.+)$", stem)
-    if not m:
-        raise ValueError(
-            f"Nome de migration inválido: {path.name!r}. "
-            "Esperado: NNNN_<nome>.sql (ex: 0001_auth.sql)"
-        )
-    version, name = m.group(1), m.group(2)
-
-    content = path.read_text(encoding="utf-8")
-    checksum = hashlib.sha256(content.encode()).hexdigest()
-
-    # Divide o arquivo em seções pelo marcador "-- up" / "-- down"
-    parts = _SECTION_RE.split(content)
-    sections: dict[str, str] = {}
-    i = 1  # parts[0] é o texto antes do primeiro marcador (geralmente comentário)
-    while i < len(parts) - 1:
-        section_name = parts[i].strip().lower()
-        section_body = parts[i + 1]
-        sections[section_name] = section_body
-        i += 2
-
-    return MigrationFile(
-        version=version,
-        name=name,
-        path=path,
-        up_sql=sections.get("up", ""),
-        down_sql=sections.get("down", ""),
-        checksum=checksum,
-    )
-
-
-# ---------------------------------------------------------------------------
-# MigrationRunner
-# ---------------------------------------------------------------------------
+def _split_statements(sql: str) -> list[str]:
+    """Divide o script em statements individuais, descartando comentários
+    de linha inteira (``-- ...``) e trechos vazios."""
+    lines = [line for line in sql.split("\n") if not line.strip().startswith("--")]
+    without_comments = "\n".join(lines)
+    return [s.strip() for s in without_comments.split(";") if s.strip()]
 
 
 class MigrationRunner:
-    """Aplica e reverte migrations em um banco SQLite assíncrono.
+    """Aplica o schema SQLite único em um banco, reaplicando quando muda.
 
     Args:
-        conn:           Conexão ``aiosqlite.Connection`` aberta.
-        migrations_dir: Diretório com os arquivos ``NNNN_*.sql``.
-                        Default: diretório ``migrations/`` ao lado deste arquivo.
+        conn:        Conexão ``aiosqlite.Connection`` aberta.
+        schema_file: Caminho do ``schema.sql``. Default: ``sqlite/schema.sql``
+                     ao lado deste arquivo.
     """
 
     def __init__(
         self,
         conn: Any,  # aiosqlite.Connection
-        migrations_dir: str | Path | None = None,
+        schema_file: str | Path | None = None,
     ) -> None:
         self._conn = conn
-        self._dir = (
-            Path(migrations_dir) if migrations_dir else Path(__file__).parent / "sqlite"
+        self._file = (
+            Path(schema_file)
+            if schema_file
+            else Path(__file__).parent / "sqlite" / "schema.sql"
         )
 
-    # ------------------------------------------------------------------
-    # Inicialização
-    # ------------------------------------------------------------------
-
     async def _ensure_control_table(self) -> None:
-        """Cria a tabela ``schema_migrations`` se não existir."""
         await self._conn.executescript(_CONTROL_SCHEMA)
         await self._conn.commit()
 
-    # ------------------------------------------------------------------
-    # Leitura de estado
-    # ------------------------------------------------------------------
+    def _read_schema(self) -> tuple[str, str]:
+        """Retorna ``(conteúdo, checksum)`` do schema.sql."""
+        content = self._file.read_text(encoding="utf-8")
+        checksum = hashlib.sha256(content.encode()).hexdigest()
+        return content, checksum
 
-    def _load_files(self) -> list[MigrationFile]:
-        """Retorna todos os arquivos ``.sql`` do diretório, ordenados por versão."""
-        files = sorted(
-            self._dir.glob("*.sql"),
-            key=lambda p: p.stem.split("_")[0],
-        )
-        result = []
-        for f in files:
-            try:
-                result.append(_parse_sql_file(f))
-            except ValueError as exc:
-                logger.warning("storage/migrations: ignorando arquivo: %s", exc)
-        return result
-
-    async def _applied(self) -> dict[str, dict[str, str]]:
-        """Retorna dict ``{version: {applied_at, checksum}}`` das migrations aplicadas."""
+    async def _stored(self) -> dict[str, str] | None:
         await self._ensure_control_table()
         cursor = await self._conn.execute(
-            "SELECT version, applied_at, checksum FROM schema_migrations ORDER BY version"
+            "SELECT checksum, applied_at FROM schema_migrations WHERE id = 1"
         )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return {"checksum": row[0], "applied_at": row[1]}
+
+    async def status(self) -> MigrationStatus:
+        """Retorna o status do schema.sql em relação ao banco."""
+        _content, checksum = self._read_schema()
+        stored = await self._stored()
+        if stored is None:
+            return MigrationStatus(
+                applied=False, applied_at=None, drift=False, checksum=checksum
+            )
+        return MigrationStatus(
+            applied=True,
+            applied_at=stored["applied_at"],
+            drift=stored["checksum"] != checksum,
+            checksum=checksum,
+        )
+
+    async def _existing_columns(self, table: str) -> set[str]:
+        cursor = await self._conn.execute(f"PRAGMA table_info({table})")  # nosec B608 — table vem de regex sobre schema.sql versionado, não input externo
         rows = await cursor.fetchall()
-        return {r[0]: {"applied_at": r[1], "checksum": r[2]} for r in rows}
+        return {row[1] for row in rows}
 
-    async def status(self) -> list[MigrationStatus]:
-        """Retorna o status de cada migration (aplicada / pendente / drift).
+    async def _execute_statement(self, statement: str) -> None:
+        alter_match = _ALTER_ADD_COLUMN_RE.match(statement)
+        if alter_match:
+            table, column = alter_match.group(1), alter_match.group(2)
+            existing = await self._existing_columns(table)
+            if column in existing:
+                logger.debug(
+                    "storage/migrations: coluna %s.%s já existe, pulando ALTER",
+                    table,
+                    column,
+                )
+                return
+        await self._conn.execute(statement)
+
+    async def apply(self) -> bool:
+        """Reaplica o schema.sql inteiro se ele mudou desde a última vez.
 
         Returns:
-            Lista ordenada por versão.
+            True se o schema foi (re)aplicado nesta chamada, False se já
+            estava atualizado.
         """
-        files = self._load_files()
-        applied = await self._applied()
-        result = []
-        for mf in files:
-            rec = applied.get(mf.version)
-            if rec is None:
-                result.append(
-                    MigrationStatus(
-                        version=mf.version,
-                        name=mf.name,
-                        applied=False,
-                        applied_at=None,
-                        drift=False,
-                    )
-                )
-            else:
-                drift = rec["checksum"] != mf.checksum
-                result.append(
-                    MigrationStatus(
-                        version=mf.version,
-                        name=mf.name,
-                        applied=True,
-                        applied_at=rec["applied_at"],
-                        drift=drift,
-                    )
-                )
-        return result
+        content, checksum = self._read_schema()
+        stored = await self._stored()
+        if stored is not None and stored["checksum"] == checksum:
+            logger.info("storage/migrations: schema já atualizado — nada a fazer")
+            return False
 
-    # ------------------------------------------------------------------
-    # Upgrade
-    # ------------------------------------------------------------------
-
-    async def upgrade(self, target: str | None = None) -> list[str]:
-        """Aplica todas as migrations pendentes até ``target`` (inclusive).
-
-        Args:
-            target: Versão máxima a aplicar (ex: ``"0003"``). Se None, aplica
-                    todas as pendentes.
-
-        Returns:
-            Lista de versões aplicadas nesta chamada.
-        """
-        files = self._load_files()
-        applied = await self._applied()
-        applied_now: list[str] = []
-
-        for mf in files:
-            if target is not None and mf.version > target:
-                break
-            if mf.version in applied:
-                continue
-            if not mf.up_sql.strip():
-                logger.warning(
-                    "storage/migrations: migration %s não tem seção -- up, pulando",
-                    mf.version,
-                )
-                continue
-            logger.info("storage/migrations: aplicando %s_%s", mf.version, mf.name)
-            await self._conn.executescript(mf.up_sql)
-            now = datetime.now(UTC).isoformat()
-            await self._conn.execute(
-                "INSERT OR REPLACE INTO schema_migrations "
-                "(version, name, applied_at, checksum) VALUES (?, ?, ?, ?)",
-                (mf.version, mf.name, now, mf.checksum),
-            )
-            await self._conn.commit()
-            applied_now.append(mf.version)
-            logger.info("storage/migrations: %s_%s aplicada", mf.version, mf.name)
-
-        if not applied_now:
-            logger.info("storage/migrations: banco atualizado — nada a fazer")
-        return applied_now
-
-    # ------------------------------------------------------------------
-    # Downgrade
-    # ------------------------------------------------------------------
-
-    async def downgrade(self, target: str) -> list[str]:
-        """Reverte migrations até ``target`` (inclusive — target é revertida).
-
-        Args:
-            target: Versão mais antiga a reverter (ex: ``"0002"`` reverte
-                    ``0003``, ``0002`` nessa ordem).
-
-        Returns:
-            Lista de versões revertidas nesta chamada.
-        """
-        files = self._load_files()
-        applied = await self._applied()
-        # Reverte em ordem decrescente de versão
-        to_revert = sorted(
-            [mf for mf in files if mf.version in applied and mf.version >= target],
-            key=lambda mf: mf.version,
-            reverse=True,
+        logger.info("storage/migrations: aplicando schema.sql (checksum mudou)")
+        for statement in _split_statements(content):
+            await self._execute_statement(statement)
+        now = datetime.now(UTC).isoformat()
+        await self._conn.execute(
+            "INSERT INTO schema_migrations (id, checksum, applied_at) VALUES (1, ?, ?) "
+            "ON CONFLICT (id) DO UPDATE SET checksum = excluded.checksum, "
+            "applied_at = excluded.applied_at",
+            (checksum, now),
         )
-        reverted: list[str] = []
-        for mf in to_revert:
-            if not mf.down_sql.strip():
-                logger.warning(
-                    "storage/migrations: migration %s não tem seção -- down, pulando",
-                    mf.version,
-                )
-                continue
-            logger.info("storage/migrations: revertendo %s_%s", mf.version, mf.name)
-            await self._conn.executescript(mf.down_sql)
-            await self._conn.execute(
-                "DELETE FROM schema_migrations WHERE version = ?", (mf.version,)
-            )
-            await self._conn.commit()
-            reverted.append(mf.version)
-            logger.info("storage/migrations: %s_%s revertida", mf.version, mf.name)
-        return reverted
+        await self._conn.commit()
+        logger.info("storage/migrations: schema.sql aplicado")
+        return True
+
+    # Alias retrocompatível — mesma semântica de apply(), mantido porque o
+    # nome "upgrade" já é o vocabulário usado pelo CLI (`vectora storage
+    # migrate upgrade`).
+    async def upgrade(self) -> bool:
+        return await self.apply()
 
 
 # ---------------------------------------------------------------------------
@@ -325,24 +189,17 @@ class MigrationRunner:
 
 async def run_migrations(
     conn: Any,
-    migrations_dir: str | Path | None = None,
-    *,
-    target: str | None = None,
-) -> list[str]:
-    """Aplica todas as migrations pendentes em ``conn``.
+    schema_file: str | Path | None = None,
+) -> bool:
+    """Reaplica o schema.sql em ``conn`` se ele mudou desde a última vez.
 
-    Atalho para uso no startup de services:
+    Atalho para uso no startup do servidor:
 
         from backend.storage.migrations import run_migrations
         await run_migrations(conn)
 
-    Args:
-        conn:            Conexão aiosqlite aberta.
-        migrations_dir:  Diretório com ``NNNN_*.sql``. Default: pasta ``migrations/``.
-        target:          Versão máxima (inclusive). None = tudo.
-
     Returns:
-        Lista de versões aplicadas.
+        True se o schema foi (re)aplicado nesta chamada.
     """
-    runner = MigrationRunner(conn, migrations_dir)
-    return await runner.upgrade(target=target)
+    runner = MigrationRunner(conn, schema_file)
+    return await runner.apply()

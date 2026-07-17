@@ -237,7 +237,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         async with aiosqlite.connect(_db_path) as _conn:
             applied = await run_migrations(_conn)
             if applied:
-                logger.info("api/server: migrations SQLite aplicadas: %s", applied)
+                logger.info("api/server: schema SQLite aplicado (checksum mudou)")
     except Exception as exc:
         logger.warning("api/server: migrations SQLite falhou: %s", exc)
 

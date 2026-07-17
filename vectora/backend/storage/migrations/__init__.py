@@ -1,7 +1,5 @@
-"""Runner de schema versioning para SQLite.
-
-Substitui o padrão ``ALTER TABLE … suppress(Exception)`` espalhado pelos
-services por um sistema declarativo de migrations versionadas.
+"""Runner de schema para SQLite — arquivo único (sqlite/schema.sql),
+reaplicado inteiro sempre que seu conteúdo muda. Ver runner.py.
 """
 
 from __future__ import annotations

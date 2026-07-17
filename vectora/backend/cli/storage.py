@@ -314,52 +314,34 @@ async def _storage_migrate(
         runner = MigrationRunner(conn)
 
         if subaction == "status":
-            statuses = await runner.status()
-            if not statuses:
-                console.print("[dim]Nenhuma migration encontrada.[/dim]")
-                return
-            table = Table(title="Schema Migrations", show_lines=False)
-            table.add_column("Versão", style="cyan bold", width=8)
-            table.add_column("Nome", width=20)
+            status = await runner.status()
+            table = Table(title="Schema (arquivo único)", show_lines=False)
             table.add_column("Estado", width=12)
-            table.add_column("Aplicada em", style="dim", width=22)
-            for s in statuses:
-                if not s.applied:
-                    state = "[yellow]pendente[/yellow]"
-                    ts = "—"
-                elif s.drift:
-                    state = "[red]drift![/red]"
-                    ts = (s.applied_at or "")[:19].replace("T", " ")
-                else:
-                    state = "[green]ok[/green]"
-                    ts = (s.applied_at or "")[:19].replace("T", " ")
-                table.add_row(s.version, s.name, state, ts)
+            table.add_column("Checksum", style="dim", width=16)
+            table.add_column("Aplicado em", style="dim", width=22)
+            if not status.applied:
+                state = "[yellow]pendente[/yellow]"
+                ts = "—"
+            elif status.drift:
+                state = "[red]drift![/red]"
+                ts = (status.applied_at or "")[:19].replace("T", " ")
+            else:
+                state = "[green]ok[/green]"
+                ts = (status.applied_at or "")[:19].replace("T", " ")
+            table.add_row(state, status.checksum[:12], ts)
             console.print(table)
 
         elif subaction == "upgrade":
-            applied = await runner.upgrade(target=version)
+            applied = await runner.upgrade()
             if applied:
-                console.print(f"[green]✓ Aplicadas:[/green] {', '.join(applied)}")
+                console.print("[green]✓ Schema aplicado (checksum mudou).[/green]")
             else:
                 console.print("[green]✓ Banco já atualizado — nada a fazer.[/green]")
-
-        elif subaction == "downgrade":
-            if not version:
-                console.print(
-                    "[red]❌ Informe a versão alvo: "
-                    "vectora storage migrate downgrade <VERSÃO>[/red]"
-                )
-                sys.exit(1)
-            reverted = await runner.downgrade(version)
-            if reverted:
-                console.print(f"[yellow]↩ Revertidas:[/yellow] {', '.join(reverted)}")
-            else:
-                console.print("[dim]Nenhuma migration revertida.[/dim]")
 
         else:
             console.print(
                 f"[red]Sub-ação desconhecida: {subaction!r}[/red]\n"
-                "Opções: status | upgrade | downgrade | "
+                "Opções: status | upgrade | "
                 "to-postgres | to-qdrant | to-pgvector | memory-to-langgraph"
             )
             sys.exit(1)

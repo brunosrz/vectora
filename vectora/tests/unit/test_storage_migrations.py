@@ -6,11 +6,13 @@ DataMigration: dry-run em memória.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 
 class TestMigrationRunner:
-    """Schema migration runner (F2)."""
+    """Schema migration runner — arquivo único (sqlite/schema.sql)."""
 
     @pytest.fixture
     async def runner_conn(self, tmp_path):
@@ -33,49 +35,50 @@ class TestMigrationRunner:
         await conn.close()
 
     @pytest.mark.asyncio
-    async def test_status_lists_pending_migrations(self, runner_conn):
-        """status() lista as migrations SQLite como pendentes num banco vazio."""
+    async def test_status_pending_on_empty_db(self, runner_conn):
+        """status() mostra applied=False num banco vazio."""
         from backend.storage.migrations.runner import MigrationRunner
 
         runner = MigrationRunner(runner_conn)
-        statuses = await runner.status()
-        assert isinstance(statuses, list)
-        assert len(statuses) >= 1
-        assert all(not s.applied for s in statuses)
+        status = await runner.status()
+        assert status.applied is False
+        assert status.applied_at is None
+        assert status.checksum
 
     @pytest.mark.asyncio
     async def test_status_shows_applied_after_upgrade(self, runner_conn):
-        """status() mostra applied=True após upgrade() rodar."""
+        """status() mostra applied=True e drift=False após upgrade() rodar."""
         from backend.storage.migrations.runner import MigrationRunner
 
         runner = MigrationRunner(runner_conn)
         await runner.upgrade()
-        statuses = await runner.status()
-        assert all(s.applied for s in statuses)
+        status = await runner.status()
+        assert status.applied is True
+        assert status.drift is False
+        assert status.applied_at is not None
 
     @pytest.mark.asyncio
-    async def test_upgrade_applies_sqlite_migrations(self, runner_conn):
-        """upgrade() aplica as migrations SQLite e retorna lista de versões."""
+    async def test_upgrade_applies_schema_and_returns_true(self, runner_conn):
+        """upgrade() aplica o schema.sql inteiro e retorna True na 1ª chamada."""
         from backend.storage.migrations.runner import MigrationRunner
 
         runner = MigrationRunner(runner_conn)
         applied = await runner.upgrade()
-        assert isinstance(applied, list)
-        assert len(applied) >= 1
+        assert applied is True
 
     @pytest.mark.asyncio
     async def test_upgrade_idempotent(self, runner_conn):
-        """Segunda chamada a upgrade() não re-aplica migrations já aplicadas."""
+        """Segunda chamada a upgrade() é no-op (checksum já bate) — retorna False."""
         from backend.storage.migrations.runner import MigrationRunner
 
         runner = MigrationRunner(runner_conn)
         await runner.upgrade()
         second = await runner.upgrade()
-        assert second == []
+        assert second is False
 
     @pytest.mark.asyncio
     async def test_schema_migrations_table_created(self, runner_conn):
-        """Tabela schema_migrations é criada ao instanciar runner."""
+        """Tabela de controle schema_migrations é criada ao instanciar runner."""
         from backend.storage.migrations.runner import MigrationRunner
 
         runner = MigrationRunner(runner_conn)
@@ -94,14 +97,13 @@ class TestMigrationRunner:
 
         runner = MigrationRunner(raw_conn)
         applied = await runner.upgrade()
-        assert isinstance(applied, list)
-        assert len(applied) >= 1
+        assert applied is True
         second = await runner.upgrade()
-        assert second == []
+        assert second is False
 
     @pytest.mark.asyncio
     async def test_vectora_sessions_table_created(self, runner_conn):
-        """A migration 0002 cria a tabela vectora_sessions."""
+        """O schema cria a tabela vectora_sessions."""
         from backend.storage.migrations.runner import MigrationRunner
 
         await MigrationRunner(runner_conn).upgrade()
@@ -123,33 +125,54 @@ class TestMigrationRunner:
         assert "thread_id" in cols
 
     @pytest.mark.asyncio
-    async def test_applied_versions_sorted(self, runner_conn):
-        """upgrade() aplica em ordem ascendente de versão."""
+    async def test_reapply_after_content_change_updates_checksum(
+        self, runner_conn, tmp_path
+    ):
+        """Editar o schema.sql muda o checksum: upgrade() reaplica e status() reflete."""
         from backend.storage.migrations.runner import MigrationRunner
 
-        applied = await MigrationRunner(runner_conn).upgrade()
-        assert applied == sorted(applied)
+        original = (
+            Path(__file__).resolve().parents[2]
+            / "backend"
+            / "storage"
+            / "migrations"
+            / "sqlite"
+            / "schema.sql"
+        ).read_text(encoding="utf-8")
+
+        edited_file = tmp_path / "schema_edited.sql"
+        edited_file.write_text(
+            original
+            + "\nCREATE TABLE IF NOT EXISTS _test_marker (id INTEGER PRIMARY KEY);\n",
+            encoding="utf-8",
+        )
+
+        runner = MigrationRunner(runner_conn, schema_file=edited_file)
+        first = await runner.upgrade()
+        assert first is True
+
+        cur = await runner_conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='_test_marker'"
+        )
+        assert await cur.fetchone() is not None
+
+        status = await runner.status()
+        assert status.applied is True
+        assert status.drift is False
 
     @pytest.mark.asyncio
-    async def test_known_migrations_in_status(self, runner_conn):
-        """status() inclui as migrations base 0001 (auth) e 0002 (sessions)."""
-        from backend.storage.migrations.runner import MigrationRunner
-
-        statuses = await MigrationRunner(runner_conn).status()
-        versions = {s.version for s in statuses}
-        assert "0001" in versions
-        assert "0002" in versions
-
-    @pytest.mark.asyncio
-    async def test_status_all_applied_count_matches(self, runner_conn):
-        """Após upgrade num banco vazio, todas as migrations ficam applied."""
+    async def test_alter_add_column_skips_existing_column(self, runner_conn):
+        """ALTER TABLE ... ADD COLUMN não falha quando a coluna já existe."""
         from backend.storage.migrations.runner import MigrationRunner
 
         runner = MigrationRunner(runner_conn)
-        applied = await runner.upgrade()
-        statuses = await runner.status()
-        assert len(applied) == len(statuses)
-        assert all(s.applied for s in statuses)
+        await runner.upgrade()
+
+        # Reaplicar manualmente o statement ALTER de uma coluna já criada pelo
+        # CREATE TABLE não deve levantar "duplicate column name".
+        await runner._execute_statement(
+            "ALTER TABLE vectora_sessions ADD COLUMN extra TEXT"
+        )
 
 
 class TestDataMigrationDryRun:

@@ -16,24 +16,20 @@ import backend
 from backend.scheduling import background_tasks as bg
 from backend.services import agent_factory
 
-_MIGRATION = (
-    Path(backend.__file__).parent
-    / "storage"
-    / "migrations"
-    / "sqlite"
-    / "0008_background_tasks.sql"
+_SCHEMA = (
+    Path(backend.__file__).parent / "storage" / "migrations" / "sqlite" / "schema.sql"
 )
 
 
 @pytest.fixture
 async def db(tmp_path, monkeypatch):
-    """Banco SQLite temporário com o schema 0007 aplicado.
+    """Banco SQLite temporário com o schema único aplicado.
 
     `_get_db` abre uma conexão nova por chamada (igual à produção); todas apontam
     para o mesmo arquivo, então o estado persiste entre operações.
     """
     db_path = str(tmp_path / "bg.db")
-    up_sql = _MIGRATION.read_text(encoding="utf-8").split("-- down")[0]
+    up_sql = _SCHEMA.read_text(encoding="utf-8")
 
     import aiosqlite
 
