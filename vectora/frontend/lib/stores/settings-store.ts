@@ -69,8 +69,6 @@ function detectLanguage(): Lang {
 export interface SettingsState {
   /** Exibir tool calls na interface do chat */
   showToolCalls: boolean;
-  /** Solicitar confirmação antes de ações destrutivas (HITL antecipado) */
-  requireHitl: boolean;
   /** Tema da interface (claro/escuro/sistema) */
   theme: Theme;
   /** Paleta de cores aplicada por cima do tema (presets ou customizada) */
@@ -108,7 +106,6 @@ export interface SettingsState {
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
-  setRequireHitl: (v: boolean) => void;
   setTheme: (v: Theme) => void;
   setThemePreset: (v: ThemePreset) => void;
   setCustomThemeColors: (v: BaseThemeColors | null) => void;
@@ -137,7 +134,6 @@ const SIDEBAR_MAX_WIDTH = 480;
 
 const DEFAULTS = {
   showToolCalls: false,
-  requireHitl: true,
   theme: "system" as Theme,
   themePreset: "default" as ThemePreset,
   customThemeColors: null as BaseThemeColors | null,
@@ -180,7 +176,6 @@ export const useSettingsStore = create<SettingsState>()(
       language: detectLanguage(),
 
       setShowToolCalls: (v) => set({ showToolCalls: v }),
-      setRequireHitl: (v) => set({ requireHitl: v }),
       setTheme: (v) => {
         set({ theme: v });
         void pushPrefs({ theme: v });
@@ -254,7 +249,6 @@ export const useSettingsStore = create<SettingsState>()(
       ),
       partialize: (state) => ({
         showToolCalls: state.showToolCalls,
-        requireHitl: state.requireHitl,
         theme: state.theme,
         themePreset: state.themePreset,
         customThemeColors: state.customThemeColors,

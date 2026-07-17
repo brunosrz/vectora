@@ -56,12 +56,6 @@ describe("useSettingsStore — valores padrão", () => {
     expect(state.showToolCalls).toBe(false);
   });
 
-  it("requireHitl deve ser true por padrão (fallback seguro — R7)", async () => {
-    const { useSettingsStore } = await getStore();
-    const state = useSettingsStore.getState();
-    expect(state.requireHitl).toBe(true);
-  });
-
   it("permissionMode deve ser 'ask' por padrão (R2)", async () => {
     const { useSettingsStore } = await getStore();
     expect(useSettingsStore.getState().permissionMode).toBe("ask");
@@ -95,12 +89,6 @@ describe("useSettingsStore — mutações de estado", () => {
     const { useSettingsStore } = await getStore();
     useSettingsStore.getState().setShowToolCalls(true);
     expect(useSettingsStore.getState().showToolCalls).toBe(true);
-  });
-
-  it("setRequireHitl altera requireHitl para true", async () => {
-    const { useSettingsStore } = await getStore();
-    useSettingsStore.getState().setRequireHitl(true);
-    expect(useSettingsStore.getState().requireHitl).toBe(true);
   });
 
   it("setTheme aceita 'dark'", async () => {
@@ -166,7 +154,6 @@ describe("useSettingsStore — reset", () => {
 
     const after = useSettingsStore.getState();
     expect(after.showToolCalls).toBe(false);
-    expect(after.requireHitl).toBe(true);
     expect(after.theme).toBe("system");
     expect(after.customSystemPrompt).toBe("");
     expect(after.permissionMode).toBe("ask");
