@@ -61,7 +61,44 @@ def run(cmd: list, cwd: Path, desc: str, env: dict | None = None) -> None:
         sys.exit(f"FALHA: {desc}")
 
 
+# Padrões de arquivo que nunca podem existir dentro de vectora/backend/ na
+# hora do build: o Nuitka `--mode=package` embute QUALQUER arquivo não-.py
+# achado dentro do pacote (é assim que backend/defaults.env sobrevive ao
+# empacotamento via importlib.resources — confirmado: nem aparece como
+# arquivo solto no dist/vectora/ gerado, só funciona embutido no .pyd). Um
+# `.env`/chave/credencial esquecido ali vira permanente e invisível dentro do
+# binário entregue a QUALQUER usuário que baixar o instalador — diferente de
+# vectora/.env (fora do pacote), que nunca é varrido pelo Nuitka.
+_FORBIDDEN_BACKEND_FILE_PATTERNS = (
+    ".env",
+    ".env.*",
+    "*.pem",
+    "id_rsa*",
+    "credentials.json",
+    "service-account*.json",
+)
+
+
+def _assert_no_secrets_inside_backend() -> None:
+    backend_dir = VECTORA / "backend"
+    allowed = {backend_dir / "defaults.env"}
+    found: set[Path] = set()
+    for pattern in _FORBIDDEN_BACKEND_FILE_PATTERNS:
+        found.update(p for p in backend_dir.rglob(pattern) if p.is_file())
+    found -= allowed
+    if found:
+        listed = "\n".join(f"  - {p.relative_to(VECTORA)}" for p in sorted(found))
+        sys.exit(
+            "FALHA: arquivo de segredo dentro de vectora/backend/ — o Nuitka "
+            "embute isso no binário compilado, entregue a todo mundo que "
+            f"baixar o instalador:\n{listed}\n"
+            "Mova pra vectora/.env (fora do pacote) ou ~/.vectora/.env antes "
+            "de rodar o build."
+        )
+
+
 def main() -> None:
+    _assert_no_secrets_inside_backend()
     jobs = os.environ.get("NUITKA_JOBS", "2")
     if "--jobs" in sys.argv:
         jobs = sys.argv[sys.argv.index("--jobs") + 1]
