@@ -3,6 +3,7 @@
 vectora                 imprime o help (descobre a CLI de configuração)
 vectora start           sobe backend + MCP + SPA (fullstack)
 vectora start --headless  sobe sem janela (bandeja + backend + MCP)
+vectora web             sobe só como webapp — sem Electron, sem bandeja
 
 Configuração (operacional, para VPS via SSH):
   vectora config                 mostra ~/.vectora/settings.json
@@ -115,6 +116,7 @@ def _build_parser() -> argparse.ArgumentParser:
   vectora start                        sobe backend + MCP + SPA (fullstack)
   vectora start --headless             servidor headless (VPS/systemd)
   vectora start --port 9000            porta customizada
+  vectora web                          webapp puro — sem Electron, sem bandeja
 
   vectora config                       mostra configuração completa
   vectora config keys                  wizard: API keys + LLM provider
@@ -171,6 +173,36 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     start_p.add_argument(
+        "--ssl-keyfile",
+        metavar="PEM",
+        default=None,
+        help="Chave privada TLS correspondente. Também via env SSL_KEYFILE.",
+    )
+
+    # ── web — força modo webapp puro (sem Electron, sem bandeja) ──────────────
+    web_p = sub.add_parser(
+        "web",
+        help="Sobe o Vectora como webapp puro (sem Electron, sem bandeja)",
+        description=(
+            "Sobe o backend completo (FastAPI + /mcp) servindo a SPA via uvicorn,\n"
+            "acessível só pelo browser — nunca abre janela Electron nem ícone de\n"
+            "bandeja, mesmo numa máquina com display. Equivalente ao modo\n"
+            "servidor/VPS, mas utilizável em qualquer máquina."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    web_p.add_argument("--host", default="0.0.0.0", help="Host de escuta")  # noqa: S104  # nosec B104
+    web_p.add_argument("--port", type=int, default=None, help="Porta (default: 8080)")
+    web_p.add_argument(
+        "--ssl-certfile",
+        metavar="PEM",
+        default=None,
+        help=(
+            "Certificado TLS (PEM fullchain) — sobe em https://. Também via env "
+            "SSL_CERTFILE. Necessário para Secure Context ao acessar via IP de LAN."
+        ),
+    )
+    web_p.add_argument(
         "--ssl-keyfile",
         metavar="PEM",
         default=None,
@@ -303,11 +335,15 @@ def _build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 
 
-def _run_start(args: argparse.Namespace) -> None:
+def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
     """``vectora start`` — sobe FastAPI (+ /mcp) servindo a SPA via uvicorn.
 
     Em ``--headless`` registra ``VECTORA_HEADLESS=1`` para a bandeja/Electron
     decidirem não abrir janela; o servidor em si é idêntico.
+
+    ``force_web=True`` (``vectora web``) vai além de ``--headless``: nem a
+    bandeja do sistema sobe — só o servidor ASGI, para uso via browser em
+    qualquer máquina, com ou sem display.
     """
     warnings.filterwarnings(
         "ignore", category=DeprecationWarning, module="deepagents.*"
@@ -318,7 +354,8 @@ def _run_start(args: argparse.Namespace) -> None:
 
     from backend.api.server import create_app
 
-    if args.headless:
+    headless = force_web or getattr(args, "headless", False)
+    if headless:
         os.environ["VECTORA_HEADLESS"] = "1"
 
     # Precedência da porta: --port > VECTORA_PORT (env do Electron) > 8080.
@@ -395,7 +432,7 @@ def _run_start(args: argparse.Namespace) -> None:
             scheme,
             args.host,
             port,
-            "headless" if args.headless else "fullstack",
+            "web" if force_web else ("headless" if headless else "fullstack"),
         )
         config = uvicorn.Config(
             app,
@@ -429,21 +466,33 @@ def _run_start(args: argparse.Namespace) -> None:
         asyncio.run(_run_win())
         return
 
-    # Sobe o servidor e, quando há display, a bandeja do sistema (Python). Sem
-    # display (VPS/Docker) ou sem pystray, degrada para servidor puro. A bandeja
-    # bloqueia a main thread até "Sair"; o servidor roda em thread de fundo.
-    from backend.services.tray import run_server_with_tray
-
     icon_ref: list[Any] = [None]
     if sys.stdin.isatty() and not os.environ.get("VECTORA_DESKTOP"):
         _install_terminal_signals(server, icon_ref)
 
-    run_server_with_tray(
-        server,
-        f"{scheme}://localhost:{port}",
-        headless=args.headless,
-        icon_ref=icon_ref,
-    )
+    if force_web:
+        # vectora web: nem a bandeja sobe — só o servidor ASGI puro, igual ao
+        # fallback "sem display" de run_server_with_tray, mas explícito
+        # mesmo em máquina com display (Ctrl+C encerra via os sinais acima).
+        logger.warning(
+            "\n\n  ✨  Vectora rodando em %s://localhost:%d — acesse pelo browser.\n",
+            scheme,
+            port,
+        )
+        asyncio.run(server.serve())
+    else:
+        # Sobe o servidor e, quando há display, a bandeja do sistema (Python).
+        # Sem display (VPS/Docker) ou sem pystray, degrada para servidor puro.
+        # A bandeja bloqueia a main thread até "Sair"; o servidor roda em
+        # thread de fundo.
+        from backend.services.tray import run_server_with_tray
+
+        run_server_with_tray(
+            server,
+            f"{scheme}://localhost:{port}",
+            headless=headless,
+            icon_ref=icon_ref,
+        )
 
     # Retorno do tray/servidor = shutdown concluído. No Windows, threads
     # não-daemon de libs externas (langsmith, httpx, SQLite do tracer, Cohere
@@ -471,6 +520,10 @@ def run() -> None:
 
     if command == "start":
         _run_start(args)
+        return
+
+    if command == "web":
+        _run_start(args, force_web=True)
         return
 
     if command == "config":
