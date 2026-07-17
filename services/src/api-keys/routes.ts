@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 import type { Env } from "../relay/types";
 import { requireUserId } from "../auth/routes";
+import { getUserRole } from "../auth/roles";
 import { sha256Hex } from "../auth/session";
 
 export const apiKeys = new Hono<{ Bindings: Env }>();
@@ -38,6 +39,16 @@ apiKeys.post("/", async (c) => {
   const scopes = body.scopes ?? [];
   if (!scopes.length || !scopes.every((s) => VALID_SCOPES.has(s))) {
     return c.json({ error: "invalid_scopes" }, 400);
+  }
+  // O scope "admin" só pode ser concedido a quem já tem role=admin no D1 —
+  // sem isso, qualquer usuário autenticado podia pedir uma key com scope
+  // admin e o worker só validava o FORMATO do array, nunca o privilégio de
+  // quem pedia (regra 8 CLAUDE.md: backend é fonte de verdade).
+  if (scopes.includes("admin")) {
+    const role = await getUserRole(c.env, userId);
+    if (role !== "admin") {
+      return c.json({ error: "admin_scope_forbidden" }, 403);
+    }
   }
 
   const raw = crypto.randomUUID();

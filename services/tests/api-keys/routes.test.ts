@@ -113,4 +113,44 @@ describe("api-keys", () => {
     expect(duplicate.status).toBe(409);
     expect(await duplicate.json()).toEqual({ error: "name_taken" });
   });
+
+  it("rejects scope admin for a regular user, accepts it for an admin (privilege escalation gate)", async () => {
+    const { token } = await makeUserWithSession();
+    const auth = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    const forbidden = await apiKeys.request(
+      "/",
+      {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ name: "elevated", scopes: ["admin"] }),
+      },
+      env,
+    );
+    expect(forbidden.status).toBe(403);
+    expect(await forbidden.json()).toEqual({ error: "admin_scope_forbidden" });
+
+    const { userId: adminId, token: adminToken } = await makeUserWithSession();
+    await env.DB.prepare("UPDATE users SET role = 'admin' WHERE id = ?")
+      .bind(adminId)
+      .run();
+    const adminAuth = {
+      Authorization: `Bearer ${adminToken}`,
+      "Content-Type": "application/json",
+    };
+
+    const allowed = await apiKeys.request(
+      "/",
+      {
+        method: "POST",
+        headers: adminAuth,
+        body: JSON.stringify({ name: "elevated", scopes: ["admin"] }),
+      },
+      env,
+    );
+    expect(allowed.status).toBe(200);
+  });
 });
