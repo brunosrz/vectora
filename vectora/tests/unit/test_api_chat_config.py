@@ -111,6 +111,22 @@ def test_model_without_colon_passthrough():
 
 
 # ---------------------------------------------------------------------------
+# Item 3 — fork de checkpoint (editar mensagem / regenerar resposta)
+# ---------------------------------------------------------------------------
+
+
+def test_fork_from_checkpoint_id_present_included_absent_omitted():
+    """checkpoint_id presente no configurable faz o LangGraph ramificar dali
+    (edit/regenerate); ausente mantém o comportamento atual — resume do
+    checkpoint mais recente da thread."""
+    cfg = _build_configurable(ChatConfig(fork_from_checkpoint_id="cp-1234"), "t", "u")
+    assert cfg["checkpoint_id"] == "cp-1234"
+
+    cfg_default = _build_configurable(ChatConfig(), "t", "u")
+    assert "checkpoint_id" not in cfg_default
+
+
+# ---------------------------------------------------------------------------
 # Workspace por sessão — _resolve_workspace_id
 # ---------------------------------------------------------------------------
 

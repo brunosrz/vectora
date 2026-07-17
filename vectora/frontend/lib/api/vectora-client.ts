@@ -34,6 +34,11 @@ export interface ChatConfig {
   permission_mode?: string;
   /** R4 — low|medium|high|max (vazio = default do modelo) */
   reasoning_effort?: string;
+  /** Fork de checkpoint (editar mensagem / regenerar resposta) — checkpoint_id
+   * pai da mensagem alvo (ver HistoryMessage.checkpoint_id). Resumir o grafo
+   * a partir dele faz o LangGraph ramificar dali; o histórico original
+   * continua intacto, só deixa de ser o branch "atual" da thread. */
+  fork_from_checkpoint_id?: string;
 }
 
 /** Tipo semântico do attachment — espelha AttachmentKind do backend. */
@@ -153,6 +158,10 @@ export interface HistoryMessage {
   role: "human" | "assistant";
   content: string;
   created_at?: string;
+  /** Checkpoint pai (estado do thread imediatamente antes desta mensagem
+   * existir) — alvo de fork pra "editar e reenviar"/"regenerar". Vazio
+   * quando o backend não conseguiu resolver. */
+  checkpoint_id?: string;
 }
 
 // ============================================================================

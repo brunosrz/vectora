@@ -508,6 +508,7 @@ export function ChatInterface({
                 timestamp: hist.created_at
                   ? new Date(hist.created_at)
                   : new Date(),
+                checkpointId: hist.checkpoint_id,
               }) as Message,
           )
           .filter((message) => message.content.trim().length > 0);
@@ -1063,10 +1064,14 @@ export function ChatInterface({
       .find((m) => m.role === "user");
     if (!lastUserMessage) return;
 
-    const messagesUpToLastUser = messages.slice(
-      0,
-      messages.findIndex((m) => m.id === lastUserMessage.id) + 1,
+    const lastUserIndex = messages.findIndex(
+      (m) => m.id === lastUserMessage.id,
     );
+    const messagesUpToLastUser = messages.slice(0, lastUserIndex + 1);
+    // A resposta descartada (mensagem logo após a última do usuário) carrega
+    // o checkpoint_id certo pra regenerar: "estado logo após o humano, antes
+    // dessa resposta" (ver HistoryMessage.checkpoint_id / Message.checkpointId).
+    const discardedAssistant = messages[lastUserIndex + 1];
     setMessages(messagesUpToLastUser);
     uiDispatch({ type: "START_REGENERATE" });
     shouldInterruptRef.current = false;
@@ -1076,6 +1081,8 @@ export function ChatInterface({
       const { assistantContent } = await processStream(
         lastUserMessage.content,
         assistantMessageId,
+        undefined,
+        discardedAssistant?.checkpointId,
       );
 
       if (onThreadUpdate && assistantContent) {
@@ -1133,8 +1140,9 @@ export function ChatInterface({
       if (messageIndex === -1) return;
 
       const messagesUpToEdit = messages.slice(0, messageIndex);
+      const editedMessage = messages[messageIndex];
       const updatedMessage = {
-        ...messages[messageIndex],
+        ...editedMessage,
         content: newContent,
       };
 
@@ -1148,9 +1156,14 @@ export function ChatInterface({
           "Rerunning from edited message with assistantMessageId:",
           assistantMessageId,
         );
+        // O checkpoint pai da mensagem editada (estado logo ANTES dela
+        // existir) é o alvo de fork — a nova mensagem substitui a antiga a
+        // partir daí (ver HistoryMessage.checkpoint_id).
         const { assistantContent } = await processStream(
           newContent,
           assistantMessageId,
+          undefined,
+          editedMessage.checkpointId,
         );
 
         if (onThreadUpdate && assistantContent) {

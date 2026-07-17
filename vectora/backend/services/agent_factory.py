@@ -726,12 +726,22 @@ def _message_text(content: Any) -> str:
     return str(content)
 
 
-async def aget_thread_messages(thread_id: str) -> list[tuple[str, str]]:
-    """Mensagens persistidas de uma thread como ``(role, text)``.
+async def aget_thread_messages(thread_id: str) -> list[tuple[str, str, str]]:
+    """Mensagens persistidas de uma thread como ``(role, text, checkpoint_id)``.
 
     Usa o grafo deepagents compilado (schema idêntico ao que escreveu os
-    checkpoints) para ler estado via ``aget_state``. Um grafo mínimo NOOP
-    falha na desserialização porque não possui os canais internos do deepagents.
+    checkpoints) para ler o histórico via ``aget_state_history`` — não só o
+    estado mais recente (``aget_state``), pra poder atribuir a cada mensagem o
+    checkpoint pai (estado do thread imediatamente antes dela existir). Um
+    grafo mínimo NOOP falha na desserialização porque não possui os canais
+    internos do deepagents.
+
+    O ``checkpoint_id`` devolvido por mensagem é o alvo de fork pra "editar e
+    reenviar" (edita a própria mensagem) e "regenerar" (edita a última
+    resposta do assistente) — resumir o grafo a partir dele faz o LangGraph
+    ramificar dali, preservando o histórico original intacto (ver
+    ``ChatConfig.fork_from_checkpoint_id`` em chat.py). Vazio quando não há
+    checkpoint pai (raríssimo — thread sem nenhum estado gravado ainda).
 
     Filtra mensagens de tool e turnos AI sem texto — devolve transcript limpo.
     """
@@ -744,28 +754,42 @@ async def aget_thread_messages(thread_id: str) -> list[tuple[str, str]]:
     graph = await get_user_agent()
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     try:
-        state = await graph.aget_state(config)
+        # aget_state_history vem do mais recente pro mais antigo (LangGraph);
+        # inverte pra processar em ordem cronológica e comparar snapshots
+        # consecutivos.
+        history = [snap async for snap in graph.aget_state_history(config)]
     except Exception:
         logger.debug(
-            "aget_thread_messages: falha ao ler estado thread=%s",
+            "aget_thread_messages: falha ao ler histórico thread=%s",
             thread_id,
             exc_info=True,
         )
         return []
 
-    if not state or not state.values:
+    if not history:
         return []
+    history.reverse()
 
-    out: list[tuple[str, str]] = []
-    for msg in state.values.get("messages", []):
-        msg_type = getattr(msg, "type", "")
-        if msg_type == "tool":
-            continue
-        text = _message_text(getattr(msg, "content", "")).strip()
-        if not text:
-            continue
-        role = "human" if msg_type == "human" else "assistant"
-        out.append((role, text))
+    out: list[tuple[str, str, str]] = []
+    prev_len = 0
+    for snapshot in history:
+        msgs = snapshot.values.get("messages", []) if snapshot.values else []
+        new_msgs = msgs[prev_len:]
+        if new_msgs:
+            parent_config = snapshot.parent_config or {}
+            parent_checkpoint_id = parent_config.get("configurable", {}).get(
+                "checkpoint_id", ""
+            )
+            for msg in new_msgs:
+                msg_type = getattr(msg, "type", "")
+                if msg_type == "tool":
+                    continue
+                text = _message_text(getattr(msg, "content", "")).strip()
+                if not text:
+                    continue
+                role = "human" if msg_type == "human" else "assistant"
+                out.append((role, text, parent_checkpoint_id))
+        prev_len = len(msgs)
     return out
 
 

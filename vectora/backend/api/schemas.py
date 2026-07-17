@@ -40,6 +40,11 @@ class ChatConfig(BaseModel):
     # Idioma preferido do usuário (BCP-47 ou código curto: pt, en, es). Quando
     # vazio, o agente segue a heurística "adapte ao idioma da conversa".
     language: str = ""
+    # Fork de checkpoint (editar mensagem / regenerar resposta): checkpoint_id
+    # pai da mensagem alvo (ver HistoryMessage.checkpoint_id). Resumir o grafo
+    # a partir dele faz o LangGraph ramificar dali — o histórico original
+    # continua intacto, só deixa de ser o branch "atual" da thread.
+    fork_from_checkpoint_id: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -518,6 +523,11 @@ class HistoryMessage(BaseModel):
     role: str
     content: str
     created_at: str = ""
+    # Checkpoint pai (estado do thread imediatamente antes desta mensagem
+    # existir) — alvo de fork pra "editar e reenviar"/"regenerar". Vazio
+    # quando o backend não conseguiu resolver (thread sem checkpointer, erro
+    # de leitura do histórico) — ver ChatConfig.fork_from_checkpoint_id.
+    checkpoint_id: str = ""
 
 
 class ListThreadsResponse(BaseModel):

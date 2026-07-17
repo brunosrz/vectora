@@ -75,6 +75,38 @@ describe("useStreamHandler.processStream", () => {
     expect(assistant?.isError).toBeFalsy();
   });
 
+  it("Item 3 — forkFromCheckpointId presente manda config.fork_from_checkpoint_id; ausente omite (edit/regenerate)", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "token", content: "ok" },
+        { type: "done", thread_id: "t1", run_id: "run-1" },
+      ]),
+    );
+
+    const { result } = run();
+    await result.current.processStream("editado", "a1", undefined, "cp-999");
+
+    expect(streamChatMock).toHaveBeenCalledTimes(1);
+    const request = streamChatMock.mock.calls[0]?.[0] as {
+      config: { fork_from_checkpoint_id?: string };
+    };
+    expect(request.config.fork_from_checkpoint_id).toBe("cp-999");
+
+    streamChatMock.mockClear();
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "done", thread_id: "t1", run_id: "run-2" },
+      ]),
+    );
+    await result.current.processStream("normal", "a2");
+    const requestSemFork = streamChatMock.mock.calls[0]?.[0] as {
+      config: { fork_from_checkpoint_id?: string };
+    };
+    expect(requestSemFork.config.fork_from_checkpoint_id).toBeUndefined();
+  });
+
   it("evento de erro RATE_LIMIT vira aviso limpo + isError (não vaza JSON do provider)", async () => {
     streamChatMock.mockReturnValue(
       gen([

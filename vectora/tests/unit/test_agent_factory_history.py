@@ -41,17 +41,30 @@ class _Msg:
         self.content = content
 
 
-class _StateValues:
-    def __init__(self, messages: list[_Msg] | None) -> None:
-        self.values: dict | None = (
-            {"messages": messages} if messages is not None else None
+class _Snapshot:
+    """Snapshot fake de ``graph.aget_state_history`` — só ``values`` e
+    ``parent_config`` importam pro algoritmo de checkpoint_id pai."""
+
+    def __init__(self, messages: list[_Msg], parent_checkpoint_id: str | None) -> None:
+        self.values: dict = {"messages": messages}
+        self.parent_config: dict | None = (
+            {"configurable": {"checkpoint_id": parent_checkpoint_id}}
+            if parent_checkpoint_id is not None
+            else None
         )
 
 
-def _make_compiled(state: _StateValues) -> MagicMock:
-    """Retorna um CompiledStateGraph fake com aget_state fixo."""
+async def _async_iter(items: list[_Snapshot]):
+    for item in items:
+        yield item
+
+
+def _make_compiled(history_newest_first: list[_Snapshot]) -> MagicMock:
+    """Retorna um CompiledStateGraph fake com aget_state_history fixo."""
     compiled = MagicMock()
-    compiled.aget_state = AsyncMock(return_value=state)
+    compiled.aget_state_history = MagicMock(
+        return_value=_async_iter(history_newest_first)
+    )
     return compiled
 
 
@@ -60,15 +73,20 @@ async def test_aget_thread_messages_filters_tool_and_empty(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Filtra mensagens de tool e AI sem texto; mapeia human/ai → role correto."""
-    messages = [
-        _Msg("human", "oi"),
+    human = _Msg("human", "oi")
+    rest = [
         _Msg("ai", [{"type": "text", "text": "olá"}]),
         _Msg("ai", [{"type": "tool_use", "name": "x"}]),  # sem texto → filtra
         _Msg("tool", "[]"),  # tool result → filtra
         _Msg("ai", "resposta final"),
     ]
-    state = _StateValues(messages)
-    compiled = _make_compiled(state)
+    # Mais antigo primeiro na construção; _make_compiled recebe invertido
+    # (mais recente primeiro), como o LangGraph real entrega.
+    history_chronological = [
+        _Snapshot([human], "cp-inicial"),
+        _Snapshot([human, *rest], "cp-apos-human"),
+    ]
+    compiled = _make_compiled(list(reversed(history_chronological)))
 
     sentinel_checkpointer = object()
     monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)
@@ -84,9 +102,9 @@ async def test_aget_thread_messages_filters_tool_and_empty(
     pairs = await aget_thread_messages("t1")
 
     assert pairs == [
-        ("human", "oi"),
-        ("assistant", "olá"),
-        ("assistant", "resposta final"),
+        ("human", "oi", "cp-inicial"),
+        ("assistant", "olá", "cp-apos-human"),
+        ("assistant", "resposta final", "cp-apos-human"),
     ]
 
 
@@ -94,9 +112,8 @@ async def test_aget_thread_messages_filters_tool_and_empty(
 async def test_aget_thread_messages_empty_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Devolve lista vazia quando aget_state retorna state sem values."""
-    state = _StateValues(None)
-    compiled = _make_compiled(state)
+    """Devolve lista vazia quando o histórico só tem estado sem mensagens."""
+    compiled = _make_compiled([_Snapshot([], None)])
 
     sentinel_checkpointer = object()
     monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)

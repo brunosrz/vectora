@@ -171,6 +171,7 @@ interface UseStreamHandlerReturn {
     userContent: string,
     assistantMessageId: string,
     images?: ImageAttachment[],
+    forkFromCheckpointId?: string,
   ) => Promise<{ assistantContent: string; runId: string | undefined }>;
   /** Retoma uma execução pausada por HITL (approve / reject / edit:<json>). */
   processResume: (
@@ -206,6 +207,7 @@ export function useStreamHandler({
       userContent: string,
       assistantMessageId: string,
       images?: ImageAttachment[],
+      forkFromCheckpointId?: string,
     ): Promise<{ assistantContent: string; runId: string | undefined }> => {
       // Cancela stream anterior se ainda em andamento
       abortRef.current?.abort();
@@ -263,6 +265,12 @@ export function useStreamHandler({
       }
       config.permission_mode = settings.permissionMode;
       config.reasoning_effort = settings.reasoningEffort;
+      // Item 3 — editar mensagem / regenerar resposta: resume o grafo a
+      // partir do checkpoint pai da mensagem alvo em vez do mais recente,
+      // fazendo o LangGraph ramificar dali (histórico original preservado).
+      if (forkFromCheckpointId) {
+        config.fork_from_checkpoint_id = forkFromCheckpointId;
+      }
 
       // Converte ImageAttachment[] → Attachment[] para a API (F1)
       const attachments =

@@ -61,6 +61,12 @@ export interface Message {
   // Interruption tracking
   wasInterrupted?: boolean;
 
+  // Item 3 — fork de checkpoint (editar mensagem / regenerar resposta)
+  /** Checkpoint pai desta mensagem (ver HistoryMessage.checkpoint_id no
+   * backend) — alvo de fork ao editar esta mensagem ou, se for a última
+   * resposta do assistente, ao regenerá-la. */
+  checkpointId?: string;
+
   // M5 — Optimistic UI / error retry
   /** Mensagem é uma falha de stream — exibe botão de retry */
   isError?: boolean;

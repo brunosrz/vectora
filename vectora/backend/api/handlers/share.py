@@ -135,7 +135,9 @@ async def get_shared_thread(token: str) -> SharedThread:
         from backend.services import agent_factory
 
         pairs = await agent_factory.aget_thread_messages(thread_id)
-        messages = [HistoryMessage(role=role, content=text) for role, text in pairs]
+        messages = [
+            HistoryMessage(role=role, content=text) for role, text, _cp in pairs
+        ]
     except Exception:
         logger.debug("share: não foi possível carregar histórico do grafo")
 

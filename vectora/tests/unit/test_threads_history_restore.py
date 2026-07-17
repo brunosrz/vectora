@@ -28,17 +28,24 @@ class _RoundtripState(TypedDict):
     messages: Annotated[list, add_messages]
 
 
-class _FakeState:
+class _FakeSnapshot:
     def __init__(self, messages) -> None:
         self.values = {"messages": messages} if messages is not None else {}
+        self.parent_config = None
 
 
 def _patch_graph(monkeypatch, messages) -> None:
-    """Patcha get_user_agent para devolver um grafo fake cujo aget_state retorna messages."""
+    """Patcha get_user_agent para devolver um grafo fake cujo aget_state_history
+    devolve um único snapshot com ``messages`` (tudo commitado em um passo só —
+    o mapeamento por-mensagem do checkpoint pai é coberto em
+    test_services_agent_factory.py; aqui o foco é a filtragem/transformação)."""
 
     class _FakeCompiled:
-        async def aget_state(self, _config):
-            return _FakeState(messages)
+        async def _history(self, _config):
+            yield _FakeSnapshot(messages)
+
+        def aget_state_history(self, config):
+            return self._history(config)
 
     async def _fake_get_user_agent(*a, **kw):
         return _FakeCompiled()
@@ -68,10 +75,10 @@ async def test_returns_clean_human_assistant_pairs(monkeypatch):
     pairs = await agent_factory.aget_thread_messages("tid")
 
     assert pairs == [
-        ("human", "oi"),
-        ("assistant", "Olá! Como posso ajudar?"),
-        ("human", "liste arquivos"),
-        ("assistant", "Encontrei 2 arquivos."),
+        ("human", "oi", ""),
+        ("assistant", "Olá! Como posso ajudar?", ""),
+        ("human", "liste arquivos", ""),
+        ("assistant", "Encontrei 2 arquivos.", ""),
     ]
 
 
@@ -84,7 +91,7 @@ async def test_multimodal_assistant_content_extracted(monkeypatch):
     _patch_graph(monkeypatch, messages)
 
     pairs = await agent_factory.aget_thread_messages("tid")
-    assert pairs == [("human", "oi"), ("assistant", "resposta multimodal")]
+    assert pairs == [("human", "oi", ""), ("assistant", "resposta multimodal", "")]
 
 
 @pytest.mark.asyncio

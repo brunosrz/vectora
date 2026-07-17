@@ -217,6 +217,13 @@ class TestThreadModels:
     def test_history_message(self):
         msg = HistoryMessage(role="human", content="Olá")
         assert msg.role == "human"
+        # checkpoint_id (fork pra editar/regenerar) é opcional — vazio por
+        # default, presente quando o backend resolve o checkpoint pai.
+        assert msg.checkpoint_id == ""
+        msg_with_cp = HistoryMessage(
+            role="human", content="Olá", checkpoint_id="cp-abc"
+        )
+        assert msg_with_cp.checkpoint_id == "cp-abc"
 
     def test_list_threads_response(self):
         resp = ListThreadsResponse(

@@ -417,6 +417,12 @@ def _build_configurable(
         configurable["language"] = sys_lang
     if user_name:
         configurable["user_name"] = user_name
+    if config.fork_from_checkpoint_id:
+        # Chave reservada do LangGraph (mesmo nível de "thread_id") — resumir
+        # com um checkpoint_id anterior faz o grafo ramificar dali ao
+        # processar a nova mensagem, em vez de continuar do estado mais
+        # recente. Ver docs: oss/python/langgraph/checkpointers#replay.
+        configurable["checkpoint_id"] = config.fork_from_checkpoint_id
     return configurable
 
 

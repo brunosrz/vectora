@@ -647,7 +647,10 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
         from backend.services import agent_factory
 
         pairs = await agent_factory.aget_thread_messages(request.thread_id)
-        history = [HistoryMessage(role=role, content=text) for role, text in pairs]
+        history = [
+            HistoryMessage(role=role, content=text, checkpoint_id=checkpoint_id)
+            for role, text, checkpoint_id in pairs
+        ]
         return GetHistoryResponse(messages=history)
 
     except Exception as exc:
@@ -724,8 +727,8 @@ async def generate_title(request: GenerateTitleRequest) -> GenerateTitleResponse
         from backend.services import agent_factory
 
         pairs = await agent_factory.aget_thread_messages(request.thread_id)
-        user_text = next((t for r, t in pairs if r == "human"), "")
-        assistant_text = next((t for r, t in pairs if r == "assistant"), "")
+        user_text = next((t for r, t, _cp in pairs if r == "human"), "")
+        assistant_text = next((t for r, t, _cp in pairs if r == "assistant"), "")
         if not user_text:
             return GenerateTitleResponse(title="")
 
@@ -968,7 +971,10 @@ async def get_thread_history_paginated(
 
     has_more = start > 0
 
-    messages = [HistoryMessage(role=role, content=text) for role, text in page]
+    messages = [
+        HistoryMessage(role=role, content=text, checkpoint_id=checkpoint_id)
+        for role, text, checkpoint_id in page
+    ]
     return PagedHistoryResponse(
         messages=messages,
         has_more=has_more,

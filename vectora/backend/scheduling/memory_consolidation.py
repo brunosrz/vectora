@@ -66,7 +66,7 @@ async def _fetch_recent_threads(
             try:
                 messages = await aget_thread_messages(thread_id)
                 if messages:
-                    threads.append(messages)
+                    threads.append([(role, text) for role, text, _cp in messages])
             except Exception:
                 logger.debug("memory_consolidation: falha ao ler thread=%s", thread_id)
         return threads
