@@ -374,16 +374,27 @@ export function useStreamHandler({
             // throw — o catch fica reservado a quedas de transporte.
             const friendly = streamErrorMessage(event.code);
             setMessages((prev) =>
-              updateMessageInList(prev, activeId, (m) => ({
-                ...m,
-                content: friendly,
-                isError: true,
-                isThinking: false,
-                thinkingDuration:
-                  m.thinkingStartTime !== undefined
-                    ? Date.now() - m.thinkingStartTime
-                    : undefined,
-              })),
+              updateMessageInList(prev, activeId, (m) => {
+                // Preserva qualquer conteúdo parcial real já gerado antes do
+                // erro (ex.: quota estourou no meio da execução de um
+                // subagente, depois do orquestrador já ter respondido algo)
+                // — nunca sobrescreve, senão o usuário só vê o aviso
+                // genérico e perde o trabalho parcial visível.
+                const existing = typeof m.content === "string" ? m.content : "";
+                const content = existing.trim()
+                  ? `${existing}\n\n---\n\n${friendly}`
+                  : friendly;
+                return {
+                  ...m,
+                  content,
+                  isError: true,
+                  isThinking: false,
+                  thinkingDuration:
+                    m.thinkingStartTime !== undefined
+                      ? Date.now() - m.thinkingStartTime
+                      : undefined,
+                };
+              }),
             );
             break;
           }

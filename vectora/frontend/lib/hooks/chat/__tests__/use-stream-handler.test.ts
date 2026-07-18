@@ -28,7 +28,7 @@ vi.mock("@/lib/api/vectora-client", () => ({
   resumeChat: (...args: unknown[]) => resumeChatMock(...args),
 }));
 
-import { useStreamHandler } from "../use-stream-handler";
+import { useStreamHandler, streamErrorMessage } from "../use-stream-handler";
 
 function gen(events: StreamEvent[]): AsyncGenerator<StreamEvent> {
   return (async function* () {
@@ -132,6 +132,38 @@ describe("useStreamHandler.processStream", () => {
     expect(assistant?.content).not.toContain("RESOURCE_EXHAUSTED");
     expect(assistant?.content).not.toContain("429");
     expect(assistant?.content).not.toMatch(/Erro no stream:/i);
+  });
+
+  it("erro após conteúdo parcial real preserva o texto já gerado (não sobrescreve)", async () => {
+    // Regressão: QuotaExhaustedError no meio de um turno (ex.: orquestrador
+    // já respondeu algo, delegou pro subagente coder, que estourou quota) —
+    // o evento `error` sobrescrevia content inteiro pela mensagem genérica,
+    // descartando qualquer trabalho parcial já visível ao usuário.
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "token", content: "Vou criar o jogo da cobrinha. " },
+        { type: "token", content: "Aqui está o plano inicial..." },
+        {
+          type: "error",
+          message: "429 RESOURCE_EXHAUSTED quota exceeded",
+          code: "RATE_LIMIT",
+        },
+      ]),
+    );
+
+    const { result } = run();
+    await result.current.processStream("crie um jogo", "a1");
+
+    const assistant = messages.find((m) => m.id === "a1");
+    expect(assistant?.isError).toBe(true);
+    // O texto parcial real continua visível...
+    expect(assistant?.content).toContain(
+      "Vou criar o jogo da cobrinha. Aqui está o plano inicial...",
+    );
+    // ...com o aviso de erro anexado, não substituindo o conteúdo.
+    expect(assistant?.content).toContain(streamErrorMessage("RATE_LIMIT"));
+    expect(assistant?.content).not.toBe(streamErrorMessage("RATE_LIMIT"));
   });
 
   it("evento de erro MODEL_NO_VISION vira aviso claro (imagem + provider sem visão)", async () => {
