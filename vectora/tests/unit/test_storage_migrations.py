@@ -174,6 +174,34 @@ class TestMigrationRunner:
             "ALTER TABLE vectora_sessions ADD COLUMN extra TEXT"
         )
 
+    @pytest.mark.asyncio
+    async def test_upgrade_from_old_versioned_control_table(self, runner_conn):
+        """Banco real que já rodou o sistema de migrations antigo (versionado,
+        NNNN_nome.sql) tem schema_migrations no formato (version, name,
+        applied_at, checksum) — sem coluna `id`. apply() não pode quebrar com
+        "no such column: id" nesse caso; reproduzido ao vivo em produção."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        await runner_conn.executescript("""
+            CREATE TABLE schema_migrations (
+                version    TEXT PRIMARY KEY,
+                name       TEXT NOT NULL,
+                applied_at TEXT NOT NULL,
+                checksum   TEXT NOT NULL
+            );
+            INSERT INTO schema_migrations VALUES
+                ('0001', 'auth', '2026-07-13T13:31:47+00:00', 'deadbeef');
+        """)
+        await runner_conn.commit()
+
+        runner = MigrationRunner(runner_conn)
+        applied = await runner.apply()
+        assert applied is True
+
+        status = await runner.status()
+        assert status.applied is True
+        assert status.drift is False
+
 
 class TestDataMigrationDryRun:
     """Migrações de dados (F12) — apenas dry-run para não precisar de infra."""

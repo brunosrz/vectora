@@ -96,6 +96,19 @@ class MigrationRunner:
 
     async def _ensure_control_table(self) -> None:
         await self._conn.executescript(_CONTROL_SCHEMA)
+        # Compat: bancos que já rodaram o sistema de migrations antigo
+        # (versionado, NNNN_nome.sql) têm schema_migrations no formato
+        # (version, name, applied_at, checksum) — sem coluna `id`. O CREATE
+        # TABLE IF NOT EXISTS acima é no-op nesse caso; sem este check, toda
+        # leitura subsequente quebra com "no such column: id". A tabela é só
+        # bookkeeping (não guarda dado de usuário) — seguro recriar vazia, o
+        # schema.sql novo é idempotente e reaplica tudo do jeito certo.
+        cursor = await self._conn.execute("PRAGMA table_info(schema_migrations)")
+        cols = {row[1] for row in await cursor.fetchall()}
+        if "id" not in cols:
+            await self._conn.executescript(
+                "DROP TABLE schema_migrations;" + _CONTROL_SCHEMA
+            )
         await self._conn.commit()
 
     def _read_schema(self) -> tuple[str, str]:

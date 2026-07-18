@@ -63,6 +63,19 @@ class PostgresMigrationRunner:
 
     async def _ensure_control_table(self) -> None:
         await self._conn.execute(_CONTROL_SCHEMA)
+        # Compat: bancos que já rodaram o sistema de migrations antigo
+        # (versionado) têm schema_migrations no formato (version, name,
+        # applied_at, checksum) — sem coluna `id`. O CREATE TABLE IF NOT
+        # EXISTS acima é no-op nesse caso; sem este check, toda leitura
+        # subsequente quebra com "column id does not exist". A tabela é só
+        # bookkeeping (não guarda dado de usuário) — seguro recriar vazia.
+        row = await self._conn.fetchrow(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'schema_migrations' AND column_name = 'id'"
+        )
+        if row is None:
+            await self._conn.execute("DROP TABLE schema_migrations")
+            await self._conn.execute(_CONTROL_SCHEMA)
 
     def _read_schema(self) -> tuple[str, str]:
         content = self._file.read_text(encoding="utf-8")

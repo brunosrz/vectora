@@ -109,6 +109,35 @@ class TestPostgresMigrationRunner:
         assert status.applied is True
         assert status.drift is False
 
+    @pytest.mark.asyncio
+    @pytest.mark.storage
+    async def test_upgrade_from_old_versioned_control_table(self, pg_conn):
+        """Banco que já rodou o sistema de migrations antigo (versionado) tem
+        schema_migrations no formato (version, name, applied_at, checksum) —
+        sem coluna `id`. apply() não pode quebrar com "column id does not
+        exist" nesse caso; reproduz o bug real encontrado em produção."""
+        from backend.storage.migrations.postgres_runner import PostgresMigrationRunner
+
+        await pg_conn.execute("""
+            CREATE TABLE schema_migrations (
+                version    TEXT PRIMARY KEY,
+                name       TEXT NOT NULL,
+                applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                checksum   TEXT NOT NULL
+            )
+        """)
+        await pg_conn.execute(
+            "INSERT INTO schema_migrations VALUES ('0001', 'sessions', now(), 'deadbeef')"
+        )
+
+        runner = PostgresMigrationRunner(pg_conn)
+        applied = await runner.apply()
+        assert applied is True
+
+        status = await runner.status()
+        assert status.applied is True
+        assert status.drift is False
+
 
 class TestPostgresPool:
     """Pool asyncpg conecta e executa queries básicas."""
