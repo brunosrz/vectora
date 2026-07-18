@@ -89,7 +89,6 @@ from backend.tools.native import (
     time_parse,
 )
 from backend.tools.notion import notion_create_page, notion_read_page, notion_search
-from backend.tools.plans import update_plan_item
 from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.thinking import sequential_thinking
@@ -149,7 +148,6 @@ WORKSPACE_TOOLS: list[BaseTool] = [
     workspace_list,
     bucket_summary,
     get_workbench_context,
-    update_plan_item,
     create_background_task,
 ]
 
@@ -239,7 +237,6 @@ for _t in [
     workspace_list,
     bucket_summary,
     get_workbench_context,
-    update_plan_item,
     create_background_task,
     # G3 — Git + GitHub CLI
     git_status,
