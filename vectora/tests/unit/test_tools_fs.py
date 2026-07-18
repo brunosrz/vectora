@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 from unittest.mock import patch
 
 import pytest
+from langchain_core.runnables import RunnableConfig
 
 from backend.vtypes import Workspace
 
@@ -275,6 +277,13 @@ class TestListDir:
 # ---------------------------------------------------------------------------
 
 
+def _cfg(thread_id: str) -> RunnableConfig:
+    """RunnableConfig mínimo — thread_id vem do config (injetado pelo
+    LangGraph em produção via configurable["thread_id"]), nunca de um
+    kwarg que dependeria do modelo "lembrar" de passar o ID certo."""
+    return cast("RunnableConfig", {"configurable": {"thread_id": thread_id}})
+
+
 class TestCreateArtifact:
     def test_creates_file_and_returns_json(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact
@@ -285,8 +294,8 @@ class TestCreateArtifact:
                 "artifact_type": "plan",
                 "title": "Plano de Implementacao Auth",
                 "content": "# Auth\n\nPasso 1: definir schema\nPasso 2: implementar JWT",
-                "session_id": "042731",
-            }
+            },
+            config=_cfg("042731"),
         )
         data = json.loads(result)
         assert "path" in data
@@ -306,8 +315,8 @@ class TestCreateArtifact:
                 "artifact_type": "spec",
                 "title": "API de Pagamentos",
                 "content": "Spec content",
-                "session_id": "000001",
-            }
+            },
+            config=_cfg("000001"),
         )
         data = json.loads(result)
         artifact_path = Path(data["path"])
@@ -323,10 +332,10 @@ class TestCreateArtifact:
             "artifact_type": "guide",
             "title": "Setup Guide",
             "content": "Content",
-            "session_id": "999999",
         }
-        r1 = json.loads(create_artifact.invoke(kwargs))
-        r2 = json.loads(create_artifact.invoke(kwargs))
+        cfg = _cfg("999999")
+        r1 = json.loads(create_artifact.invoke(kwargs, config=cfg))
+        r2 = json.loads(create_artifact.invoke(kwargs, config=cfg))
         assert r1["path"] != r2["path"]
         assert Path(r1["path"]).exists()
         assert Path(r2["path"]).exists()
@@ -340,8 +349,8 @@ class TestCreateArtifact:
                 "artifact_type": "invalid_type",
                 "title": "Titulo",
                 "content": "Conteudo",
-                "session_id": "000000",
-            }
+            },
+            config=_cfg("000000"),
         )
         data = json.loads(result)
         assert "error" in data
@@ -355,8 +364,8 @@ class TestCreateArtifact:
                 "artifact_type": "plan",
                 "title": "   ",
                 "content": "Conteudo",
-                "session_id": "000000",
-            }
+            },
+            config=_cfg("000000"),
         )
         data = json.loads(result)
         assert "error" in data
@@ -370,8 +379,8 @@ class TestCreateArtifact:
                 "artifact_type": "plan",
                 "title": "Titulo valido",
                 "content": "",
-                "session_id": "000000",
-            }
+            },
+            config=_cfg("000000"),
         )
         data = json.loads(result)
         assert "error" in data
@@ -386,13 +395,22 @@ class TestCreateArtifact:
                     "artifact_type": artifact_type,
                     "title": f"Teste {artifact_type}",
                     "content": "Conteudo de teste",
-                    "session_id": "000000",
-                }
+                },
+                config=_cfg("000000"),
             )
             data = json.loads(result)
             assert "error" not in data, f"tipo '{artifact_type}' falhou: {data}"
 
-    def test_default_session_id(self, tmp_path, monkeypatch):
+    def test_missing_thread_id_returns_error_instead_of_silent_default(
+        self, tmp_path, monkeypatch
+    ):
+        """Regressão: session_id="000000" como default oculto fazia o artifact
+        cair num diretório errado sempre que o config não trazia o thread_id
+        real (ex.: modelo "esquecia" de passar o parâmetro, já que dependia
+        dele lembrar de um valor visto só no texto do prompt) — o painel
+        Plano da UI, que busca pelo threadId real, mostrava "Sem planos"
+        mesmo com o Vectora confirmando que salvou. Agora falha alto (erro
+        explícito) em vez de salvar silenciosamente no lugar errado."""
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -401,12 +419,11 @@ class TestCreateArtifact:
                 "artifact_type": "overview",
                 "title": "Visao Geral",
                 "content": "Conteudo",
-                # session_id omitido → usa default "000000"
-            }
+            },
+            config={"configurable": {}},
         )
         data = json.loads(result)
-        assert data["session_id"] == "000000"
-        assert "000000" in data["path"]
+        assert "error" in data
 
 
 # ---------------------------------------------------------------------------

@@ -143,7 +143,6 @@ Quando o usuário pedir plano, spec, lista de tarefas, guia ou arquitetura
 para **salvar como documento**:
 - Use `create_artifact` com tipo: `plan`, `spec`, `task_list`, `overview`,
   `guide`, `architecture` ou `implementation`.
-- Passe o `session_id` disponível no contexto.
 - Confirme com o caminho do arquivo gerado.
 
 ---

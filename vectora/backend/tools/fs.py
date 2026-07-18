@@ -746,6 +746,19 @@ def _artifact_slug(title: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _thread_id(config: RunnableConfig | None) -> str:
+    """Extrai o thread_id real do RunnableConfig injetado pelo LangGraph.
+
+    Nunca confiar no modelo pra "lembrar" de passar o ID certo — o system
+    prompt é montado por workspace (cacheado), não por thread, então o
+    thread_id real nunca aparece literalmente no texto do prompt. Ler do
+    config elimina a classe inteira de erro "salvou no artifact errado".
+    """
+    return (
+        str((config.get("configurable") or {}).get("thread_id", "")) if config else ""
+    )
+
+
 @tool(
     extras={
         "render_hint": "artifact",
@@ -758,7 +771,7 @@ def create_artifact(
     artifact_type: str,
     title: str,
     content: str,
-    session_id: str = "000000",
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria e persiste um artifact estruturado em ~/.vectora/artifacts/{session_id}/{slug}.md.
 
@@ -779,7 +792,6 @@ def create_artifact(
             - "implementation" → código de referência, snippets documentados
         title: Título descritivo do artifact (ex: "Plano de implementação do módulo Auth")
         content: Conteúdo completo em markdown
-        session_id: ID da sessão atual — disponível no bloco de contexto do sistema
 
     Returns:
         JSON com path, title, artifact_type, session_id e created_at
@@ -798,8 +810,14 @@ def create_artifact(
     if not content or not content.strip():
         return json.dumps({"error": "content não pode ser vazio"})
 
+    session_id = _thread_id(config)
+    if not session_id:
+        return json.dumps(
+            {"error": "Sessão não identificada — não foi possível salvar o artifact."}
+        )
+
     slug = _artifact_slug(title.strip())
-    artifact_dir = Path.home() / ".vectora" / "artifacts" / str(session_id)
+    artifact_dir = Path.home() / ".vectora" / "artifacts" / session_id
 
     try:
         artifact_dir.mkdir(parents=True, exist_ok=True)
