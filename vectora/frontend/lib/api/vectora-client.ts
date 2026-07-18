@@ -483,6 +483,26 @@ export async function getSharedThread(
 // SSE parser interno
 // ============================================================================
 
+/**
+ * Parseia uma única linha SSE (`data: {...}`) e retorna o evento tipado, ou
+ * `null` para linhas irrelevantes/vazias (`[DONE]`, whitespace, não-`data:`).
+ * Compartilhada entre o parse incremental (linhas completas) e o flush do
+ * buffer residual quando o stream fecha.
+ */
+function parseSSELine(line: string): StreamEvent | null {
+  if (!line.startsWith("data: ")) return null;
+  const json = line.slice(6).trim();
+  if (!json || json === "[DONE]") return null;
+
+  try {
+    return JSON.parse(json) as StreamEvent;
+  } catch {
+    // Linha malformada — ignorar
+    console.warn("[vectora-client] SSE parse error:", json);
+    return null;
+  }
+}
+
 async function* readSSEStream(
   body: ReadableStream<Uint8Array>,
 ): AsyncGenerator<StreamEvent> {
@@ -495,7 +515,17 @@ async function* readSSEStream(
       // SSE é stream sequencial — Promise.all() seria incorreto aqui.
       // eslint-disable-next-line no-await-in-loop
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        // O socket pode fechar exatamente no meio de uma linha `data:
+        // {...}` que nunca teve seu `\n\n` terminador entregue — sem este
+        // flush, esse último evento (às vezes o próprio `done`/`error` do
+        // backend) seria descartado silenciosamente, sem erro nem warning.
+        if (buffer.trim()) {
+          const event = parseSSELine(buffer);
+          if (event) yield event;
+        }
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
 
@@ -505,18 +535,10 @@ async function* readSSEStream(
       buffer = lines.pop() ?? "";
 
       for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const json = line.slice(6).trim();
-        if (!json || json === "[DONE]") continue;
-
-        try {
-          const event: StreamEvent = JSON.parse(json);
-          yield event;
-          if (event.type === "done" || event.type === "error") return;
-        } catch {
-          // Linha malformada — ignorar
-          console.warn("[vectora-client] SSE parse error:", json);
-        }
+        const event = parseSSELine(line);
+        if (!event) continue;
+        yield event;
+        if (event.type === "done" || event.type === "error") return;
       }
     }
   } finally {
