@@ -182,6 +182,21 @@ class TestPostgresPool:
         finally:
             await _fac.close_pg_pool()
             _fac._reset_singletons()
+            # get_pg_pool() aplica o schema.sql de verdade (commit real, fora
+            # de qualquer transação de teste) — ao contrário do resto da
+            # classe, que roda em cima de `pg_conn` (rollback automático via
+            # conftest.py). Sem este reset, schema_migrations e as demais
+            # tabelas ficam commitadas no container Postgres compartilhado e
+            # quebram os testes de `TestPostgresMigrationRunner` que rodam
+            # depois (assumem banco sem schema aplicado).
+            import asyncpg
+
+            reset_conn = await asyncpg.connect(pg_dsn)
+            try:
+                await reset_conn.execute("DROP SCHEMA public CASCADE")
+                await reset_conn.execute("CREATE SCHEMA public")
+            finally:
+                await reset_conn.close()
 
     @pytest.mark.asyncio
     @pytest.mark.storage

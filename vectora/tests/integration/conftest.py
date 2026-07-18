@@ -169,9 +169,21 @@ async def pg_pool(_storage_stack_ok: bool, pg_dsn: str):
 
 @pytest.fixture
 async def pg_conn(pg_pool):
-    """Conexão asyncpg isolada por teste."""
+    """Conexão asyncpg isolada por teste.
+
+    Envolve o teste numa transação que é sempre revertida no fim — DDL é
+    transacional no Postgres, então migrations aplicadas dentro do teste
+    (CREATE TABLE, etc.) nunca vazam pro próximo teste via o container
+    compartilhado (que persiste entre execuções, já que ``stack_up()``
+    reaproveita o volume nomeado em vez de recriar o banco do zero).
+    """
     async with pg_pool.acquire() as conn:
-        yield conn
+        tr = conn.transaction()
+        await tr.start()
+        try:
+            yield conn
+        finally:
+            await tr.rollback()
 
 
 @pytest.fixture
