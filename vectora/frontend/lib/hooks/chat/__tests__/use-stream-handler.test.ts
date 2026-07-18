@@ -22,10 +22,12 @@ import {
 
 const streamChatMock = vi.fn();
 const resumeChatMock = vi.fn();
+const getHistoryMock = vi.fn();
 
 vi.mock("@/lib/api/vectora-client", () => ({
   streamChat: (...args: unknown[]) => streamChatMock(...args),
   resumeChat: (...args: unknown[]) => resumeChatMock(...args),
+  getHistory: (...args: unknown[]) => getHistoryMock(...args),
 }));
 
 import { useStreamHandler, streamErrorMessage } from "../use-stream-handler";
@@ -46,6 +48,8 @@ describe("useStreamHandler.processStream", () => {
     messages = [];
     streamChatMock.mockReset();
     resumeChatMock.mockReset();
+    getHistoryMock.mockReset();
+    window.localStorage.clear();
   });
 
   function run() {
@@ -237,6 +241,77 @@ describe("useStreamHandler.processStream", () => {
       expect.any(Error),
     );
     errorSpy.mockRestore();
+  });
+
+  it("stream corta em silêncio (generator esgota sem done/error) — reconcilia com o histórico do backend", async () => {
+    // Reproduz o bug real: readSSEStream perde o evento final numa queda de
+    // conexão silenciosa — o for-await simplesmente esgota, sem throw e sem
+    // done/error. O conteúdo acumulado no client ("parte") não é o completo;
+    // o backend já persistiu tudo no checkpoint LangGraph.
+    streamChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "thread", thread_id: "t1" } as StreamEvent;
+        yield { type: "token", content: "parte" } as StreamEvent;
+        // termina aqui — sem done, sem error, sem throw.
+      })(),
+    );
+    getHistoryMock.mockResolvedValue({
+      messages: [
+        { role: "human", content: "oi" },
+        { role: "assistant", content: "parte completa do backend" },
+      ],
+    });
+
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    const assistant = messages.find((m) => m.id === "a1");
+    expect(assistant?.content).toBe("parte completa do backend");
+    expect(assistant?.isThinking).toBe(false);
+    expect(getHistoryMock).toHaveBeenCalledWith("t1");
+    // markStreamEnded NÃO foi chamado — a marca de interrupção sobrevive
+    // pra avisar num reload futuro, mesmo já reconciliado aqui (defesa em
+    // profundidade caso a reconciliação em si tenha falhado).
+    expect(window.localStorage.getItem("vectora:streaming:t1")).not.toBeNull();
+  });
+
+  it("falha ao reconciliar (getHistory rejeita) não quebra o fluxo — conteúdo parcial permanece", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    streamChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "token", content: "parte" } as StreamEvent;
+      })(),
+    );
+    getHistoryMock.mockRejectedValue(new Error("offline"));
+
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    const assistant = messages.find((m) => m.id === "a1");
+    expect(assistant?.content).toBe("parte");
+    errorSpy.mockRestore();
+  });
+
+  it("evento hitl encerra o loop sem disparar reconciliação (pausa deliberada, não truncamento)", async () => {
+    streamChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "token", content: "pensando" } as StreamEvent;
+        yield {
+          type: "hitl",
+          tool_name: "file_write",
+          args_json: "{}",
+          interrupt_id: "int-1",
+        } as StreamEvent;
+      })(),
+    );
+
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    expect(getHistoryMock).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem("vectora:streaming:t1")).toBeNull();
+    const assistant = messages.find((m) => m.id === "a1");
+    expect(assistant?.hitlPending?.toolName).toBe("file_write");
   });
 
   it("message_break mantém bolha única e concatena segmentos com separador", async () => {
@@ -692,6 +767,8 @@ describe("useStreamHandler.processResume", () => {
     ];
     streamChatMock.mockReset();
     resumeChatMock.mockReset();
+    getHistoryMock.mockReset();
+    window.localStorage.clear();
   });
 
   function run() {
@@ -703,6 +780,26 @@ describe("useStreamHandler.processResume", () => {
     interrupt_id: "i1",
     decision: "approve" as const,
   };
+
+  it("stream de resume corta em silêncio — reconcilia com o histórico do backend", async () => {
+    resumeChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "token", content: " parte" } as StreamEvent;
+        // termina sem done/error — mesma classe de bug de processStream.
+      })(),
+    );
+    getHistoryMock.mockResolvedValue({
+      messages: [{ role: "assistant", content: "resposta completa" }],
+    });
+
+    const { result } = run();
+    await result.current.processResume(resumeReq, "a1");
+
+    const assistant = messages.find((m) => m.id === "a1");
+    expect(assistant?.content).toBe("resposta completa");
+    expect(getHistoryMock).toHaveBeenCalledWith("t1");
+    expect(window.localStorage.getItem("vectora:streaming:t1")).not.toBeNull();
+  });
 
   it("acumula tokens e retorna assistantContent correto", async () => {
     resumeChatMock.mockReturnValue(

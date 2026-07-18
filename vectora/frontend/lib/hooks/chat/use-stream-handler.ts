@@ -20,6 +20,7 @@ import type { Message, ToolCall, ImageAttachment } from "../../types";
 import {
   streamChat,
   resumeChat,
+  getHistory,
   type StreamEvent,
   type ChatConfig,
   type ResumeChatRequest,
@@ -147,6 +148,37 @@ function announceSSEDropped(err: unknown): void {
   }
 }
 
+/**
+ * Reconcilia uma mensagem cujo stream terminou sem `done`/`error` explícito
+ * — o async generator do SSE simplesmente esgotou (ex.: buffer final
+ * descartado numa queda de conexão silenciosa). O backend já persistiu o
+ * conteúdo completo no checkpoint do LangGraph independente do que chegou ao
+ * vivo; busca o histórico e aplica só o conteúdo final da mensagem truncada,
+ * SEM substituir a lista inteira de mensagens (evita reintroduzir a race que
+ * o guard `hasSentMessageRef` de chat-interface.tsx existe para prevenir).
+ * Nunca lança — best-effort, roda dentro do `finally` do stream.
+ */
+async function reconcileTruncatedMessage(
+  threadId: string,
+  assistantMessageId: string,
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+): Promise<void> {
+  try {
+    const { messages } = await getHistory(threadId);
+    const lastAssistant = messages.findLast((m) => m.role === "assistant");
+    if (!lastAssistant) return;
+    setMessages((prev) =>
+      updateMessageInList(prev, assistantMessageId, (m) => ({
+        ...m,
+        content: lastAssistant.content,
+        isThinking: false,
+      })),
+    );
+  } catch (err) {
+    console.error("[chat] falha ao reconciliar mensagem truncada:", err);
+  }
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -235,6 +267,12 @@ export function useStreamHandler({
       let resolvedRunId: string | undefined;
       // UX-15 — primeiro evento recebido = conexão SSE estabelecida
       let sseConnected = false;
+      // true só quando o loop termina por done/error/abort explícitos — se o
+      // async generator simplesmente esgotar sem nenhum desses (queda de
+      // conexão silenciosa), fica false e dispara reconciliação com o
+      // backend (ver reconcileTruncatedMessage) em vez de aceitar o
+      // conteúdo parcial como definitivo.
+      let streamCompletedNormally = false;
 
       // Monta config da request
       const config: ChatConfig = {};
@@ -306,6 +344,7 @@ export function useStreamHandler({
           // Interrupção solicitada pelo usuário
           if (shouldInterruptRef?.current) {
             abort.abort();
+            streamCompletedNormally = true;
             break;
           }
 
@@ -362,8 +401,17 @@ export function useStreamHandler({
 
           await handleEvent(event, activeId, setMessages, threadId);
 
+          if (event.type === "hitl") {
+            // Pausa deliberada pra aprovação humana — o backend encerra o
+            // stream aqui de propósito (ver adapt_stream), não é
+            // truncamento. Sem este break explícito, o loop só sairia por
+            // esgotamento natural do generator, indistinguível do bug real.
+            streamCompletedNormally = true;
+            break;
+          }
           if (event.type === "done") {
             resolvedRunId = event.run_id || undefined;
+            streamCompletedNormally = true;
             break;
           }
           if (event.type === "error") {
@@ -396,12 +444,24 @@ export function useStreamHandler({
                 };
               }),
             );
+            streamCompletedNormally = true;
             break;
           }
+        }
+        // O `for await` acima também termina "normalmente" (sem exceção,
+        // sem break) quando o async generator simplesmente esgota — ex.:
+        // readSSEStream perdeu o evento final numa queda de conexão
+        // silenciosa (mesma classe de bug já mitigada na origem, mas
+        // defesa em profundidade aqui). Sem done/error/abort explícitos, o
+        // conteúdo acumulado no client não pode ser considerado definitivo
+        // — reconcilia com o que o backend de fato persistiu.
+        if (!streamCompletedNormally) {
+          await reconcileTruncatedMessage(threadId, activeId, setMessages);
         }
       } catch (err: unknown) {
         if ((err as { name?: string }).name === "AbortError") {
           // Interrompido pelo usuário — não é um erro; encerra o thinking timer
+          streamCompletedNormally = true;
           setMessages((prev) =>
             updateMessageInList(prev, activeId, (m) => ({
               ...m,
@@ -442,8 +502,14 @@ export function useStreamHandler({
           markCreateNewWorkspace(threadId);
         }
         // UX-18 — qualquer saída conhecida do loop desmarca a thread como
-        // "streaming em andamento" (só sobra marcado o caso de aba fechada).
-        markStreamEnded(threadId);
+        // "streaming em andamento". Se terminou sem done/error/abort (loop
+        // esgotou em silêncio), a marca fica — mesmo já reconciliado acima,
+        // preserva o aviso "resposta pode ter sido interrompida" num
+        // reload/mount futuro (defesa em profundidade caso a reconciliação
+        // em si tenha falhado).
+        if (streamCompletedNormally) {
+          markStreamEnded(threadId);
+        }
         // Defesa em profundidade: garante que o spinner sempre encerra na bolha ativa
         setMessages((prev) =>
           updateMessageInList(prev, activeId, (m) =>
@@ -487,6 +553,8 @@ export function useStreamHandler({
       let assistantContent = "";
       // UX-15 — primeiro evento recebido = conexão SSE estabelecida
       let sseConnected = false;
+      // Mesma defesa em profundidade de processStream — ver comentário lá.
+      let streamCompletedNormally = false;
 
       // UX-18 — mesma marca de "stream em andamento" do processStream
       markStreamStarted(threadId);
@@ -503,6 +571,7 @@ export function useStreamHandler({
 
           if (shouldInterruptRef?.current) {
             abortRef.current?.abort();
+            streamCompletedNormally = true;
             break;
           }
 
@@ -522,7 +591,16 @@ export function useStreamHandler({
 
           await handleEvent(event, assistantMessageId, setMessages, threadId);
 
-          if (event.type === "done") break;
+          if (event.type === "hitl") {
+            // Pausa deliberada pra aprovação humana — ver comentário
+            // equivalente em processStream.
+            streamCompletedNormally = true;
+            break;
+          }
+          if (event.type === "done") {
+            streamCompletedNormally = true;
+            break;
+          }
           if (event.type === "error") {
             const friendly = streamErrorMessage(event.code);
             setMessages((prev) =>
@@ -533,11 +611,24 @@ export function useStreamHandler({
                 isThinking: false,
               })),
             );
+            streamCompletedNormally = true;
             break;
           }
         }
+        // Ver comentário equivalente em processStream: loop esgotado sem
+        // done/error/abort explícitos → conteúdo acumulado não é
+        // definitivo, reconcilia com o backend.
+        if (!streamCompletedNormally) {
+          await reconcileTruncatedMessage(
+            threadId,
+            assistantMessageId,
+            setMessages,
+          );
+        }
       } catch (err: unknown) {
-        if ((err as { name?: string }).name !== "AbortError") {
+        if ((err as { name?: string }).name === "AbortError") {
+          streamCompletedNormally = true;
+        } else {
           // UX-15 — mesma distinção transporte vs. aplicação do processStream
           announceSSEDropped(err);
           setMessages((prev) =>
@@ -552,8 +643,11 @@ export function useStreamHandler({
       } finally {
         // UX-18 — qualquer saída conhecida do loop (done/hitl/error/abort)
         // desmarca a thread como "streaming em andamento"; só sobra marcado
-        // o caso em que a aba fechou/recarregou no meio da resposta.
-        markStreamEnded(threadId);
+        // o caso em que a aba fechou/recarregou no meio da resposta (mesma
+        // lógica de processStream — ver comentário lá).
+        if (streamCompletedNormally) {
+          markStreamEnded(threadId);
+        }
         setMessages((prev) =>
           updateMessageInList(prev, assistantMessageId, (m) =>
             m.isThinking
