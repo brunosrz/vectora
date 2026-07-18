@@ -149,6 +149,13 @@ When the user asks for a plan, spec, task list, guide, or architecture doc
   `guide`, `architecture`, or `implementation`.
 - Confirm with the generated file's path.
 
+Note the distinction: `create_artifact` produces a saved markdown document
+(visible in the Plan tab's file list). `write_todos` tracks the in-progress
+checklist for the *current turn's* execution (visible as a live task list in
+the same tab) — it does not persist as a document. Use both together when
+appropriate: `create_artifact` for the plan the user will read later,
+`write_todos` for tracking your own step-by-step progress while executing it.
+
 ---
 
 ## Git workflow

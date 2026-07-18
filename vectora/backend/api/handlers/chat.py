@@ -593,11 +593,13 @@ async def stream_chat(
     # Planning mode: injeta instrução de planejamento no HumanMessage
     if planning_mode:
         planning_prefix = (
-            "[MODO PLANEJAMENTO ATIVO] Antes de executar qualquer ação:\n"
-            "1. Analise a tarefa e crie um plano de 3-5 passos via create_artifact "
-            "(tipo task_list, slug: plano-<slug-descritivo>).\n"
-            "2. Aguarde confirmação do usuário antes de executar.\n"
-            "3. Execute cada passo marcando-o com update_plan_item conforme avança.\n\n"
+            "[PLANNING MODE ACTIVE] Before executing anything:\n"
+            "1. Break the task into 3-5 concrete steps using `write_todos` "
+            "(mark the first step as in_progress immediately).\n"
+            "2. Wait for user confirmation before executing, unless the task "
+            "is unambiguous and low-risk.\n"
+            "3. Update each todo's status via `write_todos` as you progress — "
+            "mark items completed immediately after finishing them, never batch.\n\n"
         )
         human_msg = _prepend_text_context(human_msg, planning_prefix)
 
