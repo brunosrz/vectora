@@ -29,23 +29,26 @@ def test_identity_licenca_so_quando_perguntado():
     responde "não sou open source" a um simples "oi").
     """
     lowered = VECTORA_IDENTITY.lower()
+    # Normaliza quebras de linha do blockquote markdown antes de checar frases
+    # que podem estar wrapadas em linhas diferentes.
+    flat = " ".join(lowered.split())
     # Sabe que é comercial/self-hosted, sem reivindicar licença OSS.
-    assert "comercial" in lowered
+    assert "commercial" in lowered
     assert "self-hosted" in lowered or "self hosted" in lowered
     assert "apache" not in lowered
     # Regra de comportamento: só esclarecer licença quando o usuário perguntar.
-    assert "quando o usuário perguntar" in lowered
-    # Erro/borda: não pode haver afirmação proativa "não é open source" (a versão
+    assert "when the user asks" in flat
+    # Erro/borda: não pode haver afirmação proativa "isn't open source" (a versão
     # antiga liderava com isso e o agente passou a anunciar num "oi").
-    assert "não é open source" not in lowered
+    assert "is not open source" not in flat
 
 
 def test_identity_conhece_workbench_tarefas():
     """A identidade conhece a workbench de Tarefas (tasks, antiga "Segundo plano")."""
     lowered = VECTORA_IDENTITY.lower()
     assert "tasks" in lowered
-    assert "tarefas" in lowered
-    assert "segundo plano" in lowered  # descreve a funcionalidade
+    assert "background" in lowered  # descreve a funcionalidade
+    assert "heartbeat" in lowered
     assert "webhook" in lowered
 
 
