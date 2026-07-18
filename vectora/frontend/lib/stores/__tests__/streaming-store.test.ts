@@ -1,68 +1,61 @@
 /**
- * Tests para o streaming-store: qual thread está com stream SSE ativo.
+ * Tests para o streaming-store: quais threads têm stream SSE ativo,
+ * simultaneamente (mapa por threadId, não um único valor global).
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { useStreamingStore } from "../streaming-store";
 
 beforeEach(() => {
-  useStreamingStore.setState({ streamingThreadId: null });
+  useStreamingStore.setState({ streaming: {} });
 });
 
 describe("streaming-store", () => {
-  it("streamingThreadId começa null", () => {
-    expect(useStreamingStore.getState().streamingThreadId).toBeNull();
+  it("nenhuma thread está streaming inicialmente", () => {
+    expect(useStreamingStore.getState().streaming).toEqual({});
+    expect(useStreamingStore.getState().isStreaming("t1")).toBe(false);
   });
 
-  it("setStreaming define o thread ativo", () => {
-    useStreamingStore.getState().setStreaming("t1");
-    expect(useStreamingStore.getState().streamingThreadId).toBe("t1");
+  it("setStreaming(id, true) marca a thread como streaming", () => {
+    useStreamingStore.getState().setStreaming("t1", true);
+    expect(useStreamingStore.getState().isStreaming("t1")).toBe(true);
   });
 
-  it("setStreaming(null) limpa o thread ativo", () => {
+  it("setStreaming(id, false) desmarca só aquela thread", () => {
     const s = useStreamingStore.getState();
-    s.setStreaming("t1");
-    s.setStreaming(null);
-    expect(useStreamingStore.getState().streamingThreadId).toBeNull();
+    s.setStreaming("t1", true);
+    s.setStreaming("t1", false);
+    expect(useStreamingStore.getState().isStreaming("t1")).toBe(false);
   });
 
-  it("setStreaming sobrescreve o thread anterior", () => {
+  it("duas threads streamando ao mesmo tempo — regressão do bug de sessão fantasma: navegar pra outra thread e mandar mensagem lá não pode apagar o indicador da 1ª thread, que ainda está com stream em andamento", () => {
     const s = useStreamingStore.getState();
-    s.setStreaming("t1");
-    s.setStreaming("t2");
-    expect(useStreamingStore.getState().streamingThreadId).toBe("t2");
+    s.setStreaming("t1", true);
+    s.setStreaming("t2", true);
+    expect(useStreamingStore.getState().isStreaming("t1")).toBe(true);
+    expect(useStreamingStore.getState().isStreaming("t2")).toBe(true);
+
+    s.setStreaming("t1", false);
+    expect(useStreamingStore.getState().isStreaming("t1")).toBe(false);
+    expect(useStreamingStore.getState().isStreaming("t2")).toBe(true);
   });
 
-  it("setStreaming com o mesmo id mantém o valor", () => {
+  it("setStreaming(id, true) repetido é idempotente", () => {
     const s = useStreamingStore.getState();
-    s.setStreaming("t1");
-    s.setStreaming("t1");
-    expect(useStreamingStore.getState().streamingThreadId).toBe("t1");
-  });
-
-  it("aceita string vazia", () => {
-    useStreamingStore.getState().setStreaming("");
-    expect(useStreamingStore.getState().streamingThreadId).toBe("");
-  });
-
-  it("alterna entre threads", () => {
-    const s = useStreamingStore.getState();
-    s.setStreaming("a");
-    expect(useStreamingStore.getState().streamingThreadId).toBe("a");
-    s.setStreaming("b");
-    expect(useStreamingStore.getState().streamingThreadId).toBe("b");
-    s.setStreaming(null);
-    expect(useStreamingStore.getState().streamingThreadId).toBeNull();
-  });
-
-  it("null após null é no-op", () => {
-    useStreamingStore.getState().setStreaming(null);
-    expect(useStreamingStore.getState().streamingThreadId).toBeNull();
+    s.setStreaming("t1", true);
+    s.setStreaming("t1", true);
+    expect(useStreamingStore.getState().isStreaming("t1")).toBe(true);
+    expect(Object.keys(useStreamingStore.getState().streaming)).toEqual(["t1"]);
   });
 
   it("ids longos (uuid) são preservados", () => {
     const uuid = "550e8400-e29b-41d4-a716-446655440000";
-    useStreamingStore.getState().setStreaming(uuid);
-    expect(useStreamingStore.getState().streamingThreadId).toBe(uuid);
+    useStreamingStore.getState().setStreaming(uuid, true);
+    expect(useStreamingStore.getState().isStreaming(uuid)).toBe(true);
+  });
+
+  it("id vazio é ignorado (nunca deve virar chave no mapa)", () => {
+    useStreamingStore.getState().setStreaming("", true);
+    expect(useStreamingStore.getState().streaming).toEqual({});
   });
 });

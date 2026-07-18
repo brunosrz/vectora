@@ -17,6 +17,12 @@ import json
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _isolated(_no_thread_persistence):
+    pass
+
+
 # ===========================================================================
 # D1 — ThinkingEvent: schema + extração + emissão
 # ===========================================================================

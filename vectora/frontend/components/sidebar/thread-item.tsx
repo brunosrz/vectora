@@ -23,8 +23,9 @@ export const ThreadItem = memo(function ThreadItem({
   onDelete,
 }: ThreadItemProps) {
   const title = thread.metadata?.title || m.sidebar_new_conversation();
-  const streamingThreadId = useStreamingStore((s) => s.streamingThreadId);
-  const isStreaming = thread.thread_id === streamingThreadId;
+  const isStreaming = useStreamingStore((s) =>
+    Boolean(s.streaming[thread.thread_id]),
+  );
 
   const handleMouseEnter = () => {
     void queryClient.prefetchQuery({

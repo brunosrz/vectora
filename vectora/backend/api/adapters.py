@@ -350,6 +350,23 @@ async def _record_turn_checkpoint(
         logger.exception("_record_turn_checkpoint: falha ao gravar checkpoint de turno")
 
 
+async def _mark_thread_has_content(thread_id: str) -> None:
+    """Marca a thread como tendo conteúdo real (``message_count`` > 0).
+
+    Chamada fire-and-forget (``asyncio.ensure_future``, nunca ``await``ada)
+    a partir de ``adapt_stream`` no 1º token emitido — captura a própria
+    exceção pra nunca gerar "Task exception was never retrieved".
+    """
+    try:
+        from backend.api.handlers.threads import _increment_message_count
+
+        await _increment_message_count(thread_id)
+    except Exception:
+        logger.warning(
+            "adapt_stream: falha ao marcar thread com conteúdo real", exc_info=True
+        )
+
+
 def adapt_stream(
     events: Any,
     thread_id: str,
@@ -391,6 +408,11 @@ def adapt_stream(
             ThreadEvent(thread_id=thread_id, workspace_id=workspace_id or "")
         )
 
+        # Referencia tasks fire-and-forget (ex.: _mark_thread_has_content)
+        # pra não serem coletadas pelo GC antes de completar — remove a si
+        # mesma da coleção quando termina.
+        background_tasks: set[asyncio.Task[None]] = set()
+
         node_start_times: dict[str, float] = {}
         tool_start_times: dict[str, float] = {}
         tool_args_previews: dict[str, str] = {}
@@ -404,6 +426,12 @@ def adapt_stream(
         # manter tudo numa única bolha com separação limpa.
         current_token_node: str | None = None
         token_buffer_nonempty = False
+        # Marca a thread como tendo conteúdo real só quando o 1º token de
+        # verdade sai do modelo — não na inicialização do grafo. Sem isso,
+        # um turno que falha antes do 1º chunk (ex.: quota 429) já deixava
+        # a thread "real" (message_count=1) na sidebar sem nenhuma resposta,
+        # virando sessão fantasma (ver `_increment_message_count`).
+        content_started = False
 
         # FallbackChatModel (services/fallback_chat_model.py) chama o
         # `.astream()` PÚBLICO do provider interno (ChatCohere, etc.) dentro do
@@ -627,6 +655,20 @@ def adapt_stream(
                     if node_name:
                         current_token_node = node_name
                     token_buffer_nonempty = True
+                    if not content_started:
+                        content_started = True
+                        # Fire-and-forget: um `await` aqui adiciona um ponto de
+                        # suspensão real (I/O de banco) que dá chance do loop
+                        # rodar o `next_task` (prefetch do próximo evento, ver
+                        # `asyncio.ensure_future` acima) ANTES deste token ser
+                        # yielded — quebra a garantia de emissão incremental
+                        # (1 evento puxado por token emitido, ver
+                        # test_tokens_are_incremental_not_buffered).
+                        task = asyncio.ensure_future(
+                            _mark_thread_has_content(thread_id)
+                        )
+                        background_tasks.add(task)
+                        task.add_done_callback(background_tasks.discard)
 
                 # Injeta duration_ms nos NodeEvent de fim
                 if isinstance(payload, NodeEvent) and payload.status == "finished":

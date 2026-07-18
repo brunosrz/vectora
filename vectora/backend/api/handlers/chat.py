@@ -559,27 +559,21 @@ async def stream_chat(
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    # Registra thread em vectora_sessions para que ListThreads a inclua
-    # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
-    # separadamente e não é consultado pelo endpoint de listagem). Persiste o
-    # workspace e o modo (chat/dev) para que a sidebar filtre e restaure a pasta.
-    # Só roda DEPOIS do grafo inicializar com sucesso: se `get_user_agent`
-    # falhar (ex.: fresh install sem provider configurado), a thread não pode
-    # ficar marcada como "real" (message_count=1) sem nenhuma mensagem de
-    # verdade — ela nunca seria pega por `cleanup_empty_threads` (que só olha
-    # message_count=0) nem filtrada por `list_threads`, virando sessão fantasma.
+    # Registra thread em vectora_sessions (message_count=0) para que exista
+    # metadado (workspace, mode) mesmo antes de qualquer resposta. NÃO
+    # incrementa message_count aqui — isso só acontece em adapt_stream() no
+    # 1º token real emitido pelo modelo (ver `content_started`). Se
+    # incrementasse aqui, um turno que falha antes do 1º chunk (ex.: quota
+    # 429 logo de cara) já deixaria a thread "real" na sidebar sem nenhuma
+    # resposta — sessão fantasma, bug real reproduzido em produção.
     try:
-        from backend.api.handlers.threads import (
-            _increment_message_count,
-            _upsert_session,
-        )
+        from backend.api.handlers.threads import _upsert_session
 
         await _upsert_session(
             thread_id,
             workspace_id=workspace_id or None,
             mode="chat" if chat_mode else "code",
         )
-        await _increment_message_count(thread_id)
     except Exception as exc:
         logger.warning(
             "api/chat: falha ao registrar thread em vectora_sessions: %s", exc

@@ -26,3 +26,23 @@ def _no_nats_sidecar(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         nats_sidecar, "ensure_nats_sidecar", AsyncMock(return_value=None)
     )
+
+
+@pytest.fixture
+def _no_thread_persistence(monkeypatch: pytest.MonkeyPatch):
+    """Neutraliza ``threads._increment_message_count``.
+
+    ``adapt_stream()`` (adapters.py) dispara essa chamada fire-and-forget no
+    1º ``TokenEvent`` de qualquer stream (ver ``_mark_thread_has_content``) —
+    sem mock, abre uma conexão ``aiosqlite`` REAL a ``~/.vectora/checkpoints.db``.
+    Testes que só exercitam semântica de streaming (não bookkeeping de sessão)
+    vazavam essa conexão entre si — a task nunca é esperada, então o singleton
+    ``_db_conn`` do módulo ``threads`` ficava preso a um event loop de um teste
+    já encerrado, travando ``TestClient.__enter__`` de testes de lifespan bem
+    mais adiante na suíte.
+    """
+    from backend.api.handlers import threads
+
+    monkeypatch.setattr(
+        threads, "_increment_message_count", AsyncMock(return_value=None)
+    )

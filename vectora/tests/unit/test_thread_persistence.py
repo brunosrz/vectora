@@ -583,11 +583,12 @@ class TestListThreadsIncludesUpserted:
 
     @pytest.mark.asyncio
     async def test_upserted_thread_appears_in_list(self):
-        """Thread com uma troca de mensagem real (_upsert_session +
-        _increment_message_count, o par que stream_chat chama a cada turno)
-        aparece em ListThreads. Usa aiosqlite real (não FakeDB) — o fake
-        anterior não aplicava o filtro `WHERE message_count > 0` de verdade,
-        mascarando esse comportamento."""
+        """Thread com uma troca de mensagem real (_upsert_session, chamado
+        por stream_chat no início do turno; _increment_message_count,
+        chamado por adapt_stream no 1º token real emitido) aparece em
+        ListThreads. Usa aiosqlite real (não FakeDB) — o fake anterior não
+        aplicava o filtro `WHERE message_count > 0` de verdade, mascarando
+        esse comportamento."""
         import aiosqlite
         from fastapi.testclient import TestClient
 

@@ -18,6 +18,11 @@ from backend.api.adapters import adapt_stream
 from backend.services.terminal_stream import emit_terminal_line
 
 
+@pytest.fixture(autouse=True)
+def _isolated(_no_thread_persistence):
+    pass
+
+
 def _parse(sse: str) -> dict:
     assert sse.startswith("data: ")
     return json.loads(sse[len("data: ") :].strip())

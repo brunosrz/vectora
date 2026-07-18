@@ -12,12 +12,17 @@ from __future__ import annotations
 
 import asyncio
 import json
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from langchain_core.messages import AIMessageChunk
 
 from backend.api.adapters import adapt_stream
+
+
+@pytest.fixture(autouse=True)
+def _isolated(_no_thread_persistence):
+    pass
 
 
 def _chunk_event(text, node="model"):
@@ -133,6 +138,43 @@ async def test_empty_chunk_emits_no_token():
     }
     out = [_parse(s) async for s in adapt_stream(_agen([ev]), "tid")]
     assert [e for e in out if e["type"] == "token"] == []
+
+
+@pytest.mark.asyncio
+async def test_first_token_marks_thread_as_having_real_content():
+    """Thread só deve virar visível em ListThreads quando o LLM de fato produz
+    conteúdo — não quando o turno só inicializa o grafo. Regressão do bug de
+    sessão fantasma: `_increment_message_count` disparava antes do primeiro
+    token, então uma falha de quota logo no início (429) já deixava a thread
+    marcada como "real" (message_count=1) sem nenhuma resposta."""
+    events = [_chunk_event("oi"), _chunk_event(" tudo bem?")]
+    with patch(
+        "backend.api.handlers.threads._increment_message_count",
+        new=AsyncMock(),
+    ) as mock_increment:
+        _ = [_parse(s) async for s in adapt_stream(_agen(events), "tid-123")]
+        # A marcação é fire-and-forget (asyncio.ensure_future, não await) pra
+        # não introduzir um ponto de suspensão real no meio do streaming de
+        # tokens (ver comentário em adapt_stream) — dar 1 tick ao loop pra
+        # deixar a task agendada rodar até completar, ainda com o patch ativo.
+        await asyncio.sleep(0)
+
+    mock_increment.assert_awaited_once_with("tid-123")
+
+
+@pytest.mark.asyncio
+async def test_no_token_never_marks_thread_as_having_content():
+    """Par de erro do teste acima: turno que nunca produz token (ex.: erro de
+    quota antes do 1º chunk) NÃO deve marcar a thread como tendo conteúdo
+    real — senão ela vira sessão fantasma na sidebar."""
+    with patch(
+        "backend.api.handlers.threads._increment_message_count",
+        new=AsyncMock(),
+    ) as mock_increment:
+        _ = [_parse(s) async for s in adapt_stream(_agen([]), "tid-456")]
+        await asyncio.sleep(0)
+
+    mock_increment.assert_not_awaited()
 
 
 @pytest.mark.asyncio

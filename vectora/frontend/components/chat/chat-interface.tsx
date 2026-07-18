@@ -371,7 +371,7 @@ export function ChatInterface({
       decision: "approve" | "reject" | `edit:${string}`,
     ) => {
       uiDispatch({ type: "START_SEND" });
-      useStreamingStore.getState().setStreaming(threadId);
+      useStreamingStore.getState().setStreaming(threadId, true);
       try {
         const { assistantContent } = await processResume(
           { thread_id: threadId, interrupt_id: interruptId, decision },
@@ -388,7 +388,7 @@ export function ChatInterface({
         console.error("Erro ao retomar após HITL:", error);
       } finally {
         uiDispatch({ type: "FINISH_SEND" });
-        useStreamingStore.getState().setStreaming(null);
+        useStreamingStore.getState().setStreaming(threadId, false);
       }
     },
     [processResume, threadId, onThreadUpdate, customTitle, uiDispatch],
@@ -607,7 +607,7 @@ export function ChatInterface({
       // processStream), o otimista da sidebar precisa ser desfeito.
       const isFirstMessageOfThread = messages.length === 0;
       uiDispatch({ type: "START_SEND" });
-      useStreamingStore.getState().setStreaming(threadId);
+      useStreamingStore.getState().setStreaming(threadId, true);
       // START_SEND zera o input no reducer; descarta também o rascunho
       // persistido para a mensagem enviada não reaparecer no reload.
       useChatInputStore.getState().clearDraft(threadId);
@@ -724,7 +724,7 @@ export function ChatInterface({
         }
       } finally {
         uiDispatch({ type: "FINISH_SEND" });
-        useStreamingStore.getState().setStreaming(null);
+        useStreamingStore.getState().setStreaming(threadId, false);
       }
     },
     [
