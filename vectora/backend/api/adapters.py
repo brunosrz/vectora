@@ -42,6 +42,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Delay antes de confirmar uma leitura positiva de is_disconnected(). Mitiga
+# falso-positivo (suspeita: BaseHTTPMiddleware de auth envolvendo a
+# StreamingResponse) que cortava streams reais sem nenhum ErrorEvent — exigir
+# 2 leituras positivas em sequência, não 1 isolada, antes de encerrar.
+_DISCONNECT_CONFIRM_DELAY_S = 0.3
+
 
 def classify_stream_error(exc: BaseException) -> tuple[str, str]:
     """Classifica uma exceção do stream em ``(code, message)``.
@@ -472,18 +478,25 @@ def adapt_stream(
             while True:
                 wait_set: set[asyncio.Task[Any]] = {next_task, term_task}
                 disconnect_task: asyncio.Task[bool] | None = None
+                request: Request | None = None
                 if http_request is not None:
-                    disconnect_task = asyncio.ensure_future(
-                        http_request.is_disconnected()
-                    )
+                    request = http_request
+                    disconnect_task = asyncio.ensure_future(request.is_disconnected())
                     wait_set.add(disconnect_task)
 
                 done, _ = await asyncio.wait(
                     wait_set, return_when=asyncio.FIRST_COMPLETED
                 )
 
-                if disconnect_task is not None:
+                if disconnect_task is not None and request is not None:
                     if disconnect_task in done and disconnect_task.result():
+                        # 1ª leitura positiva pode ser ruído — confirma com
+                        # uma 2ª leitura após um delay curto antes de tratar
+                        # como desconexão real e encerrar o stream.
+                        await asyncio.sleep(_DISCONNECT_CONFIRM_DELAY_S)
+                        if not await request.is_disconnected():
+                            disconnect_task = None
+                            continue
                         next_task.cancel()
                         term_task.cancel()
                         # Espera as tasks canceladas de fato desenrolarem antes

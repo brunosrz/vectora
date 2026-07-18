@@ -215,6 +215,43 @@ async def test_stops_consuming_events_when_client_disconnects_mid_stream():
     assert torn_down["value"] is True
 
 
+@pytest.mark.asyncio
+async def test_survives_false_positive_disconnect_reading():
+    """Regressão: um único ``is_disconnected() == True`` isolado (ruído —
+    ex.: possível artefato do BaseHTTPMiddleware de auth envolvendo a
+    StreamingResponse) não pode cortar um stream que o cliente nunca
+    largou de verdade. A confirmação (2ª leitura) deve negar o falso
+    positivo e o stream deve seguir entregando todos os eventos.
+    """
+    torn_down = {"value": False}
+
+    async def _events():
+        try:
+            yield _chunk_event("um")
+            await asyncio.sleep(0.05)
+            yield _chunk_event("dois")
+        finally:
+            torn_down["value"] = True
+
+    request = MagicMock()
+    # 1 leitura positiva isolada (índice 1) seguida de negativas — a
+    # confirmação (leitura extra logo depois) deve resolver como
+    # "ainda conectado" e o loop deve seguir normalmente.
+    request.is_disconnected = AsyncMock(
+        side_effect=[False, True, False, False, False, False, False, False]
+    )
+
+    out = [
+        _parse(s) async for s in adapt_stream(_events(), "tid", http_request=request)
+    ]
+
+    tokens = [e for e in out if e["type"] == "token"]
+    assert [t["content"] for t in tokens] == ["um", "dois"]
+    assert out[-1]["type"] == "done"
+    # Terminou pelo fim natural do generator, não por cancelamento.
+    assert torn_down["value"] is True
+
+
 def _nested_chat_model_events(text: str, outer_run_id: str, inner_run_id: str):
     """Simula o FallbackChatModel: dois runs 'chat_model' aninhados emitindo o
     MESMO token — o wrapper (outer, parent_ids=[node_run_id]) e o provider real
