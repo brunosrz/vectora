@@ -15,6 +15,7 @@ import type { StreamEvent } from "@/lib/api/vectora-client";
 // `messages.find((m) => ...)` neste arquivo (convenção do projeto).
 import { m as paraglideMessages } from "@/lib/paraglide/messages";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import {
   markCreateNewWorkspace,
   consumeCreateNewWorkspace,
@@ -742,6 +743,24 @@ describe("useStreamHandler.processStream", () => {
     expect(out.assistantContent).toBe("ok");
     const a = messages.find((m) => m.id === "a1");
     expect(a?.toolCalls ?? []).toHaveLength(0);
+  });
+
+  it("todos_updated popula o slice de todos do workbench-store (Plan Mode real)", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "todos_updated",
+          todos: [{ content: "passo 1", status: "in_progress" }],
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("faça um plano", "a1");
+
+    expect(useWorkbenchStore.getState().getTodos("t1")).toEqual([
+      { content: "passo 1", status: "in_progress" },
+    ]);
   });
 });
 

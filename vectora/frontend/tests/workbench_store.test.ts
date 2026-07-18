@@ -367,6 +367,46 @@ describe("workbench-store: plan slice", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Todos (write_todos / TodoListMiddleware — Plan Mode real)
+// ---------------------------------------------------------------------------
+
+describe("workbench-store: todos slice", () => {
+  it("getTodos() devolve lista vazia estável quando thread não tem todos", () => {
+    const a = useWorkbenchStore.getState().getTodos("th-todos");
+    const b = useWorkbenchStore.getState().getTodos("th-todos");
+    expect(a).toEqual([]);
+    expect(a).toBe(b);
+  });
+
+  it("setTodos() substitui a lista inteira (write_todos não é incremental)", () => {
+    useWorkbenchStore.getState().setTodos("th-todos", [
+      { content: "passo 1", status: "pending" },
+      { content: "passo 2", status: "pending" },
+    ]);
+    useWorkbenchStore
+      .getState()
+      .setTodos("th-todos", [{ content: "passo 1", status: "completed" }]);
+    const todos = useWorkbenchStore.getState().getTodos("th-todos");
+    expect(todos).toEqual([{ content: "passo 1", status: "completed" }]);
+  });
+
+  it("setTodos() é isolado por thread", () => {
+    useWorkbenchStore
+      .getState()
+      .setTodos("th-a", [{ content: "a", status: "pending" }]);
+    useWorkbenchStore
+      .getState()
+      .setTodos("th-b", [{ content: "b", status: "in_progress" }]);
+    expect(useWorkbenchStore.getState().getTodos("th-a")).toEqual([
+      { content: "a", status: "pending" },
+    ]);
+    expect(useWorkbenchStore.getState().getTodos("th-b")).toEqual([
+      { content: "b", status: "in_progress" },
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Pendência de atualização por aba
 // ---------------------------------------------------------------------------
 

@@ -450,6 +450,25 @@ class ModelSwitchedEvent(BaseModel):
     to_model: str
 
 
+class TodoItem(BaseModel):
+    """Um item da checklist de progresso mantida por ``write_todos``
+    (``TodoListMiddleware``, injetado incondicionalmente pelo deepagents)."""
+
+    content: str
+    status: Literal["pending", "in_progress", "completed"]
+
+
+class TodosUpdatedEvent(BaseModel):
+    """Emitido quando ``write_todos`` atualiza o state ``todos`` do grafo.
+
+    ``write_todos`` substitui a lista inteira a cada chamada (não é
+    incremental) — o payload aqui reflete o snapshot completo mais recente,
+    não um delta. Alimenta a seção "Tasks" do Plan tab em tempo real.
+    """
+
+    todos: list[TodoItem]
+
+
 # ---------------------------------------------------------------------------
 # Envelope de streaming
 # ---------------------------------------------------------------------------
@@ -474,6 +493,7 @@ StreamChatEventPayload = (
     | ToolActivityEvent
     | ModelSwitchedEvent
     | TerminalLineEvent
+    | TodosUpdatedEvent
 )
 
 _TYPE_MAP: dict[type, str] = {
@@ -493,6 +513,7 @@ _TYPE_MAP: dict[type, str] = {
     ToolActivityEvent: "tool_activity",
     ModelSwitchedEvent: "model_switched",
     TerminalLineEvent: "terminal_line",
+    TodosUpdatedEvent: "todos_updated",
 }
 
 
@@ -536,6 +557,10 @@ class ListThreadsResponse(BaseModel):
 
 class GetHistoryResponse(BaseModel):
     messages: list[HistoryMessage]
+    # Snapshot mais recente de write_todos (TodoListMiddleware) — repopula a
+    # seção "Tasks" do Plan tab num reload de página. Vazio quando a thread
+    # nunca chamou write_todos.
+    todos: list[TodoItem] = Field(default_factory=list)
 
 
 class PagedHistoryResponse(BaseModel):

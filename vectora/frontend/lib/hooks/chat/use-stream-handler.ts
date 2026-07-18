@@ -918,6 +918,16 @@ async function handleEvent(
       break;
     }
 
+    // Plan Mode real (write_todos/TodoListMiddleware) — substitui a lista
+    // inteira a cada chamada (não incremental); alimenta a seção "Tasks"
+    // do Plan tab ao vivo, sem round-trip HTTP extra.
+    case "todos_updated": {
+      if (threadId) {
+        useWorkbenchStore.getState().setTodos(threadId, event.todos);
+      }
+      break;
+    }
+
     default:
       break;
   }

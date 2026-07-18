@@ -10,7 +10,10 @@
  */
 
 import {
+  CheckCircle2,
   CheckSquare,
+  Circle,
+  CircleDot,
   ChevronDown,
   ChevronRight,
   FileText,
@@ -29,6 +32,7 @@ import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
   type PlanItem,
+  type TodoItem,
 } from "@/lib/stores/workbench-store";
 import { m } from "@/lib/paraglide/messages";
 
@@ -100,12 +104,35 @@ function FilesTouchedSection({ threadId }: { threadId: string }) {
   );
 }
 
-function TasksSection({ threadId }: { threadId: string }) {
-  const [open, setOpen] = useState(false);
-  const plan = useWorkbenchStore((s) => s.getPlan(threadId));
-  const items = plan.items;
+function TodoStatusIcon({ status }: { status: TodoItem["status"] }) {
+  switch (status) {
+    case "completed":
+      return (
+        <CheckCircle2 className="w-3 h-3 shrink-0 text-primary" aria-hidden />
+      );
+    case "in_progress":
+      return (
+        <CircleDot className="w-3 h-3 shrink-0 text-amber-500" aria-hidden />
+      );
+    default:
+      return (
+        <Circle
+          className="w-3 h-3 shrink-0 text-muted-foreground/50"
+          aria-hidden
+        />
+      );
+  }
+}
 
-  if (items.length === 0) return null;
+// write_todos (TodoListMiddleware) — checklist ao vivo do turno atual,
+// entregue via evento SSE dedicado (todos_updated). Distinto dos artifacts
+// (documentos salvos, seção principal acima): não persiste como arquivo, é
+// o progresso de execução do agente em tempo real.
+function TasksSection({ threadId }: { threadId: string }) {
+  const [open, setOpen] = useState(true);
+  const todos = useWorkbenchStore((s) => s.getTodos(threadId));
+
+  if (todos.length === 0) return null;
 
   return (
     <div className="border-t border-border/40">
@@ -120,17 +147,26 @@ function TasksSection({ threadId }: { threadId: string }) {
         )}
         <CheckSquare className="w-3 h-3 shrink-0" />
         <span className="font-medium flex-1 text-left">
-          {m.workbench_plan_tasks_section()} ({items.length})
+          {m.workbench_plan_tasks_section()} ({todos.length})
         </span>
       </button>
       {open && (
         <div className="pb-2 divide-y divide-border/30">
-          {items.map((item, idx) => (
+          {todos.map((item, idx) => (
             <div
               key={idx}
-              className="px-4 py-1.5 text-[11px] text-foreground/70"
+              className="px-4 py-1.5 text-[11px] flex items-center gap-2"
             >
-              {item.title}
+              <TodoStatusIcon status={item.status} />
+              <span
+                className={
+                  item.status === "completed"
+                    ? "line-through text-foreground/40"
+                    : "text-foreground/70"
+                }
+              >
+                {item.content}
+              </span>
             </div>
           ))}
         </div>

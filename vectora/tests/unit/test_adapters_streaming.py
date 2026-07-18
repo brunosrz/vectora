@@ -389,3 +389,55 @@ async def test_record_turn_checkpoint_nonexistent_directory_returns_silently(
 
     # Deve retornar sem levantar — best-effort
     await _record_turn_checkpoint("ws-2", "thread-2", {"run_id": "r2"})
+
+
+def _todos_chunk_event(todos: list[dict], node: str = "tools"):
+    """Evento ``on_chain_stream`` do grafo raiz cujo chunk carrega o update
+    de ``todos`` (TodoListMiddleware, injetado incondicionalmente pelo
+    deepagents). Shape confirmado empiricamente (create_deep_agent real +
+    fake tool-calling model): o chunk raiz vem no formato updates-por-nó
+    (``{node_name: partial_state}``), não values — ``todos`` aparece
+    aninhado sob a chave do nó que executou a tool (``tools``), nunca em
+    ``chunk["todos"]`` diretamente.
+    """
+    return {
+        "event": "on_chain_stream",
+        "name": "vectora",
+        "data": {"chunk": {node: {"todos": todos}}},
+    }
+
+
+@pytest.mark.asyncio
+async def test_write_todos_emits_todos_updated_event():
+    todos = [{"content": "passo 1", "status": "in_progress"}]
+    out = [
+        _parse(s) async for s in adapt_stream(_agen([_todos_chunk_event(todos)]), "tid")
+    ]
+    todos_events = [e for e in out if e["type"] == "todos_updated"]
+    assert len(todos_events) == 1
+    assert todos_events[0]["todos"] == todos
+
+
+@pytest.mark.asyncio
+async def test_write_todos_dedupes_repeated_identical_chunk():
+    """O chunk de on_chain_stream repete o mesmo state["todos"] em vários
+    super-steps consecutivos enquanto nada relacionado a todos muda — sem
+    dedupe, cada super-step reemitiria o mesmo evento pro frontend."""
+    todos = [{"content": "passo 1", "status": "pending"}]
+    events = [_todos_chunk_event(todos), _todos_chunk_event(todos)]
+    out = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
+    todos_events = [e for e in out if e["type"] == "todos_updated"]
+    assert len(todos_events) == 1
+
+
+@pytest.mark.asyncio
+async def test_write_todos_emits_new_event_when_status_changes():
+    events = [
+        _todos_chunk_event([{"content": "passo 1", "status": "pending"}]),
+        _todos_chunk_event([{"content": "passo 1", "status": "completed"}]),
+    ]
+    out = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
+    todos_events = [e for e in out if e["type"] == "todos_updated"]
+    assert len(todos_events) == 2
+    assert todos_events[0]["todos"][0]["status"] == "pending"
+    assert todos_events[1]["todos"][0]["status"] == "completed"

@@ -243,3 +243,78 @@ class TestAgetThreadMessages:
             result = await af.aget_thread_messages("thread-multi")
 
         assert result == [("assistant", "Parte 1 Parte 2", "cp0")]
+
+
+# ─────────────────────────── aget_thread_todos ────────────────────────────
+# Popula a seção "Tasks" do Plan tab num reload de página — o SSE ao vivo
+# (TodosUpdatedEvent) já entrega isso, mas não persiste no client entre
+# streams; lê direto do snapshot mais recente do checkpoint (fonte real).
+
+
+class TestAgetThreadTodos:
+    @pytest.mark.asyncio
+    async def test_no_checkpointer_returns_empty(self):
+        import backend.services.agent_factory as af
+
+        original = af._checkpointer
+        af._checkpointer = None
+        try:
+            result = await af.aget_thread_todos("thread-abc")
+        finally:
+            af._checkpointer = original
+
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_returns_todos_from_latest_snapshot(self):
+        import backend.services.agent_factory as af
+
+        todos = [{"content": "passo 1", "status": "completed"}]
+        snap = MagicMock()
+        snap.values = {"todos": todos}
+        mock_graph = AsyncMock()
+        mock_graph.aget_state = AsyncMock(return_value=snap)
+
+        with (
+            patch.object(af, "_checkpointer", MagicMock()),
+            patch.object(af, "_ensure_infra", AsyncMock()),
+            patch.object(af, "get_user_agent", AsyncMock(return_value=mock_graph)),
+        ):
+            result = await af.aget_thread_todos("thread-ok")
+
+        assert result == todos
+
+    @pytest.mark.asyncio
+    async def test_snapshot_without_todos_key_returns_empty(self):
+        """Thread que nunca chamou write_todos — chave ausente, não erro."""
+        import backend.services.agent_factory as af
+
+        snap = MagicMock()
+        snap.values = {"messages": []}
+        mock_graph = AsyncMock()
+        mock_graph.aget_state = AsyncMock(return_value=snap)
+
+        with (
+            patch.object(af, "_checkpointer", MagicMock()),
+            patch.object(af, "_ensure_infra", AsyncMock()),
+            patch.object(af, "get_user_agent", AsyncMock(return_value=mock_graph)),
+        ):
+            result = await af.aget_thread_todos("thread-no-todos")
+
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_aget_state_exception_returns_empty(self):
+        import backend.services.agent_factory as af
+
+        mock_graph = AsyncMock()
+        mock_graph.aget_state = AsyncMock(side_effect=RuntimeError("db error"))
+
+        with (
+            patch.object(af, "_checkpointer", MagicMock()),
+            patch.object(af, "_ensure_infra", AsyncMock()),
+            patch.object(af, "get_user_agent", AsyncMock(return_value=mock_graph)),
+        ):
+            result = await af.aget_thread_todos("thread-err")
+
+        assert result == []

@@ -796,6 +796,40 @@ async def aget_thread_messages(thread_id: str) -> list[tuple[str, str, str]]:
     return out
 
 
+async def aget_thread_todos(thread_id: str) -> list[dict[str, str]]:
+    """Snapshot mais recente de ``state["todos"]`` (write_todos/
+    TodoListMiddleware, injetado incondicionalmente pelo deepagents).
+
+    Popula a seção "Tasks" do Plan tab num reload de página — o SSE ao vivo
+    (``TodosUpdatedEvent``) já entrega isso em tempo real, mas não persiste
+    em lugar nenhum entre streams; aqui lê direto do checkpoint, mesma fonte
+    de verdade de ``aget_thread_messages``. Usa ``aget_state`` (só o
+    snapshot mais recente), não ``aget_state_history`` — não precisa do
+    histórico completo, só do estado atual.
+    """
+    await _ensure_infra()
+    if _checkpointer is None:
+        return []
+
+    from langchain_core.runnables import RunnableConfig
+
+    graph = await get_user_agent()
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    try:
+        snapshot = await graph.aget_state(config)
+    except Exception:
+        logger.debug(
+            "aget_thread_todos: falha ao ler state thread=%s",
+            thread_id,
+            exc_info=True,
+        )
+        return []
+
+    if not snapshot or not snapshot.values:
+        return []
+    return snapshot.values.get("todos", []) or []
+
+
 def reset_default_graph() -> None:
     """Invalida o grafo do modelo padrão após troca de provider/model.
 

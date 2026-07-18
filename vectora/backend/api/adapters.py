@@ -29,6 +29,7 @@ from backend.api.schemas import (
     RagCitationEvent,
     StreamChatEventPayload,
     TerminalLineEvent,
+    TodosUpdatedEvent,
     TokenEvent,
     ToolActivityEvent,
     ToolCallEvent,
@@ -451,6 +452,12 @@ def adapt_stream(
         chat_model_run_ids: set[str] = set()
         nested_chat_model_run_ids: set[str] = set()
 
+        # Dedupe de TodosUpdatedEvent: o chunk de on_chain_stream repete o
+        # mesmo state["todos"] em vários super-steps consecutivos enquanto
+        # nada relacionado a todos muda — sem isso, cada super-step do grafo
+        # reemitiria o mesmo evento pro frontend.
+        last_todos_json: str | None = None
+
         events_iter = events.__aiter__()
 
         # Streaming ao vivo da tool `terminal`: enquanto o comando roda, não
@@ -577,6 +584,30 @@ def adapt_stream(
                 # esse sentinel e traduzimos para HITLEvent antes do DoneEvent.
                 if kind == "on_chain_stream":
                     chunk = data.get("chunk", {})
+
+                    # ── Plan Mode: write_todos (TodoListMiddleware) ──────────
+                    # TodoListMiddleware já vem incondicionalmente embutido no
+                    # deepagents (graph.py) — write_todos não é registrada em
+                    # ALL_TOOLS, então on_tool_end não tem metadata útil pra
+                    # ela. Confirmado empiricamente (script com fake tool-
+                    # calling model + create_deep_agent real): o chunk raiz do
+                    # grafo ("LangGraph") vem no formato updates-por-nó
+                    # ({node_name: partial_state}), não values — "todos"
+                    # aparece aninhado sob a chave do nó que rodou a tool
+                    # (ex.: chunk["tools"]["todos"]), nunca em chunk["todos"]
+                    # diretamente. Checa ANTES do "__interrupt__" abaixo —
+                    # esse branch faz `return`, o que pularia a emissão de
+                    # todos se ambos aparecessem no mesmo chunk.
+                    if isinstance(chunk, dict):
+                        for node_update in chunk.values():
+                            if isinstance(node_update, dict) and "todos" in node_update:
+                                todos = node_update["todos"]
+                                todos_json = json.dumps(todos, sort_keys=True)
+                                if todos_json != last_todos_json:
+                                    last_todos_json = todos_json
+                                    yield encode_event(TodosUpdatedEvent(todos=todos))
+                                break
+
                     if isinstance(chunk, dict) and "__interrupt__" in chunk:
                         raw_interrupts = chunk["__interrupt__"]
                         for intr in raw_interrupts:

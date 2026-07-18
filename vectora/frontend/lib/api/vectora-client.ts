@@ -141,7 +141,14 @@ export type StreamEvent =
       elapsed_ms: number | null;
     }
   | { type: "model_switched"; from_model: string; to_model: string }
-  | { type: "terminal_line"; line: string };
+  | { type: "terminal_line"; line: string }
+  | { type: "todos_updated"; todos: TodoItem[] };
+
+/** Item da checklist de write_todos (TodoListMiddleware) — Plan Mode real. */
+export interface TodoItem {
+  content: string;
+  status: "pending" | "in_progress" | "completed";
+}
 
 export interface Thread {
   id: string;
@@ -355,7 +362,7 @@ export const updateThread = (
 
 export const getHistory = (
   thread_id: string,
-): Promise<{ messages: HistoryMessage[] }> =>
+): Promise<{ messages: HistoryMessage[]; todos?: TodoItem[] }> =>
   postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
 export interface PagedHistoryResponse {

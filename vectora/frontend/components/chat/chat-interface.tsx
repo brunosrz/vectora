@@ -30,6 +30,10 @@ import { estimateTokens } from "@/lib/utils/tokens";
 import { CONTEXT_BLOCK_PCT, CONTEXT_WARN_PCT } from "@/lib/utils/usage";
 import { useThreadsStore } from "@/lib/stores/threads-store";
 import { useStreamingStore } from "@/lib/stores/streaming-store";
+import {
+  useWorkbenchStore,
+  type TodoItem as WorkbenchTodoItem,
+} from "@/lib/stores/workbench-store";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { useRouter } from "next/navigation";
 import { useToastStore } from "@/lib/stores/toast-store";
@@ -473,8 +477,9 @@ export function ChatInterface({
         // Sem isso, reabrir a sessão após reiniciar mostrava o chat vazio.
         const prefetched = queryClient.getQueryData<{
           messages: HistoryMessage[];
+          todos?: WorkbenchTodoItem[];
         }>(["thread-history", currentThreadId]);
-        const { messages: historyMessages } =
+        const { messages: historyMessages, todos: historyTodos } =
           prefetched && prefetched.messages.length > 0
             ? prefetched
             : await getHistory(currentThreadId).catch((err) => {
@@ -485,8 +490,18 @@ export function ChatInterface({
                 } else {
                   console.error("Error fetching thread history:", err);
                 }
-                return { messages: [] as HistoryMessage[] };
+                return {
+                  messages: [] as HistoryMessage[],
+                  todos: [] as WorkbenchTodoItem[],
+                };
               });
+
+        // Repopula a checklist ao vivo do Plan tab (write_todos) — o SSE já
+        // entrega isso em tempo real, mas não sobrevive a um reload de
+        // página; o backend é a fonte de verdade (CLAUDE.md #8).
+        useWorkbenchStore
+          .getState()
+          .setTodos(currentThreadId, historyTodos ?? []);
 
         if (historyMessages.length === 0) {
           // Re-check: if user sent a message while getHistory() was in-flight,

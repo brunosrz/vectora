@@ -651,7 +651,8 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
             HistoryMessage(role=role, content=text, checkpoint_id=checkpoint_id)
             for role, text, checkpoint_id in pairs
         ]
-        return GetHistoryResponse(messages=history)
+        todos = await agent_factory.aget_thread_todos(request.thread_id)
+        return GetHistoryResponse(messages=history, todos=todos)
 
     except Exception as exc:
         logger.exception("api/threads: erro ao carregar histórico")

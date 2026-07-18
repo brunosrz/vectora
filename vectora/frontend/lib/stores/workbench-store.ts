@@ -148,6 +148,17 @@ interface PlanCache {
   fetchedAt: number;
 }
 
+// ── Todos (write_todos / TodoListMiddleware) ────────────────────────────────
+// Checklist ao vivo do turno atual — distinto dos artifacts (`plan` acima):
+// documentos salvos vs. progresso de execução em tempo real. Entregue via
+// evento SSE dedicado (`todos_updated`), não persiste em localStorage — a
+// fonte de verdade é o checkpoint do LangGraph.
+
+export interface TodoItem {
+  content: string;
+  status: "pending" | "in_progress" | "completed";
+}
+
 // ---------------------------------------------------------------------------
 // Estado do store
 // ---------------------------------------------------------------------------
@@ -195,6 +206,7 @@ interface WorkbenchState {
   files: Record<string, FilesCache>;
   diff: Record<string, DiffCache>;
   plan: Record<string, PlanCache>;
+  todos: Record<string, TodoItem[]>;
 
   // Files
   getFiles: (wsId: string) => FilesCache;
@@ -218,6 +230,10 @@ interface WorkbenchState {
   setPlanOpenSlug: (threadId: string, slug: string | null) => void;
   setPlanContent: (threadId: string, slug: string, content: string) => void;
   invalidatePlan: (threadId?: string) => void;
+
+  // Todos
+  getTodos: (threadId: string) => TodoItem[];
+  setTodos: (threadId: string, todos: TodoItem[]) => void;
 
   // Pendência de atualização por aba (volátil). Marcada quando uma tool do
   // agente edita o workspace e a aba Files/Diff não está montada; limpa
@@ -251,6 +267,7 @@ const EMPTY_PLAN: PlanCache = {
   contentsBySlug: {},
   fetchedAt: 0,
 };
+const EMPTY_TODOS: TodoItem[] = [];
 
 // LRU simples: mantém só os últimos 8 conteúdos por workspace.
 function pruneContents(
@@ -410,6 +427,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         files: {},
         diff: {},
         plan: {},
+        todos: {},
 
         getFiles: (wsId) => get().files[wsId] ?? EMPTY_FILES,
         setFilesEntries: (wsId, path, entries) =>
@@ -562,6 +580,10 @@ export const useWorkbenchStore = create<WorkbenchState>()(
               plan: { ...s.plan, [threadId]: { ...cur, fetchedAt: 0 } },
             };
           }),
+
+        getTodos: (threadId) => get().todos[threadId] ?? EMPTY_TODOS,
+        setTodos: (threadId, todos) =>
+          set((s) => ({ todos: { ...s.todos, [threadId]: todos } })),
 
         markPending: (wsId) =>
           set((s) => ({
