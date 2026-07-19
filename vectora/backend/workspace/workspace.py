@@ -297,7 +297,7 @@ class WorkspaceRegistry:
             name=name or (remote_host or codespace_name or "remote"),
             cwd=str(placeholder),
             created_at=datetime.now(UTC).isoformat(),
-            transport=transport,  # ty: ignore[invalid-argument-type]
+            transport=transport,
             remote_host=remote_host,
             remote_path=remote_path,
             ssh_key_id=ssh_key_id,

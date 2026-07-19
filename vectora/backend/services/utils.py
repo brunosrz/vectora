@@ -83,8 +83,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 "no",
             }
             betas = ["prompt-caching-2024-07-31"] if prompt_cache else []
-            return ChatAnthropic(  # ty: ignore[missing-argument]
-                model=model_name,  # ty: ignore[unknown-argument]
+            return ChatAnthropic(
+                model=model_name,
                 api_key=get_env("ANTHROPIC_API_KEY"),
                 temperature=temperature,
                 betas=betas,

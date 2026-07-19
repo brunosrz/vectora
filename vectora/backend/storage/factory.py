@@ -236,7 +236,7 @@ def _build_voyage_embeddings() -> Any:
             return None
 
         return VoyageAIEmbeddings(
-            voyage_api_key=key,  # ty: ignore[unknown-argument]
+            voyage_api_key=key,
             model=model,
         )
     except Exception:

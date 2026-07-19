@@ -190,6 +190,34 @@ describe("TasksTab", () => {
     vi.unstubAllGlobals();
   });
 
+  it("lista scrollável tem min-h-0 (evita overflow quando o painel é redimensionado pequeno)", () => {
+    mockTasks.mockReturnValue(
+      baseHook({
+        tasks: [
+          {
+            id: "t1",
+            session_id: "s1",
+            workspace_id: null,
+            kind: "cron",
+            name: "Tarefa normal",
+            instruction: "",
+            trigger_type: "cron",
+            trigger_config: {},
+            enabled: true,
+            last_run_at: null,
+            next_run_at: null,
+          },
+        ],
+      }),
+    );
+
+    const { container } = render(<TasksTab threadId="t1" />);
+
+    const scrollable = container.querySelector(".overflow-y-auto");
+    expect(scrollable).not.toBeNull();
+    expect(scrollable?.className).toContain("min-h-0");
+  });
+
   it("mantém rodar-agora e toggle pra tarefas normais (regressão)", () => {
     mockTasks.mockReturnValue(
       baseHook({

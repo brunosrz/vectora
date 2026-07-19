@@ -133,9 +133,9 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
     if provider_id == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
-        return ChatAnthropic(  # ty: ignore[missing-argument]
+        return ChatAnthropic(
             api_key=api_key,
-            model=model,  # ty: ignore[unknown-argument]
+            model=model,
         )
 
     if provider_id == "cohere":

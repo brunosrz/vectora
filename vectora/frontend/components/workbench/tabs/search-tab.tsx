@@ -93,7 +93,7 @@ export function SearchTab() {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
         {error && <div className="p-4 text-sm text-destructive">{error}</div>}
 
         {isSearching && (

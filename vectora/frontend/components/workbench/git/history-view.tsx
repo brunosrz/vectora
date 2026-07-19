@@ -204,7 +204,7 @@ export function HistoryView({
           {m.workbench_git_commits_count({ n: data.commits.length })}
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {data.commits.map((c) => (
           <CommitRow
             key={c.sha}

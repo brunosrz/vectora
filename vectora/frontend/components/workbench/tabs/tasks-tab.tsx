@@ -280,7 +280,7 @@ export function TasksTab({ threadId }: { threadId: string }) {
           </p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto px-3 pt-3 pb-3 space-y-4">
+        <div className="flex-1 overflow-y-auto min-h-0 px-3 pt-3 pb-3 space-y-4">
           {tasks.length === 0 ? null : (
             <ul className="space-y-2" data-testid="background-task-list">
               {tasks.map((t) => (

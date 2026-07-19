@@ -87,4 +87,21 @@ describe("HistoryView — paginação", () => {
     await screen.findByText("commit a1");
     expect(screen.queryByText("Load 50 more")).not.toBeInTheDocument();
   });
+
+  it("lista de commits tem min-h-0 (evita overflow quando o painel é redimensionado pequeno)", async () => {
+    vi.spyOn(api, "fetchGitLog").mockResolvedValue({
+      branch: "main",
+      commits: [commit("a1")],
+      has_more: false,
+    });
+
+    const { container } = render(
+      <HistoryView workspaceId="ws1" onChanged={() => {}} />,
+    );
+    await screen.findByText("commit a1");
+
+    const scrollable = container.querySelector(".overflow-y-auto");
+    expect(scrollable).not.toBeNull();
+    expect(scrollable?.className).toContain("min-h-0");
+  });
 });
