@@ -198,6 +198,35 @@ async def run_task_endpoint(
     return {"status": "queued", "task_id": task_id}
 
 
+class ResumeRunRequest(BaseModel):
+    decision: str = "approve"  # "approve" | "reject" | "edit:<json_dos_args>"
+
+
+@router.post("/runs/{run_id}/resume", status_code=202)
+async def resume_run_endpoint(
+    request: Request,
+    thread_id: str,
+    run_id: str,
+    body: ResumeRunRequest,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    """Retoma uma run pausada em HITL (``awaiting_approval``).
+
+    O resume roda em background (invoca o agente); o novo status chega via o
+    evento SSE ``background_run.done``/``needs_approval`` e no ``GET /runs``.
+    """
+    from backend.scheduling.background_tasks import _get_run, resume_background_run
+
+    _user_id(request)
+    run = await _get_run(run_id)
+    if run is None or run.get("session_id") != thread_id:
+        raise HTTPException(status_code=404, detail="Run não encontrada")
+    if run.get("status") != "awaiting_approval":
+        raise HTTPException(status_code=409, detail="Run não está aguardando aprovação")
+    background_tasks.add_task(resume_background_run, run_id, body.decision)
+    return {"status": "queued", "run_id": run_id}
+
+
 @router.get("/runs", response_model=list[RunOut])
 async def get_runs(request: Request, thread_id: str) -> list[RunOut]:
     from backend.scheduling.background_tasks import list_runs

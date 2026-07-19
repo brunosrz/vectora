@@ -340,6 +340,25 @@ async def _finish_run(run_id: str, status: str, summary: str) -> None:
             await conn.close()
 
 
+async def _mark_run_awaiting(run_id: str, summary: str) -> None:
+    """Marca a run como pendente de aprovação humana (HITL).
+
+    Diferente de ``_finish_run``: NÃO grava ``finished_at`` — a run não terminou,
+    está esperando resume (approve/reject/edit).
+    """
+    conn = await _get_db()
+    try:
+        await conn.execute(
+            "UPDATE vectora_background_runs SET status = 'awaiting_approval', "
+            "summary = ? WHERE id = ?",
+            (summary[:4000], run_id),
+        )
+        await conn.commit()
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
+
+
 async def _touch_last_run(task_id: str) -> None:
     conn = await _get_db()
     try:
@@ -460,6 +479,49 @@ def _extract_summary(result: Any) -> str:
     return ""
 
 
+def _extract_interrupt(result: Any) -> Any | None:
+    """Retorna o payload do 1º interrupt se a run pausou (HITL), senão ``None``.
+
+    O LangGraph devolve ``result["__interrupt__"]`` (lista de ``Interrupt``)
+    quando o grafo pausa numa tool sob HumanInTheLoopMiddleware, em vez de
+    levantar exceção. O ``.value`` do primeiro interrupt carrega o pedido de
+    aprovação (tool + args).
+    """
+    if not isinstance(result, dict):
+        return None
+    interrupts = result.get("__interrupt__")
+    if not interrupts:
+        return None
+    first = interrupts[0]
+    return getattr(first, "value", first)
+
+
+def _describe_interrupt(payload: Any) -> str:
+    """Descrição curta e humana do que a run está esperando aprovar.
+
+    O payload do HumanInTheLoopMiddleware costuma ser uma lista de pedidos de
+    ação (``action``/``tool``/``args``). Extrai os nomes das tools quando
+    possível; fallback para ``str`` truncado.
+    """
+    try:
+        items = payload if isinstance(payload, list) else [payload]
+        names: list[str] = []
+        for it in items:
+            if isinstance(it, dict):
+                name = (
+                    it.get("action")
+                    or it.get("tool")
+                    or (it.get("action_request") or {}).get("action")
+                )
+                if name:
+                    names.append(str(name))
+        if names:
+            return "Aguardando aprovação: " + ", ".join(names)
+    except Exception:
+        logger.debug("background_tasks: falha ao descrever interrupt", exc_info=True)
+    return ("Aguardando aprovação: " + str(payload))[:2000]
+
+
 def _emit_run_event(
     event: str, task: BackgroundTask, run_id: str, run_thread_id: str, summary: str = ""
 ) -> None:
@@ -514,10 +576,11 @@ async def run_task(
         configurable: dict[str, Any] = {
             "thread_id": run_thread_id,
             "user_id": task.user_id,
-            # Sem humano para responder HITL no fluxo de fundo: "auto" faz o HITL
-            # dinâmico (runtime.context.permission_mode) rodar sem pausas, então
-            # a task conclui inteira em vez de travar num interrupt sem aprovador.
-            "permission_mode": "auto",
+            # Default "auto": sem humano no fluxo de fundo, o HITL dinâmico roda
+            # sem pausas e a task conclui inteira. Uma task pode configurar um
+            # modo que interrompe (trigger_config.permission_mode) — aí a run
+            # fica "awaiting_approval" e é retomável via resume_background_run.
+            "permission_mode": task.trigger_config.get("permission_mode", "auto"),
         }
         if task.workspace_id:
             configurable["workspace_id"] = task.workspace_id
@@ -529,7 +592,6 @@ async def run_task(
             config=config,
             context=ctx_from_config(config),
         )
-        summary = _extract_summary(result)
 
         from backend.api.handlers.threads import _upsert_session
 
@@ -540,6 +602,18 @@ async def run_task(
             workspace_id=task.workspace_id,
         )
 
+        # HITL: se o grafo pausou numa ação destrutiva, a run fica pendente de
+        # aprovação (não "done") — o interrupt está salvo no checkpointer e a
+        # run é retomável por resume_background_run.
+        interrupt_payload = _extract_interrupt(result)
+        if interrupt_payload is not None:
+            desc = _describe_interrupt(interrupt_payload)
+            await _mark_run_awaiting(run_id, desc)
+            await _touch_last_run(task.id)
+            _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
+            return run_thread_id
+
+        summary = _extract_summary(result)
         await _finish_run(run_id, "done", summary)
         await _touch_last_run(task.id)
         _emit_run_event("done", task, run_id, run_thread_id, summary)
@@ -552,6 +626,94 @@ async def run_task(
         with contextlib.suppress(Exception):
             await _finish_run(run_id, "error", str(exc))
         _emit_run_event("error", task, run_id, run_thread_id, str(exc))
+        return None
+
+
+async def _get_run(run_id: str) -> dict[str, Any] | None:
+    """Uma run de background por id (ou ``None``)."""
+    conn = await _get_db()
+    try:
+        cur = await conn.execute(
+            "SELECT id, task_id, session_id, run_thread_id, status "
+            "FROM vectora_background_runs WHERE id = ?",
+            (run_id,),
+        )
+        return await cur.fetchone()
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
+
+
+async def resume_background_run(run_id: str, decision: str = "approve") -> str | None:
+    """Retoma uma run de background pausada em HITL (``awaiting_approval``).
+
+    O interrupt está persistido no checkpointer compartilhado sob o
+    ``run_thread_id``, então resume o grafo com ``Command(resume=...)`` — mesmo
+    mecanismo do ResumeChat do chat síncrono.
+
+    Args:
+        run_id: id da run em ``awaiting_approval``.
+        decision: ``"approve"`` | ``"reject"`` | ``"edit:<json_dos_args>"``.
+
+    Returns:
+        Novo status (``"done"`` ou ``"awaiting_approval"`` se pausou de novo no
+        mesmo turno), ou ``None`` se a run não existe/não está pendente ou falha.
+    """
+    run = await _get_run(run_id)
+    if run is None or run.get("status") != "awaiting_approval":
+        return None
+    run_thread_id = run.get("run_thread_id") or ""
+    task = await get_task(run["task_id"])
+    if task is None or not run_thread_id:
+        return None
+
+    try:
+        from langgraph.types import Command
+
+        from backend.services import agent_factory
+        from backend.vtypes.context import ctx_from_config
+
+        if decision == "approve":
+            resume_value: dict[str, Any] = {"action": "approve"}
+        elif decision == "reject":
+            resume_value = {"action": "reject"}
+        elif decision.startswith("edit:"):
+            resume_value = {"action": "edit", "args": json.loads(decision[5:])}
+        else:
+            raise ValueError(f"decision inválida: {decision!r}")
+
+        mode = task.trigger_config.get("permission_mode", "auto")
+        configurable: dict[str, Any] = {
+            "thread_id": run_thread_id,
+            "user_id": task.user_id,
+            "permission_mode": mode,
+        }
+        if task.workspace_id:
+            configurable["workspace_id"] = task.workspace_id
+        config = {"configurable": configurable, "recursion_limit": 50}
+
+        agent = await agent_factory.get_user_agent(user_id=task.user_id)
+        result = await agent.ainvoke(
+            Command(resume=resume_value),
+            config=config,
+            context=ctx_from_config(config),
+        )
+
+        interrupt_payload = _extract_interrupt(result)
+        if interrupt_payload is not None:
+            desc = _describe_interrupt(interrupt_payload)
+            await _mark_run_awaiting(run_id, desc)
+            _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
+            return "awaiting_approval"
+
+        summary = _extract_summary(result)
+        await _finish_run(run_id, "done", summary)
+        _emit_run_event("done", task, run_id, run_thread_id, summary)
+        return "done"
+    except Exception as exc:
+        logger.exception("background_tasks: resume falhou", extra={"run_id": run_id})
+        with contextlib.suppress(Exception):
+            await _finish_run(run_id, "error", str(exc))
         return None
 
 

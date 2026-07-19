@@ -62,7 +62,19 @@ class _FakeAgent:
         return self.result
 
 
-def _patch_agent(monkeypatch, agent: _FakeAgent) -> None:
+class _SeqAgent:
+    """Agente fake que devolve resultados em sequência (um por ainvoke)."""
+
+    def __init__(self, results: list[Any]) -> None:
+        self.results = list(results)
+        self.calls: list[dict[str, Any]] = []
+
+    async def ainvoke(self, inp, config=None, context=None) -> Any:
+        self.calls.append({"input": inp, "config": config, "context": context})
+        return self.results.pop(0)
+
+
+def _patch_agent(monkeypatch, agent: Any) -> None:
     async def _fake_get_agent(user_id: str | None = None, model: str = "") -> Any:
         return agent
 
@@ -225,6 +237,95 @@ async def test_run_task_error_path_records_error_and_skips_session(db, monkeypat
     runs = await bg.list_runs("sess-err")
     assert runs[0]["status"] == "error"
     assert "LLM caiu" in runs[0]["summary"]
+
+
+# ---------------------------------------------------------------------------
+# HITL em background — interrupt → awaiting_approval → resume (Sprint 1.3)
+# ---------------------------------------------------------------------------
+
+
+async def test_run_task_interrupt_marks_awaiting_and_resume_completes(db, monkeypatch):
+    """Uma run que pausa em HITL fica 'awaiting_approval' (não 'done') e o
+    resume_background_run a retoma até concluir. O interrupt é detectado pelo
+    ``__interrupt__`` no resultado do ainvoke (LangGraph pausa, não levanta)."""
+    from types import SimpleNamespace
+
+    # 1º ainvoke (run_task) pausa; 2º ainvoke (resume) conclui.
+    agent = _SeqAgent(
+        [
+            {"__interrupt__": [SimpleNamespace(value=[{"action": "file_write"}])]},
+            {"messages": [{"content": "arquivo escrito"}]},
+        ]
+    )
+    _patch_agent(monkeypatch, agent)
+
+    async def _fake_upsert(thread_id, title=None, workspace_id=None):
+        return None
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _fake_upsert)
+
+    task = await bg.create_task(
+        session_id="sess-hitl",
+        user_id="u-hitl",
+        kind="routine",
+        name="Escreve",
+        instruction="Escreva um arquivo",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},  # modo que interrompe
+        workspace_id="ws-h",
+    )
+
+    run_thread_id = await bg.run_task(task, "manual")
+    assert run_thread_id is not None  # thread visível mesmo pausada
+
+    runs = await bg.list_runs("sess-hitl")
+    assert len(runs) == 1
+    assert runs[0]["status"] == "awaiting_approval"
+    assert runs[0]["finished_at"] is None  # não terminou — aguarda aprovação
+    assert "file_write" in runs[0]["summary"]
+    run_id = runs[0]["id"]
+
+    # Resume aprovando → conclui.
+    status = await bg.resume_background_run(run_id, "approve")
+    assert status == "done"
+    assert len(agent.calls) == 2
+    from langgraph.types import Command
+
+    assert isinstance(agent.calls[1]["input"], Command)  # resume via Command
+
+    runs2 = await bg.list_runs("sess-hitl")
+    assert runs2[0]["status"] == "done"
+    assert runs2[0]["summary"] == "arquivo escrito"
+
+
+async def test_resume_background_run_rejects_unknown_or_finished_run(db, monkeypatch):
+    """Erro/borda: resume de run inexistente ou já concluída devolve None sem
+    tocar no agente."""
+    agent = _SeqAgent([{"messages": [{"content": "x"}]}])
+    _patch_agent(monkeypatch, agent)
+
+    async def _fake_upsert(*a, **k):
+        return None
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _fake_upsert)
+
+    # Run inexistente.
+    assert await bg.resume_background_run("nao-existe", "approve") is None
+
+    # Run que concluiu (status 'done') não é retomável.
+    task = await bg.create_task(
+        session_id="sess-fin",
+        user_id="u",
+        kind="routine",
+        name="Feito",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    await bg.run_task(task, "manual")  # conclui 'done' (sem interrupt)
+    done_run = (await bg.list_runs("sess-fin"))[0]
+    assert done_run["status"] == "done"
+    assert await bg.resume_background_run(done_run["id"], "approve") is None
 
 
 # ---------------------------------------------------------------------------
