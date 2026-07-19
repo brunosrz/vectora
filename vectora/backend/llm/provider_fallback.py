@@ -91,14 +91,20 @@ def _provider_of(model_id: str) -> str:
 
 
 def _provider_has_key(provider: str) -> bool:
-    """True se o provider tem credencial configurada (ollama é sempre local)."""
+    """True se o provider tem credencial configurada (ollama é sempre local).
+
+    ``provider`` chega normalizado com underscore (mesma convenção de
+    ``_provider_of``/``chat.py::_build_configurable``), então as chaves do
+    keymap usam underscore também — "google-genai" (hífen) nunca bateria
+    aqui e o Gemini nunca entraria como fallback de outro provider.
+    """
     if provider == "ollama":
         return True
     from backend.settings import settings
 
     keymap = {
         "openai": settings.openai_api_key,
-        "google-genai": settings.google_api_key,
+        "google_genai": settings.google_api_key,
         "anthropic": settings.anthropic_api_key,
         "cohere": settings.cohere_api_key,
         "openrouter": settings.openrouter_api_key,
@@ -114,14 +120,39 @@ def _fallback_order() -> list[str]:
     return [str(x) for x in order] if isinstance(order, list) else []
 
 
+def _default_fallback_chain(current_provider: str) -> list[str]:
+    """Cadeia automática quando o usuário nunca configurou uma (§ opt-in
+    vira default sensato): todo provider de chat com key detectada, exceto
+    o primário, na ordem canônica de ``_PROVIDER_SPEC``. Resolve o caso real
+    de "Cohere configurado mas nunca tentado" sem exigir configuração manual
+    em Preferências."""
+    from backend.services.utils import _PROVIDER_SPEC
+
+    chain: list[str] = []
+    for provider, (_env_var, default_model) in _PROVIDER_SPEC.items():
+        if provider == current_provider:
+            continue
+        if not _provider_has_key(provider):
+            continue
+        chain.append(f"{provider}:{default_model}")
+    return chain
+
+
 def get_fallback_chain(current_model_id: str) -> list[str]:
     """Cadeia ordenada de modelos a tentar após o atual esgotar.
 
-    Remove o provider atual (mesma quota) e os providers sem API key.
+    Remove o provider atual (mesma quota) e os providers sem API key. Sem
+    configuração explícita (``llm_fallback_order`` vazia), monta uma cadeia
+    automática (ver ``_default_fallback_chain``) — configuração manual do
+    usuário, mesmo com uma única entrada, sempre tem precedência.
     """
     current_provider = _provider_of(current_model_id)
+    configured = _fallback_order()
+    if not configured:
+        return _default_fallback_chain(current_provider)
+
     chain: list[str] = []
-    for mid in _fallback_order():
+    for mid in configured:
         prov = _provider_of(mid)
         if prov == current_provider:
             continue

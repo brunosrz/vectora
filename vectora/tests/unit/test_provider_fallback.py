@@ -176,6 +176,22 @@ class TestProviderHasKey:
     def test_unknown_provider_false(self):
         assert pf._provider_has_key("does-not-exist") is False
 
+    def test_google_genai_true_when_key_configured(self):
+        """Regressão: o keymap usava 'google-genai' (hífen) mas o provider
+        chega normalizado com underscore (mesma convenção de _provider_of) —
+        o Gemini nunca era reconhecido como tendo key, então nunca entrava
+        na cadeia de fallback de outro provider."""
+        from backend.settings import settings
+
+        with patch.object(settings, "google_api_key", "AIza-fake"):
+            assert pf._provider_has_key("google_genai") is True
+
+    def test_google_genai_false_when_key_absent(self):
+        from backend.settings import settings
+
+        with patch.object(settings, "google_api_key", None):
+            assert pf._provider_has_key("google_genai") is False
+
 
 # ---------------------------------------------------------------------------
 # get_fallback_chain
@@ -230,6 +246,75 @@ class TestGetFallbackChain:
         rt, keys = _patch_env(order, set())
         with rt, keys:
             assert pf.get_fallback_chain("openai:gpt-4o") == []
+
+
+# ---------------------------------------------------------------------------
+# get_fallback_chain — cadeia automática quando nunca configurada (§ opt-in
+# padrão empty devia significar "sem fallback", vira default sensato)
+# ---------------------------------------------------------------------------
+
+
+class TestGetFallbackChainAutoDefault:
+    def test_bug_real_cohere_entra_no_fallback_do_gemini_sem_configuracao(self):
+        """Reproduz o bug ao vivo: llm_fallback_order nunca configurada
+        (vazia), Gemini é o primário e esgota a quota, Cohere está com key
+        configurada — o fallback deve tentá-lo automaticamente."""
+        from backend.settings import settings
+
+        rt = patch.object(pf, "_fallback_order", return_value=[])
+        with (
+            rt,
+            patch.object(settings, "google_api_key", "AIza-fake"),
+            patch.object(settings, "openai_api_key", None),
+            patch.object(settings, "anthropic_api_key", None),
+            patch.object(settings, "cohere_api_key", "co-fake"),
+            patch.object(settings, "openrouter_api_key", None),
+        ):
+            chain = pf.get_fallback_chain("google_genai:gemini-2.5-pro")
+        # ollama é sempre "local" (sem key exigida) — entra por padrão também.
+        assert chain == ["cohere:command-a-03-2025", "ollama:gpt-oss:20b"]
+
+    def test_exclui_o_primario_e_ollama_sempre_entra(self):
+        from backend.settings import settings
+
+        rt = patch.object(pf, "_fallback_order", return_value=[])
+        with (
+            rt,
+            patch.object(settings, "google_api_key", None),
+            patch.object(settings, "openai_api_key", None),
+            patch.object(settings, "anthropic_api_key", None),
+            patch.object(settings, "cohere_api_key", None),
+            patch.object(settings, "openrouter_api_key", None),
+        ):
+            chain = pf.get_fallback_chain("openai:gpt-4o")
+        assert chain == ["ollama:gpt-oss:20b"]
+        # o primário nunca aparece na própria cadeia auto-gerada.
+        assert all(not c.startswith("openai:") for c in chain)
+
+    def test_nenhum_provider_com_key_devolve_cadeia_so_com_ollama(self):
+        from backend.settings import settings
+
+        rt = patch.object(pf, "_fallback_order", return_value=[])
+        with (
+            rt,
+            patch.object(settings, "google_api_key", None),
+            patch.object(settings, "openai_api_key", None),
+            patch.object(settings, "anthropic_api_key", None),
+            patch.object(settings, "cohere_api_key", None),
+            patch.object(settings, "openrouter_api_key", None),
+        ):
+            chain = pf.get_fallback_chain("ollama:gpt-oss:20b")
+        assert chain == []  # ollama é o próprio primário aqui — exclui-se
+
+    def test_configuracao_explicita_com_uma_entrada_nao_e_substituida(self):
+        """Erro/borda: configuração manual do usuário, mesmo incompleta (1
+        entrada só), tem precedência sobre o default automático — não
+        adiciona providers extras que o usuário não escolheu."""
+        order = ["cohere:command-a-custom"]
+        rt, keys = _patch_env(order, {"cohere"})
+        with rt, keys:
+            chain = pf.get_fallback_chain("google_genai:gemini-2.5-pro")
+        assert chain == ["cohere:command-a-custom"]
 
 
 # ---------------------------------------------------------------------------
