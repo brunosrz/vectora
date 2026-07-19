@@ -211,7 +211,12 @@ export function ChatInput({
       <div
         className={`relative z-[50] backdrop-blur-sm ${compact ? "bg-sidebar" : "bg-background"}`}
       >
-        <div className="w-full max-w-4xl mx-auto">
+        {/* @container/composer: o rodapé de controles reage à largura do
+            PRÓPRIO composer, não da viewport. No modo IDE o ChatInput vive numa
+            sidebar de chat estreita enquanto a janela segue larga — breakpoints
+            de viewport (sm:) nunca disparavam ali e os controles transbordavam.
+            Container queries resolvem chat largo e IDE estreito com uma regra. */}
+        <div className="@container/composer w-full max-w-4xl mx-auto">
           {/* File Previews */}
           <FilePreviewGrid files={attachedFiles} onRemove={onRemoveFile} />
 
@@ -406,7 +411,7 @@ export function ChatInput({
               configuração). Grupo esquerdo: workspace (onde) → modo de
               permissão; direita: modelo e medidor de uso. Sem barra de
               contexto acima do input (poluição visual desnecessária). */}
-          <div className="flex items-center justify-between gap-2 mt-1 px-1 flex-nowrap">
+          <div className="flex flex-wrap @sm/composer:flex-nowrap items-center justify-between gap-x-2 gap-y-1 mt-1 px-1">
             <div className="flex items-center gap-1 min-w-0">
               <PlusMenu
                 disabled={!userId || offline}
@@ -420,19 +425,19 @@ export function ChatInput({
                   size="sm"
                 />
               )}
-              <div className="hidden sm:block h-4 w-px bg-border/60" />
+              <div className="hidden @sm/composer:block h-4 w-px bg-border/60" />
               {/* O workspace é escolhido só no modal de nova conversa e é imutável
                   depois disso — por isso não há seletor de workspace na appbar. */}
               {!chatMode && !ideMode && wsId && (
                 <>
                   <VscodeMenu workspaceId={wsId} />
-                  <div className="hidden sm:block h-4 w-px bg-border/60" />
+                  <div className="hidden @sm/composer:block h-4 w-px bg-border/60" />
                 </>
               )}
               <PermissionModeMenu />
             </div>
 
-            <div className="flex items-center gap-1 min-w-0 justify-end">
+            <div className="flex flex-1 items-center gap-1 min-w-0 justify-end">
               <EffortMenu />
               {agentConfig && onAgentConfigChange && (
                 <ModelSelector

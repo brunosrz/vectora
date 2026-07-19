@@ -310,4 +310,25 @@ describe("ChatInput — aviso de modelo sem suporte a imagem", () => {
       screen.queryByText(m.chat_input_no_vision_warning()),
     ).not.toBeInTheDocument();
   });
+
+  // Responsividade por CONTAINER (não por viewport): no modo IDE o ChatInput
+  // vive numa sidebar estreita enquanto a janela segue larga; breakpoints `sm:`
+  // (viewport) nunca disparavam ali e o rodapé transbordava. O rodapé precisa
+  // reagir à largura do próprio composer via container queries do Tailwind v4.
+  it("o rodapé usa container queries (@container/composer + @sm/composer)", () => {
+    const { container } = render(<ChatInput {...baseProps()} />);
+
+    // O wrapper do composer estabelece o contexto de container nomeado.
+    expect(container.querySelector(".\\@container\\/composer")).not.toBeNull();
+
+    // O rodapé quebra por padrão (estreito) e só volta a uma linha quando o
+    // container é largo — reagindo ao composer, não à viewport.
+    const footer = container.querySelector(
+      ".flex-wrap.\\@sm\\/composer\\:flex-nowrap",
+    );
+    expect(footer).not.toBeNull();
+
+    // Nenhum breakpoint de viewport (`sm:`) deve sobrar no rodapé — só container.
+    expect(container.querySelector(".sm\\:flex-nowrap")).toBeNull();
+  });
 });
