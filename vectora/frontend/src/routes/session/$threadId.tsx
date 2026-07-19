@@ -105,6 +105,7 @@ function SessionPage() {
   const threadId = isNewRoute ? localNewId : routeParam;
   const userId = useAuthStore((s) => s.user?.id);
   const pushMention = useChatInputStore((s) => s.pushMention);
+  const pushDraft = useChatInputStore((s) => s.pushDraft);
 
   // Painel do workbench: visível e redimensionável via workbench-store. O gate
   // de hidratação evita divergência SSR/cliente do estado persistido.
@@ -599,6 +600,7 @@ function SessionPage() {
                   threadId={threadId}
                   side="left"
                   onAddToContext={pushMention}
+                  onSendPrompt={pushDraft}
                 />
                 <div
                   role="separator"
@@ -793,6 +795,7 @@ function SessionPage() {
                   <WorkbenchContent
                     threadId={threadId}
                     onAddToContext={pushMention}
+                    onSendPrompt={pushDraft}
                   />
                 }
               />

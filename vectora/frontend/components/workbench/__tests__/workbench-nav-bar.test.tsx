@@ -6,7 +6,7 @@
  * e a alternância entre os dois com base na feature flag.
  */
 
-import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
 // ── mocks ────────────────────────────────────────────────────────────────────
@@ -74,7 +74,11 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
-import { WorkbenchNavBar, WorkbenchContent } from "../workbench-panel";
+import {
+  WorkbenchNavBar,
+  WorkbenchContent,
+  ComingSoonTabButton,
+} from "../workbench-panel";
 
 afterEach(() => {
   cleanup();
@@ -96,30 +100,24 @@ function getButtons(container: HTMLElement) {
 
 // ── Testes ───────────────────────────────────────────────────────────────────
 
-describe("WorkbenchNavBar — BETA_TABS e ComingSoonTabButton", () => {
+describe("WorkbenchNavBar — BETA_TABS vazio (context_graph promovido a estável)", () => {
   describe("com enableFeaturesBeta = false (comportamento de produção)", () => {
-    it("renderiza botão para context_graph marcado como aria-disabled", () => {
+    it("context_graph renderiza como NavTabButton normal (sem aria-disabled)", () => {
       const { container } = renderNav(false);
       const btns = getButtons(container);
       // 3 tabs no mock: files (0), context_graph (1), terminal (2)
-      expect(btns[1].getAttribute("aria-disabled")).toBe("true");
+      expect(btns[1].hasAttribute("aria-disabled")).toBe(false);
     });
 
-    it("context_graph fica fora da ordem de tab (tabIndex=-1)", () => {
+    it("context_graph fica na ordem de tab normal (sem tabIndex=-1)", () => {
       const { container } = renderNav(false);
-      expect(getButtons(container)[1].tabIndex).toBe(-1);
+      expect(getButtons(container)[1].tabIndex).not.toBe(-1);
     });
 
-    it("hover em context_graph mostra tooltip 'em breve'", () => {
-      const { container } = renderNav(false);
-      const tooltips = container.querySelectorAll("[data-tooltip]");
-      expect(tooltips[1]?.textContent).toBe("workbench_tab_coming_soon");
-    });
-
-    it("clicar em context_graph NÃO chama selectTab nem despacha toast", () => {
+    it("clicar em context_graph chama selectTab normalmente (não é mais ComingSoon)", () => {
       const { container } = renderNav(false);
       fireEvent.click(getButtons(container)[1]);
-      expect(mockSelectTab).not.toHaveBeenCalled();
+      expect(mockSelectTab).toHaveBeenCalledWith("t1", "context_graph");
       expect(mockPush).not.toHaveBeenCalled();
     });
 
@@ -131,21 +129,6 @@ describe("WorkbenchNavBar — BETA_TABS e ComingSoonTabButton", () => {
     });
   });
 
-  describe("com enableFeaturesBeta = true (comportamento de dev)", () => {
-    it("clicar em context_graph chama selectTab (funcional em dev)", () => {
-      const { container } = renderNav(true);
-      fireEvent.click(getButtons(container)[1]);
-      expect(mockSelectTab).toHaveBeenCalledWith("t1", "context_graph");
-    });
-
-    it("botão de context_graph não fica aria-disabled quando a flag está ligada", () => {
-      const { container } = renderNav(true);
-      expect(getButtons(container)[1].hasAttribute("aria-disabled")).toBe(
-        false,
-      );
-    });
-  });
-
   describe("edge cases", () => {
     it("tab normal (terminal) chama selectTab independentemente da flag", () => {
       const { container } = renderNav(false);
@@ -154,32 +137,33 @@ describe("WorkbenchNavBar — BETA_TABS e ComingSoonTabButton", () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it("múltiplos cliques em context_graph continuam sem efeito (sem toast nem selectTab)", () => {
+    it("múltiplos cliques em context_graph continuam chamando selectTab (não trava)", () => {
       const { container } = renderNav(false);
       const btn = getButtons(container)[1];
       fireEvent.click(btn);
       fireEvent.click(btn);
-      expect(mockSelectTab).not.toHaveBeenCalled();
+      expect(mockSelectTab).toHaveBeenCalledTimes(2);
       expect(mockPush).not.toHaveBeenCalled();
     });
   });
 });
 
-describe("ComingSoonTabButton — em isolamento via WorkbenchNavBar", () => {
-  beforeEach(() => {
-    featuresBeta = false;
+describe("ComingSoonTabButton — componente em isolamento (usado só se BETA_TABS ganhar entradas no futuro)", () => {
+  it("botão tem aria-disabled=true e tabIndex=-1 (não interativo)", () => {
+    const { container } = render(<ComingSoonTabButton tab="files" />);
+    const btn = container.querySelector("button")!;
+    expect(btn.getAttribute("aria-disabled")).toBe("true");
+    expect(btn.tabIndex).toBe(-1);
   });
 
-  it("botão tem aria-disabled=true (não interativo)", () => {
-    const { container } = render(<WorkbenchNavBar threadId="t2" />);
-    const btns = getButtons(container);
-    expect(btns[1].getAttribute("aria-disabled")).toBe("true");
-  });
-
-  it("clicar não dispara nenhum efeito colateral (sem toast)", () => {
-    const { container } = render(<WorkbenchNavBar threadId="t3" />);
-    fireEvent.click(getButtons(container)[1]);
+  it("mostra tooltip 'em breve' e clicar não dispara nenhum efeito colateral", () => {
+    const { container } = render(<ComingSoonTabButton tab="files" />);
+    expect(container.querySelector("[data-tooltip]")?.textContent).toBe(
+      "workbench_tab_coming_soon",
+    );
+    fireEvent.click(container.querySelector("button")!);
     expect(mockPush).not.toHaveBeenCalled();
+    expect(mockSelectTab).not.toHaveBeenCalled();
   });
 });
 

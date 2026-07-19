@@ -92,10 +92,23 @@ describe("ContextGraphTab", () => {
       expect(screen.getByText("graph_not_built")).toBeTruthy();
     });
 
-    it("botão mostra graph_build_button", () => {
+    it("botão mostra graph_build_button (barra de ações e CTA vazio)", () => {
       setup();
       render(<ContextGraphTab threadId="t1" />);
-      expect(screen.getByText("graph_build_button")).toBeTruthy();
+      // Aparece 2x: o botão compacto da barra de ações + o CTA proeminente
+      // no estado vazio (Sprint 2 — descoberta melhor, não só texto passivo).
+      expect(screen.getAllByText("graph_build_button")).toHaveLength(2);
+    });
+
+    it("clicar no CTA proeminente do estado vazio também chama build()", async () => {
+      setup();
+      render(<ContextGraphTab threadId="t1" />);
+      const buttons = screen.getAllByText("graph_build_button");
+      const ctaButton = buttons[1].closest("button") as HTMLButtonElement;
+      await act(async () => {
+        fireEvent.click(ctaButton);
+      });
+      expect(mockBuild).toHaveBeenCalledTimes(1);
     });
 
     it("clicar no botão chama build() com mode + fileTypes dos settings", async () => {
@@ -292,10 +305,18 @@ describe("ContextGraphTab", () => {
   });
 
   describe("crédito e report toggle", () => {
-    it("exibe crédito do graphify no rodapé", () => {
+    it("exibe crédito do graphify no rodapé como link clicável pro repositório", () => {
       setup();
       render(<ContextGraphTab threadId="t1" />);
-      expect(screen.getByText("graph_credit")).toBeTruthy();
+      const credit = screen.getByText("graph_credit");
+      expect(credit.tagName).toBe("A");
+      expect(credit.getAttribute("href")).toBe(
+        "https://github.com/safishamsi/graphify",
+      );
+      expect(credit.getAttribute("target")).toBe("_blank");
+      // rel="noopener" é obrigatório com target="_blank" — evita a página
+      // aberta reusar o `window.opener` (regressão de segurança comum).
+      expect(credit.getAttribute("rel")).toContain("noopener");
     });
 
     it("toggle do report expande e colapsa o markdown", async () => {

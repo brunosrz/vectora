@@ -53,6 +53,7 @@ import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
 import { MemoryTab } from "./tabs/memory-tab";
 import { TasksTab } from "./tabs/tasks-tab";
+import { ContextGraphTab } from "./tabs/context-graph-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
@@ -62,6 +63,8 @@ interface WorkbenchPanelProps {
   threadId: string;
   /** Injetar @path no chat ao clicar no botão @ de um arquivo/pasta. */
   onAddToContext?: (path: string) => void;
+  /** Inserir texto no composer (god nodes/perguntas sugeridas do Context Graph). */
+  onSendPrompt?: (text: string) => void;
 }
 
 const TAB_ICON: Record<
@@ -113,7 +116,10 @@ function useTabBadge(
   }
 }
 
-const BETA_TABS = new Set<WorkbenchTab>(["context_graph"]);
+// Context Graph saiu do beta: backend (pipeline + endpoints + tool) e
+// frontend (ContextGraphTab) estão completos e religados no switch acima —
+// não há mais motivo pra gatear atrás de enableFeaturesBeta.
+const BETA_TABS = new Set<WorkbenchTab>([]);
 
 export function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
   const Icon = TAB_ICON[tab];
@@ -265,6 +271,7 @@ export function WorkbenchNavBar({
 export function WorkbenchContent({
   threadId,
   onAddToContext,
+  onSendPrompt,
   side = "right",
 }: WorkbenchPanelProps & { side?: "left" | "right" }) {
   const workspace = useWorkspacesStore((s) => s.getActive());
@@ -321,6 +328,12 @@ export function WorkbenchContent({
             {activeTab === "preview" && <PreviewTab threadId={threadId} />}
             {activeTab === "storage" && <MemoryTab threadId={threadId} />}
             {activeTab === "tasks" && <TasksTab threadId={threadId} />}
+            {activeTab === "context_graph" && (
+              <ContextGraphTab
+                threadId={threadId}
+                onSendPrompt={onSendPrompt}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

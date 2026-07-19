@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, RefreshCw, ExternalLink, X, Settings2 } from "lucide-react";
+import {
+  Loader2,
+  RefreshCw,
+  ExternalLink,
+  X,
+  Settings2,
+  Waypoints,
+} from "lucide-react";
 
 import { useContextGraph } from "@/lib/hooks/use-context-graph";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -252,11 +259,20 @@ export function ContextGraphTab({
           </div>
         )}
 
-        {/* Status: not built */}
+        {/* Status: not built — CTA proeminente (não só texto passivo) */}
         {!isBuilt && !isRunning && !isPaused && status.status !== "error" && (
-          <div className="px-3 py-4 text-sm text-muted-foreground text-center space-y-2">
-            <p>{m.graph_not_built()}</p>
+          <div className="px-3 py-6 text-sm text-muted-foreground text-center space-y-3">
+            <Waypoints className="h-8 w-8 mx-auto text-muted-foreground/50" />
+            <p className="font-medium text-foreground">{m.graph_not_built()}</p>
             <p className="text-xs">{m.graph_build_description()}</p>
+            <button
+              onClick={handleBuild}
+              disabled={loading}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
+            >
+              <RefreshCw className="h-3 w-3" />
+              {m.graph_build_button()}
+            </button>
           </div>
         )}
 
@@ -436,7 +452,14 @@ export function ContextGraphTab({
 
       {/* Footer: crédito */}
       <div className="px-3 py-1.5 border-t border-border/60 shrink-0">
-        <p className="text-xs text-muted-foreground/60">{m.graph_credit()}</p>
+        <a
+          href="https://github.com/safishamsi/graphify"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-muted-foreground/60 hover:text-muted-foreground hover:underline underline-offset-2 transition-colors"
+        >
+          {m.graph_credit()}
+        </a>
       </div>
     </div>
   );
