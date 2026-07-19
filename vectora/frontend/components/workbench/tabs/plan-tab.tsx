@@ -292,22 +292,6 @@ export function PlanTab({ threadId }: PlanTabProps) {
         </div>
       )}
 
-      {items.length > 0 && (
-        <div className="border-t border-border/40 px-2 py-1.5">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full h-7 text-xs"
-            onClick={() => {
-              console.log("Rewind workspace (FS-3 placeholder)");
-            }}
-            title="Restore to checkpoint (FS-3)"
-          >
-            ↶ Rewind
-          </Button>
-        </div>
-      )}
-
       <TasksSection threadId={threadId} />
 
       <FilesTouchedSection threadId={threadId} />
