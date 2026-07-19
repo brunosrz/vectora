@@ -125,6 +125,54 @@ class TestSubagentOutputEventSchema:
         # web_search não gerou subagent_output.
         assert all(s["tool_call_id"] == "r1" for s in subs)
 
+    @pytest.mark.asyncio
+    async def test_adapt_stream_emite_subagent_output_status_error(self):
+        """Erro/borda: quando a delegação falha (ToolMessage com
+        status='error'), o subagent_output final sai com status='error' (não
+        'complete') — o card precisa distinguir falha de sucesso."""
+        from langchain_core.messages import ToolMessage
+
+        from backend.api.adapters import adapt_stream
+
+        events = [
+            {
+                "event": "on_tool_start",
+                "name": "task",
+                "data": {
+                    "input": {"subagent_type": "search", "description": "busca X"}
+                },
+                "run_id": "r-err",
+                "metadata": {},
+            },
+            {
+                "event": "on_tool_end",
+                "name": "task",
+                "data": {
+                    "output": ToolMessage(
+                        content="falha ao buscar",
+                        tool_call_id="r-err",
+                        status="error",
+                    )
+                },
+                "run_id": "r-err",
+                "metadata": {},
+            },
+        ]
+
+        async def _fake_events():
+            for e in events:
+                yield e
+
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_fake_events(), "t-sub-err")
+            if line.startswith("data: ")
+        ]
+        subs = [p for p in payloads if p.get("type") == "subagent_output"]
+        assert len(subs) == 2
+        assert subs[1]["status"] == "error"
+        assert subs[1]["content"] == "falha ao buscar"
+
 
 # ===========================================================================
 # D2 — Progresso semântico: node → label

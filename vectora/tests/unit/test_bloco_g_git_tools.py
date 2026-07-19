@@ -189,6 +189,30 @@ class TestGitStatusImpl:
         assert result["status"] == "ok"
         assert "novo.py" in result["staged"]
 
+    @pytest.mark.asyncio
+    async def test_handler_degrada_erro_inesperado_em_vez_de_500(
+        self, monkeypatch
+    ) -> None:
+        """Defesa em profundidade do endpoint HTTP: se ``_git_status_impl``
+        levantar algo além do unborn-HEAD (ex.: gitpython em estado
+        transitório), o handler ``git_status`` não deve propagar — degrada
+        para ``GitStatusResponse(is_git_repo=True)`` em vez de 500."""
+        import backend.tools.git as git_tools
+        from backend.api.handlers import workspaces
+
+        monkeypatch.setattr(
+            workspaces, "_open_workspace_repo", lambda workspace_id: object()
+        )
+
+        def _boom(repo):
+            raise RuntimeError("estado transitório do gitpython")
+
+        monkeypatch.setattr(git_tools, "_git_status_impl", _boom)
+
+        resp = await workspaces.git_status("ws-1")
+        assert resp.is_git_repo is True
+        assert resp.clean is True  # valores-default degradados, não crash
+
 
 # ===========================================================================
 # Classe 3 — _git_log_impl

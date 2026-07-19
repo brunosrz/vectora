@@ -14,6 +14,8 @@ from backend.api.handlers.mcp_marketplace import (
     InstallRequest,
     MCPConnector,
     UninstallRequest,
+    _connector_to_server,
+    _req_user_id,
     install_mcp,
     list_registry,
     uninstall_mcp,
@@ -113,3 +115,52 @@ async def test_uninstall_removes_from_functional_store(_functional_store):
 
     again = await uninstall_mcp(UninstallRequest(mcp_id=_REGISTRY[0].id), "local")
     assert again["status"] == "not_found"
+
+
+def test_connector_to_server_com_install_cmd_vazio():
+    """Erro/borda: conector sem install_cmd (string vazia) cai no fallback
+    ["npx"] sem args, em vez de estourar IndexError no split()[0]."""
+    connector = MCPConnector(id="custom", name="Custom", description="x")
+    server = _connector_to_server(connector)
+    assert server.command == "npx"
+    assert server.args == []
+    assert server.name == "custom"
+
+
+def test_req_user_id_extrai_do_request_state_ou_usa_fallback_local():
+    """_req_user_id lê request.state.user.id quando presente; sem usuário
+    autenticado no state, cai no fallback 'local' (uso desktop single-user)."""
+    from types import SimpleNamespace
+    from typing import Any
+
+    req_autenticado: Any = SimpleNamespace(
+        state=SimpleNamespace(user=SimpleNamespace(id="uuid-123"))
+    )
+    assert _req_user_id(req_autenticado) == "uuid-123"
+
+    req_sem_user: Any = SimpleNamespace(state=SimpleNamespace(user=None))
+    assert _req_user_id(req_sem_user) == "local"
+
+
+@pytest.mark.asyncio
+async def test_install_uninstall_mcp_tratam_excecao_do_store(
+    _functional_store, monkeypatch
+):
+    """Erro/borda: plugins.add_server/remove_server lançando não deve propagar
+    — install_mcp/uninstall_mcp devolvem status='error' (tools defensivas §11)."""
+
+    def _boom_add(*a, **k):
+        raise RuntimeError("disco cheio")
+
+    def _boom_remove(*a, **k):
+        raise RuntimeError("arquivo corrompido")
+
+    monkeypatch.setattr(_functional_store, "add_server", _boom_add)
+    out_install = await install_mcp(InstallRequest(mcp_id=_REGISTRY[0].id))
+    assert out_install["status"] == "error"
+    assert "disco cheio" in out_install["error"]
+
+    monkeypatch.setattr(_functional_store, "remove_server", _boom_remove)
+    out_uninstall = await uninstall_mcp(UninstallRequest(mcp_id=_REGISTRY[0].id))
+    assert out_uninstall["status"] == "error"
+    assert "arquivo corrompido" in out_uninstall["error"]

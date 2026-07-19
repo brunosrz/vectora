@@ -797,6 +797,42 @@ describe("useStreamHandler.processStream", () => {
     expect(sub.isComplete).toBe(true);
     expect(sub.isStreaming).toBe(false);
   });
+
+  it("subagent_output com status='error' marca isComplete e carrega a mensagem de erro", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "subagent_output",
+          subagent_type: "search",
+          description: "busca X",
+          status: "running",
+          tool_call_id: "r-err",
+          content: "",
+        },
+        {
+          type: "subagent_output",
+          subagent_type: "search",
+          description: "busca X",
+          status: "error",
+          tool_call_id: "r-err",
+          content: "falha ao buscar",
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("delega pro search", "a1");
+
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.subgraphOutputs ?? []).toHaveLength(1);
+    const sub = a!.subgraphOutputs![0];
+    expect(sub.output).toBe("falha ao buscar");
+    // O status "running" não recebe tratamento distinto de "complete": ambos
+    // saem de streaming e ficam marcados como concluídos (o conteúdo é que
+    // comunica a falha ao usuário).
+    expect(sub.isComplete).toBe(true);
+    expect(sub.isStreaming).toBe(false);
+  });
 });
 
 // ============================================================================

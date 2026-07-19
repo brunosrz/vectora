@@ -75,10 +75,15 @@ class _SeqAgent:
     def __init__(self, results: list[Any]) -> None:
         self.results = list(results)
         self.calls: list[dict[str, Any]] = []
+        self.state_updates: list[dict[str, Any]] = []
 
     async def ainvoke(self, inp, config=None, context=None) -> Any:
         self.calls.append({"input": inp, "config": config, "context": context})
         return self.results.pop(0)
+
+    async def aupdate_state(self, config, values) -> Any:
+        self.state_updates.append({"config": config, "values": values})
+        return None
 
 
 def _patch_agent(monkeypatch, agent: Any) -> None:
@@ -469,6 +474,207 @@ async def test_resume_background_run_rejects_unknown_or_finished_run(db, monkeyp
     assert await bg.resume_background_run(done_run["id"], "approve") is None
 
 
+async def test_resume_background_run_reject_and_edit_decisions(db, monkeypatch):
+    """decision='reject' e decision='edit:<json>' montam o Command(resume=...)
+    correto (action distinta dos demais); ambos concluem no fake agent."""
+    from langgraph.types import Command
+
+    task_reject = await bg.create_task(
+        session_id="sess-reject",
+        user_id="u",
+        kind="routine",
+        name="R",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    run_id_reject = "run-reject"
+    await bg._insert_run(run_id_reject, task_reject, "bg-reject", "manual")
+    await bg._mark_run_awaiting(run_id_reject, "aguardando terminal")
+
+    agent = _SeqAgent([{"messages": [{"content": "rejeitado"}]}])
+    _patch_agent(monkeypatch, agent)
+    status = await bg.resume_background_run(run_id_reject, "reject")
+    assert status == "done"
+    assert isinstance(agent.calls[0]["input"], Command)
+    assert agent.calls[0]["input"].resume == {"action": "reject"}
+
+    task_edit = await bg.create_task(
+        session_id="sess-edit",
+        user_id="u",
+        kind="routine",
+        name="E",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    run_id_edit = "run-edit"
+    await bg._insert_run(run_id_edit, task_edit, "bg-edit", "manual")
+    await bg._mark_run_awaiting(run_id_edit, "aguardando terminal")
+
+    agent2 = _SeqAgent([{"messages": [{"content": "editado"}]}])
+    _patch_agent(monkeypatch, agent2)
+    status2 = await bg.resume_background_run(run_id_edit, 'edit:{"cmd": "ls"}')
+    assert status2 == "done"
+    assert agent2.calls[0]["input"].resume == {"action": "edit", "args": {"cmd": "ls"}}
+
+
+async def test_resume_background_run_invalid_decision_marks_error(db, monkeypatch):
+    """Erro/borda: decision desconhecida levanta ValueError, capturado pelo
+    except geral — a run vira 'error' (não fica presa em awaiting_approval) e
+    o resume devolve None."""
+    task = await bg.create_task(
+        session_id="sess-bad-decision",
+        user_id="u",
+        kind="routine",
+        name="X",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    run_id = "run-bad-decision"
+    await bg._insert_run(run_id, task, "bg-bad", "manual")
+    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+
+    agent = _SeqAgent([{"messages": [{"content": "nunca chega"}]}])
+    _patch_agent(monkeypatch, agent)
+
+    status = await bg.resume_background_run(run_id, "banana")
+    assert status is None
+    assert agent.calls == []  # nem chegou a invocar o agente
+
+    run = await bg._get_run(run_id)
+    assert run is not None
+    assert run["status"] == "error"
+    assert "decision inválida" in run["summary"]
+
+
+async def test_resume_background_run_repauses_same_turn(db, monkeypatch):
+    """Se o resume dispara OUTRA ação destrutiva no mesmo turno, a run continua
+    'awaiting_approval' (não vira 'done') — retomável de novo."""
+    from types import SimpleNamespace
+
+    task = await bg.create_task(
+        session_id="sess-repause",
+        user_id="u",
+        kind="routine",
+        name="Y",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    run_id = "run-repause"
+    await bg._insert_run(run_id, task, "bg-repause", "manual")
+    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+
+    agent = _SeqAgent(
+        [{"__interrupt__": [SimpleNamespace(value=[{"action": "terminal"}])]}]
+    )
+    _patch_agent(monkeypatch, agent)
+
+    status = await bg.resume_background_run(run_id, "approve")
+    assert status == "awaiting_approval"
+
+    run = await bg._get_run(run_id)
+    assert run is not None
+    assert run["status"] == "awaiting_approval"
+    assert "terminal" in run["summary"]
+
+
+async def test_resume_background_run_ainvoke_exception_marks_error(db, monkeypatch):
+    """Erro/borda: exceção do agent.ainvoke durante o resume marca a run como
+    'error' (não fica presa em awaiting_approval) e devolve None."""
+    task = await bg.create_task(
+        session_id="sess-resume-exc",
+        user_id="u",
+        kind="routine",
+        name="Z",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    run_id = "run-resume-exc"
+    await bg._insert_run(run_id, task, "bg-resume-exc", "manual")
+    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+
+    agent = _FakeAgent(exc=RuntimeError("modelo indisponível"))
+    _patch_agent(monkeypatch, agent)
+
+    status = await bg.resume_background_run(run_id, "approve")
+    assert status is None
+
+    run = await bg._get_run(run_id)
+    assert run is not None
+    assert run["status"] == "error"
+    assert "modelo indisponível" in run["summary"]
+
+
+async def test_resume_background_run_reporta_conclusao_na_sessao_mae(db, monkeypatch):
+    """report_to_parent_session também é chamado a partir do resume (não só de
+    run_task) — a sessão-mãe recebe o aviso de conclusão pós-aprovação."""
+    task = await bg.create_task(
+        session_id="parent-resume",
+        user_id="u",
+        kind="routine",
+        name="Aprovada",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    run_id = "run-report-resume"
+    await bg._insert_run(run_id, task, "bg-report-resume", "manual")
+    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+
+    agent = _SeqAgent([{"messages": [{"content": "ação concluída"}]}])
+    _patch_agent(monkeypatch, agent)
+
+    status = await bg.resume_background_run(run_id, "approve")
+    assert status == "done"
+    assert len(agent.state_updates) == 1
+    upd = agent.state_updates[0]
+    assert upd["config"]["configurable"]["thread_id"] == "parent-resume"
+    assert "ação concluída" in upd["values"]["messages"][0].content
+
+
+async def test_describe_interrupt_non_list_payload_and_internal_exception():
+    """Erro/borda: payload que não é lista/dict cai no fallback str truncado;
+    um item cujo 'action_request' não é dict dispara o except interno (e
+    também cai no mesmo fallback, sem propagar)."""
+    assert bg._describe_interrupt("motivo qualquer") == (
+        "Aguardando aprovação: motivo qualquer"
+    )
+
+    # action_request não-dict: `"oops".get(...)` estoura AttributeError,
+    # capturado pelo except interno de _describe_interrupt.
+    payload = [{"action_request": "oops"}]
+    desc = bg._describe_interrupt(payload)
+    assert desc.startswith("Aguardando aprovação: ")
+    assert "oops" in desc
+
+
+async def test_report_to_parent_session_tolera_falha_do_aupdate_state(db, monkeypatch):
+    """Erro/borda: aupdate_state falhando (ex.: sessão-mãe corrompida) não deve
+    propagar — report_to_parent_session é best-effort e devolve False."""
+
+    class _BoomAgent:
+        async def aupdate_state(self, config, values):
+            raise RuntimeError("checkpoint indisponível")
+
+    _patch_agent(monkeypatch, _BoomAgent())
+
+    task = bg.BackgroundTask(
+        id="t-boom",
+        session_id="parent-boom",
+        user_id="u",
+        kind="routine",
+        name="X",
+        instruction="i",
+        trigger_type="manual",
+    )
+    ok = await bg.report_to_parent_session(task, "bg-boom", "resumo")
+    assert ok is False
+
+
 # ---------------------------------------------------------------------------
 # Sprint 3.3 — tools do orquestrador: listar/consultar tasks e runs
 # ---------------------------------------------------------------------------
@@ -538,6 +744,38 @@ async def test_orchestrator_tools_list_status_result(db, monkeypatch):
     assert bad_result["status"] == "error"
 
 
+async def test_list_background_tasks_sem_session_id_e_task_sem_run(db, monkeypatch):
+    """Erro/borda: config sem thread_id → erro tipado (sem exceção). Task que
+    nunca rodou aparece com last_run=None (não quebra o dict de latest_by_task)."""
+    import json as _json
+
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
+    monkeypatch.setenv("LANGSMITH_TRACING", "false")
+
+    from langchain_core.runnables import RunnableConfig
+
+    from backend.tools.background import list_background_tasks
+
+    sem_thread: RunnableConfig = {"configurable": {"user_id": "u"}}
+    out_sem = _json.loads(await list_background_tasks.ainvoke({}, config=sem_thread))
+    assert out_sem["status"] == "error"
+
+    await bg.create_task(
+        session_id="sess-no-run",
+        user_id="u",
+        kind="routine",
+        name="Nunca rodou",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    cfg: RunnableConfig = {"configurable": {"thread_id": "sess-no-run", "user_id": "u"}}
+    out = _json.loads(await list_background_tasks.ainvoke({}, config=cfg))
+    assert out["status"] == "ok"
+    assert len(out["tasks"]) == 1
+    assert out["tasks"][0]["last_run"] is None
+
+
 # ---------------------------------------------------------------------------
 # Sprint 3.4 — intervenção: cancelar / aprovar via tool do orquestrador
 # ---------------------------------------------------------------------------
@@ -590,6 +828,70 @@ async def test_cancel_and_approve_task_action(db, monkeypatch):
         )
     )
     assert out2["status"] == "error"
+
+
+async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
+    """approve_task_action delega approve/reject/edit para resume_background_run
+    (só 'cancel' tinha cobertura via tool até aqui)."""
+    import json as _json
+
+    from langchain_core.runnables import RunnableConfig
+
+    from backend.tools.background import approve_task_action
+
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
+    monkeypatch.setenv("LANGSMITH_TRACING", "false")
+
+    task = await bg.create_task(
+        session_id="sess-approve-tool",
+        user_id="u",
+        kind="routine",
+        name="Perigosa",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    cfg: RunnableConfig = {
+        "configurable": {"thread_id": "sess-approve-tool", "user_id": "u"}
+    }
+
+    run_approve = "run-tool-approve"
+    await bg._insert_run(run_approve, task, "sess-approve-tool", "manual")
+    await bg._mark_run_awaiting(run_approve, "aguardando terminal")
+    agent = _SeqAgent([{"messages": [{"content": "ok"}]}])
+    _patch_agent(monkeypatch, agent)
+    out_approve = _json.loads(
+        await approve_task_action.ainvoke(
+            {"run_id": run_approve, "decision": "approve"}, config=cfg
+        )
+    )
+    assert out_approve == {"status": "ok", "run_status": "done"}
+
+    run_reject = "run-tool-reject"
+    await bg._insert_run(run_reject, task, "sess-approve-tool", "manual")
+    await bg._mark_run_awaiting(run_reject, "aguardando terminal")
+    agent2 = _SeqAgent([{"messages": [{"content": "recusado"}]}])
+    _patch_agent(monkeypatch, agent2)
+    out_reject = _json.loads(
+        await approve_task_action.ainvoke(
+            {"run_id": run_reject, "decision": "reject"}, config=cfg
+        )
+    )
+    assert out_reject == {"status": "ok", "run_status": "done"}
+    assert agent2.calls[0]["input"].resume == {"action": "reject"}
+
+    run_edit = "run-tool-edit"
+    await bg._insert_run(run_edit, task, "sess-approve-tool", "manual")
+    await bg._mark_run_awaiting(run_edit, "aguardando terminal")
+    agent3 = _SeqAgent([{"messages": [{"content": "editado"}]}])
+    _patch_agent(monkeypatch, agent3)
+    out_edit = _json.loads(
+        await approve_task_action.ainvoke(
+            {"run_id": run_edit, "decision": 'edit:{"path": "x"}'}, config=cfg
+        )
+    )
+    assert out_edit == {"status": "ok", "run_status": "done"}
+    assert agent3.calls[0]["input"].resume == {"action": "edit", "args": {"path": "x"}}
 
 
 # ---------------------------------------------------------------------------

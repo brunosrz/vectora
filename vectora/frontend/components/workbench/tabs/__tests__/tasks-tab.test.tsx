@@ -136,6 +136,57 @@ describe("TasksTab", () => {
         body: JSON.stringify({ decision: "approve" }),
       }),
     );
+    await vi.waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+    vi.unstubAllGlobals();
+  });
+
+  it("rejeitar envia decision='reject' e refetch depois; cancelar envia decision='cancel'", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal("fetch", fetchMock);
+    const refetch = vi.fn();
+
+    mockTasks.mockReturnValue(
+      baseHook({
+        refetch,
+        runs: [
+          {
+            id: "run-2",
+            task_id: "t1",
+            run_thread_id: "bg-t1-2",
+            trigger_source: "manual",
+            status: "awaiting_approval",
+            summary: "aguardando terminal",
+            started_at: "2025",
+            finished_at: null,
+          },
+        ],
+      }),
+    );
+
+    render(<TasksTab threadId="thr-2" />);
+
+    fireEvent.click(screen.getByText("background_reject"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/sessions/thr-2/background/runs/run-2/resume",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ decision: "reject" }),
+      }),
+    );
+    await vi.waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByText("background_cancel_run"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/sessions/thr-2/background/runs/run-2/resume",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ decision: "cancel" }),
+      }),
+    );
+    await vi.waitFor(() => expect(refetch).toHaveBeenCalledTimes(2));
     vi.unstubAllGlobals();
   });
 

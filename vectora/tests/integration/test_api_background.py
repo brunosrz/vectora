@@ -18,12 +18,14 @@ from fastapi import BackgroundTasks, HTTPException
 import backend
 from backend.api.handlers.background import (
     CreateTaskRequest,
+    ResumeRunRequest,
     UpdateTaskRequest,
     delete_task_endpoint,
     get_runs,
     get_tasks,
     patch_task,
     post_task,
+    resume_run_endpoint,
     run_task_endpoint,
 )
 from backend.scheduling import background_tasks as bg
@@ -176,3 +178,86 @@ async def test_manual_run_creates_run_and_registers_thread(db, monkeypatch):
     with pytest.raises(HTTPException) as wrong:
         await run_task_endpoint(_req(), "outra-thread", created.id, BackgroundTasks())
     assert wrong.value.status_code == 404
+
+
+async def test_resume_run_endpoint_cancel_and_approve(db, monkeypatch):
+    """POST /runs/{id}/resume: cancela sincronamente (decision='cancel') ou
+    enfileira o resume (approve/reject) via BackgroundTasks — mesmo padrão do
+    disparo manual. Erro/borda: run inexistente → 404; run que não está
+    aguardando aprovação → 409."""
+    created = await post_task(
+        _req(),
+        "thread-resume",
+        CreateTaskRequest(
+            kind="routine",
+            name="Perigosa",
+            instruction="i",
+            trigger_type="manual",
+            trigger_config={"permission_mode": "ask"},
+        ),
+    )
+
+    # Erro/borda: run inexistente → 404.
+    with pytest.raises(HTTPException) as not_found:
+        await resume_run_endpoint(
+            _req(), "thread-resume", "nao-existe", ResumeRunRequest(), BackgroundTasks()
+        )
+    assert not_found.value.status_code == 404
+
+    task = await bg.get_task(created.id)
+    assert task is not None
+
+    # Registra uma run pausada em HITL.
+    run_id = "run-http-resume"
+    await bg._insert_run(run_id, task, "bg-thread-resume", "manual")
+
+    # Erro/borda: run 'running' (ainda não pausou) → 409.
+    with pytest.raises(HTTPException) as not_awaiting:
+        await resume_run_endpoint(
+            _req(), "thread-resume", run_id, ResumeRunRequest(), BackgroundTasks()
+        )
+    assert not_awaiting.value.status_code == 409
+
+    await bg._mark_run_awaiting(run_id, "Aguardando aprovação: terminal")
+
+    # decision='cancel' — síncrono, run vira 'cancelled' imediatamente.
+    resp_cancel = await resume_run_endpoint(
+        _req(),
+        "thread-resume",
+        run_id,
+        ResumeRunRequest(decision="cancel"),
+        BackgroundTasks(),
+    )
+    assert resp_cancel == {"status": "cancelled", "run_id": run_id}
+    cancelled = await bg._get_run(run_id)
+    assert cancelled is not None
+    assert cancelled["status"] == "cancelled"
+
+    # decision='approve' num run pendente — enfileira via BackgroundTasks.
+    run_id_2 = "run-http-approve"
+    await bg._insert_run(run_id_2, task, "bg-thread-resume-2", "manual")
+    await bg._mark_run_awaiting(run_id_2, "Aguardando aprovação: terminal")
+
+    agent = SimpleNamespace()
+
+    async def _ainvoke(inp, config=None, context=None) -> Any:
+        return {"messages": [{"content": "concluído"}]}
+
+    agent.ainvoke = _ainvoke
+
+    async def _get_agent(user_id: str | None = None, model: str = "") -> Any:
+        return agent
+
+    monkeypatch.setattr(agent_factory, "get_user_agent", _get_agent)
+
+    bt = BackgroundTasks()
+    resp_approve = await resume_run_endpoint(
+        _req(), "thread-resume", run_id_2, ResumeRunRequest(decision="approve"), bt
+    )
+    assert resp_approve == {"status": "queued", "run_id": run_id_2}
+
+    await bt()  # executa o resume enfileirado (o que o FastAPI faria depois)
+
+    approved = await bg._get_run(run_id_2)
+    assert approved is not None
+    assert approved["status"] == "done"
