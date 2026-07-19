@@ -58,6 +58,15 @@ def _relay_callback_url(
 #: kind="oauth"  → fluxo OAuth delegado; o token é salvo como env_override.
 INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
     {
+        "id": "gemini",
+        "name": "Google Gemini",
+        "env_var": "GOOGLE_API_KEY",
+        "kind": "apikey",
+        "description": "Gemini 2.5 (Pro/Flash) — provider padrão do Vectora",
+        "docs_url": "https://aistudio.google.com/app/apikey",
+        "icon": "gemini",
+    },
+    {
         "id": "openai",
         "name": "OpenAI",
         "env_var": "OPENAI_API_KEY",
@@ -106,6 +115,10 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "docs_url": "https://github.com/settings/tokens",
         "icon": "github",
         "oauth_scopes": ["repo", "user:email", "read:org"],
+        # GITHUB_PERSONAL_ACCESS_TOKEN é a convenção do servidor MCP oficial
+        # do GitHub (marketplace) — reconhecida aqui como alias pra "conectado"
+        # não depender de saber qual dos dois nomes o usuário configurou.
+        "env_var_aliases": ["GITHUB_PERSONAL_ACCESS_TOKEN"],
     },
     {
         "id": "gitlab",
@@ -277,9 +290,10 @@ async def list_integrations(request: Request) -> dict:
 
     items = []
     for integ in INTEGRATIONS_REGISTRY:
-        env_var = integ["env_var"]
-        # Considera conectado se há override do usuário OU se a env global está setada
-        connected = bool(overrides.get(env_var) or os.environ.get(env_var))
+        env_vars = [integ["env_var"], *integ.get("env_var_aliases", [])]
+        # Considera conectado se há override do usuário OU env global setada,
+        # em qualquer um dos nomes aceitos (env_var principal ou alias).
+        connected = any(overrides.get(v) or os.environ.get(v) for v in env_vars)
         items.append(
             {
                 **integ,
@@ -300,9 +314,14 @@ async def verify_integration(request: Request, integration_id: str) -> dict:
             status_code=404, detail=f"Integração '{integration_id}' desconhecida"
         )
 
-    env_var = integ["env_var"]
-    # Lê do env efetivo (system + user overrides já mesclados pelo middleware)
-    token = os.environ.get(env_var, "")
+    # Lê do env efetivo (system + user overrides já mesclados pelo middleware),
+    # tentando o env_var principal e, se ausente, os aliases aceitos. Não é
+    # senha hardcoded (B105 falso-positivo) — é o valor inicial antes do loop.
+    token = ""  # nosec B105
+    for v in [integ["env_var"], *integ.get("env_var_aliases", [])]:
+        token = os.environ.get(v, "")
+        if token:
+            break
     if not token:
         return {"ok": False, "message": "Chave não configurada"}
 

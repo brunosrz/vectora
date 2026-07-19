@@ -97,3 +97,23 @@ class TestIntegrationsRegistry:
         openai = next((i for i in INTEGRATIONS_REGISTRY if i["id"] == "openai"), None)
         assert openai is not None
         assert openai["kind"] == "apikey"
+
+    def test_gemini_present_com_google_api_key(self):
+        """Gemini/Google Gemini faltava no catálogo — usava GOOGLE_API_KEY
+        (mesma env que o resto do backend já lê), não GEMINI_API_KEY."""
+        from backend.api.handlers.oauth import INTEGRATIONS_REGISTRY
+
+        gemini = next((i for i in INTEGRATIONS_REGISTRY if i["id"] == "gemini"), None)
+        assert gemini is not None
+        assert gemini["env_var"] == "GOOGLE_API_KEY"
+        assert gemini["kind"] == "apikey"
+
+    def test_github_declara_alias_personal_access_token(self):
+        """GITHUB_PERSONAL_ACCESS_TOKEN é a convenção do servidor MCP oficial
+        do GitHub — reconhecida como alias pra não depender de qual dos dois
+        nomes o usuário configurou."""
+        from backend.api.handlers.oauth import INTEGRATIONS_REGISTRY
+
+        github = next((i for i in INTEGRATIONS_REGISTRY if i["id"] == "github"), None)
+        assert github is not None
+        assert "GITHUB_PERSONAL_ACCESS_TOKEN" in github.get("env_var_aliases", [])

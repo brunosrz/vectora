@@ -101,6 +101,9 @@ export function EnvironmentDialog() {
           className="flex-1 overflow-hidden flex flex-col"
         >
           <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2">
+            <TabsTrigger value="integracoes" className="rounded-md text-xs">
+              Integrações
+            </TabsTrigger>
             <TabsTrigger value="envs" className="rounded-md text-xs">
               Envs
             </TabsTrigger>
@@ -113,14 +116,14 @@ export function EnvironmentDialog() {
             <TabsTrigger value="gateways" className="rounded-md text-xs">
               Gateways
             </TabsTrigger>
-            <TabsTrigger value="integracoes" className="rounded-md text-xs">
-              Integrações
-            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto pt-4">
             <ErrorBoundary>
               <Suspense fallback={<TabFallback />}>
+                <TabsContent value="integracoes" className="mt-0">
+                  <IntegracoesTab />
+                </TabsContent>
                 <TabsContent value="envs" className="mt-0">
                   <EnvsTab />
                 </TabsContent>
@@ -132,9 +135,6 @@ export function EnvironmentDialog() {
                 </TabsContent>
                 <TabsContent value="gateways" className="mt-0">
                   <GatewaysTab />
-                </TabsContent>
-                <TabsContent value="integracoes" className="mt-0">
-                  <IntegracoesTab />
                 </TabsContent>
               </Suspense>
             </ErrorBoundary>

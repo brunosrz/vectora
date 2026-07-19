@@ -300,3 +300,44 @@ class TestIntegrationsRegistry:
                 assert integ.get("oauth_scopes") or integ.get("parent"), (
                     f"{integ['id']} oauth sem oauth_scopes nem parent"
                 )
+
+
+# ---------------------------------------------------------------------------
+# GET /integrations — connected via env_var_aliases (Sprint B: token sem relay)
+# ---------------------------------------------------------------------------
+
+
+class TestListIntegrationsAlias:
+    def test_github_connected_via_alias_sem_env_var_principal(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        """Erro/borda: usuário configurou só GITHUB_PERSONAL_ACCESS_TOKEN (o
+        nome que o MCP marketplace usa), sem GITHUB_TOKEN — o card GitHub
+        ainda deve aparecer conectado, não depende do relay."""
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        monkeypatch.setenv("GITHUB_PERSONAL_ACCESS_TOKEN", "ghp_fake")
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        assert resp.status_code == 200
+        github = next(i for i in resp.json()["integrations"] if i["id"] == "github")
+        assert github["connected"] is True
+
+    def test_gemini_desconectado_sem_google_api_key(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        assert resp.status_code == 200
+        gemini = next(i for i in resp.json()["integrations"] if i["id"] == "gemini")
+        assert gemini["connected"] is False
+
+    def test_gemini_conectado_com_google_api_key(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        monkeypatch.setenv("GOOGLE_API_KEY", "AIza-fake")
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        assert resp.status_code == 200
+        gemini = next(i for i in resp.json()["integrations"] if i["id"] == "gemini")
+        assert gemini["connected"] is True
