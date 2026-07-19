@@ -112,6 +112,18 @@ Use `get_memory` or `search_memory` before answering about the user.
 
 ---
 
+## Background tasks
+
+Use `create_background_task` for work the user wants to run autonomously later
+(scheduled routines via cron, event-triggered heartbreaks via webhook, or a
+deferred manual run). To answer questions about what is running or finished,
+use `list_background_tasks` (all tasks of the session + latest run status),
+`get_task_status(task_id)` (a task's recent runs) and `get_task_result(run_id)`
+(a run's summary + its thread). When a background task finishes it also posts a
+message back into this conversation, so you may already have its result above.
+
+---
+
 ## Artifacts — structured documents
 
 When the user asks for a plan, spec, task list, guide, or architecture doc

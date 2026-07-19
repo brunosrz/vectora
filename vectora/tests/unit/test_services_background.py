@@ -470,6 +470,75 @@ async def test_resume_background_run_rejects_unknown_or_finished_run(db, monkeyp
 
 
 # ---------------------------------------------------------------------------
+# Sprint 3.3 — tools do orquestrador: listar/consultar tasks e runs
+# ---------------------------------------------------------------------------
+
+
+async def test_orchestrator_tools_list_status_result(db, monkeypatch):
+    """list_background_tasks/get_task_status/get_task_result devolvem o estado
+    das tasks e runs da sessão — o orquestrador principal fica sabendo o que
+    está rodando/terminou. Erro/borda: task/run inexistente devolve erro
+    tipado, não exceção (§11)."""
+    import json as _json
+
+    # Hermético: invocar tools via .ainvoke dispara callbacks do LangChain que
+    # sondam o ambiente via `git describe` (langsmith) — desligado aqui para não
+    # depender do git ambiente nem da ordem do suite.
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
+    monkeypatch.setenv("LANGSMITH_TRACING", "false")
+
+    from backend.tools.background import (
+        get_task_result,
+        get_task_status,
+        list_background_tasks,
+    )
+
+    task = await bg.create_task(
+        session_id="sess-tools",
+        user_id="u",
+        kind="routine",
+        name="Diária",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    # Registra uma run concluída manualmente (sem invocar o agente).
+    run_id = "run-xyz"
+    await bg._insert_run(run_id, task, "sess-tools", "manual")
+    await bg._finish_run(run_id, "done", "3 itens processados")
+
+    from langchain_core.runnables import RunnableConfig
+
+    cfg: RunnableConfig = {"configurable": {"thread_id": "sess-tools", "user_id": "u"}}
+
+    listed = _json.loads(await list_background_tasks.ainvoke({}, config=cfg))
+    assert listed["status"] == "ok"
+    assert len(listed["tasks"]) == 1
+    assert listed["tasks"][0]["task_id"] == task.id
+    assert listed["tasks"][0]["last_run"]["status"] == "done"
+
+    status = _json.loads(
+        await get_task_status.ainvoke({"task_id": task.id}, config=cfg)
+    )
+    assert status["status"] == "ok"
+    assert any(r["run_id"] == run_id for r in status["runs"])
+
+    result = _json.loads(await get_task_result.ainvoke({"run_id": run_id}, config=cfg))
+    assert result["status"] == "ok"
+    assert result["summary"] == "3 itens processados"
+
+    # Erro/borda: ids inexistentes → erro tipado.
+    bad_status = _json.loads(
+        await get_task_status.ainvoke({"task_id": "nope"}, config=cfg)
+    )
+    assert bad_status["status"] == "error"
+    bad_result = _json.loads(
+        await get_task_result.ainvoke({"run_id": "nope"}, config=cfg)
+    )
+    assert bad_result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
 # Scheduler (interval)
 # ---------------------------------------------------------------------------
 

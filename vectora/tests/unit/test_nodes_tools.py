@@ -68,7 +68,19 @@ def test_search_memory_registered():
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas — atualize ao
     # adicionar/remover tool em backend/nodes/tools.py.
-    assert len(ALL_TOOLS) == 81
+    assert len(ALL_TOOLS) == 84
+
+
+def test_background_task_tools_registered():
+    # Sprint 3.3 — o orquestrador precisa poder listar/consultar tasks/runs.
+    names = {t.name for t in ALL_TOOLS}
+    for expected in (
+        "create_background_task",
+        "list_background_tasks",
+        "get_task_status",
+        "get_task_result",
+    ):
+        assert expected in names, f"Tool de background ausente: {expected}"
 
 
 def test_browser_tools_registered():

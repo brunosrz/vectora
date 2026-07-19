@@ -642,7 +642,7 @@ async def _get_run(run_id: str) -> dict[str, Any] | None:
     conn = await _get_db()
     try:
         cur = await conn.execute(
-            "SELECT id, task_id, session_id, run_thread_id, status "
+            "SELECT id, task_id, session_id, run_thread_id, status, summary "
             "FROM vectora_background_runs WHERE id = ?",
             (run_id,),
         )
