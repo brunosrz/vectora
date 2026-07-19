@@ -547,6 +547,53 @@ class TestEnvOverridesEndpoints:
         r = client.get("/auth/envs", headers=headers)
         assert "DEL_KEY" not in r.json()["keys"]
 
+    def test_set_env_llm_key_applies_to_os_environ_and_settings(
+        self, client, monkeypatch
+    ):
+        """Regressão do bug real: colar uma key de LLM (GOOGLE_API_KEY) na
+        aba Envs precisa valer na PRÓXIMA chamada ao provider — antes só
+        gravava em env_overrides_json (banco por-usuário), nunca chegava em
+        os.environ/settings, e a chamada real ao Gemini continuava usando a
+        key antiga do boot (erro de quota já na 1ª mensagem)."""
+        import os
+
+        from backend.settings import settings
+
+        access = self._get_fresh_token(client)
+        headers = {"Authorization": f"Bearer {access}"}
+        monkeypatch.setenv("GOOGLE_API_KEY", "old-boot-key")
+        original_setting = settings.google_api_key
+
+        try:
+            r = client.post(
+                "/auth/envs",
+                json={"key": "GOOGLE_API_KEY", "value": "AIza-key-paga-nova"},
+                headers=headers,
+            )
+            assert r.status_code == 200
+            assert os.environ["GOOGLE_API_KEY"] == "AIza-key-paga-nova"
+            assert settings.google_api_key == "AIza-key-paga-nova"
+        finally:
+            object.__setattr__(settings, "google_api_key", original_setting)
+
+    def test_set_env_unknown_key_stays_override_only(self, client, monkeypatch):
+        """Erro/borda: chave desconhecida (não é key de LLM/search, ex.
+        token OAuth de integração) preserva o comportamento antigo — só vai
+        pro override por-usuário, nunca mexe em os.environ/settings."""
+        import os
+
+        access = self._get_fresh_token(client)
+        headers = {"Authorization": f"Bearer {access}"}
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+
+        r = client.post(
+            "/auth/envs",
+            json={"key": "GITHUB_TOKEN", "value": "ghp_fake"},
+            headers=headers,
+        )
+        assert r.status_code == 200
+        assert "GITHUB_TOKEN" not in os.environ
+
     def test_envs_without_auth_returns_401(self, app_and_db):
         from fastapi.testclient import TestClient
 

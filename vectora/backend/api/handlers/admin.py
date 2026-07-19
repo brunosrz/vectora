@@ -726,7 +726,7 @@ async def get_api_keys(request: Request) -> dict:
 async def patch_api_keys(request: Request, body: PatchApiKeysBody) -> dict:
     """Salva API keys em ~/.vectora/.env e atualiza os.environ em runtime."""
     require_admin(_get_user(request))
-    from backend.cli.keys import upsert_env_key
+    from backend.services.env_keys import apply_llm_env_key
 
     env = _env_file()
     updated: list[str] = []
@@ -737,18 +737,7 @@ async def patch_api_keys(request: Request, body: PatchApiKeysBody) -> dict:
     }
     for env_var, value in mapping.items():
         if value is not None:
-            v = value.strip()
-            upsert_env_key(env, env_var, v)
-            os.environ[env_var] = v
-            # Atualiza settings em runtime para o backend usar sem reiniciar.
-            try:
-                from backend.settings import settings
-
-                attr = env_var.lower()
-                if hasattr(settings, attr):
-                    object.__setattr__(settings, attr, v or None)
-            except Exception:
-                pass
+            apply_llm_env_key(env, env_var, value)
             updated.append(env_var)
     logger.info(
         "admin: api-keys atualizadas por user_id=%s: %s", _get_user(request).id, updated

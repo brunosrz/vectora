@@ -577,11 +577,24 @@ async def get_envs(request: Request) -> dict:
 @router.post("/envs")
 async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
     from backend.rbac import auth as auth_svc
+    from backend.services.env_keys import KNOWN_LLM_ENV_KEYS
 
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
     await auth_svc.set_env_override(user.id, body.key, body.value)
+
+    # Keys de LLM/search (GOOGLE_API_KEY etc.) precisam valer na PRÓXIMA
+    # chamada ao provider, não só no próximo boot — env_overrides_json é
+    # lido só pra integrações OAuth, nunca chega em os.environ. Aplica
+    # também pelo mesmo caminho de /admin/api-keys (single-tenant por
+    # instância — seguro aplicar globalmente).
+    key_upper = body.key.upper()
+    if key_upper in KNOWN_LLM_ENV_KEYS:
+        from backend.services.env_keys import apply_llm_env_key, default_env_file
+
+        apply_llm_env_key(default_env_file(), key_upper, body.value)
+
     return {"ok": True}
 
 
