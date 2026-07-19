@@ -177,6 +177,7 @@ function TasksSection({ threadId }: { threadId: string }) {
 
 export function PlanTab({ threadId }: PlanTabProps) {
   const items = useWorkbenchStore((s) => s.getPlan(threadId).items);
+  const todos = useWorkbenchStore((s) => s.getTodos(threadId));
   const fetchedAt = useWorkbenchStore((s) => s.getPlan(threadId).fetchedAt);
   const openSlug = useWorkbenchStore((s) => s.getPlan(threadId).openSlug);
   const openContent = useWorkbenchStore((s) =>
@@ -227,7 +228,10 @@ export function PlanTab({ threadId }: PlanTabProps) {
     );
   }
 
-  if (items.length === 0) {
+  // "Sem planos" só quando NÃO há artifact salvo NEM checklist do write_todos.
+  // Plan Mode gera o plano via write_todos (todos), sem create_artifact — olhar
+  // só `items` (artifacts) escondia o plano inteiro atrás do empty-state.
+  if (items.length === 0 && todos.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3 p-4 text-center">
         <FileText className="w-6 h-6 text-muted-foreground/40" />
@@ -255,52 +259,54 @@ export function PlanTab({ threadId }: PlanTabProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto py-1">
-        {items.map((item) => {
-          const slug = fileSlug(item.path);
-          const active = slug === openSlug;
-          return (
-            <button
-              key={item.path}
-              onClick={() => handleOpen(item)}
-              className={`w-full flex items-start gap-2 px-2 py-2 text-left text-xs hover:bg-muted/40 border-b border-border/40 ${
-                active ? "bg-muted/40" : ""
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5 shrink-0 text-primary mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-foreground">
-                  {item.title}
-                </p>
-                {item.content_preview && (
-                  <p className="truncate text-[11px] text-muted-foreground">
-                    {item.content_preview}
+      {items.length > 0 && (
+        <div className="flex-1 overflow-y-auto py-1">
+          {items.map((item) => {
+            const slug = fileSlug(item.path);
+            const active = slug === openSlug;
+            return (
+              <button
+                key={item.path}
+                onClick={() => handleOpen(item)}
+                className={`w-full flex items-start gap-2 px-2 py-2 text-left text-xs hover:bg-muted/40 border-b border-border/40 ${
+                  active ? "bg-muted/40" : ""
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5 shrink-0 text-primary mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-foreground">
+                    {item.title}
                   </p>
-                )}
-                <p className="text-[10px] text-muted-foreground/60">
-                  {new Date(item.created_at).toLocaleString()}
-                </p>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+                  {item.content_preview && (
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {item.content_preview}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground/60">
+                    {new Date(item.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      <div className="border-t border-border/40 px-2 py-1.5">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-7 text-xs"
-          onClick={() => {
-            // FS-3: Rewind placeholder — restaura workspace a checkpoint anterior
-            // Implementação completa em sprint seguinte
-            console.log("Rewind workspace (FS-3 placeholder)");
-          }}
-          title="Restore to checkpoint (FS-3)"
-        >
-          ↶ Rewind
-        </Button>
-      </div>
+      {items.length > 0 && (
+        <div className="border-t border-border/40 px-2 py-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-7 text-xs"
+            onClick={() => {
+              console.log("Rewind workspace (FS-3 placeholder)");
+            }}
+            title="Restore to checkpoint (FS-3)"
+          >
+            ↶ Rewind
+          </Button>
+        </div>
+      )}
 
       <TasksSection threadId={threadId} />
 

@@ -11,6 +11,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
+import { m } from "@/lib/paraglide/messages";
 import { PlanTab } from "../tabs/plan-tab";
 
 vi.mock("@/lib/api/vectora-client", () => ({
@@ -84,6 +85,44 @@ describe("PlanTab — TasksSection (write_todos)", () => {
 
     await screen.findByText("doc.md");
     expect(screen.queryByText(/Tasks/)).not.toBeInTheDocument();
+  });
+
+  it("mostra os todos mesmo sem nenhum artifact (Plan Mode via write_todos)", async () => {
+    // Bug ao vivo: /plan gera o plano via write_todos (não create_artifact),
+    // então NÃO há artifact salvo. O guard de empty-state olhava só `items`
+    // (artifacts) e curto-circuitava pro "Sem planos" ANTES de renderizar a
+    // TasksSection — o plano existia no store mas ficava invisível.
+    const threadId = "t-tasks-no-artifact";
+    // fetchedAt > 0 (já buscou uma vez), mas nenhum artifact salvo.
+    useWorkbenchStore.getState().setPlanItems(threadId, []);
+    useWorkbenchStore.getState().setTodos(threadId, [
+      { content: "desenhar o tabuleiro", status: "completed" },
+      { content: "loop de movimento", status: "in_progress" },
+      { content: "detecção de colisão", status: "pending" },
+    ]);
+
+    renderPlanTab(threadId);
+
+    // Os passos do plano aparecem…
+    expect(await screen.findByText("loop de movimento")).toBeInTheDocument();
+    expect(screen.getByText("desenhar o tabuleiro")).toBeInTheDocument();
+    expect(screen.getByText("detecção de colisão")).toBeInTheDocument();
+    // …e o empty-state "Sem planos" NÃO é mostrado.
+    expect(
+      screen.queryByText(m.workbench_plan_empty()),
+    ).not.toBeInTheDocument();
+  });
+
+  it("empty-state só quando não há artifact NEM todos", async () => {
+    const threadId = "t-tasks-truly-empty";
+    useWorkbenchStore.getState().setPlanItems(threadId, []);
+    useWorkbenchStore.getState().setTodos(threadId, []);
+
+    renderPlanTab(threadId);
+
+    expect(
+      await screen.findByText(m.workbench_plan_empty()),
+    ).toBeInTheDocument();
   });
 
   it("a lista de artifacts continua intacta — fonte de dados separada dos todos", async () => {
