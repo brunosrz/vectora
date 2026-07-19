@@ -23,6 +23,24 @@ class Document(BaseModel):
         return getattr(self, item, default)
 
 
+VALID_ARTIFACT_TYPES = frozenset(
+    {
+        "plan",
+        "spec",
+        "task_list",
+        "overview",
+        "guide",
+        "architecture",
+        "implementation",
+    }
+)
+
+# Tipo default pra artifacts salvos antes do campo existir (sidecar
+# `.artifact_type` ausente) — nunca quebra a listagem, só perde o ícone/cor
+# específico do tipo.
+DEFAULT_ARTIFACT_TYPE = "other"
+
+
 class ArtifactMetadata(BaseModel):
     """Metadado de um artifact persistido em disco (Pydantic)."""
 
@@ -30,6 +48,11 @@ class ArtifactMetadata(BaseModel):
     path: str = Field(description="Caminho absoluto do arquivo no disco.")
     session_id: str = Field(description="ID da sessão que gerou o artifact.")
     created_at: str = Field(description="Timestamp ISO 8601 de criação.")
+    artifact_type: str = Field(
+        default=DEFAULT_ARTIFACT_TYPE,
+        description="Tipo do artifact (plan/spec/task_list/...); "
+        "'other' para artifacts legados sem o sidecar de tipo.",
+    )
     content_preview: str | None = Field(
         default=None, description="Preview dos primeiros 200 caracteres."
     )

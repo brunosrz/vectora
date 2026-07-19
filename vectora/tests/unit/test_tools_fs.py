@@ -386,6 +386,27 @@ class TestCreateArtifact:
         assert h2.read_text(encoding="utf-8") == "v2"
         assert r1["path"] == str(current)  # 1ª chamada já grava no path final
 
+    def test_writes_artifact_type_sidecar_read_by_api(self, tmp_path, monkeypatch):
+        """A API (handlers/artifacts.py) lê `{slug}.artifact_type` pra
+        colorir/iconizar a Plan tab por tipo — precisa existir ao lado do
+        .md da versão atual."""
+        from backend.tools.fs import create_artifact
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        result = create_artifact.invoke(
+            {
+                "artifact_type": "architecture",
+                "title": "Decisão de Arquitetura do Cache Distribuído",
+                "content": "conteudo",
+            },
+            config=_cfg("side-1"),
+        )
+        data = json.loads(result)
+        current = Path(data["path"])
+        sidecar = current.with_suffix(".artifact_type")
+        assert sidecar.exists()
+        assert sidecar.read_text(encoding="utf-8") == "architecture"
+
     def test_generic_title_rejected(self, tmp_path, monkeypatch):
         """Erro/borda: título só com o nome do tipo ('Plano') é rejeitado —
         viraria plan.md sem dizer do que trata (bug real observado ao vivo:

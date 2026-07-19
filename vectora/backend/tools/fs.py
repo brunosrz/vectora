@@ -24,6 +24,7 @@ from backend.services.security import (
     resolve_within_workspace,
 )
 from backend.services.terminal_stream import emit_terminal_line
+from backend.vtypes.documents import VALID_ARTIFACT_TYPES
 
 logger = logging.getLogger(__name__)
 
@@ -720,15 +721,7 @@ async def terminal(
 # Artifact helpers
 # ---------------------------------------------------------------------------
 
-_VALID_ARTIFACT_TYPES = {
-    "plan",
-    "spec",
-    "task_list",
-    "overview",
-    "guide",
-    "architecture",
-    "implementation",
-}
+_VALID_ARTIFACT_TYPES = VALID_ARTIFACT_TYPES
 
 
 def _artifact_slug(title: str) -> str:
@@ -779,6 +772,17 @@ def _rotate_artifact_history(artifact_dir: Path, slug: str, content: str) -> Pat
         current.rename(artifact_dir / f"{slug}-{n}.md")
     current.write_text(content, encoding="utf-8")
     return current
+
+
+def _write_artifact_type_sidecar(
+    artifact_dir: Path, slug: str, artifact_type: str
+) -> None:
+    """Grava `{slug}.artifact_type` — sidecar de texto puro com o tipo, lido
+    pela API (`handlers/artifacts.py`) pra colorir/iconizar a Plan tab.
+    Só existe pra versão ATUAL (`{slug}.md`); versões de histórico
+    (`{slug}-N.md`) não têm sidecar próprio e caem no default ao serem
+    listadas — aceitável, o histórico não é navegado por tipo."""
+    (artifact_dir / f"{slug}.artifact_type").write_text(artifact_type, encoding="utf-8")
 
 
 def _mirror_artifact_to_workspace(
@@ -908,6 +912,7 @@ def create_artifact(
         artifact_dir.mkdir(parents=True, exist_ok=True)
         stripped_content = content.strip()
         path = _rotate_artifact_history(artifact_dir, slug, stripped_content)
+        _write_artifact_type_sidecar(artifact_dir, slug, artifact_type)
         _mirror_artifact_to_workspace(config, artifact_type, slug, stripped_content)
 
         created_at = datetime.now(UTC).isoformat()

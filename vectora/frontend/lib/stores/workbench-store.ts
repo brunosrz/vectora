@@ -138,12 +138,14 @@ export interface PlanItem {
   path: string;
   session_id: string;
   created_at: string;
+  artifact_type?: string;
   content_preview?: string | null;
 }
 
 interface PlanCache {
   items: PlanItem[];
-  openSlug: string | null;
+  /** Slugs abertos no Accordion — vários simultâneos (`type="multiple"`). */
+  openSlugs: string[];
   contentsBySlug: Record<string, string>;
   fetchedAt: number;
 }
@@ -227,7 +229,8 @@ interface WorkbenchState {
   // Plan
   getPlan: (threadId: string) => PlanCache;
   setPlanItems: (threadId: string, items: PlanItem[]) => void;
-  setPlanOpenSlug: (threadId: string, slug: string | null) => void;
+  /** Abre/fecha `slug` no Accordion sem afetar os demais já abertos. */
+  togglePlanOpenSlug: (threadId: string, slug: string) => void;
   setPlanContent: (threadId: string, slug: string, content: string) => void;
   invalidatePlan: (threadId?: string) => void;
 
@@ -263,7 +266,7 @@ const EMPTY_DIFF: DiffCache = {
 };
 const EMPTY_PLAN: PlanCache = {
   items: [],
-  openSlug: null,
+  openSlugs: [],
   contentsBySlug: {},
   fetchedAt: 0,
 };
@@ -551,11 +554,15 @@ export const useWorkbenchStore = create<WorkbenchState>()(
               },
             };
           }),
-        setPlanOpenSlug: (threadId, slug) =>
+        togglePlanOpenSlug: (threadId, slug) =>
           set((s) => {
             const cur = s.plan[threadId] ?? EMPTY_PLAN;
+            const isOpen = cur.openSlugs.includes(slug);
+            const openSlugs = isOpen
+              ? cur.openSlugs.filter((s2) => s2 !== slug)
+              : [...cur.openSlugs, slug];
             return {
-              plan: { ...s.plan, [threadId]: { ...cur, openSlug: slug } },
+              plan: { ...s.plan, [threadId]: { ...cur, openSlugs } },
             };
           }),
         setPlanContent: (threadId, slug, content) =>

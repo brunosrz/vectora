@@ -28,6 +28,7 @@
     "electron:dist:linux": "pnpm electron:build && electron-builder --config electron/electron-builder.yml --linux"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.16",
     "@react-symbols/icons": "^1.4.1",
     "@sentry/electron": "^7.15.0",
     "electron-updater": "^6.8.9",

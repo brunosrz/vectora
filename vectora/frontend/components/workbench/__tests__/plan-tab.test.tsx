@@ -1,14 +1,18 @@
 // @vitest-environment jsdom
 /**
- * PlanTab — TasksSection (item 7 do plano de Plan Mode real): a seção
- * "Tasks" passou a renderizar a checklist real de write_todos
- * (pending/in_progress/completed), não mais os mesmos artifacts da lista
- * principal. Cobre os 3 estados visuais e confirma que a lista de
- * artifacts continua intacta (fonte de dados diferente, seção separada).
+ * PlanTab — Accordion multi-item unificando artifacts + write_todos
+ * (Sprint 6): lista única, itens colapsáveis, vários abertos ao mesmo
+ * tempo, markdown real por artifact, ícone/cor por `artifact_type`.
  */
 
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { m } from "@/lib/paraglide/messages";
@@ -29,11 +33,20 @@ function renderPlanTab(threadId: string) {
   );
 }
 
+function openAccordionItem(name: RegExp) {
+  fireEvent.click(screen.getByRole("button", { name }));
+}
+
 beforeEach(() => {
   fetchMock.mockReset();
-  fetchMock.mockResolvedValue({
-    ok: true,
-    json: async () => ({ artifacts: [] }),
+  fetchMock.mockImplementation((url: string) => {
+    if (typeof url === "string" && url.includes("/artifacts/")) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ content: "# Conteúdo\n\n**negrito** aqui" }),
+      });
+    }
+    return Promise.resolve({ ok: true, json: async () => ({ artifacts: [] }) });
   });
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -43,8 +56,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("PlanTab — TasksSection (write_todos)", () => {
-  it("renderiza os 3 estados de status (pending/in_progress/completed)", async () => {
+describe("PlanTab — Tasks (write_todos) dentro do Accordion", () => {
+  it("renderiza os 3 estados de status (pending/in_progress/completed) ao abrir o item", async () => {
     const threadId = "t-tasks-1";
     useWorkbenchStore.getState().setPlanItems(threadId, [
       {
@@ -61,6 +74,8 @@ describe("PlanTab — TasksSection (write_todos)", () => {
     ]);
 
     renderPlanTab(threadId);
+    await screen.findByText("doc.md");
+    openAccordionItem(/Tasks/);
 
     expect(await screen.findByText("passo pendente")).toBeInTheDocument();
     expect(screen.getByText("passo em andamento")).toBeInTheDocument();
@@ -88,12 +103,7 @@ describe("PlanTab — TasksSection (write_todos)", () => {
   });
 
   it("mostra os todos mesmo sem nenhum artifact (Plan Mode via write_todos)", async () => {
-    // Bug ao vivo: /plan gera o plano via write_todos (não create_artifact),
-    // então NÃO há artifact salvo. O guard de empty-state olhava só `items`
-    // (artifacts) e curto-circuitava pro "Sem planos" ANTES de renderizar a
-    // TasksSection — o plano existia no store mas ficava invisível.
     const threadId = "t-tasks-no-artifact";
-    // fetchedAt > 0 (já buscou uma vez), mas nenhum artifact salvo.
     useWorkbenchStore.getState().setPlanItems(threadId, []);
     useWorkbenchStore.getState().setTodos(threadId, [
       { content: "desenhar o tabuleiro", status: "completed" },
@@ -102,12 +112,11 @@ describe("PlanTab — TasksSection (write_todos)", () => {
     ]);
 
     renderPlanTab(threadId);
+    openAccordionItem(/Tasks/);
 
-    // Os passos do plano aparecem…
     expect(await screen.findByText("loop de movimento")).toBeInTheDocument();
     expect(screen.getByText("desenhar o tabuleiro")).toBeInTheDocument();
     expect(screen.getByText("detecção de colisão")).toBeInTheDocument();
-    // …e o empty-state "Sem planos" NÃO é mostrado.
     expect(
       screen.queryByText(m.workbench_plan_empty()),
     ).not.toBeInTheDocument();
@@ -140,8 +149,151 @@ describe("PlanTab — TasksSection (write_todos)", () => {
       .setTodos(threadId, [{ content: "passo 1", status: "in_progress" }]);
 
     renderPlanTab(threadId);
+    await screen.findByText("spec.md");
+    openAccordionItem(/Tasks/);
 
-    expect(await screen.findByText("spec.md")).toBeInTheDocument();
-    expect(screen.getByText("passo 1")).toBeInTheDocument();
+    expect(await screen.findByText("passo 1")).toBeInTheDocument();
+  });
+});
+
+describe("PlanTab — Accordion multi-item (Sprint 6)", () => {
+  it("todos os títulos viram AccordionTrigger (botões clicáveis)", async () => {
+    const threadId = "t-accordion-1";
+    useWorkbenchStore.getState().setPlanItems(threadId, [
+      {
+        title: "Plano de Implementação",
+        path: "/plano.md",
+        session_id: threadId,
+        created_at: "2025-01-02",
+        artifact_type: "plan",
+      },
+      {
+        title: "Especificação Técnica",
+        path: "/spec.md",
+        session_id: threadId,
+        created_at: "2025-01-01",
+        artifact_type: "spec",
+      },
+    ]);
+
+    renderPlanTab(threadId);
+
+    expect(
+      await screen.findByRole("button", { name: /Plano de Implementação/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Especificação Técnica/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("clicar dois triggers deixa ambos abertos simultaneamente (type=multiple)", async () => {
+    const threadId = "t-accordion-2";
+    useWorkbenchStore.getState().setPlanItems(threadId, [
+      {
+        title: "Plano A",
+        path: "/plano-a.md",
+        session_id: threadId,
+        created_at: "2025-01-02",
+        artifact_type: "plan",
+      },
+      {
+        title: "Guia B",
+        path: "/guia-b.md",
+        session_id: threadId,
+        created_at: "2025-01-01",
+        artifact_type: "guide",
+      },
+    ]);
+
+    renderPlanTab(threadId);
+    await screen.findByRole("button", { name: /Plano A/ });
+
+    openAccordionItem(/Plano A/);
+    openAccordionItem(/Guia B/);
+
+    // Markdown de ambos aparece — nenhum fechou o outro ao abrir.
+    const bold = await screen.findAllByText("negrito");
+    expect(bold.length).toBe(2);
+  });
+
+  it("renderiza markdown real (**negrito** vira <strong>), não texto cru", async () => {
+    const threadId = "t-accordion-md";
+    useWorkbenchStore.getState().setPlanItems(threadId, [
+      {
+        title: "Documento com Markdown",
+        path: "/doc-md.md",
+        session_id: threadId,
+        created_at: "2025-01-01",
+        artifact_type: "guide",
+      },
+    ]);
+
+    renderPlanTab(threadId);
+    await screen.findByRole("button", { name: /Documento com Markdown/ });
+    openAccordionItem(/Documento com Markdown/);
+
+    const bold = await screen.findByText("negrito");
+    expect(bold.tagName.toLowerCase()).toBe("strong");
+  });
+
+  it("artifact sem artifact_type cai no ícone/cor fallback sem quebrar", async () => {
+    const threadId = "t-accordion-notype";
+    useWorkbenchStore.getState().setPlanItems(threadId, [
+      {
+        title: "Artifact Legado Sem Tipo",
+        path: "/legado.md",
+        session_id: threadId,
+        created_at: "2025-01-01",
+        // artifact_type ausente de propósito (artifact criado antes do campo existir).
+      },
+    ]);
+
+    expect(() => renderPlanTab(threadId)).not.toThrow();
+    expect(
+      await screen.findByRole("button", {
+        name: /Artifact Legado Sem Tipo/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("FilesTouchedSection continua fora do Accordion (rodapé próprio, sempre visível)", async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (typeof url === "string" && url.includes("/artifacts/")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ content: "" }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ artifacts: [] }),
+      });
+    });
+    const { getThreadActivity } = await import("@/lib/api/vectora-client");
+    vi.mocked(getThreadActivity).mockResolvedValueOnce({
+      files_touched: ["src/a.ts"],
+      tool_call_counts: {},
+      turn_count: 1,
+    });
+
+    const threadId = "t-files-touched";
+    useWorkbenchStore.getState().setPlanItems(threadId, [
+      {
+        title: "Plano X",
+        path: "/plano-x.md",
+        session_id: threadId,
+        created_at: "2025-01-01",
+      },
+    ]);
+
+    const { container } = renderPlanTab(threadId);
+    await screen.findByRole("button", { name: /Plano X/ });
+
+    const footer = await screen.findByText(/Files touched/);
+    // Fora do <Accordion> — não é um AccordionTrigger.
+    expect(
+      within(container).queryAllByRole("button", { name: /Plano X/ }),
+    ).toHaveLength(1);
+    expect(footer.closest('[data-slot="accordion"]')).toBeNull();
   });
 });

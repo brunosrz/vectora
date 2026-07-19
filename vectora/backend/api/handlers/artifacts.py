@@ -16,7 +16,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from backend.vtypes.documents import ArtifactMetadata
+from backend.vtypes.documents import DEFAULT_ARTIFACT_TYPE, ArtifactMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class ArtifactContent(BaseModel):
     session_id: str
     created_at: str
     content: str
+    artifact_type: str = DEFAULT_ARTIFACT_TYPE
 
 
 def _artifacts_dir(session_id: str) -> Path:
@@ -47,6 +48,17 @@ def _read_preview(path: Path, limit: int = 200) -> str | None:
             return f.read(limit + 1)[:limit]
     except OSError:
         return None
+
+
+def _read_artifact_type(path: Path) -> str:
+    """Lê o sidecar `{stem}.artifact_type` gravado por `create_artifact`
+    (`tools/fs.py`). Artifacts legados (criados antes do campo existir) ou
+    versões de histórico (`{slug}-N.md`) não têm sidecar — caem no default."""
+    sidecar = path.with_suffix(".artifact_type")
+    try:
+        return sidecar.read_text(encoding="utf-8").strip() or DEFAULT_ARTIFACT_TYPE
+    except OSError:
+        return DEFAULT_ARTIFACT_TYPE
 
 
 @router.get("/", response_model=ListArtifactsResponse)
@@ -83,6 +95,7 @@ async def list_artifacts(
                 path=str(path),
                 session_id=session_id,
                 created_at=_format_mtime(stat.st_mtime),
+                artifact_type=_read_artifact_type(path),
                 content_preview=_read_preview(path),
             )
         )
@@ -121,6 +134,7 @@ async def get_artifact(
         session_id=session_id,
         created_at=created,
         content=content,
+        artifact_type=_read_artifact_type(path),
     )
 
 

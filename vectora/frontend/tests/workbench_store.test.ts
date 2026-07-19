@@ -331,7 +331,7 @@ describe("workbench-store: plan slice", () => {
     const a = useWorkbenchStore.getState().getPlan("th");
     const b = useWorkbenchStore.getState().getPlan("th");
     expect(a.items).toEqual([]);
-    expect(a.openSlug).toBeNull();
+    expect(a.openSlugs).toEqual([]);
     expect(a).toBe(b);
   });
 
@@ -350,12 +350,41 @@ describe("workbench-store: plan slice", () => {
     expect(cache.fetchedAt).toBeGreaterThanOrEqual(before);
   });
 
-  it("setPlanOpenSlug() / setPlanContent() — viewer e conteúdo", () => {
-    useWorkbenchStore.getState().setPlanOpenSlug("th", "plano-a");
+  it("togglePlanOpenSlug() / setPlanContent() — viewer e conteúdo", () => {
+    useWorkbenchStore.getState().togglePlanOpenSlug("th", "plano-a");
     useWorkbenchStore.getState().setPlanContent("th", "plano-a", "# Plano A");
     const cache = useWorkbenchStore.getState().getPlan("th");
-    expect(cache.openSlug).toBe("plano-a");
+    expect(cache.openSlugs).toEqual(["plano-a"]);
     expect(cache.contentsBySlug["plano-a"]).toBe("# Plano A");
+  });
+
+  it("togglePlanOpenSlug() abre múltiplos slugs simultaneamente (Accordion multiple)", () => {
+    const { togglePlanOpenSlug } = useWorkbenchStore.getState();
+    togglePlanOpenSlug("th-multi", "plano-a");
+    togglePlanOpenSlug("th-multi", "plano-b");
+    expect(useWorkbenchStore.getState().getPlan("th-multi").openSlugs).toEqual([
+      "plano-a",
+      "plano-b",
+    ]);
+  });
+
+  it("togglePlanOpenSlug() fecha só o slug clicado, sem afetar os demais abertos", () => {
+    const { togglePlanOpenSlug } = useWorkbenchStore.getState();
+    togglePlanOpenSlug("th-close", "plano-a");
+    togglePlanOpenSlug("th-close", "plano-b");
+    togglePlanOpenSlug("th-close", "plano-a");
+    expect(useWorkbenchStore.getState().getPlan("th-close").openSlugs).toEqual([
+      "plano-b",
+    ]);
+  });
+
+  it("erro/borda: toggle duplo do mesmo slug é idempotente (abre, fecha, volta ao estado inicial)", () => {
+    const { togglePlanOpenSlug } = useWorkbenchStore.getState();
+    togglePlanOpenSlug("th-idem", "plano-a");
+    togglePlanOpenSlug("th-idem", "plano-a");
+    expect(useWorkbenchStore.getState().getPlan("th-idem").openSlugs).toEqual(
+      [],
+    );
   });
 
   it("invalidatePlan(threadId) zera fetchedAt", () => {

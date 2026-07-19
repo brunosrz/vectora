@@ -100,6 +100,27 @@ class TestListArtifacts:
         assert len(resp.artifacts[0].content_preview) <= 200
 
     @pytest.mark.asyncio
+    async def test_exposes_artifact_type_from_sidecar(self, fake_home):
+        from backend.api.handlers.artifacts import list_artifacts
+
+        path = _write_artifact(fake_home, "typed", "plano-x", "conteudo")
+        path.with_suffix(".artifact_type").write_text("plan", encoding="utf-8")
+
+        resp = await list_artifacts(session_id="typed")
+        assert resp.artifacts[0].artifact_type == "plan"
+
+    @pytest.mark.asyncio
+    async def test_legacy_artifact_without_sidecar_defaults_to_other(self, fake_home):
+        """Erro/borda: artifact criado antes do campo existir (sem sidecar)
+        não quebra a listagem — cai num default sensato."""
+        from backend.api.handlers.artifacts import list_artifacts
+
+        _write_artifact(fake_home, "legacy", "plano-antigo", "conteudo")
+
+        resp = await list_artifacts(session_id="legacy")
+        assert resp.artifacts[0].artifact_type == "other"
+
+    @pytest.mark.asyncio
     async def test_session_id_traversal_is_stripped(self, fake_home):
         """`..` e barras no session_id são removidos — não foge da pasta."""
         from backend.api.handlers.artifacts import list_artifacts
@@ -135,6 +156,16 @@ class TestGetArtifact:
         assert resp.slug == "meu-plano"
         assert resp.session_id == "g1"
         assert resp.created_at  # ISO 8601 do mtime
+
+    @pytest.mark.asyncio
+    async def test_returns_artifact_type_from_sidecar(self, fake_home):
+        from backend.api.handlers.artifacts import get_artifact
+
+        path = _write_artifact(fake_home, "g2", "spec-y", "detalhe")
+        path.with_suffix(".artifact_type").write_text("spec", encoding="utf-8")
+
+        resp = await get_artifact("spec-y", session_id="g2")
+        assert resp.artifact_type == "spec"
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_missing(self, fake_home):

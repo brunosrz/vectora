@@ -1,26 +1,42 @@
 "use client";
 
 /**
- * PlanTab — lista de artifacts da sessão.
+ * PlanTab — lista unificada de artifacts + checklist ao vivo (write_todos)
+ * da sessão, num Accordion multi-item (vários abertos ao mesmo tempo,
+ * expandindo inline — sem faixa fixa separada no rodapé).
  *
  * Estado vive no workbench-store (slice `plan`):
  *   - lista de artifacts da sessão → cacheada por threadId
- *   - artifact aberto + conteúdo carregado → idem
+ *   - slugs abertos no Accordion + conteúdo carregado por slug → idem
  * SWR via `useWorkbenchSWR`.
  */
 
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { MarkdownView } from "@/components/workbench/markdown-view";
+import {
+  Boxes,
+  BookOpen,
   CheckCircle2,
   CheckSquare,
   Circle,
   CircleDot,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
+  Code2,
+  FileCode2,
   FileText,
+  LayoutList,
   Loader2,
   Sparkles,
+  type LucideIcon,
 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -60,6 +76,25 @@ function fileSlug(path: string): string {
   return last.replace(/\.md$/i, "");
 }
 
+// Ícone + cor por artifact_type — mesmo padrão de `components/icons/`.
+// Tipo desconhecido/ausente (artifact legado sem sidecar) cai no fallback.
+const TYPE_ICON: Record<string, { icon: LucideIcon; className: string }> = {
+  plan: { icon: ClipboardList, className: "text-blue-400" },
+  spec: { icon: FileCode2, className: "text-purple-400" },
+  task_list: { icon: CheckSquare, className: "text-amber-400" },
+  overview: { icon: LayoutList, className: "text-sky-400" },
+  guide: { icon: BookOpen, className: "text-green-400" },
+  architecture: { icon: Boxes, className: "text-orange-400" },
+  implementation: { icon: Code2, className: "text-pink-400" },
+};
+const DEFAULT_TYPE_ICON = { icon: FileText, className: "text-primary" };
+
+function artifactIcon(artifactType: string | undefined) {
+  return (artifactType && TYPE_ICON[artifactType]) || DEFAULT_TYPE_ICON;
+}
+
+const TODOS_SLUG = "__todos__";
+
 interface PlanTabProps {
   threadId: string;
 }
@@ -74,7 +109,7 @@ function FilesTouchedSection({ threadId }: { threadId: string }) {
   const files = data?.files_touched ?? [];
   if (files.length === 0) return null;
   return (
-    <div className="border-t border-border/40">
+    <div className="border-t border-border/40 shrink-0">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -124,68 +159,17 @@ function TodoStatusIcon({ status }: { status: TodoItem["status"] }) {
   }
 }
 
-// write_todos (TodoListMiddleware) — checklist ao vivo do turno atual,
-// entregue via evento SSE dedicado (todos_updated). Distinto dos artifacts
-// (documentos salvos, seção principal acima): não persiste como arquivo, é
-// o progresso de execução do agente em tempo real.
-function TasksSection({ threadId }: { threadId: string }) {
-  const [open, setOpen] = useState(true);
-  const todos = useWorkbenchStore((s) => s.getTodos(threadId));
-
-  if (todos.length === 0) return null;
-
-  return (
-    <div className="border-t border-border/40">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {open ? (
-          <ChevronDown className="w-3 h-3 shrink-0" />
-        ) : (
-          <ChevronRight className="w-3 h-3 shrink-0" />
-        )}
-        <CheckSquare className="w-3 h-3 shrink-0" />
-        <span className="font-medium flex-1 text-left">
-          {m.workbench_plan_tasks_section()} ({todos.length})
-        </span>
-      </button>
-      {open && (
-        <div className="pb-2 divide-y divide-border/30">
-          {todos.map((item, idx) => (
-            <div
-              key={idx}
-              className="px-4 py-1.5 text-[11px] flex items-center gap-2"
-            >
-              <TodoStatusIcon status={item.status} />
-              <span
-                className={
-                  item.status === "completed"
-                    ? "line-through text-foreground/40"
-                    : "text-foreground/70"
-                }
-              >
-                {item.content}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function PlanTab({ threadId }: PlanTabProps) {
   const items = useWorkbenchStore((s) => s.getPlan(threadId).items);
   const todos = useWorkbenchStore((s) => s.getTodos(threadId));
   const fetchedAt = useWorkbenchStore((s) => s.getPlan(threadId).fetchedAt);
-  const openSlug = useWorkbenchStore((s) => s.getPlan(threadId).openSlug);
-  const openContent = useWorkbenchStore((s) =>
-    openSlug ? s.getPlan(threadId).contentsBySlug[openSlug] : undefined,
+  const openSlugs = useWorkbenchStore((s) => s.getPlan(threadId).openSlugs);
+  const contentsBySlug = useWorkbenchStore(
+    (s) => s.getPlan(threadId).contentsBySlug,
   );
 
   const setPlanItems = useWorkbenchStore((s) => s.setPlanItems);
-  const setPlanOpenSlug = useWorkbenchStore((s) => s.setPlanOpenSlug);
+  const togglePlanOpenSlug = useWorkbenchStore((s) => s.togglePlanOpenSlug);
   const setPlanContent = useWorkbenchStore((s) => s.setPlanContent);
 
   useWorkbenchSWR({
@@ -198,23 +182,40 @@ export function PlanTab({ threadId }: PlanTabProps) {
     },
   });
 
-  useWorkbenchSWR({
-    key: `plan-content:${threadId}:${openSlug ?? ""}`,
-    hasCache: openContent !== undefined,
-    isStale: false,
-    revalidate: async () => {
-      if (!openSlug) return;
-      const content = await fetchArtifactContent(threadId, openSlug);
-      if (content !== null) setPlanContent(threadId, openSlug, content);
-    },
-    skip: !openSlug,
-  });
+  // write_todos (TodoListMiddleware) vira UMA entrada sintética no
+  // Accordion (não um item por tarefa) — sempre a mais recente, já que é o
+  // progresso ao vivo do turno atual, não um documento datado como os
+  // artifacts.
+  const entries = useMemo(() => {
+    const artifactEntries = items.map((item) => ({
+      slug: fileSlug(item.path),
+      timestamp: new Date(item.created_at).getTime() || 0,
+      item,
+    }));
+    const todosEntry =
+      todos.length > 0
+        ? [{ slug: TODOS_SLUG, timestamp: Date.now(), item: null }]
+        : [];
+    return [...todosEntry, ...artifactEntries].toSorted(
+      (a, b) => b.timestamp - a.timestamp,
+    );
+  }, [items, todos]);
 
-  const handleOpen = useCallback(
-    (item: PlanItem) => {
-      setPlanOpenSlug(threadId, fileSlug(item.path));
+  const handleAccordionChange = useCallback(
+    (next: string[]) => {
+      const added = next.filter((v) => !openSlugs.includes(v));
+      const removed = openSlugs.filter((v) => !next.includes(v));
+      for (const slug of [...added, ...removed]) {
+        togglePlanOpenSlug(threadId, slug);
+      }
+      for (const slug of added) {
+        if (slug === TODOS_SLUG || contentsBySlug[slug] !== undefined) continue;
+        void fetchArtifactContent(threadId, slug).then((content) => {
+          if (content !== null) setPlanContent(threadId, slug, content);
+        });
+      }
     },
-    [threadId, setPlanOpenSlug],
+    [openSlugs, threadId, togglePlanOpenSlug, contentsBySlug, setPlanContent],
   );
 
   // Estado de loading inicial: ainda não fetchamos uma única vez.
@@ -255,72 +256,81 @@ export function PlanTab({ threadId }: PlanTabProps) {
     );
   }
 
-  const openLoading = openSlug !== null && openContent === undefined;
-
   return (
     <div className="h-full flex flex-col">
-      {items.length > 0 && (
-        <div className="flex-1 overflow-y-auto py-1">
-          {items.map((item) => {
-            const slug = fileSlug(item.path);
-            const active = slug === openSlug;
-            return (
-              <button
-                key={item.path}
-                onClick={() => handleOpen(item)}
-                className={`w-full flex items-start gap-2 px-2 py-2 text-left text-xs hover:bg-muted/40 border-b border-border/40 ${
-                  active ? "bg-muted/40" : ""
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5 shrink-0 text-primary mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-foreground">
-                    {item.title}
-                  </p>
-                  {item.content_preview && (
-                    <p className="truncate text-[11px] text-muted-foreground">
-                      {item.content_preview}
-                    </p>
-                  )}
-                  <p className="text-[10px] text-muted-foreground/60">
-                    {new Date(item.created_at).toLocaleString()}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      <TasksSection threadId={threadId} />
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <Accordion
+          type="multiple"
+          value={openSlugs}
+          onValueChange={handleAccordionChange}
+          className="px-1"
+        >
+          {entries.map(({ slug, item }) =>
+            slug === TODOS_SLUG ? (
+              <AccordionItem key={slug} value={slug}>
+                <AccordionTrigger>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <CheckSquare className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                    <span className="truncate">
+                      {m.workbench_plan_tasks_section()} ({todos.length})
+                    </span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="divide-y divide-border/30">
+                    {todos.map((t, idx) => (
+                      <div
+                        key={idx}
+                        className="py-1.5 text-[11px] flex items-center gap-2"
+                      >
+                        <TodoStatusIcon status={t.status} />
+                        <span
+                          className={
+                            t.status === "completed"
+                              ? "line-through text-foreground/40"
+                              : "text-foreground/70"
+                          }
+                        >
+                          {t.content}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ) : (
+              item && (
+                <AccordionItem key={slug} value={slug}>
+                  <AccordionTrigger>
+                    {(() => {
+                      const { icon: Icon, className } = artifactIcon(
+                        item.artifact_type,
+                      );
+                      return (
+                        <span className="flex items-center gap-2 min-w-0">
+                          <Icon
+                            className={`w-3.5 h-3.5 shrink-0 ${className}`}
+                          />
+                          <span className="truncate">{item.title}</span>
+                        </span>
+                      );
+                    })()}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {contentsBySlug[slug] === undefined ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground m-2" />
+                    ) : (
+                      <MarkdownView content={contentsBySlug[slug]} />
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            ),
+          )}
+        </Accordion>
+      </div>
 
       <FilesTouchedSection threadId={threadId} />
-
-      {openSlug && (
-        <div className="border-t border-border/60 max-h-[55%] flex flex-col">
-          <div className="flex items-center justify-between px-2 py-1 bg-muted/30 text-xs">
-            <span className="truncate font-mono text-muted-foreground">
-              {openSlug}
-            </span>
-            <button
-              onClick={() => setPlanOpenSlug(threadId, null)}
-              className="text-muted-foreground hover:text-foreground px-1"
-              title={m.workbench_close()}
-            >
-              ×
-            </button>
-          </div>
-          <div className="flex-1 overflow-auto p-3">
-            {openLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            ) : (
-              <pre className="text-xs whitespace-pre-wrap break-words font-mono">
-                {openContent}
-              </pre>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
