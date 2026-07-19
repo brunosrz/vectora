@@ -46,6 +46,8 @@ async def db(tmp_path, monkeypatch):
     await setup.close()
 
     monkeypatch.setattr(bg, "_get_db", _connect)
+    # threads.py (upsert/increment/list de sessions) compartilha o mesmo banco.
+    monkeypatch.setattr("backend.api.handlers.threads._get_db", _connect)
     return db_path
 
 
@@ -237,6 +239,72 @@ async def test_run_task_error_path_records_error_and_skips_session(db, monkeypat
     runs = await bg.list_runs("sess-err")
     assert runs[0]["status"] == "error"
     assert "LLM caiu" in runs[0]["summary"]
+
+
+# ---------------------------------------------------------------------------
+# Sprint 3.1 — a thread da run aparece na sidebar (ListThreads)
+# ---------------------------------------------------------------------------
+
+
+async def test_run_task_incrementa_message_count_da_thread(db, monkeypatch):
+    """A run bem-sucedida chama _increment_message_count(run_thread_id) — é o
+    que faz ListThreads (filtra message_count>0) mostrá-la na sidebar. Antes a
+    thread era gravada com message_count=0 e nunca aparecia.
+
+    Testa o wiring com mock (o caminho real de I/O de sessão publica eventos
+    que não isolam por event-loop nos testes; ListThreads+increment reais têm
+    cobertura própria em test_threads_*)."""
+    agent = _FakeAgent(result={"messages": [{"content": "feito"}]})
+    _patch_agent(monkeypatch, agent)
+
+    upserts: list[str] = []
+    increments: list[str] = []
+
+    async def _fake_upsert(thread_id, title=None, workspace_id=None, mode=None):
+        upserts.append(thread_id)
+
+    async def _fake_increment(thread_id):
+        increments.append(thread_id)
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _fake_upsert)
+    monkeypatch.setattr(
+        "backend.api.handlers.threads._increment_message_count", _fake_increment
+    )
+
+    task = await bg.create_task(
+        session_id="sess-vis",
+        user_id="u",
+        kind="routine",
+        name="Visível",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+        workspace_id="ws1",
+    )
+
+    run_thread_id = await bg.run_task(task, "manual")
+    assert run_thread_id is not None
+    # A run registrou a thread E incrementou seu message_count (→ listável).
+    assert upserts == [run_thread_id]
+    assert increments == [run_thread_id]
+
+    # Erro/borda: run que FALHA (agente levanta) nem registra nem incrementa —
+    # thread sem conteúdo não polui a sidebar.
+    upserts.clear()
+    increments.clear()
+    _patch_agent(monkeypatch, _FakeAgent(exc=RuntimeError("boom")))
+    task2 = await bg.create_task(
+        session_id="sess-vis",
+        user_id="u",
+        kind="routine",
+        name="Falha",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    assert await bg.run_task(task2, "manual") is None
+    assert upserts == []
+    assert increments == []
 
 
 # ---------------------------------------------------------------------------

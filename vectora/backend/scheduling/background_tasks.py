@@ -593,7 +593,10 @@ async def run_task(
             context=ctx_from_config(config),
         )
 
-        from backend.api.handlers.threads import _upsert_session
+        from backend.api.handlers.threads import (
+            _increment_message_count,
+            _upsert_session,
+        )
 
         label = "Rotina" if task.kind == "routine" else "Heartbreak"
         await _upsert_session(
@@ -601,6 +604,10 @@ async def run_task(
             title=f"{label}: {task.name}",
             workspace_id=task.workspace_id,
         )
+        # message_count>0 faz a thread da run aparecer na sidebar (ListThreads
+        # filtra message_count>0). O histórico completo sai do checkpointer via
+        # GetHistory (o grafo roda com run_thread_id + checkpointer compartilhado).
+        await _increment_message_count(run_thread_id)
 
         # HITL: se o grafo pausou numa ação destrutiva, a run fica pendente de
         # aprovação (não "done") — o interrupt está salvo no checkpointer e a
