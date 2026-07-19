@@ -324,21 +324,168 @@ class TestCreateArtifact:
         assert "000001" in str(artifact_path)
         assert artifact_path.suffix == ".md"
 
-    def test_no_overwrite_collision(self, tmp_path, monkeypatch):
+    def test_same_title_rewrites_current_and_keeps_previous_as_history(
+        self, tmp_path, monkeypatch
+    ):
+        """Versionamento: salvar de novo com o MESMO título mantém o path
+        atual estável (a UI sempre acha a versão mais recente no mesmo
+        lugar) — a versão anterior vira histórico imutável numerado, não é
+        perdida nem gera um path novo pra cada save."""
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        kwargs = {
-            "artifact_type": "guide",
-            "title": "Setup Guide",
-            "content": "Content",
-        }
         cfg = _cfg("999999")
-        r1 = json.loads(create_artifact.invoke(kwargs, config=cfg))
-        r2 = json.loads(create_artifact.invoke(kwargs, config=cfg))
-        assert r1["path"] != r2["path"]
-        assert Path(r1["path"]).exists()
-        assert Path(r2["path"]).exists()
+        r1 = json.loads(
+            create_artifact.invoke(
+                {
+                    "artifact_type": "guide",
+                    "title": "Guia de Setup do Ambiente de Deploy",
+                    "content": "versão 1",
+                },
+                config=cfg,
+            )
+        )
+        r2 = json.loads(
+            create_artifact.invoke(
+                {
+                    "artifact_type": "guide",
+                    "title": "Guia de Setup do Ambiente de Deploy",
+                    "content": "versão 2",
+                },
+                config=cfg,
+            )
+        )
+        assert r1["path"] == r2["path"]  # path da versão atual é estável
+        current = Path(r2["path"])
+        assert current.read_text(encoding="utf-8") == "versão 2"
+
+        history = current.with_name(f"{current.stem}-1.md")
+        assert history.exists()
+        assert history.read_text(encoding="utf-8") == "versão 1"
+
+    def test_third_write_rotates_history_without_losing_the_first(
+        self, tmp_path, monkeypatch
+    ):
+        from backend.tools.fs import create_artifact
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        cfg = _cfg("777777")
+        kwargs = {
+            "artifact_type": "spec",
+            "title": "Especificação da API de Pagamentos v2",
+        }
+        r1 = json.loads(create_artifact.invoke({**kwargs, "content": "v1"}, config=cfg))
+        json.loads(create_artifact.invoke({**kwargs, "content": "v2"}, config=cfg))
+        r3 = json.loads(create_artifact.invoke({**kwargs, "content": "v3"}, config=cfg))
+
+        current = Path(r3["path"])
+        assert current.read_text(encoding="utf-8") == "v3"
+        h1 = current.with_name(f"{current.stem}-1.md")
+        h2 = current.with_name(f"{current.stem}-2.md")
+        assert h1.read_text(encoding="utf-8") == "v1"
+        assert h2.read_text(encoding="utf-8") == "v2"
+        assert r1["path"] == str(current)  # 1ª chamada já grava no path final
+
+    def test_generic_title_rejected(self, tmp_path, monkeypatch):
+        """Erro/borda: título só com o nome do tipo ('Plano') é rejeitado —
+        viraria plan.md sem dizer do que trata (bug real observado ao vivo:
+        artifact criado sem título descritivo)."""
+        from backend.tools.fs import create_artifact
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        result = create_artifact.invoke(
+            {"artifact_type": "plan", "title": "Plano", "content": "conteudo"},
+            config=_cfg("gen-1"),
+        )
+        data = json.loads(result)
+        assert "error" in data
+        assert not (tmp_path / ".vectora").exists()  # nada foi escrito
+
+    def test_descriptive_title_still_accepted(self, tmp_path, monkeypatch):
+        from backend.tools.fs import create_artifact
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        result = create_artifact.invoke(
+            {
+                "artifact_type": "plan",
+                "title": "Plano de Implementação do Jogo da Cobrinha em Godot 4.7",
+                "content": "conteudo",
+            },
+            config=_cfg("gen-2"),
+        )
+        data = json.loads(result)
+        assert "error" not in data
+        assert Path(data["path"]).exists()
+
+    def test_mirrors_current_version_to_active_workspace(self, tmp_path, monkeypatch):
+        """Com workspace_id no config, a versão atual é espelhada em
+        <workspace>/.vectora/{tipo}s/{slug}.md — sem histórico, sempre a
+        última versão, visível direto no projeto (não só em ~/.vectora)."""
+        from backend.tools.fs import create_artifact
+        from backend.workspace import workspace as ws_mod
+
+        home_dir = tmp_path / "home"
+        home_dir.mkdir()
+        ws_dir = tmp_path / "proj"
+        ws_dir.mkdir()
+        monkeypatch.setattr(Path, "home", lambda: home_dir)
+
+        ws = Workspace(
+            id="testws",
+            name="testws",
+            cwd=str(ws_dir),
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+        )
+        monkeypatch.setattr(
+            ws_mod.workspace_registry,
+            "get",
+            lambda wid: ws if wid == "testws" else None,
+        )
+        cfg = cast(
+            "RunnableConfig",
+            {"configurable": {"thread_id": "t1", "workspace_id": "testws"}},
+        )
+        result = create_artifact.invoke(
+            {
+                "artifact_type": "plan",
+                "title": "Plano de Implementação do Jogo da Cobrinha em Godot 4.7",
+                "content": "conteudo do plano",
+            },
+            config=cfg,
+        )
+        data = json.loads(result)
+        assert "error" not in data
+
+        mirror = ws_dir / ".vectora" / "plans" / Path(data["path"]).name
+        assert mirror.exists()
+        assert mirror.read_text(encoding="utf-8") == "conteudo do plano"
+
+    def test_sem_workspace_id_nao_resolve_workspace_default(
+        self, tmp_path, monkeypatch
+    ):
+        """Erro/borda: sem workspace_id explícito, nunca chama
+        get_or_create (não força a criação/uso de um workspace default só
+        pra tentar espelhar o artifact)."""
+        from backend.tools.fs import create_artifact
+        from backend.workspace import workspace as ws_mod
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        def _boom(*args, **kwargs):
+            raise AssertionError("não deveria resolver workspace sem workspace_id")
+
+        monkeypatch.setattr(ws_mod.workspace_registry, "get_or_create", _boom)
+        result = create_artifact.invoke(
+            {
+                "artifact_type": "plan",
+                "title": "Plano de Migração do Banco de Dados Legado",
+                "content": "conteudo",
+            },
+            config=_cfg("sem-ws"),
+        )
+        data = json.loads(result)
+        assert "error" not in data
 
     def test_invalid_type_returns_error(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact

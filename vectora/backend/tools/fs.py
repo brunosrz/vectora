@@ -741,6 +741,71 @@ def _artifact_slug(title: str) -> str:
     return slug[:50] or "artifact"
 
 
+# Slugs genéricos demais por tipo — título como "Plano" vira "plano.md", sem
+# dizer do que trata. Força o modelo a escolher um título específico (ex:
+# "Plano de Implementação do Jogo da Cobrinha em Godot 4.7").
+_GENERIC_TITLE_SLUGS: dict[str, set[str]] = {
+    "plan": {"plan", "plano", "planejamento", "plano-de-implementacao"},
+    "spec": {"spec", "especificacao", "especificacoes", "especificacao-tecnica"},
+    "task_list": {
+        "tasks",
+        "task-list",
+        "tarefas",
+        "todo",
+        "todos",
+        "lista-de-tarefas",
+    },
+    "overview": {"overview", "visao-geral", "resumo", "resumo-executivo"},
+    "guide": {"guide", "guia", "tutorial"},
+    "architecture": {"architecture", "arquitetura"},
+    "implementation": {"implementation", "implementacao"},
+}
+
+
+def _rotate_artifact_history(artifact_dir: Path, slug: str, content: str) -> Path:
+    """Grava ``content`` como a versão ATUAL (``{slug}.md``), preservando a
+    versão anterior (se houver) como histórico imutável numerado.
+
+    O arquivo sem sufixo é sempre a versão mais recente — a UI (Plan tab)
+    consulta por ele diretamente. Antes de sobrescrever, a versão atual vira
+    ``{slug}-N.md`` (N = próximo número livre), então o histórico cresce em
+    ordem cronológica sem nunca perder uma versão anterior.
+    """
+    current = artifact_dir / f"{slug}.md"
+    if current.exists():
+        n = 1
+        while (artifact_dir / f"{slug}-{n}.md").exists():
+            n += 1
+        current.rename(artifact_dir / f"{slug}-{n}.md")
+    current.write_text(content, encoding="utf-8")
+    return current
+
+
+def _mirror_artifact_to_workspace(
+    config: RunnableConfig | None, artifact_type: str, slug: str, content: str
+) -> None:
+    """Espelha a versão atual do artifact dentro do workspace ativo
+    (``<workspace_root>/.vectora/{type}s/{slug}.md``) — sempre a última
+    versão, sem histórico (o histórico imutável vive só em
+    ``~/.vectora/artifacts/``). Só espelha quando a sessão tem um
+    ``workspace_id`` explícito no config — sem isso, não força a criação de
+    um workspace default só pra gravar o espelho. Best-effort: falha aqui
+    nunca derruba a criação do artifact.
+    """
+    workspace_id = (
+        (config.get("configurable") or {}).get("workspace_id") if config else None
+    )
+    if not workspace_id:
+        return
+    try:
+        root, _ws = _workspace_root(config)
+        mirror_dir = root / ".vectora" / f"{artifact_type}s"
+        mirror_dir.mkdir(parents=True, exist_ok=True)
+        (mirror_dir / f"{slug}.md").write_text(content, encoding="utf-8")
+    except Exception:
+        logger.exception("create_artifact: falha ao espelhar '%s' no workspace", slug)
+
+
 # ---------------------------------------------------------------------------
 # Tool
 # ---------------------------------------------------------------------------
@@ -781,6 +846,12 @@ def create_artifact(
     NÃO use para respostas conversacionais — apenas para documentos que o usuário
     vai querer consultar depois.
 
+    Versionamento: {slug}.md é sempre a versão MAIS RECENTE; ao salvar de novo com
+    o mesmo título, a versão anterior vira histórico imutável ({slug}-1.md,
+    {slug}-2.md, ...). Se a sessão tem um workspace ativo, a versão atual também é
+    espelhada em <workspace>/.vectora/{artifact_type}s/{slug}.md (sem histórico —
+    só a última versão, visível direto no projeto).
+
     Args:
         artifact_type: Tipo do artifact. Valores válidos:
             - "plan"           → plano de implementação, roadmap
@@ -790,7 +861,10 @@ def create_artifact(
             - "guide"          → guia, tutorial, how-to
             - "architecture"   → decisões de arquitetura, diagramas
             - "implementation" → código de referência, snippets documentados
-        title: Título descritivo do artifact (ex: "Plano de implementação do módulo Auth")
+        title: Título ESPECÍFICO e descritivo do artifact (ex: "Plano de
+            Implementação do Jogo da Cobrinha em Godot 4.7"). Nunca use só o nome
+            do tipo ("Plano", "Spec", "Tarefas") — isso é rejeitado com erro;
+            o título vira o nome do arquivo e precisa dizer do que o documento trata.
         content: Conteúdo completo em markdown
 
     Returns:
@@ -817,19 +891,24 @@ def create_artifact(
         )
 
     slug = _artifact_slug(title.strip())
+    if slug in _GENERIC_TITLE_SLUGS.get(artifact_type, set()):
+        return json.dumps(
+            {
+                "error": (
+                    f"title '{title.strip()}' é genérico demais — descreva do "
+                    "que o artifact trata (ex.: 'Plano de Implementação do "
+                    "Jogo da Cobrinha em Godot 4.7', não apenas 'Plano')."
+                )
+            }
+        )
+
     artifact_dir = Path.home() / ".vectora" / "artifacts" / session_id
 
     try:
         artifact_dir.mkdir(parents=True, exist_ok=True)
-
-        # Evita sobrescrever com mesmo slug — adiciona sufixo numérico
-        path = artifact_dir / f"{slug}.md"
-        counter = 1
-        while path.exists():
-            path = artifact_dir / f"{slug}-{counter}.md"
-            counter += 1
-
-        path.write_text(content.strip(), encoding="utf-8")
+        stripped_content = content.strip()
+        path = _rotate_artifact_history(artifact_dir, slug, stripped_content)
+        _mirror_artifact_to_workspace(config, artifact_type, slug, stripped_content)
 
         created_at = datetime.now(UTC).isoformat()
         logger.info(
