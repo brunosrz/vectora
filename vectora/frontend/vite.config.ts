@@ -170,8 +170,17 @@ export default defineConfig({
     sourcemap: false,
     target: "es2022",
     chunkSizeWarningLimit: 1500,
+    // O aviso `[PLUGIN_TIMINGS]` (tempo gasto em plugins) é puramente
+    // informativo e polui o build. A flag oficial `checks.pluginTimings: false`
+    // é ignorada pelo binding nativo do rolldown-vite (@rolldown/binding 1.1.5
+    // emite o aviso mesmo com a flag desligada), então filtramos pelo código no
+    // onLog — que o rolldown-vite consulta em build.rolldownOptions.onLog — e
+    // deixamos todo o resto dos logs passar sem alteração.
     rolldownOptions: {
-      checks: { pluginTimings: false },
+      onLog(level, log, defaultHandler) {
+        if (log?.code === "PLUGIN_TIMINGS") return;
+        defaultHandler(level, log);
+      },
       output: {
         // Split vendor chunks so the Rolldown/Oxc WASM parser processes
         // smaller files and stays within its WebAssembly memory limit.
