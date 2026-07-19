@@ -514,9 +514,9 @@ async def run_task(
         configurable: dict[str, Any] = {
             "thread_id": run_thread_id,
             "user_id": task.user_id,
-            # Sem humano para responder HITL: auto-aprova edições, mas ainda
-            # interrompe em ações destrutivas (a thread fica na sidebar para o
-            # usuário retomar).
+            # Sem humano para responder HITL no fluxo de fundo: "auto" faz o HITL
+            # dinâmico (runtime.context.permission_mode) rodar sem pausas, então
+            # a task conclui inteira em vez de travar num interrupt sem aprovador.
             "permission_mode": "auto",
         }
         if task.workspace_id:

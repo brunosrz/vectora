@@ -105,50 +105,20 @@ async def test_get_user_agent_no_user_id_uses_global_cache():
 
 
 # ---------------------------------------------------------------------------
-# A4 — permission_mode entra na chave de cache (plan != ask, mesmo cache antes)
+# HITL dinâmico — permission_mode NÃO entra na chave de cache (um grafo só)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_get_user_agent_plan_mode_gets_its_own_cached_graph():
-    """permission_mode="plan" compila/cacheia um grafo À PARTE de "ask".
+async def test_get_user_agent_one_graph_serves_all_permission_modes():
+    """HITL dinâmico: o grafo é o mesmo para qualquer modo (o modo é lido do
+    runtime.context por request, não compilado).
 
-    Antes desta mudança, TODO grafo era compilado com permission_mode="ask"
-    fixo — passar "plan" no request nunca tinha efeito nenhum no HITL real.
+    Antes cada permission_mode com interrupt_on distinto tinha grafo próprio
+    cacheado; agora get_user_agent nem aceita permission_mode e compila um único
+    grafo por (user, model, chat_mode). Trocar o modo na appbar não recompila.
     """
-    fake_ask_graph = MagicMock(name="graph-ask")
-    fake_plan_graph = MagicMock(name="graph-plan")
-    build_mock = AsyncMock(side_effect=[fake_ask_graph, fake_plan_graph])
-
-    with (
-        patch("backend.services.agent_factory._build_graph_async", new=build_mock),
-        patch("backend.services.agent_factory._track_versions"),
-    ):
-        import backend.services.agent_factory as af
-
-        af._graphs_by_user.clear()
-        af._graphs.clear()
-
-        g_ask = await af.get_user_agent(
-            user_id="user-1", model="", permission_mode="ask"
-        )
-        g_plan = await af.get_user_agent(
-            user_id="user-1", model="", permission_mode="plan"
-        )
-
-        assert g_ask is fake_ask_graph
-        assert g_plan is fake_plan_graph
-        assert g_ask is not g_plan
-        assert build_mock.call_count == 2
-        # último arg posicional de _build_graph_async é permission_mode
-        assert build_mock.call_args_list[0].args[-1] == "ask"
-        assert build_mock.call_args_list[1].args[-1] == "plan"
-
-
-@pytest.mark.asyncio
-async def test_get_user_agent_repeated_plan_mode_reuses_cached_graph():
-    """Duas chamadas com permission_mode="plan" reusam o mesmo grafo cacheado."""
-    fake_graph = MagicMock()
+    fake_graph = MagicMock(name="graph")
     build_mock = AsyncMock(return_value=fake_graph)
 
     with (
@@ -160,11 +130,24 @@ async def test_get_user_agent_repeated_plan_mode_reuses_cached_graph():
         af._graphs_by_user.clear()
         af._graphs.clear()
 
-        g1 = await af.get_user_agent(user_id="user-2", permission_mode="plan")
-        g2 = await af.get_user_agent(user_id="user-2", permission_mode="plan")
+        g1 = await af.get_user_agent(user_id="user-1", model="")
+        g2 = await af.get_user_agent(user_id="user-1", model="")
 
         assert g1 is g2
         assert build_mock.call_count == 1
+        # _build_graph_async recebe só (model, chat_mode, user_id) — sem
+        # permission_mode (assinatura reduzida no HITL dinâmico).
+        assert len(build_mock.call_args_list[0].args) == 3
+
+
+@pytest.mark.asyncio
+async def test_get_user_agent_rejects_permission_mode_kwarg():
+    """Erro/borda: permission_mode foi removido da assinatura — passá-lo agora
+    é TypeError (protege contra caller legado ressurgir silenciosamente)."""
+    import backend.services.agent_factory as af
+
+    with pytest.raises(TypeError):
+        await af.get_user_agent(user_id="user-2", permission_mode="plan")  # ty: ignore[unknown-argument]
 
 
 # ---------------------------------------------------------------------------

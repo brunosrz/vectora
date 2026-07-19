@@ -4,23 +4,18 @@ Monta e expõe o conjunto de middlewares usados em ``create_deep_agent``.
 Cada middleware é lazy-importado para evitar carregamento desnecessário em
 contextos que não instanciam o grafo (CLI, testes unitários).
 
+HITL dinâmico (por request, não por compilação):
+    Um único ``HumanInTheLoopMiddleware`` cobre todas as tools destrutivas.
+    O predicate ``when=_dynamic_hitl_when`` lê ``runtime.context.permission_mode``
+    (``VectoraContext``, populado do ``configurable`` por request via
+    ``ctx_from_config`` no handler de chat) e aplica a política do modo em tempo
+    de execução. Assim o MESMO grafo compilado atende os 5 modos — trocar o modo
+    no meio da sessão passa a valer no turno seguinte sem recompilar.
+
 Middlewares disponíveis em deepagents (usados aqui):
-    - ``SummarizationMiddleware`` — comprime contexto quando próximo do limite
-    - ``HumanInTheLoopMiddleware`` — pausa execução de tools para aprovação humana
-
-Middlewares do plano sem suporte nativo em deepagents (TODO quando disponíveis):
-    - ``ModelCallLimitMiddleware`` — limita chamadas de modelo por turno
-    - ``ToolCallLimitMiddleware`` — limita chamadas de tool por turno
-    - ``ModelRetryMiddleware`` — retry em falhas do modelo
-    - ``ModelFallbackMiddleware`` — fallback para LLM backup
-    - ``ToolRetryMiddleware`` — retry em falhas de tool
-    - ``ContextEditingMiddleware`` — edição de contexto (sobreposição por E.B-5)
-
-Quando ``create_deep_agent`` recebe ``interrupt_on``, ele usa HITL compile-time.
-Esta abordagem funciona bem para o singleton compartilhado (todos os usuários
-têm o mesmo gráfico); quando E.B-5 introduzir ``context_schema=VectoraContext``,
-o ``_dynamic_hitl_when`` lerá ``runtime.context.permission_mode`` em tempo real
-e o ``interrupt_on`` estático poderá ser substituído por lógica dinâmica.
+    - ``SummarizationMiddleware`` — adicionado incondicionalmente pelo
+      ``create_deep_agent`` (não duplicar aqui).
+    - ``HumanInTheLoopMiddleware`` — pausa tools destrutivas para aprovação.
 """
 
 from __future__ import annotations
@@ -37,25 +32,27 @@ if TYPE_CHECKING:
     from langchain.agents.middleware.types import ToolCallRequest
 
 # ---------------------------------------------------------------------------
-# HITL: mapeamento permission_mode → interrupt_on
+# HITL: política canônica por permission_mode
 # ---------------------------------------------------------------------------
 
-#: Tools destrutivas que pausam o grafo para aprovação.
+#: Tools destrutivas candidatas a pausar o grafo para aprovação.
 _REQUIRE_APPROVAL: frozenset[str] = frozenset(
     {"terminal", "terminal_tool", "file_write", "file_write_tool"}
 )
 
-#: Tools auto-aprovadas no modo "accept_edits".
+#: Tools auto-aprovadas no modo "accept_edits" (edições de arquivo passam sem
+#: pausa; só o terminal interrompe).
 _ACCEPT_EDITS_AUTO: frozenset[str] = frozenset({"file_write", "file_write_tool"})
 
-#: Decisions permitidas no modo "ask" (todas).
+#: Modos que NUNCA interrompem (rodam autônomos). ``auto`` e ``bypass`` têm o
+#: mesmo comportamento no grafo (sem pausa); a diferença é de UX/observabilidade
+#: no frontend (banner "automático" vs "permissões ignoradas"), não de HITL.
+_NON_INTERRUPTING_MODES: frozenset[str] = frozenset({"auto", "bypass"})
+
+#: Decisions permitidas no interrupt (todas — o predicate decide SE pausa; uma
+#: vez pausado, o revisor tem o leque completo de ações).
 _ALL_DECISIONS: list[DecisionType] = cast(  # type: ignore[assignment]
     "list[DecisionType]", ["approve", "edit", "reject", "respond"]
-)
-
-#: Decisions permitidas no modo "accept_edits" (sem reject).
-_EDITS_DECISIONS: list[DecisionType] = cast(  # type: ignore[assignment]
-    "list[DecisionType]", ["approve", "edit", "respond"]
 )
 
 
@@ -68,7 +65,7 @@ def _plan_mode_should_interrupt(req: ToolCallRequest) -> bool:
     rodam sem pausas novas. Detecta "turno atual" varrendo ``state["messages"]``
     de trás pra frente até a última ``HumanMessage``: se já existe um
     ``ToolMessage`` de uma tool destrutiva DEPOIS dela, o gate já foi passado
-    neste turno — não sem novo autorização em toda pergunta nova.
+    neste turno — não interrompe de novo.
     """
     from langchain_core.messages import HumanMessage, ToolMessage
 
@@ -87,105 +84,89 @@ def _plan_mode_should_interrupt(req: ToolCallRequest) -> bool:
     return True  # primeira tool destrutiva do turno — pausa pra aprovação
 
 
-def _interrupt_on_for_mode(permission_mode: str) -> dict[str, Any]:
-    """Retorna o dict ``interrupt_on`` canônico para o modo de permissão.
+def _mode_should_interrupt(mode: str, tool_name: str, req: ToolCallRequest) -> bool:
+    """Política canônica dos 5 modos — fonte única de verdade do HITL.
 
-    ``permission_mode`` → ``interrupt_on`` dict:
+    - ``ask`` (manual): interrompe TODA tool destrutiva, em toda rodada.
+    - ``accept_edits`` (aceitar permissões): auto-aprova edições de arquivo;
+      só ``terminal`` interrompe.
+    - ``plan`` (plano): interrompe só a 1ª tool destrutiva do turno
+      (``_plan_mode_should_interrupt``) — aprovado uma vez, o resto do turno
+      roda sem novas pausas.
+    - ``auto`` (automático) / ``bypass`` (ignorar permissões): nunca interrompe.
 
-    - ``"bypass"`` / ``"auto"`` → ``{}`` (sem pausas)
-    - ``"accept_edits"``        → só terminal interrompe (approve/edit/respond)
-    - ``"ask"``                 → toda tool destrutiva interrompe, em toda
-      rodada de tool-calling (all decisions)
-    - ``"plan"``                → só a 1ª tool destrutiva do turno interrompe
-      (``_plan_mode_should_interrupt``); aprovado uma vez, o resto do turno
-      roda sem novas pausas — diferente de ``"ask"``, que pausa em CADA rodada
-
-    O dict retornado é passado diretamente a ``HumanInTheLoopMiddleware`` ou
-    ao parâmetro ``interrupt_on`` de ``create_deep_agent``.
+    ``tool_name`` fora de ``_REQUIRE_APPROVAL`` nunca interrompe (o interrupt_on
+    já restringe as tools cobertas, mas a checagem torna a função correta se
+    chamada isolada).
     """
-    from deepagents.middleware.subagents import (
-        InterruptOnConfig,  # type: ignore[attr-defined]
-    )
-
-    match permission_mode:
-        case "bypass" | "auto":
-            return {}
-        case "accept_edits":
-            # Só terminal interrupts (file_write é auto-aprovado neste modo)
-            return {
-                name: InterruptOnConfig(allowed_decisions=_EDITS_DECISIONS)
-                for name in (_REQUIRE_APPROVAL - _ACCEPT_EDITS_AUTO)
-            }
-        case "plan":
-            return {
-                name: InterruptOnConfig(
-                    allowed_decisions=_ALL_DECISIONS, when=_plan_mode_should_interrupt
-                )
-                for name in _REQUIRE_APPROVAL
-            }
-        case _:  # "ask" ou desconhecido → mais restritivo
-            return {
-                name: InterruptOnConfig(allowed_decisions=_ALL_DECISIONS)
-                for name in _REQUIRE_APPROVAL
-            }
+    if tool_name not in _REQUIRE_APPROVAL:
+        return False
+    if mode in _NON_INTERRUPTING_MODES:
+        return False
+    if mode == "accept_edits":
+        return tool_name not in _ACCEPT_EDITS_AUTO
+    if mode == "plan":
+        return _plan_mode_should_interrupt(req)
+    return True  # "ask" ou desconhecido → mais restritivo
 
 
-def _hitl_middleware(permission_mode: str) -> Any | None:
-    """Constrói ``HumanInTheLoopMiddleware`` para o modo de permissão dado.
+def _mode_from_runtime(req: ToolCallRequest) -> str:
+    """Extrai ``permission_mode`` do ``runtime.context`` (VectoraContext).
 
-    Retorna ``None`` quando o modo não requer HITL (bypass/auto), evitando
-    adicionar middleware desnecessário ao stack.
-
-    Centraliza o mapeamento ``permission_mode → HumanInTheLoopMiddleware``.
+    Defensivo: se o runtime/context não estiver disponível (ex.: tool invocada
+    fora do grafo), cai em ``"ask"`` — o modo mais restritivo.
     """
-    interrupt_on = _interrupt_on_for_mode(permission_mode)
-    if not interrupt_on:
-        return None
-
-    from deepagents.middleware.subagents import (
-        HumanInTheLoopMiddleware,  # type: ignore[attr-defined]
-    )
-
-    return HumanInTheLoopMiddleware(interrupt_on=interrupt_on)
+    runtime = getattr(req, "runtime", None)
+    context = getattr(runtime, "context", None)
+    mode = getattr(context, "permission_mode", "") if context is not None else ""
+    return mode or "ask"
 
 
-# ---------------------------------------------------------------------------
-# Sumarização: compressão de contexto
-# ---------------------------------------------------------------------------
+def _dynamic_hitl_when(req: ToolCallRequest) -> bool:
+    """Predicate único do HITL dinâmico: lê o modo do runtime e aplica a política.
+
+    Chamado pelo ``HumanInTheLoopMiddleware`` para cada tool call destrutiva.
+    Lê ``permission_mode`` do ``runtime.context`` (por request) em vez de depender
+    de um grafo compilado por modo.
+    """
+    tool_call = getattr(req, "tool_call", {}) or {}
+    tool_name = tool_call.get("name", "") if isinstance(tool_call, dict) else ""
+    mode = _mode_from_runtime(req)
+    return _mode_should_interrupt(mode, tool_name, req)
 
 
-# ---------------------------------------------------------------------------
-# Stack completo
-# ---------------------------------------------------------------------------
-
-
-def build_middleware_stack(permission_mode: str = "ask") -> list[Any]:
+def build_middleware_stack() -> list[Any]:
     """Monta o stack de middleware para ``create_deep_agent(middleware=...)``.
 
-    Args:
-        permission_mode: Modo de permissão da sessão ("ask", "accept_edits",
-            "auto", "bypass", "plan"). Determina o HITL behavior.
+    Um único ``HumanInTheLoopMiddleware`` cobre todas as tools de
+    ``_REQUIRE_APPROVAL`` com o predicate dinâmico ``_dynamic_hitl_when``, que lê
+    o ``permission_mode`` do ``runtime.context`` em tempo de execução. O grafo
+    compilado é o mesmo para todos os modos — a decisão de pausar acontece por
+    request.
 
     Returns:
         Lista de ``AgentMiddleware`` prontos para passar ao ``create_deep_agent``.
 
-    Nota: o singleton do factory usa ``permission_mode="ask"`` como padrão
-    (mais restritivo). Quando E.B-5 introduzir ``context_schema=VectoraContext``,
-    o middleware poderá ler o mode dinamicamente via ``runtime.context``.
+    Nota: ``create_deep_agent`` já adiciona um ``SummarizationMiddleware`` ao
+    stack base incondicionalmente — adicionar outro aqui causa
+    ``AssertionError: Please remove duplicate middleware instances``.
     """
-    stack: list[Any] = []
+    from deepagents.middleware.subagents import (
+        HumanInTheLoopMiddleware,  # type: ignore[attr-defined]
+        InterruptOnConfig,  # type: ignore[attr-defined]
+    )
 
-    # HITL (pausa ferramentas destrutivas para aprovação humana). Note que
-    # ``create_deep_agent`` já adiciona um ``SummarizationMiddleware`` ao
-    # stack base incondicionalmente — adicionar outro aqui causa
-    # ``AssertionError: Please remove duplicate middleware instances``.
-    hitl = _hitl_middleware(permission_mode)
-    if hitl is not None:
-        stack.append(hitl)
+    # ``dict[str, Any]`` porque ``HumanInTheLoopMiddleware`` aceita
+    # ``dict[str, bool | InterruptOnConfig]`` (dict é invariante no valor).
+    interrupt_on: dict[str, Any] = {
+        name: InterruptOnConfig(
+            allowed_decisions=_ALL_DECISIONS, when=_dynamic_hitl_when
+        )
+        for name in _REQUIRE_APPROVAL
+    }
+    stack: list[Any] = [HumanInTheLoopMiddleware(interrupt_on=interrupt_on)]
 
     logger.debug(
-        "middleware: stack montado para mode=%s → %d middlewares",
-        permission_mode,
-        len(stack),
+        "middleware: stack montado (HITL dinâmico) → %d middlewares", len(stack)
     )
     return stack

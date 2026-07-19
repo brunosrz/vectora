@@ -145,52 +145,8 @@ async def test_aget_thread_messages_no_checkpointer(
 
 
 # ---------------------------------------------------------------------------
-# Sprint 5 — get_interrupt_on + reset_default_graph + profiles guard
+# reset_default_graph + profiles guard
 # ---------------------------------------------------------------------------
-
-
-class TestGetInterruptOn:
-    def test_bypass_returns_empty(self) -> None:
-        from backend.services.agent_factory import get_interrupt_on
-
-        assert get_interrupt_on("bypass") == {}
-
-    def test_auto_returns_empty(self) -> None:
-        from backend.services.agent_factory import get_interrupt_on
-
-        assert get_interrupt_on("auto") == {}
-
-    def test_ask_interrupts_all_destructive(self) -> None:
-        from backend.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
-
-        result = get_interrupt_on("ask")
-        assert set(result.keys()) == REQUIRE_APPROVAL
-        assert all(v is True for v in result.values())
-
-    def test_accept_edits_excludes_file_write(self) -> None:
-        from backend.services.agent_factory import (
-            ACCEPT_EDITS_AUTO,
-            REQUIRE_APPROVAL,
-            get_interrupt_on,
-        )
-
-        result = get_interrupt_on("accept_edits")
-        expected = REQUIRE_APPROVAL - ACCEPT_EDITS_AUTO
-        assert set(result.keys()) == expected
-        assert "file_write" not in result
-        assert "file_write_tool" not in result
-
-    def test_unknown_mode_treated_as_ask(self) -> None:
-        from backend.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
-
-        result = get_interrupt_on("plan")
-        assert set(result.keys()) == REQUIRE_APPROVAL
-
-    def test_accept_edits_error_mode_missing(self) -> None:
-        from backend.services.agent_factory import get_interrupt_on
-
-        result = get_interrupt_on("accept_edits")
-        assert result != {}, "accept_edits deve interromper ao menos terminal"
 
 
 class TestResetDefaultGraph:

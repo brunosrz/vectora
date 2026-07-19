@@ -546,14 +546,15 @@ async def stream_chat(
         # Troca de modelo por request: o grafo é cacheado por modelo escolhido
         # (configurable["model"] já normalizado para "provider:model"). Sem
         # escolha, usa o grafo do modelo padrão. chat_mode usa um grafo separado
-        # com toolset conversacional (CHAT_TOOLS).
+        # com toolset conversacional (CHAT_TOOLS). O permission_mode NÃO afeta a
+        # escolha do grafo (HITL dinâmico via runtime.context); guardamos o modo
+        # do turno só para o resume reidratar o mesmo contexto (ver resume_chat).
         permission_mode = configurable.get("permission_mode", "ask")
         _thread_permission_mode[thread_id] = permission_mode
         graph = await agent_factory.get_user_agent(
             user_id,
             model=configurable.get("model", ""),
             chat_mode=chat_mode,
-            permission_mode=permission_mode,
         )
     except Exception as exc:
         logger.exception("api/chat: erro ao inicializar grafo")
@@ -663,16 +664,19 @@ async def resume_chat(
     resume_user_id = _user_id_from_request(http_request)
     permission_mode = _thread_permission_mode.get(request.thread_id, "ask")
     try:
-        graph = await agent_factory.get_user_agent(
-            resume_user_id, permission_mode=permission_mode
-        )
+        graph = await agent_factory.get_user_agent(resume_user_id)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    # permission_mode entra no configurable para que ctx_from_config o carregue
+    # ao runtime.context — o HITL dinâmico reavalia o gate no resume com o MESMO
+    # modo do turno original (senão uma 2ª tool destrutiva no mesmo turno seria
+    # avaliada como "ask" e pausaria indevidamente num turno em modo "plan").
     config: dict[str, Any] = {
         "configurable": {
             "thread_id": request.thread_id,
             "user_id": resume_user_id,
+            "permission_mode": permission_mode,
         },
         "recursion_limit": 50,
     }

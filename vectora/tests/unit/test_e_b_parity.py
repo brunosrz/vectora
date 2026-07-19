@@ -81,43 +81,26 @@ class TestVectoraContext:
 
 
 class TestMiddlewareStack:
-    def test_bypass_mode_no_hitl(self):
-        """Mode bypass retorna stack sem HITL."""
+    def test_stack_sempre_tem_hitl_dinamico(self):
+        """HITL dinâmico: o stack SEMPRE inclui HumanInTheLoopMiddleware — não há
+        mais variação por modo na compilação. O gate por modo (incluindo
+        auto/bypass que não pausam) acontece em runtime no _dynamic_hitl_when
+        (coberto em test_services_middleware.py)."""
         from backend.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="bypass")
-        assert all("HumanInTheLoop" not in type(m).__name__ for m in stack)
-
-    def test_auto_mode_no_hitl(self):
-        """Mode auto retorna stack sem HITL."""
-        from backend.services.middleware import build_middleware_stack
-
-        stack = build_middleware_stack(permission_mode="auto")
-        assert all("HumanInTheLoop" not in type(m).__name__ for m in stack)
-
-    def test_ask_mode_has_hitl(self):
-        """Mode ask deve incluir HumanInTheLoopMiddleware."""
-        from backend.services.middleware import build_middleware_stack
-
-        stack = build_middleware_stack(permission_mode="ask")
+        stack = build_middleware_stack()
         names = [type(m).__name__ for m in stack]
         assert "HumanInTheLoopMiddleware" in names
 
-    def test_plan_mode_has_hitl(self):
-        """Mode plan deve incluir HumanInTheLoopMiddleware."""
+    def test_stack_nao_aceita_permission_mode(self):
+        """Erro/borda: build_middleware_stack não recebe mais permission_mode —
+        passá-lo é TypeError (protege contra caller compile-time ressurgir)."""
+        import pytest
+
         from backend.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="plan")
-        names = [type(m).__name__ for m in stack]
-        assert "HumanInTheLoopMiddleware" in names
-
-    def test_accept_edits_has_hitl(self):
-        """Mode accept_edits inclui HITL para terminal (não para file_write)."""
-        from backend.services.middleware import build_middleware_stack
-
-        stack = build_middleware_stack(permission_mode="accept_edits")
-        names = [type(m).__name__ for m in stack]
-        assert "HumanInTheLoopMiddleware" in names
+        with pytest.raises(TypeError):
+            build_middleware_stack(permission_mode="bypass")  # type: ignore[call-arg]  # ty: ignore[unknown-argument]
 
     def test_no_duplicate_summarization_middleware(self):
         """build_middleware_stack não adiciona SummarizationMiddleware —
@@ -125,7 +108,7 @@ class TestMiddlewareStack:
         adicionar outro causa AssertionError de middleware duplicado."""
         from backend.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="ask")
+        stack = build_middleware_stack()
         names = [type(m).__name__ for m in stack]
         assert not any("ummariz" in n for n in names)
 
