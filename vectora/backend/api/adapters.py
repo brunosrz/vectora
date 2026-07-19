@@ -28,6 +28,7 @@ from backend.api.schemas import (
     RagCitation,
     RagCitationEvent,
     StreamChatEventPayload,
+    SubagentOutputEvent,
     TerminalLineEvent,
     TodosUpdatedEvent,
     TokenEvent,
@@ -670,6 +671,18 @@ def adapt_stream(
                             "subagent_type": str(tool_input.get("subagent_type", "")),
                             "description": str(tool_input.get("description", "")),
                         }
+                        # Card "Subagent Outputs": identidade + status ao vivo do
+                        # subagente (running agora, complete/error no on_tool_end).
+                        yield encode_event(
+                            SubagentOutputEvent(
+                                subagent_type=subagent_calls[run_id]["subagent_type"]
+                                or "subagent",
+                                description=subagent_calls[run_id]["description"],
+                                status="running",
+                                tool_call_id=run_id,
+                                content="",
+                            )
+                        )
                     yield encode_event(
                         ToolActivityEvent(
                             tool_name=name,
@@ -746,6 +759,17 @@ def adapt_stream(
 
                     # Delegação de subagente concluída — registra na aba Tarefas.
                     call = subagent_calls.pop(run_id, None)
+                    if call is not None and isinstance(payload, ToolResultEvent):
+                        # Card "Subagent Outputs": resposta final com identidade.
+                        yield encode_event(
+                            SubagentOutputEvent(
+                                subagent_type=call["subagent_type"] or "subagent",
+                                description=call["description"],
+                                status="error" if payload.is_error else "complete",
+                                tool_call_id=run_id,
+                                content=payload.content_json,
+                            )
+                        )
                     if (
                         call is not None
                         and user_id is not None

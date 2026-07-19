@@ -33,14 +33,6 @@ export interface Message {
   thinkingStartTime?: number;
   thinkingDuration?: number;
 
-  // Bloco D — Reasoning Reveal
-  /** Raciocínio do orchestrator (ThinkingEvent) */
-  thinking?: {
-    reason: string;
-    action: string;
-    delegate_to?: string | null;
-    task_query?: string | null;
-  };
   /** Label semântico do nó atualmente em execução (D2) */
   currentNodeLabel?: string;
   /** Durações por nó, acumuladas durante o stream (D3) */

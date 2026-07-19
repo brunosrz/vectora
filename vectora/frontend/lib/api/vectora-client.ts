@@ -90,11 +90,12 @@ export type StreamEvent =
       is_error?: boolean;
     }
   | {
-      type: "thinking";
-      reason: string;
-      action: string;
-      delegate_to?: string | null;
-      task_query?: string | null;
+      type: "subagent_output";
+      subagent_type: string;
+      description?: string;
+      status: "running" | "complete" | "error";
+      tool_call_id: string;
+      content: string;
     }
   | {
       type: "node";

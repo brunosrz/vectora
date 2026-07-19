@@ -772,18 +772,31 @@ async function handleEvent(
       break;
     }
 
-    // D1 — ThinkingEvent: raciocínio do orchestrator
-    case "thinking": {
+    // Resultado de delegação via task() — popula o card "Subagent Outputs"
+    // com identidade (coder/search), status ao vivo e conteúdo. Dedupe por
+    // tool_call_id: o "running" (content vazio) vira "complete"/"error" com o
+    // resultado no mesmo card, sem duplicar.
+    case "subagent_output": {
       setMessages((prev) =>
-        updateMessageInList(prev, assistantMessageId, (m) => ({
-          ...m,
-          thinking: {
-            reason: event.reason,
-            action: event.action,
-            delegate_to: event.delegate_to ?? null,
-            task_query: event.task_query ?? null,
-          },
-        })),
+        updateMessageInList(prev, assistantMessageId, (m) => {
+          const existing = m.subgraphOutputs ?? [];
+          const entry = {
+            name: event.subagent_type,
+            output: event.content,
+            timestamp: Date.now(),
+            toolCallId: event.tool_call_id,
+            isStreaming: event.status === "running",
+            isComplete: event.status !== "running",
+          };
+          const idx = existing.findIndex(
+            (s) => s.toolCallId === event.tool_call_id,
+          );
+          const subgraphOutputs =
+            idx >= 0
+              ? existing.map((s, i) => (i === idx ? { ...s, ...entry } : s))
+              : [...existing, entry];
+          return { ...m, subgraphOutputs };
+        }),
       );
       break;
     }

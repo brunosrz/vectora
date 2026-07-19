@@ -11,7 +11,6 @@
 
 import { memo, useMemo, useEffect, useRef, useState, useCallback } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useSearchParams } from "next/navigation";
 import type { Message } from "@/lib/types";
 import { MessageItem } from "./message-item";
 import { MessageSkeletons } from "./message-skeleton";
@@ -84,10 +83,6 @@ export const MessageList = memo(function MessageList({
   workspaceId,
   compact = false,
 }: MessageListProps) {
-  // D4 — dev mode detectado uma vez por render de lista
-  const searchParams = useSearchParams();
-  const isDevMode = searchParams?.get("dev") === "1";
-
   // Scroll container
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -381,7 +376,6 @@ export const MessageList = memo(function MessageList({
     onCancelComment,
     onToggleComment,
     setFeedbackComment,
-    isDevMode,
     onHitlDecision,
     threadId,
     onRetry,

@@ -762,6 +762,41 @@ describe("useStreamHandler.processStream", () => {
       { content: "passo 1", status: "in_progress" },
     ]);
   });
+
+  it("subagent_output popula subgraphOutputs com identidade e dedupa por tool_call_id", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "subagent_output",
+          subagent_type: "coder",
+          description: "faz X",
+          status: "running",
+          tool_call_id: "r1",
+          content: "",
+        },
+        {
+          type: "subagent_output",
+          subagent_type: "coder",
+          description: "faz X",
+          status: "complete",
+          tool_call_id: "r1",
+          content: "arquivo criado",
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("delega pro coder", "a1");
+
+    const a = messages.find((m) => m.id === "a1");
+    // Dedupe por tool_call_id: um card só, com o estado final.
+    expect(a?.subgraphOutputs ?? []).toHaveLength(1);
+    const sub = a!.subgraphOutputs![0];
+    expect(sub.name).toBe("coder");
+    expect(sub.output).toBe("arquivo criado");
+    expect(sub.isComplete).toBe(true);
+    expect(sub.isStreaming).toBe(false);
+  });
 });
 
 // ============================================================================

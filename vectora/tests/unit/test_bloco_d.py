@@ -24,95 +24,84 @@ def _isolated(_no_thread_persistence):
 
 
 # ===========================================================================
-# D1 — ThinkingEvent: schema + extração + emissão
+# SubagentOutputEvent: identidade do subagente no card "Subagent Outputs"
 # ===========================================================================
 
 
-class TestThinkingEventSchema:
-    """ThinkingEvent deve existir em schemas.py com os campos corretos."""
+class TestSubagentOutputEventSchema:
+    """SubagentOutputEvent substitui o ThinkingEvent morto (Sprint 2)."""
 
-    def test_thinking_event_importable(self):
-        from backend.api.schemas import ThinkingEvent
+    def test_thinking_event_foi_removido(self):
+        """Erro/borda: o ThinkingEvent legado não existe mais no schema."""
+        from backend.api import schemas
 
-    def test_thinking_event_has_reason(self):
-        from backend.api.schemas import ThinkingEvent
+        assert not hasattr(schemas, "ThinkingEvent")
 
-        e = ThinkingEvent(reason="usuário perguntou sobre código")
-        assert e.reason == "usuário perguntou sobre código"
+    def test_campos_e_defaults(self):
+        from backend.api.schemas import SubagentOutputEvent
 
-    def test_thinking_event_has_action(self):
-        from backend.api.schemas import ThinkingEvent
+        e = SubagentOutputEvent(subagent_type="coder")
+        assert e.subagent_type == "coder"
+        assert e.status == "running"  # default
+        assert e.content == ""
+        assert e.description == ""
 
-        e = ThinkingEvent(reason="delegando", action="delegate")
-        assert e.action == "delegate"
+        full = SubagentOutputEvent(
+            subagent_type="search",
+            description="pesquisar X",
+            status="complete",
+            tool_call_id="call-1",
+            content="achei X",
+        )
+        assert full.status == "complete"
+        assert full.content == "achei X"
 
-    def test_thinking_event_action_defaults_to_respond(self):
-        from backend.api.schemas import ThinkingEvent
+    def test_encode_tem_type_subagent_output(self):
+        from backend.api.schemas import SubagentOutputEvent, encode_event
 
-        e = ThinkingEvent(reason="r")
-        assert e.action == "respond"
-
-    def test_thinking_event_has_delegate_to(self):
-        from backend.api.schemas import ThinkingEvent
-
-        e = ThinkingEvent(reason="r", delegate_to="search_agent")
-        assert e.delegate_to == "search_agent"
-
-    def test_thinking_event_delegate_to_defaults_none(self):
-        from backend.api.schemas import ThinkingEvent
-
-        e = ThinkingEvent(reason="r")
-        assert e.delegate_to is None
-
-    def test_thinking_event_encode_has_correct_type(self):
-        from backend.api.schemas import ThinkingEvent, encode_event
-
-        line = encode_event(ThinkingEvent(reason="r"))
+        line = encode_event(
+            SubagentOutputEvent(subagent_type="coder", status="complete")
+        )
         data = json.loads(line.removeprefix("data: ").strip())
-        assert data["type"] == "thinking"
-        assert data["reason"] == "r"
+        assert data["type"] == "subagent_output"
+        assert data["subagent_type"] == "coder"
 
-    def test_thinking_event_in_stream_payload_union(self):
-        """ThinkingEvent deve fazer parte de StreamChatEventPayload."""
-        from backend.api.schemas import StreamChatEventPayload, ThinkingEvent
+    def test_no_stream_payload_union(self):
+        from backend.api.schemas import StreamChatEventPayload, SubagentOutputEvent
 
-        e: StreamChatEventPayload = ThinkingEvent(reason="ok")
+        e: StreamChatEventPayload = SubagentOutputEvent(subagent_type="coder")
         assert e is not None
 
-
-# TestExtractOrchestratorThinking removida em E.B-6:
-# _extract_orchestrator_thinking foi removido — deepagents usa streaming natural,
-# sem structured output do orchestrator.
-
-
-class TestAdaptStreamThinkingEvent:
-    """adapt_stream não emite ThinkingEvent legado com deepagents (E.B-6)."""
-
-    # test_thinking_event_emitted_in_stream removido em E.B-6:
-    # deepagents usa streaming natural sem structured output do orchestrator;
-    # ThinkingEvent não é mais emitido via on_chain_end do nó "orchestrator".
-
     @pytest.mark.asyncio
-    async def test_no_thinking_event_when_orchestrator_responds_directly(self):
-        from langchain_core.messages import AIMessage
+    async def test_adapt_stream_emite_subagent_output_na_tool_task(self):
+        """A tool `task` emite subagent_output 'running' (start) e 'complete'
+        (end, com o resultado) — identidade do subagente pro card. Erro/borda:
+        uma tool comum (não `task`) NÃO emite subagent_output."""
+        from langchain_core.messages import ToolMessage
 
         from backend.api.adapters import adapt_stream
 
         events = [
             {
-                "event": "on_chain_start",
-                "name": "orchestrator",
-                "data": {},
+                "event": "on_tool_start",
+                "name": "task",
+                "data": {"input": {"subagent_type": "coder", "description": "faz X"}},
+                "run_id": "r1",
                 "metadata": {},
             },
             {
-                "event": "on_chain_end",
-                "name": "orchestrator",
-                "data": {
-                    "output": {
-                        "messages": [AIMessage(content="resposta direta")],
-                    }
-                },
+                "event": "on_tool_end",
+                "name": "task",
+                "data": {"output": ToolMessage(content="feito X", tool_call_id="r1")},
+                "run_id": "r1",
+                "metadata": {},
+            },
+            # tool comum não deve gerar subagent_output
+            {
+                "event": "on_tool_start",
+                "name": "web_search",
+                "data": {"input": {"query": "x"}},
+                "run_id": "r2",
                 "metadata": {},
             },
         ]
@@ -121,15 +110,20 @@ class TestAdaptStreamThinkingEvent:
             for e in events:
                 yield e
 
-        lines = [line async for line in adapt_stream(_fake_events(), "t-1")]
-
         payloads = [
-            json.loads(ln.removeprefix("data: ").strip())
-            for ln in lines
-            if ln.startswith("data: ")
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_fake_events(), "t-sub")
+            if line.startswith("data: ")
         ]
-        thinking_events = [p for p in payloads if p["type"] == "thinking"]
-        assert len(thinking_events) == 0
+        subs = [p for p in payloads if p.get("type") == "subagent_output"]
+        assert len(subs) == 2
+        assert subs[0]["status"] == "running"
+        assert subs[0]["subagent_type"] == "coder"
+        assert subs[0]["tool_call_id"] == "r1"
+        assert subs[1]["status"] == "complete"
+        assert subs[1]["content"] == "feito X"
+        # web_search não gerou subagent_output.
+        assert all(s["tool_call_id"] == "r1" for s in subs)
 
 
 # ===========================================================================
@@ -348,53 +342,6 @@ class TestNodeEventDuration:
         assert "node_b" in finished
         assert finished["node_a"] >= 0
         assert finished["node_b"] >= 0
-
-
-# ===========================================================================
-# D4 — Dev mode: campos extras acessíveis via flag
-# ===========================================================================
-
-
-class TestDevModeFields:
-    """Com dev=True, o ThinkingEvent expõe campos extras de debug."""
-
-    def test_thinking_event_has_task_query_field(self):
-        from backend.api.schemas import ThinkingEvent
-
-        e = ThinkingEvent(
-            reason="r",
-            action="delegate",
-            delegate_to="coder_agent",
-            task_query="escreva um script python",
-        )
-        assert e.task_query == "escreva um script python"
-
-    def test_thinking_event_task_query_defaults_none(self):
-        from backend.api.schemas import ThinkingEvent
-
-        e = ThinkingEvent(reason="r")
-        assert e.task_query is None
-
-    def test_thinking_event_full_fields_in_encoded_event(self):
-        from backend.api.schemas import ThinkingEvent, encode_event
-
-        e = ThinkingEvent(
-            reason="precisa de código",
-            action="delegate",
-            delegate_to="coder_agent",
-            task_query="crie função hello world",
-        )
-        data = json.loads(encode_event(e).removeprefix("data: ").strip())
-        assert data["reason"] == "precisa de código"
-        assert data["action"] == "delegate"
-        assert data["delegate_to"] == "coder_agent"
-        assert data["task_query"] == "crie função hello world"
-
-    # test_extract_thinking_includes_task_query removido em E.B-6:
-    # _extract_orchestrator_thinking foi removido — deepagents não usa structured output.
-
-    # test_thinking_event_in_stream_has_task_query removido em E.B-6:
-    # adapt_stream não emite mais ThinkingEvent via on_chain_end do orchestrator.
 
 
 # ===========================================================================

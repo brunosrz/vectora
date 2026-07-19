@@ -339,13 +339,21 @@ class NodeEvent(BaseModel):
         return self
 
 
-class ThinkingEvent(BaseModel):
-    """Raciocínio do orchestrator — visível para o usuário como bloco 'Thinking'."""
+class SubagentOutputEvent(BaseModel):
+    """Resultado de uma delegação via ``task()`` — popula o card 'Subagent Outputs'.
 
-    reason: str
-    action: str = "respond"
-    delegate_to: str | None = None
-    task_query: str | None = None
+    Emitido no início (status='running', content vazio) e no fim (status=
+    'complete'/'error', content = resposta do subagente) de cada chamada da
+    tool ``task``. ``tool_call_id`` é a chave de dedupe no frontend (mesmo
+    run_id do ToolCallEvent), dando identidade — "coder respondeu" / "search
+    respondeu" — em vez do bloco genérico "N ações".
+    """
+
+    subagent_type: str
+    description: str = ""
+    status: str = "running"  # "running" | "complete" | "error"
+    tool_call_id: str = ""
+    content: str = ""
 
 
 class UIMetricsEvent(BaseModel):
@@ -484,7 +492,7 @@ StreamChatEventPayload = (
     | NodeEvent
     | UIMetricsEvent
     | HITLEvent
-    | ThinkingEvent
+    | SubagentOutputEvent
     | RagCitationEvent
     | ErrorEvent
     | DoneEvent
@@ -504,7 +512,7 @@ _TYPE_MAP: dict[type, str] = {
     NodeEvent: "node",
     UIMetricsEvent: "ui_metrics",
     HITLEvent: "hitl",
-    ThinkingEvent: "thinking",
+    SubagentOutputEvent: "subagent_output",
     RagCitationEvent: "rag_citations",
     ErrorEvent: "error",
     DoneEvent: "done",
