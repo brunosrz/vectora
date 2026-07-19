@@ -726,6 +726,21 @@ async def resume_background_run(run_id: str, decision: str = "approve") -> str |
         return None
 
 
+async def cancel_background_run(run_id: str) -> str | None:
+    """Cancela uma run pendente de aprovação (ou rodando) — status 'cancelled'.
+
+    A run cancelada não é retomável. Retorna ``"cancelled"`` em sucesso, ou
+    ``None`` se a run não existe ou já terminou (done/error/cancelled).
+    """
+    run = await _get_run(run_id)
+    if run is None or run.get("status") not in ("awaiting_approval", "running"):
+        return None
+    await _finish_run(
+        run_id, "cancelled", run.get("summary") or "Cancelada pelo usuário."
+    )
+    return "cancelled"
+
+
 async def report_to_parent_session(
     task: BackgroundTask, run_thread_id: str, summary: str
 ) -> bool:

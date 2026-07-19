@@ -210,12 +210,18 @@ async def resume_run_endpoint(
     body: ResumeRunRequest,
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
-    """Retoma uma run pausada em HITL (``awaiting_approval``).
+    """Retoma (approve/reject/edit) OU cancela (``decision="cancel"``) uma run
+    pausada em HITL (``awaiting_approval``).
 
     O resume roda em background (invoca o agente); o novo status chega via o
-    evento SSE ``background_run.done``/``needs_approval`` e no ``GET /runs``.
+    evento SSE ``background_run.done``/``needs_approval`` e no ``GET /runs``. O
+    cancelamento é síncrono (só marca 'cancelled').
     """
-    from backend.scheduling.background_tasks import _get_run, resume_background_run
+    from backend.scheduling.background_tasks import (
+        _get_run,
+        cancel_background_run,
+        resume_background_run,
+    )
 
     _user_id(request)
     run = await _get_run(run_id)
@@ -223,6 +229,9 @@ async def resume_run_endpoint(
         raise HTTPException(status_code=404, detail="Run não encontrada")
     if run.get("status") != "awaiting_approval":
         raise HTTPException(status_code=409, detail="Run não está aguardando aprovação")
+    if body.decision == "cancel":
+        await cancel_background_run(run_id)
+        return {"status": "cancelled", "run_id": run_id}
     background_tasks.add_task(resume_background_run, run_id, body.decision)
     return {"status": "queued", "run_id": run_id}
 

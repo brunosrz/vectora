@@ -173,6 +173,48 @@ async def get_task_status(
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@tool(
+    extras={
+        "invalidates": ["tasks"],
+        "destructive": True,
+        "category": "workspace",
+        "icon": "check",
+    }
+)
+async def approve_task_action(
+    run_id: str,
+    decision: str = "approve",
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Intervém numa run de background pausada aguardando aprovação (HITL).
+
+    Quando uma task roda num modo que interrompe em ações destrutivas, a run
+    fica ``awaiting_approval``. Use isto para retomá-la (o orquestrador pode
+    aprovar/rejeitar em nome do usuário).
+
+    Args:
+        run_id: id da run em ``awaiting_approval`` (de ``list_background_tasks``).
+        decision: ``approve`` | ``reject`` | ``edit:<json_dos_args>`` | ``cancel``.
+            ``cancel`` encerra a run como cancelada (não retomável).
+
+    Returns:
+        JSON com o novo status ("done" | "awaiting_approval" | "cancelled") ou erro.
+    """
+    try:
+        if decision == "cancel":
+            res = await background_tasks.cancel_background_run(run_id)
+        else:
+            res = await background_tasks.resume_background_run(run_id, decision)
+        if res is None:
+            return json.dumps(
+                {"status": "error", "error": "run não está pendente ou não existe"}
+            )
+        return json.dumps({"status": "ok", "run_status": res})
+    except Exception as e:
+        logger.exception("approve_task_action: erro inesperado")
+        return json.dumps({"status": "error", "error": str(e)})
+
+
 @tool(extras={"destructive": False, "category": "workspace", "icon": "file-text"})
 async def get_task_result(
     run_id: str,

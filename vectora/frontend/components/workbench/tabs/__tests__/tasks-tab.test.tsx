@@ -95,6 +95,50 @@ describe("TasksTab", () => {
     expect(screen.queryByTestId("background-run-now")).not.toBeInTheDocument();
   });
 
+  it("run awaiting_approval mostra aprovar/rejeitar/cancelar e aprova via endpoint (Sprint 3.4)", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal("fetch", fetchMock);
+    const refetch = vi.fn();
+
+    mockTasks.mockReturnValue(
+      baseHook({
+        refetch,
+        runs: [
+          {
+            id: "run-1",
+            task_id: "t1",
+            run_thread_id: "bg-t1-1",
+            trigger_source: "manual",
+            status: "awaiting_approval",
+            summary: "aguardando terminal",
+            started_at: "2025",
+            finished_at: null,
+          },
+        ],
+      }),
+    );
+
+    render(<TasksTab threadId="thr-1" />);
+
+    const approve = screen.getByText("background_approve");
+    expect(approve).toBeInTheDocument();
+    expect(screen.getByText("background_reject")).toBeInTheDocument();
+    expect(screen.getByText("background_cancel_run")).toBeInTheDocument();
+
+    fireEvent.click(approve);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/sessions/thr-1/background/runs/run-1/resume",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ decision: "approve" }),
+      }),
+    );
+    vi.unstubAllGlobals();
+  });
+
   it("mantém rodar-agora e toggle pra tarefas normais (regressão)", () => {
     mockTasks.mockReturnValue(
       baseHook({

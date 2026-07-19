@@ -539,6 +539,60 @@ async def test_orchestrator_tools_list_status_result(db, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# Sprint 3.4 — intervenção: cancelar / aprovar via tool do orquestrador
+# ---------------------------------------------------------------------------
+
+
+async def test_cancel_and_approve_task_action(db, monkeypatch):
+    """cancel_background_run encerra uma run pendente; a tool approve_task_action
+    (decision='cancel') faz o mesmo pelo orquestrador. Erro/borda: cancelar uma
+    run já concluída → None / erro tipado."""
+    import json as _json
+
+    from langchain_core.runnables import RunnableConfig
+
+    from backend.tools.background import approve_task_action
+
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
+    monkeypatch.setenv("LANGSMITH_TRACING", "false")
+
+    task = await bg.create_task(
+        session_id="sess-cancel",
+        user_id="u",
+        kind="routine",
+        name="Perigosa",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"permission_mode": "ask"},
+    )
+    run_id = "run-await"
+    await bg._insert_run(run_id, task, "sess-cancel", "manual")
+    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+
+    cfg: RunnableConfig = {"configurable": {"thread_id": "sess-cancel", "user_id": "u"}}
+    out = _json.loads(
+        await approve_task_action.ainvoke(
+            {"run_id": run_id, "decision": "cancel"}, config=cfg
+        )
+    )
+    assert out["status"] == "ok"
+    assert out["run_status"] == "cancelled"
+
+    run = await bg._get_run(run_id)
+    assert run is not None
+    assert run["status"] == "cancelled"
+
+    # Erro/borda: cancelar de novo (já não está pendente) → None / erro tipado.
+    assert await bg.cancel_background_run(run_id) is None
+    out2 = _json.loads(
+        await approve_task_action.ainvoke(
+            {"run_id": run_id, "decision": "cancel"}, config=cfg
+        )
+    )
+    assert out2["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
 # Scheduler (interval)
 # ---------------------------------------------------------------------------
 

@@ -32,7 +32,7 @@ export interface BackgroundRun {
   task_id: string;
   run_thread_id: string | null;
   trigger_source: string;
-  status: "running" | "done" | "error";
+  status: "running" | "done" | "error" | "awaiting_approval" | "cancelled";
   summary: string | null;
   started_at: string;
   finished_at: string | null;

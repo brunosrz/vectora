@@ -54,7 +54,27 @@ const EMPTY_DRAFT: DraftState = {
 function statusLabel(status: string): string {
   if (status === "done") return m.background_status_done();
   if (status === "error") return m.background_status_error();
+  if (status === "awaiting_approval") return m.background_status_awaiting();
+  if (status === "cancelled") return m.background_status_cancelled();
   return m.background_status_running();
+}
+
+/** Resolve uma run pausada em HITL (approve/reject/cancel) via o endpoint. */
+async function resolveRun(
+  threadId: string,
+  runId: string,
+  decision: "approve" | "reject" | "cancel",
+): Promise<void> {
+  await fetch(
+    `/sessions/${encodeURIComponent(threadId)}/background/runs/${encodeURIComponent(
+      runId,
+    )}/resume`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision }),
+    },
+  );
 }
 
 export function TasksTab({ threadId }: { threadId: string }) {
@@ -366,20 +386,56 @@ export function TasksTab({ threadId }: { threadId: string }) {
                         {r.summary ?? ""}
                       </span>
                     </div>
-                    {r.run_thread_id && (
-                      <button
-                        onClick={() =>
-                          void navigate({
-                            to: "/session/$threadId",
-                            params: { threadId: r.run_thread_id as string },
-                          })
-                        }
-                        title={m.background_open_thread()}
-                        className="p-1 text-muted-foreground hover:text-foreground shrink-0"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {r.status === "awaiting_approval" && (
+                        <>
+                          <button
+                            onClick={() =>
+                              void resolveRun(threadId, r.id, "approve").then(
+                                () => refetch(),
+                              )
+                            }
+                            className="px-1.5 py-0.5 text-[10px] rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25"
+                          >
+                            {m.background_approve()}
+                          </button>
+                          <button
+                            onClick={() =>
+                              void resolveRun(threadId, r.id, "reject").then(
+                                () => refetch(),
+                              )
+                            }
+                            className="px-1.5 py-0.5 text-[10px] rounded bg-muted hover:bg-muted/70"
+                          >
+                            {m.background_reject()}
+                          </button>
+                          <button
+                            onClick={() =>
+                              void resolveRun(threadId, r.id, "cancel").then(
+                                () => refetch(),
+                              )
+                            }
+                            className="px-1.5 py-0.5 text-[10px] rounded bg-destructive/15 text-destructive hover:bg-destructive/25"
+                          >
+                            {m.background_cancel_run()}
+                          </button>
+                        </>
+                      )}
+                      {r.run_thread_id && (
+                        <button
+                          onClick={() =>
+                            void navigate({
+                              to: "/session/$threadId",
+                              params: { threadId: r.run_thread_id as string },
+                            })
+                          }
+                          title={m.background_open_thread()}
+                          className="p-1 text-muted-foreground hover:text-foreground"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

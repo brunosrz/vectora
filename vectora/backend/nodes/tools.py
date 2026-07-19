@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from langgraph.prebuilt import ToolNode
 
 from backend.tools.background import (
+    approve_task_action,
     create_background_task,
     get_task_result,
     get_task_status,
@@ -157,6 +158,7 @@ WORKSPACE_TOOLS: list[BaseTool] = [
     list_background_tasks,
     get_task_status,
     get_task_result,
+    approve_task_action,
 ]
 
 #: Ferramentas do Context Graph (grafo de conhecimento do workspace)
@@ -249,6 +251,7 @@ for _t in [
     list_background_tasks,
     get_task_status,
     get_task_result,
+    approve_task_action,
     # G3 — Git + GitHub CLI
     git_status,
     git_log,
