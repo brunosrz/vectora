@@ -12,12 +12,14 @@ Routes (montadas em server.py):
 
 from __future__ import annotations
 
-import json
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from backend.workspace.plugins import McpServer
 
 logger = logging.getLogger(__name__)
 
@@ -112,33 +114,23 @@ _REGISTRY: list[MCPConnector] = [
 
 
 # ---------------------------------------------------------------------------
-# Config path (substituível em testes)
+# Lógica de install/uninstall — grava no MESMO store por-usuário que o agente
+# lê (backend.workspace.plugins), não num mcp.json paralelo. Instalar um
+# conector faz suas tools aparecerem no toolset via get_user_mcp_tools.
 # ---------------------------------------------------------------------------
 
 
-def _config_path() -> Path:
-    return Path.home() / ".vectora" / "mcp.json"
+def _connector_to_server(connector: MCPConnector) -> McpServer:
+    """Converte um conector do registry num McpServer stdio do store funcional."""
+    from backend.workspace.plugins import McpServer
 
-
-# ---------------------------------------------------------------------------
-# Lógica de install/uninstall
-# ---------------------------------------------------------------------------
-
-
-def _load_installed() -> dict:
-    path = _config_path()
-    if path.exists():
-        try:
-            return json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return {"mcpServers": {}}
-
-
-def _save_installed(config: dict) -> None:
-    path = _config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(config, indent=2, ensure_ascii=False), encoding="utf-8")
+    parts = connector.install_cmd.split() if connector.install_cmd else ["npx"]
+    return McpServer(
+        name=connector.id,
+        transport="stdio",
+        command=parts[0],
+        args=parts[1:],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -150,38 +142,33 @@ def list_registry() -> list[MCPConnector]:
     return list(_REGISTRY)
 
 
-async def install_mcp(req: InstallRequest) -> dict:
+async def install_mcp(req: InstallRequest, user_id: str = "local") -> dict:
     connector = next((c for c in _REGISTRY if c.id == req.mcp_id), None)
     if connector is None:
         return {
             "status": "error",
             "error": f"conector '{req.mcp_id}' não encontrado no registry",
         }
-
     try:
-        config = _load_installed()
-        config["mcpServers"][connector.id] = {
-            "command": connector.install_cmd.split()[0]
-            if connector.install_cmd
-            else "npx",
-            "args": connector.install_cmd.split()[1:] if connector.install_cmd else [],
-            "env": {k: f"${{{k}}}" for k in connector.env_vars},
-        }
-        _save_installed(config)
-        logger.info("mcp_marketplace: instalado %s", connector.id)
+        from backend.workspace import plugins
+
+        plugins.add_server(user_id, _connector_to_server(connector))
+        logger.info("mcp_marketplace: instalado %s (user=%s)", connector.id, user_id)
         return {"status": "installed", "mcp_id": connector.id}
     except Exception as exc:
         logger.exception("mcp_marketplace: falha ao instalar %s", req.mcp_id)
         return {"status": "error", "error": str(exc)}
 
 
-async def uninstall_mcp(req: UninstallRequest) -> dict:
+async def uninstall_mcp(req: UninstallRequest, user_id: str = "local") -> dict:
     try:
-        config = _load_installed()
-        if req.mcp_id in config.get("mcpServers", {}):
-            del config["mcpServers"][req.mcp_id]
-            _save_installed(config)
-            logger.info("mcp_marketplace: desinstalado %s", req.mcp_id)
+        from backend.workspace import plugins
+
+        removed = plugins.remove_server(user_id, req.mcp_id)
+        if removed:
+            logger.info(
+                "mcp_marketplace: desinstalado %s (user=%s)", req.mcp_id, user_id
+            )
             return {"status": "removed", "mcp_id": req.mcp_id}
         return {"status": "not_found", "mcp_id": req.mcp_id}
     except Exception as exc:
@@ -194,16 +181,21 @@ async def uninstall_mcp(req: UninstallRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def _req_user_id(request: Request) -> str:
+    user = getattr(request.state, "user", None)
+    return str(user.id) if user is not None else "local"
+
+
 @router.get("/registry", response_model=list[MCPConnector])
 async def get_registry() -> list[MCPConnector]:
     return list_registry()
 
 
 @router.post("/install")
-async def post_install(req: InstallRequest) -> dict:
-    return await install_mcp(req)
+async def post_install(req: InstallRequest, request: Request) -> dict:
+    return await install_mcp(req, _req_user_id(request))
 
 
 @router.post("/uninstall")
-async def post_uninstall(req: UninstallRequest) -> dict:
-    return await uninstall_mcp(req)
+async def post_uninstall(req: UninstallRequest, request: Request) -> dict:
+    return await uninstall_mcp(req, _req_user_id(request))
