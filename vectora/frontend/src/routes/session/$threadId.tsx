@@ -575,7 +575,7 @@ function SessionPage() {
     <div className="flex flex-col h-full overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="popLayout" initial={false}>
         {ideMode && !chatMode && enableFeaturesBeta ? (
           // ── Layout IDE: sidebars ao topo, Header só acima do DockedEditor ──
           <motion.div
