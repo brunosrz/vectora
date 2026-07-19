@@ -624,6 +624,7 @@ async def run_task(
         await _finish_run(run_id, "done", summary)
         await _touch_last_run(task.id)
         _emit_run_event("done", task, run_id, run_thread_id, summary)
+        await report_to_parent_session(task, run_thread_id, summary)
         return run_thread_id
     except Exception as exc:
         logger.exception(
@@ -716,12 +717,52 @@ async def resume_background_run(run_id: str, decision: str = "approve") -> str |
         summary = _extract_summary(result)
         await _finish_run(run_id, "done", summary)
         _emit_run_event("done", task, run_id, run_thread_id, summary)
+        await report_to_parent_session(task, run_thread_id, summary)
         return "done"
     except Exception as exc:
         logger.exception("background_tasks: resume falhou", extra={"run_id": run_id})
         with contextlib.suppress(Exception):
             await _finish_run(run_id, "error", str(exc))
         return None
+
+
+async def report_to_parent_session(
+    task: BackgroundTask, run_thread_id: str, summary: str
+) -> bool:
+    """Posta o resultado da run COMO MENSAGEM na sessão-mãe (Hermes/Paperclip).
+
+    Anexa uma ``AIMessage`` ao checkpoint da sessão que criou a task
+    (``task.session_id``) via ``graph.aupdate_state`` — o reducer de mensagens
+    do LangGraph acrescenta ao histórico, então o próximo turno do orquestrador
+    principal VÊ que a tarefa terminou (com resumo + link pra thread da run).
+
+    Best-effort: falha aqui nunca deve derrubar a conclusão da run. Retorna
+    ``True`` se reportou, ``False`` se pulou (sem sessão-mãe) ou falhou.
+    """
+    if not task.session_id or task.session_id == run_thread_id:
+        return False
+    try:
+        from langchain_core.messages import AIMessage
+
+        from backend.services import agent_factory
+
+        graph = await agent_factory.get_user_agent(user_id=task.user_id)
+        text = (
+            f"🔔 Tarefa em segundo plano concluída — **{task.name}**\n\n"
+            f"{summary or '(sem resumo)'}\n\n"
+            f"_Histórico completo na thread `{run_thread_id}`._"
+        )
+        await graph.aupdate_state(
+            {"configurable": {"thread_id": task.session_id}},
+            {"messages": [AIMessage(content=text)]},
+        )
+        return True
+    except Exception:
+        logger.exception(
+            "background_tasks: falha ao reportar à sessão-mãe",
+            extra={"task_id": task.id, "session_id": task.session_id},
+        )
+        return False
 
 
 # ---------------------------------------------------------------------------

@@ -56,12 +56,17 @@ class _FakeAgent:
         self.result = result
         self.exc = exc
         self.calls: list[dict[str, Any]] = []
+        self.state_updates: list[dict[str, Any]] = []
 
     async def ainvoke(self, inp, config=None, context=None) -> Any:
         self.calls.append({"input": inp, "config": config, "context": context})
         if self.exc is not None:
             raise self.exc
         return self.result
+
+    async def aupdate_state(self, config, values) -> Any:
+        self.state_updates.append({"config": config, "values": values})
+        return None
 
 
 class _SeqAgent:
@@ -305,6 +310,74 @@ async def test_run_task_incrementa_message_count_da_thread(db, monkeypatch):
     assert await bg.run_task(task2, "manual") is None
     assert upserts == []
     assert increments == []
+
+
+# ---------------------------------------------------------------------------
+# Sprint 3.2 — a run reporta o resultado de volta na sessão-mãe
+# ---------------------------------------------------------------------------
+
+
+async def test_run_task_reporta_conclusao_na_sessao_mae(db, monkeypatch):
+    """Ao concluir, a run posta uma AIMessage no checkpoint da sessão que criou
+    a task (task.session_id) via graph.aupdate_state — o orquestrador principal
+    fica sabendo que a tarefa terminou (Hermes/Paperclip)."""
+    agent = _FakeAgent(result={"messages": [{"content": "3 arquivos alterados"}]})
+    _patch_agent(monkeypatch, agent)
+
+    async def _noop(*a, **k):
+        return None
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _noop)
+    monkeypatch.setattr("backend.api.handlers.threads._increment_message_count", _noop)
+
+    task = await bg.create_task(
+        session_id="parent-sess",
+        user_id="u",
+        kind="routine",
+        name="Auditoria",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    run_thread_id = await bg.run_task(task, "manual")
+
+    assert len(agent.state_updates) == 1
+    upd = agent.state_updates[0]
+    assert upd["config"]["configurable"]["thread_id"] == "parent-sess"
+    msg = upd["values"]["messages"][0]
+    assert "Auditoria" in msg.content  # nome da task
+    assert "3 arquivos alterados" in msg.content  # resumo
+    assert run_thread_id in msg.content  # link pra thread da run
+
+
+async def test_report_to_parent_session_pula_sem_sessao_mae(db, monkeypatch):
+    """Erro/borda: sem session_id (ou session_id == run_thread_id) não reporta
+    — não há sessão-mãe distinta pra notificar."""
+    agent = _FakeAgent()
+    _patch_agent(monkeypatch, agent)
+
+    task_sem = bg.BackgroundTask(
+        id="t",
+        session_id="",
+        user_id="u",
+        kind="routine",
+        name="X",
+        instruction="i",
+        trigger_type="manual",
+    )
+    assert await bg.report_to_parent_session(task_sem, "bg-1", "resumo") is False
+    assert agent.state_updates == []
+
+    task_self = bg.BackgroundTask(
+        id="t",
+        session_id="bg-1",
+        user_id="u",
+        kind="routine",
+        name="X",
+        instruction="i",
+        trigger_type="manual",
+    )
+    assert await bg.report_to_parent_session(task_self, "bg-1", "resumo") is False
 
 
 # ---------------------------------------------------------------------------
