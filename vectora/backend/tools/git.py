@@ -130,7 +130,14 @@ def _git_status_impl(repo: git.Repo) -> dict:
 
     untracked = repo.untracked_files
     modified = [item.a_path for item in repo.index.diff(None)]
-    staged = [item.a_path for item in repo.index.diff("HEAD")]
+    # Repo sem nenhum commit (unborn HEAD) não tem "HEAD" resolvível —
+    # `index.diff("HEAD")` estoura `gitdb.exc.BadName`. Nesse caso tudo que
+    # está no index é "staged" para o primeiro commit (diff contra a árvore
+    # vazia); usa as entries do index diretamente.
+    if repo.head.is_valid():
+        staged = [item.a_path for item in repo.index.diff("HEAD")]
+    else:
+        staged = [path for path, _stage in repo.index.entries]
 
     # ahead/behind quando há remote tracking
     ahead = behind = 0

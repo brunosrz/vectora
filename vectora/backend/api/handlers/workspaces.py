@@ -1775,7 +1775,14 @@ async def git_status(workspace_id: str) -> GitStatusResponse:
     repo = _open_workspace_repo(workspace_id)
     if repo is None:
         return GitStatusResponse(is_git_repo=False)
-    info = _git_status_impl(repo)
+    # Defesa em profundidade: o GitStatusBadge/painel Git bate aqui com
+    # frequência; qualquer erro inesperado do gitpython (ex.: repo em estado
+    # transitório) degrada pra uma resposta válida em vez de 500 no log.
+    try:
+        info = _git_status_impl(repo)
+    except Exception:
+        logger.exception("api/workspaces: git_status falhou ws=%s", workspace_id)
+        return GitStatusResponse(is_git_repo=True)
     return GitStatusResponse(
         is_git_repo=True,
         branch=info.get("branch", ""),

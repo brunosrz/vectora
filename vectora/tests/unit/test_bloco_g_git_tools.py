@@ -163,6 +163,32 @@ class TestGitStatusImpl:
         result = _git_status_impl(dirty_repo)
         assert "README.md" in result["staged"]
 
+    def test_empty_repo_no_crash(self, empty_repo: git.Repo) -> None:
+        """Regressão do 500 real: repo sem nenhum commit não tem HEAD
+        resolvível — ``repo.index.diff("HEAD")`` estourava ``BadName``. Um
+        projeto recém-criado (ex.: `snake/`) cai exatamente aqui, e o
+        endpoint /git/status chama _git_status_impl sem guarda → 500."""
+        from backend.tools.git import _git_status_impl
+
+        result = _git_status_impl(empty_repo)
+        assert result["status"] == "ok"
+        assert result["staged"] == []
+        # Untracked/modified continuam funcionando em repo unborn.
+        assert result["modified"] == []
+
+    def test_empty_repo_with_staged_file(self, empty_repo: git.Repo, tmp_path):
+        """Repo sem commits mas com arquivo já no index (git add antes do 1º
+        commit): o arquivo deve aparecer em ``staged`` (diff contra a árvore
+        vazia), não crashar."""
+        from backend.tools.git import _git_status_impl
+
+        f = tmp_path / "novo.py"
+        f.write_text("x = 1\n")
+        empty_repo.index.add(["novo.py"])
+        result = _git_status_impl(empty_repo)
+        assert result["status"] == "ok"
+        assert "novo.py" in result["staged"]
+
 
 # ===========================================================================
 # Classe 3 — _git_log_impl
