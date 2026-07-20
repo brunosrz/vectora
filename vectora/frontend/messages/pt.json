@@ -698,7 +698,6 @@
   "library_filter_skills": "Skills",
   "library_filter_memory": "Memory",
   "library_empty_mcp": "Nenhum servidor MCP disponível ainda.",
-  "library_empty_skills": "Nenhuma skill disponível ainda.",
   "library_empty_memory": "Nenhum bucket de memória disponível ainda.",
   "library_empty_no_filters": "Nenhum filtro ativo — ligue ao menos uma categoria pra buscar.",
   "library_mcp_install": "Instalar",

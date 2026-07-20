@@ -19,7 +19,7 @@
  * o custo de uma feature secundária.
  */
 
-import { Suspense } from "react";
+import { Suspense, type ComponentType } from "react";
 import {
   Dialog,
   DialogDescription,
@@ -38,7 +38,14 @@ import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 import { m } from "@/lib/paraglide/messages";
 
 const SkillsTab = lazyWithRetry(
-  () => import("./tabs/skills-tab").then((mod) => ({ default: mod.SkillsTab })),
+  () =>
+    import("./tabs/skills-tab").then((mod) => ({
+      // SkillsTab aceita um onSkillsChange opcional (Sprint 3, usado pela
+      // Library) — Settings sempre monta sem props, então o cast é seguro
+      // aqui (mesmo padrão de zero-props que os outros lazy imports desta
+      // tela já satisfazem naturalmente).
+      default: mod.SkillsTab as ComponentType<unknown>,
+    })),
   "skills-tab",
 );
 const PluginsTab = lazyWithRetry(

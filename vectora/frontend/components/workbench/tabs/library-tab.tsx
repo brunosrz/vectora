@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/accordion";
 import { m } from "@/lib/paraglide/messages";
 import { McpSection } from "./library-mcp-section";
+import { SkillsSection } from "./library-skills-section";
 
 interface LibraryTabProps {
   threadId: string;
@@ -120,11 +121,10 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
     });
   };
 
-  // Skills e Memory Library ainda vazias (Sprints 3/6 povoam cada uma) — a
-  // busca/filtro já funciona sobre a lista real assim que ela existir. MCP
-  // já é real (Sprint 2) — vive no próprio McpSection, que reporta a
-  // contagem filtrada de volta via onCountChange.
-  const skillsItems = useMemo<LibraryItem[]>(() => [], []);
+  // Memory Library ainda vazia (Sprint 6 povoa) — a busca/filtro já funciona
+  // sobre a lista real assim que ela existir. MCP (Sprint 2) e Skills
+  // (Sprint 3) já são reais — cada uma vive no próprio subcomponente, que
+  // reporta a contagem de volta via onCountChange.
   const memoryItems = useMemo<LibraryItem[]>(() => [], []);
 
   const [mcpCount, setMcpCount] = useState(0);
@@ -132,7 +132,11 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
     setMcpCount(count);
   }, []);
 
-  const filteredSkills = filterItems(skillsItems, query);
+  const [skillsCount, setSkillsCount] = useState(0);
+  const handleSkillsCountChange = useCallback((count: number) => {
+    setSkillsCount(count);
+  }, []);
+
   const filteredMemory = filterItems(memoryItems, query);
 
   const noFiltersActive = activeFilters.size === 0;
@@ -194,22 +198,15 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
                   <span className="flex items-center gap-2 min-w-0">
                     <Blocks className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">
-                      {m.library_section_skills()} ({filteredSkills.length})
+                      {m.library_section_skills()} ({skillsCount})
                     </span>
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
-                  {filteredSkills.length === 0 ? (
-                    <SectionEmptyState label={m.library_empty_skills()} />
-                  ) : (
-                    <ul className="divide-y divide-border/30">
-                      {filteredSkills.map((item) => (
-                        <li key={item.id} className="py-1.5 text-xs">
-                          {item.name}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <SkillsSection
+                    query={query}
+                    onCountChange={handleSkillsCountChange}
+                  />
                 </AccordionContent>
               </AccordionItem>
             )}

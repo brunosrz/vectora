@@ -33,7 +33,14 @@ interface Skill {
 
 type VerifyState = { state: "idle" | "loading" | "ok" | "error"; msg: string };
 
-export function SkillsTab() {
+interface SkillsTabProps {
+  /** Notifica a contagem atual de skills instaladas após cada refresh —
+   * usado pela Library (Sprint 3) pra manter o badge do accordion em dia
+   * sem duplicar o fetch. Opcional: Settings → Skills não precisa dele. */
+  onSkillsChange?: (count: number) => void;
+}
+
+export function SkillsTab({ onSkillsChange }: SkillsTabProps = {}) {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState("");
@@ -46,13 +53,15 @@ export function SkillsTab() {
     try {
       const res = await fetch("/skills");
       const data = await res.json();
-      setSkills(Array.isArray(data.skills) ? data.skills : []);
+      const list = Array.isArray(data.skills) ? data.skills : [];
+      setSkills(list);
+      onSkillsChange?.(list.length);
     } catch {
       setError(m.skills_error_load());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onSkillsChange]);
 
   useEffect(() => {
     void refresh();

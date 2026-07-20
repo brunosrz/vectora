@@ -5,17 +5,15 @@
  * Cobre: renderização das 3 seções como AccordionTrigger; abrir múltiplas
  * seções ao mesmo tempo; toggle de filtros (liga/desliga categoria); estado
  * vazio quando nenhum filtro está ativo; seção sem itens mostra estado vazio
- * específico sem quebrar (as 3 seções estão vazias até os Sprints 2/3/6
- * povoarem cada uma).
+ * específico sem quebrar. MCP (Sprint 2) e Skills (Sprint 3) já são reais —
+ * mockadas aqui pra testar só o shell; suas próprias suítes cobrem o
+ * comportamento real (library-mcp-section.test.tsx, skills-tab.test.tsx).
+ * Memory Library segue vazia até o Sprint 6.
  */
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { useEffect } from "react";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
-// A seção MCP é real desde o Sprint 2 (fetch de /mcp/registry e /plugins) —
-// aqui testamos só o shell (busca/filtros/accordion), então ela é mockada
-// como vazia; o comportamento real da seção tem sua própria suíte
-// (library-mcp-section.test.tsx).
 vi.mock("../library-mcp-section", () => ({
   McpSection: ({
     onCountChange,
@@ -27,6 +25,20 @@ vi.mock("../library-mcp-section", () => ({
       onCountChange(0);
     }, [onCountChange]);
     return <p>No MCP servers available yet.</p>;
+  },
+}));
+
+vi.mock("../library-skills-section", () => ({
+  SkillsSection: ({
+    onCountChange,
+  }: {
+    query: string;
+    onCountChange: (count: number) => void;
+  }) => {
+    useEffect(() => {
+      onCountChange(0);
+    }, [onCountChange]);
+    return <p>No skills available yet.</p>;
   },
 }));
 
