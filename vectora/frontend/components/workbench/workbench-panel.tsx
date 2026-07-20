@@ -31,6 +31,7 @@ import {
   Brain,
   Radar,
   Waypoints,
+  Library,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
@@ -54,6 +55,7 @@ import { PreviewTab } from "./tabs/preview-tab";
 import { MemoryTab } from "./tabs/memory-tab";
 import { TasksTab } from "./tabs/tasks-tab";
 import { ContextGraphTab } from "./tabs/context-graph-tab";
+import { LibraryTab } from "./tabs/library-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
@@ -79,6 +81,7 @@ const TAB_ICON: Record<
   storage: Brain,
   tasks: Radar,
   context_graph: Waypoints,
+  library: Library,
 };
 
 /** Lê o cache do workbench-store e devolve o texto do chip por aba. */
@@ -112,6 +115,7 @@ function useTabBadge(
     case "storage":
     case "tasks":
     case "context_graph":
+    case "library":
       return null;
   }
 }
@@ -119,7 +123,9 @@ function useTabBadge(
 // Context Graph saiu do beta: backend (pipeline + endpoints + tool) e
 // frontend (ContextGraphTab) estão completos e religados no switch acima —
 // não há mais motivo pra gatear atrás de enableFeaturesBeta.
-const BETA_TABS = new Set<WorkbenchTab>([]);
+// Library entra em beta enquanto suas 3 seções (MCP/Skills/Memory Library)
+// ainda não estão todas implementadas — sai daqui quando estabilizar.
+const BETA_TABS = new Set<WorkbenchTab>(["library"]);
 
 export function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
   const Icon = TAB_ICON[tab];
@@ -336,6 +342,7 @@ export function WorkbenchContent({
                 onSendPrompt={onSendPrompt}
               />
             )}
+            {activeTab === "library" && <LibraryTab threadId={threadId} />}
           </motion.div>
         </AnimatePresence>
       </div>

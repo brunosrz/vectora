@@ -49,6 +49,7 @@ describe("WORKBENCH_TABS", () => {
       "preview",
       "storage",
       "context_graph",
+      "library",
       "terminal",
     ]);
   });

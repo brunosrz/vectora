@@ -51,8 +51,9 @@ vi.mock("@/lib/hooks/use-workspace-watcher", () => ({
 }));
 
 vi.mock("@/lib/hooks/use-hydrated", () => ({ useHydrated: () => true }));
+const featureFlags = { enableFeaturesBeta: false };
 vi.mock("@/lib/hooks/use-feature-flags", () => ({
-  useFeatureFlags: () => ({ enableFeaturesBeta: false }),
+  useFeatureFlags: () => featureFlags,
 }));
 
 vi.mock("@/components/workbench/terminal/terminal-panel", () => ({
@@ -86,10 +87,14 @@ vi.mock("../tabs/context-graph-tab", () => ({
     </div>
   ),
 }));
+vi.mock("../tabs/library-tab", () => ({
+  LibraryTab: () => <div>stub-library</div>,
+}));
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  featureFlags.enableFeaturesBeta = false;
 });
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -128,6 +133,12 @@ describe("WorkbenchContent — switch de renderização por aba", () => {
     expect(screen.getByText("stub-plan")).toBeInTheDocument();
     expect(screen.queryByText("stub-context-graph")).not.toBeInTheDocument();
   });
+
+  it("activeTab='library' monta LibraryTab (Sprint 1)", () => {
+    setActiveTab("t1", "library");
+    renderContent({ threadId: "t1" });
+    expect(screen.getByText("stub-library")).toBeInTheDocument();
+  });
 });
 
 describe("WorkbenchNavBar — ícone do Context Graph não fica mais atrás de flag beta", () => {
@@ -139,12 +150,41 @@ describe("WorkbenchNavBar — ícone do Context Graph não fica mais atrás de f
       </TooltipProvider>,
     );
     // ComingSoonTabButton usa aria-disabled="true" e tabIndex={-1} — o botão
-    // real (NavTabButton) não tem esses atributos.
+    // real (NavTabButton) não tem esses atributos. Library está em beta
+    // (Sprint 1), então com enableFeaturesBeta=false ela fica desabilitada —
+    // a asserção aqui é só sobre o Context Graph, não "nenhum botão".
     const buttons = screen.getAllByRole("button");
     const contextGraphBtn = buttons.find(
       (b) => b.getAttribute("aria-disabled") !== "true",
     );
     expect(contextGraphBtn).toBeDefined();
+  });
+});
+
+describe("WorkbenchNavBar — Library atrás de flag beta (Sprint 1)", () => {
+  it("com enableFeaturesBeta=false, o ícone da Library fica desabilitado (ComingSoonTabButton)", () => {
+    setActiveTab("t1", "files");
+    render(
+      <TooltipProvider>
+        <WorkbenchNavBar threadId="t1" />
+      </TooltipProvider>,
+    );
+    const buttons = screen.getAllByRole("button");
+    const anyDisabled = buttons.some(
+      (b) => b.getAttribute("aria-disabled") === "true",
+    );
+    expect(anyDisabled).toBe(true);
+  });
+
+  it("com enableFeaturesBeta=true, todos os botões (incluindo Library) ficam clicáveis", () => {
+    featureFlags.enableFeaturesBeta = true;
+    setActiveTab("t1", "files");
+    render(
+      <TooltipProvider>
+        <WorkbenchNavBar threadId="t1" />
+      </TooltipProvider>,
+    );
+    const buttons = screen.getAllByRole("button");
     const anyDisabled = buttons.some(
       (b) => b.getAttribute("aria-disabled") === "true",
     );

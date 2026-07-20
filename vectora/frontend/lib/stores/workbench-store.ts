@@ -47,10 +47,11 @@ export type WorkbenchTab =
   | "preview"
   | "storage"
   | "tasks"
-  | "context_graph";
+  | "context_graph"
+  | "library";
 
 // Ordem: file system → git → plan → segundo plano → preview → memory (rag) →
-// context graph → terminal (shell).
+// context graph → library (MCP/Skills/Memory) → terminal (shell).
 export const WORKBENCH_TABS: WorkbenchTab[] = [
   "files",
   "diff",
@@ -59,6 +60,7 @@ export const WORKBENCH_TABS: WorkbenchTab[] = [
   "preview",
   "storage",
   "context_graph",
+  "library",
   "terminal",
 ];
 
