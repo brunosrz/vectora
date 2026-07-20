@@ -197,9 +197,9 @@ describe("WorkbenchNavBar — prop side (layout IDE vs Assistente)", () => {
     expect(container.querySelector(".h-16")).not.toBeNull();
   });
 
-  it('side="left" não renderiza spacer h-16 (Header já está no topo no layout IDE)', () => {
+  it('side="left" TAMBÉM renderiza spacer h-16 (Sprint 0.2: WorkbenchContent sempre tem header h-16, independente do side — sem o spacer aqui os ícones da NavBar ficavam desalinhados no modo IDE)', () => {
     const { container } = render(<WorkbenchNavBar threadId="t1" side="left" />);
-    expect(container.querySelector(".h-16")).toBeNull();
+    expect(container.querySelector(".h-16")).not.toBeNull();
   });
 });
 

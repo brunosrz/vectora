@@ -211,8 +211,12 @@ function NavTabButton({
  * Faixa estreita (48px), sempre visível, com os ícones de cada aba —
  * equivalente à Activity Bar do VS Code. Não é redimensionável.
  *
- * `side="right"` (padrão): layout Assistente, borda esquerda, spacer h-16.
- * `side="left"`: layout IDE, borda direita, sem spacer (Header já está no topo).
+ * `side="right"` (padrão): layout Assistente, borda esquerda.
+ * `side="left"`: layout IDE, borda direita (editor fica à direita).
+ * Em ambos, o spacer h-16 é obrigatório — `WorkbenchContent` sempre desenha
+ * seu próprio header de h-16 (linha ~292), independente do `side`; sem o
+ * spacer aqui os ícones da NavBar ficam ~56px acima de onde o conteúdo do
+ * painel de fato começa (bug real observado no modo IDE).
  */
 export function WorkbenchNavBar({
   threadId,
@@ -234,11 +238,9 @@ export function WorkbenchNavBar({
         side === "left" ? "border-r" : "border-l"
       } border-border/60`}
     >
-      {/* Spacer h-16: alinha com o Header quando a NavBar está à direita (layout
-          Assistente). No layout IDE o Header já está no topo — sem spacer. */}
-      {side === "right" && (
-        <div className="h-16 w-full shrink-0 border-b border-border/60" />
-      )}
+      {/* Spacer h-16: alinha os ícones com a base do header de WorkbenchContent
+          (sempre h-16, nos dois modos — ver comentário do JSDoc acima). */}
+      <div className="h-16 w-full shrink-0 border-b border-border/60" />
       <div className="flex flex-col items-center gap-1 pt-2">
         {WORKBENCH_TABS.map((tab) =>
           !enableFeaturesBeta && BETA_TABS.has(tab) ? (
