@@ -13,6 +13,21 @@ enabled = false
 # relay/ (Fase A) — OAuth/webhooks pro app desktop, WebSocket bidirecional.
 # Domínios relay.vectora.chat + {token}.vectora.chat continuam exatamente
 # como estavam — o cliente Python do desktop já tem essas URLs hardcoded.
+#
+# Só documentado aqui a partir de agora — até então esse binding de rota
+# existia apenas no dashboard Cloudflare, fora do controle de versão
+# (drift entre o que está versionado e o que está de fato configurado em
+# produção). `relay.vectora.chat` é domínio exato (Custom Domain);
+# `{token}.vectora.chat` é wildcard de subdomínio por sessão de relay,
+# roteado via zona.
+[[routes]]
+pattern = "relay.vectora.chat"
+custom_domain = true
+
+[[routes]]
+pattern = "*.vectora.chat/*"
+zone_name = "vectora.chat"
+
 [durable_objects]
 bindings = [
   { name = "RELAY_SESSION", class_name = "RelaySession" }
