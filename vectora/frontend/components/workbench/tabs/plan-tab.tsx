@@ -309,9 +309,11 @@ export function PlanTab({ threadId }: PlanTabProps) {
                       return (
                         <span className="flex items-center gap-2 min-w-0">
                           <Icon
-                            className={`w-3.5 h-3.5 shrink-0 ${className}`}
+                            className={`w-3.5 h-3.5 shrink-0 mt-0.5 self-start ${className}`}
                           />
-                          <span className="truncate">{item.title}</span>
+                          <span className="whitespace-normal break-words">
+                            {item.title}
+                          </span>
                         </span>
                       );
                     })()}

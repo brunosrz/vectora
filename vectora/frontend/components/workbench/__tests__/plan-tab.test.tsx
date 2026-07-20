@@ -186,6 +186,30 @@ describe("PlanTab — Accordion multi-item (Sprint 6)", () => {
     ).toBeInTheDocument();
   });
 
+  it("título longo quebra em várias linhas em vez de truncar com '...'", async () => {
+    // Sprint 0.1 — bug real ao vivo: min-w-0 ausente no AccordionTrigger
+    // fazia o botão estourar a largura do painel em vez de conter o título.
+    const threadId = "t-title-wrap";
+    const longTitle =
+      "plano de implementação do jogo da cobrinha em godot 4.7 com todos os detalhes";
+    useWorkbenchStore.getState().setPlanItems(threadId, [
+      {
+        title: longTitle,
+        path: "/plano-longo.md",
+        session_id: threadId,
+        created_at: "2025-01-02",
+        artifact_type: "plan",
+      },
+    ]);
+
+    renderPlanTab(threadId);
+
+    const titleEl = await screen.findByText(longTitle);
+    expect(titleEl.className).toContain("whitespace-normal");
+    expect(titleEl.className).toContain("break-words");
+    expect(titleEl.className).not.toContain("truncate");
+  });
+
   it("clicar dois triggers deixa ambos abertos simultaneamente (type=multiple)", async () => {
     const threadId = "t-accordion-2";
     useWorkbenchStore.getState().setPlanItems(threadId, [
