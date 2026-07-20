@@ -730,6 +730,101 @@ describe("useStreamHandler.processStream", () => {
     expect(tc?.output).toBe("done");
   });
 
+  it("Sprint 0.4 — create_artifact só invalida o cache do Plan no tool_result (não no tool_call)", async () => {
+    // Bug real: invalidar em tool_call (on_tool_start) dispara o refetch
+    // antes do arquivo existir em disco — o painel Plan fica vazio até um
+    // pedido novo do usuário por acidente disparar outro ciclo.
+    useWorkbenchStore.getState().setPlanItems("t1", [
+      {
+        title: "Plano anterior",
+        path: "/antigo.md",
+        session_id: "t1",
+        created_at: "2025-01-01",
+        artifact_type: "plan",
+      },
+    ]);
+    const fetchedAtAfterSetup =
+      useWorkbenchStore.getState().plan["t1"]?.fetchedAt;
+    expect(fetchedAtAfterSetup).toBeGreaterThan(0);
+
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "tool_call",
+          tool_name: "create_artifact",
+          tool_call_id: "tc-artifact",
+          args_json: '{"title":"Novo plano"}',
+        },
+        // Sem tool_result nesse stream — a tool ainda "não terminou".
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result: r1 } = run();
+    await r1.current.processStream("crie um plano", "a-mid");
+    expect(useWorkbenchStore.getState().plan["t1"]?.fetchedAt).toBe(
+      fetchedAtAfterSetup,
+    );
+
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "tool_call",
+          tool_name: "create_artifact",
+          tool_call_id: "tc-artifact2",
+          args_json: '{"title":"Novo plano"}',
+        },
+        {
+          type: "tool_result",
+          tool_call_id: "tc-artifact2",
+          content_json: '"/novo.md"',
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result: r2 } = run();
+    await r2.current.processStream("crie um plano", "a2");
+
+    // Depois do tool_result de sucesso, a invalidação real aconteceu.
+    expect(useWorkbenchStore.getState().plan["t1"]?.fetchedAt).toBe(0);
+  });
+
+  it("Sprint 0.4 — tool_result com erro NÃO invalida o cache do workbench", async () => {
+    useWorkbenchStore.getState().setPlanItems("t1", [
+      {
+        title: "Plano existente",
+        path: "/existente.md",
+        session_id: "t1",
+        created_at: "2025-01-01",
+        artifact_type: "plan",
+      },
+    ]);
+    const fetchedAtBefore = useWorkbenchStore.getState().plan["t1"]?.fetchedAt;
+
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "tool_call",
+          tool_name: "create_artifact",
+          tool_call_id: "tc-err",
+          args_json: "{}",
+        },
+        {
+          type: "tool_result",
+          tool_call_id: "tc-err",
+          content_json: '"falha ao escrever arquivo"',
+          is_error: true,
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("crie um plano", "a3");
+
+    expect(useWorkbenchStore.getState().plan["t1"]?.fetchedAt).toBe(
+      fetchedAtBefore,
+    );
+  });
+
   it("terminal_line sem nenhuma tool terminal ativa não quebra o stream (edge)", async () => {
     streamChatMock.mockReturnValue(
       gen([

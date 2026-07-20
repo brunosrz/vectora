@@ -718,9 +718,6 @@ async function handleEvent(
           toolCalls: [...(m.toolCalls ?? []), toolCall],
         })),
       );
-
-      // Invalidate cache do workbench quando a tool muda o disco.
-      invalidateWorkbenchFor(event.tool_name, threadId);
       break;
     }
 
@@ -759,16 +756,25 @@ async function handleEvent(
         output = event.content_json;
       }
 
+      let resolvedToolName: string | undefined;
       setMessages((prev) =>
         updateMessageInList(prev, assistantMessageId, (m) => ({
           ...m,
-          toolCalls: (m.toolCalls ?? []).map((tc) =>
-            tc.id === event.tool_call_id
-              ? { ...tc, output, isError: event.is_error }
-              : tc,
-          ),
+          toolCalls: (m.toolCalls ?? []).map((tc) => {
+            if (tc.id !== event.tool_call_id) return tc;
+            resolvedToolName = tc.name;
+            return { ...tc, output, isError: event.is_error };
+          }),
         })),
       );
+
+      // Invalidate cache do workbench só quando a tool de fato terminou
+      // (arquivo já em disco) — invalidar em "tool_call" (on_tool_start)
+      // é cedo demais e causava o painel Plan/Files ficar vazio até um
+      // novo pedido do usuário disparar outro ciclo de invalidação.
+      if (!event.is_error && resolvedToolName) {
+        invalidateWorkbenchFor(resolvedToolName, threadId);
+      }
       break;
     }
 
