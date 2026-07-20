@@ -408,7 +408,8 @@ Documentos legais obrigatórios para o site e para o billing:
 O billing e a autenticação da company **não usam mais Supabase**. A
 company foi migrada integralmente para um backend próprio: um Cloudflare
 Worker chamado **`services`** (`services.vectora.company`), que também
-absorveu o antigo `relay` (OAuth/webhooks do desktop) e o `update-server`
+absorveu o antigo `relay` — renomeado para `gateway` em 2026-07-20 — (OAuth/
+webhooks do desktop) e o `update-server`
 (distribuição de releases). Tudo roda em D1 (SQLite gerenciado pela
 Cloudflare) — não há RLS de banco; autorização é código, verificada em
 cada handler via sessão resolvida a partir do token Bearer.

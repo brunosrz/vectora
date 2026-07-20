@@ -11,7 +11,7 @@ Build e testes rodam via **SCons** a partir da **raiz do monorepo** (requer `uv`
 ```powershell
 # na raiz do monorepo (C:\...\vectora\)
 
-scons tests          # todos os subprojetos: vectora + relay + company
+scons tests          # todos os subprojetos: vectora + services + company
 scons coverage       # mesma suíte com relatório de cobertura
 scons lint           # todos: ruff+ty+bandit (vectora) + tsc+oxlint+eslint (TS)
 scons update         # atualiza deps: uv (backend) + pnpm (front/company/services) + hugo mod (docs)
@@ -22,7 +22,7 @@ scons clean          # remove outputs de build
 Subprojetos cobertos por `scons lint` e `scons tests`:
 
 - `vectora/` — Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
-- `services/` — TypeScript (tsc, vitest) — relay + updates unificados
+- `services/` — TypeScript (tsc, vitest) — gateway + updates unificados
 - `company/` — TypeScript (eslint, tsc, vitest)
 - `vectora/frontend/electron/` — TypeScript (vitest — funções puras: cookie-utils, lifecycle). Fundido no `package.json` do frontend (sem pacote npm próprio); só o `tsconfig.json` de compilação (Node/NodeNext) segue separado.
 - `docs/` — TypeScript (tsc) — sem testes
@@ -41,10 +41,10 @@ Rodar teste específico (frontend — a partir da raiz):
 pnpm --dir vectora/frontend exec vitest run src/components/chat/__tests__/message-item.test.tsx
 ```
 
-Rodar testes do relay:
+Rodar testes do services:
 
 ```powershell
-pnpm --dir relay run test
+pnpm --dir services run test
 ```
 
 Verificar tipos e lint separados (a partir da raiz):
@@ -57,7 +57,7 @@ uv run ty check backend tests            # type check Python
 # TypeScript (da raiz do monorepo)
 pnpm --dir vectora/frontend run typecheck   # i18n:compile + tsc --noEmit
 pnpm --dir vectora/frontend exec oxlint     # lint TypeScript
-pnpm --dir relay run typecheck              # tsc --noEmit
+pnpm --dir services run typecheck           # tsc --noEmit
 pnpm --dir company run lint                 # eslint
 pnpm --dir company exec tsc --noEmit
 ```
@@ -89,9 +89,9 @@ vectora/          ← produto principal (Python backend + React frontend)
 SConstruct        ← build orchestrator (SCons) — raiz do monorepo
 company/          ← site/dashboard externo (Nuxt/TanStack Start) — separado
 docs/             ← Docusaurus docs
-services/         ← Cloudflare Worker único: relay (OAuth/webhooks pro
-                    desktop) + updates (distribuição de releases) — era
-                    relay/ + update-server/, unificados
+services/         ← Cloudflare Worker único: gateway (OAuth/webhooks pro
+                    desktop, ex-relay) + updates (distribuição de releases)
+                    — era relay/ + update-server/, unificados
 ```
 
 ### Backend (`vectora/backend/`)

@@ -27,8 +27,8 @@ Subprojetos cobertos por lint e tests:
     company/        TypeScript (eslint, tsc, vitest)
     docs/           Hugo + Hextra (build check via `hugo --gc --minify`) — sem
                     testes; era Docusaurus, migrado pra Hugo
-    services/       TypeScript (tsc, vitest) — relay + updates unificados
-                    (era relay/ + update-server/, ver Fase A do plano de
+    services/       TypeScript (tsc, vitest) — gateway + updates unificados
+                    (era relay/ (renomeado gateway) + update-server/, ver Fase A do plano de
                     unificação)
 """
 
@@ -442,7 +442,7 @@ def _action_lint(target, source, env):
         # já resolve o módulo Hextra pinado em go.mod sozinho — não rodar
         # `hugo mod get` aqui, que faz upgrade do pin como side-effect.
         _run([HUGO, "--gc", "--minify", "--destination", "public"], log=log, cwd=DOCS)
-        # ── services (relay + updates unificados) ──────────────────────────────
+        # ── services (gateway + updates unificados) ──────────────────────────────
         _pnpm_install_if_needed("services", log)
         _run([PNPM, "--dir", "services", "exec", "tsc", "--noEmit"], log=log)
     print("\n>> log completo (limpo) em .scons-logs/lint.txt")
@@ -471,7 +471,7 @@ def _action_tests_storage(target, source, env):
 
 def _run_full_suite(log, *, coverage: bool):
     """Suíte completa: vectora (vitest + pytest, inclui electron fundido no
-    frontend) + company + services (vitest — relay + updates unificados).
+    frontend) + company + services (vitest — gateway + updates unificados).
 
     docs não tem testes — coberto só pelo lint (typecheck).
 
@@ -514,7 +514,7 @@ def _run_full_suite(log, *, coverage: bool):
     _pnpm_install_if_needed("company", log)
     _run([PNPM, "--dir", "company", "run", "test"], log=log)
 
-    # ── services (relay + updates unificados; worker.ts + scripts/release.ts) ─
+    # ── services (gateway + updates unificados; worker.ts + scripts/release.ts) ─
     _pnpm_install_if_needed("services", log)
     services_test_cmd = [PNPM, "--dir", "services", "exec", "vitest", "run"]
     if coverage:
@@ -658,7 +658,7 @@ def _action_clean(target, source, env):
 # ── Prod (deploy) ─────────────────────────────────────────────────────────────
 # `scons prod` — deploy de produção da borda web/edge do monorepo: docs
 # (Vercel, docs.vectora.company), company (Vercel, vectora.company) e services
-# (Cloudflare Worker único: relay + updates). Bump de versão, build do
+# (Cloudflare Worker único: gateway + updates). Bump de versão, build do
 # instalador e publicação no canal de update rodam só via GitHub Actions
 # (.github/workflows/vectora.yml), disparados por "[up-release]" na mensagem
 # do commit.

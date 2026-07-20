@@ -1,32 +1,32 @@
-# Plano de Implementação — Vectora Relay (Produção)
+# Plano de Implementação — Vectora Gateway (Produção)
 
 > Revisado 2026-06-28. Versão corrigida após identificar inconsistências na primeira versão.
 
 ---
 
-## Arquitetura — O que é o relay e quem faz o quê
+## Arquitetura — O que é o gateway e quem faz o quê
 
 ```
 Bruno (desenvolvedor)
   └── cria UMA vez: OAuth Apps no GitHub/Google/Slack, Worker no Cloudflare
 
 Usuário final do Vectora (instala o .exe)
-  └── não configura nada de relay/OAuth — tudo acontece automaticamente
+  └── não configura nada de gateway/OAuth — tudo acontece automaticamente
   └── só conecta sua conta GitHub/Slack dentro do app Vectora
 
-Relay (Cloudflare Worker em relay.vectora.chat)
+Gateway (Cloudflare Worker em gateway.vectora.chat)
   └── recebe conexões WebSocket de backends Vectora
-  └── atribui token estável: HMAC-SHA256(userId:fingerprint) → abc123
+  └── atribui token estável: HMAC-SHA256(fingerprint) → abc123
   └── {abc123}.vectora.chat aponta para aquele backend
   └── recebe callbacks OAuth e webhooks, encaminha via WebSocket ao backend certo
 ```
 
 **Dois tipos de OAuth — não confundir:**
 
-| Tipo                     | Propósito                                   | Provider                 | Callback                                      |
-| ------------------------ | ------------------------------------------- | ------------------------ | --------------------------------------------- |
-| **Login na company**     | Entrar em vectora.company                   | Supabase → GitHub/Google | `supabase.co/auth/v1/callback`                |
-| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Relay → Backend          | `relay.vectora.chat/auth/{provider}/callback` |
+| Tipo                     | Propósito                                   | Provider                 | Callback                                        |
+| ------------------------ | ------------------------------------------- | ------------------------ | ----------------------------------------------- |
+| **Login na company**     | Entrar em vectora.company                   | Supabase → GitHub/Google | `supabase.co/auth/v1/callback`                  |
+| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Gateway → Backend        | `gateway.vectora.chat/auth/{provider}/callback` |
 
 A Seção 3 deste plano é sobre o **segundo tipo** — OAuth para que o agente faça chamadas API em nome do usuário.
 
@@ -42,10 +42,10 @@ A Seção 3 deste plano é sobre o **segundo tipo** — OAuth para que o agente 
 
 ### 1.2 Registros DNS — `vectora.chat`
 
-| Tipo  | Nome    | Conteúdo                                 | Proxy      | TTL  |
-| ----- | ------- | ---------------------------------------- | ---------- | ---- |
-| CNAME | `relay` | `vectora-relay.bruno-soarxz.workers.dev` | ✅ Proxied | Auto |
-| CNAME | `*`     | `vectora-relay.bruno-soarxz.workers.dev` | ✅ Proxied | Auto |
+| Tipo  | Nome      | Conteúdo                                   | Proxy      | TTL  |
+| ----- | --------- | ------------------------------------------ | ---------- | ---- |
+| CNAME | `gateway` | `vectora-gateway.bruno-soarxz.workers.dev` | ✅ Proxied | Auto |
+| CNAME | `*`       | `vectora-gateway.bruno-soarxz.workers.dev` | ✅ Proxied | Auto |
 
 O wildcard `*` captura todos os subdomínios `{token}.vectora.chat` e os proxia para o Worker. Cloudflare emite certificado wildcard automaticamente.
 
@@ -53,10 +53,10 @@ O wildcard `*` captura todos os subdomínios `{token}.vectora.chat` e os proxia 
 
 ### 1.3 Custom Domains no Worker
 
-Cloudflare Dashboard → Workers & Pages → `vectora-relay` → Settings → Domains:
+Cloudflare Dashboard → Workers & Pages → `vectora-gateway` → Settings → Domains:
 
 ```
-Adicionar: relay.vectora.chat
+Adicionar: gateway.vectora.chat
 Adicionar: *.vectora.chat
 ```
 
@@ -64,7 +64,7 @@ Ou via `wrangler.toml`:
 
 ```toml
 routes = [
-  { pattern = "relay.vectora.chat/*", custom_domain = true },
+  { pattern = "gateway.vectora.chat/*", custom_domain = true },
   { pattern = "*.vectora.chat/*",     custom_domain = true }
 ]
 ```
@@ -75,20 +75,20 @@ Depois: `pnpm wrangler deploy`
 
 ### 1.4 Secrets no Worker
 
-Executar em `relay/`:
+Executar em `gateway/`:
 
 ```powershell
-# 1. HMAC para gerar tokens estáveis por usuário (só o relay usa)
+# 1. HMAC para gerar tokens estáveis por usuário (só o gateway usa)
 #    Gerar: python -c "import secrets; print(secrets.token_hex(32))"
-pnpm wrangler secret put RELAY_HMAC_SECRET
+pnpm wrangler secret put GATEWAY_HMAC_SECRET
 
-# 2. Segredo compartilhado company ↔ relay ↔ backend para OAuth device flow de licença
+# 2. Segredo compartilhado company ↔ gateway ↔ backend para OAuth device flow de licença
 #    Gerar: python -c "import secrets; print(secrets.token_hex(32))"
-#    MESMO valor em: company Vercel (RELAY_OAUTH_SECRET) e backend .env (VECTORA_OAUTH_SECRET)
+#    MESMO valor em: company Vercel (GATEWAY_OAUTH_SECRET) e backend .env (VECTORA_OAUTH_SECRET)
 pnpm wrangler secret put VECTORA_OAUTH_SECRET
 ```
 
-> ⚠️ Não existe `VECTORA_JWT_SECRET` no relay. O relay não valida JWTs de backends
+> ⚠️ Não existe `VECTORA_JWT_SECRET` no gateway. O gateway não valida JWTs de backends
 > individuais — cada instalação tem sua própria chave. Autenticação de registro
 > é feita via `VECTORA_APP_SECRET` (veja Seção 2.2).
 
@@ -97,7 +97,7 @@ pnpm wrangler secret put VECTORA_OAUTH_SECRET
 ### 1.5 KV Namespace
 
 - **ID:** `ae857e96bdf94823a10629562fb28184`
-- **Binding:** `RELAY_METRICS`
+- **Binding:** `GATEWAY_METRICS`
 - **Status:** ✅ Configurado no `wrangler.toml`
 - **Uso:** `oauth:{state}` → token temporário (TTL 5min) para device flow de licença
 
@@ -105,8 +105,8 @@ pnpm wrangler secret put VECTORA_OAUTH_SECRET
 
 ### 1.6 Durable Objects
 
-- **Classe:** `RelaySession`
-- **Binding:** `RELAY_SESSION`
+- **Classe:** `GatewaySession`
+- **Binding:** `GATEWAY_SESSION`
 - **Migration:** `v1` com `new_sqlite_classes` (free plan)
 - **Status:** ✅ Configurado e deployed
 
@@ -114,38 +114,40 @@ pnpm wrangler secret put VECTORA_OAUTH_SECRET
 
 ## SEÇÃO 2 — Backend Vectora App
 
-### 2.1 Variáveis de Ambiente do Relay no Backend
+### 2.1 Variáveis de Ambiente do Gateway no Backend
 
 Em `~/.vectora/.env` da instalação:
 
 ```env
-RELAY_URL=wss://relay.vectora.chat
-RELAY_ENABLED=true
+GATEWAY_URL=wss://gateway.vectora.chat
+GATEWAY_ENABLED=true
 
-# Compartilhado com relay para OAuth device flow de licença
+# Compartilhado com gateway para OAuth device flow de licença
 VECTORA_OAUTH_SECRET=<mesmo valor do wrangler secret VECTORA_OAUTH_SECRET>
 ```
 
 ---
 
-### 2.2 Como o Backend Registra com o Relay
+### 2.2 Como o Backend Registra com o Gateway
 
-O relay recebe qualquer backend Vectora legítimo. A autenticação de registro funciona assim:
+O gateway recebe qualquer backend Vectora legítimo. A autenticação de registro funciona assim:
 
 ```
-Backend                              Relay
+Backend                              Gateway
   │                                    │
   │  POST /register                    │
-  │  { userId, fingerprint,            │
-  │    app_secret: VECTORA_APP_SECRET }│
+  │  Authorization: Bearer <APP_SECRET>│
+  │  { fingerprint }                   │
   │ ─────────────────────────────────► │
-  │                                    │  verifica VECTORA_APP_SECRET
-  │                                    │  (valor fixo, shipado com o app)
-  │                                    │  gera token = HMAC(userId:fingerprint)
-  │  { token, subdomain, ws_url }      │
+  │                                    │  timingSafeEqual contra
+  │                                    │  env.VECTORA_APP_SECRET (fixo,
+  │                                    │  shipado com o app — igual pra
+  │                                    │  toda instalação)
+  │                                    │  gera token = HMAC-SHA256(fingerprint)
+  │  { token }                         │
   │ ◄───────────────────────────────── │
   │                                    │
-  │  WebSocket: wss://relay.../ws/token│
+  │  WebSocket: wss://gateway.../ws/token│
   │ ─────────────────────────────────► │
 ```
 
@@ -154,12 +156,12 @@ embutido no executável do Vectora. Prova que o cliente é software Vectora leg�
 — não é por usuário, é por produto.
 
 ```powershell
-# Adicionar ao relay:
+# Adicionar ao gateway:
 pnpm wrangler secret put VECTORA_APP_SECRET
 # Usar o mesmo valor em: vectora/backend/defaults.env → VECTORA_APP_SECRET
 ```
 
-O subdomínio `{token}.vectora.chat` aparece em `GET /relay/status` no backend
+O subdomínio `{token}.vectora.chat` aparece em `GET /gateway/status` no backend
 para exibir ao usuário no dashboard do app.
 
 ---
@@ -169,36 +171,55 @@ para exibir ao usuário no dashboard do app.
 > **Quem cria:** Bruno (você), uma única vez, como desenvolvedor.
 > **Quem usa:** Todos os usuários do Vectora ao conectar suas contas no app.
 >
-> O callback sempre vai para `relay.vectora.chat/auth/{provider}/callback`.
-> O relay usa o parâmetro `state` para saber qual backend encaminhar.
+> O callback sempre vai para `gateway.vectora.chat/auth/{provider}/callback`.
+> O gateway usa o parâmetro `state` para saber qual backend encaminhar.
 > Não há `{token}` na URL — um único app OAuth atende todos os usuários.
 
 ---
 
-### 3.1 GitHub OAuth App
+### 3.1 GitHub OAuth App — checklist de registro
 
-**Onde:** github.com/settings/developers → OAuth Apps → New OAuth App
+**Ação manual, uma única vez, feita por você (Bruno) como desenvolvedor.**
+Nenhum `client_id`/`client_secret` vai hardcoded no código — o app lê
+`GITHUB_OAUTH_CLIENT_ID`/`GITHUB_OAUTH_CLIENT_SECRET`/`GITHUB_OAUTH_REDIRECT_URI`
+do ambiente, com fallback pro domínio do gateway
+(`backend/api/handlers/oauth.py::_github_cfg`).
 
-```
-Application name: Vectora
-Homepage URL: https://vectora.company
-Authorization callback URL: https://relay.vectora.chat/auth/github/callback
-```
-
-> Não usar GitHub App (mais complexo). OAuth App simples é suficiente.
+1. **github.com/settings/developers → OAuth Apps → New OAuth App.**
+2. Preencher:
+   ```
+   Application name: Vectora
+   Homepage URL: https://vectora.company
+   Authorization callback URL: https://gateway.vectora.chat/auth/github/callback
+   ```
+   > Não usar GitHub App (mais complexo). OAuth App simples é suficiente.
+3. **Gerar o client secret** (botão "Generate a new client secret" na página
+   do app criado) — visível só uma vez, copiar imediatamente.
+4. **Guardar as credenciais** em `~/.vectora/.env` da instalação (ou nas
+   envs do backend, se rodando em modo servidor):
+   ```env
+   GITHUB_OAUTH_CLIENT_ID=<Client ID>
+   GITHUB_OAUTH_CLIENT_SECRET=<Client Secret>
+   ```
+   O `GITHUB_OAUTH_REDIRECT_URI` não precisa ser setado — sem ele, o
+   backend resolve o callback sozinho: usa `https://{token}.vectora.chat/
+auth/github/callback` (token da instalação, se o gateway já registrou
+   um) ou `http://localhost:8080/auth/github/callback` como último
+   fallback (dev sem gateway conectado). Só defina a env var pra forçar
+   um callback custom (self-hosted atrás de domínio próprio, por exemplo).
+5. Repetir o mesmo padrão para GitLab/Google/Slack se o usuário quiser
+   habilitá-los já — a estrutura de `_gitlab_cfg`/`_google_cfg`/`_slack_cfg`
+   é análoga (ver §3.2-3.4 abaixo).
+6. **Teste de validação**: no app Vectora, ir em Configurações →
+   Integrações → GitHub → Conectar. Deve redirecionar para o GitHub,
+   pedir autorização, e voltar ao app já conectado. Confirmar via
+   `GET /auth/github/status` → `{"connected": true, ...}`.
 
 **Scopes solicitados no fluxo pelo backend:**
 
 - `repo` — leitura/escrita em repositórios
 - `user:email` — email do usuário
 - `read:org` — membros de organização
-
-**Backend (`~/.vectora/.env`):**
-
-```env
-GITHUB_OAUTH_CLIENT_ID=<Client ID>
-GITHUB_OAUTH_CLIENT_SECRET=<Client Secret>
-```
 
 ---
 
@@ -218,7 +239,7 @@ GITHUB_OAUTH_CLIENT_SECRET=<Client Secret>
    - Application type: Web application
    - Authorized redirect URIs:
      ```
-     https://relay.vectora.chat/auth/google/callback
+     https://gateway.vectora.chat/auth/google/callback
      http://localhost:8080/auth/google/callback
      ```
 
@@ -227,7 +248,7 @@ GITHUB_OAUTH_CLIENT_SECRET=<Client Secret>
 ```env
 GOOGLE_OAUTH_CLIENT_ID=<Client ID>
 GOOGLE_OAUTH_CLIENT_SECRET=<Client Secret>
-GOOGLE_OAUTH_REDIRECT_URI=https://relay.vectora.chat/auth/google/callback
+GOOGLE_OAUTH_REDIRECT_URI=https://gateway.vectora.chat/auth/google/callback
 ```
 
 ---
@@ -247,11 +268,11 @@ GOOGLE_OAUTH_REDIRECT_URI=https://relay.vectora.chat/auth/google/callback
    ```
 2. **Redirect URLs:**
    ```
-   https://relay.vectora.chat/auth/slack/callback
+   https://gateway.vectora.chat/auth/slack/callback
    http://localhost:8080/auth/slack/callback
    ```
 3. **Event Subscriptions:**
-   - Request URL: `https://relay.vectora.chat/webhook/slack`
+   - Request URL: `https://gateway.vectora.chat/webhook/slack`
    - Events: `message.channels`, `app_mention`, `message.im`
 
 **Backend:**
@@ -260,7 +281,7 @@ GOOGLE_OAUTH_REDIRECT_URI=https://relay.vectora.chat/auth/google/callback
 SLACK_OAUTH_CLIENT_ID=<Client ID>
 SLACK_OAUTH_CLIENT_SECRET=<Client Secret>
 SLACK_SIGNING_SECRET=<Signing Secret>
-SLACK_REDIRECT_URI=https://relay.vectora.chat/auth/slack/callback
+SLACK_REDIRECT_URI=https://gateway.vectora.chat/auth/slack/callback
 ```
 
 ---
@@ -272,7 +293,7 @@ SLACK_REDIRECT_URI=https://relay.vectora.chat/auth/slack/callback
 ```
 Name: Vectora
 Redirect URI:
-  https://relay.vectora.chat/auth/gitlab/callback
+  https://gateway.vectora.chat/auth/gitlab/callback
   http://localhost:8080/auth/gitlab/callback
 Scopes: api, read_repository, write_repository, read_user
 ```
@@ -289,8 +310,8 @@ GITLAB_BASE_URL=https://gitlab.com
 
 ## SEÇÃO 4 — Webhooks
 
-> Webhooks chegam em `https://relay.vectora.chat/webhook/{provider}`.
-> O relay usa o header `X-Relay-Token` ou o payload para identificar
+> Webhooks chegam em `https://gateway.vectora.chat/webhook/{provider}`.
+> O gateway usa o header `X-Gateway-Token` ou o payload para identificar
 > o backend destino e encaminha via WebSocket.
 >
 > **Quem configura:** Você (Bruno) como desenvolvedor, uma única vez nos painéis dos providers.
@@ -303,7 +324,7 @@ GITLAB_BASE_URL=https://gitlab.com
 **Onde:** github.com/organizations/vectora-company → Settings → Webhooks
 
 ```
-Payload URL: https://relay.vectora.chat/webhook/github
+Payload URL: https://gateway.vectora.chat/webhook/github
 Content type: application/json
 Secret: <valor de GITHUB_WEBHOOK_SECRET>
 Events: Pull requests, Pushes, Issues, Comments
@@ -323,7 +344,7 @@ GITHUB_WEBHOOK_SECRET=<secret>
 ### 4.2 GitLab Webhooks
 
 ```
-URL: https://relay.vectora.chat/webhook/gitlab
+URL: https://gateway.vectora.chat/webhook/gitlab
 Secret Token: <valor de GITLAB_WEBHOOK_SECRET>
 Triggers: Push, Merge requests, Comments
 ```
@@ -339,18 +360,18 @@ GITLAB_WEBHOOK_SECRET=<token>
 ### 4.3 Slack Event Subscriptions
 
 ```
-Request URL: https://relay.vectora.chat/webhook/slack
+Request URL: https://gateway.vectora.chat/webhook/slack
 ```
 
-> Slack faz challenge de verificação na hora do cadastro — relay precisa
-> responder com `{"challenge": "..."}`. Implementar no handler do relay.
+> Slack faz challenge de verificação na hora do cadastro — gateway precisa
+> responder com `{"challenge": "..."}`. Implementar no handler do gateway.
 
 ---
 
 ### 4.4 Linear Webhooks
 
 ```
-URL: https://relay.vectora.chat/webhook/linear
+URL: https://gateway.vectora.chat/webhook/linear
 Events: Issue, Comment, Cycle, Project
 ```
 
@@ -365,7 +386,7 @@ LINEAR_WEBHOOK_SECRET=<secret gerado pelo Linear>
 ### 4.5 Resend Webhooks
 
 ```
-URL: https://relay.vectora.chat/webhook/resend
+URL: https://gateway.vectora.chat/webhook/resend
 Events: email.sent, email.delivered, email.bounced, email.complained
 ```
 
@@ -380,7 +401,7 @@ RESEND_WEBHOOK_SECRET=<signing secret Svix>
 ## SEÇÃO 5 — Supabase (vectora.company)
 
 > O Supabase da `vectora.company` hospeda auth de usuários e edge functions de licença.
-> O relay interage com `vectora.company` apenas no OAuth device flow de licença.
+> O gateway interage com `vectora.company` apenas no OAuth device flow de licença.
 
 ### 5.1 Edge Functions Necessárias
 
@@ -407,8 +428,8 @@ RESEND_WEBHOOK_SECRET=<signing secret Svix>
 
 | Var                             | Valor                                         | Ambiente   |
 | ------------------------------- | --------------------------------------------- | ---------- |
-| `RELAY_URL`                     | `https://relay.vectora.chat`                  | Production |
-| `RELAY_OAUTH_SECRET`            | `<mesmo que wrangler VECTORA_OAUTH_SECRET>`   | Production |
+| `GATEWAY_URL`                   | `https://gateway.vectora.chat`                | Production |
+| `GATEWAY_OAUTH_SECRET`          | `<mesmo que wrangler VECTORA_OAUTH_SECRET>`   | Production |
 | `VITE_GA4_MEASUREMENT_ID`       | `G-K0JK9B2YH2`                                | Production |
 | `VITE_GOOGLE_SITE_VERIFICATION` | `i9Af68Fzq4E9N6QEmMHxz8Bp5xpTZXzPyNqG5IeoZbo` | Production |
 | `RESEND_API_KEY`                | `<chave do Resend>`                           | Production |
@@ -428,10 +449,10 @@ RESEND_WEBHOOK_SECRET=<signing secret Svix>
 
 ## SEÇÃO 7 — Verificação
 
-### 7.1 Relay online
+### 7.1 Gateway online
 
 ```powershell
-curl https://relay.vectora.chat/health
+curl https://gateway.vectora.chat/health
 # Esperado: 200 OK
 ```
 
@@ -439,7 +460,7 @@ curl https://relay.vectora.chat/health
 
 ```powershell
 curl https://abc123.vectora.chat/
-# Esperado: relay responde (4xx sem sessão ativa — normal)
+# Esperado: gateway responde (4xx sem sessão ativa — normal)
 ```
 
 ### 7.3 OAuth device flow (licença)
@@ -463,16 +484,16 @@ curl https://abc123.vectora.chat/
 ## SEÇÃO 8 — Ordem de Execução
 
 ```
-[ ] 1. Cloudflare: adicionar registros DNS (relay + wildcard *)
+[ ] 1. Cloudflare: adicionar registros DNS (gateway + wildcard *)
 [ ] 2. Cloudflare: adicionar custom domains ao Worker
-[ ] 3. Relay: wrangler secret put RELAY_HMAC_SECRET
-[ ] 4. Relay: wrangler secret put VECTORA_OAUTH_SECRET
-[ ] 5. Relay: wrangler secret put VECTORA_APP_SECRET
-[ ] 6. Relay: implementar handler /register (verificar VECTORA_APP_SECRET)
-[ ] 7. Relay: wrangler deploy com custom domains
+[ ] 3. Gateway: wrangler secret put GATEWAY_HMAC_SECRET
+[ ] 4. Gateway: wrangler secret put VECTORA_OAUTH_SECRET
+[ ] 5. Gateway: wrangler secret put VECTORA_APP_SECRET
+[ ] 6. Gateway: implementar handler /register (verificar VECTORA_APP_SECRET)
+[ ] 7. Gateway: wrangler deploy com custom domains
 [ ] 8. Backend: adicionar VECTORA_APP_SECRET ao defaults.env
-[ ] 9. Backend: implementar conexão ao relay no startup
-[ ] 10. Testar: GET /relay/status no backend → ver subdomínio
+[ ] 9. Backend: implementar conexão ao gateway no startup
+[ ] 10. Testar: GET /gateway/status no backend → ver subdomínio
 [ ] 11. GitHub OAuth App: criar em github.com/settings/developers
 [ ] 12. Google OAuth: criar no console.cloud.google.com
 [ ] 13. Slack App: criar em api.slack.com/apps
@@ -486,10 +507,10 @@ curl https://abc123.vectora.chat/
 
 ## SEÇÃO 9 — Secrets Consolidados
 
-### Relay (Cloudflare wrangler secrets)
+### Gateway (Cloudflare wrangler secrets)
 
 ```
-RELAY_HMAC_SECRET     → interno ao relay, gera tokens estáveis por usuário
+GATEWAY_HMAC_SECRET     → interno ao gateway, gera tokens estáveis por usuário
 VECTORA_OAUTH_SECRET  → compartilhado com company e backend (device flow)
 VECTORA_APP_SECRET    → prova que cliente é Vectora legítimo (fixo por produto)
 ```
@@ -497,21 +518,21 @@ VECTORA_APP_SECRET    → prova que cliente é Vectora legítimo (fixo por produ
 ### Backend (`~/.vectora/.env`)
 
 ```env
-VECTORA_APP_SECRET=<mesmo do relay>
-VECTORA_OAUTH_SECRET=<mesmo do relay>
-RELAY_URL=wss://relay.vectora.chat
-RELAY_ENABLED=true
+VECTORA_APP_SECRET=<mesmo do gateway>
+VECTORA_OAUTH_SECRET=<mesmo do gateway>
+GATEWAY_URL=wss://gateway.vectora.chat
+GATEWAY_ENABLED=true
 
 # OAuth Providers (integração do agente)
 GITHUB_OAUTH_CLIENT_ID=
 GITHUB_OAUTH_CLIENT_SECRET=
 GOOGLE_OAUTH_CLIENT_ID=
 GOOGLE_OAUTH_CLIENT_SECRET=
-GOOGLE_OAUTH_REDIRECT_URI=https://relay.vectora.chat/auth/google/callback
+GOOGLE_OAUTH_REDIRECT_URI=https://gateway.vectora.chat/auth/google/callback
 SLACK_OAUTH_CLIENT_ID=
 SLACK_OAUTH_CLIENT_SECRET=
 SLACK_SIGNING_SECRET=
-SLACK_REDIRECT_URI=https://relay.vectora.chat/auth/slack/callback
+SLACK_REDIRECT_URI=https://gateway.vectora.chat/auth/slack/callback
 GITLAB_OAUTH_CLIENT_ID=
 GITLAB_OAUTH_CLIENT_SECRET=
 GITLAB_BASE_URL=https://gitlab.com
@@ -527,6 +548,6 @@ RESEND_WEBHOOK_SECRET=
 ### Company (Vercel env vars)
 
 ```
-RELAY_URL=https://relay.vectora.chat
-RELAY_OAUTH_SECRET=<mesmo do relay>
+GATEWAY_URL=https://gateway.vectora.chat
+GATEWAY_OAUTH_SECRET=<mesmo do gateway>
 ```

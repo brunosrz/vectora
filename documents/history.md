@@ -285,7 +285,9 @@ O que ficou, e o que existe hoje no repositório:
   Supabase), não um "Vectora Cloud" rodando o desktop de terceiros em
   Docker. A GPT Store e o Vectora Desktop em Docker sob demanda da V2 foram
   abandonados junto com a ideia de cloud obrigatória.
-- **`services/`.** Unifica o antigo relay (OAuth/webhooks do desktop) + o
+- **`services/`.** Unifica o antigo relay — renomeado para `gateway` em
+  2026-07-20, rename limpo sem período de transição — (OAuth/webhooks do
+  desktop) + o
   update-server (distribuição de releases) + auth/billing/license/GDPR/
   api-keys/issues da company (que antes dependiam do Supabase). Sem RLS —
   autorização é código, em cada handler.
