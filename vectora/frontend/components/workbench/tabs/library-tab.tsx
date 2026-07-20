@@ -11,7 +11,7 @@
  */
 
 import { Blocks, Library as LibraryIcon, Puzzle, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   Accordion,
@@ -20,6 +20,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { m } from "@/lib/paraglide/messages";
+import { McpSection } from "./library-mcp-section";
 
 interface LibraryTabProps {
   threadId: string;
@@ -119,13 +120,18 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
     });
   };
 
-  // Seções ainda vazias (Sprints 2/3/6 povoam cada uma) — a busca/filtro já
-  // funciona sobre a lista real assim que ela existir.
-  const mcpItems = useMemo<LibraryItem[]>(() => [], []);
+  // Skills e Memory Library ainda vazias (Sprints 3/6 povoam cada uma) — a
+  // busca/filtro já funciona sobre a lista real assim que ela existir. MCP
+  // já é real (Sprint 2) — vive no próprio McpSection, que reporta a
+  // contagem filtrada de volta via onCountChange.
   const skillsItems = useMemo<LibraryItem[]>(() => [], []);
   const memoryItems = useMemo<LibraryItem[]>(() => [], []);
 
-  const filteredMcp = filterItems(mcpItems, query);
+  const [mcpCount, setMcpCount] = useState(0);
+  const handleMcpCountChange = useCallback((count: number) => {
+    setMcpCount(count);
+  }, []);
+
   const filteredSkills = filterItems(skillsItems, query);
   const filteredMemory = filterItems(memoryItems, query);
 
@@ -169,22 +175,15 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
                   <span className="flex items-center gap-2 min-w-0">
                     <Puzzle className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">
-                      {m.library_section_mcp()} ({filteredMcp.length})
+                      {m.library_section_mcp()} ({mcpCount})
                     </span>
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
-                  {filteredMcp.length === 0 ? (
-                    <SectionEmptyState label={m.library_empty_mcp()} />
-                  ) : (
-                    <ul className="divide-y divide-border/30">
-                      {filteredMcp.map((item) => (
-                        <li key={item.id} className="py-1.5 text-xs">
-                          {item.name}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <McpSection
+                    query={query}
+                    onCountChange={handleMcpCountChange}
+                  />
                 </AccordionContent>
               </AccordionItem>
             )}

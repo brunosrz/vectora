@@ -8,8 +8,27 @@
  * específico sem quebrar (as 3 seções estão vazias até os Sprints 2/3/6
  * povoarem cada uma).
  */
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { useEffect } from "react";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+
+// A seção MCP é real desde o Sprint 2 (fetch de /mcp/registry e /plugins) —
+// aqui testamos só o shell (busca/filtros/accordion), então ela é mockada
+// como vazia; o comportamento real da seção tem sua própria suíte
+// (library-mcp-section.test.tsx).
+vi.mock("../library-mcp-section", () => ({
+  McpSection: ({
+    onCountChange,
+  }: {
+    query: string;
+    onCountChange: (count: number) => void;
+  }) => {
+    useEffect(() => {
+      onCountChange(0);
+    }, [onCountChange]);
+    return <p>No MCP servers available yet.</p>;
+  },
+}));
 
 import { LibraryTab } from "../library-tab";
 

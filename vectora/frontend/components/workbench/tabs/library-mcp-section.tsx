@@ -1,0 +1,391 @@
+"use client";
+
+/**
+ * McpSection — seção "MCP" da Library (Sprint 2): religa o marketplace que
+ * já existia no backend (backend/api/handlers/mcp_marketplace.py) mas nunca
+ * tinha UI — GET /mcp/registry, POST /mcp/install, POST /mcp/uninstall.
+ *
+ * Conectores que exigem env vars pedem os valores antes de instalar,
+ * persistidos via POST /auth/envs (mesmo backend da aba Integrações) — o
+ * MCP instalado passa a aparecer lá como uma entrada "Customizada"
+ * automaticamente, sem trabalho extra (a aba já lista qualquer env key
+ * órfã do catálogo).
+ *
+ * "Adicionar MCP manual" (stdio/sse/http + política de tools) reaproveita
+ * o componente PluginsTab existente — mesma tela hoje em Settings →
+ * Plugins, que sai de lá no Sprint 4 quando a Library assume de vez.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Loader2,
+  Puzzle,
+  Trash2,
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { PluginsTab } from "@/components/settings/environment/tabs/plugins-tab";
+import { m } from "@/lib/paraglide/messages";
+import type { LibraryItem } from "./library-tab";
+
+interface MCPConnector {
+  id: string;
+  name: string;
+  description: string;
+  install_cmd: string;
+  env_vars: string[];
+  homepage: string;
+  category: string;
+}
+
+async function fetchRegistry(): Promise<MCPConnector[]> {
+  const res = await fetch("/mcp/registry");
+  if (!res.ok) return [];
+  return res.json();
+}
+
+async function fetchInstalledIds(): Promise<Set<string>> {
+  const res = await fetch("/plugins");
+  if (!res.ok) return new Set();
+  const data = (await res.json()) as { servers?: { name: string }[] };
+  return new Set((data.servers ?? []).map((s) => s.name));
+}
+
+async function saveEnvVar(key: string, value: string): Promise<void> {
+  const res = await fetch("/auth/envs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, value }),
+  });
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+}
+
+async function installMcp(mcpId: string): Promise<{ status: string }> {
+  const res = await fetch("/mcp/install", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mcp_id: mcpId }),
+  });
+  return res.json();
+}
+
+async function uninstallMcp(mcpId: string): Promise<void> {
+  await fetch("/mcp/uninstall", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mcp_id: mcpId }),
+  });
+}
+
+export function connectorToLibraryItem(c: MCPConnector): LibraryItem {
+  return { id: c.id, name: c.name, description: c.description };
+}
+
+function ConfigureDialog({
+  connector,
+  onClose,
+  onInstalled,
+}: {
+  connector: MCPConnector;
+  onClose: () => void;
+  onInstalled: () => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleConfirm = async () => {
+    const missing = connector.env_vars.find((key) => !values[key]?.trim());
+    if (missing) {
+      setError(m.library_mcp_error_missing_env({ key: missing }));
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await Promise.all(
+        connector.env_vars.map((key) => saveEnvVar(key, values[key].trim())),
+      );
+      const result = await installMcp(connector.id);
+      if (result.status === "error") {
+        setError(m.library_mcp_error_install());
+        return;
+      }
+      onInstalled();
+      onClose();
+    } catch {
+      setError(m.library_mcp_error_install());
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {m.library_mcp_configure_title({ name: connector.name })}
+          </DialogTitle>
+          <DialogDescription>
+            {m.library_mcp_configure_desc()}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-1">
+          {connector.env_vars.map((key) => (
+            <div key={key} className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground font-mono">
+                {key}
+              </label>
+              <Input
+                type="password"
+                autoComplete="new-password"
+                value={values[key] ?? ""}
+                onChange={(e) =>
+                  setValues((prev) => ({ ...prev, [key]: e.target.value }))
+                }
+                className="text-sm font-mono"
+              />
+            </div>
+          ))}
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            {m.envs_cancel()}
+          </Button>
+          <Button onClick={handleConfirm} disabled={saving}>
+            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            {m.library_mcp_install()}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConnectorCard({
+  connector,
+  installed,
+  onChanged,
+}: {
+  connector: MCPConnector;
+  installed: boolean;
+  onChanged: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [configuring, setConfiguring] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleInstallClick = () => {
+    if (connector.env_vars.length > 0) {
+      setConfiguring(true);
+      return;
+    }
+    void handleInstall();
+  };
+
+  const handleInstall = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await installMcp(connector.id);
+      if (result.status === "error") {
+        setError(m.library_mcp_error_install());
+        return;
+      }
+      onChanged();
+    } catch {
+      setError(m.library_mcp_error_install());
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleUninstall = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await uninstallMcp(connector.id);
+      onChanged();
+    } catch {
+      setError(m.library_mcp_error_uninstall());
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border bg-card p-3 space-y-2">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+          <Puzzle className="w-4 h-4 text-muted-foreground" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium truncate">
+              {connector.name}
+            </span>
+            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+              {connector.category}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground truncate">
+            {connector.description}
+          </p>
+        </div>
+        <Button
+          variant={installed ? "outline" : "default"}
+          size="sm"
+          className="h-7 text-xs shrink-0"
+          onClick={installed ? handleUninstall : handleInstallClick}
+          disabled={busy}
+        >
+          {busy ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : installed ? (
+            <>
+              <Trash2 className="w-3 h-3 mr-1.5" />
+              {m.library_mcp_uninstall()}
+            </>
+          ) : (
+            <>
+              <Download className="w-3 h-3 mr-1.5" />
+              {m.library_mcp_install()}
+            </>
+          )}
+        </Button>
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {configuring && (
+        <ConfigureDialog
+          connector={connector}
+          onClose={() => setConfiguring(false)}
+          onInstalled={onChanged}
+        />
+      )}
+    </div>
+  );
+}
+
+export function McpSection({
+  query,
+  onCountChange,
+}: {
+  query: string;
+  onCountChange: (count: number) => void;
+}) {
+  const [connectors, setConnectors] = useState<MCPConnector[]>([]);
+  const [installedIds, setInstalledIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [registry, installed] = await Promise.all([
+        fetchRegistry(),
+        fetchInstalledIds(),
+      ]);
+      setConnectors(registry);
+      setInstalledIds(installed);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return connectors;
+    return connectors.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q),
+    );
+  }, [connectors, query]);
+
+  useEffect(() => {
+    onCountChange(filtered.length);
+  }, [filtered.length, onCountChange]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-6">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (filtered.length === 0) {
+    return (
+      <div className="py-4 space-y-3">
+        <p className="text-xs text-muted-foreground text-center">
+          {m.library_empty_mcp()}
+        </p>
+        <AdvancedToggle
+          open={showAdvanced}
+          onToggle={() => setShowAdvanced((v) => !v)}
+        />
+        {showAdvanced && <PluginsTab />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 py-1">
+      {filtered.map((connector) => (
+        <ConnectorCard
+          key={connector.id}
+          connector={connector}
+          installed={installedIds.has(connector.id)}
+          onChanged={load}
+        />
+      ))}
+      <AdvancedToggle
+        open={showAdvanced}
+        onToggle={() => setShowAdvanced((v) => !v)}
+      />
+      {showAdvanced && <PluginsTab />}
+    </div>
+  );
+}
+
+function AdvancedToggle({
+  open,
+  onToggle,
+}: {
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors pt-1"
+    >
+      {open ? (
+        <ChevronUp className="w-3.5 h-3.5" />
+      ) : (
+        <ChevronDown className="w-3.5 h-3.5" />
+      )}
+      {m.library_mcp_advanced_toggle()}
+    </button>
+  );
+}
