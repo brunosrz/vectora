@@ -42,15 +42,15 @@ from backend.api.handlers.background import router as background_router
 from backend.api.handlers.chat import router as chat_router
 from backend.api.handlers.context_graph import router as graph_router
 from backend.api.handlers.flags import router as flags_router
-from backend.api.handlers.gateways import router as gateways_router
+from backend.api.handlers.gateway import router as gateway_router
 from backend.api.handlers.license import router as license_router
 from backend.api.handlers.mcp_marketplace import router as mcp_marketplace_router
 from backend.api.handlers.memory import router as memory_router
 from backend.api.handlers.models import router as models_router
 from backend.api.handlers.oauth import router as oauth_router
 from backend.api.handlers.plugins import router as plugins_router
+from backend.api.handlers.provider_routing import router as provider_routing_router
 from backend.api.handlers.rag import router as rag_router
-from backend.api.handlers.relay import router as relay_router
 from backend.api.handlers.share import router as share_router
 from backend.api.handlers.skills import router as skills_router
 from backend.api.handlers.terminal import router as terminal_router
@@ -358,27 +358,26 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar cleanup de threads: %s", exc)
 
-    # Relay client — WebSocket persistente para receber webhooks e callbacks OAuth.
-    # Só inicia quando RELAY_ENABLED=true nas settings (padrão).
-    _relay_client = None
+    # Gateway client (ex-relay) — WebSocket persistente para receber webhooks
+    # e callbacks OAuth. Só inicia quando GATEWAY_ENABLED=true (padrão) E o
+    # secret fixo do produto está configurado — sem VECTORA_APP_SECRET o
+    # handshake de /register nunca autenticaria, então nem tenta (degrada
+    # pro fallback sem gateway, nunca impede o backend de iniciar).
+    _gateway_client = None
     try:
-        from backend.settings import get_settings as _gs_relay
+        from backend.settings import get_settings as _gs_gateway
 
-        _cfg = _gs_relay()
-        if _cfg.relay_enabled:
-            from backend.rbac.auth import create_relay_jwt
-            from backend.services.relay import RelayClient
+        _cfg = _gs_gateway()
+        if _cfg.gateway_enabled and _cfg.vectora_app_secret:
+            from backend.services.gateway import GatewayClient
 
-            async def _relay_jwt_getter() -> str:
-                return create_relay_jwt()
-
-            _relay_client = RelayClient(
-                relay_url=_cfg.relay_url,
-                jwt_getter=_relay_jwt_getter,
+            _gateway_client = GatewayClient(
+                gateway_url=_cfg.gateway_url,
+                app_secret=_cfg.vectora_app_secret,
             )
-            _relay_client.start()
+            _gateway_client.start()
     except Exception as exc:
-        logger.warning("api/server: falha ao iniciar relay client: %s", exc)
+        logger.warning("api/server: falha ao iniciar gateway client: %s", exc)
 
     try:
         yield
@@ -388,9 +387,9 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             consolidation_task.cancel()
         if thread_cleanup_task is not None:
             thread_cleanup_task.cancel()
-        if _relay_client is not None:
+        if _gateway_client is not None:
             with suppress(Exception):
-                await _relay_client.stop()
+                await _gateway_client.stop()
         try:
             from backend.scheduling.background_tasks import get_scheduler as _gs
 
@@ -537,7 +536,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(share_router)
     app.include_router(memory_router)
     app.include_router(oauth_router)
-    app.include_router(relay_router)
+    app.include_router(gateway_router)
     app.include_router(webhooks_router)
     app.include_router(admin_router)
     app.include_router(workspace_router)
@@ -548,7 +547,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(license_router)
     app.include_router(tools_router)
     app.include_router(models_router)
-    app.include_router(gateways_router)
+    app.include_router(provider_routing_router)
     app.include_router(rag_router)
     app.include_router(terminal_router)
     app.include_router(background_router)

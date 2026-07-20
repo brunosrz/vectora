@@ -1,6 +1,6 @@
 /** api-keys/ — porta company/src/server/fns/api-keys.ts. */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireUserId } from "../auth/routes";
 import { getUserRole } from "../auth/roles";
 import { sha256Hex } from "../auth/session";

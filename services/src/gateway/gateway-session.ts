@@ -1,4 +1,9 @@
-import type { Env, QueuedRequest, RelayMessage, ClientMessage } from "./types";
+import type {
+  Env,
+  QueuedRequest,
+  GatewayMessage,
+  ClientMessage,
+} from "./types";
 
 const QUEUE_TTL_DEFAULT = 600_000; // 10 min
 const FORWARD_TIMEOUT_MS = 30_000;
@@ -10,7 +15,7 @@ interface PendingResponse {
   timer: ReturnType<typeof setTimeout>;
 }
 
-export class RelaySession implements DurableObject {
+export class GatewaySession implements DurableObject {
   private ws: WebSocket | null = null;
   private queue: QueuedRequest[] = [];
   private pending = new Map<string, PendingResponse>();
@@ -74,7 +79,7 @@ export class RelaySession implements DurableObject {
     if (this.pingTimer) clearInterval(this.pingTimer);
     this.pingTimer = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        const msg: RelayMessage = { type: "ping" };
+        const msg: GatewayMessage = { type: "ping" };
         this.ws.send(JSON.stringify(msg));
       }
     }, PING_INTERVAL_MS);
@@ -156,7 +161,7 @@ export class RelaySession implements DurableObject {
     }
 
     const id = crypto.randomUUID();
-    const msg: RelayMessage = {
+    const msg: GatewayMessage = {
       type: "request",
       id,
       method: request.method,
@@ -220,7 +225,7 @@ export class RelaySession implements DurableObject {
 
   private flushQueue(): void {
     if (!this.ws || this.queue.length === 0) return;
-    const msg: RelayMessage = { type: "queued", items: [...this.queue] };
+    const msg: GatewayMessage = { type: "queued", items: [...this.queue] };
     this.ws.send(JSON.stringify(msg));
     this.queue = [];
     void this.state.storage.put("queue", this.queue);

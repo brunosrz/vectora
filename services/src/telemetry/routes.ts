@@ -3,10 +3,10 @@
  * (crash/uso). Sem auth: Free não tem conta, e o dado aqui não é sensível
  * o bastante pra justificar exigir sessão — mas `source` é restrito a uma
  * allowlist e o payload é limitado por MAX_PAYLOAD_BYTES (mesma variável já
- * usada pelo relay pra limitar tamanho de request).
+ * usada pelo gateway pra limitar tamanho de request).
  */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { enqueueJob } from "../lib/queue";
 
 export const telemetry = new Hono<{ Bindings: Env }>();

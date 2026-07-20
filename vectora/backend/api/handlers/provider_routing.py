@@ -1,18 +1,18 @@
-"""Gateways dinâmicos de LLM (Ollama local, OpenRouter) — descoberta e registro.
+"""Provider routing dinâmico de LLM (Ollama local, OpenRouter) — descoberta e registro.
 
 Endpoints (exigem auth via middleware):
-    GET    /gateways/ollama/models                  — descoberta via {base_url}/api/tags
-    GET    /gateways/ollama/registered               — modelos Ollama registrados
-    POST   /gateways/ollama/registered                — registra um modelo (tag)
-    DELETE /gateways/ollama/registered/{model_id}     — remove
+    GET    /provider-routing/ollama/models                  — descoberta via {base_url}/api/tags
+    GET    /provider-routing/ollama/registered               — modelos Ollama registrados
+    POST   /provider-routing/ollama/registered                — registra um modelo (tag)
+    DELETE /provider-routing/ollama/registered/{model_id}     — remove
 
-    GET    /gateways/openrouter/status                — key configurada? (mascarada)
-    POST   /gateways/openrouter/key                   — valida e salva a key
-    DELETE /gateways/openrouter/key                    — remove a key
-    GET    /gateways/openrouter/models?q=              — catálogo público (cache ~1h)
-    GET    /gateways/openrouter/registered             — modelos OpenRouter registrados
-    POST   /gateways/openrouter/registered              — registra um modelo (id)
-    DELETE /gateways/openrouter/registered/{model_id}   — remove
+    GET    /provider-routing/openrouter/status                — key configurada? (mascarada)
+    POST   /provider-routing/openrouter/key                   — valida e salva a key
+    DELETE /provider-routing/openrouter/key                    — remove a key
+    GET    /provider-routing/openrouter/models?q=              — catálogo público (cache ~1h)
+    GET    /provider-routing/openrouter/registered             — modelos OpenRouter registrados
+    POST   /provider-routing/openrouter/registered              — registra um modelo (id)
+    DELETE /provider-routing/openrouter/registered/{model_id}   — remove
 
 Ollama não exige API key — a UI popula o dropdown consultando /api/tags do
 host configurado em vez de digitação livre (evita erro de digitação virar
@@ -38,7 +38,7 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/gateways", tags=["gateways"])
+router = APIRouter(prefix="/provider-routing", tags=["provider-routing"])
 
 
 async def _get_http_client() -> AsyncIterator[Any]:
@@ -160,7 +160,9 @@ async def discover_ollama_models() -> OllamaDiscoveryResponse:
             resp.raise_for_status()
             data = resp.json()
     except Exception:
-        logger.info("gateways: Ollama em %s inacessível", base_url, exc_info=True)
+        logger.info(
+            "provider_routing: Ollama em %s inacessível", base_url, exc_info=True
+        )
         return OllamaDiscoveryResponse(reachable=False, models=[])
 
     models = [
@@ -333,7 +335,7 @@ async def discover_openrouter_models(
             _catalog_cache["fetched_at"] = now
         except Exception:
             logger.warning(
-                "gateways: falha ao buscar catálogo OpenRouter", exc_info=True
+                "provider_routing: falha ao buscar catálogo OpenRouter", exc_info=True
             )
             if not _catalog_cache["models"]:
                 return OpenRouterCatalogResponse(models=[])

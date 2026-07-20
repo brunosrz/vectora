@@ -20,7 +20,7 @@
  * `vectora/backend`/`vectora/frontend`, não deste Worker.
  */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 
 export const registry = new Hono<{ Bindings: Env }>();
 

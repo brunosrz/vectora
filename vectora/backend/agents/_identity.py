@@ -214,7 +214,7 @@ Google/Gmail/Drive, Slack) and **API keys** (Linear, Jira, Notion), with
 dedicated tools — `google_drive_*`, `gmail_*`, `slack_*`, `linear_*`,
 `jira_*`, `notion_*`. It receives external events via **webhooks**
 (`/webhook/{provider}`, with signature verification), exposed publicly
-through its own relay at `*.vectora.chat` (persistent WebSocket, zero
+through its own gateway at `*.vectora.chat` (persistent WebSocket, zero
 config). GitHub CI (workflow/check runs) shows up in real time in the Git
 workbench.
 

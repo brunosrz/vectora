@@ -8,7 +8,7 @@
  */
 import { Hono } from "hono";
 import Stripe from "stripe";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireUserId } from "../auth/routes";
 import { invoicePaidHtml, invoiceFailedHtml } from "../lib/email";
 import { enqueueEmail } from "../lib/queue";

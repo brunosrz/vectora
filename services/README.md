@@ -1,12 +1,12 @@
 # vectora-services
 
-Worker único no Cloudflare que serve `relay/`, `updates/` e
+Worker único no Cloudflare que serve `gateway/`, `updates/` e
 auth/billing/license/GDPR/api-keys/issues/rag-library/registry. Domínios:
 
-- `relay.vectora.chat` + `{token}.vectora.chat` — proxy WebSocket
-  bidirecional de OAuth/webhooks pro app desktop (`src/relay/`). O cliente
-  Python do desktop já tem essas URLs hardcoded — não mexer sem atualizar
-  os dois lados.
+- `gateway.vectora.chat` + `{token}.vectora.chat` — proxy WebSocket
+  bidirecional de OAuth/webhooks pro app desktop (`src/gateway/`, ex-relay —
+  renomeado sem alias de transição, decisão do produto: não havia clientes
+  antigos em produção pra coordenar).
 - `services.vectora.company` — tudo o mais montado num único Hono app em
   `src/index.ts`: auth/billing/license/GDPR/api-keys/issues/rag-library/
   registry/telemetry **e** updates (distribuição de releases pro
@@ -14,23 +14,25 @@ auth/billing/license/GDPR/api-keys/issues/rag-library/registry. Domínios:
   `src/updates/`) — mesclado na raiz via `.route("/", updatesApp)`, sem
   domínio próprio.
 
-Dispatch por hostname em `src/index.ts`: só relay tem host dedicado; qualquer
-outro host cai no app único de `services.vectora.company`.
+Dispatch por hostname em `src/index.ts`: só gateway tem host dedicado;
+qualquer outro host cai no app único de `services.vectora.company`.
 
 ## Rotas
 
-**relay** (`relay.vectora.chat`):
+**gateway** (`gateway.vectora.chat`):
 
-- `POST /register` — troca um JWT do backend Python por um token de relay de
-  6 caracteres + URL de WebSocket.
+- `POST /register` — autenticado por `VECTORA_APP_SECRET` (secret fixo por
+  produto, embutido no binário Nuitka — igual pra toda instalação) via
+  `Authorization: Bearer`; troca o fingerprint da máquina por um token de
+  gateway de 6 caracteres + URL de WebSocket.
 - `GET|POST /ws/:token` — upgrade pra WebSocket, vira a sessão ativa da
-  Durable Object `RelaySession`.
+  Durable Object `GatewaySession`.
 - `GET /health/:token` — `{connected, queued}`.
-- `DELETE /relay/session/:token` — revoga a sessão.
+- `DELETE /gateway/session/:token` — revoga a sessão.
 - `POST /oauth/token` / `GET /oauth/token/:state` — device flow de OAuth
   (a company grava o token trocado, o backend consome via polling).
 
-**relay** (`{token}.vectora.chat`, qualquer path): webhooks/callbacks OAuth
+**gateway** (`{token}.vectora.chat`, qualquer path): webhooks/callbacks OAuth
 de terceiros (GitHub etc.) — encaminhados pro backend local via WebSocket se
 conectado, ou enfileirados (TTL 10min) se offline.
 
@@ -58,7 +60,7 @@ handler):
   (email+senha → token, usado pelo backend Python), `portal` (mesma lógica
   de `/billing/portal`, mas autenticado pelo token em vez de sessão — é a
   rota que o backend Python chama).
-- `/oauth/*` — device flow que conecta a conta vectora.company ao relay.
+- `/oauth/*` — device flow que conecta a conta vectora.company ao gateway.
 - `/gdpr/*` — soft-delete + Cron Trigger diário que só enfileira 1 job
   `gdpr_delete_user` por usuário expirado (hard-delete de verdade acontece
   no consumer, `hardDeleteOneUser`).
@@ -76,8 +78,8 @@ handler):
 
 ## Bindings (`wrangler.toml`)
 
-- Durable Object `RELAY_SESSION` (classe `RelaySession`).
-- KV `RELAY_METRICS` — estado de OAuth device flow do relay.
+- Durable Object `GATEWAY_SESSION` (classe `GatewaySession`).
+- KV `GATEWAY_METRICS` — estado de OAuth device flow do gateway.
 - R2 `R2` (bucket `vectora-releases`) — instaladores + manifestos.
 - KV `KV` — config de canais/rollout/quarentena do updates.
 - D1 `DB` (`vectora-db`) — users/sessions/tokens/subscriptions/license_checks/
@@ -92,9 +94,10 @@ handler):
   que existia no read-modify-write direto em KV) — jobs `gdpr_delete_user`,
   `update_telemetry`, `telemetry_ingest`, `rag_reindex`; DLQ
   `vectora-jobs-dlq`.
-- Secrets (via `wrangler secret put`, não no `.toml`): `VECTORA_JWT_SECRET`,
-  `RELAY_HMAC_SECRET`, `VECTORA_OAUTH_SECRET` (relay); `RESEND_API_KEY`
-  (email transacional); `TURNSTILE_SECRET_KEY` (anti-bot); `STRIPE_SECRET_KEY`,
+- Secrets (via `wrangler secret put`, não no `.toml`): `VECTORA_APP_SECRET`
+  (secret fixo por produto, autentica `POST /register`), `GATEWAY_HMAC_SECRET`,
+  `VECTORA_OAUTH_SECRET` (gateway); `RESEND_API_KEY` (email transacional);
+  `TURNSTILE_SECRET_KEY` (anti-bot); `STRIPE_SECRET_KEY`,
   `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_USD` (billing INTL);
   `ASAAS_API_KEY`, `ASAAS_API_URL` (billing BR).
 

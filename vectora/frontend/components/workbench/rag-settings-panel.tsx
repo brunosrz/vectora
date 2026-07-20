@@ -396,7 +396,7 @@ interface DiscoveredModel {
  * já têm modelo fixo em settings.py), então o usuário escolhe explicitamente
  * a partir de uma lista descoberta, nunca texto livre (erro de digitação
  * viraria falha silenciosa de embedding — mesmo motivo que o seletor de
- * LLM em gateways-tab.tsx já evita texto livre). */
+ * LLM em provider-routing-tab.tsx já evita texto livre). */
 function EmbedModelPicker({
   provider,
   value,
@@ -413,7 +413,7 @@ function EmbedModelPicker({
   const loadOllama = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/gateways/ollama/models");
+      const res = await fetch("/provider-routing/ollama/models");
       if (!res.ok) return;
       const data = (await res.json()) as {
         reachable: boolean;
@@ -431,7 +431,7 @@ function EmbedModelPicker({
     setLoading(true);
     try {
       const res = await fetch(
-        `/gateways/openrouter/models${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+        `/provider-routing/openrouter/models${q ? `?q=${encodeURIComponent(q)}` : ""}`,
       );
       if (!res.ok) return;
       const data = (await res.json()) as {

@@ -1,12 +1,12 @@
 import type { EmailMessage, JobMessage } from "../lib/queue-types";
 
 export interface Env {
-  RELAY_SESSION: DurableObjectNamespace;
-  RELAY_METRICS: KVNamespace;
-  VECTORA_JWT_SECRET: string;
-  RELAY_HMAC_SECRET: string;
+  GATEWAY_SESSION: DurableObjectNamespace;
+  GATEWAY_METRICS: KVNamespace;
+  VECTORA_APP_SECRET: string;
+  GATEWAY_HMAC_SECRET: string;
   VECTORA_OAUTH_SECRET: string;
-  RELAY_URL: string;
+  GATEWAY_URL: string;
   MAX_PAYLOAD_BYTES: string;
   QUEUE_TTL_MS: string;
   TEST_IS_WINDOWS?: string;
@@ -30,14 +30,7 @@ export interface Env {
   LICENSE_VALIDATE_LIMITER: RateLimit;
 }
 
-export interface JwtPayload {
-  sub: string;
-  exp: number;
-  iat: number;
-}
-
 export interface RegisterRequest {
-  jwt: string;
   fingerprint: string;
 }
 
@@ -56,8 +49,8 @@ export interface QueuedRequest {
   enqueuedAt: number;
 }
 
-// WebSocket protocol messages (relay ↔ Python client)
-export type RelayMessage =
+// WebSocket protocol messages (gateway ↔ Python client)
+export type GatewayMessage =
   | {
       type: "request";
       id: string;

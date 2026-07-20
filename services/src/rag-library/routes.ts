@@ -8,7 +8,7 @@
  * em aberto, ver "Decisões em aberto" do plano).
  */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { enqueueJob } from "../lib/queue";
 
 export const ragLibrary = new Hono<{ Bindings: Env }>();

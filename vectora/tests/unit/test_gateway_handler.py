@@ -1,62 +1,22 @@
-"""TDD — backend/api/handlers/relay.py + services/auth.create_relay_jwt"""
+"""TDD — backend/api/handlers/gateway.py (status/revoke do gateway local)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
-# create_relay_jwt
+# GET /gateway/status — sem token salvo
 # ---------------------------------------------------------------------------
 
 
-class TestCreateRelayJwt:
-    def test_retorna_string_jwt(self) -> None:
-        from backend.rbac.auth import create_relay_jwt
-
-        token = create_relay_jwt()
-        assert isinstance(token, str)
-        assert token.count(".") == 2
-
-    def test_decodifica_com_decode_access_token(self) -> None:
-        from backend.rbac.auth import create_relay_jwt, decode_access_token
-
-        token = create_relay_jwt()
-        payload = decode_access_token(token)
-        assert payload["sub"] == "relay-system"
-
-    def test_exp_esta_no_futuro(self) -> None:
-        import time
-
-        from backend.rbac.auth import create_relay_jwt, decode_access_token
-
-        token = create_relay_jwt(ttl_seconds=600)
-        payload = decode_access_token(token)
-        assert payload["exp"] > int(time.time())
-
-    def test_ttl_personalizado(self) -> None:
-        import time
-
-        from backend.rbac.auth import create_relay_jwt, decode_access_token
-
-        token = create_relay_jwt(ttl_seconds=120)
-        payload = decode_access_token(token)
-        assert payload["exp"] - int(time.time()) <= 120
-
-
-# ---------------------------------------------------------------------------
-# GET /relay/status — sem token salvo
-# ---------------------------------------------------------------------------
-
-
-class TestRelayStatusSemToken:
+class TestGatewayStatusSemToken:
     def _app(self) -> TestClient:
         from fastapi import FastAPI
 
-        from backend.api.handlers.relay import router
+        from backend.api.handlers.gateway import router
 
         app = FastAPI()
 
@@ -71,9 +31,9 @@ class TestRelayStatusSemToken:
     def test_retorna_desconectado_sem_token(self, tmp_path: Path) -> None:
         """Erro/borda: nunca conectou é um estado NEUTRO (never_connected),
         distinto de um erro real — a UI não deve tratar como falha."""
-        token_path = tmp_path / "relay_token"
-        with patch("backend.api.handlers.relay._TOKEN_PATH", token_path):
-            res = self._app().get("/relay/status")
+        token_path = tmp_path / "gateway_token"
+        with patch("backend.api.handlers.gateway._TOKEN_PATH", token_path):
+            res = self._app().get("/gateway/status")
         assert res.status_code == 200
         data = res.json()
         assert data["connected"] is False
@@ -85,25 +45,25 @@ class TestRelayStatusSemToken:
     def test_retorna_401_sem_autenticacao(self, tmp_path: Path) -> None:
         from fastapi import FastAPI
 
-        from backend.api.handlers.relay import router
+        from backend.api.handlers.gateway import router
 
         app = FastAPI()
         app.include_router(router)
         client = TestClient(app, raise_server_exceptions=False)
-        res = client.get("/relay/status")
+        res = client.get("/gateway/status")
         assert res.status_code == 401
 
 
 # ---------------------------------------------------------------------------
-# GET /relay/status — com token salvo
+# GET /gateway/status — com token salvo
 # ---------------------------------------------------------------------------
 
 
-class TestRelayStatusComToken:
+class TestGatewayStatusComToken:
     def _app(self) -> TestClient:
         from fastapi import FastAPI
 
-        from backend.api.handlers.relay import router
+        from backend.api.handlers.gateway import router
 
         app = FastAPI()
 
@@ -116,7 +76,7 @@ class TestRelayStatusComToken:
         return TestClient(app)
 
     def test_retorna_status_do_worker(self, tmp_path: Path) -> None:
-        token_path = tmp_path / "relay_token"
+        token_path = tmp_path / "gateway_token"
         token_path.write_text("abc123")
 
         mock_resp = AsyncMock()
@@ -131,12 +91,12 @@ class TestRelayStatusComToken:
         mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("backend.api.handlers.relay._TOKEN_PATH", token_path):
+        with patch("backend.api.handlers.gateway._TOKEN_PATH", token_path):
             with patch(
-                "backend.api.handlers.relay.aiohttp.ClientSession",
+                "backend.api.handlers.gateway.aiohttp.ClientSession",
                 return_value=mock_session_ctx,
             ):
-                res = self._app().get("/relay/status")
+                res = self._app().get("/gateway/status")
 
         assert res.status_code == 200
         data = res.json()
@@ -151,15 +111,15 @@ class TestRelayStatusComToken:
         """Erro/borda: já teve token (tentativa real de conexão) mas o
         Worker não respondeu — state='error', distinto de never_connected,
         com detalhe da falha pra UI mostrar algo além de "desconectado"."""
-        token_path = tmp_path / "relay_token"
+        token_path = tmp_path / "gateway_token"
         token_path.write_text("abc123")
 
-        with patch("backend.api.handlers.relay._TOKEN_PATH", token_path):
+        with patch("backend.api.handlers.gateway._TOKEN_PATH", token_path):
             with patch(
-                "backend.api.handlers.relay.aiohttp.ClientSession",
+                "backend.api.handlers.gateway.aiohttp.ClientSession",
                 side_effect=Exception("network error"),
             ):
-                res = self._app().get("/relay/status")
+                res = self._app().get("/gateway/status")
 
         assert res.status_code == 200
         data = res.json()
@@ -169,15 +129,15 @@ class TestRelayStatusComToken:
 
 
 # ---------------------------------------------------------------------------
-# POST /relay/revoke
+# POST /gateway/revoke
 # ---------------------------------------------------------------------------
 
 
-class TestRelayRevoke:
+class TestGatewayRevoke:
     def _app(self) -> TestClient:
         from fastapi import FastAPI
 
-        from backend.api.handlers.relay import router
+        from backend.api.handlers.gateway import router
 
         app = FastAPI()
 
@@ -190,13 +150,13 @@ class TestRelayRevoke:
         return TestClient(app)
 
     def test_retorna_404_sem_token(self, tmp_path: Path) -> None:
-        token_path = tmp_path / "relay_token"
-        with patch("backend.api.handlers.relay._TOKEN_PATH", token_path):
-            res = self._app().post("/relay/revoke")
+        token_path = tmp_path / "gateway_token"
+        with patch("backend.api.handlers.gateway._TOKEN_PATH", token_path):
+            res = self._app().post("/gateway/revoke")
         assert res.status_code == 404
 
     def test_revoga_e_deleta_arquivo(self, tmp_path: Path) -> None:
-        token_path = tmp_path / "relay_token"
+        token_path = tmp_path / "gateway_token"
         token_path.write_text("abc123")
 
         mock_resp = AsyncMock()
@@ -210,27 +170,27 @@ class TestRelayRevoke:
         mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("backend.api.handlers.relay._TOKEN_PATH", token_path):
+        with patch("backend.api.handlers.gateway._TOKEN_PATH", token_path):
             with patch(
-                "backend.api.handlers.relay.aiohttp.ClientSession",
+                "backend.api.handlers.gateway.aiohttp.ClientSession",
                 return_value=mock_session_ctx,
             ):
-                res = self._app().post("/relay/revoke")
+                res = self._app().post("/gateway/revoke")
 
         assert res.status_code == 200
         assert res.json()["revoked"] is True
         assert not token_path.exists()
 
     def test_revoga_mesmo_se_worker_falhar(self, tmp_path: Path) -> None:
-        token_path = tmp_path / "relay_token"
+        token_path = tmp_path / "gateway_token"
         token_path.write_text("abc123")
 
-        with patch("backend.api.handlers.relay._TOKEN_PATH", token_path):
+        with patch("backend.api.handlers.gateway._TOKEN_PATH", token_path):
             with patch(
-                "backend.api.handlers.relay.aiohttp.ClientSession",
+                "backend.api.handlers.gateway.aiohttp.ClientSession",
                 side_effect=Exception("network error"),
             ):
-                res = self._app().post("/relay/revoke")
+                res = self._app().post("/gateway/revoke")
 
         assert res.status_code == 200
         assert not token_path.exists()

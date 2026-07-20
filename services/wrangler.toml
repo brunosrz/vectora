@@ -10,33 +10,35 @@ invocation_logs = true
 [observability.traces]
 enabled = false
 
-# relay/ (Fase A) — OAuth/webhooks pro app desktop, WebSocket bidirecional.
-# Domínios relay.vectora.chat + {token}.vectora.chat continuam exatamente
-# como estavam — o cliente Python do desktop já tem essas URLs hardcoded.
+# gateway/ (ex-relay, Sprint 10) — OAuth/webhooks pro app desktop, WebSocket
+# bidirecional. Domínio migrado de relay.vectora.chat para
+# gateway.vectora.chat SEM alias/período de transição (decisão do produto —
+# não havia clientes antigos em produção pra coordenar). {token}.vectora.chat
+# continua igual (subdomínio de sessão, independente do nome do serviço).
 #
-# Só documentado aqui a partir de agora — até então esse binding de rota
-# existia apenas no dashboard Cloudflare, fora do controle de versão
-# (drift entre o que está versionado e o que está de fato configurado em
-# produção). Uma única rota wildcard de zona cobre tanto
-# `relay.vectora.chat` quanto `{token}.vectora.chat` (qualquer subdomínio
-# de vectora.chat) — declarar `relay.vectora.chat` também como Custom
-# Domain em paralelo conflita na API da Cloudflare (hostname já coberto
-# por rota), confirmado ao vivo via `wrangler deploy`.
+# Uma única rota wildcard de zona cobre tanto `gateway.vectora.chat` quanto
+# `{token}.vectora.chat` (qualquer subdomínio de vectora.chat) — declarar
+# `gateway.vectora.chat` também como Custom Domain em paralelo conflita na
+# API da Cloudflare (hostname já coberto por rota), confirmado ao vivo via
+# `wrangler deploy` quando o domínio ainda era relay.vectora.chat.
 [[routes]]
 pattern = "*.vectora.chat/*"
 zone_name = "vectora.chat"
 
 [durable_objects]
 bindings = [
-  { name = "RELAY_SESSION", class_name = "RelaySession" }
+  { name = "GATEWAY_SESSION", class_name = "GatewaySession" }
 ]
 
+# Sem clientes em produção usando o DO ainda (rename de dia zero) — recriado
+# do zero em vez de usar `renamed_classes`, mais simples e sem risco por não
+# haver storage real a preservar.
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["RelaySession"]
+new_sqlite_classes = ["GatewaySession"]
 
 [[kv_namespaces]]
-binding = "RELAY_METRICS"
+binding = "GATEWAY_METRICS"
 id = "f38a1de6901643c89d02a69cd5b529e2"
 
 # updates/ (Fase A) — distribuição de releases (electron-updater + download
@@ -105,12 +107,18 @@ dead_letter_queue = "vectora-jobs-dlq"
 MAX_PAYLOAD_BYTES = "5242880"
 QUEUE_TTL_MS = "600000"
 APP_URL = "https://vectora.company"
-RELAY_URL = "https://relay.vectora.chat"
+GATEWAY_URL = "https://gateway.vectora.chat"
 
 # Secrets (não vão neste arquivo — `wrangler secret put <nome>`):
-#   VECTORA_JWT_SECRET     — relay: verifica JWT assinado pelo backend Python
-#   RELAY_HMAC_SECRET      — relay: assina o token de 6 chars por user+fingerprint
-#   VECTORA_OAUTH_SECRET   — relay: Bearer auth nos endpoints /oauth/token
+#   VECTORA_APP_SECRET     — gateway: secret fixo por produto (embutido no
+#                            binário Nuitka, igual pra toda instalação) que
+#                            autentica POST /register. Substitui o antigo
+#                            VECTORA_JWT_SECRET (JWT por-instalação que nunca
+#                            batia com um secret único no Worker — o "sub"
+#                            do JWT sempre foi a constante "relay-system",
+#                            então essa granularidade nunca existiu de fato).
+#   GATEWAY_HMAC_SECRET    — gateway: assina o token de 6 chars por fingerprint
+#   VECTORA_OAUTH_SECRET   — gateway: Bearer auth nos endpoints /oauth/token
 #   RESEND_API_KEY         — auth/billing/gdpr/issues: envio de email transacional
 #   TURNSTILE_SECRET_KEY   — auth/issues: verificação anti-bot (opcional em dev)
 #   STRIPE_SECRET_KEY      — billing: API Stripe (clientes INTL)

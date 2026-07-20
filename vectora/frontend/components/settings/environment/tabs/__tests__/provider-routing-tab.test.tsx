@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Testes da GatewaysTab (gateways Ollama e OpenRouter).
+ * Testes da ProviderRoutingTab (gateways Ollama e OpenRouter).
  *
  * Cobre:
  * - Ollama: lista de modelos registrados (vazia / populada), descoberta
@@ -18,7 +18,7 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
-import { GatewaysTab } from "../gateways-tab";
+import { ProviderRoutingTab } from "../provider-routing-tab";
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
 afterEach(cleanup);
@@ -43,20 +43,20 @@ function mockFetch(
     .mockImplementation((url: string, init?: RequestInit) => {
       const method = init?.method;
 
-      if (url === "/gateways/ollama/registered" && !method) {
+      if (url === "/provider-routing/ollama/registered" && !method) {
         return Promise.resolve({
           ok: true,
           json: async () => handlers.registered ?? [],
         } as Response);
       }
-      if (url === "/gateways/ollama/models") {
+      if (url === "/provider-routing/ollama/models") {
         return Promise.resolve({
           ok: true,
           json: async () =>
             handlers.discover ?? { reachable: false, models: [] },
         } as Response);
       }
-      if (url === "/gateways/ollama/registered" && method === "POST") {
+      if (url === "/provider-routing/ollama/registered" && method === "POST") {
         return Promise.resolve({
           ok: handlers.registerOk ?? true,
           status: handlers.registerOk === false ? 500 : 200,
@@ -69,7 +69,7 @@ function mockFetch(
       }
       if (
         typeof url === "string" &&
-        url.startsWith("/gateways/ollama/registered/")
+        url.startsWith("/provider-routing/ollama/registered/")
       ) {
         return Promise.resolve({
           ok: handlers.removeOk ?? true,
@@ -77,14 +77,14 @@ function mockFetch(
           json: async () => ({ ok: true }),
         } as Response);
       }
-      if (url === "/gateways/openrouter/status") {
+      if (url === "/provider-routing/openrouter/status") {
         return Promise.resolve({
           ok: true,
           json: async () =>
             handlers.openrouterStatus ?? { configured: false, masked: "" },
         } as Response);
       }
-      if (url === "/gateways/openrouter/key" && method === "POST") {
+      if (url === "/provider-routing/openrouter/key" && method === "POST") {
         const ok = handlers.openrouterKeySaveOk ?? true;
         return Promise.resolve({
           ok,
@@ -95,7 +95,7 @@ function mockFetch(
               : { detail: handlers.openrouterKeySaveDetail ?? "Key rejeitada" },
         } as Response);
       }
-      if (url === "/gateways/openrouter/key" && method === "DELETE") {
+      if (url === "/provider-routing/openrouter/key" && method === "DELETE") {
         return Promise.resolve({
           ok: true,
           json: async () => ({ configured: false, masked: "" }),
@@ -103,20 +103,23 @@ function mockFetch(
       }
       if (
         typeof url === "string" &&
-        url.startsWith("/gateways/openrouter/models")
+        url.startsWith("/provider-routing/openrouter/models")
       ) {
         return Promise.resolve({
           ok: true,
           json: async () => ({ models: handlers.openrouterCatalog ?? [] }),
         } as Response);
       }
-      if (url === "/gateways/openrouter/registered" && !method) {
+      if (url === "/provider-routing/openrouter/registered" && !method) {
         return Promise.resolve({
           ok: true,
           json: async () => handlers.openrouterRegistered ?? [],
         } as Response);
       }
-      if (url === "/gateways/openrouter/registered" && method === "POST") {
+      if (
+        url === "/provider-routing/openrouter/registered" &&
+        method === "POST"
+      ) {
         const ok = handlers.openrouterRegisterOk ?? true;
         return Promise.resolve({
           ok,
@@ -130,7 +133,7 @@ function mockFetch(
       }
       if (
         typeof url === "string" &&
-        url.startsWith("/gateways/openrouter/registered/")
+        url.startsWith("/provider-routing/openrouter/registered/")
       ) {
         return Promise.resolve({
           ok: true,
@@ -145,14 +148,14 @@ function mockFetch(
     });
 }
 
-describe("GatewaysTab — Ollama", () => {
+describe("ProviderRoutingTab — Ollama", () => {
   beforeEach(() => {
     overwriteGetLocale(() => "pt");
     mockFetch({ registered: [] });
   });
 
   it("mostra estado vazio quando nenhum modelo está registrado", async () => {
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     await waitFor(() => {
       expect(screen.getAllByText(/nenhum modelo registrado/i).length).toBe(2);
     });
@@ -162,7 +165,7 @@ describe("GatewaysTab — Ollama", () => {
     mockFetch({
       registered: [{ id: "1", tag: "qwen3:8b", created_at: "now" }],
     });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     await waitFor(() => {
       expect(screen.getByText("qwen3:8b")).toBeTruthy();
     });
@@ -170,7 +173,7 @@ describe("GatewaysTab — Ollama", () => {
 
   it("descoberta com host inacessível exibe aviso, sem crashar", async () => {
     mockFetch({ registered: [], discover: { reachable: false, models: [] } });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     await waitFor(() => screen.getByRole("button", { name: /detectar/i }));
     fireEvent.click(screen.getByRole("button", { name: /detectar/i }));
     await waitFor(() => {
@@ -187,7 +190,7 @@ describe("GatewaysTab — Ollama", () => {
       },
       registerOk: true,
     });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     fireEvent.click(await screen.findByRole("button", { name: /detectar/i }));
     await waitFor(() => screen.getByText("qwen3:8b"));
 
@@ -206,7 +209,7 @@ describe("GatewaysTab — Ollama", () => {
       },
       registerOk: false,
     });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     fireEvent.click(await screen.findByRole("button", { name: /detectar/i }));
     await waitFor(() => screen.getByText("qwen3:8b"));
 
@@ -221,7 +224,7 @@ describe("GatewaysTab — Ollama", () => {
       registered: [{ id: "1", tag: "qwen3:8b", created_at: "now" }],
       removeOk: true,
     });
-    const { container } = render(<GatewaysTab />);
+    const { container } = render(<ProviderRoutingTab />);
     await waitFor(() => screen.getByText("qwen3:8b"));
 
     const removeBtn = container.querySelector(
@@ -240,7 +243,7 @@ describe("GatewaysTab — Ollama", () => {
       registered: [{ id: "1", tag: "qwen3:8b", created_at: "now" }],
       removeOk: false,
     });
-    const { container } = render(<GatewaysTab />);
+    const { container } = render(<ProviderRoutingTab />);
     await waitFor(() => screen.getByText("qwen3:8b"));
 
     const removeBtn = container.querySelector(
@@ -255,14 +258,14 @@ describe("GatewaysTab — Ollama", () => {
   });
 });
 
-describe("GatewaysTab — OpenRouter", () => {
+describe("ProviderRoutingTab — OpenRouter", () => {
   beforeEach(() => {
     overwriteGetLocale(() => "pt");
   });
 
   it("mostra input de key quando não configurada", async () => {
     mockFetch({ openrouterStatus: { configured: false, masked: "" } });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/sk-or-v1/i)).toBeTruthy();
     });
@@ -273,7 +276,7 @@ describe("GatewaysTab — OpenRouter", () => {
       openrouterStatus: { configured: false, masked: "" },
       openrouterKeySaveOk: true,
     });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     const input = await screen.findByPlaceholderText(/sk-or-v1/i);
     fireEvent.change(input, { target: { value: "sk-or-v1-abcdef" } });
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
@@ -290,7 +293,7 @@ describe("GatewaysTab — OpenRouter", () => {
       openrouterKeySaveOk: false,
       openrouterKeySaveDetail: "Key rejeitada pela OpenRouter (HTTP 401)",
     });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     const input = await screen.findByPlaceholderText(/sk-or-v1/i);
     fireEvent.change(input, { target: { value: "bad-key" } });
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
@@ -309,7 +312,7 @@ describe("GatewaysTab — OpenRouter", () => {
       ],
       openrouterRegisterOk: true,
     });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     const search = await screen.findByPlaceholderText(/buscar modelo/i);
     fireEvent.change(search, { target: { value: "gpt-4o" } });
 
@@ -334,7 +337,7 @@ describe("GatewaysTab — OpenRouter", () => {
     mockFetch({
       openrouterStatus: { configured: true, masked: "sk-or-•••cdef" },
     });
-    render(<GatewaysTab />);
+    render(<ProviderRoutingTab />);
     await waitFor(() => screen.getByText("sk-or-•••cdef"));
 
     fireEvent.click(screen.getByRole("button", { name: /remover key/i }));

@@ -1,24 +1,24 @@
-import { verifyJwt, generateRelayToken } from "./auth";
-import { RelaySession } from "./relay-session";
+import { timingSafeEqual, generateGatewayToken } from "./auth";
+import { GatewaySession } from "./gateway-session";
 import type { Env, RegisterRequest, RegisterResponse } from "./types";
 
-export { RelaySession };
+export { GatewaySession };
 
-export const RELAY_HOST = "relay.vectora.chat";
-export const RELAY_BASE_DOMAIN = "vectora.chat";
+export const GATEWAY_HOST = "gateway.vectora.chat";
+export const GATEWAY_BASE_DOMAIN = "vectora.chat";
 
-const relayHandler = {
+const gatewayHandler = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const host = url.hostname;
 
     // Subdomínio de sessão: {token}.vectora.chat
-    if (host !== RELAY_HOST && host.endsWith(`.${RELAY_BASE_DOMAIN}`)) {
-      const token = host.slice(0, -`.${RELAY_BASE_DOMAIN}`.length);
+    if (host !== GATEWAY_HOST && host.endsWith(`.${GATEWAY_BASE_DOMAIN}`)) {
+      const token = host.slice(0, -`.${GATEWAY_BASE_DOMAIN}`.length);
       return routeToSession(request, token, env, url);
     }
 
-    // Endpoints do relay em relay.vectora.chat
+    // Endpoints do gateway em gateway.vectora.chat
     if (request.method === "POST" && url.pathname === "/register") {
       return handleRegister(request, env);
     }
@@ -36,7 +36,7 @@ const relayHandler = {
       const token = url.pathname.slice(8);
       if (!token) return new Response("Bad Request", { status: 400 });
       return routeToSession(
-        new Request(`https://${RELAY_HOST}/_health`, { method: "GET" }),
+        new Request(`https://${GATEWAY_HOST}/_health`, { method: "GET" }),
         token,
         env,
         url,
@@ -45,12 +45,12 @@ const relayHandler = {
 
     if (
       request.method === "DELETE" &&
-      url.pathname.startsWith("/relay/session/")
+      url.pathname.startsWith("/gateway/session/")
     ) {
-      const token = url.pathname.slice("/relay/session/".length);
+      const token = url.pathname.slice("/gateway/session/".length);
       if (!token) return new Response("Bad Request", { status: 400 });
       return routeToSession(
-        new Request(`https://${RELAY_HOST}/_revoke`, { method: "DELETE" }),
+        new Request(`https://${GATEWAY_HOST}/_revoke`, { method: "DELETE" }),
         token,
         env,
         url,
@@ -71,9 +71,24 @@ const relayHandler = {
   },
 } satisfies ExportedHandler<Env>;
 
-export default relayHandler;
+export default gatewayHandler;
+
+/** Prova que quem chama é um build genuíno do Vectora — secret fixo por
+ * produto, embutido no binário Nuitka, igual pra toda instalação (não é
+ * por-usuário — nunca foi: o esquema anterior via JWT sempre assinava com
+ * `sub: "relay-system"`, uma constante, então trocar pra um secret fixo
+ * comparado em texto não perde granularidade nenhuma que já existisse). */
+function requireAppSecret(request: Request, env: Env): boolean {
+  const auth = request.headers.get("Authorization") ?? "";
+  const expected = `Bearer ${env.VECTORA_APP_SECRET}`;
+  return timingSafeEqual(auth, expected);
+}
 
 async function handleRegister(request: Request, env: Env): Promise<Response> {
+  if (!requireAppSecret(request, env)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   let body: RegisterRequest;
   try {
     body = (await request.json()) as RegisterRequest;
@@ -81,31 +96,20 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
     return new Response("Bad Request", { status: 400 });
   }
 
-  if (!body.jwt || !body.fingerprint) {
-    return new Response("Bad Request — jwt and fingerprint required", {
+  if (!body.fingerprint) {
+    return new Response("Bad Request — fingerprint required", {
       status: 400,
     });
   }
 
-  let userId: string;
-  try {
-    const payload = await verifyJwt(body.jwt, env.VECTORA_JWT_SECRET);
-    userId = payload.sub;
-  } catch (err) {
-    return new Response(`Unauthorized — ${(err as Error).message}`, {
-      status: 401,
-    });
-  }
-
-  const token = await generateRelayToken(
-    userId,
+  const token = await generateGatewayToken(
     body.fingerprint,
-    env.RELAY_HMAC_SECRET,
+    env.GATEWAY_HMAC_SECRET,
   );
   const response: RegisterResponse = {
     token,
-    subdomain: `${token}.${RELAY_BASE_DOMAIN}`,
-    websocket_url: `wss://${RELAY_HOST}/ws/${token}`,
+    subdomain: `${token}.${GATEWAY_BASE_DOMAIN}`,
+    websocket_url: `wss://${GATEWAY_HOST}/ws/${token}`,
   };
 
   return Response.json(response);
@@ -133,7 +137,7 @@ async function handleOAuthStore(request: Request, env: Env): Promise<Response> {
       status: 400,
     });
   }
-  await env.RELAY_METRICS.put(`oauth:${body.state}`, body.token, {
+  await env.GATEWAY_METRICS.put(`oauth:${body.state}`, body.token, {
     expirationTtl: OAUTH_TTL_SECONDS,
   });
   return Response.json({ ok: true });
@@ -148,9 +152,9 @@ async function handleOAuthPoll(
     return new Response("Unauthorized", { status: 401 });
   }
   if (!state) return new Response("Bad Request", { status: 400 });
-  const token = await env.RELAY_METRICS.get(`oauth:${state}`);
+  const token = await env.GATEWAY_METRICS.get(`oauth:${state}`);
   if (!token) return new Response("Pending", { status: 202 });
-  await env.RELAY_METRICS.delete(`oauth:${state}`);
+  await env.GATEWAY_METRICS.delete(`oauth:${state}`);
   return Response.json({ token });
 }
 
@@ -168,7 +172,7 @@ function routeToSession(
   if (contentLength > maxBytes) {
     return Promise.resolve(new Response("Payload Too Large", { status: 413 }));
   }
-  const id = env.RELAY_SESSION.idFromName(token);
-  const stub = env.RELAY_SESSION.get(id);
+  const id = env.GATEWAY_SESSION.idFromName(token);
+  const stub = env.GATEWAY_SESSION.get(id);
   return stub.fetch(request);
 }

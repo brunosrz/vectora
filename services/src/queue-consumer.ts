@@ -3,7 +3,7 @@
  * chamado pelo `queue()` do ExportedHandler em src/index.ts. Despacha por
  * `batch.queue` e, dentro de `vectora-jobs`, por `message.body.type`.
  */
-import type { Env } from "./relay/types";
+import type { Env } from "./gateway/types";
 import type { EmailMessage, JobMessage } from "./lib/queue-types";
 import { sendEmail } from "./lib/email";
 import { hardDeleteOneUser } from "./gdpr/routes";

@@ -9,7 +9,7 @@
  *   - Envs        — variáveis de ambiente por usuário
  *   - Skills      — skills instaladas
  *   - Plugins     — plugins/MCP servers + política de ferramentas
- *   - Gateways    — modelos de LLM locais/dinâmicos (Ollama)
+ *   - Provider Routing — modelos de LLM locais/dinâmicos (Ollama)
  *   - Integrações — conectores externos
  *
  * "Preferências" (Conta/Preferências/Memória) e "Administração" (root/admin)
@@ -57,12 +57,12 @@ const IntegracoesTab = lazyWithRetry(
     })),
   "integracoes-tab",
 );
-const GatewaysTab = lazyWithRetry(
+const ProviderRoutingTab = lazyWithRetry(
   () =>
-    import("./tabs/gateways-tab").then((mod) => ({
-      default: mod.GatewaysTab,
+    import("./tabs/provider-routing-tab").then((mod) => ({
+      default: mod.ProviderRoutingTab,
     })),
-  "gateways-tab",
+  "provider-routing-tab",
 );
 
 function TabFallback() {
@@ -113,8 +113,11 @@ export function EnvironmentDialog() {
             <TabsTrigger value="plugins" className="rounded-md text-xs">
               Plugins
             </TabsTrigger>
-            <TabsTrigger value="gateways" className="rounded-md text-xs">
-              Gateways
+            <TabsTrigger
+              value="provider_routing"
+              className="rounded-md text-xs"
+            >
+              Provider Routing
             </TabsTrigger>
           </TabsList>
 
@@ -133,8 +136,8 @@ export function EnvironmentDialog() {
                 <TabsContent value="plugins" className="mt-0">
                   <PluginsTab />
                 </TabsContent>
-                <TabsContent value="gateways" className="mt-0">
-                  <GatewaysTab />
+                <TabsContent value="provider_routing" className="mt-0">
+                  <ProviderRoutingTab />
                 </TabsContent>
               </Suspense>
             </ErrorBoundary>

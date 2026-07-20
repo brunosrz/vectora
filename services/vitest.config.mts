@@ -5,11 +5,11 @@ const workerOptions = {
   wrangler: { configPath: "./wrangler.toml" },
   miniflare: {
     bindings: {
-      VECTORA_JWT_SECRET: "test-jwt-secret-32-chars-minimum!",
-      RELAY_HMAC_SECRET: "test-hmac-secret-32-chars-minimum",
+      VECTORA_APP_SECRET: "test-app-secret-fixo-por-produto",
+      GATEWAY_HMAC_SECRET: "test-hmac-secret-32-chars-minimum",
       VECTORA_OAUTH_SECRET: "test-oauth-secret",
       APP_URL: "https://vectora.company",
-      RELAY_URL: "https://relay.vectora.chat",
+      GATEWAY_URL: "https://gateway.vectora.chat",
       RESEND_API_KEY: "test-resend-key",
       STRIPE_SECRET_KEY: "sk_test_fake",
       STRIPE_WEBHOOK_SECRET: "whsec_test_fake",
@@ -26,11 +26,11 @@ const workerOptions = {
       // impedindo o cleanup do isolated storage. Marca para skip seletivo.
       TEST_IS_WINDOWS: process.platform === "win32" ? "1" : "0",
     },
-    kvNamespaces: ["RELAY_METRICS", "KV"],
+    kvNamespaces: ["GATEWAY_METRICS", "KV"],
     r2Buckets: ["R2"],
     d1Databases: ["DB"],
     durableObjects: {
-      RELAY_SESSION: "RelaySession",
+      GATEWAY_SESSION: "GatewaySession",
     },
     queueProducers: {
       EMAIL_QUEUE: "vectora-email",
@@ -49,11 +49,11 @@ export default defineConfig({
   test: {
     reporters: ["dot"],
     // Istanbul, não V8 — o coverage nativo do vitest não instrumenta workerd.
-    // `relay-session.ts` fica perto de 0% quando rodado no Windows: os testes
-    // que tocam o Durable Object (itDO em relay-session.test.ts) são pulados
-    // aqui pelo mesmo motivo do skip seletivo (SQLite do DO trava o cleanup do
-    // isolated storage no Windows) — em CI (Linux) esses testes rodam e a
-    // cobertura reflete o arquivo inteiro.
+    // `gateway-session.ts` fica perto de 0% quando rodado no Windows: os
+    // testes que tocam o Durable Object (itDO em gateway-session.test.ts)
+    // são pulados aqui pelo mesmo motivo do skip seletivo (SQLite do DO
+    // trava o cleanup do isolated storage no Windows) — em CI (Linux) esses
+    // testes rodam e a cobertura reflete o arquivo inteiro.
     coverage: {
       provider: "istanbul",
       reporter: ["text", "html"],

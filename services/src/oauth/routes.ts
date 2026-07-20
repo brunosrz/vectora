@@ -1,11 +1,12 @@
 /**
- * oauth/ — porta company/src/server/fns/oauth.ts (authorizeDevice). O relay
- * roda no mesmo Worker (ver src/relay/), mas continua exposto só via HTTP em
- * relay.vectora.chat — chamamos por fetch normal, não por acesso direto ao
- * módulo, pra não acoplar o dispatch por hostname a uma chamada interna.
+ * oauth/ — porta company/src/server/fns/oauth.ts (authorizeDevice). O gateway
+ * (ex-relay) roda no mesmo Worker (ver src/gateway/), mas continua exposto só
+ * via HTTP em gateway.vectora.chat — chamamos por fetch normal, não por
+ * acesso direto ao módulo, pra não acoplar o dispatch por hostname a uma
+ * chamada interna.
  */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireUserId } from "../auth/routes";
 
 export const oauth = new Hono<{ Bindings: Env }>();
@@ -24,7 +25,7 @@ oauth.post("/device", async (c) => {
     .first<{ token: string | null }>();
   if (!row?.token) return c.json({ error: "no_token" }, 409);
 
-  const resp = await fetch(`${c.env.RELAY_URL}/oauth/token`, {
+  const resp = await fetch(`${c.env.GATEWAY_URL}/oauth/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -32,7 +33,7 @@ oauth.post("/device", async (c) => {
     },
     body: JSON.stringify({ state: body.state, token: row.token }),
   });
-  if (!resp.ok) return c.json({ error: "relay_error" }, 502);
+  if (!resp.ok) return c.json({ error: "gateway_error" }, 502);
 
   return c.json({ ok: true });
 });

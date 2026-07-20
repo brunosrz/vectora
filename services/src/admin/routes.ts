@@ -6,7 +6,7 @@
  * por obscuridade).
  */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireAdmin } from "../auth/roles";
 import { grantSubscription } from "../billing/routes";
 import { giftReceivedHtml, issueResponseHtml } from "../lib/email";

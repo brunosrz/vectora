@@ -1,6 +1,6 @@
 /**
  * Formas de mensagem das duas filas do Worker. Sem imports — evita ciclo
- * com relay/types.ts, que importa estes tipos pra tipar Env.EMAIL_QUEUE/
+ * com gateway/types.ts, que importa estes tipos pra tipar Env.EMAIL_QUEUE/
  * Env.JOBS_QUEUE.
  */
 

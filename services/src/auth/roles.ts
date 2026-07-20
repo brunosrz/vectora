@@ -1,4 +1,4 @@
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireUserId } from "./routes";
 
 /** Busca o `role` de um user no D1. `null` se o user não existir. */

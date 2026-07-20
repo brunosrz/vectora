@@ -1,42 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { env, SELF } from "cloudflare:test";
 
-const now = Math.floor(Date.now() / 1000);
-
-async function makeJwt(
-  sub: string,
-  secret: string,
-  expOffset = 3600,
-): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const esc = (s: string) =>
-    s.replace(/[=+/]/g, (c) => ({ "=": "", "+": "-", "/": "_" })[c] ?? c);
-  const header = esc(btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })));
-  const body = esc(
-    btoa(JSON.stringify({ sub, exp: now + expOffset, iat: now })),
-  );
-  const sig = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(`${header}.${body}`),
-  );
-  return `${header}.${body}.${esc(btoa(String.fromCharCode(...new Uint8Array(sig))))}`;
-}
-
 // Testes que só passam pelo Worker (sem tocar Durable Object) — rodam em todos OS.
 describe("POST /register", () => {
-  it("retorna token e subdomínio para JWT válido", async () => {
-    const jwt = await makeJwt("user-abc", env.VECTORA_JWT_SECRET);
-    const res = await SELF.fetch("https://relay.vectora.chat/register", {
+  it("retorna token e subdomínio pra request autenticado com VECTORA_APP_SECRET", async () => {
+    const res = await SELF.fetch("https://gateway.vectora.chat/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jwt, fingerprint: "fp-test" }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+      },
+      body: JSON.stringify({ fingerprint: "fp-test" }),
     });
     expect(res.status).toBe(200);
     const data = (await res.json()) as {
@@ -47,44 +21,67 @@ describe("POST /register", () => {
     expect(data.token).toMatch(/^[a-z0-9]{6}$/);
     expect(data.subdomain).toBe(`${data.token}.vectora.chat`);
     expect(data.websocket_url).toBe(
-      `wss://relay.vectora.chat/ws/${data.token}`,
+      `wss://gateway.vectora.chat/ws/${data.token}`,
     );
   });
 
-  it("retorna 401 para JWT inválido", async () => {
-    const jwt = await makeJwt("user-abc", "wrong-secret-for-signing-jwt!!");
-    const res = await SELF.fetch("https://relay.vectora.chat/register", {
+  it("retorna 401 sem o Authorization header", async () => {
+    const res = await SELF.fetch("https://gateway.vectora.chat/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jwt, fingerprint: "fp-test" }),
+      body: JSON.stringify({ fingerprint: "fp-test" }),
     });
     expect(res.status).toBe(401);
   });
 
-  it("retorna 401 para JWT expirado", async () => {
-    const jwt = await makeJwt("user-abc", env.VECTORA_JWT_SECRET, -1);
-    const res = await SELF.fetch("https://relay.vectora.chat/register", {
+  it("retorna 401 com VECTORA_APP_SECRET errado", async () => {
+    const res = await SELF.fetch("https://gateway.vectora.chat/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jwt, fingerprint: "fp-test" }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer secret-errado",
+      },
+      body: JSON.stringify({ fingerprint: "fp-test" }),
     });
     expect(res.status).toBe(401);
+  });
+
+  it("duas instalações diferentes com o MESMO VECTORA_APP_SECRET fixo autenticam (prova o fix da rodada anterior — JWT por-instalação nunca batia com um secret único)", async () => {
+    const auth = { Authorization: `Bearer ${env.VECTORA_APP_SECRET}` };
+    const first = await SELF.fetch("https://gateway.vectora.chat/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({ fingerprint: "fp-installation-1" }),
+    });
+    const second = await SELF.fetch("https://gateway.vectora.chat/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({ fingerprint: "fp-installation-2" }),
+    });
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
   });
 
   it("retorna 400 para body malformado", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/register", {
+    const res = await SELF.fetch("https://gateway.vectora.chat/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+      },
       body: "not-json",
     });
     expect(res.status).toBe(400);
   });
 
-  it("retorna 400 quando falta jwt ou fingerprint", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/register", {
+  it("retorna 400 quando falta fingerprint", async () => {
+    const res = await SELF.fetch("https://gateway.vectora.chat/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jwt: "only-jwt" }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+      },
+      body: JSON.stringify({}),
     });
     expect(res.status).toBe(400);
   });
@@ -104,29 +101,30 @@ describe("webhook — verificação de payload (Worker-level)", () => {
 // Guard clauses antes de tocar o Durable Object (sem SQLite, roda em todos OS).
 describe("guard clauses (Worker-level, antes do DO)", () => {
   it("GET /ws/ sem token → 400", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/ws/");
+    const res = await SELF.fetch("https://gateway.vectora.chat/ws/");
     expect(res.status).toBe(400);
   });
 
   it("GET /ws/{token} sem Upgrade: websocket → 426", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/ws/abc123");
+    const res = await SELF.fetch("https://gateway.vectora.chat/ws/abc123");
     expect(res.status).toBe(426);
   });
 
   it("GET /health/ sem token → 400", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/health/");
+    const res = await SELF.fetch("https://gateway.vectora.chat/health/");
     expect(res.status).toBe(400);
   });
 
-  it("DELETE /relay/session/ sem token → 400", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/relay/session/", {
-      method: "DELETE",
-    });
+  it("DELETE /gateway/session/ sem token → 400", async () => {
+    const res = await SELF.fetch(
+      "https://gateway.vectora.chat/gateway/session/",
+      { method: "DELETE" },
+    );
     expect(res.status).toBe(400);
   });
 
   it("rota desconhecida → 404", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/nope");
+    const res = await SELF.fetch("https://gateway.vectora.chat/nope");
     expect(res.status).toBe(404);
   });
 });
@@ -134,20 +132,23 @@ describe("guard clauses (Worker-level, antes do DO)", () => {
 describe("POST /oauth/token (device flow store)", () => {
   it("rejeita sem o secret certo, body malformado, e campos faltando", async () => {
     const unauthorized = await SELF.fetch(
-      "https://relay.vectora.chat/oauth/token",
+      "https://gateway.vectora.chat/oauth/token",
       { method: "POST", body: "{}" },
     );
     expect(unauthorized.status).toBe(401);
 
-    const badJson = await SELF.fetch("https://relay.vectora.chat/oauth/token", {
-      method: "POST",
-      headers: { Authorization: "Bearer test-oauth-secret" },
-      body: "not-json",
-    });
+    const badJson = await SELF.fetch(
+      "https://gateway.vectora.chat/oauth/token",
+      {
+        method: "POST",
+        headers: { Authorization: "Bearer test-oauth-secret" },
+        body: "not-json",
+      },
+    );
     expect(badJson.status).toBe(400);
 
     const missingFields = await SELF.fetch(
-      "https://relay.vectora.chat/oauth/token",
+      "https://gateway.vectora.chat/oauth/token",
       {
         method: "POST",
         headers: {
@@ -161,7 +162,7 @@ describe("POST /oauth/token (device flow store)", () => {
   });
 
   it("armazena o token e o poll subsequente encontra e consome (uso único)", async () => {
-    const store = await SELF.fetch("https://relay.vectora.chat/oauth/token", {
+    const store = await SELF.fetch("https://gateway.vectora.chat/oauth/token", {
       method: "POST",
       headers: {
         Authorization: "Bearer test-oauth-secret",
@@ -172,7 +173,7 @@ describe("POST /oauth/token (device flow store)", () => {
     expect(store.status).toBe(200);
 
     const poll = await SELF.fetch(
-      "https://relay.vectora.chat/oauth/token/state-1",
+      "https://gateway.vectora.chat/oauth/token/state-1",
       { headers: { Authorization: "Bearer test-oauth-secret" } },
     );
     expect(poll.status).toBe(200);
@@ -180,7 +181,7 @@ describe("POST /oauth/token (device flow store)", () => {
 
     // Consumido — segunda consulta não encontra mais (202 pending).
     const pollAgain = await SELF.fetch(
-      "https://relay.vectora.chat/oauth/token/state-1",
+      "https://gateway.vectora.chat/oauth/token/state-1",
       { headers: { Authorization: "Bearer test-oauth-secret" } },
     );
     expect(pollAgain.status).toBe(202);
@@ -188,7 +189,7 @@ describe("POST /oauth/token (device flow store)", () => {
 
   it("poll rejeita sem o secret certo", async () => {
     const res = await SELF.fetch(
-      "https://relay.vectora.chat/oauth/token/never-stored",
+      "https://gateway.vectora.chat/oauth/token/never-stored",
     );
     expect(res.status).toBe(401);
   });
@@ -201,7 +202,7 @@ const itDO = env.TEST_IS_WINDOWS === "1" ? it.skip : it;
 
 describe("GET /health/{token}", () => {
   itDO("retorna connected=false para token sem WebSocket ativo", async () => {
-    const res = await SELF.fetch("https://relay.vectora.chat/health/abc123");
+    const res = await SELF.fetch("https://gateway.vectora.chat/health/abc123");
     expect(res.status).toBe(200);
     const data = (await res.json()) as { connected: boolean; queued: number };
     expect(data.connected).toBe(false);
@@ -209,10 +210,10 @@ describe("GET /health/{token}", () => {
   });
 });
 
-describe("DELETE /relay/session/{token}", () => {
+describe("DELETE /gateway/session/{token}", () => {
   itDO("retorna 200 ao revogar token existente", async () => {
     const res = await SELF.fetch(
-      "https://relay.vectora.chat/relay/session/abc123",
+      "https://gateway.vectora.chat/gateway/session/abc123",
       {
         method: "DELETE",
       },

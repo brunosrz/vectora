@@ -553,15 +553,22 @@ class Settings(BaseSettings):
     """Provider de email: 'resend', 'sendgrid' ou 'mailgun'. Vazio = desativado."""
 
     # ============================================================================
-    # RELAY — túnel público via Cloudflare Workers (*.vectora.chat)
+    # GATEWAY — túnel público via Cloudflare Workers (*.vectora.chat), ex-relay
     # ============================================================================
 
-    relay_url: str = "wss://relay.vectora.chat"
-    """URL base do Cloudflare Worker de relay. Não altere em produção."""
+    gateway_url: str = "wss://gateway.vectora.chat"
+    """URL base do Cloudflare Worker de gateway. Não altere em produção."""
 
-    relay_enabled: bool = True
-    """Inicia o RelayClient automaticamente quando há integrações OAuth/webhook
-    configuradas. Desative com RELAY_ENABLED=false para desligar."""
+    gateway_enabled: bool = True
+    """Inicia o GatewayClient automaticamente quando há integrações OAuth/
+    webhook configuradas. Desative com GATEWAY_ENABLED=false para desligar."""
+
+    vectora_app_secret: str = ""
+    """Secret fixo por produto (embutido no binário Nuitka em builds de
+    release — igual pra toda instalação, não é por-usuário) usado por
+    `GatewayClient` pra autenticar `POST /register` no Worker. Vazio em dev
+    local desabilita o handshake de registro (degrada pro fallback sem
+    gateway, nunca impede o backend de iniciar)."""
 
     # ============================================================================
     # PYDANTIC CONFIGURATION

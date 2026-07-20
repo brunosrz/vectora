@@ -10,7 +10,7 @@
  * lá pra entender por quê (company é a única consumidora, server-to-server).
  */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { hashPassword, verifyPassword } from "./password";
 import {
   createSession,

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { enqueueEmail, enqueueJob } from "../../src/lib/queue";
-import type { Env } from "../../src/relay/types";
+import type { Env } from "../../src/gateway/types";
 
 function fakeEnv(): {
   env: Env;

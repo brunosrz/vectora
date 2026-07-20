@@ -45,7 +45,7 @@ router = APIRouter(prefix="/license", tags=["license"])
 # Estado efêmero de OAuth — states expiram em 5 min; limpeza via task assíncrona.
 _oauth_states: dict[str, float] = {}  # state → expires_at (monotonic)
 _OAUTH_TTL = 300.0  # segundos
-_RELAY_URL = os.getenv("VECTORA_RELAY_URL", "https://relay.vectora.chat")
+_GATEWAY_URL = os.getenv("VECTORA_GATEWAY_URL", "https://gateway.vectora.chat")
 
 DEFAULT_PORTAL_URL = "https://services.vectora.company/license/portal"
 DEFAULT_CONNECT_URL = "https://services.vectora.company/license/agent-login"
@@ -242,7 +242,7 @@ async def license_oauth_init() -> dict:
 
 @router.get("/oauth/poll")
 async def license_oauth_poll(state: str) -> dict:
-    """Consulta o relay para ver se o token OAuth chegou.
+    """Consulta o gateway para ver se o token OAuth chegou.
 
     O frontend faz polling a cada 2s. Quando o token chega:
     - salva-o em config + env
@@ -256,11 +256,11 @@ async def license_oauth_poll(state: str) -> dict:
         raise HTTPException(status_code=410, detail="state expirado.")
 
     secret = _oauth_secret()
-    relay_url = f"{_RELAY_URL}/oauth/token/{state}"
+    gateway_url = f"{_GATEWAY_URL}/oauth/token/{state}"
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(
-                relay_url,
+                gateway_url,
                 headers={"Authorization": f"Bearer {secret}"},
             )
     except httpx.HTTPError as exc:
@@ -271,7 +271,7 @@ async def license_oauth_poll(state: str) -> dict:
         return {"pending": True}
 
     if resp.status_code != 200:
-        logger.warning("license/oauth/poll: relay respondeu %s", resp.status_code)
+        logger.warning("license/oauth/poll: gateway respondeu %s", resp.status_code)
         return {"pending": True}
 
     data = resp.json()

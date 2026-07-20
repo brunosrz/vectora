@@ -2,7 +2,7 @@
 /**
  * EnvironmentDialog — ordem das abas. "Integrações" deve ser a primeira
  * (o usuário reportou testando ao vivo que ela aparecia por último,
- * escondida atrás de Envs/Skills/Plugins/Gateways).
+ * escondida atrás de Envs/Skills/Plugins/Provider Routing).
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
@@ -40,8 +40,8 @@ vi.mock("../tabs/skills-tab", () => ({
 vi.mock("../tabs/plugins-tab", () => ({
   PluginsTab: () => <div>plugins-content</div>,
 }));
-vi.mock("../tabs/gateways-tab", () => ({
-  GatewaysTab: () => <div>gateways-content</div>,
+vi.mock("../tabs/provider-routing-tab", () => ({
+  ProviderRoutingTab: () => <div>provider-routing-content</div>,
 }));
 vi.mock("../tabs/integracoes-tab", () => ({
   IntegracoesTab: () => <div>integracoes-content</div>,
@@ -53,7 +53,7 @@ afterEach(() => {
 });
 
 describe("EnvironmentDialog", () => {
-  it("mostra Integrações como a primeira aba, antes de Envs/Skills/Plugins/Gateways", async () => {
+  it("mostra Integrações como a primeira aba, antes de Envs/Skills/Plugins/Provider Routing", async () => {
     render(<EnvironmentDialog />);
 
     await waitFor(() => {
@@ -67,7 +67,7 @@ describe("EnvironmentDialog", () => {
       "Envs",
       "Skills",
       "Plugins",
-      "Gateways",
+      "Provider Routing",
     ]);
   });
 });

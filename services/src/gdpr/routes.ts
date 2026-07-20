@@ -9,7 +9,7 @@
  */
 import { Hono } from "hono";
 import Stripe from "stripe";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireUserId } from "../auth/routes";
 import { bearerToken, revokeSession } from "../auth/session";
 import { accountDeletedHtml } from "../lib/email";

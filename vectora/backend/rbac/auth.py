@@ -175,17 +175,6 @@ def decode_access_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, _get_secret(), algorithms=[_ALGORITHM])
 
 
-def create_relay_jwt(ttl_seconds: int = 3600) -> str:
-    """Emite JWT de curta duração para autenticar o RelayClient no Cloudflare Worker."""
-    import time
-
-    import jwt
-
-    now = int(time.time())
-    payload = {"sub": "relay-system", "iat": now, "exp": now + ttl_seconds}
-    return jwt.encode(payload, _get_secret(), algorithm=_ALGORITHM)
-
-
 # ---------------------------------------------------------------------------
 # Refresh token — opaque, hash armazenado no DB
 # ---------------------------------------------------------------------------

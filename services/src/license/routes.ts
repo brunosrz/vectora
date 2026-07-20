@@ -10,7 +10,7 @@
  * diretamente com o VECTORA_TOKEN salvo em config.toml.
  */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireUserId } from "../auth/routes";
 import { verifyPassword } from "../auth/password";
 import { sha256Hex } from "../auth/session";

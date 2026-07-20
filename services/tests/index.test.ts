@@ -10,9 +10,9 @@ import worker from "../src/index";
 const itDO = env.TEST_IS_WINDOWS === "1" ? it.skip : it;
 
 describe("fetch dispatch by hostname", () => {
-  it("routes relay.vectora.chat to the relay handler (DO-free /oauth/token endpoint)", async () => {
+  it("routes gateway.vectora.chat to the gateway handler (DO-free /oauth/token endpoint)", async () => {
     const ctx = createExecutionContext();
-    const req = new Request("https://relay.vectora.chat/oauth/token", {
+    const req = new Request("https://gateway.vectora.chat/oauth/token", {
       method: "POST",
       headers: {
         Authorization: "Bearer test-oauth-secret",
@@ -26,16 +26,19 @@ describe("fetch dispatch by hostname", () => {
     expect(await res.json()).toEqual({ ok: true });
   });
 
-  itDO("routes {token}.vectora.chat to the relay Durable Object", async () => {
-    const ctx = createExecutionContext();
-    const req = new Request("https://abc123.vectora.chat/health/abc123", {
-      method: "GET",
-    });
-    const res = await worker.fetch(req, env, ctx);
-    await waitOnExecutionContext(ctx);
-    // A DO real recém-criada não tem cliente conectado — 200 com connected:false.
-    expect(res.status).toBe(200);
-  });
+  itDO(
+    "routes {token}.vectora.chat to the gateway Durable Object",
+    async () => {
+      const ctx = createExecutionContext();
+      const req = new Request("https://abc123.vectora.chat/health/abc123", {
+        method: "GET",
+      });
+      const res = await worker.fetch(req, env, ctx);
+      await waitOnExecutionContext(ctx);
+      // A DO real recém-criada não tem cliente conectado — 200 com connected:false.
+      expect(res.status).toBe(200);
+    },
+  );
 
   it("routes an unrecognized host to the services app", async () => {
     const ctx = createExecutionContext();

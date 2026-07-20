@@ -1,6 +1,6 @@
 /** profile/ — porta company/src/server/fns/profile.ts (updateProfile). */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { requireUserId } from "../auth/routes";
 
 export const profile = new Hono<{ Bindings: Env }>();

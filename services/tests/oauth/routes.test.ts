@@ -73,10 +73,10 @@ describe("POST /oauth/device", () => {
     expect(await res.json()).toEqual({ error: "no_token" });
   });
 
-  it("forwards the token to relay/oauth/token and returns ok on success", async () => {
+  it("forwards the token to gateway/oauth/token and returns ok on success", async () => {
     const token = await makeUserWithSession(true);
     const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe("https://relay.vectora.chat/oauth/token");
+      expect(url).toBe("https://gateway.vectora.chat/oauth/token");
       expect(init.headers).toMatchObject({
         Authorization: "Bearer test-oauth-secret",
       });
@@ -100,7 +100,7 @@ describe("POST /oauth/device", () => {
     expect(await res.json()).toEqual({ ok: true });
   });
 
-  it("returns a 502 when the relay call fails", async () => {
+  it("returns a 502 when the gateway call fails", async () => {
     const token = await makeUserWithSession(true);
     vi.stubGlobal(
       "fetch",
@@ -120,6 +120,6 @@ describe("POST /oauth/device", () => {
       env,
     );
     expect(res.status).toBe(502);
-    expect(await res.json()).toEqual({ error: "relay_error" });
+    expect(await res.json()).toEqual({ error: "gateway_error" });
   });
 });

@@ -10,7 +10,7 @@
  */
 
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { enqueueJob } from "../lib/queue";
 
 interface ChannelConfig {

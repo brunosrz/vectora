@@ -31,15 +31,15 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["oauth"])
 
-_RELAY_TOKEN_PATH = Path.home() / ".vectora" / "relay_token"
+_GATEWAY_TOKEN_PATH = Path.home() / ".vectora" / "gateway_token"
 
 
-def _relay_callback_url(
+def _gateway_callback_url(
     provider: str,
     token_path: Path | None = None,
 ) -> str | None:
-    """Retorna URL de callback via relay se token disponível, ou None."""
-    path = token_path if token_path is not None else _RELAY_TOKEN_PATH
+    """Retorna URL de callback via gateway se token disponível, ou None."""
+    path = token_path if token_path is not None else _GATEWAY_TOKEN_PATH
     try:
         token = path.read_text().strip()
         if token:
@@ -258,7 +258,7 @@ def _github_cfg() -> tuple[str, str, str]:
     client_secret = os.environ.get("GITHUB_OAUTH_CLIENT_SECRET", "")
     redirect_uri = (
         os.environ.get("GITHUB_OAUTH_REDIRECT_URI")
-        or _relay_callback_url("github")
+        or _gateway_callback_url("github")
         or "http://localhost:8080/auth/github/callback"
     )
     if not client_id or not client_secret:
@@ -594,7 +594,7 @@ def _gitlab_cfg() -> tuple[str, str, str, str]:
     base_url = os.environ.get("GITLAB_BASE_URL", "https://gitlab.com")
     redirect_uri = (
         os.environ.get("GITLAB_OAUTH_REDIRECT_URI")
-        or _relay_callback_url("gitlab")
+        or _gateway_callback_url("gitlab")
         or "http://localhost:8080/auth/gitlab/callback"
     )
     if not client_id or not client_secret:
@@ -720,7 +720,7 @@ def _google_cfg() -> tuple[str, str, str]:
     client_secret = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
     redirect_uri = (
         os.environ.get("GOOGLE_OAUTH_REDIRECT_URI")
-        or _relay_callback_url("google")
+        or _gateway_callback_url("google")
         or "http://localhost:8080/auth/google/callback"
     )
     if not client_id or not client_secret:
@@ -865,7 +865,7 @@ def _slack_cfg() -> tuple[str, str, str]:
     client_secret = os.environ.get("SLACK_OAUTH_CLIENT_SECRET", "")
     redirect_uri = (
         os.environ.get("SLACK_REDIRECT_URI")
-        or _relay_callback_url("slack")
+        or _gateway_callback_url("slack")
         or "http://localhost:8080/auth/slack/callback"
     )
     if not client_id or not client_secret:

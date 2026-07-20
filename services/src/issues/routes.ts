@@ -1,6 +1,6 @@
 /** issues/ — porta company/src/server/fns/issues.ts (issues + waitlist, públicos). */
 import { Hono } from "hono";
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import { verifyTurnstile } from "../lib/turnstile";
 import { SUPPORT_EMAIL, waitlistJoinedHtml } from "../lib/email";
 import { enqueueEmail } from "../lib/queue";

@@ -2,7 +2,7 @@
   "name": "vectora-services",
   "version": "0.1.4",
   "private": true,
-  "description": "Cloudflare Worker único: relay (OAuth/webhooks pro desktop) + updates (distribuição de releases) + auth/billing/license/gdpr/rag-library/registry (próximas fases).",
+  "description": "Cloudflare Worker único: gateway (OAuth/webhooks pro desktop, ex-relay) + updates (distribuição de releases) + auth/billing/license/gdpr/rag-library/registry (próximas fases).",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",

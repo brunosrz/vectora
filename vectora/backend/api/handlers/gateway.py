@@ -1,7 +1,7 @@
-"""Endpoints de gerenciamento do relay local.
+"""Endpoints de gerenciamento do gateway local (ex-relay).
 
-R1 — GET  /relay/status  → estado atual da conexão (token, subdomain, connected)
-R2 — POST /relay/revoke  → revoga o token no Worker e limpa ~/.vectora/relay_token
+G1 — GET  /gateway/status  → estado atual da conexão (token, subdomain, connected)
+G2 — POST /gateway/revoke  → revoga o token no Worker e limpa ~/.vectora/gateway_token
 """
 
 from __future__ import annotations
@@ -13,14 +13,14 @@ from pathlib import Path
 import aiohttp
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.services.relay.token import load_token
+from backend.services.gateway.token import load_token
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/relay", tags=["relay"])
+router = APIRouter(prefix="/gateway", tags=["gateway"])
 
-_TOKEN_PATH = Path.home() / ".vectora" / "relay_token"
-_RELAY_BASE = os.environ.get("RELAY_URL", "https://relay.vectora.chat")
+_TOKEN_PATH = Path.home() / ".vectora" / "gateway_token"
+_GATEWAY_BASE = os.environ.get("GATEWAY_URL", "https://gateway.vectora.chat")
 
 
 def _require_auth(request: Request) -> None:
@@ -28,7 +28,7 @@ def _require_auth(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Não autenticado")
 
 
-def _relay_token() -> str | None:
+def _gateway_token() -> str | None:
     return load_token(_TOKEN_PATH)
 
 
@@ -37,15 +37,15 @@ def _subdomain(token: str) -> str:
 
 
 @router.get("/status")
-async def relay_status(request: Request) -> dict:
-    """Estado do relay, distinguindo "nunca conectou" (normal, nada errado)
-    de "tentou e falhou" (problema real — relay fora do ar ou mal
+async def gateway_status(request: Request) -> dict:
+    """Estado do gateway, distinguindo "nunca conectou" (normal, nada errado)
+    de "tentou e falhou" (problema real — gateway fora do ar ou mal
     configurado). Sem essa distinção, os dois casos mostravam a mesma
     mensagem "desconectado" pro usuário, que não conseguia saber se
     precisava agir ou se era só o estado inicial esperado.
     """
     _require_auth(request)
-    token = _relay_token()
+    token = _gateway_token()
     if not token:
         return {
             "connected": False,
@@ -60,14 +60,15 @@ async def relay_status(request: Request) -> dict:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{_RELAY_BASE}/health/{token}", timeout=aiohttp.ClientTimeout(total=3)
+                f"{_GATEWAY_BASE}/health/{token}",
+                timeout=aiohttp.ClientTimeout(total=3),
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     connected = bool(data.get("connected", False))
                 else:
                     connected = False
-                    detail = f"Relay respondeu {resp.status}"
+                    detail = f"Gateway respondeu {resp.status}"
     except Exception as exc:
         connected = False
         detail = str(exc)
@@ -84,25 +85,25 @@ async def relay_status(request: Request) -> dict:
 
 
 @router.post("/revoke")
-async def relay_revoke(request: Request) -> dict:
+async def gateway_revoke(request: Request) -> dict:
     _require_auth(request)
-    token = _relay_token()
+    token = _gateway_token()
     if not token:
-        raise HTTPException(status_code=404, detail="Nenhum token de relay ativo")
+        raise HTTPException(status_code=404, detail="Nenhum token de gateway ativo")
 
     try:
         async with aiohttp.ClientSession() as session:
             async with session.delete(
-                f"{_RELAY_BASE}/relay/session/{token}",
+                f"{_GATEWAY_BASE}/gateway/session/{token}",
                 timeout=aiohttp.ClientTimeout(total=5),
             ) as resp:
                 if resp.status not in (200, 404):
                     logger.warning(
-                        "relay: revoke retornou %d para token %s", resp.status, token
+                        "gateway: revoke retornou %d para token %s", resp.status, token
                     )
     except Exception as exc:
-        logger.warning("relay: falha ao revogar token no Worker — %s", exc)
+        logger.warning("gateway: falha ao revogar token no Worker — %s", exc)
 
     _TOKEN_PATH.unlink(missing_ok=True)
-    logger.info("relay: token %s revogado e removido de %s", token, _TOKEN_PATH)
+    logger.info("gateway: token %s revogado e removido de %s", token, _TOKEN_PATH)
     return {"revoked": True}

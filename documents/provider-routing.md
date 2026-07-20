@@ -1,4 +1,4 @@
-# Vectora — Gateways de Modelo (Ollama + OpenRouter)
+# Vectora — Provider Routing de Modelo (Ollama + OpenRouter)
 
 > Hoje o catálogo de modelos do Vectora é uma lista **estática** por provider
 > (`backend/settings.py::AVAILABLE_MODELS`, espelhada em
@@ -41,7 +41,7 @@ que a Meta/Mistral/Alibaba lançar.
 
 ---
 
-## 2. Ollama Gateway
+## 2. Ollama Provider Routing
 
 ### 2.1 Estado atual (parcial, é o ponto de partida)
 
@@ -111,7 +111,7 @@ instância) — o backend usa isso pra popular um dropdown de "modelos
 disponíveis nessa instância" em vez de um campo de texto livre:
 
 ```python
-# backend/services/gateways/ollama.py (novo)
+# backend/services/provider-routing/ollama.py (novo)
 async def list_ollama_models(base_url: str) -> list[str]:
     """GET {base_url}/api/tags — nomes dos modelos baixados na instância.
 
@@ -130,18 +130,18 @@ seletor (não precisa registrar todos os baixados, só os que usa no chat).
 
 ### 2.4 Backend — endpoints novos
 
-Router novo `backend/api/handlers/gateways.py`, montado em `/gateways`:
+Router novo `backend/api/handlers/provider_routing.py`, montado em `/provider-routing`:
 
-- `POST /gateways/ollama/instances` — `{ label, base_url }` → testa conexão
+- `POST /provider-routing/ollama/instances` — `{ label, base_url }` → testa conexão
   (`list_ollama_models`) antes de salvar; 400 se não conseguir conectar.
-- `GET /gateways/ollama/instances` — lista instâncias do usuário.
-- `DELETE /gateways/ollama/instances/{id}`
-- `GET /gateways/ollama/instances/{id}/available-models` — chama
+- `GET /provider-routing/ollama/instances` — lista instâncias do usuário.
+- `DELETE /provider-routing/ollama/instances/{id}`
+- `GET /provider-routing/ollama/instances/{id}/available-models` — chama
   `list_ollama_models` ao vivo (não cacheado — o usuário pode ter baixado
   modelo novo desde o cadastro).
-- `POST /gateways/ollama/instances/{id}/models` — `{ model_tag,
+- `POST /provider-routing/ollama/instances/{id}/models` — `{ model_tag,
 display_name? }` registra um modelo daquela instância.
-- `DELETE /gateways/ollama/models/{id}`
+- `DELETE /provider-routing/ollama/models/{id}`
 
 ### 2.5 Persistência — SQLite, tabela nova (não `runtime_settings.json`)
 
@@ -154,7 +154,7 @@ de auth (`backend/storage/migrations/sqlite/`), seguindo o padrão de
 `0001_auth.sql`:
 
 ```sql
--- 000N_gateways.sql
+-- 000N_provider_routing.sql
 CREATE TABLE ollama_instances (
     id         TEXT PRIMARY KEY,
     user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -195,7 +195,7 @@ continuam com o formato de 2 partes.
 
 ---
 
-## 3. OpenRouter Gateway
+## 3. OpenRouter Provider Routing
 
 ### 3.1 Por que — sem suporte hoje
 
@@ -256,7 +256,7 @@ usuário), aqui dá pra buscar o catálogo inteiro e deixar o usuário
 **filtrar/buscar** em vez de digitar id de cabeça:
 
 ```python
-# backend/services/gateways/openrouter.py (novo)
+# backend/services/provider-routing/openrouter.py (novo)
 async def list_openrouter_models() -> list[OpenRouterModel]:
     """GET /api/v1/models — catálogo público, sem auth. Cacheado 1h
     (backend/services/cache_llm.py já tem o padrão de cache pronto) —
@@ -266,17 +266,17 @@ async def list_openrouter_models() -> list[OpenRouterModel]:
 
 ### 3.4 Backend — endpoints novos
 
-Mesmo router `backend/api/handlers/gateways.py`, prefixo `/gateways/openrouter`:
+Mesmo router `backend/api/handlers/provider_routing.py`, prefixo `/provider-routing/openrouter`:
 
-- `PUT /gateways/openrouter/api-key` — `{ api_key }`. Valida chamando
+- `PUT /provider-routing/openrouter/api-key` — `{ api_key }`. Valida chamando
   `GET /api/v1/auth/key` da OpenRouter (retorna limites/créditos da key —
   serve de verificação "a key é válida?" antes de salvar).
-- `DELETE /gateways/openrouter/api-key`
-- `GET /gateways/openrouter/catalog?q=` — proxy pro catálogo público
+- `DELETE /provider-routing/openrouter/api-key`
+- `GET /provider-routing/openrouter/catalog?q=` — proxy pro catálogo público
   (cacheado), com filtro de busca por nome/id.
-- `POST /gateways/openrouter/models` — `{ model_id, display_name? }`
+- `POST /provider-routing/openrouter/models` — `{ model_id, display_name? }`
   registra um modelo do catálogo pro seletor.
-- `GET /gateways/openrouter/models` / `DELETE /gateways/openrouter/models/{id}`
+- `GET /provider-routing/openrouter/models` / `DELETE /provider-routing/openrouter/models/{id}`
 
 ### 3.5 Persistência — API key vai em `env_overrides`, modelos em tabela nova
 
@@ -326,10 +326,10 @@ já existente (`Depends(get_current_user)`) resolve o isolamento.
 
 ## 5. Frontend
 
-### 5.1 Nova aba "Gateways" no `EnvironmentDialog`
+### 5.1 Nova aba "Provider Routing" no `EnvironmentDialog`
 
 `frontend/components/settings/environment/index.tsx` já tem abas "Envs",
-"Skills", "Plugins", "Integrações" — adiciona uma quinta: "Gateways". Não
+"Skills", "Plugins", "Integrações" — adiciona uma quinta: "Provider Routing". Não
 reaproveita a UI de `integracoes-tab.tsx` 1:1 (aquele padrão é 1
 card = 1 API key por serviço fixo) porque gateway tem uma dimensão a mais
 (lista de modelos por conexão) — mas segue o mesmo padrão visual
@@ -337,7 +337,7 @@ card = 1 API key por serviço fixo) porque gateway tem uma dimensão a mais
 contra o backend).
 
 ```
-frontend/components/settings/environment/tabs/gateways-tab.tsx   (novo)
+frontend/components/settings/environment/tabs/provider-routing-tab.tsx   (novo)
   ├─ OllamaSection
   │    ├─ lista de instâncias (label, base_url, badge online/offline)
   │    ├─ form "+ Nova instância" (label, base_url, botão testar conexão)
@@ -356,17 +356,17 @@ dinâmico. O seletor de modelo (`frontend/components/chat/
 model-selector.tsx`) passa a mesclar duas fontes:
 
 ```typescript
-// novo: frontend/lib/hooks/use-gateway-models.ts
-function useGatewayModels() {
+// novo: frontend/lib/hooks/use-provider-routing-models.ts
+function useProviderRoutingModels() {
   return useQuery({
-    queryKey: ["gateway-models"],
-    queryFn: () => fetchJson("/gateways/models"), // endpoint agregado novo
+    queryKey: ["provider-routing-models"],
+    queryFn: () => fetchJson("/provider-routing/models"), // endpoint agregado novo
     staleTime: 30_000,
   });
 }
 ```
 
-Endpoint agregado novo `GET /gateways/models` no backend retorna todos os
+Endpoint agregado novo `GET /provider-routing/models` no backend retorna todos os
 modelos registrados (Ollama + OpenRouter) do usuário num formato já
 compatível com `ModelOption` do frontend
 (`"ollama:<instance>:<tag>"` / `"openrouter:<model_id>"`), pra não
@@ -408,11 +408,11 @@ API de terceiro, mesmo princípio do Sprint V1 do bugfix — ver
 
 - Backend: `list_ollama_models`/`list_openrouter_models` com mock de
   `httpx` — caminho feliz (lista modelos) e erro (instância offline →
-  lista vazia + log, nunca exceção pro caller); endpoints `/gateways/*`
+  lista vazia + log, nunca exceção pro caller); endpoints `/provider-routing/*`
   com auth (401 sem sessão, isolamento por `user_id` — usuário A não vê
   instância do usuário B); `load_llm()` com model id de gateway resolve
   pro `base_url`/`api_key` corretos (parametrizado por provider).
-- Frontend: `gateways-tab.tsx` — formulário de nova instância valida
+- Frontend: `provider-routing-tab.tsx` — formulário de nova instância valida
   campos, mostra erro de conexão falha; `model-selector.tsx` mescla
   catálogo estático + dinâmico sem duplicar entradas quando os dois
   batem por acaso.
@@ -425,9 +425,9 @@ API de terceiro, mesmo princípio do Sprint V1 do bugfix — ver
    `openrouter_registered_models`) + `env_overrides["OPENROUTER_API_KEY"]`.
 2. Backend: `_PROVIDER_SPEC`/`_build_concrete_model` ganham `openrouter`;
    `load_llm()` resolve model id de 3 partes pro Ollama por instância.
-3. Backend: router `/gateways/*` completo (Ollama + OpenRouter + endpoint
-   agregado `/gateways/models`).
-4. Frontend: aba "Gateways" no `EnvironmentDialog` (Ollama primeiro —
+3. Backend: router `/provider-routing/*` completo (Ollama + OpenRouter + endpoint
+   agregado `/provider-routing/models`).
+4. Frontend: aba "Provider Routing" no `EnvironmentDialog` (Ollama primeiro —
    reaproveita mais do backend parcial existente).
 5. Frontend: `model-selector.tsx` mesclando estático + dinâmico.
 6. Frontend: seção OpenRouter na mesma aba.

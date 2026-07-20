@@ -3,7 +3,7 @@
  * Existir como função (em vez de chamar .send() direto nos handlers) só pra
  * centralizar o tipo da mensagem num lugar só.
  */
-import type { Env } from "../relay/types";
+import type { Env } from "../gateway/types";
 import type { EmailMessage, JobMessage } from "./queue-types";
 
 export async function enqueueEmail(

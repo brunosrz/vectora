@@ -1,7 +1,7 @@
 /**
  * Envio de email via Resend — chamado direto por fetch (sem o SDK `resend`,
  * pra não adicionar dependência: services segue o mesmo padrão zero-deps de
- * relay/updates, só hono+yaml). Portado de company/src/lib/email/resend.ts +
+ * gateway/updates, só hono+yaml). Portado de company/src/lib/email/resend.ts +
  * os HTML inline que viviam nas edge functions (webhooks/index.ts).
  */
 

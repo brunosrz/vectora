@@ -120,7 +120,7 @@ describe("RagSettingsPanel", () => {
       ingest_file_types: [] as string[],
     };
     FETCH.mockImplementation((url: string, init?: RequestInit) => {
-      if (url.includes("/gateways/ollama/models"))
+      if (url.includes("/provider-routing/ollama/models"))
         return jsonRes({
           reachable: true,
           models: [
@@ -149,7 +149,9 @@ describe("RagSettingsPanel", () => {
 
     await waitFor(() =>
       expect(
-        FETCH.mock.calls.some((c) => c[0].includes("/gateways/ollama/models")),
+        FETCH.mock.calls.some((c) =>
+          c[0].includes("/provider-routing/ollama/models"),
+        ),
       ).toBe(true),
     );
     await waitFor(() =>
@@ -186,7 +188,7 @@ describe("RagSettingsPanel", () => {
       ingest_file_types: [] as string[],
     };
     FETCH.mockImplementation((url: string, init?: RequestInit) => {
-      if (url.includes("/gateways/ollama/models"))
+      if (url.includes("/provider-routing/ollama/models"))
         return Promise.reject(new Error("fetch failed"));
       if (url.includes("/rag/settings")) {
         if (init?.method === "PATCH") {
@@ -209,7 +211,9 @@ describe("RagSettingsPanel", () => {
 
     await waitFor(() =>
       expect(
-        FETCH.mock.calls.some((c) => c[0].includes("/gateways/ollama/models")),
+        FETCH.mock.calls.some((c) =>
+          c[0].includes("/provider-routing/ollama/models"),
+        ),
       ).toBe(true),
     );
     // painel continua de pé, seletor de modelo só com o placeholder

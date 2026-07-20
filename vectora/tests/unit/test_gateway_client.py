@@ -1,4 +1,4 @@
-"""TDD — RelayClient (backend/relay/__init__.py)"""
+"""TDD — GatewayClient (backend/services/gateway/__init__.py)"""
 
 import asyncio
 import contextlib
@@ -9,56 +9,56 @@ import pytest
 
 
 @pytest.fixture
-def relay_token_file(tmp_path: Path) -> Path:
-    return tmp_path / "relay_token"
+def gateway_token_file(tmp_path: Path) -> Path:
+    return tmp_path / "gateway_token"
 
 
 @pytest.fixture
-def relay_url() -> str:
-    return "wss://relay.vectora.chat"
+def gateway_url() -> str:
+    return "wss://gateway.vectora.chat"
 
 
-class TestRelayTokenPersistence:
-    def test_carrega_token_existente(self, relay_token_file: Path) -> None:
-        relay_token_file.write_text("abc123")
-        from backend.services.relay.token import load_token
+class TestGatewayTokenPersistence:
+    def test_carrega_token_existente(self, gateway_token_file: Path) -> None:
+        gateway_token_file.write_text("abc123")
+        from backend.services.gateway.token import load_token
 
-        assert load_token(relay_token_file) == "abc123"
+        assert load_token(gateway_token_file) == "abc123"
 
-    def test_retorna_none_sem_arquivo(self, relay_token_file: Path) -> None:
-        from backend.services.relay.token import load_token
+    def test_retorna_none_sem_arquivo(self, gateway_token_file: Path) -> None:
+        from backend.services.gateway.token import load_token
 
-        assert load_token(relay_token_file) is None
+        assert load_token(gateway_token_file) is None
 
-    def test_salva_token(self, relay_token_file: Path) -> None:
-        from backend.services.relay.token import save_token
+    def test_salva_token(self, gateway_token_file: Path) -> None:
+        from backend.services.gateway.token import save_token
 
-        save_token("xyz789", relay_token_file)
-        assert relay_token_file.read_text() == "xyz789"
+        save_token("xyz789", gateway_token_file)
+        assert gateway_token_file.read_text() == "xyz789"
 
     @pytest.mark.skipif(
         __import__("sys").platform == "win32",
         reason="Windows usa ACLs NTFS; chmod POSIX não aplica",
     )
-    def test_token_salvo_tem_permissao_restrita(self, relay_token_file: Path) -> None:
+    def test_token_salvo_tem_permissao_restrita(self, gateway_token_file: Path) -> None:
         import stat
 
-        from backend.services.relay.token import save_token
+        from backend.services.gateway.token import save_token
 
-        save_token("xyz789", relay_token_file)
-        mode = relay_token_file.stat().st_mode
+        save_token("xyz789", gateway_token_file)
+        mode = gateway_token_file.stat().st_mode
         # arquivo não deve ser legível por outros (world)
         assert not (mode & stat.S_IROTH)
 
 
-class TestRelayClientBackoff:
+class TestGatewayClientBackoff:
     @pytest.mark.asyncio
     async def test_backoff_dobra_a_cada_falha(self) -> None:
-        from backend.services.relay import RelayClient
+        from backend.services.gateway import GatewayClient
 
-        client = RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=AsyncMock(return_value="tok"),
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
         )
         delays: list[float] = []
 
@@ -67,13 +67,13 @@ class TestRelayClientBackoff:
             if len(delays) >= 3:
                 raise asyncio.CancelledError
 
-        with patch("backend.services.relay.asyncio.sleep", fake_sleep):
+        with patch("backend.services.gateway.asyncio.sleep", fake_sleep):
             with patch(
-                "backend.services.relay.RelayClient._connect_once",
+                "backend.services.gateway.GatewayClient._connect_once",
                 side_effect=ConnectionError("fail"),
             ):
                 with patch(
-                    "backend.services.relay.RelayClient._register",
+                    "backend.services.gateway.GatewayClient._register",
                     return_value="tok123",
                 ):
                     with contextlib.suppress(asyncio.CancelledError):
@@ -84,11 +84,11 @@ class TestRelayClientBackoff:
 
     @pytest.mark.asyncio
     async def test_backoff_nao_ultrapassa_60s(self) -> None:
-        from backend.services.relay import RelayClient
+        from backend.services.gateway import GatewayClient
 
-        client = RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=AsyncMock(return_value="tok"),
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
         )
         delays: list[float] = []
 
@@ -97,13 +97,13 @@ class TestRelayClientBackoff:
             if len(delays) >= 10:
                 raise asyncio.CancelledError
 
-        with patch("backend.services.relay.asyncio.sleep", fake_sleep):
+        with patch("backend.services.gateway.asyncio.sleep", fake_sleep):
             with patch(
-                "backend.services.relay.RelayClient._connect_once",
+                "backend.services.gateway.GatewayClient._connect_once",
                 side_effect=ConnectionError("fail"),
             ):
                 with patch(
-                    "backend.services.relay.RelayClient._register",
+                    "backend.services.gateway.GatewayClient._register",
                     return_value="tok123",
                 ):
                     with contextlib.suppress(asyncio.CancelledError):
@@ -113,29 +113,30 @@ class TestRelayClientBackoff:
         assert max(delays) == 60.0
 
 
-class TestRelayClientRegister:
+class TestGatewayClientRegister:
     @pytest.mark.asyncio
-    async def test_register_usa_jwt_e_fingerprint(self, relay_token_file: Path) -> None:
-        from backend.services.relay import RelayClient
+    async def test_register_usa_app_secret_e_fingerprint(
+        self, gateway_token_file: Path
+    ) -> None:
+        """O handshake de registro autentica com o secret fixo do produto
+        (embutido no build), não mais um JWT por-instalação — o corpo carrega
+        só o fingerprint da máquina."""
+        from backend.services.gateway import GatewayClient
 
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(
-            return_value={
-                "token": "abc123",
-                "subdomain": "abc123.vectora.chat",
-                "websocket_url": "wss://relay.vectora.chat/ws/abc123",
-            }
+        mock_response.json = AsyncMock(return_value={"token": "abc123"})
+
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="fixed-product-secret",
+            token_path=gateway_token_file,
+            fingerprint="fp-machine-a",
         )
 
-        jwt_getter = AsyncMock(return_value="valid-jwt-token")
-        client = RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=jwt_getter,
-            token_path=relay_token_file,
-        )
-
-        with patch("backend.services.relay.aiohttp.ClientSession") as mock_session_cls:
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession"
+        ) as mock_session_cls:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -150,36 +151,86 @@ class TestRelayClientRegister:
             token = await client._register()
 
         assert token == "abc123"
-        assert relay_token_file.read_text() == "abc123"
+        assert gateway_token_file.read_text() == "abc123"
+        _, call_kwargs = mock_session.post.call_args
+        assert call_kwargs["headers"]["Authorization"] == "Bearer fixed-product-secret"
+        assert call_kwargs["json"] == {"fingerprint": "fp-machine-a"}
+
+    @pytest.mark.asyncio
+    async def test_duas_instalacoes_mesmo_secret_fingerprints_diferentes(
+        self, tmp_path: Path
+    ) -> None:
+        """Erro/borda: o esquema antigo (JWT assinado por instalação) nunca
+        batia contra um secret único no Worker — este teste prova que o novo
+        esquema autentica corretamente duas instalações distintas usando o
+        MESMO VECTORA_APP_SECRET, cada uma com seu próprio fingerprint."""
+        from backend.services.gateway import GatewayClient
+
+        for fp, expected_token in (("fp-a", "tok-a"), ("fp-b", "tok-b")):
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json = AsyncMock(return_value={"token": expected_token})
+
+            client = GatewayClient(
+                gateway_url="wss://gateway.vectora.chat",
+                app_secret="shared-product-secret",
+                token_path=tmp_path / f"gateway_token_{fp}",
+                fingerprint=fp,
+            )
+
+            with patch(
+                "backend.services.gateway.aiohttp.ClientSession"
+            ) as mock_session_cls:
+                mock_session = AsyncMock()
+                mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+                mock_session.__aexit__ = AsyncMock(return_value=None)
+                mock_session.post = MagicMock(
+                    return_value=AsyncMock(
+                        __aenter__=AsyncMock(return_value=mock_response),
+                        __aexit__=AsyncMock(return_value=None),
+                    )
+                )
+                mock_session_cls.return_value = mock_session
+
+                token = await client._register()
+
+            assert token == expected_token
+            _, call_kwargs = mock_session.post.call_args
+            assert (
+                call_kwargs["headers"]["Authorization"]
+                == "Bearer shared-product-secret"
+            )
 
     @pytest.mark.asyncio
     async def test_register_reutiliza_token_existente(
-        self, relay_token_file: Path
+        self, gateway_token_file: Path
     ) -> None:
-        from backend.services.relay import RelayClient
+        from backend.services.gateway import GatewayClient
 
-        relay_token_file.write_text("existing")
-        client = RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=AsyncMock(return_value="tok"),
-            token_path=relay_token_file,
+        gateway_token_file.write_text("existing")
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+            token_path=gateway_token_file,
         )
 
-        with patch("backend.services.relay.aiohttp.ClientSession") as mock_session_cls:
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession"
+        ) as mock_session_cls:
             token = await client._register()
 
         assert token == "existing"
         mock_session_cls.assert_not_called()
 
 
-class TestRelayClientStop:
+class TestGatewayClientStop:
     @pytest.mark.asyncio
     async def test_stop_cancela_task(self) -> None:
-        from backend.services.relay import RelayClient
+        from backend.services.gateway import GatewayClient
 
-        client = RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=AsyncMock(return_value="tok"),
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
         )
         mock_task = MagicMock()
         mock_task.cancel = MagicMock()
@@ -192,22 +243,22 @@ class TestRelayClientStop:
 
     @pytest.mark.asyncio
     async def test_stop_idempotente_sem_task(self) -> None:
-        from backend.services.relay import RelayClient
+        from backend.services.gateway import GatewayClient
 
-        client = RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=AsyncMock(return_value="tok"),
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
         )
         await client.stop()  # não deve lançar erro
 
 
-class TestRelayClientDispatch:
+class TestGatewayClientDispatch:
     def _client(self):
-        from backend.services.relay import RelayClient
+        from backend.services.gateway import GatewayClient
 
-        return RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=AsyncMock(return_value="tok"),
+        return GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
         )
 
     @pytest.mark.asyncio
@@ -252,13 +303,13 @@ class TestRelayClientDispatch:
         await client._dispatch(ws, {"type": "unknown_msg"})  # sem exceção
 
 
-class TestRelayClientForward:
+class TestGatewayClientForward:
     def _client(self):
-        from backend.services.relay import RelayClient
+        from backend.services.gateway import GatewayClient
 
-        return RelayClient(
-            relay_url="wss://relay.vectora.chat",
-            jwt_getter=AsyncMock(return_value="tok"),
+        return GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
             local_url="http://localhost:8000",
         )
 
@@ -290,7 +341,7 @@ class TestRelayClientForward:
             "body": base64.b64encode(b'{"ref":"main"}').decode(),
         }
         with patch(
-            "backend.services.relay.aiohttp.ClientSession", return_value=mock_session
+            "backend.services.gateway.aiohttp.ClientSession", return_value=mock_session
         ):
             await client._forward(ws, req)
 
@@ -306,7 +357,7 @@ class TestRelayClientForward:
         ws = AsyncMock()
 
         with patch(
-            "backend.services.relay.aiohttp.ClientSession",
+            "backend.services.gateway.aiohttp.ClientSession",
             side_effect=ConnectionError("down"),
         ):
             await client._forward(
@@ -327,7 +378,7 @@ class TestRelayClientForward:
 
 class TestMachineFingerprint:
     def test_retorna_string_hex_de_32_chars(self) -> None:
-        from backend.services.relay import _machine_fingerprint
+        from backend.services.gateway import _machine_fingerprint
 
         fp = _machine_fingerprint()
         assert isinstance(fp, str)
@@ -339,12 +390,12 @@ class TestMachineFingerprint:
 
         if sys.platform == "win32":
             pytest.skip("Linux-only path test")
-        from backend.services.relay import _machine_fingerprint
+        from backend.services.gateway import _machine_fingerprint
 
         machine_id_file = tmp_path / "machine-id"
         machine_id_file.write_text("abc123def456\n")
 
-        with patch("backend.services.relay.Path") as mock_path_cls:
+        with patch("backend.services.gateway.Path") as mock_path_cls:
             mock_path_cls.side_effect = lambda *args: (
                 machine_id_file if args[0] == "/etc/machine-id" else Path(*args)
             )
@@ -356,13 +407,13 @@ class TestMachineFingerprint:
     def test_usa_hostname_como_fallback(self) -> None:
         import sys
 
-        from backend.services.relay import _machine_fingerprint
+        from backend.services.gateway import _machine_fingerprint
 
         if sys.platform == "win32":
             with patch("winreg.OpenKey", side_effect=OSError("no registry")):
                 fp = _machine_fingerprint()
         else:
-            with patch("backend.services.relay.Path") as mock_path_cls:
+            with patch("backend.services.gateway.Path") as mock_path_cls:
                 mock_p = MagicMock()
                 mock_p.is_file.return_value = False
                 mock_path_cls.return_value = mock_p

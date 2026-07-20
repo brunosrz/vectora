@@ -3,9 +3,9 @@
 Valida:
 - GET /models/providers devolve `providers` (lista) e `dynamic_models` (vazia
   por padrão).
-- Modelo Ollama registrado via /gateways/ollama/registered aparece em
+- Modelo Ollama registrado via /provider-routing/ollama/registered aparece em
   `dynamic_models` como "ollama:<tag>".
-- Modelo OpenRouter registrado via /gateways/openrouter/registered aparece em
+- Modelo OpenRouter registrado via /provider-routing/openrouter/registered aparece em
   `dynamic_models` como "openrouter:<tag>", junto (não em vez) do Ollama.
 - `tool_incompatible_models` expõe o catálogo estático de modelos que
   rejeitam replay de tool_calls (usado pelo frontend pra filtrar o seletor
@@ -54,11 +54,11 @@ class TestModelsProviders:
         tag = "providers-test-tag"
         # DB real compartilhada entre execuções (ver threads.py::_get_db) —
         # limpa resíduo de uma execução anterior antes de registrar de novo.
-        for existing in client.get("/gateways/ollama/registered").json():
+        for existing in client.get("/provider-routing/ollama/registered").json():
             if existing["tag"] == tag:
-                client.delete(f"/gateways/ollama/registered/{existing['id']}")
+                client.delete(f"/provider-routing/ollama/registered/{existing['id']}")
 
-        create = client.post("/gateways/ollama/registered", json={"tag": tag})
+        create = client.post("/provider-routing/ollama/registered", json={"tag": tag})
         assert create.status_code == 200
         model_id = create.json()["id"]
 
@@ -67,23 +67,25 @@ class TestModelsProviders:
         ids = [m["id"] for m in resp.json()["dynamic_models"]]
         assert f"ollama:{tag}" in ids
 
-        client.delete(f"/gateways/ollama/registered/{model_id}")
+        client.delete(f"/provider-routing/ollama/registered/{model_id}")
 
     def test_registered_openrouter_model_appears_alongside_ollama(self, client):
         ollama_tag = "providers-test-ollama-tag"
         openrouter_tag = "providers-test-openrouter/model"
-        for existing in client.get("/gateways/ollama/registered").json():
+        for existing in client.get("/provider-routing/ollama/registered").json():
             if existing["tag"] == ollama_tag:
-                client.delete(f"/gateways/ollama/registered/{existing['id']}")
-        for existing in client.get("/gateways/openrouter/registered").json():
+                client.delete(f"/provider-routing/ollama/registered/{existing['id']}")
+        for existing in client.get("/provider-routing/openrouter/registered").json():
             if existing["tag"] == openrouter_tag:
-                client.delete(f"/gateways/openrouter/registered/{existing['id']}")
+                client.delete(
+                    f"/provider-routing/openrouter/registered/{existing['id']}"
+                )
 
         ollama_id = client.post(
-            "/gateways/ollama/registered", json={"tag": ollama_tag}
+            "/provider-routing/ollama/registered", json={"tag": ollama_tag}
         ).json()["id"]
         openrouter_id = client.post(
-            "/gateways/openrouter/registered", json={"tag": openrouter_tag}
+            "/provider-routing/openrouter/registered", json={"tag": openrouter_tag}
         ).json()["id"]
 
         resp = client.get("/models/providers")
@@ -92,5 +94,5 @@ class TestModelsProviders:
         assert f"ollama:{ollama_tag}" in ids
         assert f"openrouter:{openrouter_tag}" in ids
 
-        client.delete(f"/gateways/ollama/registered/{ollama_id}")
-        client.delete(f"/gateways/openrouter/registered/{openrouter_id}")
+        client.delete(f"/provider-routing/ollama/registered/{ollama_id}")
+        client.delete(f"/provider-routing/openrouter/registered/{openrouter_id}")

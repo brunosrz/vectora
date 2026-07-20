@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * GatewaysTab — modelos de LLM locais/dinâmicos (Ollama, OpenRouter).
+ * ProviderRoutingTab — modelos de LLM locais/dinâmicos (Ollama, OpenRouter).
  *
- * Ollama: descoberta via GET /gateways/ollama/models (consulta
+ * Ollama: descoberta via GET /provider-routing/ollama/models (consulta
  * {base_url}/api/tags do host configurado — nunca digitação livre de nome de
  * modelo, evita erro de digitação virar falha silenciosa no chat).
  *
  * OpenRouter: exige API key (validada contra /auth/key antes de persistir via
- * POST /gateways/openrouter/key), depois permite buscar no catálogo público
- * (GET /gateways/openrouter/models?q=, cacheado ~1h no backend) e registrar
+ * POST /provider-routing/openrouter/key), depois permite buscar no catálogo público
+ * (GET /provider-routing/openrouter/models?q=, cacheado ~1h no backend) e registrar
  * os modelos desejados.
  *
  * Em ambos os casos, modelos registrados (POST .../registered) aparecem no
@@ -51,7 +51,7 @@ async function discoverModels(): Promise<{
   reachable: boolean;
   models: OllamaModelInfo[];
 }> {
-  const res = await fetch("/gateways/ollama/models");
+  const res = await fetch("/provider-routing/ollama/models");
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
@@ -59,7 +59,7 @@ async function discoverModels(): Promise<{
 async function fetchRegistered(
   gateway: "ollama" | "openrouter",
 ): Promise<RegisteredModel[]> {
-  const res = await fetch(`/gateways/${gateway}/registered`);
+  const res = await fetch(`/provider-routing/${gateway}/registered`);
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
@@ -68,7 +68,7 @@ async function registerModel(
   gateway: "ollama" | "openrouter",
   tag: string,
 ): Promise<void> {
-  const res = await fetch(`/gateways/${gateway}/registered`, {
+  const res = await fetch(`/provider-routing/${gateway}/registered`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ tag }),
@@ -80,20 +80,20 @@ async function unregisterModel(
   gateway: "ollama" | "openrouter",
   id: string,
 ): Promise<void> {
-  const res = await fetch(`/gateways/${gateway}/registered/${id}`, {
+  const res = await fetch(`/provider-routing/${gateway}/registered/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
 async function fetchOpenRouterStatus(): Promise<OpenRouterStatus> {
-  const res = await fetch("/gateways/openrouter/status");
+  const res = await fetch("/provider-routing/openrouter/status");
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
 
 async function saveOpenRouterKey(apiKey: string): Promise<OpenRouterStatus> {
-  const res = await fetch("/gateways/openrouter/key", {
+  const res = await fetch("/provider-routing/openrouter/key", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ api_key: apiKey }),
@@ -106,7 +106,9 @@ async function saveOpenRouterKey(apiKey: string): Promise<OpenRouterStatus> {
 }
 
 async function removeOpenRouterKey(): Promise<void> {
-  const res = await fetch("/gateways/openrouter/key", { method: "DELETE" });
+  const res = await fetch("/provider-routing/openrouter/key", {
+    method: "DELETE",
+  });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
@@ -114,7 +116,7 @@ async function searchOpenRouterCatalog(
   q: string,
 ): Promise<OpenRouterModelInfo[]> {
   const res = await fetch(
-    `/gateways/openrouter/models${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+    `/provider-routing/openrouter/models${q ? `?q=${encodeURIComponent(q)}` : ""}`,
   );
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   const data = await res.json();
@@ -135,13 +137,13 @@ function RegisteredModelsList({
   return (
     <div className="space-y-2 pt-2 border-t">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        {m.gateways_registered_title()}
+        {m.provider_routing_registered_title()}
       </p>
       {loading ? (
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
       ) : registered.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          {m.gateways_registered_empty()}
+          {m.provider_routing_registered_empty()}
         </p>
       ) : (
         <div className="space-y-1.5">
@@ -187,7 +189,7 @@ function OllamaSection() {
     try {
       setRegistered(await fetchRegistered("ollama"));
     } catch {
-      setError(m.gateways_error_load());
+      setError(m.provider_routing_error_load());
     } finally {
       setLoadingRegistered(false);
     }
@@ -207,7 +209,7 @@ function OllamaSection() {
     } catch {
       setReachable(false);
       setDiscovered([]);
-      setError(m.gateways_error_discover());
+      setError(m.provider_routing_error_discover());
     } finally {
       setDiscovering(false);
     }
@@ -220,7 +222,7 @@ function OllamaSection() {
       await registerModel("ollama", tag);
       await loadRegistered();
     } catch {
-      setError(m.gateways_error_register());
+      setError(m.provider_routing_error_register());
     } finally {
       setRegisteringTag(null);
     }
@@ -233,7 +235,7 @@ function OllamaSection() {
       await unregisterModel("ollama", id);
       setRegistered((prev) => prev.filter((model) => model.id !== id));
     } catch {
-      setError(m.gateways_error_remove());
+      setError(m.provider_routing_error_remove());
     } finally {
       setRemovingId(null);
     }
@@ -246,10 +248,10 @@ function OllamaSection() {
       <div className="space-y-0.5">
         <p className="text-sm font-medium flex items-center gap-1.5">
           <Server className="w-3.5 h-3.5 text-muted-foreground" />
-          {m.gateways_ollama_title()}
+          {m.provider_routing_ollama_title()}
         </p>
         <p className="text-xs text-muted-foreground max-w-[360px]">
-          {m.gateways_ollama_subtitle()}
+          {m.provider_routing_ollama_subtitle()}
         </p>
       </div>
 
@@ -272,12 +274,12 @@ function OllamaSection() {
           ) : (
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
           )}
-          {m.gateways_detect_models()}
+          {m.provider_routing_detect_models()}
         </Button>
 
         {reachable === false && (
           <p className="text-xs text-muted-foreground">
-            {m.gateways_ollama_unreachable()}
+            {m.provider_routing_ollama_unreachable()}
           </p>
         )}
 
@@ -303,11 +305,11 @@ function OllamaSection() {
                     {registeringTag === model.name ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : already ? (
-                      m.gateways_already_registered()
+                      m.provider_routing_already_registered()
                     ) : (
                       <>
                         <Plus className="w-3.5 h-3.5 mr-1" />
-                        {m.gateways_register()}
+                        {m.provider_routing_register()}
                       </>
                     )}
                   </Button>
@@ -348,7 +350,7 @@ function OpenRouterSection() {
     try {
       setStatus(await fetchOpenRouterStatus());
     } catch {
-      setError(m.gateways_openrouter_error_status());
+      setError(m.provider_routing_openrouter_error_status());
     } finally {
       setLoadingStatus(false);
     }
@@ -359,7 +361,7 @@ function OpenRouterSection() {
     try {
       setRegistered(await fetchRegistered("openrouter"));
     } catch {
-      setError(m.gateways_error_load());
+      setError(m.provider_routing_error_load());
     } finally {
       setLoadingRegistered(false);
     }
@@ -378,7 +380,7 @@ function OpenRouterSection() {
       setSearching(true);
       searchOpenRouterCatalog(query)
         .then(setCatalog)
-        .catch(() => setError(m.gateways_openrouter_error_catalog()))
+        .catch(() => setError(m.provider_routing_openrouter_error_catalog()))
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(handle);
@@ -395,7 +397,7 @@ function OpenRouterSection() {
       setError(
         err instanceof Error
           ? err.message
-          : m.gateways_openrouter_error_key_save(),
+          : m.provider_routing_openrouter_error_key_save(),
       );
     } finally {
       setSavingKey(false);
@@ -410,7 +412,7 @@ function OpenRouterSection() {
       setStatus({ configured: false, masked: "" });
       setCatalog([]);
     } catch {
-      setError(m.gateways_openrouter_error_key_remove());
+      setError(m.provider_routing_openrouter_error_key_remove());
     } finally {
       setRemovingKey(false);
     }
@@ -423,7 +425,7 @@ function OpenRouterSection() {
       await registerModel("openrouter", id);
       await loadRegistered();
     } catch {
-      setError(m.gateways_error_register());
+      setError(m.provider_routing_error_register());
     } finally {
       setRegisteringId(null);
     }
@@ -436,7 +438,7 @@ function OpenRouterSection() {
       await unregisterModel("openrouter", id);
       setRegistered((prev) => prev.filter((model) => model.id !== id));
     } catch {
-      setError(m.gateways_error_remove());
+      setError(m.provider_routing_error_remove());
     } finally {
       setRemovingId(null);
     }
@@ -449,10 +451,10 @@ function OpenRouterSection() {
       <div className="space-y-0.5">
         <p className="text-sm font-medium flex items-center gap-1.5">
           <Server className="w-3.5 h-3.5 text-muted-foreground" />
-          {m.gateways_openrouter_title()}
+          {m.provider_routing_openrouter_title()}
         </p>
         <p className="text-xs text-muted-foreground max-w-[360px]">
-          {m.gateways_openrouter_subtitle()}
+          {m.provider_routing_openrouter_subtitle()}
         </p>
       </div>
 
@@ -469,7 +471,7 @@ function OpenRouterSection() {
         <div className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2">
           <div className="flex items-center gap-1.5 text-xs">
             <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-              {m.gateways_openrouter_key_configured()}
+              {m.provider_routing_openrouter_key_configured()}
             </span>
             <span className="font-mono text-muted-foreground">
               {status.masked}
@@ -485,7 +487,7 @@ function OpenRouterSection() {
             {removingKey ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              m.gateways_openrouter_key_remove()
+              m.provider_routing_openrouter_key_remove()
             )}
           </Button>
         </div>
@@ -495,7 +497,7 @@ function OpenRouterSection() {
             type="password"
             value={keyInput}
             onChange={(e) => setKeyInput(e.target.value)}
-            placeholder={m.gateways_openrouter_key_placeholder()}
+            placeholder={m.provider_routing_openrouter_key_placeholder()}
             className="h-8 text-xs font-mono flex-1"
             autoComplete="off"
           />
@@ -508,7 +510,7 @@ function OpenRouterSection() {
             {savingKey ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              m.gateways_openrouter_key_save()
+              m.provider_routing_openrouter_key_save()
             )}
           </Button>
         </div>
@@ -522,7 +524,7 @@ function OpenRouterSection() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={m.gateways_openrouter_search_placeholder()}
+              placeholder={m.provider_routing_openrouter_search_placeholder()}
               className="h-8 text-xs pl-8"
               autoComplete="off"
             />
@@ -553,11 +555,11 @@ function OpenRouterSection() {
                       {registeringId === model.id ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : already ? (
-                        m.gateways_already_registered()
+                        m.provider_routing_already_registered()
                       ) : (
                         <>
                           <Plus className="w-3.5 h-3.5 mr-1" />
-                          {m.gateways_register()}
+                          {m.provider_routing_register()}
                         </>
                       )}
                     </Button>
@@ -579,7 +581,7 @@ function OpenRouterSection() {
   );
 }
 
-export function GatewaysTab() {
+export function ProviderRoutingTab() {
   return (
     <div className="space-y-4">
       <OllamaSection />

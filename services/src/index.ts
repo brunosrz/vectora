@@ -1,10 +1,10 @@
 /**
- * vectora-services — Worker único que serve `relay/`, `updates/` e o
+ * vectora-services — Worker único que serve `gateway/`, `updates/` e o
  * backend da company. Dispatch por hostname:
  *
- * - `relay.vectora.chat` e `{token}.vectora.chat` → relay (WebSocket
- *   bidirecional de OAuth/webhooks pro app desktop — protocolo já embutido
- *   no cliente Python, domínio não muda).
+ * - `gateway.vectora.chat` e `{token}.vectora.chat` → gateway (WebSocket
+ *   bidirecional de OAuth/webhooks pro app desktop — ex-relay, renomeado
+ *   sem alias de transição por decisão do produto).
  * - Qualquer outro host → um único Hono app com auth/profile/billing/
  *   license/gdpr/api-keys/issues/rag-library/registry/telemetry e updates
  *   (electron-updater + download público, `src/updates/worker.ts`, mesclado
@@ -15,11 +15,11 @@
  */
 
 import { Hono } from "hono";
-import relayHandler, {
-  RelaySession,
-  RELAY_HOST,
-  RELAY_BASE_DOMAIN,
-} from "./relay";
+import gatewayHandler, {
+  GatewaySession,
+  GATEWAY_HOST,
+  GATEWAY_BASE_DOMAIN,
+} from "./gateway";
 import updatesApp from "./updates/worker";
 import { auth } from "./auth/routes";
 import { admin } from "./admin/routes";
@@ -35,12 +35,14 @@ import { ragLibrary } from "./rag-library/routes";
 import { registry } from "./registry/routes";
 import { telemetry } from "./telemetry/routes";
 import { handleQueue } from "./queue-consumer";
-import type { Env } from "./relay/types";
+import type { Env } from "./gateway/types";
 
-export { RelaySession };
+export { GatewaySession };
 
-function isRelayHost(hostname: string): boolean {
-  return hostname === RELAY_HOST || hostname.endsWith(`.${RELAY_BASE_DOMAIN}`);
+function isGatewayHost(hostname: string): boolean {
+  return (
+    hostname === GATEWAY_HOST || hostname.endsWith(`.${GATEWAY_BASE_DOMAIN}`)
+  );
 }
 
 const servicesApp = new Hono<{ Bindings: Env }>();
@@ -70,8 +72,8 @@ export default {
     ctx: ExecutionContext,
   ): Response | Promise<Response> {
     const { hostname } = new URL(request.url);
-    if (isRelayHost(hostname)) {
-      return relayHandler.fetch(request, env);
+    if (isGatewayHost(hostname)) {
+      return gatewayHandler.fetch(request, env);
     }
     return servicesApp.fetch(request, env, ctx);
   },
