@@ -69,14 +69,18 @@ class TestRelayStatusSemToken:
         return TestClient(app)
 
     def test_retorna_desconectado_sem_token(self, tmp_path: Path) -> None:
+        """Erro/borda: nunca conectou é um estado NEUTRO (never_connected),
+        distinto de um erro real — a UI não deve tratar como falha."""
         token_path = tmp_path / "relay_token"
         with patch("backend.api.handlers.relay._TOKEN_PATH", token_path):
             res = self._app().get("/relay/status")
         assert res.status_code == 200
         data = res.json()
         assert data["connected"] is False
+        assert data["state"] == "never_connected"
         assert data["token"] is None
         assert data["subdomain"] is None
+        assert data["detail"] is None
 
     def test_retorna_401_sem_autenticacao(self, tmp_path: Path) -> None:
         from fastapi import FastAPI
@@ -137,11 +141,16 @@ class TestRelayStatusComToken:
         assert res.status_code == 200
         data = res.json()
         assert data["connected"] is True
+        assert data["state"] == "connected"
         assert data["token"] == "abc123"
         assert data["subdomain"] == "abc123.vectora.chat"
         assert data["webhook_base"] == "https://abc123.vectora.chat"
+        assert data["detail"] is None
 
-    def test_retorna_desconectado_se_worker_offline(self, tmp_path: Path) -> None:
+    def test_retorna_erro_real_se_worker_offline(self, tmp_path: Path) -> None:
+        """Erro/borda: já teve token (tentativa real de conexão) mas o
+        Worker não respondeu — state='error', distinto de never_connected,
+        com detalhe da falha pra UI mostrar algo além de "desconectado"."""
         token_path = tmp_path / "relay_token"
         token_path.write_text("abc123")
 
@@ -153,7 +162,10 @@ class TestRelayStatusComToken:
                 res = self._app().get("/relay/status")
 
         assert res.status_code == 200
-        assert res.json()["connected"] is False
+        data = res.json()
+        assert data["connected"] is False
+        assert data["state"] == "error"
+        assert data["detail"] == "network error"
 
 
 # ---------------------------------------------------------------------------

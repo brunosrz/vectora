@@ -63,31 +63,33 @@ async function fetchIntegrations(): Promise<Integration[]> {
   return data.integrations ?? [];
 }
 
+type RelayState = "never_connected" | "error" | "connected";
+
 interface RelayStatus {
   connected: boolean;
+  state: RelayState;
   token: string | null;
   subdomain: string | null;
   webhook_base: string | null;
+  detail: string | null;
 }
+
+const RELAY_STATUS_FALLBACK: RelayStatus = {
+  connected: false,
+  state: "never_connected",
+  token: null,
+  subdomain: null,
+  webhook_base: null,
+  detail: null,
+};
 
 async function fetchRelayStatus(): Promise<RelayStatus> {
   try {
     const res = await fetch("/relay/status");
-    if (!res.ok)
-      return {
-        connected: false,
-        token: null,
-        subdomain: null,
-        webhook_base: null,
-      };
+    if (!res.ok) return RELAY_STATUS_FALLBACK;
     return (await res.json()) as RelayStatus;
   } catch {
-    return {
-      connected: false,
-      token: null,
-      subdomain: null,
-      webhook_base: null,
-    };
+    return RELAY_STATUS_FALLBACK;
   }
 }
 
@@ -480,12 +482,7 @@ export function IntegracoesTab() {
   const { enableFeaturesBeta } = useFeatureFlags();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [relay, setRelay] = useState<RelayStatus>({
-    connected: false,
-    token: null,
-    subdomain: null,
-    webhook_base: null,
-  });
+  const [relay, setRelay] = useState<RelayStatus>(RELAY_STATUS_FALLBACK);
 
   const load = async () => {
     setLoading(true);
@@ -542,16 +539,38 @@ export function IntegracoesTab() {
         </p>
       </div>
 
-      {/* Banner relay — visível apenas quando OAuth/relay está habilitado */}
+      {/* Banner relay — visível apenas quando OAuth/relay está habilitado.
+          3 estados distintos (não só conectado/desconectado): nunca
+          conectou (neutro, nada errado — normal antes da 1ª integração),
+          erro real (relay fora do ar/mal configurado, com detalhe), e
+          conectado. Antes, os dois primeiros mostravam a mesma mensagem
+          "Relay disconnected", sem o usuário conseguir saber se precisava
+          agir ou se era só o estado inicial esperado. */}
       {enableFeaturesBeta && (
         <div
-          className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${relay.connected ? "border-green-500/30 bg-green-500/5" : "border-border bg-muted/30"}`}
+          className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${
+            relay.state === "connected"
+              ? "border-green-500/30 bg-green-500/5"
+              : relay.state === "error"
+                ? "border-destructive/30 bg-destructive/5"
+                : "border-border bg-muted/30"
+          }`}
         >
           <div className="flex items-center justify-between">
             <p
-              className={`font-medium ${relay.connected ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+              className={`font-medium ${
+                relay.state === "connected"
+                  ? "text-green-600 dark:text-green-400"
+                  : relay.state === "error"
+                    ? "text-destructive"
+                    : "text-muted-foreground"
+              }`}
             >
-              {relay.connected ? m.relay_connected() : m.relay_disconnected()}
+              {relay.state === "connected"
+                ? m.relay_connected()
+                : relay.state === "error"
+                  ? m.relay_error()
+                  : m.relay_never_connected()}
             </p>
             {relay.subdomain && (
               <span className="font-mono text-[10px] text-muted-foreground">
@@ -559,14 +578,20 @@ export function IntegracoesTab() {
               </span>
             )}
           </div>
-          {relay.webhook_base ? (
+          {relay.state === "connected" && relay.webhook_base && (
             <p className="text-muted-foreground">
               {m.relay_webhook_hint()}{" "}
               <span className="font-mono">
                 {relay.webhook_base}/webhook/&#123;provider&#125;
               </span>
             </p>
-          ) : (
+          )}
+          {relay.state === "error" && (
+            <p className="text-destructive/80">
+              {relay.detail ?? m.relay_error_retry()}
+            </p>
+          )}
+          {relay.state === "never_connected" && (
             <p className="text-muted-foreground">{m.relay_no_token()}</p>
           )}
         </div>

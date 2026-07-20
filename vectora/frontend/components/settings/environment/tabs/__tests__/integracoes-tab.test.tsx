@@ -38,18 +38,22 @@ afterEach(() => overwriteGetLocale(() => baseLocale));
 
 type RelayStatus = {
   connected: boolean;
+  state: "never_connected" | "error" | "connected";
   token: string | null;
   subdomain: string | null;
   webhook_base: string | null;
+  detail: string | null;
 };
 
 function mockFetch(
   integrations: object[],
   relay: RelayStatus = {
     connected: false,
+    state: "never_connected",
     token: null,
     subdomain: null,
     webhook_base: null,
+    detail: null,
   },
 ) {
   global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -219,9 +223,11 @@ describe("IntegracoesTab", () => {
   it("GitHub usa relay webhook_base quando relay conectado", async () => {
     mockFetch(BASE_INTEGRATIONS, {
       connected: true,
+      state: "connected",
       token: "abc123",
       subdomain: "abc123.vectora.chat",
       webhook_base: "https://abc123.vectora.chat",
+      detail: null,
     });
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
@@ -259,20 +265,25 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("relay desconectado exibe mensagem de relay desconectado", async () => {
+  it("relay nunca conectado exibe mensagem neutra (não parece erro)", async () => {
+    // Erro/borda: state="never_connected" é o default do mockFetch — nada foi
+    // configurado ainda, e a mensagem não deve soar como falha.
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
-      expect(screen.getByText(/relay desconectado/i)).toBeTruthy();
+      expect(screen.getByText(/nenhuma integração oauth/i)).toBeTruthy();
+      expect(screen.queryByText(/relay indisponível/i)).toBeNull();
     });
   });
 
   it("relay conectado exibe subdomain e mensagem de relay conectado", async () => {
     mockFetch(BASE_INTEGRATIONS, {
       connected: true,
+      state: "connected",
       token: "abc123",
       subdomain: "abc123.vectora.chat",
       webhook_base: "https://abc123.vectora.chat",
+      detail: null,
     });
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
@@ -282,6 +293,27 @@ describe("IntegracoesTab", () => {
       expect(
         screen.getAllByText(/abc123\.vectora\.chat/).length,
       ).toBeGreaterThan(0);
+    });
+  });
+
+  it("relay com erro real exibe mensagem distinta de 'nunca conectado', com detalhe", async () => {
+    // Erro/borda: distingue estado neutro (nunca tentou) de falha real
+    // (já teve token, tentou, o Worker não respondeu) — a UI não pode
+    // mostrar a mesma mensagem pros dois casos.
+    mockFetch(BASE_INTEGRATIONS, {
+      connected: false,
+      state: "error",
+      token: "abc123",
+      subdomain: "abc123.vectora.chat",
+      webhook_base: "https://abc123.vectora.chat",
+      detail: "Relay respondeu 503",
+    });
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getByText(/relay indisponível/i)).toBeTruthy();
+      expect(screen.getByText("Relay respondeu 503")).toBeTruthy();
+      expect(screen.queryByText(/nenhuma integração oauth/i)).toBeNull();
     });
   });
 });

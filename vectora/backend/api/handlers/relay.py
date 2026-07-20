@@ -38,32 +38,48 @@ def _subdomain(token: str) -> str:
 
 @router.get("/status")
 async def relay_status(request: Request) -> dict:
+    """Estado do relay, distinguindo "nunca conectou" (normal, nada errado)
+    de "tentou e falhou" (problema real — relay fora do ar ou mal
+    configurado). Sem essa distinção, os dois casos mostravam a mesma
+    mensagem "desconectado" pro usuário, que não conseguia saber se
+    precisava agir ou se era só o estado inicial esperado.
+    """
     _require_auth(request)
     token = _relay_token()
     if not token:
         return {
             "connected": False,
+            "state": "never_connected",
             "token": None,  # nosec B105
             "subdomain": None,
             "webhook_base": None,
+            "detail": None,
         }
 
+    detail: str | None = None
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{_RELAY_BASE}/health/{token}", timeout=aiohttp.ClientTimeout(total=3)
             ) as resp:
-                data = await resp.json() if resp.status == 200 else {}
-                connected = bool(data.get("connected", False))
-    except Exception:
+                if resp.status == 200:
+                    data = await resp.json()
+                    connected = bool(data.get("connected", False))
+                else:
+                    connected = False
+                    detail = f"Relay respondeu {resp.status}"
+    except Exception as exc:
         connected = False
+        detail = str(exc)
 
     sub = _subdomain(token)
     return {
         "connected": connected,
+        "state": "connected" if connected else "error",
         "token": token,
         "subdomain": sub,
         "webhook_base": f"https://{sub}",
+        "detail": detail,
     }
 
 
