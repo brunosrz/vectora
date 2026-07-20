@@ -20,7 +20,7 @@ vi.mock("@/lib/paraglide/messages", () => ({
 
 describe("environment-dialog-store", () => {
   beforeEach(() =>
-    useEnvironmentDialogStore.setState({ open: false, tab: "envs" }),
+    useEnvironmentDialogStore.setState({ open: false, tab: "integracoes" }),
   );
 
   it("openAt abre no tab pedido", () => {
@@ -29,9 +29,9 @@ describe("environment-dialog-store", () => {
     expect(useEnvironmentDialogStore.getState().tab).toBe("plugins");
   });
 
-  it("openAt sem argumento cai no default 'envs'", () => {
+  it("openAt sem argumento cai no default 'integracoes'", () => {
     useEnvironmentDialogStore.getState().openAt();
-    expect(useEnvironmentDialogStore.getState().tab).toBe("envs");
+    expect(useEnvironmentDialogStore.getState().tab).toBe("integracoes");
   });
 
   it("setOpen e setTab atualizam o estado", () => {
@@ -83,7 +83,7 @@ import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 
 function resetStores() {
   usePreferenciasDialogStore.setState({ open: false, tab: "preferencias" });
-  useEnvironmentDialogStore.setState({ open: false, tab: "envs" });
+  useEnvironmentDialogStore.setState({ open: false, tab: "integracoes" });
   useAdministracaoDialogStore.setState({ open: false, subTab: undefined });
 }
 

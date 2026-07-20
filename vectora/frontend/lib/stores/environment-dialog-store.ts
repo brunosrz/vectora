@@ -1,6 +1,6 @@
 /**
  * environment-dialog-store — controla a abertura do painel "Ambiente"
- * (Envs, Skills, Plugins, Gateways e Integrações) e a aba ativa.
+ * (Integrações, Skills, Plugins, Provider Routing) e a aba ativa.
  *
  * Permite deep-link a partir de qualquer lugar (ex.: o menu "+" abrindo
  * direto em Conectores/Plugins) sem prop drilling — o dialog é renderizado
@@ -14,7 +14,7 @@
 import { create } from "zustand";
 
 export type EnvironmentTab =
-  "envs" | "skills" | "plugins" | "provider_routing" | "integracoes";
+  "skills" | "plugins" | "provider_routing" | "integracoes";
 
 interface EnvironmentDialogState {
   open: boolean;
@@ -27,8 +27,8 @@ interface EnvironmentDialogState {
 export const useEnvironmentDialogStore = create<EnvironmentDialogState>(
   (set) => ({
     open: false,
-    tab: "envs",
-    openAt: (tab = "envs") => set({ open: true, tab }),
+    tab: "integracoes",
+    openAt: (tab = "integracoes") => set({ open: true, tab }),
     setOpen: (v) => set({ open: v }),
     setTab: (tab) => set({ tab }),
   }),

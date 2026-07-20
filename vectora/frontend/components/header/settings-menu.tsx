@@ -115,7 +115,7 @@ export function SettingsMenu() {
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
                 onClick={() => {
                   setOpen(false);
-                  openEnvironment("envs");
+                  openEnvironment("integracoes");
                 }}
               >
                 <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />

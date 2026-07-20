@@ -6,11 +6,11 @@
  * Dialog do painel "Ambiente". Acessível via Avatar → "Ambiente".
  *
  * Abas:
- *   - Envs        — variáveis de ambiente por usuário
+ *   - Integrações — conectores externos + variáveis de ambiente customizadas
+ *                   (absorveu a antiga aba Envs — Sprint 12)
  *   - Skills      — skills instaladas
  *   - Plugins     — plugins/MCP servers + política de ferramentas
  *   - Provider Routing — modelos de LLM locais/dinâmicos (Ollama)
- *   - Integrações — conectores externos
  *
  * "Preferências" (Conta/Preferências/Memória) e "Administração" (root/admin)
  * são dialogs próprios — ver `PreferenciasDialog` e `AdminDialog`.
@@ -37,10 +37,6 @@ import {
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 import { m } from "@/lib/paraglide/messages";
 
-const EnvsTab = lazyWithRetry(
-  () => import("./tabs/envs-tab").then((mod) => ({ default: mod.EnvsTab })),
-  "envs-tab",
-);
 const SkillsTab = lazyWithRetry(
   () => import("./tabs/skills-tab").then((mod) => ({ default: mod.SkillsTab })),
   "skills-tab",
@@ -104,9 +100,6 @@ export function EnvironmentDialog() {
             <TabsTrigger value="integracoes" className="rounded-md text-xs">
               Integrações
             </TabsTrigger>
-            <TabsTrigger value="envs" className="rounded-md text-xs">
-              Envs
-            </TabsTrigger>
             <TabsTrigger value="skills" className="rounded-md text-xs">
               Skills
             </TabsTrigger>
@@ -126,9 +119,6 @@ export function EnvironmentDialog() {
               <Suspense fallback={<TabFallback />}>
                 <TabsContent value="integracoes" className="mt-0">
                   <IntegracoesTab />
-                </TabsContent>
-                <TabsContent value="envs" className="mt-0">
-                  <EnvsTab />
                 </TabsContent>
                 <TabsContent value="skills" className="mt-0">
                   <SkillsTab />

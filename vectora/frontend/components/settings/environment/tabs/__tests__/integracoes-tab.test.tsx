@@ -1,15 +1,19 @@
 // @vitest-environment jsdom
 /**
- * Testes da IntegracoesTab — INT-8.
+ * Testes da IntegracoesTab — INT-8 + Sprint 12 (fusão com a antiga EnvsTab).
  *
  * Cobre:
  * - Renderização com lista de integrações do backend (conectado / não conectado)
  * - Status badge correto por provider
  * - Botão "Conectar via OAuth" presente para providers OAuth não conectados
  * - Botão "Desconectar" presente para providers OAuth conectados
- * - Webhook URL via relay (quando relay conectado) e fallback local
+ * - Webhook URL via gateway (quando gateway conectado) e fallback local
  * - Providers filho (google-drive, gmail) renderizam sem botão OAuth próprio
- * - Relay status: conectado mostra subdomain; desconectado mostra mensagem padrão
+ * - Gateway status: conectado mostra subdomain; desconectado mostra mensagem padrão
+ * - Variáveis customizadas (chave/valor livre): seção "Customizadas" lista
+ *   env vars órfãs (sem integração correspondente); dialog "+ Adicionar
+ *   variável customizada" salva via /auth/envs; erro/borda — chave ou
+ *   valor vazio não submete.
  */
 
 import {
@@ -21,7 +25,13 @@ import {
   beforeEach,
   beforeAll,
 } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
 vi.mock("@/lib/hooks/use-feature-flags", () => ({
@@ -36,7 +46,7 @@ beforeAll(async () => {
 
 afterEach(() => overwriteGetLocale(() => baseLocale));
 
-type RelayStatus = {
+type GatewayStatus = {
   connected: boolean;
   state: "never_connected" | "error" | "connected";
   token: string | null;
@@ -45,29 +55,61 @@ type RelayStatus = {
   detail: string | null;
 };
 
+const GATEWAY_FALLBACK: GatewayStatus = {
+  connected: false,
+  state: "never_connected",
+  token: null,
+  subdomain: null,
+  webhook_base: null,
+  detail: null,
+};
+
 function mockFetch(
   integrations: object[],
-  relay: RelayStatus = {
-    connected: false,
-    state: "never_connected",
-    token: null,
-    subdomain: null,
-    webhook_base: null,
-    detail: null,
+  gateway: GatewayStatus = GATEWAY_FALLBACK,
+  envs: { envs: Record<string, string>; keys: string[] } = {
+    envs: {},
+    keys: [],
   },
 ) {
-  global.fetch = vi.fn().mockImplementation((url: string) => {
-    if (url === "/relay/status") {
+  global.fetch = vi
+    .fn()
+    .mockImplementation((url: string, init?: RequestInit) => {
+      if (url === "/gateway/status") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => gateway,
+        } as Response);
+      }
+      if (url === "/auth/envs" && (!init || init.method === undefined)) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => envs,
+        } as Response);
+      }
+      if (url === "/auth/envs" && init?.method === "POST") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({}),
+        } as Response);
+      }
+      if (url.startsWith("/auth/envs/") && init?.method === "DELETE") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({}),
+        } as Response);
+      }
       return Promise.resolve({
         ok: true,
-        json: async () => relay,
+        json: async () => ({ integrations }),
       } as Response);
-    }
-    return Promise.resolve({
-      ok: true,
-      json: async () => ({ integrations }),
-    } as Response);
-  });
+    });
+}
+
+function countEnvsPostCalls(): number {
+  return (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+    (c) => c[0] === "/auth/envs" && c[1]?.method === "POST",
+  ).length;
 }
 
 const BASE_INTEGRATIONS = [
@@ -194,6 +236,21 @@ describe("IntegracoesTab", () => {
     });
   });
 
+  it("providers OAuth-only (gitlab/google/slack) também aceitam token manual", async () => {
+    // Erro/borda: antes só kind="apikey"|"hybrid" mostrava o botão de
+    // expandir pra colar token — providers OAuth-only (kind="oauth" sem
+    // hybrid) não tinham alternativa ao fluxo OAuth completo. Agora todos
+    // ganham o botão de expandir (title = "Colar token manualmente").
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      const pasteButtons = screen.getAllByTitle(/colar token manualmente/i);
+      // github(hybrid) + gitlab + google + slack = 4 no mínimo
+      // (google-drive é filho, não conta)
+      expect(pasteButtons.length).toBeGreaterThanOrEqual(4);
+    });
+  });
+
   it("Slack conectado via OAuth exibe botão Desconectar", async () => {
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
@@ -211,7 +268,7 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("GitHub conectado exibe URL de webhook local quando relay desconectado", async () => {
+  it("GitHub conectado exibe URL de webhook local quando gateway desconectado", async () => {
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
@@ -220,7 +277,7 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("GitHub usa relay webhook_base quando relay conectado", async () => {
+  it("GitHub usa gateway webhook_base quando gateway conectado", async () => {
     mockFetch(BASE_INTEGRATIONS, {
       connected: true,
       state: "connected",
@@ -265,18 +322,18 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("relay nunca conectado exibe mensagem neutra (não parece erro)", async () => {
+  it("gateway nunca conectado exibe mensagem neutra (não parece erro)", async () => {
     // Erro/borda: state="never_connected" é o default do mockFetch — nada foi
     // configurado ainda, e a mensagem não deve soar como falha.
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
       expect(screen.getByText(/nenhuma integração oauth/i)).toBeTruthy();
-      expect(screen.queryByText(/relay indisponível/i)).toBeNull();
+      expect(screen.queryByText(/gateway indisponível/i)).toBeNull();
     });
   });
 
-  it("relay conectado exibe subdomain e mensagem de relay conectado", async () => {
+  it("gateway conectado exibe subdomain e mensagem de gateway conectado", async () => {
     mockFetch(BASE_INTEGRATIONS, {
       connected: true,
       state: "connected",
@@ -288,7 +345,7 @@ describe("IntegracoesTab", () => {
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
-      expect(screen.getByText(/relay conectado/i)).toBeTruthy();
+      expect(screen.getByText(/gateway conectado/i)).toBeTruthy();
       // subdomain e webhook_base podem aparecer em múltiplos spans — getAllByText é correto
       expect(
         screen.getAllByText(/abc123\.vectora\.chat/).length,
@@ -296,7 +353,7 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("relay com erro real exibe mensagem distinta de 'nunca conectado', com detalhe", async () => {
+  it("gateway com erro real exibe mensagem distinta de 'nunca conectado', com detalhe", async () => {
     // Erro/borda: distingue estado neutro (nunca tentou) de falha real
     // (já teve token, tentou, o Worker não respondeu) — a UI não pode
     // mostrar a mesma mensagem pros dois casos.
@@ -306,14 +363,84 @@ describe("IntegracoesTab", () => {
       token: "abc123",
       subdomain: "abc123.vectora.chat",
       webhook_base: "https://abc123.vectora.chat",
-      detail: "Relay respondeu 503",
+      detail: "Gateway respondeu 503",
     });
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
-      expect(screen.getByText(/relay indisponível/i)).toBeTruthy();
-      expect(screen.getByText("Relay respondeu 503")).toBeTruthy();
+      expect(screen.getByText(/gateway indisponível/i)).toBeTruthy();
+      expect(screen.getByText("Gateway respondeu 503")).toBeTruthy();
       expect(screen.queryByText(/nenhuma integração oauth/i)).toBeNull();
     });
+  });
+
+  it("lista variáveis customizadas (órfãs) numa seção separada", async () => {
+    mockFetch(BASE_INTEGRATIONS, GATEWAY_FALLBACK, {
+      envs: { MY_CUSTOM_TOKEN: "••••••••" },
+      // GITHUB_TOKEN já é coberto pela integração GitHub — não deve
+      // aparecer duplicado na seção Customizadas.
+      keys: ["MY_CUSTOM_TOKEN", "GITHUB_TOKEN"],
+    });
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getByText("MY_CUSTOM_TOKEN")).toBeTruthy();
+      expect(screen.getByText(/customizadas/i)).toBeTruthy();
+    });
+    // GITHUB_TOKEN é conhecido — não deve renderizar como card customizado
+    expect(screen.queryByText("GITHUB_TOKEN")).toBeNull();
+  });
+
+  it("botão 'Adicionar variável customizada' abre dialog e salva via /auth/envs", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText("GitHub")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText(/adicionar variável customizada/i));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/OPENAI_API_KEY/i)).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/OPENAI_API_KEY/i), {
+      target: { value: "MY_KEY" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/enter the value|valor/i), {
+      target: { value: "secret-value" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^save$|^salvar$/i }));
+
+    await waitFor(() => {
+      expect(countEnvsPostCalls()).toBeGreaterThan(0);
+    });
+  });
+
+  it("botão salvar da variável customizada fica desabilitado com chave ou valor vazio", async () => {
+    // Erro/borda: sem os dois campos preenchidos, não deve nem tentar
+    // chamar o backend.
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText("GitHub")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText(/adicionar variável customizada/i));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/OPENAI_API_KEY/i)).toBeTruthy();
+    });
+
+    const saveBtn = screen.getByRole("button", { name: /^save$|^salvar$/i });
+    expect(saveBtn).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText(/OPENAI_API_KEY/i), {
+      target: { value: "MY_KEY" },
+    });
+    expect(saveBtn).toBeDisabled();
   });
 });

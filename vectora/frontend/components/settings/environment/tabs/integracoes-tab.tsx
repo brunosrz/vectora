@@ -1,10 +1,17 @@
 "use client";
 
 /**
- * IntegracoesTab — cards de integrações externas.
+ * IntegracoesTab — tela única de credenciais (integrações conhecidas +
+ * variáveis customizadas). Absorveu a antiga EnvsTab (Sprint 12): não há
+ * mais uma aba separada de "Envs" — qualquer chave/valor livre entra aqui
+ * como uma variável "Customizada", ao lado dos providers do catálogo.
  *
  * O1 — API key: usuário insere chave manualmente.
- * O2–O5 — OAuth: GitHub, GitLab, Google, Slack.
+ * O2–O5 — OAuth: GitHub, GitLab, Google, Slack (token manual também aceito
+ * pra quem não quer registrar um OAuth App — mesmo raciocínio já usado
+ * pro GitHub, estendido aos demais providers OAuth).
+ * Custom: chave+valor livre via /auth/envs, para credenciais sem entrada
+ * dedicada no catálogo (MCP servers, providers não listados, etc).
  * Webhook URL: exibida para providers que têm webhook configurado.
  */
 
@@ -18,12 +25,22 @@ import {
   KeyRound,
   Link2,
   Loader2,
+  Plus,
+  Trash2,
   XCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { m } from "@/lib/paraglide/messages";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
@@ -43,6 +60,8 @@ interface Integration {
   oauth_scopes?: string[];
   parent?: string;
   connected: boolean;
+  env_var_aliases?: string[];
+  extra_vars?: string[];
 }
 
 type VerifyState = "idle" | "loading" | "ok" | "error";
@@ -63,18 +82,18 @@ async function fetchIntegrations(): Promise<Integration[]> {
   return data.integrations ?? [];
 }
 
-type RelayState = "never_connected" | "error" | "connected";
+type GatewayState = "never_connected" | "error" | "connected";
 
-interface RelayStatus {
+interface GatewayStatus {
   connected: boolean;
-  state: RelayState;
+  state: GatewayState;
   token: string | null;
   subdomain: string | null;
   webhook_base: string | null;
   detail: string | null;
 }
 
-const RELAY_STATUS_FALLBACK: RelayStatus = {
+const GATEWAY_STATUS_FALLBACK: GatewayStatus = {
   connected: false,
   state: "never_connected",
   token: null,
@@ -83,14 +102,25 @@ const RELAY_STATUS_FALLBACK: RelayStatus = {
   detail: null,
 };
 
-async function fetchRelayStatus(): Promise<RelayStatus> {
+async function fetchGatewayStatus(): Promise<GatewayStatus> {
   try {
-    const res = await fetch("/relay/status");
-    if (!res.ok) return RELAY_STATUS_FALLBACK;
-    return (await res.json()) as RelayStatus;
+    const res = await fetch("/gateway/status");
+    if (!res.ok) return GATEWAY_STATUS_FALLBACK;
+    return (await res.json()) as GatewayStatus;
   } catch {
-    return RELAY_STATUS_FALLBACK;
+    return GATEWAY_STATUS_FALLBACK;
   }
+}
+
+interface EnvsResponse {
+  envs: Record<string, string>; // valores mascarados ("••••••••")
+  keys: string[];
+}
+
+async function fetchEnvs(): Promise<EnvsResponse> {
+  const res = await fetch("/auth/envs");
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  return res.json();
 }
 
 async function saveApiKey(envVar: string, value: string): Promise<void> {
@@ -132,12 +162,12 @@ function startOAuth(provider: string): void {
 function IntegrationCard({
   integ,
   onUpdated,
-  relayWebhookBase,
+  gatewayWebhookBase,
   enableFeaturesBeta,
 }: {
   integ: Integration;
   onUpdated: () => void;
-  relayWebhookBase: string | null;
+  gatewayWebhookBase: string | null;
   enableFeaturesBeta: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -151,13 +181,19 @@ function IntegrationCard({
 
   const isOAuthProvider = OAUTH_PROVIDERS.has(integ.id);
   const isChildOAuth = !!integ.parent; // google-drive, gmail dependem de google
-  const allowToken = integ.kind === "apikey" || integ.kind === "hybrid";
+  // Todo provider (apikey/hybrid/oauth) aceita token manual — mesmo os
+  // OAuth-only ganham a opção de colar um token já emitido, sem precisar
+  // registrar um OAuth App próprio (mesmo raciocínio já usado pro GitHub).
+  const allowToken =
+    integ.kind === "apikey" ||
+    integ.kind === "hybrid" ||
+    integ.kind === "oauth";
   const hasWebhook = WEBHOOK_PROVIDERS.has(integ.id);
 
-  // URL de webhook — usa relay (*.vectora.chat) quando conectado,
+  // URL de webhook — usa o gateway (*.vectora.chat) quando conectado,
   // ou a origem do site em produção (self-hosted com domínio próprio).
-  const webhookUrl = relayWebhookBase
-    ? `${relayWebhookBase}/webhook/${integ.id}`
+  const webhookUrl = gatewayWebhookBase
+    ? `${gatewayWebhookBase}/webhook/${integ.id}`
     : typeof window !== "undefined"
       ? `${window.location.origin}/webhook/${integ.id}`
       : `/webhook/${integ.id}`;
@@ -307,6 +343,7 @@ function IntegrationCard({
               size="sm"
               className="h-7 w-7 p-0"
               onClick={() => setExpanded((v) => !v)}
+              title={m.integrations_paste_token()}
             >
               {expanded ? (
                 <ChevronUp className="w-3.5 h-3.5" />
@@ -331,7 +368,7 @@ function IntegrationCard({
         </div>
       )}
 
-      {/* Expansão para API key */}
+      {/* Expansão para API key / token manual */}
       {allowToken && expanded && (
         <div className="px-3 pb-3 space-y-2 border-t pt-3">
           <div className="flex gap-2">
@@ -456,6 +493,56 @@ function IntegrationCard({
 }
 
 // ---------------------------------------------------------------------------
+// Subcomponente: card de variável customizada (chave/valor livre)
+// ---------------------------------------------------------------------------
+
+function CustomVarCard({
+  varKey,
+  maskedValue,
+  onDeleted,
+}: {
+  varKey: string;
+  maskedValue: string;
+  onDeleted: () => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await removeApiKey(varKey);
+      onDeleted();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2.5">
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-mono font-medium truncate">{varKey}</div>
+        <div className="text-xs text-muted-foreground font-mono">
+          {maskedValue}
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
+        onClick={handleDelete}
+        disabled={deleting}
+      >
+        {deleting ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <Trash2 className="w-3.5 h-3.5" />
+        )}
+      </Button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Categorias
 // ---------------------------------------------------------------------------
 
@@ -481,26 +568,51 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
 export function IntegracoesTab() {
   const { enableFeaturesBeta } = useFeatureFlags();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [customEnvs, setCustomEnvs] = useState<Record<string, string>>({});
+  const [customKeys, setCustomKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [relay, setRelay] = useState<RelayStatus>(RELAY_STATUS_FALLBACK);
+  const [gateway, setGateway] = useState<GatewayStatus>(
+    GATEWAY_STATUS_FALLBACK,
+  );
 
-  const load = async () => {
+  const [addCustomOpen, setAddCustomOpen] = useState(false);
+  const [newCustomKey, setNewCustomKey] = useState("");
+  const [newCustomValue, setNewCustomValue] = useState("");
+  const [savingCustom, setSavingCustom] = useState(false);
+  const [customError, setCustomError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [data, relayStatus] = await Promise.all([
+      const [data, gatewayStatus, envsData] = await Promise.all([
         fetchIntegrations(),
-        fetchRelayStatus(),
+        fetchGatewayStatus(),
+        fetchEnvs(),
       ]);
       setIntegrations(data);
-      setRelay(relayStatus);
+      setGateway(gatewayStatus);
+
+      // Variáveis "órfãs": chaves em /auth/envs que não correspondem ao
+      // env_var (nem aliases/extra_vars) de nenhuma integração do catálogo —
+      // continuam visíveis, agora como seção "Customizadas".
+      const knownVars = new Set(
+        data.flatMap((i) => [
+          i.env_var,
+          ...(i.env_var_aliases ?? []),
+          ...(i.extra_vars ?? []),
+        ]),
+      );
+      const orphanKeys = (envsData.keys ?? []).filter((k) => !knownVars.has(k));
+      setCustomKeys(orphanKeys);
+      setCustomEnvs(envsData.envs ?? {});
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   // Detecta oauth_success/oauth_error na URL após callback OAuth
   useEffect(() => {
@@ -512,7 +624,24 @@ export function IntegracoesTab() {
       window.history.replaceState({}, "", url.toString());
       void load();
     }
-  }, []);
+  }, [load]);
+
+  const handleAddCustom = async () => {
+    if (!newCustomKey.trim() || !newCustomValue.trim()) return;
+    setSavingCustom(true);
+    setCustomError(null);
+    try {
+      await saveApiKey(newCustomKey.trim(), newCustomValue);
+      await load();
+      setAddCustomOpen(false);
+      setNewCustomKey("");
+      setNewCustomValue("");
+    } catch {
+      setCustomError(m.envs_error_save());
+    } finally {
+      setSavingCustom(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -528,30 +657,39 @@ export function IntegracoesTab() {
   return (
     <div className="space-y-4">
       {/* Sumário */}
-      <div className="space-y-0.5">
-        <p className="text-sm font-medium">
-          {connected > 0
-            ? `${connected} integração${connected > 1 ? "s" : ""} ativa${connected > 1 ? "s" : ""}`
-            : m.integrations_none_active()}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {m.integrations_keys_private()}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium">
+            {connected > 0
+              ? `${connected} integração${connected > 1 ? "s" : ""} ativa${connected > 1 ? "s" : ""}`
+              : m.integrations_none_active()}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {m.integrations_keys_private()}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => setAddCustomOpen(true)}
+        >
+          <Plus className="w-3.5 h-3.5 mr-1.5" />
+          {m.integrations_add_custom()}
+        </Button>
       </div>
 
-      {/* Banner relay — visível apenas quando OAuth/relay está habilitado.
-          3 estados distintos (não só conectado/desconectado): nunca
-          conectou (neutro, nada errado — normal antes da 1ª integração),
-          erro real (relay fora do ar/mal configurado, com detalhe), e
-          conectado. Antes, os dois primeiros mostravam a mesma mensagem
-          "Relay disconnected", sem o usuário conseguir saber se precisava
-          agir ou se era só o estado inicial esperado. */}
+      {/* Banner gateway — visível apenas quando OAuth/gateway está
+          habilitado. 3 estados distintos (não só conectado/desconectado):
+          nunca conectou (neutro, nada errado — normal antes da 1ª
+          integração), erro real (gateway fora do ar/mal configurado, com
+          detalhe), e conectado. */}
       {enableFeaturesBeta && (
         <div
           className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${
-            relay.state === "connected"
+            gateway.state === "connected"
               ? "border-green-500/30 bg-green-500/5"
-              : relay.state === "error"
+              : gateway.state === "error"
                 ? "border-destructive/30 bg-destructive/5"
                 : "border-border bg-muted/30"
           }`}
@@ -559,40 +697,40 @@ export function IntegracoesTab() {
           <div className="flex items-center justify-between">
             <p
               className={`font-medium ${
-                relay.state === "connected"
+                gateway.state === "connected"
                   ? "text-green-600 dark:text-green-400"
-                  : relay.state === "error"
+                  : gateway.state === "error"
                     ? "text-destructive"
                     : "text-muted-foreground"
               }`}
             >
-              {relay.state === "connected"
-                ? m.relay_connected()
-                : relay.state === "error"
-                  ? m.relay_error()
-                  : m.relay_never_connected()}
+              {gateway.state === "connected"
+                ? m.gateway_connected()
+                : gateway.state === "error"
+                  ? m.gateway_error()
+                  : m.gateway_never_connected()}
             </p>
-            {relay.subdomain && (
+            {gateway.subdomain && (
               <span className="font-mono text-[10px] text-muted-foreground">
-                {relay.subdomain}
+                {gateway.subdomain}
               </span>
             )}
           </div>
-          {relay.state === "connected" && relay.webhook_base && (
+          {gateway.state === "connected" && gateway.webhook_base && (
             <p className="text-muted-foreground">
-              {m.relay_webhook_hint()}{" "}
+              {m.gateway_webhook_hint()}{" "}
               <span className="font-mono">
-                {relay.webhook_base}/webhook/&#123;provider&#125;
+                {gateway.webhook_base}/webhook/&#123;provider&#125;
               </span>
             </p>
           )}
-          {relay.state === "error" && (
+          {gateway.state === "error" && (
             <p className="text-destructive/80">
-              {relay.detail ?? m.relay_error_retry()}
+              {gateway.detail ?? m.gateway_error_retry()}
             </p>
           )}
-          {relay.state === "never_connected" && (
-            <p className="text-muted-foreground">{m.relay_no_token()}</p>
+          {gateway.state === "never_connected" && (
+            <p className="text-muted-foreground">{m.gateway_no_token()}</p>
           )}
         </div>
       )}
@@ -611,13 +749,103 @@ export function IntegracoesTab() {
                 key={integ.id}
                 integ={integ}
                 onUpdated={load}
-                relayWebhookBase={relay.webhook_base}
+                gatewayWebhookBase={gateway.webhook_base}
                 enableFeaturesBeta={enableFeaturesBeta}
               />
             ))}
           </div>
         );
       })}
+
+      {/* Variáveis customizadas — chave/valor livre, sem entrada no catálogo */}
+      {customKeys.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {m.integrations_custom_section_title()}
+          </p>
+          {customKeys.map((key) => (
+            <CustomVarCard
+              key={key}
+              varKey={key}
+              maskedValue={customEnvs[key] ?? "••••••••"}
+              onDeleted={load}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Dialog — adicionar variável customizada */}
+      <Dialog
+        open={addCustomOpen}
+        onOpenChange={(open) => {
+          setAddCustomOpen(open);
+          if (!open) {
+            setNewCustomKey("");
+            setNewCustomValue("");
+            setCustomError(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{m.integrations_custom_title()}</DialogTitle>
+            <DialogDescription>
+              {m.integrations_custom_desc()}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                {m.envs_key_label()}
+              </label>
+              <Input
+                placeholder={m.envs_key_placeholder()}
+                value={newCustomKey}
+                onChange={(e) => setNewCustomKey(e.target.value)}
+                autoComplete="off"
+                className="text-sm font-mono"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                {m.envs_value_label()}
+              </label>
+              <Input
+                type="password"
+                autoComplete="new-password"
+                placeholder={m.envs_value_placeholder()}
+                value={newCustomValue}
+                onChange={(e) => setNewCustomValue(e.target.value)}
+                className="text-sm font-mono"
+              />
+            </div>
+            {customError && (
+              <p className="text-xs text-destructive">{customError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAddCustomOpen(false)}
+              disabled={savingCustom}
+            >
+              {m.envs_cancel()}
+            </Button>
+            <Button
+              onClick={handleAddCustom}
+              disabled={
+                savingCustom || !newCustomKey.trim() || !newCustomValue.trim()
+              }
+            >
+              {savingCustom && (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              )}
+              {m.envs_save()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
