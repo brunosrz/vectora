@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 
 import { useBackgroundTasks } from "../use-background-tasks";
+import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 
 interface Call {
   url: string;
@@ -29,7 +30,10 @@ function installFetch(handler: (url: string, init?: RequestInit) => Response) {
   return calls;
 }
 
-beforeEach(() => vi.restoreAllMocks());
+beforeEach(() => {
+  vi.restoreAllMocks();
+  useWorkbenchStore.setState({ tasks: {} });
+});
 afterEach(() => vi.unstubAllGlobals());
 
 const TASK = {
@@ -73,9 +77,10 @@ describe("useBackgroundTasks", () => {
     expect(fetch).toHaveBeenCalledWith("/sessions/thread-1/background/runs");
 
     // Erro/borda: backend devolve !ok → listas vazias, sem quebrar.
+    // thread-2 (não thread-1) evita colidir com o cache SWR já populado acima.
     vi.unstubAllGlobals();
     installFetch(() => jsonRes(null, false));
-    const { result: r2 } = renderHook(() => useBackgroundTasks("thread-1"));
+    const { result: r2 } = renderHook(() => useBackgroundTasks("thread-2"));
     await waitFor(() => expect(r2.current.loading).toBe(false));
     expect(r2.current.tasks).toEqual([]);
     expect(r2.current.runs).toEqual([]);
@@ -161,5 +166,36 @@ describe("useBackgroundTasks", () => {
           c.url === "/sessions/s/background/tasks/t1/run",
       ),
     ).toBe(true);
+  });
+
+  it("cache SWR: remontar dentro do TTL não refaz o fetch; invalidar dispara de novo", async () => {
+    const calls = installFetch((url) => {
+      if (url.endsWith("/tasks")) return jsonRes([TASK]);
+      if (url.endsWith("/runs")) return jsonRes([RUN]);
+      return jsonRes([]);
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useBackgroundTasks("cache-thread"),
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const fetchesAfterFirstMount = calls.length;
+    unmount();
+
+    // Remontar dentro do TTL (cache do store ainda válido) — sem novo fetch.
+    const { result: r2, unmount: unmount2 } = renderHook(() =>
+      useBackgroundTasks("cache-thread"),
+    );
+    expect(r2.current.loading).toBe(false);
+    expect(r2.current.tasks).toHaveLength(1);
+    expect(calls.length).toBe(fetchesAfterFirstMount);
+    unmount2();
+
+    // refetch() invalida o cache explicitamente — dispara fetch de novo.
+    const { result: r3 } = renderHook(() => useBackgroundTasks("cache-thread"));
+    await act(async () => {
+      await r3.current.refetch();
+    });
+    expect(calls.length).toBeGreaterThan(fetchesAfterFirstMount);
   });
 });

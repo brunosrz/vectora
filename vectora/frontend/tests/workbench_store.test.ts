@@ -29,6 +29,7 @@ function reset() {
     files: {},
     diff: {},
     plan: {},
+    tasks: {},
   });
 }
 
@@ -392,6 +393,65 @@ describe("workbench-store: plan slice", () => {
     setPlanItems("th", []);
     invalidatePlan("th");
     expect(useWorkbenchStore.getState().getPlan("th").fetchedAt).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tasks slice (Sprint 7 — cache real, era useState local em
+// use-background-tasks.ts)
+// ---------------------------------------------------------------------------
+
+describe("workbench-store: tasks slice", () => {
+  it("getTasks() devolve cache vazio estável", () => {
+    const a = useWorkbenchStore.getState().getTasks("th");
+    const b = useWorkbenchStore.getState().getTasks("th");
+    expect(a.tasks).toEqual([]);
+    expect(a.runs).toEqual([]);
+    expect(a.fetchedAt).toBe(0);
+    expect(a).toBe(b);
+  });
+
+  it("setTasksData() popula tasks/runs e marca fetchedAt", () => {
+    const before = Date.now();
+    useWorkbenchStore.getState().setTasksData(
+      "th",
+      [
+        {
+          id: "t1",
+          session_id: "th",
+          workspace_id: null,
+          kind: "routine",
+          name: "n",
+          instruction: "i",
+          trigger_type: "manual",
+          trigger_config: {},
+          enabled: true,
+          last_run_at: null,
+          next_run_at: null,
+        },
+      ],
+      [],
+    );
+    const cache = useWorkbenchStore.getState().getTasks("th");
+    expect(cache.tasks).toHaveLength(1);
+    expect(cache.fetchedAt).toBeGreaterThanOrEqual(before);
+  });
+
+  it("invalidateTasks(threadId) zera fetchedAt sem apagar tasks/runs", () => {
+    const { setTasksData, invalidateTasks } = useWorkbenchStore.getState();
+    setTasksData("th", [], []);
+    invalidateTasks("th");
+    const cache = useWorkbenchStore.getState().getTasks("th");
+    expect(cache.fetchedAt).toBe(0);
+    expect(cache.tasks).toEqual([]);
+  });
+
+  it("erro/borda: invalidateTasks() sem threadId zera o slice inteiro", () => {
+    const { setTasksData, invalidateTasks } = useWorkbenchStore.getState();
+    setTasksData("a", [], []);
+    setTasksData("b", [], []);
+    invalidateTasks();
+    expect(useWorkbenchStore.getState().tasks).toEqual({});
   });
 });
 

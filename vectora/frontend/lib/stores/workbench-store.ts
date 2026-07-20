@@ -161,6 +161,44 @@ export interface TodoItem {
   status: "pending" | "in_progress" | "completed";
 }
 
+// ── Tasks (background tasks/runs da sessão) ─────────────────────────────────
+// Cache real (era `useState` local em `use-background-tasks.ts`, perdido a
+// cada desmontagem — reabrir a aba Tarefas sempre refazia o fetch do zero,
+// mesmo sem nada ter mudado). Tipos duplicados estruturalmente (não
+// importados de `use-background-tasks.ts`) pra manter o store sem
+// dependência do hook — TS estrutural cobre a compatibilidade.
+
+export interface BackgroundTaskItem {
+  id: string;
+  session_id: string;
+  workspace_id: string | null;
+  kind: "routine" | "heartbreak" | "subagent";
+  name: string;
+  instruction: string;
+  trigger_type: "interval" | "webhook" | "manual" | "subagent";
+  trigger_config: Record<string, unknown>;
+  enabled: boolean;
+  last_run_at: string | null;
+  next_run_at: string | null;
+}
+
+export interface BackgroundRunItem {
+  id: string;
+  task_id: string;
+  run_thread_id: string | null;
+  trigger_source: string;
+  status: "running" | "done" | "error" | "awaiting_approval" | "cancelled";
+  summary: string | null;
+  started_at: string;
+  finished_at: string | null;
+}
+
+interface TasksCache {
+  tasks: BackgroundTaskItem[];
+  runs: BackgroundRunItem[];
+  fetchedAt: number;
+}
+
 // ---------------------------------------------------------------------------
 // Estado do store
 // ---------------------------------------------------------------------------
@@ -238,6 +276,16 @@ interface WorkbenchState {
   getTodos: (threadId: string) => TodoItem[];
   setTodos: (threadId: string, todos: TodoItem[]) => void;
 
+  // Tasks (background tasks/runs)
+  tasks: Record<string, TasksCache>;
+  getTasks: (threadId: string) => TasksCache;
+  setTasksData: (
+    threadId: string,
+    tasks: BackgroundTaskItem[],
+    runs: BackgroundRunItem[],
+  ) => void;
+  invalidateTasks: (threadId?: string) => void;
+
   // Pendência de atualização por aba (volátil). Marcada quando uma tool do
   // agente edita o workspace e a aba Files/Diff não está montada; limpa
   // quando a aba é aberta e revalida.
@@ -271,6 +319,7 @@ const EMPTY_PLAN: PlanCache = {
   fetchedAt: 0,
 };
 const EMPTY_TODOS: TodoItem[] = [];
+const EMPTY_TASKS: TasksCache = { tasks: [], runs: [], fetchedAt: 0 };
 
 // LRU simples: mantém só os últimos 8 conteúdos por workspace.
 function pruneContents(
@@ -431,6 +480,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         diff: {},
         plan: {},
         todos: {},
+        tasks: {},
 
         getFiles: (wsId) => get().files[wsId] ?? EMPTY_FILES,
         setFilesEntries: (wsId, path, entries) =>
@@ -591,6 +641,24 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         getTodos: (threadId) => get().todos[threadId] ?? EMPTY_TODOS,
         setTodos: (threadId, todos) =>
           set((s) => ({ todos: { ...s.todos, [threadId]: todos } })),
+
+        getTasks: (threadId) => get().tasks[threadId] ?? EMPTY_TASKS,
+        setTasksData: (threadId, tasks, runs) =>
+          set((s) => ({
+            tasks: {
+              ...s.tasks,
+              [threadId]: { tasks, runs, fetchedAt: Date.now() },
+            },
+          })),
+        invalidateTasks: (threadId) =>
+          set((s) => {
+            if (!threadId) return { tasks: {} };
+            const cur = s.tasks[threadId];
+            if (!cur) return s;
+            return {
+              tasks: { ...s.tasks, [threadId]: { ...cur, fetchedAt: 0 } },
+            };
+          }),
 
         markPending: (wsId) =>
           set((s) => ({

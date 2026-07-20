@@ -4,39 +4,26 @@
  * Hook das tarefas em segundo plano de uma session (rotina/heartbreak/webhook).
  *
  * CRUD + histórico de execuções, scoped por `threadId`. O backend é a fonte de
- * verdade (CLAUDE.md §8): toda mutação refaz o fetch. Atualizações ao vivo das
- * runs chegam via SSE de webhooks (`use-webhook-events`), tratadas pelo painel.
+ * verdade (CLAUDE.md §8): toda mutação refaz o fetch. Cache SWR no
+ * workbench-store (slice `tasks`) — reabrir a aba dentro do TTL não refaz o
+ * fetch; fora do TTL ou após uma mutação, revalida. Atualizações ao vivo das
+ * runs chegam via SSE de webhooks (`use-webhook-events`), tratadas pelo painel
+ * (que chama `refetch()` ao receber um evento `background_run.*`).
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import {
+  WORKBENCH_STALE_MS,
+  useWorkbenchStore,
+  type BackgroundTaskItem,
+  type BackgroundRunItem,
+} from "@/lib/stores/workbench-store";
 
-export type BackgroundKind = "routine" | "heartbreak" | "subagent";
-export type TriggerType = "interval" | "webhook" | "manual" | "subagent";
-
-export interface BackgroundTask {
-  id: string;
-  session_id: string;
-  workspace_id: string | null;
-  kind: BackgroundKind;
-  name: string;
-  instruction: string;
-  trigger_type: TriggerType;
-  trigger_config: Record<string, unknown>;
-  enabled: boolean;
-  last_run_at: string | null;
-  next_run_at: string | null;
-}
-
-export interface BackgroundRun {
-  id: string;
-  task_id: string;
-  run_thread_id: string | null;
-  trigger_source: string;
-  status: "running" | "done" | "error" | "awaiting_approval" | "cancelled";
-  summary: string | null;
-  started_at: string;
-  finished_at: string | null;
-}
+export type BackgroundKind = BackgroundTaskItem["kind"];
+export type TriggerType = BackgroundTaskItem["trigger_type"];
+export type BackgroundTask = BackgroundTaskItem;
+export type BackgroundRun = BackgroundRunItem;
 
 export interface CreateTaskInput {
   kind: BackgroundKind;
@@ -70,11 +57,11 @@ export function useBackgroundTasks(threadId: string): {
   deleteTask: (id: string) => Promise<void>;
   runTask: (id: string) => Promise<void>;
 } {
-  const [tasks, setTasks] = useState<BackgroundTask[]>([]);
-  const [runs, setRuns] = useState<BackgroundRun[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cache = useWorkbenchStore((s) => s.getTasks(threadId));
+  const setTasksData = useWorkbenchStore((s) => s.setTasksData);
+  const invalidateTasks = useWorkbenchStore((s) => s.invalidateTasks);
 
-  const refetch = useCallback(async () => {
+  const fetchAndStore = useCallback(async () => {
     const [t, r] = await Promise.all([
       fetch(`${base(threadId)}/tasks`).then((res) =>
         asJson<BackgroundTask[]>(res, []),
@@ -83,14 +70,20 @@ export function useBackgroundTasks(threadId: string): {
         asJson<BackgroundRun[]>(res, []),
       ),
     ]);
-    setTasks(t);
-    setRuns(r);
-    setLoading(false);
-  }, [threadId]);
+    setTasksData(threadId, t, r);
+  }, [threadId, setTasksData]);
 
-  useEffect(() => {
-    void refetch();
-  }, [refetch]);
+  useWorkbenchSWR({
+    key: `tasks:${threadId}`,
+    hasCache: cache.fetchedAt > 0,
+    isStale: Date.now() - cache.fetchedAt > WORKBENCH_STALE_MS,
+    revalidate: fetchAndStore,
+  });
+
+  const refetch = useCallback(async () => {
+    invalidateTasks(threadId);
+    await fetchAndStore();
+  }, [threadId, invalidateTasks, fetchAndStore]);
 
   const createTask = useCallback(
     async (input: CreateTaskInput): Promise<boolean> => {
@@ -140,9 +133,9 @@ export function useBackgroundTasks(threadId: string): {
   );
 
   return {
-    tasks,
-    runs,
-    loading,
+    tasks: cache.tasks,
+    runs: cache.runs,
+    loading: cache.fetchedAt === 0,
     refetch,
     createTask,
     toggleTask,
