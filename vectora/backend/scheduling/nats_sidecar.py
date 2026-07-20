@@ -32,14 +32,19 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import logging
 import os
 import shutil
+import signal
 import socket
+import subprocess  # nosec B404 — só mata/consulta um PID já conhecido nosso, sem shell
 import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+_PID_FILE_NAME = "sidecar.pid"
 
 _proc: asyncio.subprocess.Process | None = None
 _url: str | None = None
@@ -145,6 +150,19 @@ async def ensure_nats_sidecar() -> str | None:
 
         store_dir = Path.home() / ".vectora" / "nats"
         store_dir.mkdir(parents=True, exist_ok=True)
+
+        # Órfão de uma sessão anterior que morreu sem passar pelo shutdown
+        # gracioso (kill forçado, crash, terminal fechado) — sem isso, cada
+        # novo processo Python spawna um nats-server novo sem saber dos
+        # anteriores, e eles se acumulam indefinidamente.
+        stale_pid = _read_stale_pid(store_dir)
+        if stale_pid is not None and _pid_is_alive(stale_pid):
+            logger.info(
+                "nats_sidecar: matando sidecar órfão de sessão anterior (pid=%s)",
+                stale_pid,
+            )
+            _kill_pid(stale_pid)
+
         port = _free_port()
 
         try:
@@ -169,6 +187,7 @@ async def ensure_nats_sidecar() -> str | None:
 
         _proc = proc
         _url = f"nats://127.0.0.1:{port}"
+        _write_pid_file(store_dir, proc.pid)
         logger.info("nats_sidecar: pronto em %s (store=%s)", _url, store_dir)
         return _url
 
@@ -191,6 +210,86 @@ async def _wait_ready(proc: asyncio.subprocess.Process) -> bool:
         return False
 
 
+def _pid_file_path(store_dir: Path) -> Path:
+    return store_dir / _PID_FILE_NAME
+
+
+def _write_pid_file(store_dir: Path, pid: int) -> None:
+    with contextlib.suppress(Exception):
+        _pid_file_path(store_dir).write_text(json.dumps({"pid": pid}), encoding="utf-8")
+
+
+def _read_stale_pid(store_dir: Path) -> int | None:
+    path = _pid_file_path(store_dir)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return int(data["pid"])
+    except Exception:
+        return None
+
+
+def _clear_pid_file(store_dir: Path) -> None:
+    with contextlib.suppress(FileNotFoundError):
+        _pid_file_path(store_dir).unlink()
+
+
+def _pid_is_alive_posix(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True  # existe, só não temos permissão de sinalizar
+    except OSError:
+        return False
+    return True
+
+
+def _pid_is_alive_win32(pid: int) -> bool:
+    tasklist = shutil.which("tasklist")
+    if tasklist is None:
+        return False
+    try:
+        out = subprocess.run(  # noqa: S603  # nosec B603
+            [tasklist, "/NH", "/FI", f"PID eq {pid}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except Exception:
+        return False
+    return str(pid) in out.stdout
+
+
+def _pid_is_alive(pid: int) -> bool:
+    """Checa se um PID de uma sessão anterior ainda está vivo — cross-processo,
+    não usa nenhum handle do asyncio (o `Process` só existe pra quem spawnou)."""
+    if sys.platform == "win32":
+        return _pid_is_alive_win32(pid)
+    return _pid_is_alive_posix(pid)
+
+
+def _kill_pid(pid: int) -> None:
+    """Mata um sidecar órfão de sessão anterior — best-effort, nunca lança."""
+    if sys.platform == "win32":
+        taskkill = shutil.which("taskkill")
+        if taskkill is None:
+            return
+        with contextlib.suppress(Exception):
+            subprocess.run(  # noqa: S603  # nosec B603
+                [taskkill, "/F", "/PID", str(pid)],
+                capture_output=True,
+                timeout=5,
+                check=False,
+            )
+    else:
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.kill(pid, signal.SIGKILL)
+
+
 def with_kill(proc: asyncio.subprocess.Process) -> None:
     """Mata um processo que falhou o handshake de prontidão — best-effort."""
     with contextlib.suppress(Exception):
@@ -206,6 +305,9 @@ async def stop_nats_sidecar() -> None:
     # sem isso o lock ficaria preso ao loop do teste anterior e o próximo
     # `_get_spawn_lock()` levantaria "Lock is bound to a different event loop".
     _spawn_lock = None
+
+    store_dir = Path.home() / ".vectora" / "nats"
+    _clear_pid_file(store_dir)
 
     if _proc is None:
         return

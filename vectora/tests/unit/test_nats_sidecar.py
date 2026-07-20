@@ -17,7 +17,16 @@ from backend.scheduling import nats_sidecar
 
 
 @pytest.fixture(autouse=True)
-def _reset_sidecar_state():
+def _reset_sidecar_state(tmp_path, monkeypatch):
+    # `Path.home()` isolado por padrão em TODO teste deste arquivo — sem
+    # isso, qualquer teste que não pense em PID file acaba lendo/escrevendo
+    # o ~/.vectora/nats real do dev (um pid file real deixado por uma
+    # execução anterior faria `ensure_nats_sidecar()` chamar `_pid_is_alive`
+    # contra um PID de verdade, tornando o teste dependente do disco do
+    # host). Testes de `TestOrphanPidFile` pedem `tmp_path` de novo — é a
+    # MESMA instância (cache por teste do pytest), então ficam coerentes.
+    monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
+
     nats_sidecar._proc = None
     nats_sidecar._url = None
     yield
@@ -177,3 +186,111 @@ async def test_stop_nats_sidecar_terminates_and_clears_state():
 async def test_stop_nats_sidecar_without_running_process_is_noop():
     await nats_sidecar.stop_nats_sidecar()
     assert nats_sidecar._proc is None
+
+
+class TestOrphanPidFile:
+    """D3 tinha um bug real: cada novo processo Python (nova sessão `vectora
+    start`, ou pytest rodado de novo) não sabe de sidecars órfãos deixados por
+    uma sessão anterior que morreu sem passar pelo shutdown gracioso (kill
+    forçado, crash, fechar o terminal) — resultado observado em produção:
+    dezenas de `nats-server.exe` acumulados. Um PID file cross-processo
+    resolve: antes de spawnar, mata qualquer órfão vivo registrado."""
+
+    def test_pid_file_path_fica_dentro_do_store_dir(self, tmp_path):
+        assert nats_sidecar._pid_file_path(tmp_path) == tmp_path / "sidecar.pid"
+
+    def test_write_e_read_pid_file_roundtrip(self, tmp_path):
+        nats_sidecar._write_pid_file(tmp_path, 4242)
+        assert nats_sidecar._read_stale_pid(tmp_path) == 4242
+
+    def test_read_stale_pid_sem_arquivo_retorna_none(self, tmp_path):
+        assert nats_sidecar._read_stale_pid(tmp_path) is None
+
+    def test_read_stale_pid_arquivo_corrompido_retorna_none(self, tmp_path):
+        # Erro/borda: JSON inválido ou campo ausente nunca derruba o caller —
+        # degrada pra "nenhum pid conhecido" (fail-safe, não fail-open pra
+        # matar processo errado).
+        (tmp_path / "sidecar.pid").write_text("{nao e json valido", encoding="utf-8")
+        assert nats_sidecar._read_stale_pid(tmp_path) is None
+
+    def test_clear_pid_file_remove_e_e_idempotente(self, tmp_path):
+        nats_sidecar._write_pid_file(tmp_path, 4242)
+        nats_sidecar._clear_pid_file(tmp_path)
+        assert not (tmp_path / "sidecar.pid").is_file()
+        nats_sidecar._clear_pid_file(tmp_path)  # segunda chamada não lança
+
+    @pytest.mark.asyncio
+    async def test_ensure_nats_sidecar_mata_orfao_registrado_antes_de_spawnar(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
+        store_dir = tmp_path / ".vectora" / "nats"
+        store_dir.mkdir(parents=True)
+        nats_sidecar._write_pid_file(store_dir, 9999)
+
+        fake_proc = _fake_ready_proc()
+        fake_proc.pid = 12345
+        kill_mock = MagicMock()
+
+        with (
+            patch.object(
+                nats_sidecar, "_resolve_binary", return_value="/usr/bin/nats-server"
+            ),
+            patch.object(nats_sidecar, "_pid_is_alive", return_value=True),
+            patch.object(nats_sidecar, "_kill_pid", kill_mock),
+            patch(
+                "asyncio.create_subprocess_exec", new=AsyncMock(return_value=fake_proc)
+            ),
+        ):
+            url = await nats_sidecar.ensure_nats_sidecar()
+
+        kill_mock.assert_called_once_with(9999)
+        assert url is not None
+        # Órfão morto e substituído — o pid file agora aponta pro processo novo.
+        assert nats_sidecar._read_stale_pid(store_dir) == 12345
+
+    @pytest.mark.asyncio
+    async def test_ensure_nats_sidecar_ignora_pid_morto_sem_tentar_matar(
+        self, tmp_path, monkeypatch
+    ):
+        # Par de erro/borda: pid file existe mas o processo já morreu sozinho
+        # (ex.: crash) — não deve chamar kill à toa, só limpar e seguir.
+        monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
+        store_dir = tmp_path / ".vectora" / "nats"
+        store_dir.mkdir(parents=True)
+        nats_sidecar._write_pid_file(store_dir, 9999)
+
+        fake_proc = _fake_ready_proc()
+        fake_proc.pid = 12345
+        kill_mock = MagicMock()
+
+        with (
+            patch.object(
+                nats_sidecar, "_resolve_binary", return_value="/usr/bin/nats-server"
+            ),
+            patch.object(nats_sidecar, "_pid_is_alive", return_value=False),
+            patch.object(nats_sidecar, "_kill_pid", kill_mock),
+            patch(
+                "asyncio.create_subprocess_exec", new=AsyncMock(return_value=fake_proc)
+            ),
+        ):
+            await nats_sidecar.ensure_nats_sidecar()
+
+        kill_mock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_stop_nats_sidecar_limpa_o_pid_file(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
+        store_dir = tmp_path / ".vectora" / "nats"
+        store_dir.mkdir(parents=True)
+        nats_sidecar._write_pid_file(store_dir, 4242)
+
+        fake_proc = MagicMock()
+        fake_proc.terminate = MagicMock()
+        fake_proc.wait = AsyncMock(return_value=None)
+        nats_sidecar._proc = fake_proc
+        nats_sidecar._url = "nats://127.0.0.1:4222"
+
+        await nats_sidecar.stop_nats_sidecar()
+
+        assert nats_sidecar._read_stale_pid(store_dir) is None
