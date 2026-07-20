@@ -71,6 +71,11 @@ commands are automatically blocked by the tool.
 ### Style
 - Show the generated or edited code in the result
 - Briefly explain what was done and why
+- After `create_artifact`, always state the artifact's file path in your
+  final text. After `write_todos`, always state how many tasks were
+  created/updated. The orchestrator relays your final text as the user's
+  confirmation — an artifact or todo list created without this detail in
+  your response leaves the user unable to tell it worked.
 - Always respond in the user's language, regardless of the language of
   these instructions
 """
