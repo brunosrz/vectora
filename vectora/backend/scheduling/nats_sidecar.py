@@ -42,12 +42,15 @@ import subprocess  # nosec B404 — só mata/consulta um PID já conhecido nosso
 import sys
 from pathlib import Path
 
+from backend.services.subprocess_logging import pipe_to_logger
+
 logger = logging.getLogger(__name__)
 
 _PID_FILE_NAME = "sidecar.pid"
 
 _proc: asyncio.subprocess.Process | None = None
 _url: str | None = None
+_log_task: asyncio.Task | None = None
 # Criado sob demanda (não no import) — um asyncio.Lock() de módulo, criado
 # antes de qualquer event loop rodar, fica "preso" ao primeiro loop que o
 # tocar; um segundo teste/processo com event loop novo (comum na suíte
@@ -135,7 +138,7 @@ async def ensure_nats_sidecar() -> str | None:
     passariam pelo check ``_proc is None`` antes de qualquer uma setar
     ``_proc``, subindo dois ``nats-server`` em portas diferentes.
     """
-    global _proc, _url
+    global _proc, _url, _log_task
 
     async with _get_spawn_lock():
         if _proc is not None and _proc.returncode is None:
@@ -186,6 +189,9 @@ async def ensure_nats_sidecar() -> str | None:
             return None
 
         _proc = proc
+        _log_task = asyncio.create_task(
+            pipe_to_logger(proc.stdout, logger, prefix="nats")
+        )
         _url = f"nats://127.0.0.1:{port}"
         _write_pid_file(store_dir, proc.pid)
         logger.info("nats_sidecar: pronto em %s (store=%s)", _url, store_dir)
@@ -298,13 +304,17 @@ def with_kill(proc: asyncio.subprocess.Process) -> None:
 
 async def stop_nats_sidecar() -> None:
     """Encerra o sidecar, se estiver rodando. Idempotente."""
-    global _proc, _url, _spawn_lock
+    global _proc, _url, _spawn_lock, _log_task
 
     # Solta a referência ao lock também quando não há processo rodando —
     # entre testes (cada um com seu próprio event loop via pytest-asyncio),
     # sem isso o lock ficaria preso ao loop do teste anterior e o próximo
     # `_get_spawn_lock()` levantaria "Lock is bound to a different event loop".
     _spawn_lock = None
+
+    if _log_task is not None:
+        _log_task.cancel()
+        _log_task = None
 
     store_dir = Path.home() / ".vectora" / "nats"
     _clear_pid_file(store_dir)

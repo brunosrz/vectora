@@ -10,6 +10,7 @@ backend segue de pé sem janela.
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -21,9 +22,11 @@ from backend.services import electron_sidecar
 def _reset_sidecar_state():
     electron_sidecar._proc = None
     electron_sidecar._spawn_lock = None
+    electron_sidecar._log_task = None
     yield
     electron_sidecar._proc = None
     electron_sidecar._spawn_lock = None
+    electron_sidecar._log_task = None
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +99,7 @@ async def test_ensure_electron_sidecar_spawna_e_guarda_o_processo():
     fake_proc = MagicMock()
     fake_proc.pid = 4242
     fake_proc.returncode = None
+    fake_proc.stdout = None  # sem stream real — pipe_to_logger vira no-op
 
     with (
         patch(
@@ -115,6 +119,11 @@ async def test_ensure_electron_sidecar_spawna_e_guarda_o_processo():
     call_args, call_kwargs = spawn_mock.call_args
     assert call_args == ("electron.exe", "main.js")
     assert call_kwargs["env"]["VECTORA_EXTERNAL_BACKEND"] == "1"
+    assert call_kwargs["stdout"] == asyncio.subprocess.PIPE
+    assert call_kwargs["stderr"] == asyncio.subprocess.STDOUT
+    # dá um tick pro _log_task (pipe_to_logger com stdout=None) rodar e
+    # retornar de imediato, sem deixar task/warning pendurado.
+    await asyncio.sleep(0)
 
 
 @pytest.mark.asyncio

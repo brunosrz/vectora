@@ -29,9 +29,13 @@ def _reset_sidecar_state(tmp_path, monkeypatch):
 
     nats_sidecar._proc = None
     nats_sidecar._url = None
+    nats_sidecar._log_task = None
     yield
+    if nats_sidecar._log_task is not None:
+        nats_sidecar._log_task.cancel()
     nats_sidecar._proc = None
     nats_sidecar._url = None
+    nats_sidecar._log_task = None
 
 
 @pytest.mark.asyncio
@@ -106,7 +110,10 @@ def test_resolve_binary_usa_nuitka_compiled_containing_dir(tmp_path, monkeypatch
 
 def _fake_ready_proc(ready_line: bytes = b"Server is ready\n") -> MagicMock:
     proc = MagicMock()
-    proc.stdout.readline = AsyncMock(return_value=ready_line)
+    # Depois da linha de "ready", EOF — sem isso a task de background
+    # `pipe_to_logger` (criada após o handshake) ficaria lendo a mesma
+    # linha pra sempre, um loop infinito consumindo CPU no teste.
+    proc.stdout.readline = AsyncMock(side_effect=[ready_line, b""])
     proc.returncode = None
     proc.kill = MagicMock()
     return proc

@@ -2864,7 +2864,10 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
 import asyncio as _asyncio
 import time as _time
 
+from backend.services.subprocess_logging import pipe_to_logger
+
 _preview_procs: dict[str, _asyncio.subprocess.Process] = {}
+_preview_log_tasks: dict[str, _asyncio.Task] = {}
 
 
 def _preview_key(workspace_id: str, name: str) -> str:
@@ -2898,6 +2901,30 @@ async def _wait_port_open(
             return True
         await _asyncio.sleep(interval)
     return await _is_port_open(host, port)
+
+
+async def _wait_port_open_or_exit(
+    proc: _asyncio.subprocess.Process,
+    host: str,
+    port: int,
+    *,
+    total_timeout: float = 15.0,
+    interval: float = 0.5,
+) -> tuple[bool, int | None]:
+    """Como `_wait_port_open`, mas encerra cedo se o processo morrer —
+    evita gastar os `total_timeout` segundos inteiros fazendo polling numa
+    porta que já sabemos que nunca vai abrir. Retorna
+    ``(porta_aberta, exit_code)`` — `exit_code` é `None` enquanto vivo."""
+    deadline = _time.monotonic() + total_timeout
+    while _time.monotonic() < deadline:
+        if proc.returncode is not None:
+            return False, proc.returncode
+        if await _is_port_open(host, port):
+            return True, None
+        await _asyncio.sleep(interval)
+    if proc.returncode is not None:
+        return False, proc.returncode
+    return await _is_port_open(host, port), None
 
 
 def _launch_json_path(workspace_id: str) -> Path | None:
@@ -3033,21 +3060,32 @@ async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusR
             *cmd,
             cwd=ws.cwd,
             env=env,
-            stdout=_asyncio.subprocess.DEVNULL,
-            stderr=_asyncio.subprocess.DEVNULL,
+            stdout=_asyncio.subprocess.PIPE,
+            stderr=_asyncio.subprocess.STDOUT,
         )
         _preview_procs[key] = proc
-        port_ready = await _wait_port_open("127.0.0.1", cfg.port)
-        if not port_ready:
-            return StatusResponse(
-                status="pending",
-                message=(
-                    f"processo iniciado na porta {cfg.port}, ainda compilando/subindo"
-                ),
+        _preview_log_tasks[key] = _asyncio.create_task(
+            pipe_to_logger(proc.stdout, logger, prefix=f"preview:{cfg.name}")
+        )
+        port_ready, exit_code = await _wait_port_open_or_exit(
+            proc, "127.0.0.1", cfg.port
+        )
+        if exit_code is not None:
+            status, message = (
+                "error",
+                f"processo encerrou com código {exit_code} antes de abrir "
+                f"a porta {cfg.port} — ver saída no terminal do Vectora",
             )
-        return StatusResponse(status="ok", message=f"pronto na porta {cfg.port}")
+        elif not port_ready:
+            status, message = (
+                "pending",
+                f"processo iniciado na porta {cfg.port}, ainda compilando/subindo",
+            )
+        else:
+            status, message = "ok", f"pronto na porta {cfg.port}"
     except Exception as exc:
-        return StatusResponse(status="error", message=str(exc))
+        status, message = "error", str(exc)
+    return StatusResponse(status=status, message=message)
 
 
 @view_router.post("/{workspace_id}/preview/stop", response_model=StatusResponse)
@@ -3062,6 +3100,9 @@ async def preview_stop(workspace_id: str, body: PreviewStopRequest) -> StatusRes
 
     key = _preview_key(workspace_id, cfg.name)
     proc = _preview_procs.pop(key, None)
+    log_task = _preview_log_tasks.pop(key, None)
+    if log_task is not None:
+        log_task.cancel()
     if proc is None or proc.returncode is not None:
         return StatusResponse(status="ok", message="não estava em execução")
 

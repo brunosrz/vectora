@@ -14,7 +14,11 @@ import socket
 
 import pytest
 
-from backend.api.handlers.workspaces import _is_port_open, _wait_port_open
+from backend.api.handlers.workspaces import (
+    _is_port_open,
+    _wait_port_open,
+    _wait_port_open_or_exit,
+)
 
 
 def _free_port() -> int:
@@ -71,6 +75,50 @@ async def test_wait_port_open_times_out_when_nothing_listens():
 
 
 # ---------------------------------------------------------------------------
+# _wait_port_open_or_exit: encerra cedo se o processo morrer, sem esperar
+# o timeout inteiro fazendo polling numa porta que nunca vai abrir.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_wait_port_open_or_exit_returns_open_true_when_port_opens():
+    from unittest.mock import MagicMock
+
+    port = _free_port()
+    proc = MagicMock(returncode=None)
+    server = await asyncio.start_server(lambda r, w: None, "127.0.0.1", port)
+    try:
+        opened, exit_code = await _wait_port_open_or_exit(
+            proc, "127.0.0.1", port, total_timeout=3.0, interval=0.1
+        )
+        assert opened is True
+        assert exit_code is None
+    finally:
+        server.close()
+        await server.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_wait_port_open_or_exit_returns_early_when_process_dies():
+    from unittest.mock import MagicMock
+
+    port = _free_port()  # nada escutando aqui de propósito
+    proc = MagicMock(returncode=1)  # já morto desde o início
+
+    start = asyncio.get_event_loop().time()
+    opened, exit_code = await _wait_port_open_or_exit(
+        proc, "127.0.0.1", port, total_timeout=15.0, interval=0.1
+    )
+    elapsed = asyncio.get_event_loop().time() - start
+
+    assert opened is False
+    assert exit_code == 1
+    # Erro/borda: não pode gastar o total_timeout inteiro (15s) só porque
+    # o processo já tinha morrido — retorna quase na hora.
+    assert elapsed < 1.0
+
+
+# ---------------------------------------------------------------------------
 # preview_status: running só quando processo vivo E porta aberta
 # ---------------------------------------------------------------------------
 
@@ -114,3 +162,62 @@ class TestPreviewStatus:
 
         assert result.servers[0].running is True
         assert result.servers[0].pid == 123
+
+
+# ---------------------------------------------------------------------------
+# preview_start: erro cedo quando o processo morre antes da porta abrir —
+# bug reproduzido ao vivo: "Full Stack (Turbo)" (bun run dev) travava
+# girando pra sempre com status="pending", sem nenhum log de erro.
+# ---------------------------------------------------------------------------
+
+
+class TestPreviewStart:
+    @pytest.mark.asyncio
+    async def test_returns_error_early_when_process_dies_before_port_opens(
+        self, monkeypatch
+    ):
+        from unittest.mock import AsyncMock, MagicMock
+
+        import backend.api.handlers.workspaces as ws_mod
+        import backend.workspace.workspace as workspace_mod
+        from backend.vtypes import Workspace
+
+        ws = Workspace(
+            id="ws1",
+            name="ws1",
+            cwd="/tmp/ws1",
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+        )
+
+        cfg_entry = MagicMock(
+            port=59999, runtimeExecutable="false", runtimeArgs=[], env={}
+        )
+        cfg_entry.name = "web"
+        launch_cfg = MagicMock()
+        launch_cfg.configurations = [cfg_entry]
+
+        proc = MagicMock()
+        proc.returncode = 1  # já morto assim que spawnou
+        proc.stdout = None
+
+        monkeypatch.setattr(
+            workspace_mod.workspace_registry,
+            "get",
+            lambda wid: ws if wid == "ws1" else None,
+        )
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=launch_cfg)
+        )
+        monkeypatch.setattr(ws_mod, "_preview_procs", {})
+        monkeypatch.setattr(ws_mod, "_preview_log_tasks", {})
+        monkeypatch.setattr(
+            ws_mod._asyncio, "create_subprocess_exec", AsyncMock(return_value=proc)
+        )
+
+        result = await ws_mod.preview_start(
+            "ws1", ws_mod.PreviewStartRequest(name="web")
+        )
+
+        assert result.status == "error"
+        assert "1" in (result.message or "")

@@ -21,11 +21,13 @@ import logging
 import os
 
 from backend.services.electron_launcher import resolve_electron_launch
+from backend.services.subprocess_logging import pipe_to_logger
 from backend.services.tray import has_display
 
 logger = logging.getLogger(__name__)
 
 _proc: asyncio.subprocess.Process | None = None
+_log_task: asyncio.Task | None = None
 _spawn_lock: asyncio.Lock | None = None
 
 
@@ -65,7 +67,7 @@ async def ensure_electron_sidecar() -> asyncio.subprocess.Process | None:
     próprio processo — nunca lança, retorna ``None`` em qualquer falha (o
     backend segue de pé sem janela).
     """
-    global _proc
+    global _proc, _log_task
 
     async with _get_spawn_lock():
         if _proc is not None and _proc.returncode is None:
@@ -78,21 +80,34 @@ async def ensure_electron_sidecar() -> asyncio.subprocess.Process | None:
 
         env = {**os.environ, "VECTORA_EXTERNAL_BACKEND": "1"}
         try:
-            proc = await asyncio.create_subprocess_exec(exe, *exe_args, env=env)
+            proc = await asyncio.create_subprocess_exec(
+                exe,
+                *exe_args,
+                env=env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
         except Exception:
             logger.exception("electron_sidecar: falha ao spawnar Electron (dev)")
             return None
 
         logger.info("electron_sidecar: Electron (dev) spawnado, pid=%d", proc.pid)
         _proc = proc
+        _log_task = asyncio.create_task(
+            pipe_to_logger(proc.stdout, logger, prefix="electron")
+        )
         return proc
 
 
 async def stop_electron_sidecar() -> None:
     """Encerra o sidecar Electron, se estiver rodando. Idempotente."""
-    global _proc, _spawn_lock
+    global _proc, _spawn_lock, _log_task
 
     _spawn_lock = None  # mesmo motivo do nats_sidecar: solta o lock preso ao loop
+
+    if _log_task is not None:
+        _log_task.cancel()
+        _log_task = None
 
     if _proc is None:
         return
