@@ -37,7 +37,13 @@ if TYPE_CHECKING:
 
 #: Tools destrutivas candidatas a pausar o grafo para aprovação.
 _REQUIRE_APPROVAL: frozenset[str] = frozenset(
-    {"terminal", "terminal_tool", "file_write", "file_write_tool"}
+    {
+        "terminal",
+        "terminal_tool",
+        "file_write",
+        "file_write_tool",
+        "install_learned_skill",
+    }
 )
 
 #: Tools auto-aprovadas no modo "accept_edits" (edições de arquivo passam sem

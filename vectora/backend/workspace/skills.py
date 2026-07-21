@@ -266,6 +266,50 @@ def install_skill(user_id: str, source: str) -> Skill:
     return skill
 
 
+def install_skill_from_content(
+    user_id: str, name: str, description: str, content: str
+) -> Skill:
+    """Instala uma skill a partir de conteúdo gerado em memória (learning
+    loop — Sprint Remember), sem passar por git/cópia de path.
+
+    Monta o ``SKILL.md`` (frontmatter + ``content``) direto no destino.
+    Mesma regra de slug/duplicidade de ``install_skill``: já existe com o
+    mesmo slug → rejeitado (remova antes de reinstalar)."""
+    name = name.strip()
+    description = description.strip()
+    if not name:
+        raise ValueError("name vazio.")
+    if not description:
+        raise ValueError("description vazio.")
+
+    base = _skills_dir(user_id)
+    skill_id = _slugify(name)
+    target = base / skill_id
+    if target.exists():
+        raise ValueError(
+            f"Skill '{skill_id}' já instalada — remova antes de reinstalar."
+        )
+
+    target.mkdir(parents=True)
+    skill_md = f'---\nname: "{name}"\ndescription: "{description}"\n---\n\n{content}\n'
+    (target / "SKILL.md").write_text(skill_md, encoding="utf-8")
+
+    skill = Skill(
+        id=skill_id,
+        name=name,
+        description=description,
+        source="learning-loop",
+        path=str(target),
+        installed_at=datetime.now(UTC).isoformat(),
+        installed_by=user_id,
+    )
+    skills = [s for s in _load_index(user_id) if s.id != skill_id]
+    skills.append(skill)
+    _save_index(user_id, skills)
+    _bump_version(user_id)
+    return skill
+
+
 def remove_skill(user_id: str, skill_id: str) -> bool:
     """Remove uma skill instalada. Retorna True se existia."""
     skills = _load_index(user_id)

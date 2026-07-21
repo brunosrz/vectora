@@ -96,6 +96,13 @@ def test_tool_nao_destrutiva_nunca_interrompe():
     assert _dynamic_hitl_when(_req("web_search", "ask")) is False
 
 
+def test_install_learned_skill_pausa_como_terminal_file_write():
+    # Remember: gravar skill aprendida exige a mesma aprovação HITL de
+    # terminal/file_write — nunca persiste silenciosamente.
+    assert _dynamic_hitl_when(_req("install_learned_skill", "ask")) is True
+    assert _dynamic_hitl_when(_req("install_learned_skill", "auto")) is False
+
+
 # ── _plan_mode_should_interrupt isolado (reuso pelo modo plan) ───────────────
 
 

@@ -82,6 +82,7 @@ from backend.tools.git import (
 )
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
+from backend.tools.learning import install_learned_skill, learn_from_session
 from backend.tools.linear import (
     linear_create_issue,
     linear_list_issues,
@@ -154,8 +155,15 @@ BROWSER_TOOLS: list[BaseTool] = [
     preview_logs,
 ]
 
-#: Ferramentas de memória (C4: search_memory adicionado)
-MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory, search_memory]
+#: Ferramentas de memória (C4: search_memory adicionado; Remember: learning loop)
+MEMORY_TOOLS: list[BaseTool] = [
+    save_memory,
+    get_memory,
+    delete_memory,
+    search_memory,
+    learn_from_session,
+    install_learned_skill,
+]
 
 #: Ferramentas de workspace e manifests (B6)
 WORKSPACE_TOOLS: list[BaseTool] = [
@@ -257,6 +265,8 @@ for _t in [
     get_memory,
     delete_memory,
     search_memory,
+    learn_from_session,
+    install_learned_skill,
     workspace_describe,
     workspace_list,
     bucket_summary,
