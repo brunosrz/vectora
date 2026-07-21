@@ -20,6 +20,7 @@ from backend.tools.background import (
     get_task_result,
     get_task_status,
     list_background_tasks,
+    schedule_task,
 )
 from backend.tools.browser import (
     browser_click,
@@ -163,6 +164,7 @@ WORKSPACE_TOOLS: list[BaseTool] = [
     bucket_summary,
     get_workbench_context,
     create_background_task,
+    schedule_task,
     list_background_tasks,
     get_task_status,
     get_task_result,
@@ -260,6 +262,7 @@ for _t in [
     bucket_summary,
     get_workbench_context,
     create_background_task,
+    schedule_task,
     list_background_tasks,
     get_task_status,
     get_task_result,

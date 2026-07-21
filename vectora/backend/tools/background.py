@@ -15,6 +15,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
 from backend.scheduling import background_tasks
+from backend.scheduling.nl_schedule import parse_natural_schedule
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,86 @@ async def create_background_task(
         return json.dumps({"status": "error", "error": str(e)})
     except Exception as e:
         logger.exception("create_background_task: erro inesperado")
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@tool(
+    extras={
+        "invalidates": ["tasks"],
+        "destructive": False,
+        "category": "workspace",
+        "icon": "calendar-clock",
+    }
+)
+async def schedule_task(
+    name: str,
+    instruction: str,
+    when: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Agenda uma tarefa recorrente a partir de uma descrição em linguagem
+    natural do horário (ex.: "todo dia às 9h", "toda sexta-feira às 18h",
+    "a cada 2 horas") — não exige que você (o agente) escreva a expressão
+    cron manualmente.
+
+    Só reconhece padrões recorrentes comuns em pt-BR. Se `when` não casar
+    com nenhum padrão (ambíguo, vago, ou pedido de execução única tipo
+    "daqui 2 horas" — não expressável como recorrência), retorna erro
+    pedindo pra reformular em vez de adivinhar um horário errado.
+
+    Args:
+        name: Nome curto da tarefa (ex: "Resumo diário de commits")
+        instruction: Instrução completa que o agente executará quando disparar
+        when: Horário em linguagem natural (ex: "todo dia às 9h")
+
+    Returns:
+        JSON com `status`, e em caso de sucesso `task_id` + `next_run_at`
+        (a próxima execução calculada — confirme com o usuário antes de
+        considerar o agendamento definitivo).
+    """
+    cron_expr = parse_natural_schedule(when)
+    if cron_expr is None:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": (
+                    f"Não entendi o horário '{when}'. Tente algo como "
+                    "'todo dia às 9h', 'toda segunda às 14h' ou 'a cada 2 horas'."
+                ),
+            }
+        )
+
+    try:
+        configurable = (config or {}).get("configurable") or {}
+        session_id = configurable.get("thread_id", "")
+        user_id = configurable.get("user_id", "")
+        if not session_id:
+            return json.dumps(
+                {"status": "error", "error": "session_id ausente no config"}
+            )
+
+        task = await background_tasks.create_task(
+            session_id=session_id,
+            user_id=user_id,
+            kind="routine",
+            name=name,
+            instruction=instruction,
+            trigger_type="interval",
+            trigger_config={"cron_expr": cron_expr},
+        )
+        return json.dumps(
+            {
+                "status": "created",
+                "task_id": task.id,
+                "name": task.name,
+                "cron_expr": cron_expr,
+                "next_run_at": task.next_run_at,
+            }
+        )
+    except ValueError as e:
+        return json.dumps({"status": "error", "error": str(e)})
+    except Exception as e:
+        logger.exception("schedule_task: erro inesperado")
         return json.dumps({"status": "error", "error": str(e)})
 
 

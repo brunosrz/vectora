@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from backend.tools.background import create_background_task
+from backend.tools.background import create_background_task, schedule_task
 
 
 def _cfg(thread_id: str = "t1", workspace_id: str = "ws1", user_id: str = "u1") -> Any:
@@ -153,3 +153,78 @@ def test_create_background_task_invalida_tasks() -> None:
 def test_create_background_task_e_destrutiva() -> None:
     extras = getattr(create_background_task, "extras", {}) or {}
     assert extras.get("destructive") is False
+
+
+# ---------------------------------------------------------------------------
+# schedule_task (Sprint "Schedule" — linguagem natural pra cron)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_schedule_task_parses_natural_language_and_creates_routine() -> None:
+    fake = _fake_task("Resumo diário")
+    fake.next_run_at = "2026-07-22T09:00:00+00:00"
+    with patch(
+        "backend.tools.background.background_tasks.create_task",
+        new_callable=AsyncMock,
+    ) as mock_create:
+        mock_create.return_value = fake
+
+        result = json.loads(
+            await schedule_task.ainvoke(
+                {
+                    "name": "Resumo diário",
+                    "instruction": "Resuma os commits de hoje",
+                    "when": "todo dia às 9h",
+                },
+                config=_cfg(),
+            )
+        )
+
+        assert result["status"] == "created"
+        assert result["cron_expr"] == "0 9 * * *"
+        assert result["next_run_at"] == "2026-07-22T09:00:00+00:00"
+        mock_create.assert_awaited_once()
+        call_kwargs = mock_create.call_args.kwargs
+        assert call_kwargs["trigger_type"] == "interval"
+        assert call_kwargs["trigger_config"] == {"cron_expr": "0 9 * * *"}
+        assert call_kwargs["kind"] == "routine"
+
+
+@pytest.mark.asyncio
+async def test_schedule_task_ambiguous_when_returns_error_without_creating() -> None:
+    # Erro/borda: horário que o parser não reconhece nunca vira um
+    # agendamento adivinhado — pede pra reformular, e nem chama create_task.
+    with patch(
+        "backend.tools.background.background_tasks.create_task",
+        new_callable=AsyncMock,
+    ) as mock_create:
+        result = json.loads(
+            await schedule_task.ainvoke(
+                {
+                    "name": "Tarefa vaga",
+                    "instruction": "faça algo",
+                    "when": "quando der",
+                },
+                config=_cfg(),
+            )
+        )
+
+        assert result["status"] == "error"
+        mock_create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_schedule_task_missing_session_returns_error() -> None:
+    result = json.loads(
+        await schedule_task.ainvoke(
+            {
+                "name": "n",
+                "instruction": "i",
+                "when": "todo dia às 9h",
+            },
+            config={"configurable": {}},
+        )
+    )
+
+    assert result["status"] == "error"
