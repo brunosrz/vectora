@@ -35,16 +35,124 @@ def test_registry_entries_have_required_fields():
         assert entry.description, "description não pode ser vazio"
 
 
-def test_list_registry_returns_all_connectors():
-    """list_registry deve retornar todos os conectores."""
-    result = list_registry()
+@pytest.fixture
+def _no_remote_registry(monkeypatch):
+    """Isola os testes dos dois registries remotos reais (Vectora + oficial
+    de MCP) — sem rede nos testes unitários."""
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client, "fetch_catalog", AsyncMock(return_value=[])
+    )
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_official_mcp_registry",
+        AsyncMock(return_value=[]),
+    )
+
+
+@pytest.mark.asyncio
+async def test_list_registry_returns_all_connectors(_no_remote_registry):
+    """Sem registry remoto, list_registry cai 100% pro fallback local."""
+    result = await list_registry()
     assert len(result) == len(_REGISTRY)
 
 
-def test_list_registry_items_are_mcp_connectors():
+@pytest.mark.asyncio
+async def test_list_registry_items_are_mcp_connectors(_no_remote_registry):
     """list_registry deve retornar instâncias de MCPConnector."""
-    result = list_registry()
+    result = await list_registry()
     assert all(isinstance(c, MCPConnector) for c in result)
+
+
+@pytest.mark.asyncio
+async def test_list_registry_prefers_remote_entry_over_local_when_id_matches(
+    monkeypatch, _no_remote_registry
+):
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_catalog",
+        AsyncMock(
+            return_value=[
+                {
+                    "id": "filesystem",
+                    "name": "Filesystem (remoto)",
+                    "description": "d",
+                    "install_cmd": "npx x",
+                    "env_vars": "[]",
+                    "homepage": "",
+                    "category": "filesystem",
+                }
+            ]
+        ),
+    )
+
+    result = await list_registry()
+
+    fs = next(c for c in result if c.id == "filesystem")
+    assert fs.name == "Filesystem (remoto)"
+    # Demais conectores do fallback local continuam presentes, sem duplicar.
+    assert len(result) == len(_REGISTRY)
+
+
+@pytest.mark.asyncio
+async def test_list_registry_ignores_malformed_remote_entry(
+    monkeypatch, _no_remote_registry
+):
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_catalog",
+        AsyncMock(return_value=[{"name": "sem id"}]),
+    )
+
+    result = await list_registry()
+
+    assert len(result) == len(_REGISTRY)
+
+
+@pytest.mark.asyncio
+async def test_list_registry_merges_official_mcp_registry_entries(
+    monkeypatch, _no_remote_registry
+):
+    """Cobre o fix pedido ao vivo: a Library mostrava só os 6 conectores
+    hardcoded — agora entram também as entradas do registry oficial de MCP
+    (registry.modelcontextprotocol.io), mescladas sem duplicar id."""
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_official_mcp_registry",
+        AsyncMock(
+            return_value=[
+                {
+                    "id": "com.example/foo",
+                    "name": "Foo",
+                    "description": "d",
+                    "install_cmd": "npx -y foo-mcp",
+                    "env_vars": [],
+                    "homepage": "https://github.com/example/foo",
+                    "category": "community",
+                }
+            ]
+        ),
+    )
+
+    result = await list_registry()
+
+    assert len(result) == len(_REGISTRY) + 1
+    assert any(c.id == "com.example/foo" for c in result)
 
 
 @pytest.fixture

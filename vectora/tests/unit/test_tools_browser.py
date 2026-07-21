@@ -162,3 +162,210 @@ async def test_browser_scroll_accepts_down_up_and_rejects_invalid_direction(
         {"direction": "sideways"}, config=_config()
     )
     assert err.startswith("Error:")
+
+
+# ---------------------------------------------------------------------------
+# preview_start/stop/restart/logs (0.7): paridade de controle usuário↔agente
+# — o agente ganha as mesmas ações que a aba Preview já oferece ao usuário.
+# As tools importam as funções HTTP de backend.api.handlers.workspaces por
+# import tardio (dentro do corpo, evita import circular) — o monkeypatch
+# tem que mirar o módulo real, não o atributo do módulo de tools.
+# ---------------------------------------------------------------------------
+
+
+def _launch_json(names: list[str]):
+    import backend.api.handlers.workspaces as ws_mod
+
+    return ws_mod.LaunchJsonModel(
+        configurations=[
+            ws_mod.LaunchConfigModel(
+                name=n, runtimeExecutable="bun", runtimeArgs=["run", "dev"], port=3000
+            )
+            for n in names
+        ]
+    )
+
+
+class TestResolvePreviewName:
+    @pytest.mark.asyncio
+    async def test_single_config_auto_resolves_when_name_omitted(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json(["web"]))
+        )
+
+        name, err = await browser_tools._resolve_preview_name("ws1", None)
+
+        assert name == "web"
+        assert err == ""
+
+    @pytest.mark.asyncio
+    async def test_multiple_configs_without_name_returns_error(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod,
+            "get_launch_json",
+            AsyncMock(return_value=_launch_json(["web", "api"])),
+        )
+
+        name, err = await browser_tools._resolve_preview_name("ws1", None)
+
+        assert name is None
+        assert "web" in err and "api" in err
+
+    @pytest.mark.asyncio
+    async def test_unknown_name_returns_error(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json(["web"]))
+        )
+
+        name, err = await browser_tools._resolve_preview_name("ws1", "ghost")
+
+        assert name is None
+        assert "ghost" in err
+
+    @pytest.mark.asyncio
+    async def test_empty_launch_json_returns_clear_error(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json([]))
+        )
+
+        name, err = await browser_tools._resolve_preview_name("ws1", None)
+
+        assert name is None
+        assert "launch.json" in err
+
+
+class TestPreviewStartStopRestartTools:
+    @pytest.mark.asyncio
+    async def test_preview_start_delegates_to_http_handler(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json(["web"]))
+        )
+        monkeypatch.setattr(
+            ws_mod,
+            "preview_start",
+            AsyncMock(
+                return_value=ws_mod.StatusResponse(status="ok", message="rodando")
+            ),
+        )
+
+        result = await browser_tools.preview_start.ainvoke({}, config=_config())
+
+        assert '"status": "ok"' in result
+        assert "rodando" in result
+
+    @pytest.mark.asyncio
+    async def test_preview_start_with_ambiguous_name_returns_error_without_calling_http(
+        self, monkeypatch
+    ):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod,
+            "get_launch_json",
+            AsyncMock(return_value=_launch_json(["web", "api"])),
+        )
+        http_start = AsyncMock()
+        monkeypatch.setattr(ws_mod, "preview_start", http_start)
+
+        result = await browser_tools.preview_start.ainvoke({}, config=_config())
+
+        assert result.startswith("Error:")
+        http_start.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_preview_stop_delegates_to_http_handler(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json(["web"]))
+        )
+        monkeypatch.setattr(
+            ws_mod,
+            "preview_stop",
+            AsyncMock(
+                return_value=ws_mod.StatusResponse(status="ok", message="parado")
+            ),
+        )
+
+        result = await browser_tools.preview_stop.ainvoke({}, config=_config())
+
+        assert '"status": "ok"' in result
+        assert "parado" in result
+
+    @pytest.mark.asyncio
+    async def test_preview_restart_stops_then_starts(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json(["web"]))
+        )
+        calls: list[str] = []
+
+        async def _fake_stop(workspace_id, req):
+            calls.append("stop")
+            return ws_mod.StatusResponse(status="ok", message="parado")
+
+        async def _fake_start(workspace_id, req):
+            calls.append("start")
+            return ws_mod.StatusResponse(status="ok", message="rodando")
+
+        monkeypatch.setattr(ws_mod, "preview_stop", _fake_stop)
+        monkeypatch.setattr(ws_mod, "preview_start", _fake_start)
+
+        result = await browser_tools.preview_restart.ainvoke({}, config=_config())
+
+        assert calls == ["stop", "start"]
+        assert '"status": "ok"' in result
+        assert "rodando" in result
+
+
+class TestPreviewLogsTool:
+    @pytest.mark.asyncio
+    async def test_returns_joined_lines_from_buffer(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json(["web"]))
+        )
+        monkeypatch.setattr(
+            ws_mod,
+            "preview_logs",
+            AsyncMock(
+                return_value=ws_mod.PreviewLogsResponse(lines=["compiling...", "ready"])
+            ),
+        )
+
+        result = await browser_tools.preview_logs.ainvoke({}, config=_config())
+
+        assert result == "compiling...\nready"
+
+    @pytest.mark.asyncio
+    async def test_never_started_returns_clear_message_not_empty_string(
+        self, monkeypatch
+    ):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=_launch_json(["web"]))
+        )
+        monkeypatch.setattr(
+            ws_mod,
+            "preview_logs",
+            AsyncMock(return_value=ws_mod.PreviewLogsResponse(lines=[])),
+        )
+
+        result = await browser_tools.preview_logs.ainvoke({}, config=_config())
+
+        assert result != ""
+        assert "web" in result
+        assert "nunca foi iniciado" in result

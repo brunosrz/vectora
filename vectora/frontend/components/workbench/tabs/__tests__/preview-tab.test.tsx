@@ -56,8 +56,10 @@ const LAUNCH = {
 
 function mockFetch({
   startRunning = false,
+  logLines,
 }: {
   startRunning?: boolean;
+  logLines?: string[];
 } = {}) {
   global.fetch = vi
     .fn()
@@ -92,6 +94,12 @@ function mockFetch({
           json: async () => ({ status: "ok" }),
         } as Response);
       }
+      if (url.includes("/preview/logs")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ lines: logLines ?? [] }),
+        } as Response);
+      }
       return Promise.resolve({ ok: true, json: async () => ({}) } as Response);
     });
 }
@@ -121,5 +129,30 @@ describe("PreviewTab", () => {
 
     const iframe = await screen.findByTitle("Live Preview");
     expect(iframe.getAttribute("src")).toBe("http://localhost:3001");
+  });
+
+  it("botão de console abre o painel e mostra as linhas de log do servidor", async () => {
+    mockFetch({ startRunning: false, logLines: ["compiling...", "ready"] });
+    render(<PreviewTab threadId="t1" />);
+
+    const consoleBtn = await screen.findByTitle("workbench_preview_console");
+    fireEvent.click(consoleBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("compiling...")).toBeTruthy();
+      expect(screen.getByText("ready")).toBeTruthy();
+    });
+  });
+
+  it("servidor nunca iniciado mostra estado vazio específico do console, não erro", async () => {
+    mockFetch({ startRunning: false, logLines: [] });
+    render(<PreviewTab threadId="t1" />);
+
+    const consoleBtn = await screen.findByTitle("workbench_preview_console");
+    fireEvent.click(consoleBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("workbench_preview_console_empty")).toBeTruthy();
+    });
   });
 });

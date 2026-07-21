@@ -2862,12 +2862,19 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
 # ---------------------------------------------------------------------------
 
 import asyncio as _asyncio
+import collections as _collections
 import time as _time
 
 from backend.services.subprocess_logging import pipe_to_logger
 
 _preview_procs: dict[str, _asyncio.subprocess.Process] = {}
 _preview_log_tasks: dict[str, _asyncio.Task] = {}
+# Últimas linhas de stdout/stderr por preview — sobrevive ao processo
+# encerrar/morrer (só é sobrescrito por um deque novo no próximo start),
+# pra diagnóstico continuar disponível mesmo depois de um crash. Lido tanto
+# pelo endpoint HTTP (UI) quanto pelas tools do agente (mesma fonte de dado).
+_PREVIEW_LOG_MAXLEN = 500
+_preview_log_buffers: dict[str, _collections.deque[str]] = {}
 
 
 def _preview_key(workspace_id: str, name: str) -> str:
@@ -2970,6 +2977,10 @@ class PreviewStopRequest(BaseModel):
     name: str
 
 
+class PreviewLogsResponse(BaseModel):
+    lines: list[str]
+
+
 class DetectedServer(BaseModel):
     name: str
     runtimeExecutable: str  # noqa: N815
@@ -3032,6 +3043,16 @@ async def preview_status(workspace_id: str) -> PreviewStatusResponse:
     return PreviewStatusResponse(servers=servers)
 
 
+@view_router.get("/{workspace_id}/preview/logs", response_model=PreviewLogsResponse)
+async def preview_logs(workspace_id: str, name: str) -> PreviewLogsResponse:
+    """Últimas linhas de stdout/stderr do preview `name` — disponível mesmo
+    com o processo parado/morto (buffer não é limpo em preview_stop nem
+    quando o processo encerra sozinho). Lista vazia = nunca foi iniciado."""
+    key = _preview_key(workspace_id, name)
+    buf = _preview_log_buffers.get(key)
+    return PreviewLogsResponse(lines=list(buf) if buf else [])
+
+
 @view_router.post("/{workspace_id}/preview/start", response_model=StatusResponse)
 async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusResponse:
     """Inicia o dev server de preview com o nome indicado."""
@@ -3064,8 +3085,15 @@ async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusR
             stderr=_asyncio.subprocess.STDOUT,
         )
         _preview_procs[key] = proc
+        buf: _collections.deque[str] = _collections.deque(maxlen=_PREVIEW_LOG_MAXLEN)
+        _preview_log_buffers[key] = buf
         _preview_log_tasks[key] = _asyncio.create_task(
-            pipe_to_logger(proc.stdout, logger, prefix=f"preview:{cfg.name}")
+            pipe_to_logger(
+                proc.stdout,
+                logger,
+                prefix=f"preview:{cfg.name}",
+                on_line=buf.append,
+            )
         )
         port_ready, exit_code = await _wait_port_open_or_exit(
             proc, "127.0.0.1", cfg.port

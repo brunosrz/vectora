@@ -12,11 +12,14 @@ Routes (montadas em server.py):
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
+
+from backend.services import registry_client
 
 if TYPE_CHECKING:
     from backend.workspace.plugins import McpServer
@@ -138,8 +141,52 @@ def _connector_to_server(connector: MCPConnector) -> McpServer:
 # ---------------------------------------------------------------------------
 
 
-def list_registry() -> list[MCPConnector]:
-    return list(_REGISTRY)
+def _remote_entry_to_connector(entry: dict) -> MCPConnector | None:
+    try:
+        env_vars = entry.get("env_vars", [])
+        if isinstance(env_vars, str):
+            env_vars = json.loads(env_vars)
+        return MCPConnector(
+            id=entry["id"],
+            name=entry.get("name", entry["id"]),
+            description=entry.get("description", ""),
+            install_cmd=entry.get("install_cmd", ""),
+            env_vars=list(env_vars) if env_vars else [],
+            homepage=entry.get("homepage") or "",
+            category=entry.get("category", "general"),
+        )
+    except Exception:
+        logger.warning("mcp_marketplace: entrada remota malformada ignorada: %r", entry)
+        return None
+
+
+async def list_registry() -> list[MCPConnector]:
+    """Mescla três fontes, nessa ordem de prioridade (id repetido: a
+    primeira que aparece vence):
+
+    1. Registry próprio da Vectora (D1, `services/src/registry/routes.ts`)
+       — curado, entradas com `vectora_verified`.
+    2. Registry oficial de MCP (`registry.modelcontextprotocol.io`,
+       mantido pela comunidade/Anthropic) — catálogo amplo, só servers com
+       pacote npm/stdio (único transporte que `_connector_to_server`
+       suporta hoje).
+    3. Fallback hardcoded local (`_REGISTRY`) — só entra se nem 1 nem 2
+       responderem (sem rede/cache), nunca deixa a lista vazia.
+    """
+    remote = await registry_client.fetch_catalog("mcp")
+    official = await registry_client.fetch_official_mcp_registry()
+    connectors: dict[str, MCPConnector] = {}
+    for entry in remote:
+        connector = _remote_entry_to_connector(entry)
+        if connector is not None:
+            connectors[connector.id] = connector
+    for entry in official:
+        connector = _remote_entry_to_connector(entry)
+        if connector is not None:
+            connectors.setdefault(connector.id, connector)
+    for connector in _REGISTRY:
+        connectors.setdefault(connector.id, connector)
+    return list(connectors.values())
 
 
 async def install_mcp(req: InstallRequest, user_id: str = "local") -> dict:
@@ -188,7 +235,7 @@ def _req_user_id(request: Request) -> str:
 
 @router.get("/registry", response_model=list[MCPConnector])
 async def get_registry() -> list[MCPConnector]:
-    return list_registry()
+    return await list_registry()
 
 
 @router.post("/install")

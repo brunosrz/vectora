@@ -63,3 +63,26 @@ async def test_pipe_to_logger_skips_blank_lines(caplog):
     messages = [r.message for r in caplog.records]
     assert len(messages) == 1
     assert "real content" in messages[0]
+
+
+@pytest.mark.asyncio
+async def test_pipe_to_logger_calls_on_line_for_each_line():
+    stream = _FakeStreamReader([b"first\n", b"second\n"])
+    logger = logging.getLogger("test.pipe_to_logger")
+    seen: list[str] = []
+
+    await pipe_to_logger(stream, logger, prefix="x", on_line=seen.append)
+
+    assert seen == ["first", "second"]
+
+
+@pytest.mark.asyncio
+async def test_pipe_to_logger_on_line_not_called_for_blank_lines():
+    # erro/borda: linha em branco não deve virar entrada vazia no buffer.
+    stream = _FakeStreamReader([b"\n", b"content\n"])
+    logger = logging.getLogger("test.pipe_to_logger")
+    seen: list[str] = []
+
+    await pipe_to_logger(stream, logger, prefix="x", on_line=seen.append)
+
+    assert seen == ["content"]

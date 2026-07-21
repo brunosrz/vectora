@@ -34,7 +34,16 @@ export const Route = createFileRoute("/issues")({
   }),
   loader: async () => ({ issues: await listOpenIssues() }),
   component: IssuesPage,
+  errorComponent: IssuesErrorComponent,
 });
+
+export function IssuesErrorComponent() {
+  return (
+    <Container size="prose" className="py-16 text-center">
+      <p className="text-sm text-muted-foreground">{m.error_generic()}</p>
+    </Container>
+  );
+}
 
 const CATEGORIES = ["bug", "feedback", "feature"] as const;
 type Category = (typeof CATEGORIES)[number];

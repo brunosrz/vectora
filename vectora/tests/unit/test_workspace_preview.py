@@ -211,6 +211,7 @@ class TestPreviewStart:
         )
         monkeypatch.setattr(ws_mod, "_preview_procs", {})
         monkeypatch.setattr(ws_mod, "_preview_log_tasks", {})
+        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {})
         monkeypatch.setattr(
             ws_mod._asyncio, "create_subprocess_exec", AsyncMock(return_value=proc)
         )
@@ -221,3 +222,130 @@ class TestPreviewStart:
 
         assert result.status == "error"
         assert "1" in (result.message or "")
+
+
+# ---------------------------------------------------------------------------
+# preview_logs (endpoint) + buffer: log sobrevive ao processo morrer/parar,
+# acessível tanto pela UI (este endpoint) quanto pelas tools do agente
+# (mesmo dict `_preview_log_buffers`).
+# ---------------------------------------------------------------------------
+
+
+class TestPreviewLogsEndpoint:
+    @pytest.mark.asyncio
+    async def test_returns_empty_list_when_never_started(self, monkeypatch):
+        import backend.api.handlers.workspaces as ws_mod
+
+        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {})
+
+        result = await ws_mod.preview_logs("ws1", "web")
+
+        assert result.lines == []
+
+    @pytest.mark.asyncio
+    async def test_returns_buffered_lines(self, monkeypatch):
+        import collections
+
+        import backend.api.handlers.workspaces as ws_mod
+
+        buf: collections.deque[str] = collections.deque(["line1", "line2"], maxlen=500)
+        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {"ws1::web": buf})
+
+        result = await ws_mod.preview_logs("ws1", "web")
+
+        assert result.lines == ["line1", "line2"]
+
+    @pytest.mark.asyncio
+    async def test_buffer_survives_after_preview_stop(self, monkeypatch):
+        # Erro/borda: parar o servidor não pode apagar o histórico — é
+        # exatamente nesse momento (diagnosticar por que morreu) que ele
+        # mais precisa continuar disponível.
+        import collections
+        from unittest.mock import AsyncMock, MagicMock
+
+        import backend.api.handlers.workspaces as ws_mod
+
+        buf: collections.deque[str] = collections.deque(["boom: error"], maxlen=500)
+        proc = MagicMock(returncode=None)
+        proc.terminate = MagicMock()
+        proc.wait = AsyncMock(return_value=None)
+        cfg_entry = MagicMock()
+        cfg_entry.name = "web"
+        launch_cfg = MagicMock()
+        launch_cfg.configurations = [cfg_entry]
+
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=launch_cfg)
+        )
+        monkeypatch.setattr(ws_mod, "_preview_procs", {"ws1::web": proc})
+        monkeypatch.setattr(ws_mod, "_preview_log_tasks", {})
+        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {"ws1::web": buf})
+
+        await ws_mod.preview_stop("ws1", ws_mod.PreviewStopRequest(name="web"))
+        result = await ws_mod.preview_logs("ws1", "web")
+
+        assert result.lines == ["boom: error"]
+
+
+class TestPreviewStartPopulatesLogBuffer:
+    @pytest.mark.asyncio
+    async def test_lines_written_by_pipe_end_up_in_buffer(self, monkeypatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        import backend.api.handlers.workspaces as ws_mod
+        import backend.workspace.workspace as workspace_mod
+        from backend.vtypes import Workspace
+
+        ws = Workspace(
+            id="ws1",
+            name="ws1",
+            cwd="/tmp/ws1",
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+        )
+        cfg_entry = MagicMock(
+            port=59998, runtimeExecutable="true", runtimeArgs=[], env={}
+        )
+        cfg_entry.name = "web"
+        launch_cfg = MagicMock()
+        launch_cfg.configurations = [cfg_entry]
+
+        class _FakeStdout:
+            def __init__(self, lines):
+                self._lines = list(lines)
+
+            async def readline(self):
+                if not self._lines:
+                    return b""
+                return self._lines.pop(0)
+
+        proc = MagicMock()
+        proc.returncode = None
+        proc.stdout = _FakeStdout([b"compiling...\n", b"ready\n", b""])
+
+        monkeypatch.setattr(
+            workspace_mod.workspace_registry,
+            "get",
+            lambda wid: ws if wid == "ws1" else None,
+        )
+        monkeypatch.setattr(
+            ws_mod, "get_launch_json", AsyncMock(return_value=launch_cfg)
+        )
+        monkeypatch.setattr(ws_mod, "_preview_procs", {})
+        monkeypatch.setattr(ws_mod, "_preview_log_tasks", {})
+        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {})
+        monkeypatch.setattr(
+            ws_mod._asyncio, "create_subprocess_exec", AsyncMock(return_value=proc)
+        )
+        monkeypatch.setattr(
+            ws_mod, "_wait_port_open_or_exit", AsyncMock(return_value=(False, None))
+        )
+
+        await ws_mod.preview_start("ws1", ws_mod.PreviewStartRequest(name="web"))
+        # Dá um tick pra task de background (pipe_to_logger) consumir o fake stdout.
+        for _ in range(5):
+            await asyncio.sleep(0)
+
+        result = await ws_mod.preview_logs("ws1", "web")
+
+        assert result.lines == ["compiling...", "ready"]

@@ -9,10 +9,12 @@ import {
   RefreshCw,
   Sparkles,
   Square,
+  Terminal,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { m as msg } from "@/lib/paraglide/messages";
@@ -70,8 +72,13 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     runtimeArgs: "",
     port: "",
   });
+  const [consoleFor, setConsoleFor] = useState<string | null>(null);
+  const [consoleLines, setConsoleLines] = useState<string[]>([]);
+  const [consoleLoading, setConsoleLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const consolePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const consoleLogRef = useRef<HTMLDivElement>(null);
 
   const fetchLaunch = useCallback(async () => {
     if (!wsId) return;
@@ -111,6 +118,47 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     }
     return null;
   }, [wsId, activeServer]);
+
+  const fetchConsoleLogs = useCallback(
+    async (name: string) => {
+      if (!wsId) return;
+      setConsoleLoading(true);
+      try {
+        const res = await fetch(
+          `/workspaces/${encodeURIComponent(wsId)}/preview/logs?name=${encodeURIComponent(name)}`,
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { lines: string[] };
+          setConsoleLines(data.lines ?? []);
+        }
+      } catch {
+        // silently ignore — o painel continua com as últimas linhas conhecidas
+      } finally {
+        setConsoleLoading(false);
+      }
+    },
+    [wsId],
+  );
+
+  useEffect(() => {
+    if (!consoleFor) {
+      if (consolePollRef.current) clearInterval(consolePollRef.current);
+      return;
+    }
+    fetchConsoleLogs(consoleFor);
+    consolePollRef.current = setInterval(
+      () => fetchConsoleLogs(consoleFor),
+      3000,
+    );
+    return () => {
+      if (consolePollRef.current) clearInterval(consolePollRef.current);
+    };
+  }, [consoleFor, fetchConsoleLogs]);
+
+  useEffect(() => {
+    const el = consoleLogRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [consoleLines]);
 
   useEffect(() => {
     fetchLaunch();
@@ -375,6 +423,15 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
               </div>
 
               <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  title={msg.workbench_preview_console()}
+                  onClick={() => setConsoleFor(cfg.name)}
+                >
+                  <Terminal className="h-3 w-3" />
+                </Button>
                 {isRunning && (
                   <Button
                     size="icon"
@@ -477,6 +534,48 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
           </p>
         </div>
       )}
+
+      <Sheet
+        open={consoleFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setConsoleFor(null);
+        }}
+      >
+        <SheetContent side="bottom" className="h-[50vh] p-0 gap-0">
+          <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-4 py-2">
+            <span className="text-xs font-medium text-foreground">
+              {consoleFor
+                ? msg.workbench_preview_console_title({ name: consoleFor })
+                : msg.workbench_preview_console()}
+            </span>
+            <button
+              onClick={() => consoleFor && fetchConsoleLogs(consoleFor)}
+              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              title={msg.workbench_preview_console_refresh()}
+            >
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${consoleLoading ? "animate-spin" : ""}`}
+              />
+            </button>
+          </div>
+          <div
+            ref={consoleLogRef}
+            className="flex-1 overflow-y-auto bg-background px-4 py-2 font-mono text-[11px] leading-relaxed text-foreground/90"
+          >
+            {consoleLines.length === 0 ? (
+              <p className="text-muted-foreground">
+                {msg.workbench_preview_console_empty()}
+              </p>
+            ) : (
+              consoleLines.map((line, i) => (
+                <div key={i} className="whitespace-pre-wrap break-all">
+                  {line}
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

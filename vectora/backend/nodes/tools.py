@@ -27,6 +27,10 @@ from backend.tools.browser import (
     browser_read_dom,
     browser_screenshot,
     browser_scroll,
+    preview_logs,
+    preview_restart,
+    preview_start,
+    preview_stop,
 )
 from backend.tools.context_graph import (
     build_knowledge_graph,
@@ -143,6 +147,10 @@ BROWSER_TOOLS: list[BaseTool] = [
     browser_scroll,
     browser_fill,
     browser_read_dom,
+    preview_start,
+    preview_stop,
+    preview_restart,
+    preview_logs,
 ]
 
 #: Ferramentas de memória (C4: search_memory adicionado)
@@ -239,6 +247,10 @@ for _t in [
     browser_scroll,
     browser_fill,
     browser_read_dom,
+    preview_start,
+    preview_stop,
+    preview_restart,
+    preview_logs,
     save_memory,
     get_memory,
     delete_memory,

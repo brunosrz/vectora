@@ -551,3 +551,121 @@ RESEND_WEBHOOK_SECRET=
 GATEWAY_URL=https://gateway.vectora.chat
 GATEWAY_OAUTH_SECRET=<mesmo do gateway>
 ```
+
+---
+
+## SEÇÃO 10 — Tool Gateway (roadmap, design apenas)
+
+> Escopo desta seção: arquitetura decidida + pontos de extensão identificados
+> no código real. **Não é implementação** — fica para uma sprint futura
+> dedicada, quando o volume de tools cobertas justificar o investimento.
+> Distinto da Seção 3 (OAuth de integração do agente): a Seção 3 já entrega
+> o mecanismo genérico gateway↔backend; o Tool Gateway é uma camada em cima
+> disso que resolve um problema de **fricção de setup**, não de mecanismo.
+
+### O problema hoje
+
+Cada tool de integração externa (`backend/tools/slack.py`, `gdrive.py`,
+`gmail.py`, `jira.py`, `linear.py`, `notion.py`, `gh.py`) lê sua **própria**
+env var (`SLACK_BOT_TOKEN`, `GITHUB_PERSONAL_ACCESS_TOKEN`, etc. — ver
+`slack.py::_token()`), e cada uma exige que **Bruno** (não o usuário final)
+registre um OAuth App separado no provider correspondente (Seção 5). Isso é
+fricção dupla:
+
+1. **Pro operador do Vectora** (Bruno): N providers = N OAuth Apps pra
+   manter, N conjuntos de client_id/client_secret, N callbacks.
+2. **Pro usuário final**: cada integração nova é um fluxo de conexão
+   separado em Integrações, mesmo que várias tools compartilhem o mesmo
+   provider (ex.: Slack `slack_send`/`slack_list_channels`/`slack_read` já
+   compartilham `SLACK_BOT_TOKEN` — isso já funciona bem; o problema é
+   entre _providers diferentes_, não dentro do mesmo).
+
+### O que o Tool Gateway resolve — e o que não resolve
+
+**Resolve**: um usuário que ainda não tem OAuth Apps próprios pode conectar
+Slack/GitHub/Google/etc. através de credenciais operadas pela Vectora
+(client_id/secret do gateway), reduzindo o fluxo de "criar OAuth App
+primeiro" pra "clicar em Conectar". Centraliza _quais_ integrações estão
+disponíveis (mesmo catálogo, uma vez, não duplicado por tool).
+
+**Não resolve, e não deve**: substituir BYOK. O princípio fundacional do
+produto (`market-and-positioning.md`) é que o usuário sempre pode trazer
+suas próprias credenciais — o Tool Gateway é uma opção adicional de setup
+mais rápido, nunca a única via. Qualquer tool continua funcionando com a
+env var direta (`SLACK_BOT_TOKEN` etc.) configurada manualmente em
+Integrações, exatamente como hoje — o gateway só populariza essa mesma env
+var por um caminho alternativo (ver fluxo abaixo).
+
+### Arquitetura decidida
+
+Reaproveita a primitiva que a Seção 3 já entrega — `gateway.vectora.chat`
+já recebe callbacks OAuth e encaminha pro backend certo via WebSocket
+(`GatewaySession` Durable Object, `services/src/gateway/gateway-session.ts`).
+O Tool Gateway generaliza isso de "OAuth por provider configurado
+individualmente" pra "catálogo de providers com credenciais operadas pela
+Vectora, resultado sempre pousando na mesma env var que a tool já lê":
+
+```
+Usuário clica "Conectar" no catálogo de integrações (aba Integrações,
+já teria uma seção "via Vectora" ao lado de "BYOK")
+        │
+        ▼
+gateway.vectora.chat/auth/{provider}/start
+   (usa client_id/secret OPERADOS PELA VECTORA — Seção 5, já registrados
+    uma vez por Bruno, reaproveitados por todos os usuários finais)
+        │
+        ▼
+OAuth callback → gateway.vectora.chat/auth/{provider}/callback
+        │
+        ▼
+GatewaySession (Durable Object) encaminha o token via WebSocket pro
+backend do usuário (mesmo canal que já existe pra webhooks — Seção 3)
+        │
+        ▼
+Backend grava o token na MESMA env var que a tool já lê hoje
+(SLACK_BOT_TOKEN, GITHUB_PERSONAL_ACCESS_TOKEN, ...) via
+POST /auth/envs (mesmo mecanismo da aba Integrações) — as tools em
+backend/tools/*.py não mudam NADA, continuam lendo a env var de sempre
+```
+
+**Ponto de extensão central**: nenhuma tool precisa saber se o token veio
+via Tool Gateway ou via BYOK manual — ambos os caminhos convergem na mesma
+env var, gravada pelo mesmo `POST /auth/envs`. Isso significa que o Tool
+Gateway é **puramente aditivo** na aba Integrações (mais uma forma de
+popular a env var), sem exigir refactor de nenhuma tool existente.
+
+### Escopo de providers (fase 1, ao implementar)
+
+Providers que já têm tool própria e leem env var isolada — candidatos
+naturais por já terem o "outro lado" pronto: Slack (`SLACK_BOT_TOKEN`),
+GitHub (`GITHUB_PERSONAL_ACCESS_TOKEN`, já cobre `gh.py`), Google
+(`gmail.py`/`gdrive.py`, hoje sem OAuth implementado — ver nota abaixo),
+Linear, Jira, Notion. Não inclui MCP marketplace (Sprint 2 já resolveu isso
+via `POST /auth/envs` no fluxo de instalação, sem precisar do Tool Gateway).
+
+**Nota de gap identificado durante a investigação**: `gmail.py`/`gdrive.py`
+hoje não têm um fluxo `/auth/google/...` implementado no backend (só a
+env var lida diretamente) — isso não é bloqueante para o Tool Gateway (o
+design não depende de OAuth já existir por provider), mas é um pré-requisito
+de implementação a resolver na sprint que fizer isso de verdade: cada
+provider sem OAuth próprio ganha um `backend/api/handlers/oauth_{provider}.py`
+seguindo o padrão que a Seção 3 já define para GitHub/Slack/GitLab.
+
+### Testes (quando implementado — fora de escopo desta seção)
+
+- Conectar via Tool Gateway grava a mesma env var que a tool já lê — tool
+  funciona sem nenhuma mudança de código.
+- BYOK continua funcionando em paralelo — desconectar do Tool Gateway não
+  apaga uma env var configurada manualmente por cima (BYOK sempre vence,
+  nunca é sobrescrito silenciosamente por uma conexão via gateway mais
+  antiga).
+- Erro/borda: provider sem OAuth App operado pela Vectora ainda configurado
+  (client_id vazio) — catálogo mostra a opção "via Vectora" desabilitada
+  com mensagem clara, não um botão que falha silenciosamente ao clicar.
+
+### Verificação (quando implementado)
+
+Conectar Slack via Tool Gateway (sem nunca ter configurado `SLACK_BOT_TOKEN`
+manualmente), confirmar que `slack_send` funciona sem nenhuma mudança de
+código na tool; depois configurar `SLACK_BOT_TOKEN` manualmente por cima e
+confirmar que o valor manual vence (BYOK sempre tem prioridade).

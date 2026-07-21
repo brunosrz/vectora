@@ -76,9 +76,6 @@ export default function Footer() {
         <span className="text-[12px] text-muted-foreground">
           © {year} Vectora. All rights reserved.
         </span>
-        <span className="text-[12px] text-muted-foreground">
-          CNPJ a confirmar
-        </span>
       </div>
     </footer>
   );

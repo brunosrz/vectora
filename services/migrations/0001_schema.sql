@@ -190,6 +190,51 @@ CREATE TABLE IF NOT EXISTS rag_packages (
   updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Registry real de MCP/Skills (Fase F, `services/src/registry/routes.ts`) —
+-- substitui os placeholders `{entries: []}`. Seed inicial migra os 6
+-- conectores hoje hardcoded em `backend/api/handlers/mcp_marketplace.py`
+-- (fonte de verdade passa a ser este catálogo; a lista Python vira só
+-- fallback offline). `extensions` fica de fora (roadmap §2, SDK ainda não
+-- existe) — não crie tabela pra ela até o SDK de extensões existir.
+CREATE TABLE IF NOT EXISTS mcp_catalog (
+  id               TEXT PRIMARY KEY,
+  name             TEXT NOT NULL,
+  description      TEXT NOT NULL,
+  install_cmd      TEXT NOT NULL,
+  env_vars         TEXT NOT NULL DEFAULT '[]', -- JSON array serializado
+  homepage         TEXT,
+  category         TEXT NOT NULL,
+  vectora_verified INTEGER NOT NULL DEFAULT 0,
+  downloads_count  INTEGER NOT NULL DEFAULT 0,
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS skills_catalog (
+  id               TEXT PRIMARY KEY,
+  name             TEXT NOT NULL,
+  description      TEXT NOT NULL,
+  source           TEXT NOT NULL, -- git URL, mesmo formato aceito por POST /skills
+  tags             TEXT NOT NULL DEFAULT '[]', -- JSON array serializado
+  vectora_verified INTEGER NOT NULL DEFAULT 0,
+  downloads_count  INTEGER NOT NULL DEFAULT 0,
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+INSERT OR IGNORE INTO mcp_catalog (id, name, description, install_cmd, env_vars, homepage, category, vectora_verified) VALUES
+  ('brave-search', 'Brave Search', 'Pesquisa web via Brave Search API com resultados sem rastreamento.', 'npx -y @modelcontextprotocol/server-brave-search', '["BRAVE_API_KEY"]', 'https://github.com/modelcontextprotocol/servers', 'web', 1),
+  ('filesystem', 'Filesystem', 'Acesso seguro ao filesystem local com controle de diretórios permitidos.', 'npx -y @modelcontextprotocol/server-filesystem', '[]', 'https://github.com/modelcontextprotocol/servers', 'filesystem', 1),
+  ('github', 'GitHub', 'Integração com GitHub: PRs, issues, código, actions e mais.', 'npx -y @modelcontextprotocol/server-github', '["GITHUB_PERSONAL_ACCESS_TOKEN"]', 'https://github.com/modelcontextprotocol/servers', 'devtools', 1),
+  ('postgres', 'PostgreSQL', 'Consultas read-only em banco PostgreSQL.', 'npx -y @modelcontextprotocol/server-postgres', '["POSTGRES_CONNECTION_STRING"]', 'https://github.com/modelcontextprotocol/servers', 'database', 1),
+  ('slack', 'Slack', 'Leitura e envio de mensagens no Slack via Bot Token.', 'npx -y @modelcontextprotocol/server-slack', '["SLACK_BOT_TOKEN", "SLACK_TEAM_ID"]', 'https://github.com/modelcontextprotocol/servers', 'communication', 1),
+  ('sequential-thinking', 'Sequential Thinking', 'Raciocínio passo-a-passo estruturado antes de agir.', 'npx -y @modelcontextprotocol/server-sequential-thinking', '[]', 'https://github.com/modelcontextprotocol/servers', 'reasoning', 1);
+
+-- skills_catalog nasce sem seed: ao contrário do MCP (que já tinha 6
+-- conectores hardcoded pra migrar), não existe hoje nenhuma skill oficial
+-- do Vectora com repositório git publicado — fabricar uma URL aqui criaria
+-- uma entrada curada apontando pra um link inexistente/quebrado. Curadoria
+-- entra por PR editando este seed (mesmo fluxo do resto do arquivo, ver
+-- comentário no topo) assim que houver skills reais pra publicar.
+
 -- Tabela de telemetria genérica (crash/uso) enviada pelo backend Python do
 -- Vectora local — POST /telemetry/ingest, sempre via fila (vectora-jobs,
 -- job telemetry_ingest), nunca gravada direto na rota HTTP.

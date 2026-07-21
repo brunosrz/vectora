@@ -16,6 +16,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 
+from backend.services import registry_client
 from backend.workspace.skills import (
     InstallSkillRequest,
     install_skill,
@@ -41,6 +42,17 @@ async def list_user_skills(request: Request) -> dict:
     """Lista as skills instaladas para o usuário autenticado."""
     skills = list_skills(_user_id(request))
     return {"skills": [s.model_dump() for s in skills], "total": len(skills)}
+
+
+@router.get("/catalog")
+async def get_skills_catalog() -> dict:
+    """Catálogo de skills curadas do registry remoto (D1, `skills_catalog`) —
+    distinto de `GET /skills` (que lista as já instaladas). Sem fallback
+    hardcoded local: até hoje não existe skill oficial pré-curada, então
+    catálogo vazio é um estado válido (registry fora do ar ou sem seed
+    ainda), não erro."""
+    entries = await registry_client.fetch_catalog("skills")
+    return {"entries": entries, "total": len(entries)}
 
 
 @router.post("")

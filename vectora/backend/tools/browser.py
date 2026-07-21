@@ -9,6 +9,7 @@ internet (isso é papel do `web_search`/`fetch_url`).
 from __future__ import annotations
 
 import base64
+import json
 import logging
 from typing import Annotated, Any
 
@@ -206,3 +207,189 @@ async def browser_read_dom(
     except Exception:
         logger.exception("browser_read_dom failed", extra={"selector": selector})
         return f"Error: seletor '{selector}' não encontrado no preview."
+
+
+async def _resolve_preview_name(
+    workspace_id: str, name: str | None
+) -> tuple[str | None, str]:
+    """Resolve qual configuração de `.vectora/launch.json` usar.
+
+    Retorna `(name, "")` em sucesso, ou `(None, mensagem_de_erro)` — nunca
+    adivinha entre múltiplas configs ambíguas.
+    """
+    from backend.api.handlers.workspaces import get_launch_json
+
+    launch = await get_launch_json(workspace_id)
+    if not launch.configurations:
+        return (
+            None,
+            "Error: nenhuma configuração de preview encontrada "
+            "(.vectora/launch.json vazio ou ausente).",
+        )
+    if name:
+        if not any(c.name == name for c in launch.configurations):
+            available = ", ".join(c.name for c in launch.configurations)
+            return (
+                None,
+                f"Error: configuração '{name}' não encontrada. Disponíveis: {available}.",
+            )
+        return name, ""
+    if len(launch.configurations) == 1:
+        return launch.configurations[0].name, ""
+    available = ", ".join(c.name for c in launch.configurations)
+    return (
+        None,
+        f"Error: múltiplas configurações de preview existem ({available}) "
+        "— especifique `name`.",
+    )
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "play",
+    }
+)
+async def preview_start(
+    name: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Inicia o dev server de preview do workspace ativo (mesmo efeito que o
+    usuário clicar em "play" na aba Preview).
+
+    Args:
+        name: Nome da configuração em `.vectora/launch.json`. Se omitido e
+            houver só uma configuração, usa ela; se houver mais de uma,
+            retorna erro pedindo pra especificar.
+
+    Returns:
+        JSON `{"status": "ok"|"pending"|"error", "message": "..."}`. Em
+        `"pending"`/`"error"`, chame `preview_logs` pra ver a saída real do
+        processo antes de tentar de novo.
+    """
+    from backend.api.handlers.workspaces import PreviewStartRequest
+    from backend.api.handlers.workspaces import preview_start as _http_preview_start
+
+    workspace_id = _workspace_id(config)
+    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    if resolved_name is None:
+        return err
+    result = await _http_preview_start(
+        workspace_id, PreviewStartRequest(name=resolved_name)
+    )
+    return json.dumps({"status": result.status, "message": result.message})
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "square",
+    }
+)
+async def preview_stop(
+    name: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Para o dev server de preview do workspace ativo.
+
+    Args:
+        name: Nome da configuração em `.vectora/launch.json` (mesma regra de
+            resolução de `preview_start`).
+
+    Returns:
+        JSON `{"status": "ok"|"error", "message": "..."}`.
+    """
+    from backend.api.handlers.workspaces import PreviewStopRequest
+    from backend.api.handlers.workspaces import preview_stop as _http_preview_stop
+
+    workspace_id = _workspace_id(config)
+    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    if resolved_name is None:
+        return err
+    result = await _http_preview_stop(
+        workspace_id, PreviewStopRequest(name=resolved_name)
+    )
+    return json.dumps({"status": result.status, "message": result.message})
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "refresh-cw",
+    }
+)
+async def preview_restart(
+    name: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Reinicia o dev server de preview (para se estiver rodando, depois
+    inicia de novo) — útil depois de corrigir a causa de uma falha (ex.:
+    rodar `bun install`) pra confirmar que resolveu.
+
+    Args:
+        name: Nome da configuração em `.vectora/launch.json` (mesma regra de
+            resolução de `preview_start`).
+
+    Returns:
+        JSON `{"status": "ok"|"pending"|"error", "message": "..."}` do novo
+        start.
+    """
+    from backend.api.handlers.workspaces import PreviewStartRequest, PreviewStopRequest
+    from backend.api.handlers.workspaces import preview_start as _http_preview_start
+    from backend.api.handlers.workspaces import preview_stop as _http_preview_stop
+
+    workspace_id = _workspace_id(config)
+    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    if resolved_name is None:
+        return err
+    await _http_preview_stop(workspace_id, PreviewStopRequest(name=resolved_name))
+    result = await _http_preview_start(
+        workspace_id, PreviewStartRequest(name=resolved_name)
+    )
+    return json.dumps({"status": result.status, "message": result.message})
+
+
+@tool(
+    extras={
+        "render_hint": "terminal_output",
+        "category": "browser",
+        "destructive": False,
+        "icon": "terminal",
+    }
+)
+async def preview_logs(
+    name: str | None = None,
+    lines: int = 100,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Lê as últimas linhas de stdout/stderr do dev server de preview —
+    inclusive depois dele ter travado/morrido (o histórico não é apagado ao
+    parar). Use pra se autodiagnosticar quando `preview_start` retornar
+    `"error"`/`"pending"`, ou quando as tools de browser automation
+    (`browser_screenshot` etc.) falharem.
+
+    Args:
+        name: Nome da configuração em `.vectora/launch.json` (mesma regra de
+            resolução de `preview_start`).
+        lines: Quantidade de linhas mais recentes a retornar (padrão 100).
+
+    Returns:
+        As últimas `lines` linhas de saída, ou uma mensagem indicando que
+        esse preview nunca foi iniciado.
+    """
+    from backend.api.handlers.workspaces import preview_logs as _http_preview_logs
+
+    workspace_id = _workspace_id(config)
+    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    if resolved_name is None:
+        return err
+    result = await _http_preview_logs(workspace_id, resolved_name)
+    if not result.lines:
+        return f"(nenhum log disponível — preview '{resolved_name}' nunca foi iniciado)"
+    return "\n".join(result.lines[-lines:])
