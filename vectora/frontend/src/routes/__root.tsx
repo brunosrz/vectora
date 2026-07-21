@@ -285,6 +285,23 @@ function RootComponent() {
     applyThemeTokens(preset ? buildThemeTokens(preset.colors) : null);
   }, [themePreset, customThemeColors]);
 
+  // Escala de fonte por superfície (Preferências → Aparência) — CSS vars
+  // consumidas por styles.css (--font-scale-ui) e por markdown-view.tsx/
+  // message-item.tsx (--font-scale-markdown/--font-scale-chat).
+  const fontScaleUi = useSettingsStore((s) => s.fontScaleUi);
+  const fontScaleChat = useSettingsStore((s) => s.fontScaleChat);
+  const fontScaleMarkdown = useSettingsStore((s) => s.fontScaleMarkdown);
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    root.style.setProperty("--font-scale-ui", String(fontScaleUi / 100));
+    root.style.setProperty("--font-scale-chat", String(fontScaleChat / 100));
+    root.style.setProperty(
+      "--font-scale-markdown",
+      String(fontScaleMarkdown / 100),
+    );
+  }, [fontScaleUi, fontScaleChat, fontScaleMarkdown]);
+
   return (
     <div
       className="h-screen flex flex-col overflow-hidden"

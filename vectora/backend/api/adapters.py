@@ -61,8 +61,9 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
     Códigos: ``RATE_LIMIT`` (429 / quota esgotada), ``MISSING_KEYS`` (chave de
     API não configurada), ``AUTH`` (chave inválida / 401 / 403),
     ``MODEL_INCOMPATIBLE`` (provider rejeitou o histórico da conversa em
-    todos os candidatos da cadeia de fallback — não é quota), ``STREAM_ERROR``
-    (genérico).
+    todos os candidatos da cadeia de fallback — não é quota),
+    ``RECURSION_LIMIT`` (o grafo estourou o limite de passos sem convergir),
+    ``STREAM_ERROR`` (genérico).
     """
     text = f"{type(exc).__name__}: {exc}".lower()
     # MISSING_KEYS antes de AUTH: a falta de chave cita "api key" (que casaria
@@ -91,32 +92,47 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
             "MODEL_INCOMPATIBLE",
             "Este modelo não conseguiu processar o histórico desta conversa.",
         )
-    if (
-        "429" in text
-        or "too many requests" in text
-        or "resource_exhausted" in text
-        or "rate limit" in text
-        or "ratelimit" in text
-        or "quota" in text
-    ):
-        return "RATE_LIMIT", "O limite de uso deste modelo foi atingido."
-    if (
-        "timeout" in text
-        or "timed out" in text
-        or "connecttimeout" in text
-        or "readtimeout" in text
-    ):
-        return "TIMEOUT", "A conexão com o modelo expirou. Tente novamente."
-    if (
-        "401" in text
-        or "403" in text
-        or "unauthorized" in text
-        or "permission denied" in text
-        or "api key" in text
-        or "api_key" in text
-        or "invalid authentication" in text
-    ):
-        return "AUTH", "Falha de autenticação com o provedor do modelo."
+    keyword_matches: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+        (
+            "RATE_LIMIT",
+            "O limite de uso deste modelo foi atingido.",
+            (
+                "429",
+                "too many requests",
+                "resource_exhausted",
+                "rate limit",
+                "ratelimit",
+                "quota",
+            ),
+        ),
+        (
+            "TIMEOUT",
+            "A conexão com o modelo expirou. Tente novamente.",
+            ("timeout", "timed out", "connecttimeout", "readtimeout"),
+        ),
+        (
+            "AUTH",
+            "Falha de autenticação com o provedor do modelo.",
+            (
+                "401",
+                "403",
+                "unauthorized",
+                "permission denied",
+                "api key",
+                "api_key",
+                "invalid authentication",
+            ),
+        ),
+        (
+            "RECURSION_LIMIT",
+            "O agente entrou em um loop e foi interrompido automaticamente. "
+            "Tente novamente ou simplifique o pedido.",
+            ("graphrecursionerror", "recursion limit"),
+        ),
+    )
+    for code, message, keywords in keyword_matches:
+        if any(keyword in text for keyword in keywords):
+            return code, message
     return "STREAM_ERROR", "Ocorreu um erro ao gerar a resposta."
 
 

@@ -5,7 +5,6 @@ import {
   Database,
   FolderPlus,
   Paperclip,
-  Plug,
   Plus,
   Share2,
   Slash,
@@ -132,17 +131,6 @@ export function PlusMenu({
           >
             <Share2 className="w-4 h-4 shrink-0 text-muted-foreground" />
             {m.plus_connectors()}
-          </button>
-
-          <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
-            onClick={() => {
-              setOpen(false);
-              openEnvironment("plugins");
-            }}
-          >
-            <Plug className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {m.plus_plugins()}
           </button>
         </PopoverContent>
       </Popover>

@@ -1,13 +1,9 @@
 "use client";
 
 /**
- * LibraryTab — shell da aba Library (Sprint 1): 3 seções fecháveis (MCP,
- * Skills, Memory Library) + busca com filtros toggle por categoria.
- *
- * Cada seção povoa seus próprios itens nos Sprints 2 (MCP), 3 (Skills) e 6
- * (Memory Library) — aqui só o shell + o mecanismo de busca/filtro, que já
- * funciona sobre os itens conforme cada seção for entrando (busca
- * client-side sobre os dados já carregados, sem endpoint agregado).
+ * LibraryTab — 3 seções fecháveis (MCP, Skills, Memory Library) com busca
+ * e filtros toggle por categoria. A busca é client-side sobre os itens já
+ * carregados de cada seção, sem endpoint agregado.
  */
 
 import { Blocks, Library as LibraryIcon, Puzzle, Search } from "lucide-react";
@@ -31,9 +27,9 @@ type LibraryFilter = "mcp" | "skills" | "memory";
 
 const ALL_FILTERS: LibraryFilter[] = ["mcp", "skills", "memory"];
 
-/** Item genérico de qualquer seção — cada seção real (Sprints 2/3/6) monta
- * a lista completa a partir do seu próprio backend; a busca/filtro aqui só
- * precisa do nome pra combinar contra a query. */
+/** Item genérico de qualquer seção — cada seção monta a lista completa a
+ * partir do seu próprio backend; a busca/filtro aqui só precisa do nome
+ * pra combinar contra a query. */
 export interface LibraryItem {
   id: string;
   name: string;
@@ -121,10 +117,8 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
     });
   };
 
-  // Memory Library ainda vazia (Sprint 6 povoa) — a busca/filtro já funciona
-  // sobre a lista real assim que ela existir. MCP (Sprint 2) e Skills
-  // (Sprint 3) já são reais — cada uma vive no próprio subcomponente, que
-  // reporta a contagem de volta via onCountChange.
+  // MCP e Skills vivem em subcomponentes próprios, que reportam a contagem
+  // filtrada de volta via onCountChange.
   const memoryItems = useMemo<LibraryItem[]>(() => [], []);
 
   const [mcpCount, setMcpCount] = useState(0);

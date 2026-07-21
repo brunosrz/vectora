@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 /**
- * SkillsTab — cobre o callback onSkillsChange (Sprint 3, usado pela Library
- * pra manter o badge do accordion em dia sem duplicar o fetch). Settings →
- * Skills continua funcionando sem passar esse prop (opcional).
+ * SkillsTab — cobre o callback opcional onSkillsChange, disparado a cada
+ * refresh com a contagem atual de skills instaladas.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";

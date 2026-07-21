@@ -11,6 +11,7 @@ from __future__ import annotations
 async def resolve_preview_url(workspace_id: str) -> str | None:
     """Retorna `http://localhost:{port}` do primeiro preview server rodando, ou None."""
     from backend.api.handlers.workspaces import (
+        _is_port_open,
         _preview_key,
         _preview_procs,
         get_launch_json,
@@ -19,6 +20,10 @@ async def resolve_preview_url(workspace_id: str) -> str | None:
     launch = await get_launch_json(workspace_id)
     for cfg in launch.configurations:
         proc = _preview_procs.get(_preview_key(workspace_id, cfg.name))
-        if proc is not None and proc.returncode is None:
+        if (
+            proc is not None
+            and proc.returncode is None
+            and await _is_port_open("127.0.0.1", cfg.port)
+        ):
             return f"http://localhost:{cfg.port}"
     return None

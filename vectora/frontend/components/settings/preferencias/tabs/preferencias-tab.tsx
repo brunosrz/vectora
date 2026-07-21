@@ -24,6 +24,10 @@ import { Switch } from "@/components/ui/switch";
 import {
   useSettingsStore,
   SUPPORTED_LANGS,
+  FONT_SCALE_MIN,
+  FONT_SCALE_MAX,
+  MONACO_FONT_SIZE_MIN,
+  MONACO_FONT_SIZE_MAX,
   type Theme,
   type Lang,
   type SidebarPosition,
@@ -266,6 +270,108 @@ function AutoUpdateSection({
   );
 }
 
+/** Aparência — 4 escalas de fonte independentes (UI, chat, markdown, Monaco).
+ * Cada uma aplicada só na superfície correspondente (ver __root.tsx e
+ * markdown-view.tsx/message-item.tsx/file-editor.tsx). */
+function FontScaleSection({
+  fontScaleUi,
+  fontScaleChat,
+  fontScaleMarkdown,
+  monacoFontSize,
+  setFontScaleUi,
+  setFontScaleChat,
+  setFontScaleMarkdown,
+  setMonacoFontSize,
+}: {
+  fontScaleUi: number;
+  fontScaleChat: number;
+  fontScaleMarkdown: number;
+  monacoFontSize: number;
+  setFontScaleUi: (v: number) => void;
+  setFontScaleChat: (v: number) => void;
+  setFontScaleMarkdown: (v: number) => void;
+  setMonacoFontSize: (v: number) => void;
+}) {
+  const rows: {
+    id: string;
+    label: string;
+    value: number;
+    onChange: (v: number) => void;
+    min: number;
+    max: number;
+    step: number;
+    unit: string;
+  }[] = [
+    {
+      id: "font-scale-ui",
+      label: m.prefs_font_scale_ui(),
+      value: fontScaleUi,
+      onChange: setFontScaleUi,
+      min: FONT_SCALE_MIN,
+      max: FONT_SCALE_MAX,
+      step: 10,
+      unit: "%",
+    },
+    {
+      id: "font-scale-chat",
+      label: m.prefs_font_scale_chat(),
+      value: fontScaleChat,
+      onChange: setFontScaleChat,
+      min: FONT_SCALE_MIN,
+      max: FONT_SCALE_MAX,
+      step: 10,
+      unit: "%",
+    },
+    {
+      id: "font-scale-markdown",
+      label: m.prefs_font_scale_markdown(),
+      value: fontScaleMarkdown,
+      onChange: setFontScaleMarkdown,
+      min: FONT_SCALE_MIN,
+      max: FONT_SCALE_MAX,
+      step: 10,
+      unit: "%",
+    },
+    {
+      id: "monaco-font-size",
+      label: m.prefs_font_size_monaco(),
+      value: monacoFontSize,
+      onChange: setMonacoFontSize,
+      min: MONACO_FONT_SIZE_MIN,
+      max: MONACO_FONT_SIZE_MAX,
+      step: 1,
+      unit: "px",
+    },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <Label>{m.prefs_appearance_section()}</Label>
+      {rows.map((row) => (
+        <div key={row.id} className="flex items-center gap-3">
+          <Label htmlFor={row.id} className="flex-1 text-xs font-normal">
+            {row.label}
+          </Label>
+          <input
+            id={row.id}
+            type="range"
+            min={row.min}
+            max={row.max}
+            step={row.step}
+            value={row.value}
+            onChange={(e) => row.onChange(Number(e.target.value))}
+            className="w-32 accent-primary"
+          />
+          <span className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+            {row.value}
+            {row.unit}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function PreferenciasTab() {
   const {
     theme,
@@ -286,6 +392,14 @@ export function PreferenciasTab() {
     setTrainingInstructions,
     autoUpdateEnabled,
     setAutoUpdateEnabled,
+    fontScaleUi,
+    fontScaleChat,
+    fontScaleMarkdown,
+    monacoFontSize,
+    setFontScaleUi,
+    setFontScaleChat,
+    setFontScaleMarkdown,
+    setMonacoFontSize,
   } = useSettingsStore();
 
   const activeCustomColors = customThemeColors ?? DEFAULT_CUSTOM_COLORS;
@@ -494,6 +608,18 @@ export function PreferenciasTab() {
           </div>
         ))}
       </div>
+
+      {/* Aparência — escalas de fonte independentes */}
+      <FontScaleSection
+        fontScaleUi={fontScaleUi}
+        fontScaleChat={fontScaleChat}
+        fontScaleMarkdown={fontScaleMarkdown}
+        monacoFontSize={monacoFontSize}
+        setFontScaleUi={setFontScaleUi}
+        setFontScaleChat={setFontScaleChat}
+        setFontScaleMarkdown={setFontScaleMarkdown}
+        setMonacoFontSize={setMonacoFontSize}
+      />
 
       {/* Auto-update (só desktop) */}
       <AutoUpdateSection

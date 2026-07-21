@@ -120,11 +120,6 @@ function useTabBadge(
   }
 }
 
-// Context Graph saiu do beta: backend (pipeline + endpoints + tool) e
-// frontend (ContextGraphTab) estão completos e religados no switch acima —
-// não há mais motivo pra gatear atrás de enableFeaturesBeta.
-// Library entra em beta enquanto suas 3 seções (MCP/Skills/Memory Library)
-// ainda não estão todas implementadas — sai daqui quando estabilizar.
 const BETA_TABS = new Set<WorkbenchTab>(["library"]);
 
 export function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {

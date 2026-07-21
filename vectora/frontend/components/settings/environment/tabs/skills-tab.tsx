@@ -34,9 +34,7 @@ interface Skill {
 type VerifyState = { state: "idle" | "loading" | "ok" | "error"; msg: string };
 
 interface SkillsTabProps {
-  /** Notifica a contagem atual de skills instaladas após cada refresh —
-   * usado pela Library (Sprint 3) pra manter o badge do accordion em dia
-   * sem duplicar o fetch. Opcional: Settings → Skills não precisa dele. */
+  /** Notifica a contagem atual de skills instaladas após cada refresh. */
   onSkillsChange?: (count: number) => void;
 }
 

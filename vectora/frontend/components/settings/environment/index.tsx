@@ -7,9 +7,6 @@
  *
  * Abas:
  *   - Integrações — conectores externos + variáveis de ambiente customizadas
- *                   (absorveu a antiga aba Envs — Sprint 12)
- *   - Skills      — skills instaladas
- *   - Plugins     — plugins/MCP servers + política de ferramentas
  *   - Provider Routing — modelos de LLM locais/dinâmicos (Ollama)
  *
  * "Preferências" (Conta/Preferências/Memória) e "Administração" (root/admin)
@@ -19,7 +16,7 @@
  * o custo de uma feature secundária.
  */
 
-import { Suspense, type ComponentType } from "react";
+import { Suspense } from "react";
 import {
   Dialog,
   DialogDescription,
@@ -37,22 +34,6 @@ import {
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 import { m } from "@/lib/paraglide/messages";
 
-const SkillsTab = lazyWithRetry(
-  () =>
-    import("./tabs/skills-tab").then((mod) => ({
-      // SkillsTab aceita um onSkillsChange opcional (Sprint 3, usado pela
-      // Library) — Settings sempre monta sem props, então o cast é seguro
-      // aqui (mesmo padrão de zero-props que os outros lazy imports desta
-      // tela já satisfazem naturalmente).
-      default: mod.SkillsTab as ComponentType<unknown>,
-    })),
-  "skills-tab",
-);
-const PluginsTab = lazyWithRetry(
-  () =>
-    import("./tabs/plugins-tab").then((mod) => ({ default: mod.PluginsTab })),
-  "plugins-tab",
-);
 const IntegracoesTab = lazyWithRetry(
   () =>
     import("./tabs/integracoes-tab").then((mod) => ({
@@ -107,12 +88,6 @@ export function EnvironmentDialog() {
             <TabsTrigger value="integracoes" className="rounded-md text-xs">
               Integrações
             </TabsTrigger>
-            <TabsTrigger value="skills" className="rounded-md text-xs">
-              Skills
-            </TabsTrigger>
-            <TabsTrigger value="plugins" className="rounded-md text-xs">
-              Plugins
-            </TabsTrigger>
             <TabsTrigger
               value="provider_routing"
               className="rounded-md text-xs"
@@ -126,12 +101,6 @@ export function EnvironmentDialog() {
               <Suspense fallback={<TabFallback />}>
                 <TabsContent value="integracoes" className="mt-0">
                   <IntegracoesTab />
-                </TabsContent>
-                <TabsContent value="skills" className="mt-0">
-                  <SkillsTab />
-                </TabsContent>
-                <TabsContent value="plugins" className="mt-0">
-                  <PluginsTab />
                 </TabsContent>
                 <TabsContent value="provider_routing" className="mt-0">
                   <ProviderRoutingTab />

@@ -15,6 +15,7 @@ import { Loader2, Save } from "lucide-react";
 
 import { languageFromPath } from "@/lib/monaco/setup";
 import { useIsDark } from "@/lib/hooks/use-is-dark";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { fetchFile, apiUpdateFile } from "@/lib/api/fs-files";
 import type { FileContent } from "@/lib/stores/workbench-store";
 import { useToastStore } from "@/lib/stores/toast-store";
@@ -29,6 +30,7 @@ export function FileEditor({
   path: string;
 }) {
   const isDark = useIsDark();
+  const monacoFontSize = useSettingsStore((s) => s.monacoFontSize);
   const media = getMediaKind(path);
 
   const [file, setFile] = useState<FileContent | null>(null);
@@ -150,7 +152,7 @@ export function FileEditor({
           onMount={handleMount}
           options={{
             readOnly,
-            fontSize: 13,
+            fontSize: monacoFontSize,
             minimap: { enabled: true },
             scrollBeyondLastLine: false,
             automaticLayout: true,

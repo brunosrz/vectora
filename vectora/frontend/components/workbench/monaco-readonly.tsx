@@ -13,6 +13,7 @@ import MonacoEditor from "@monaco-editor/react";
 import { Loader2 } from "lucide-react";
 
 import { languageFromPath } from "@/lib/monaco/setup";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 
 export default function MonacoReadOnly({
   value,
@@ -23,6 +24,7 @@ export default function MonacoReadOnly({
   path: string;
   isDark: boolean;
 }) {
+  const monacoFontSize = useSettingsStore((s) => s.monacoFontSize);
   return (
     <MonacoEditor
       value={value}
@@ -31,7 +33,7 @@ export default function MonacoReadOnly({
       options={{
         readOnly: true,
         domReadOnly: true,
-        fontSize: 13,
+        fontSize: monacoFontSize,
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
         automaticLayout: true,

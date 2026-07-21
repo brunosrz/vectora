@@ -24,9 +24,9 @@ describe("environment-dialog-store", () => {
   );
 
   it("openAt abre no tab pedido", () => {
-    useEnvironmentDialogStore.getState().openAt("plugins");
+    useEnvironmentDialogStore.getState().openAt("provider_routing");
     expect(useEnvironmentDialogStore.getState().open).toBe(true);
-    expect(useEnvironmentDialogStore.getState().tab).toBe("plugins");
+    expect(useEnvironmentDialogStore.getState().tab).toBe("provider_routing");
   });
 
   it("openAt sem argumento cai no default 'integracoes'", () => {

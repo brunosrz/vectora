@@ -171,6 +171,12 @@
     border-color: var(--border);
   }
 
+  html {
+    /* Preferências → Aparência: escala global da UI (padrão 1 = 100%),
+       aplicada em src/routes/__root.tsx via CSS var. */
+    font-size: calc(100% * var(--font-scale-ui, 1));
+  }
+
   html,
   body {
     background-color: var(--background);

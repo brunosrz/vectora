@@ -129,3 +129,29 @@ def test_direct_provider_incompatible_error_classified():
         Exception("`tool plan` cannot be used with this model.")
     )
     assert code == "MODEL_INCOMPATIBLE"
+
+
+def test_graph_recursion_error_classified():
+    """Bug reproduzido ao vivo: troca de provider por falso "quota esgotada"
+    (ver test_config_settings::TestLlmKeyPrecedence) deixava o orchestrator
+    em loop de delegação até estourar o recursion_limit do LangGraph — o
+    GraphRecursionError propagava como STREAM_ERROR genérico, sem explicar
+    ao usuário o que de fato aconteceu."""
+    from langgraph.errors import GraphRecursionError
+
+    code, message = classify_stream_error(
+        GraphRecursionError(
+            "Recursion limit of 50 reached without hitting a stop condition."
+        )
+    )
+    assert code == "RECURSION_LIMIT"
+    assert message
+    assert "loop" in message.lower()
+    # Não vaza o número cru do limite/jargão do LangGraph pro usuário.
+    assert "50" not in message
+
+
+def test_graph_recursion_not_confused_with_rate_limit():
+    r_code, _ = classify_stream_error(Exception("recursion limit reached"))
+    q_code, _ = classify_stream_error(Exception("429 quota"))
+    assert r_code != q_code

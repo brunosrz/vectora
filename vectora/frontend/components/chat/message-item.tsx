@@ -871,6 +871,7 @@ export const MessageItem = memo(
                         : "auto",
                       backfaceVisibility: "hidden",
                       transform: "translateZ(0)",
+                      fontSize: "calc(0.875rem * var(--font-scale-chat, 1))",
                     }}
                   >
                     {message.content && typeof message.content === "string" ? (

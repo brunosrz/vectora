@@ -2862,12 +2862,42 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
 # ---------------------------------------------------------------------------
 
 import asyncio as _asyncio
+import time as _time
 
 _preview_procs: dict[str, _asyncio.subprocess.Process] = {}
 
 
 def _preview_key(workspace_id: str, name: str) -> str:
     return f"{workspace_id}::{name}"
+
+
+async def _is_port_open(host: str, port: int, timeout_s: float = 0.3) -> bool:
+    """Sonda TCP curta — só considera um dev server "no ar" quando a porta
+    aceita conexão, não quando o processo apenas existe (compilação inicial
+    de vite/next tipicamente ainda não está escutando)."""
+    try:
+        _, writer = await _asyncio.wait_for(
+            _asyncio.open_connection(host, port), timeout=timeout_s
+        )
+    except (OSError, TimeoutError):
+        return False
+    writer.close()
+    with contextlib.suppress(Exception):
+        await writer.wait_closed()
+    return True
+
+
+async def _wait_port_open(
+    host: str, port: int, *, total_timeout: float = 15.0, interval: float = 0.5
+) -> bool:
+    """Poll limitado até a porta abrir — usado só no `preview/start` pra não
+    responder "ok" com o dev server ainda compilando."""
+    deadline = _time.monotonic() + total_timeout
+    while _time.monotonic() < deadline:
+        if await _is_port_open(host, port):
+            return True
+        await _asyncio.sleep(interval)
+    return await _is_port_open(host, port)
 
 
 def _launch_json_path(workspace_id: str) -> Path | None:
@@ -2966,8 +2996,9 @@ async def preview_status(workspace_id: str) -> PreviewStatusResponse:
     for cfg in launch.configurations:
         key = _preview_key(workspace_id, cfg.name)
         proc = _preview_procs.get(key)
-        running = proc is not None and proc.returncode is None
-        pid = proc.pid if running and proc else None
+        alive = proc is not None and proc.returncode is None
+        running = alive and await _is_port_open("127.0.0.1", cfg.port)
+        pid = proc.pid if alive and proc else None
         servers.append(
             PreviewServerStatus(name=cfg.name, port=cfg.port, running=running, pid=pid)
         )
@@ -3006,7 +3037,15 @@ async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusR
             stderr=_asyncio.subprocess.DEVNULL,
         )
         _preview_procs[key] = proc
-        return StatusResponse(status="ok", message=f"iniciado na porta {cfg.port}")
+        port_ready = await _wait_port_open("127.0.0.1", cfg.port)
+        if not port_ready:
+            return StatusResponse(
+                status="pending",
+                message=(
+                    f"processo iniciado na porta {cfg.port}, ainda compilando/subindo"
+                ),
+            )
+        return StatusResponse(status="ok", message=f"pronto na porta {cfg.port}")
     except Exception as exc:
         return StatusResponse(status="error", message=str(exc))
 

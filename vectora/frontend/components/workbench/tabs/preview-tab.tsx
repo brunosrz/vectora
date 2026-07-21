@@ -90,8 +90,8 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     }
   }, [wsId]);
 
-  const fetchStatus = useCallback(async () => {
-    if (!wsId) return;
+  const fetchStatus = useCallback(async (): Promise<ServerStatus[] | null> => {
+    if (!wsId) return null;
     try {
       const res = await fetch(
         `/workspaces/${encodeURIComponent(wsId)}/preview/status`,
@@ -104,10 +104,12 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
           const updated = servers.find((s) => s.name === activeServer.name);
           if (updated) setActiveServer(updated);
         }
+        return servers;
       }
     } catch {
       // silently ignore
     }
+    return null;
   }, [wsId, activeServer]);
 
   useEffect(() => {
@@ -177,15 +179,16 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     if (!wsId) return;
     setActionLoading(cfg.name);
     try {
+      // POST bloqueia no backend até a porta abrir (ou ~15s de timeout) —
+      // não precisa de espera fixa aqui; o status refletido já é real.
       await fetch(`/workspaces/${encodeURIComponent(wsId)}/preview/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: cfg.name }),
       });
-      await new Promise((r) => setTimeout(r, 1500));
-      await fetchStatus();
-      const status = statuses.find((s) => s.name === cfg.name);
-      if (status) setActiveServer({ ...status, running: true });
+      const servers = await fetchStatus();
+      const status = servers?.find((s) => s.name === cfg.name);
+      if (status) setActiveServer(status);
     } finally {
       setActionLoading(null);
     }
@@ -210,9 +213,13 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
   const getStatus = (name: string): ServerStatus | undefined =>
     statuses.find((s) => s.name === name);
 
-  const activeUrl = activeServer
-    ? `http://localhost:${activeServer.port}`
-    : null;
+  // Só navega o iframe quando o backend confirmou a porta aberta — evita o
+  // ERR_CONNECTION_REFUSED de apontar pra um dev server ainda compilando.
+  const activeUrl =
+    activeServer && activeServer.running
+      ? `http://localhost:${activeServer.port}`
+      : null;
+  const activeServerStarting = Boolean(activeServer && !activeServer.running);
 
   const effectiveUrl = urlOverride || activeUrl || "";
 
@@ -459,9 +466,14 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
           />
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          {activeServerStarting && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          )}
           <p className="text-xs text-muted-foreground">
-            {msg.workbench_preview_select_server()}
+            {activeServerStarting
+              ? msg.workbench_preview_starting()
+              : msg.workbench_preview_select_server()}
           </p>
         </div>
       )}

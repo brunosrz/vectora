@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+from pathlib import Path
 
 import pytest
 
@@ -297,3 +299,61 @@ class TestConfiguredLlmProviders:
         finally:
             if prev is not None:
                 _os.environ["COHERE_API_KEY"] = prev
+
+
+# ---------------------------------------------------------------------------
+# Precedência de chaves de LLM: ~/.vectora/.env vence sobre .env de
+# projeto/cwd (bug: chave de teste esquecida em vectora/.env sobrescrevia
+# silenciosamente a chave paga do usuário a cada boot, causando "quota
+# esgotada" indevido).
+# ---------------------------------------------------------------------------
+
+
+class TestLlmKeyPrecedence:
+    def test_user_env_llm_key_wins_over_project_env(
+        self, monkeypatch, tmp_path, caplog
+    ):
+        home_dir = tmp_path / "home"
+        project_dir = tmp_path / "project"
+        (home_dir / ".vectora").mkdir(parents=True)
+        project_dir.mkdir(parents=True)
+
+        (home_dir / ".vectora" / ".env").write_text(
+            "GOOGLE_API_KEY=user-real-paid-key\n", encoding="utf-8"
+        )
+        (project_dir / ".env").write_text(
+            "GOOGLE_API_KEY=stale-test-key-no-billing\n", encoding="utf-8"
+        )
+
+        monkeypatch.setattr(Path, "home", lambda: home_dir)
+        monkeypatch.chdir(project_dir)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+        with caplog.at_level(logging.WARNING, logger="backend.settings"):
+            Settings()
+
+        assert os.environ["GOOGLE_API_KEY"] == "user-real-paid-key"
+        assert any("GOOGLE_API_KEY" in record.message for record in caplog.records)
+
+    def test_no_warning_when_project_env_agrees_with_user_env(
+        self, monkeypatch, tmp_path, caplog
+    ):
+        home_dir = tmp_path / "home"
+        project_dir = tmp_path / "project"
+        (home_dir / ".vectora").mkdir(parents=True)
+        project_dir.mkdir(parents=True)
+
+        (home_dir / ".vectora" / ".env").write_text(
+            "GOOGLE_API_KEY=same-key\n", encoding="utf-8"
+        )
+        (project_dir / ".env").write_text("GOOGLE_API_KEY=same-key\n", encoding="utf-8")
+
+        monkeypatch.setattr(Path, "home", lambda: home_dir)
+        monkeypatch.chdir(project_dir)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+        with caplog.at_level(logging.WARNING, logger="backend.settings"):
+            Settings()
+
+        assert os.environ["GOOGLE_API_KEY"] == "same-key"
+        assert not any("GOOGLE_API_KEY" in record.message for record in caplog.records)

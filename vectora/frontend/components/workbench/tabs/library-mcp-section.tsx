@@ -1,19 +1,16 @@
 "use client";
 
 /**
- * McpSection — seção "MCP" da Library (Sprint 2): religa o marketplace que
- * já existia no backend (backend/api/handlers/mcp_marketplace.py) mas nunca
- * tinha UI — GET /mcp/registry, POST /mcp/install, POST /mcp/uninstall.
+ * McpSection — marketplace de conectores MCP: GET /mcp/registry,
+ * POST /mcp/install, POST /mcp/uninstall.
  *
  * Conectores que exigem env vars pedem os valores antes de instalar,
- * persistidos via POST /auth/envs (mesmo backend da aba Integrações) — o
- * MCP instalado passa a aparecer lá como uma entrada "Customizada"
- * automaticamente, sem trabalho extra (a aba já lista qualquer env key
- * órfã do catálogo).
+ * persistidos via POST /auth/envs — o MCP instalado passa a aparecer na
+ * aba Integrações como uma entrada "Customizada" automaticamente, já que
+ * ela lista qualquer env key órfã do catálogo.
  *
  * "Adicionar MCP manual" (stdio/sse/http + política de tools) reaproveita
- * o componente PluginsTab existente — mesma tela hoje em Settings →
- * Plugins, que sai de lá no Sprint 4 quando a Library assume de vez.
+ * o componente PluginsTab.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";

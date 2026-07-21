@@ -2,14 +2,12 @@
 
 /**
  * IntegracoesTab — tela única de credenciais (integrações conhecidas +
- * variáveis customizadas). Absorveu a antiga EnvsTab (Sprint 12): não há
- * mais uma aba separada de "Envs" — qualquer chave/valor livre entra aqui
- * como uma variável "Customizada", ao lado dos providers do catálogo.
+ * variáveis customizadas). Qualquer chave/valor livre entra aqui como uma
+ * variável "Customizada", ao lado dos providers do catálogo.
  *
  * O1 — API key: usuário insere chave manualmente.
  * O2–O5 — OAuth: GitHub, GitLab, Google, Slack (token manual também aceito
- * pra quem não quer registrar um OAuth App — mesmo raciocínio já usado
- * pro GitHub, estendido aos demais providers OAuth).
+ * pra quem não quer registrar um OAuth App próprio).
  * Custom: chave+valor livre via /auth/envs, para credenciais sem entrada
  * dedicada no catálogo (MCP servers, providers não listados, etc).
  * Webhook URL: exibida para providers que têm webhook configurado.
@@ -20,6 +18,8 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Eye,
+  EyeOff,
   ExternalLink,
   GitBranch,
   KeyRound,
@@ -172,6 +172,7 @@ function IntegrationCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [keyValue, setKeyValue] = useState("");
+  const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [verifyState, setVerifyState] = useState<VerifyState>("idle");
@@ -181,9 +182,8 @@ function IntegrationCard({
 
   const isOAuthProvider = OAUTH_PROVIDERS.has(integ.id);
   const isChildOAuth = !!integ.parent; // google-drive, gmail dependem de google
-  // Todo provider (apikey/hybrid/oauth) aceita token manual — mesmo os
-  // OAuth-only ganham a opção de colar um token já emitido, sem precisar
-  // registrar um OAuth App próprio (mesmo raciocínio já usado pro GitHub).
+  // Todo provider (apikey/hybrid/oauth) aceita token manual, incluindo
+  // OAuth-only, como alternativa a registrar um OAuth App próprio.
   const allowToken =
     integ.kind === "apikey" ||
     integ.kind === "hybrid" ||
@@ -342,7 +342,10 @@ function IntegrationCard({
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0"
-              onClick={() => setExpanded((v) => !v)}
+              onClick={() => {
+                setExpanded((v) => !v);
+                setShowKey(false);
+              }}
               title={m.integrations_paste_token()}
             >
               {expanded ? (
@@ -372,17 +375,35 @@ function IntegrationCard({
       {allowToken && expanded && (
         <div className="px-3 pb-3 space-y-2 border-t pt-3">
           <div className="flex gap-2">
-            <Input
-              type="password"
-              autoComplete="new-password"
-              placeholder={m.integrations_api_key_placeholder()}
-              value={keyValue}
-              onChange={(e) => setKeyValue(e.target.value)}
-              className="h-8 text-xs font-mono"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void handleSave();
-              }}
-            />
+            <div className="relative flex-1">
+              <Input
+                type={showKey ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder={m.integrations_api_key_placeholder()}
+                value={keyValue}
+                onChange={(e) => setKeyValue(e.target.value)}
+                className="h-8 pr-8 text-xs font-mono"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void handleSave();
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center justify-center w-8 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={
+                  showKey
+                    ? m.integrations_hide_key()
+                    : m.integrations_show_key()
+                }
+              >
+                {showKey ? (
+                  <EyeOff className="h-3.5 w-3.5" />
+                ) : (
+                  <Eye className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </div>
             <Button
               size="sm"
               className="h-8 shrink-0"
@@ -578,6 +599,7 @@ export function IntegracoesTab() {
   const [addCustomOpen, setAddCustomOpen] = useState(false);
   const [newCustomKey, setNewCustomKey] = useState("");
   const [newCustomValue, setNewCustomValue] = useState("");
+  const [showCustomValue, setShowCustomValue] = useState(false);
   const [savingCustom, setSavingCustom] = useState(false);
   const [customError, setCustomError] = useState<string | null>(null);
 
@@ -782,6 +804,7 @@ export function IntegracoesTab() {
           if (!open) {
             setNewCustomKey("");
             setNewCustomValue("");
+            setShowCustomValue(false);
             setCustomError(null);
           }
         }}
@@ -811,14 +834,32 @@ export function IntegracoesTab() {
               <label className="text-xs font-medium text-muted-foreground">
                 {m.envs_value_label()}
               </label>
-              <Input
-                type="password"
-                autoComplete="new-password"
-                placeholder={m.envs_value_placeholder()}
-                value={newCustomValue}
-                onChange={(e) => setNewCustomValue(e.target.value)}
-                className="text-sm font-mono"
-              />
+              <div className="relative">
+                <Input
+                  type={showCustomValue ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder={m.envs_value_placeholder()}
+                  value={newCustomValue}
+                  onChange={(e) => setNewCustomValue(e.target.value)}
+                  className="pr-8 text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCustomValue((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center justify-center w-8 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={
+                    showCustomValue
+                      ? m.integrations_hide_key()
+                      : m.integrations_show_key()
+                  }
+                >
+                  {showCustomValue ? (
+                    <EyeOff className="h-3.5 w-3.5" />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
             </div>
             {customError && (
               <p className="text-xs text-destructive">{customError}</p>
@@ -827,7 +868,13 @@ export function IntegracoesTab() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setAddCustomOpen(false)}
+              onClick={() => {
+                setAddCustomOpen(false);
+                setNewCustomKey("");
+                setNewCustomValue("");
+                setShowCustomValue(false);
+                setCustomError(null);
+              }}
               disabled={savingCustom}
             >
               {m.envs_cancel()}

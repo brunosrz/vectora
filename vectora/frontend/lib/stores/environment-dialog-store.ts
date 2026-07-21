@@ -1,10 +1,10 @@
 /**
  * environment-dialog-store — controla a abertura do painel "Ambiente"
- * (Integrações, Skills, Plugins, Provider Routing) e a aba ativa.
+ * (Integrações, Provider Routing) e a aba ativa.
  *
  * Permite deep-link a partir de qualquer lugar (ex.: o menu "+" abrindo
- * direto em Conectores/Plugins) sem prop drilling — o dialog é renderizado
- * uma única vez (no SettingsMenu) e lê seu estado daqui.
+ * direto em Conectores) sem prop drilling — o dialog é renderizado uma
+ * única vez (no SettingsMenu) e lê seu estado daqui.
  *
  * "Preferências" (Conta/Preferências/Memória) e "Administração" (root/admin)
  * são painéis próprios — ver `preferencias-dialog-store` e
@@ -13,8 +13,7 @@
 
 import { create } from "zustand";
 
-export type EnvironmentTab =
-  "skills" | "plugins" | "provider_routing" | "integracoes";
+export type EnvironmentTab = "provider_routing" | "integracoes";
 
 interface EnvironmentDialogState {
   open: boolean;

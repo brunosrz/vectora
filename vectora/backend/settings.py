@@ -17,7 +17,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -701,15 +701,18 @@ class Settings(BaseSettings):
             except Exception as _e:
                 logger.debug(f"Could not load config.toml [server]: {_e}")
 
-        # Level 2: Load user global ~/.vectora/.env (segredos pessoais, fallback)
-        # override=False: apenas preenche variáveis ainda não definidas no OS env.
-        # O projeto .env (carregado abaixo com override=True) sempre ganha.
+        # Level 2: Load user global ~/.vectora/.env (segredos pessoais do
+        # usuário — fonte de verdade para chaves de LLM, ver abaixo).
         user_env = Path.home() / ".vectora" / ".env"
+        user_env_values: dict[str, str | None] = {}
         if user_env.exists():
             load_dotenv(user_env, override=False)
-            logger.debug(f"Loaded user .env from {user_env} (fallback only)")
+            user_env_values = dotenv_values(user_env)
+            logger.debug(f"Loaded user .env from {user_env}")
 
-        # Level 1 (highest): Load project-local .env — overrides user global
+        # Level 1: Load project-local .env — para configs de dev que não
+        # são chaves de LLM, tem precedência sobre o global (ex.: rodar de
+        # outro diretório via MCP/orchestrator com config diferente).
         # Also check the package/project root directory to support running from other directories (e.g. via MCP/orchestrator)
         package_root_env = Path(__file__).resolve().parent.parent.parent / ".env"
         project_env = Path.cwd() / ".env"
@@ -726,6 +729,22 @@ class Settings(BaseSettings):
         if project_env.exists():
             load_dotenv(project_env, override=True)
             logger.debug(f"Loaded project .env from {project_env}")
+
+        # Chaves de LLM são a exceção: um .env de projeto/repo esquecido no
+        # filesystem (git-ignorado, então invisível em git status/PRs) não
+        # pode silenciosamente vencer a chave que o usuário configurou de
+        # propósito em ~/.vectora/.env — restaura o valor do usuário e avisa.
+        for _key_name in set(PROVIDER_API_KEY_ENV.values()):
+            if _key_name is None:
+                continue
+            _user_value = user_env_values.get(_key_name)
+            if _user_value and os.environ.get(_key_name) != _user_value:
+                logger.warning(
+                    f"settings: {_key_name} de .env de projeto/cwd "
+                    f"sobrescreveu ~/.vectora/.env — restaurando o valor "
+                    f"do usuário (fonte de verdade para chaves de LLM)"
+                )
+                os.environ[_key_name] = _user_value
 
     def _initialize_directories(self) -> None:
         """Create all required directories if they don't exist."""

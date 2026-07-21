@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * EnvironmentDialog — ordem das abas. "Integrações" deve ser a primeira
- * (o usuário reportou testando ao vivo que ela aparecia por último,
- * escondida atrás de Skills/Plugins/Provider Routing).
+ * EnvironmentDialog — ordem das abas. "Integrações" deve ser a primeira.
+ * Skills e Plugins migraram pra Library (workbench) — só Integrações e
+ * Provider Routing continuam aqui.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
@@ -34,12 +34,6 @@ vi.mock("@/lib/stores/environment-dialog-store", () => ({
     sel({ open: true, tab: "integracoes", setOpen: vi.fn(), setTab: vi.fn() }),
 }));
 
-vi.mock("../tabs/skills-tab", () => ({
-  SkillsTab: () => <div>skills-content</div>,
-}));
-vi.mock("../tabs/plugins-tab", () => ({
-  PluginsTab: () => <div>plugins-content</div>,
-}));
 vi.mock("../tabs/provider-routing-tab", () => ({
   ProviderRoutingTab: () => <div>provider-routing-content</div>,
 }));
@@ -53,7 +47,7 @@ afterEach(() => {
 });
 
 describe("EnvironmentDialog", () => {
-  it("mostra Integrações como a primeira aba, antes de Skills/Plugins/Provider Routing", async () => {
+  it("mostra Integrações como a primeira aba, antes de Provider Routing", async () => {
     render(<EnvironmentDialog />);
 
     await waitFor(() => {
@@ -62,11 +56,6 @@ describe("EnvironmentDialog", () => {
 
     const labels = screen.getAllByRole("tab").map((el) => el.textContent);
     expect(labels[0]).toBe("Integrações");
-    expect(labels).toEqual([
-      "Integrações",
-      "Skills",
-      "Plugins",
-      "Provider Routing",
-    ]);
+    expect(labels).toEqual(["Integrações", "Provider Routing"]);
   });
 });

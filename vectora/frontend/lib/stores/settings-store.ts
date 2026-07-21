@@ -103,6 +103,14 @@ export interface SettingsState {
    *  próximo boot (só toma efeito na próxima abertura do app, não em
    *  runtime). Sem efeito no navegador/modo servidor. */
   autoUpdateEnabled: boolean;
+  /** Escala de fonte da interface geral (%), aplicada via CSS var --font-scale-ui. */
+  fontScaleUi: number;
+  /** Escala de fonte das mensagens do chat (%), --font-scale-chat. */
+  fontScaleChat: number;
+  /** Escala de fonte do markdown renderizado (Plan/Memory/Files/preview), --font-scale-markdown. */
+  fontScaleMarkdown: number;
+  /** Tamanho de fonte (px) do editor Monaco. */
+  monacoFontSize: number;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -121,12 +129,34 @@ export interface SettingsState {
   setChatSidebarWidth: (v: number) => void;
   setSelectedModel: (v: string) => void;
   setAutoUpdateEnabled: (v: boolean) => void;
+  setFontScaleUi: (v: number) => void;
+  setFontScaleChat: (v: number) => void;
+  setFontScaleMarkdown: (v: number) => void;
+  setMonacoFontSize: (v: number) => void;
   resetSettings: () => void;
 }
 
 /** Limites de largura da sidebar (px). */
 const SIDEBAR_MIN_WIDTH = 180;
 const SIDEBAR_MAX_WIDTH = 480;
+
+/** Limites de escala de fonte (%) — 80% a 150%, passo de 10 na UI. */
+export const FONT_SCALE_MIN = 80;
+export const FONT_SCALE_MAX = 150;
+/** Limites de tamanho de fonte do Monaco (px). */
+export const MONACO_FONT_SIZE_MIN = 10;
+export const MONACO_FONT_SIZE_MAX = 24;
+
+function clampFontScale(v: number): number {
+  return Math.max(FONT_SCALE_MIN, Math.min(FONT_SCALE_MAX, Math.round(v)));
+}
+
+function clampMonacoFontSize(v: number): number {
+  return Math.max(
+    MONACO_FONT_SIZE_MIN,
+    Math.min(MONACO_FONT_SIZE_MAX, Math.round(v)),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Defaults
@@ -149,6 +179,10 @@ const DEFAULTS = {
   chatSidebarWidth: 256,
   selectedModel: getDefaultModel(),
   autoUpdateEnabled: true,
+  fontScaleUi: 100,
+  fontScaleChat: 100,
+  fontScaleMarkdown: 100,
+  monacoFontSize: 13,
 };
 
 // ---------------------------------------------------------------------------
@@ -229,6 +263,11 @@ export const useSettingsStore = create<SettingsState>()(
         set({ autoUpdateEnabled: v });
         void pushPrefs({ autoUpdateEnabled: v });
       },
+      setFontScaleUi: (v) => set({ fontScaleUi: clampFontScale(v) }),
+      setFontScaleChat: (v) => set({ fontScaleChat: clampFontScale(v) }),
+      setFontScaleMarkdown: (v) =>
+        set({ fontScaleMarkdown: clampFontScale(v) }),
+      setMonacoFontSize: (v) => set({ monacoFontSize: clampMonacoFontSize(v) }),
       resetSettings: () =>
         set({
           ...DEFAULTS,
@@ -263,6 +302,10 @@ export const useSettingsStore = create<SettingsState>()(
         chatSidebarWidth: state.chatSidebarWidth,
         selectedModel: state.selectedModel,
         autoUpdateEnabled: state.autoUpdateEnabled,
+        fontScaleUi: state.fontScaleUi,
+        fontScaleChat: state.fontScaleChat,
+        fontScaleMarkdown: state.fontScaleMarkdown,
+        monacoFontSize: state.monacoFontSize,
       }),
     },
   ),

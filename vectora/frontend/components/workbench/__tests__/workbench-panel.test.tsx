@@ -134,7 +134,7 @@ describe("WorkbenchContent — switch de renderização por aba", () => {
     expect(screen.queryByText("stub-context-graph")).not.toBeInTheDocument();
   });
 
-  it("activeTab='library' monta LibraryTab (Sprint 1)", () => {
+  it("activeTab='library' monta LibraryTab", () => {
     setActiveTab("t1", "library");
     renderContent({ threadId: "t1" });
     expect(screen.getByText("stub-library")).toBeInTheDocument();
@@ -150,9 +150,9 @@ describe("WorkbenchNavBar — ícone do Context Graph não fica mais atrás de f
       </TooltipProvider>,
     );
     // ComingSoonTabButton usa aria-disabled="true" e tabIndex={-1} — o botão
-    // real (NavTabButton) não tem esses atributos. Library está em beta
-    // (Sprint 1), então com enableFeaturesBeta=false ela fica desabilitada —
-    // a asserção aqui é só sobre o Context Graph, não "nenhum botão".
+    // real (NavTabButton) não tem esses atributos. Library está em beta,
+    // então com enableFeaturesBeta=false ela fica desabilitada — a asserção
+    // aqui é só sobre o Context Graph, não "nenhum botão".
     const buttons = screen.getAllByRole("button");
     const contextGraphBtn = buttons.find(
       (b) => b.getAttribute("aria-disabled") !== "true",
@@ -161,7 +161,7 @@ describe("WorkbenchNavBar — ícone do Context Graph não fica mais atrás de f
   });
 });
 
-describe("WorkbenchNavBar — Library atrás de flag beta (Sprint 1)", () => {
+describe("WorkbenchNavBar — Library atrás de flag beta", () => {
   it("com enableFeaturesBeta=false, o ícone da Library fica desabilitado (ComingSoonTabButton)", () => {
     setActiveTab("t1", "files");
     render(

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * McpSection — seção MCP da Library (Sprint 2).
+ * McpSection — seção MCP da Library.
  *
  * Cobre: lista os conectores do registry; instalar um sem env_vars chama
  * POST /mcp/install direto; instalar um com env_vars abre o form de config

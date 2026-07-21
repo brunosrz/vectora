@@ -443,4 +443,74 @@ describe("IntegracoesTab", () => {
     });
     expect(saveBtn).toBeDisabled();
   });
+
+  it("olho revela/oculta o valor digitado da variável customizada", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText("GitHub")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText(/adicionar variável customizada/i));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/OPENAI_API_KEY/i)).toBeTruthy();
+    });
+
+    const valueInput = screen.getByPlaceholderText(
+      /enter the value|valor/i,
+    ) as HTMLInputElement;
+    expect(valueInput.type).toBe("password");
+
+    fireEvent.click(screen.getByLabelText(/mostrar valor/i));
+    expect(valueInput.type).toBe("text");
+
+    fireEvent.click(screen.getByLabelText(/ocultar valor/i));
+    expect(valueInput.type).toBe("password");
+  });
+
+  it("olho reseta ao fechar o dialog de variável customizada", async () => {
+    // Erro/borda: o estado de visibilidade não pode vazar pra próxima
+    // abertura do dialog.
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText("GitHub")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText(/adicionar variável customizada/i));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/OPENAI_API_KEY/i)).toBeTruthy();
+    });
+    fireEvent.click(screen.getByLabelText(/mostrar valor/i));
+    fireEvent.click(
+      screen.getByRole("button", { name: /^cancel$|^cancelar$/i }),
+    );
+
+    fireEvent.click(screen.getByText(/adicionar variável customizada/i));
+    await waitFor(() => {
+      const valueInput = screen.getByPlaceholderText(
+        /enter the value|valor/i,
+      ) as HTMLInputElement;
+      expect(valueInput.type).toBe("password");
+    });
+  });
+
+  it("olho revela/oculta o token manual de uma integração", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+
+    const pasteBtn = await screen.findAllByTitle(/colar token manualmente/i);
+    fireEvent.click(pasteBtn[0]);
+
+    const keyInput = (
+      await screen.findAllByPlaceholderText(/cole sua chave aqui/i)
+    )[0] as HTMLInputElement;
+    expect(keyInput.type).toBe("password");
+
+    fireEvent.click(screen.getAllByLabelText(/mostrar valor/i)[0]);
+    expect(keyInput.type).toBe("text");
+  });
 });
