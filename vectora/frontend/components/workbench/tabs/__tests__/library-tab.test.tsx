@@ -5,9 +5,10 @@
  * Cobre: renderização das 3 seções como AccordionTrigger; abrir múltiplas
  * seções ao mesmo tempo; toggle de filtros (liga/desliga categoria); estado
  * vazio quando nenhum filtro está ativo; seção sem itens mostra estado vazio
- * específico sem quebrar. MCP e Skills são mockadas aqui pra testar só o
- * shell; suas próprias suítes cobrem o comportamento real
- * (library-mcp-section.test.tsx, skills-tab.test.tsx).
+ * específico sem quebrar. MCP, Skills e Memory são mockadas aqui pra testar
+ * só o shell; suas próprias suítes cobrem o comportamento real
+ * (library-mcp-section.test.tsx, skills-tab.test.tsx,
+ * library-memory-section.test.tsx).
  */
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { useEffect } from "react";
@@ -38,6 +39,20 @@ vi.mock("../library-skills-section", () => ({
       onCountChange(0);
     }, [onCountChange]);
     return <p>No skills available yet.</p>;
+  },
+}));
+
+vi.mock("../library-memory-section", () => ({
+  MemorySection: ({
+    onCountChange,
+  }: {
+    query: string;
+    onCountChange: (count: number) => void;
+  }) => {
+    useEffect(() => {
+      onCountChange(0);
+    }, [onCountChange]);
+    return <p>No memory buckets available yet.</p>;
   },
 }));
 

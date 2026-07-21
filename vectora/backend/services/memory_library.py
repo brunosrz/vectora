@@ -34,18 +34,23 @@ def _rag_library_url() -> str:
     return os.getenv("VECTORA_RAG_LIBRARY_URL", DEFAULT_RAG_LIBRARY_URL).strip()
 
 
-async def _fetch_bucket_metadata(bucket_id: str) -> dict:
+async def list_catalog() -> list[dict]:
+    """Lista o catálogo completo da Memory Library. Degrada para lista
+    vazia em qualquer falha de rede — nunca propaga exceção pro handler
+    HTTP (a seção da Library trata lista vazia como estado vazio, não erro)."""
     url = f"{_rag_library_url()}/"
     try:
         async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
             resp = await client.get(url)
             resp.raise_for_status()
-            entries = resp.json()
+            return resp.json()
     except Exception as exc:
-        raise MemoryLibraryError(
-            f"Falha ao consultar o catálogo da Memory Library: {exc}"
-        ) from exc
+        logger.warning("memory_library: falha ao consultar catálogo — %s", exc)
+        return []
 
+
+async def _fetch_bucket_metadata(bucket_id: str) -> dict:
+    entries = await list_catalog()
     for entry in entries:
         if entry.get("id") == bucket_id:
             return entry

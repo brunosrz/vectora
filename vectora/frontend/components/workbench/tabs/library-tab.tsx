@@ -7,7 +7,7 @@
  */
 
 import { Blocks, Library as LibraryIcon, Puzzle, Search } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
 import {
   Accordion,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import { m } from "@/lib/paraglide/messages";
 import { McpSection } from "./library-mcp-section";
+import { MemorySection } from "./library-memory-section";
 import { SkillsSection } from "./library-skills-section";
 
 interface LibraryTabProps {
@@ -82,16 +83,6 @@ function LibrarySearchBox({
   );
 }
 
-function filterItems(items: LibraryItem[], query: string): LibraryItem[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return items;
-  return items.filter(
-    (item) =>
-      item.name.toLowerCase().includes(q) ||
-      (item.description?.toLowerCase().includes(q) ?? false),
-  );
-}
-
 function SectionEmptyState({ label }: { label: string }) {
   return (
     <p className="py-4 text-xs text-muted-foreground text-center">{label}</p>
@@ -117,10 +108,8 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
     });
   };
 
-  // MCP e Skills vivem em subcomponentes próprios, que reportam a contagem
-  // filtrada de volta via onCountChange.
-  const memoryItems = useMemo<LibraryItem[]>(() => [], []);
-
+  // MCP, Skills e Memory vivem em subcomponentes próprios, que reportam a
+  // contagem filtrada de volta via onCountChange.
   const [mcpCount, setMcpCount] = useState(0);
   const handleMcpCountChange = useCallback((count: number) => {
     setMcpCount(count);
@@ -131,7 +120,10 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
     setSkillsCount(count);
   }, []);
 
-  const filteredMemory = filterItems(memoryItems, query);
+  const [memoryCount, setMemoryCount] = useState(0);
+  const handleMemoryCountChange = useCallback((count: number) => {
+    setMemoryCount(count);
+  }, []);
 
   const noFiltersActive = activeFilters.size === 0;
 
@@ -211,22 +203,15 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
                   <span className="flex items-center gap-2 min-w-0">
                     <LibraryIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">
-                      {m.library_section_memory()} ({filteredMemory.length})
+                      {m.library_section_memory()} ({memoryCount})
                     </span>
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
-                  {filteredMemory.length === 0 ? (
-                    <SectionEmptyState label={m.library_empty_memory()} />
-                  ) : (
-                    <ul className="divide-y divide-border/30">
-                      {filteredMemory.map((item) => (
-                        <li key={item.id} className="py-1.5 text-xs">
-                          {item.name}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <MemorySection
+                    query={query}
+                    onCountChange={handleMemoryCountChange}
+                  />
                 </AccordionContent>
               </AccordionItem>
             )}
