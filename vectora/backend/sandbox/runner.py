@@ -13,10 +13,20 @@ import asyncio
 import logging
 from pathlib import Path
 
+from backend.sandbox.docker import run_docker_sandboxed
 from backend.sandbox.linux import SandboxResult, run_local_sandboxed
+from backend.sandbox.modal import run_modal_sandboxed
 from backend.sandbox.policy import parse_policy
+from backend.sandbox.ssh import run_ssh_sandboxed
 
 logger = logging.getLogger(__name__)
+
+_BACKENDS = {
+    "local": run_local_sandboxed,
+    "docker": run_docker_sandboxed,
+    "ssh": run_ssh_sandboxed,
+    "modal": run_modal_sandboxed,
+}
 
 
 async def _run_unsandboxed(
@@ -59,16 +69,16 @@ async def run_sandboxed(
     policy = parse_policy(Path(workspace_dir) / "vectora.toml")
     if not policy.enabled:
         return await _run_unsandboxed(command, workspace_dir, timeout_s)
-    if policy.backend == "local":
-        return await run_local_sandboxed(
-            command, workspace_dir, policy, timeout_s=timeout_s
+
+    backend_fn = _BACKENDS.get(policy.backend)
+    if backend_fn is None:
+        logger.error(
+            "sandbox: backend '%s' não suportado — negando execução (fail-closed)",
+            policy.backend,
         )
-    logger.error(
-        "sandbox: backend '%s' não suportado — negando execução (fail-closed)",
-        policy.backend,
-    )
-    return SandboxResult(
-        stdout="",
-        stderr=f"Error: backend de sandbox '{policy.backend}' não suportado.",
-        exit_code=126,
-    )
+        return SandboxResult(
+            stdout="",
+            stderr=f"Error: backend de sandbox '{policy.backend}' não suportado.",
+            exit_code=126,
+        )
+    return await backend_fn(command, workspace_dir, policy, timeout_s=timeout_s)
