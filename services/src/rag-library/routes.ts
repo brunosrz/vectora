@@ -1,15 +1,22 @@
 /**
- * rag-library/ (Fase E) — catálogo de bancos RAG pré-indexados públicos.
+ * rag-library/ (Fase E + Sprint 7 Memory Library) — catálogo de bancos RAG
+ * pré-indexados, dois tipos de linha na mesma tabela `rag_packages`:
  *
- * Escopo mínimo: lista + redirect pro storage externo (fora da Cloudflare —
- * decisão do usuário, ver plano). Não reindexação, não upload de terceiros
- * nesta fase. `rag_packages` é só metadado de leitura em D1; o binário em si
- * vive no provedor de storage escolhido (Backblaze B2 recomendado — decisão
- * em aberto, ver "Decisões em aberto" do plano).
+ * - First-party: bibliotecas de código pré-indexadas pela Vectora
+ *   (`source_lib`/`source_version`, ex. "langchain 0.3.0"), sem publisher.
+ * - Comunidade (Memory Library): buckets publicados por usuários via
+ *   `POST /publish`, com `publisher_id`/`embed_model`/`license`, curados
+ *   via `PATCH /admin/:id/verify` (community aberta + selo first-party).
+ *
+ * Storage é R2 (mesmo bucket que `issues/routes.ts` já usa) — revoga a
+ * decisão antiga de storage externo (Backblaze B2): não era necessário,
+ * R2 já está provisionado neste Worker.
  */
 import { Hono } from "hono";
 import type { Env } from "../gateway/types";
 import { enqueueJob } from "../lib/queue";
+import { requireAdmin } from "../auth/roles";
+import { requireUserId } from "../auth/routes";
 
 export const ragLibrary = new Hono<{ Bindings: Env }>();
 
@@ -26,19 +33,41 @@ export const NO_STORAGE_PROVIDER_REASON =
 interface RagPackageRow {
   id: string;
   name: string;
+  description: string | null;
   source_lib: string;
   source_version: string;
   size_bytes: number;
   checksum: string;
   storage_url: string;
+  embed_model: string | null;
+  publisher_id: string | null;
+  verified: number;
+  downloads_count: number;
+  license: string | null;
   updated_at: string;
 }
 
 ragLibrary.get("/", async (c) => {
   const { results } = await c.env.DB.prepare(
-    "SELECT id, name, source_lib, source_version, size_bytes, checksum, updated_at FROM rag_packages ORDER BY name",
+    "SELECT id, name, description, source_lib, source_version, size_bytes, checksum, embed_model, publisher_id, verified, downloads_count, license, updated_at FROM rag_packages ORDER BY name",
   ).all();
   return c.json(results);
+});
+
+/** Serve o binário de um bucket publicado — mesmo padrão de `issues/routes.ts`. */
+ragLibrary.get("/files/*", async (c) => {
+  const key = c.req.path.replace(/^.*?\/files\//, "");
+  if (!key.startsWith("rag-library/")) return c.text("not found", 404);
+  const obj = await c.env.R2.get(key);
+  if (!obj) return c.text("not found", 404);
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type":
+        obj.httpMetadata?.contentType ?? "application/octet-stream",
+      "Cache-Control": "public, max-age=3600",
+      ETag: obj.httpEtag,
+    },
+  });
 });
 
 ragLibrary.get("/:id/download", async (c) => {
@@ -50,7 +79,94 @@ ragLibrary.get("/:id/download", async (c) => {
     .first<Pick<RagPackageRow, "storage_url">>();
   if (!row) return c.json({ error: "not_found" }, 404);
 
+  await c.env.DB.prepare(
+    "UPDATE rag_packages SET downloads_count = downloads_count + 1 WHERE id = ?",
+  )
+    .bind(id)
+    .run();
+
   return c.redirect(row.storage_url, 302);
+});
+
+/**
+ * Publica um bucket de Memory Library — multipart (name, description,
+ * embed_model, license, file). `embed_model` é obrigatório aqui (só pras
+ * publicações novas — linhas first-party legadas continuam com o campo
+ * NULL, sem quebrar). Grava no R2 (mesmo padrão de `issues/routes.ts`) e
+ * insere a linha em `rag_packages` com `verified=0` (curadoria manual
+ * posterior via `PATCH /admin/:id/verify`).
+ */
+ragLibrary.post("/publish", async (c) => {
+  const userId = await requireUserId(c);
+  if (!userId) return c.json({ error: "unauthorized" }, 401);
+
+  const contentType = c.req.header("Content-Type") ?? "";
+  if (!contentType.includes("multipart/form-data")) {
+    return c.json({ error: "invalid_content_type" }, 400);
+  }
+  const body = await c.req.parseBody();
+
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const description =
+    typeof body.description === "string" ? body.description.trim() : "";
+  const embedModel =
+    typeof body.embed_model === "string" ? body.embed_model.trim() : "";
+  const license = typeof body.license === "string" ? body.license.trim() : "";
+  const file = body.file instanceof File ? body.file : null;
+
+  if (!name) return c.json({ error: "invalid_name" }, 400);
+  if (!embedModel) return c.json({ error: "embed_model_required" }, 400);
+  if (!file) return c.json({ error: "file_required" }, 400);
+
+  const id = crypto.randomUUID();
+  const key = `rag-library/${id}/${file.name.replace(/[^\w.-]/g, "_").slice(0, 80)}`;
+  const buffer = await file.arrayBuffer();
+  const checksum = await sha256Hex(buffer);
+
+  await c.env.R2.put(key, buffer, {
+    httpMetadata: { contentType: file.type || "application/octet-stream" },
+  });
+
+  const storageUrl = `https://services.vectora.company/rag-library/files/${key}`;
+
+  await c.env.DB.prepare(
+    `INSERT INTO rag_packages
+       (id, name, source_lib, source_version, size_bytes, checksum, storage_url,
+        embed_model, publisher_id, verified, license, description)
+     VALUES (?, ?, '', '', ?, ?, ?, ?, ?, 0, ?, ?)`,
+  )
+    .bind(
+      id,
+      name,
+      file.size,
+      checksum,
+      storageUrl,
+      embedModel,
+      userId,
+      license || null,
+      description || null,
+    )
+    .run();
+
+  return c.json({ ok: true, id, status: "published", verified: false });
+});
+
+/** Curadoria: seta `verified=1` — só quem tem `role='admin'`. */
+ragLibrary.patch("/admin/:id/verify", async (c) => {
+  const adminId = await requireAdmin(c);
+  if (!adminId) return c.json({ error: "forbidden" }, 403);
+
+  const id = c.req.param("id");
+  const row = await c.env.DB.prepare("SELECT id FROM rag_packages WHERE id = ?")
+    .bind(id)
+    .first();
+  if (!row) return c.json({ error: "not_found" }, 404);
+
+  await c.env.DB.prepare("UPDATE rag_packages SET verified = 1 WHERE id = ?")
+    .bind(id)
+    .run();
+
+  return c.json({ ok: true, id, verified: true });
 });
 
 /**
@@ -86,4 +202,11 @@ export async function processRagReindex(
   )
     .bind(NO_STORAGE_PROVIDER_REASON, packageId)
     .run();
+}
+
+async function sha256Hex(data: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }

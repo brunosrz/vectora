@@ -5,6 +5,31 @@ import {
   processRagReindex,
   NO_STORAGE_PROVIDER_REASON,
 } from "../../src/rag-library/routes";
+import { createSession } from "../../src/auth/session";
+
+async function createUser(role: "user" | "admin" = "user") {
+  const userId = crypto.randomUUID();
+  await env.DB.prepare(
+    "INSERT INTO users (id, email, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)",
+  )
+    .bind(
+      userId,
+      `${userId}@example.com`,
+      "pbkdf2$1$AA==$AA==",
+      "Test User",
+      role,
+    )
+    .run();
+  const session = await createSession(env.DB, userId);
+  return { userId, token: session.token };
+}
+
+function authed(token: string, init: RequestInit = {}) {
+  return {
+    ...init,
+    headers: { ...init.headers, Authorization: `Bearer ${token}` },
+  };
+}
 
 async function makePackage(status: "ready" | "pending" | "failed" = "ready") {
   const id = crypto.randomUUID();
@@ -94,6 +119,139 @@ describe("POST /rag-library/:id/reindex", () => {
       env,
     );
     expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /rag-library/publish", () => {
+  it("publica um bucket autenticado — grava R2 + linha D1 com publisher_id", async () => {
+    const { userId, token } = await createUser("user");
+
+    const form = new FormData();
+    form.set("name", "Meu bucket de teste");
+    form.set("description", "descrição de teste");
+    form.set("embed_model", "text-embedding-3-small");
+    form.set("license", "MIT");
+    form.set("file", new File(["conteudo"], "bucket.lance"), "bucket.lance");
+
+    const res = await ragLibrary.request(
+      "/publish",
+      authed(token, { method: "POST", body: form }),
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json<{
+      ok: boolean;
+      id: string;
+      verified: boolean;
+    }>();
+    expect(body.ok).toBe(true);
+    expect(body.verified).toBe(false);
+
+    const row = await env.DB.prepare(
+      "SELECT publisher_id, embed_model, verified FROM rag_packages WHERE id = ?",
+    )
+      .bind(body.id)
+      .first<{ publisher_id: string; embed_model: string; verified: number }>();
+    expect(row).toEqual({
+      publisher_id: userId,
+      embed_model: "text-embedding-3-small",
+      verified: 0,
+    });
+  });
+
+  it("rejeita publicação sem embed_model (400) — campo obrigatório pra publicação nova", async () => {
+    const { token } = await createUser("user");
+
+    const form = new FormData();
+    form.set("name", "Sem embed model");
+    form.set("file", new File(["x"], "b.lance"), "b.lance");
+
+    const res = await ragLibrary.request(
+      "/publish",
+      authed(token, { method: "POST", body: form }),
+      env,
+    );
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "embed_model_required" });
+  });
+
+  it("rejeita chamada sem sessão (401)", async () => {
+    const form = new FormData();
+    form.set("name", "x");
+    form.set("embed_model", "m");
+    form.set("file", new File(["x"], "b.lance"), "b.lance");
+
+    const res = await ragLibrary.request(
+      "/publish",
+      { method: "POST", body: form },
+      env,
+    );
+
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("PATCH /rag-library/admin/:id/verify", () => {
+  it("seta verified=1 quando chamado por admin", async () => {
+    const id = await makePackage("ready");
+    const { token } = await createUser("admin");
+
+    const res = await ragLibrary.request(
+      `/admin/${id}/verify`,
+      authed(token, { method: "PATCH" }),
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const row = await env.DB.prepare(
+      "SELECT verified FROM rag_packages WHERE id = ?",
+    )
+      .bind(id)
+      .first<{ verified: number }>();
+    expect(row?.verified).toBe(1);
+  });
+
+  it("403 quando chamado por não-admin", async () => {
+    const id = await makePackage("ready");
+    const { token } = await createUser("user");
+
+    const res = await ragLibrary.request(
+      `/admin/${id}/verify`,
+      authed(token, { method: "PATCH" }),
+      env,
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  it("404 para pacote inexistente", async () => {
+    const { token } = await createUser("admin");
+
+    const res = await ragLibrary.request(
+      "/admin/unknown-id/verify",
+      authed(token, { method: "PATCH" }),
+      env,
+    );
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("GET /:id/download increments downloads_count", () => {
+  it("incrementa downloads_count a cada download bem-sucedido", async () => {
+    const id = await makePackage("ready");
+
+    await ragLibrary.request(`/${id}/download`, { redirect: "manual" }, env);
+    await ragLibrary.request(`/${id}/download`, { redirect: "manual" }, env);
+
+    const row = await env.DB.prepare(
+      "SELECT downloads_count FROM rag_packages WHERE id = ?",
+    )
+      .bind(id)
+      .first<{ downloads_count: number }>();
+    expect(row?.downloads_count).toBe(2);
   });
 });
 

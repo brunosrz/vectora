@@ -177,17 +177,30 @@ CREATE TABLE IF NOT EXISTS issues (
 -- artefatos de verdade vivem em storage externo, não Cloudflare). status:
 -- pacotes existentes nascem 'ready' — só quem passa por /reindex entra em
 -- 'pending'/'failed'.
+-- source_lib/source_version são NOT NULL só pra linhas first-party
+-- (bibliotecas de código pré-indexadas, ex. "langchain 0.3.0"); publicações
+-- da comunidade (Memory Library, Sprint 7) usam publisher_id em vez disso
+-- e ficam com source_lib/source_version vazios — não dá pra tornar essas
+-- colunas nullable retroativamente sem quebrar linhas antigas, então o
+-- handler de POST /publish grava string vazia ('') nesses dois campos para
+-- publicações de usuário, nunca NULL.
 CREATE TABLE IF NOT EXISTS rag_packages (
-  id             TEXT PRIMARY KEY,
-  name           TEXT NOT NULL,
-  source_lib     TEXT NOT NULL,
-  source_version TEXT NOT NULL,
-  size_bytes     INTEGER NOT NULL,
-  checksum       TEXT NOT NULL,
-  storage_url    TEXT NOT NULL,
-  status         TEXT NOT NULL DEFAULT 'ready' CHECK (status IN ('ready', 'pending', 'failed')),
-  status_reason  TEXT,
-  updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+  id               TEXT PRIMARY KEY,
+  name             TEXT NOT NULL,
+  source_lib       TEXT NOT NULL,
+  source_version   TEXT NOT NULL,
+  size_bytes       INTEGER NOT NULL,
+  checksum         TEXT NOT NULL,
+  storage_url      TEXT NOT NULL,
+  status           TEXT NOT NULL DEFAULT 'ready' CHECK (status IN ('ready', 'pending', 'failed')),
+  status_reason    TEXT,
+  embed_model      TEXT,
+  publisher_id     TEXT REFERENCES users(id),
+  verified         INTEGER NOT NULL DEFAULT 0,
+  downloads_count  INTEGER NOT NULL DEFAULT 0,
+  license          TEXT,
+  description      TEXT,
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Registry real de MCP/Skills (Fase F, `services/src/registry/routes.ts`) —
