@@ -90,6 +90,44 @@ async def test_remove_task_worktree_is_idempotent_on_missing_worktree():
 
 
 @pytest.mark.asyncio
+async def test_remove_task_worktree_also_deletes_the_branch():
+    # Sem isso, `git worktree add <task_id>` cria implicitamente uma
+    # branch com o nome da task, e remover só o worktree deixa essa
+    # branch órfã pra sempre — confirmado ao vivo contra um repo real.
+    with (
+        patch("backend.workspace.workspace.workspace_registry") as mock_registry,
+        patch("git.Repo") as mock_repo_cls,
+        patch("backend.tools.git._git_worktree_impl") as mock_impl,
+    ):
+        mock_registry.get.return_value = _fake_workspace()
+        mock_repo = MagicMock()
+        mock_repo_cls.return_value = mock_repo
+        mock_impl.return_value = {"status": "ok", "action": "remove"}
+
+        await remove_task_worktree("ws1", "task-42")
+
+        mock_repo.git.branch.assert_called_once_with("-D", "task-42")
+
+
+@pytest.mark.asyncio
+async def test_remove_task_worktree_branch_delete_failure_does_not_raise():
+    # Erro/borda: branch já deletada manualmente, ou checked out em outro
+    # lugar — best-effort, nunca propaga (a remoção do worktree já valeu).
+    with (
+        patch("backend.workspace.workspace.workspace_registry") as mock_registry,
+        patch("git.Repo") as mock_repo_cls,
+        patch("backend.tools.git._git_worktree_impl") as mock_impl,
+    ):
+        mock_registry.get.return_value = _fake_workspace()
+        mock_repo = MagicMock()
+        mock_repo.git.branch.side_effect = Exception("branch not found")
+        mock_repo_cls.return_value = mock_repo
+        mock_impl.return_value = {"status": "ok", "action": "remove"}
+
+        await remove_task_worktree("ws1", "task-42")  # não deve levantar
+
+
+@pytest.mark.asyncio
 async def test_workspace_without_git_repo_raises_delegate_error():
     with (
         patch("backend.workspace.workspace.workspace_registry") as mock_registry,
