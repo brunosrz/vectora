@@ -329,6 +329,32 @@ describe("windows-store — closeAll (reset de nova conversa / delete)", () => {
     s().closeAll();
     expect(s().windows).toHaveLength(0);
   });
+
+  it("closeAll também zera o editor docked (modo IDE) — não deixa arquivo de workspace anterior vazando", () => {
+    s().openDocked("ws1", "src/main.ts");
+    expect(s().dockedWorkspaceId).toBe("ws1");
+    s().closeAll();
+    expect(s().dockedWorkspaceId).toBeNull();
+    expect(s().dockedTabs).toEqual([]);
+    expect(s().dockedActiveTab).toBeNull();
+  });
+});
+
+describe("windows-store — persistência não vaza estado docked entre workspaces", () => {
+  it("partialize exclui dockedWorkspaceId/dockedTabs/dockedActiveTab do que seria salvo", () => {
+    s().open("ws1", "a.ts");
+    s().openDocked("ws1", "src/main.ts");
+
+    const partialize = useWindowsStore.persist.getOptions().partialize;
+    expect(partialize).toBeDefined();
+    const persisted = partialize?.(s()) as Record<string, unknown>;
+
+    expect(persisted).not.toHaveProperty("dockedWorkspaceId");
+    expect(persisted).not.toHaveProperty("dockedTabs");
+    expect(persisted).not.toHaveProperty("dockedActiveTab");
+    expect(persisted).toHaveProperty("windows");
+    expect(persisted).toHaveProperty("topZ");
+  });
 });
 
 describe("windows-store — docked editor (IDE mode)", () => {

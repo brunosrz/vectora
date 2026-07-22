@@ -5,14 +5,31 @@ import { useWindowsStore } from "@/lib/stores/windows-store";
 import { FileEditor } from "@/components/workbench/file-editor";
 import { m } from "@/lib/paraglide/messages";
 
-export function DockedEditor() {
+interface DockedEditorProps {
+  /** Workspace ativo da sessão atual. Quando fornecido e divergente de
+   * `dockedWorkspaceId`, o editor não renderiza — defesa em profundidade
+   * contra estado docked vazado de outro workspace (ex. via localStorage
+   * de uma versão anterior sem `partialize`, ou uma race de navegação). */
+  activeWorkspaceId?: string | null;
+}
+
+export function DockedEditor({ activeWorkspaceId }: DockedEditorProps = {}) {
   const dockedWorkspaceId = useWindowsStore((s) => s.dockedWorkspaceId);
   const dockedTabs = useWindowsStore((s) => s.dockedTabs);
   const dockedActiveTab = useWindowsStore((s) => s.dockedActiveTab);
   const setDockedActiveTab = useWindowsStore((s) => s.setDockedActiveTab);
   const closeDockedTab = useWindowsStore((s) => s.closeDockedTab);
 
-  if (!dockedWorkspaceId || dockedTabs.length === 0) {
+  const belongsToOtherWorkspace =
+    activeWorkspaceId != null &&
+    dockedWorkspaceId != null &&
+    dockedWorkspaceId !== activeWorkspaceId;
+
+  if (
+    !dockedWorkspaceId ||
+    dockedTabs.length === 0 ||
+    belongsToOtherWorkspace
+  ) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3 p-6 text-center bg-background">
         <Code2 className="w-8 h-8 text-muted-foreground/40" />

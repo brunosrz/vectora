@@ -131,4 +131,32 @@ describe("DockedEditor", () => {
     fireEvent.click(closeBtn);
     expect(mockSetDockedActiveTab).not.toHaveBeenCalled();
   });
+
+  it("defesa em profundidade: dockedWorkspaceId de OUTRO workspace mostra o estado vazio, nunca o arquivo", () => {
+    mockWindowsState.dockedWorkspaceId = "ws-snake";
+    mockWindowsState.dockedTabs = ["/snake/project.godot"];
+    mockWindowsState.dockedActiveTab = "/snake/project.godot";
+    render(<DockedEditor activeWorkspaceId="ws-vectora" />);
+    expect(screen.getByText("docked_editor_empty")).toBeInTheDocument();
+    expect(screen.queryByTestId("file-editor")).not.toBeInTheDocument();
+  });
+
+  it("mesmo workspace ativo: renderiza o arquivo normalmente", () => {
+    mockWindowsState.dockedWorkspaceId = "ws-vectora";
+    mockWindowsState.dockedTabs = ["/vectora/main.py"];
+    mockWindowsState.dockedActiveTab = "/vectora/main.py";
+    render(<DockedEditor activeWorkspaceId="ws-vectora" />);
+    expect(screen.getByTestId("file-editor")).toHaveAttribute(
+      "data-path",
+      "/vectora/main.py",
+    );
+  });
+
+  it("sem activeWorkspaceId (prop omitida): não bloqueia — comportamento atual preservado", () => {
+    mockWindowsState.dockedWorkspaceId = "ws1";
+    mockWindowsState.dockedTabs = ["/project/src/main.ts"];
+    mockWindowsState.dockedActiveTab = "/project/src/main.ts";
+    render(<DockedEditor />);
+    expect(screen.getByTestId("file-editor")).toBeInTheDocument();
+  });
 });

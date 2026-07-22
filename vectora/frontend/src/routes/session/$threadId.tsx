@@ -322,6 +322,11 @@ function SessionPage() {
       // Abrir uma sessão entra no modo dela (chat/dev).
       const t = threads.find((th) => th.thread_id === id);
       if (t) setChatMode((t.mode ?? "dev") === "chat");
+      // Troca de thread pode trocar de workspace — fecha janelas/editor
+      // docked da thread anterior pra não herdar arquivo de outro
+      // workspace (mesma proteção de handleNewChat/handleConfirmNewChat/
+      // handleDeleteThread).
+      useWindowsStore.getState().closeAll();
       goTo(id);
       setIsMobileSidebarOpen(false);
     },
@@ -625,7 +630,7 @@ function SessionPage() {
                 showModeSwitch={!chatMode && enableFeaturesBeta}
               />
               <div className="flex-1 min-h-0 overflow-hidden">
-                <DockedEditor />
+                <DockedEditor activeWorkspaceId={activeWorkspaceId} />
               </div>
             </div>
 

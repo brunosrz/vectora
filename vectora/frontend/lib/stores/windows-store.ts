@@ -190,7 +190,13 @@ export const useWindowsStore = create<WindowsState>()(
       close: (id) =>
         set((s) => ({ windows: s.windows.filter((w) => w.id !== id) })),
 
-      closeAll: () => set({ windows: [] }),
+      closeAll: () =>
+        set({
+          windows: [],
+          dockedWorkspaceId: null,
+          dockedTabs: [],
+          dockedActiveTab: null,
+        }),
 
       closeTab: (id, path) =>
         set((s) => {
@@ -271,6 +277,15 @@ export const useWindowsStore = create<WindowsState>()(
               removeItem: () => {},
             },
       ),
+      // Estado do editor docked (modo IDE) é efêmero de sessão — persistir
+      // sobrevivia a reload e vazava entre workspaces (abrir uma sessão
+      // nova mostrava o último arquivo docado de OUTRO workspace, já que
+      // dockedWorkspaceId/dockedTabs/dockedActiveTab ficavam numa chave
+      // global de localStorage sem escopo por workspace).
+      partialize: (state) => ({
+        windows: state.windows,
+        topZ: state.topZ,
+      }),
     },
   ),
 );
