@@ -90,6 +90,10 @@ export function XtermView({
       } catch {
         // ignora se o container não tiver dimensões ainda
       }
+      // xterm.js só foca a textarea interna automaticamente no clique —
+      // sem isso, abrir a aba não deixa o usuário digitar até clicar
+      // manualmente dentro do terminal.
+      term.focus();
       termRef.current = term;
       fitRef.current = fit;
 
@@ -215,5 +219,11 @@ export function XtermView({
     };
   }, [terminalId, threadId, workspaceId]);
 
-  return <div ref={containerRef} className="h-full w-full bg-sidebar" />;
+  return (
+    <div
+      ref={containerRef}
+      className="h-full w-full bg-sidebar"
+      onClick={() => termRef.current?.focus()}
+    />
+  );
 }

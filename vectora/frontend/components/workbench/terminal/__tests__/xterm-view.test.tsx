@@ -8,7 +8,13 @@
  */
 
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, cleanup, act, waitFor } from "@testing-library/react";
+import {
+  render,
+  cleanup,
+  act,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 
 vi.mock("@/lib/paraglide/messages", () => ({
   m: new Proxy({}, { get: (_t, prop) => () => String(prop) }),
@@ -23,6 +29,7 @@ class FakeTerminal {
   rows = 24;
   written: Array<string | Uint8Array> = [];
   disposed = false;
+  focusCalls = 0;
   private dataHandler: ((d: string) => void) | null = null;
   constructor(options: Record<string, unknown>) {
     this.options = options;
@@ -30,6 +37,9 @@ class FakeTerminal {
   }
   loadAddon(): void {}
   open(): void {}
+  focus(): void {
+    this.focusCalls++;
+  }
   write(data: string | Uint8Array): void {
     this.written.push(data);
   }
@@ -207,6 +217,18 @@ describe("XtermView", () => {
     expect(ws.sent.length).toBeGreaterThan(0);
     const last = ws.sent[ws.sent.length - 1] as Uint8Array;
     expect(new TextDecoder().decode(last)).toBe("ls -la\n");
+  });
+
+  it("chama term.focus() ao montar — sem isso, digitar exige clicar primeiro", async () => {
+    const { term } = await renderView();
+    expect(term.focusCalls).toBeGreaterThan(0);
+  });
+
+  it("clicar no container refoca o terminal", async () => {
+    const { term, container } = await renderView();
+    const focusCallsAfterMount = term.focusCalls;
+    fireEvent.click(container.firstChild as Element);
+    expect(term.focusCalls).toBeGreaterThan(focusCallsAfterMount);
   });
 
   it("onData não envia nada quando o WebSocket ainda não está aberto (readyState != OPEN)", async () => {
