@@ -14,6 +14,8 @@ from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
+from backend.sandbox.policy import SandboxPolicy, parse_policy
+from backend.sandbox.workspace_jail import WorkerSpawnError, jail_manager
 from backend.services.ignore import is_ignored as _is_ignored
 from backend.services.ignore import iter_files as _iter_files
 from backend.services.ignore import load_ignore_spec as _load_ignore_spec
@@ -103,6 +105,28 @@ def _require_local(config: RunnableConfig | None) -> str:
             "Use a tool `terminal` para executar comandos remoto."
         )
     return ""
+
+
+def _jail_request_sync(
+    op: str,
+    root: Path,
+    workspace_id: str,
+    policy: SandboxPolicy,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Ponte síncrona pro worker jailado da workspace (`backend.sandbox.
+    workspace_jail`) — `file_write`/`file_edit` são tools síncronas, sem
+    event loop próprio na thread onde rodam (mesmo padrão de
+    `_run_hooks_and_autocommit`: `asyncio.run` abre um loop novo só pra
+    essa chamada). Levanta `WorkerSpawnError` se o worker não puder nascer
+    (bwrap ausente/sem permissão) — nunca cai silenciosamente pra I/O
+    direto quando o sandbox está habilitado."""
+
+    async def _do() -> dict[str, Any]:
+        worker = await jail_manager.get_or_spawn(workspace_id, str(root), policy)
+        return await worker.request(op, **kwargs)
+
+    return asyncio.run(_do())
 
 
 @tool(
@@ -245,18 +269,43 @@ def file_edit(
         logger.warning("file_edit blocked by scope check", extra={"path": file_path})
         return err
 
+    root, ws = _workspace_root(config)
+    policy = parse_policy(root / "vectora.toml")
+    workspace_id = str(getattr(ws, "id", root))
+
     try:
         path = resolved
 
-        # Cria arquivo novo quando old_text="" e arquivo não existe
-        if old_text == "" and not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(new_text, encoding="utf-8")
-            logger.info("file_edit created new file", extra={"path": file_path})
-            _run_hooks_and_autocommit(path, config)
-            return f"[OK] File created: {file_path}"
-
-        content = path.read_text(encoding="utf-8")
+        if policy.enabled:
+            read_resp = _jail_request_sync(
+                "read_file", root, workspace_id, policy, path=str(path)
+            )
+            if "error" in read_resp:
+                if old_text != "":
+                    return "Error: Text not found in file"
+                write_resp = _jail_request_sync(
+                    "write_file",
+                    root,
+                    workspace_id,
+                    policy,
+                    path=str(path),
+                    content=new_text,
+                )
+                if "error" in write_resp:
+                    return f"Error: {write_resp['error']}"
+                logger.info("file_edit created new file", extra={"path": file_path})
+                _run_hooks_and_autocommit(path, config)
+                return f"[OK] File created: {file_path}"
+            content = read_resp["content"]
+        else:
+            # Cria arquivo novo quando old_text="" e arquivo não existe
+            if old_text == "" and not path.exists():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(new_text, encoding="utf-8")
+                logger.info("file_edit created new file", extra={"path": file_path})
+                _run_hooks_and_autocommit(path, config)
+                return f"[OK] File created: {file_path}"
+            content = path.read_text(encoding="utf-8")
 
         if old_text and old_text not in content:
             return "Error: Text not found in file"
@@ -266,7 +315,20 @@ def file_edit(
             if replace_all
             else content.replace(old_text, new_text, 1)
         )
-        path.write_text(new_content, encoding="utf-8")
+
+        if policy.enabled:
+            write_resp = _jail_request_sync(
+                "write_file",
+                root,
+                workspace_id,
+                policy,
+                path=str(path),
+                content=new_content,
+            )
+            if "error" in write_resp:
+                return f"Error: {write_resp['error']}"
+        else:
+            path.write_text(new_content, encoding="utf-8")
 
         count = content.count(old_text) if replace_all else 1
         logger.info(
@@ -275,6 +337,9 @@ def file_edit(
         )
         _run_hooks_and_autocommit(path, config)
         return f"[OK] File edited successfully ({count} occurrence{'s' if count != 1 else ''} replaced)"
+    except WorkerSpawnError as exc:
+        logger.warning("file_edit sandbox spawn failed", extra={"path": file_path})
+        return f"Error: {exc}"
     except Exception:
         logger.exception("file_edit failed", extra={"path": file_path})
         return "Error editing file. Check logs."
@@ -317,17 +382,36 @@ def file_write(
         logger.warning("file_write blocked by scope check", extra={"path": file_path})
         return err
 
+    root, ws = _workspace_root(config)
+    policy = parse_policy(root / "vectora.toml")
+
     try:
         path = resolved
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        if policy.enabled:
+            resp = _jail_request_sync(
+                "write_file",
+                root,
+                str(getattr(ws, "id", root)),
+                policy,
+                path=str(path),
+                content=content,
+            )
+            if "error" in resp:
+                return f"Error: {resp['error']}"
+            size = len(content.encode("utf-8"))
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+            size = path.stat().st_size
 
-        size = path.stat().st_size
         logger.info(
             "file_write completed", extra={"path": file_path, "size_bytes": size}
         )
         _run_hooks_and_autocommit(path, config)
         return f"[OK] File written: {file_path} ({size} bytes)"
+    except WorkerSpawnError as exc:
+        logger.warning("file_write sandbox spawn failed", extra={"path": file_path})
+        return f"Error: {exc}"
     except Exception:
         logger.exception("file_write failed", extra={"path": file_path})
         return "Error writing file. Check logs."
@@ -671,6 +755,35 @@ async def terminal(
             },
         )
         return output or f"Command executed with exit code {result.exit_code}"
+
+    policy = parse_policy(root / "vectora.toml")
+    if policy.enabled:
+        # Roteia pelo worker jailado da workspace (backend.sandbox.
+        # workspace_jail) em vez do subprocess direto abaixo. Comando
+        # sandboxed roda até o fim numa chamada só — não registra nada em
+        # _pending_terminal, então um `stdin_input` de acompanhamento (pra
+        # responder a um prompt interativo) simplesmente não encontra
+        # comando pendente e retorna o erro claro já existente logo no
+        # topo desta função. Suporte a stdin interativo dentro do jail
+        # fica pra uma sprint futura, se virar fricção real.
+        try:
+            worker = await jail_manager.get_or_spawn(
+                str(getattr(_ws, "id", root)), str(root), policy
+            )
+            resp = await worker.request("exec", command=["sh", "-c", command])
+        except WorkerSpawnError as exc:
+            logger.warning(
+                "terminal sandbox spawn failed", extra={"command": command[:50]}
+            )
+            return f"Error: {exc}"
+        if "error" in resp:
+            return f"Error: {resp['error']}"
+        output = (resp.get("stdout", "") + resp.get("stderr", "")).strip()
+        logger.info(
+            "terminal_command_sandboxed",
+            extra={"command": command[:50], "exit_code": resp.get("exit_code")},
+        )
+        return output or f"Command executed with exit code {resp.get('exit_code')}"
 
     try:
         # asyncio.create_subprocess_shell não bloqueia o event loop

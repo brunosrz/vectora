@@ -40,7 +40,9 @@ async def handle_request(req: dict[str, Any]) -> dict[str, Any]:
             content = Path(req["path"]).read_text(encoding="utf-8")
             return {"id": req_id, "content": content}
         if op == "write_file":
-            Path(req["path"]).write_text(req["content"], encoding="utf-8")
+            target = Path(req["path"])
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(req["content"], encoding="utf-8")
             return {"id": req_id, "ok": True}
         return {"id": req_id, "error": f"op desconhecida: {op!r}"}
     except Exception as exc:
