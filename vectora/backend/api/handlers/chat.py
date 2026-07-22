@@ -560,21 +560,28 @@ async def stream_chat(
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    # Registra thread em vectora_sessions (message_count=0) para que exista
-    # metadado (workspace, mode) mesmo antes de qualquer resposta. NÃO
-    # incrementa message_count aqui — isso só acontece em adapt_stream() no
-    # 1º token real emitido pelo modelo (ver `content_started`). Se
-    # incrementasse aqui, um turno que falha antes do 1º chunk (ex.: quota
-    # 429 logo de cara) já deixaria a thread "real" na sidebar sem nenhuma
-    # resposta — sessão fantasma, bug real reproduzido em produção.
+    # Registra thread em vectora_sessions e conta a mensagem do usuário —
+    # é o usuário quem inicia a conversa, então a thread já é "real" (deve
+    # aparecer em ListThreads e sobreviver a cleanup_empty_threads) a partir
+    # daqui, mesmo que o assistente nunca chegue a responder (erro de auth/
+    # quota/timeout do provider). `adapt_stream()` (ver `content_started`)
+    # incrementa de novo no 1º token do assistente — o contador deixou de
+    # significar "só resposta do assistente" e passou a significar "tem
+    # pelo menos 1 mensagem real", que é o que list_threads/cleanup_
+    # empty_threads precisam. Só thread sem NENHUMA mensagem (nem essa)
+    # continua com message_count=0 e é limpa normalmente.
     try:
-        from backend.api.handlers.threads import _upsert_session
+        from backend.api.handlers.threads import (
+            _increment_message_count,
+            _upsert_session,
+        )
 
         await _upsert_session(
             thread_id,
             workspace_id=workspace_id or None,
             mode="chat" if chat_mode else "code",
         )
+        await _increment_message_count(thread_id)
     except Exception as exc:
         logger.warning(
             "api/chat: falha ao registrar thread em vectora_sessions: %s", exc

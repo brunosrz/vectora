@@ -548,13 +548,17 @@ class TestEnvOverridesEndpoints:
         assert "DEL_KEY" not in r.json()["keys"]
 
     def test_set_env_llm_key_applies_to_os_environ_and_settings(
-        self, client, monkeypatch
+        self, client, monkeypatch, tmp_path
     ):
         """Regressão do bug real: colar uma key de LLM (GOOGLE_API_KEY) na
         aba Envs precisa valer na PRÓXIMA chamada ao provider — antes só
         gravava em env_overrides_json (banco por-usuário), nunca chegava em
         os.environ/settings, e a chamada real ao Gemini continuava usando a
-        key antiga do boot (erro de quota já na 1ª mensagem)."""
+        key antiga do boot (erro de quota já na 1ª mensagem).
+
+        `settings.vectora_home` é isolado em `tmp_path` — sem isso, o
+        handler grava de verdade em `~/.vectora/.env`, sobrescrevendo a key
+        real do usuário que roda a suíte (bug real já reproduzido)."""
         import os
 
         from backend.settings import settings
@@ -562,7 +566,16 @@ class TestEnvOverridesEndpoints:
         access = self._get_fresh_token(client)
         headers = {"Authorization": f"Bearer {access}"}
         monkeypatch.setenv("GOOGLE_API_KEY", "old-boot-key")
+        monkeypatch.setattr(settings, "vectora_home", tmp_path)
         original_setting = settings.google_api_key
+        from pathlib import Path
+
+        real_home_env = Path.home() / ".vectora" / ".env"
+        real_home_before = (
+            real_home_env.read_text(encoding="utf-8")
+            if real_home_env.exists()
+            else None
+        )
 
         try:
             r = client.post(
@@ -573,6 +586,15 @@ class TestEnvOverridesEndpoints:
             assert r.status_code == 200
             assert os.environ["GOOGLE_API_KEY"] == "AIza-key-paga-nova"
             assert settings.google_api_key == "AIza-key-paga-nova"
+            assert (tmp_path / ".env").read_text(encoding="utf-8").strip() == (
+                "GOOGLE_API_KEY=AIza-key-paga-nova"
+            )
+            real_home_after = (
+                real_home_env.read_text(encoding="utf-8")
+                if real_home_env.exists()
+                else None
+            )
+            assert real_home_after == real_home_before
         finally:
             object.__setattr__(settings, "google_api_key", original_setting)
 

@@ -30,8 +30,10 @@ KNOWN_LLM_ENV_KEYS: frozenset[str] = frozenset(
 
 
 def default_env_file() -> Path:
-    """``~/.vectora/.env`` — mesmo arquivo que `PATCH /admin/api-keys` já usa."""
-    p = Path.home() / ".vectora" / ".env"
+    """``settings.vectora_home / ".env"`` — mesmo arquivo que `PATCH /admin/api-keys` já usa."""
+    from backend.settings import settings
+
+    p = settings.vectora_home / ".env"
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
 

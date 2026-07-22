@@ -434,6 +434,75 @@ class TestStreamChatRegistersThread:
             "_increment_message_count não pode rodar se o grafo falhou ao inicializar"
         )
 
+    @pytest.mark.asyncio
+    async def test_stream_chat_counts_user_message_even_without_assistant_reply(
+        self,
+    ):
+        """Regra correta: quem inicia a conversa é o usuário, então a thread
+        já deve contar como real assim que a mensagem dele é enviada ao
+        grafo — mesmo que o assistente nunca produza nenhum token (erro de
+        auth/quota/timeout do provider, `astream_events` sem nenhum evento).
+        Antes desse fix, message_count só incrementava no 1º token do
+        assistente (`adapt_stream`/`content_started`), então esse cenário
+        deixava a mensagem do usuário persistida no checkpointer LangGraph
+        mas invisível em ListThreads e sujeita a cleanup_empty_threads."""
+        increment_calls: list[str] = []
+
+        async def mock_increment(thread_id: str) -> None:
+            increment_calls.append(thread_id)
+
+        async def _empty_events(*_a: object, **_kw: object):
+            return
+            yield  # async generator sem nenhum evento — assistente nunca responde
+
+        mock_graph = MagicMock()
+        mock_graph.astream_events = MagicMock(return_value=_empty_events())
+
+        from backend.api.schemas import StreamChatRequest
+
+        mock_ws4 = MagicMock()
+        mock_ws4.id = "test-ws-no-reply"
+        mock_registry4 = MagicMock()
+        mock_registry4.get.return_value = None
+        mock_registry4.get_active.return_value = None
+        mock_registry4.get_or_create_session_workspace.return_value = mock_ws4
+
+        with (
+            patch(
+                "backend.services.agent_factory.get_user_agent",
+                new=AsyncMock(return_value=mock_graph),
+            ),
+            patch(
+                "backend.api.handlers.threads._upsert_session",
+                new=AsyncMock(),
+            ),
+            patch(
+                "backend.api.handlers.threads._increment_message_count",
+                side_effect=mock_increment,
+            ),
+            patch(
+                "backend.workspace.workspace.workspace_registry",
+                mock_registry4,
+            ),
+        ):
+            import importlib
+
+            import backend.api.handlers.chat as chat_mod
+
+            importlib.reload(chat_mod)
+
+            request = StreamChatRequest(
+                content="oi, ninguém vai responder", thread_id="no-reply-thread"
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            _response = await chat_mod.stream_chat(request, http_request)
+
+        assert increment_calls == ["no-reply-thread"], (
+            "message_count deve ser incrementado pela mensagem do usuário, "
+            "sem esperar nenhuma resposta do assistente"
+        )
+
 
 # ---------------------------------------------------------------------------
 # 3. UpdateThread endpoint

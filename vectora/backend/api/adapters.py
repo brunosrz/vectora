@@ -376,11 +376,16 @@ async def _record_turn_checkpoint(
 
 
 async def _mark_thread_has_content(thread_id: str) -> None:
-    """Marca a thread como tendo conteúdo real (``message_count`` > 0).
+    """Incrementa ``message_count`` quando o assistente emite o 1º token real.
 
-    Chamada fire-and-forget (``asyncio.ensure_future``, nunca ``await``ada)
-    a partir de ``adapt_stream`` no 1º token emitido — captura a própria
-    exceção pra nunca gerar "Task exception was never retrieved".
+    A visibilidade da thread em ListThreads/cleanup_empty_threads já é
+    garantida antes disso — `stream_chat` (`api/handlers/chat.py`) incrementa
+    assim que a mensagem do USUÁRIO é enviada ao grafo, já que é o usuário
+    quem inicia a conversa. Este incremento extra no lado do assistente só
+    reflete que o turno teve resposta de verdade, sem ser o gate de
+    visibilidade. Chamada fire-and-forget (``asyncio.ensure_future``, nunca
+    ``await``ada) a partir de ``adapt_stream`` no 1º token emitido — captura
+    a própria exceção pra nunca gerar "Task exception was never retrieved".
     """
     try:
         from backend.api.handlers.threads import _increment_message_count
@@ -451,11 +456,9 @@ def adapt_stream(
         # manter tudo numa única bolha com separação limpa.
         current_token_node: str | None = None
         token_buffer_nonempty = False
-        # Marca a thread como tendo conteúdo real só quando o 1º token de
-        # verdade sai do modelo — não na inicialização do grafo. Sem isso,
-        # um turno que falha antes do 1º chunk (ex.: quota 429) já deixava
-        # a thread "real" (message_count=1) na sidebar sem nenhuma resposta,
-        # virando sessão fantasma (ver `_increment_message_count`).
+        # Marca que o assistente produziu conteúdo real no 1º token — a
+        # visibilidade da thread (message_count > 0) já foi garantida antes
+        # disso, quando a mensagem do usuário foi enviada (`stream_chat`).
         content_started = False
 
         # FallbackChatModel (services/fallback_chat_model.py) chama o
