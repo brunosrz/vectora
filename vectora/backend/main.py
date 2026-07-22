@@ -408,7 +408,9 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
     # named pipe (ipc_pipe_win). Web/VPS mantém TCP (servidor de rede, por design).
     uds_path: str | None = None
     if os.environ.get("VECTORA_DESKTOP") and sys.platform != "win32":
-        sock_dir = Path.home() / ".vectora"
+        from backend.settings import settings as _settings_ipc
+
+        sock_dir = _settings_ipc.vectora_home
         sock_dir.mkdir(parents=True, exist_ok=True)
         uds_path = str(sock_dir / "vectora.sock")
         with contextlib.suppress(FileNotFoundError):

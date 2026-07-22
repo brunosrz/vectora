@@ -328,6 +328,7 @@ markers = [
     "browser: testes que sobem Chromium real via Playwright — requer 'playwright install chromium'",
     "frontend_build: testes que sobem o backend real servindo frontend/dist — requer 'pnpm --dir frontend build'",
     "electron_dev: testes que sobem o Electron dev build real — requer 'scons frontend' (ou 'pnpm --dir vectora/frontend install && pnpm --dir vectora/frontend run electron:build')",
+    "live: testes sem mock que chamam LLM/Tavily reais — custam API real, só via 'scons tests-live'",
 ]
 
 [dependency-groups]

@@ -1,0 +1,252 @@
+// @vitest-environment jsdom
+/**
+ * Testes do ChangesView — grupos Staged/Modificados/Untracked, ações inline
+ * de arquivo (stage/unstage/discard) e painel de commit.
+ */
+
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from "@testing-library/react";
+import { ChangesView } from "../changes-view";
+import * as api from "../api";
+import type { DiffFile, DiffSummary } from "@/lib/stores/workbench-store";
+
+vi.mock("@/lib/paraglide/messages", () => ({
+  m: new Proxy(
+    {},
+    {
+      get: (_target, prop) => (args?: Record<string, unknown>) =>
+        args ? `${String(prop)}(${JSON.stringify(args)})` : String(prop),
+    },
+  ),
+}));
+
+const mockDiffState = {
+  openFiles: [] as string[],
+  hunksByFile: {} as Record<string, unknown>,
+  fileFetchedAt: {} as Record<string, number>,
+};
+
+const mockWorkbench = {
+  getDiff: (_id: string) => mockDiffState,
+  setDiffOpenFile: vi.fn(),
+  setDiffHunks: vi.fn(),
+  invalidateDiff: vi.fn(),
+};
+
+vi.mock("@/lib/stores/workbench-store", () => ({
+  WORKBENCH_STALE_MS: 30000,
+  useWorkbenchStore: (sel: (s: typeof mockWorkbench) => unknown) =>
+    sel(mockWorkbench),
+}));
+
+vi.mock("@/lib/hooks/workbench/use-swr", () => ({
+  useWorkbenchSWR: vi.fn(),
+}));
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  mockDiffState.openFiles = [];
+  mockDiffState.hunksByFile = {};
+  mockDiffState.fileFetchedAt = {};
+});
+
+function file(overrides: Partial<DiffFile>): DiffFile {
+  return {
+    path: "src/a.ts",
+    status: "M",
+    additions: 1,
+    deletions: 0,
+    staged_change: null,
+    unstaged_change: null,
+    untracked: false,
+    ...overrides,
+  };
+}
+
+function summary(files: DiffFile[]): DiffSummary {
+  return {
+    is_git_repo: true,
+    total_additions: files.reduce((n, f) => n + f.additions, 0),
+    total_deletions: files.reduce((n, f) => n + f.deletions, 0),
+    files,
+  };
+}
+
+describe("ChangesView", () => {
+  it("mostra estado vazio (working tree limpo) quando summary.files está vazio", () => {
+    render(<ChangesView workspaceId="ws1" summary={summary([])} />);
+    expect(screen.getByText("workbench_diff_clean")).toBeInTheDocument();
+  });
+
+  it("agrupa arquivos staged, modificados e untracked corretamente", () => {
+    const files = [
+      file({ path: "staged.ts", staged_change: "M" }),
+      file({ path: "modified.ts", unstaged_change: "M" }),
+      file({ path: "new.ts", untracked: true }),
+    ];
+    render(<ChangesView workspaceId="ws1" summary={summary(files)} />);
+
+    expect(screen.getByText("staged.ts")).toBeInTheDocument();
+    expect(screen.getByText("modified.ts")).toBeInTheDocument();
+    expect(screen.getByText("new.ts")).toBeInTheDocument();
+    expect(
+      screen.getByText("workbench_diff_group_untracked"),
+    ).toBeInTheDocument();
+  });
+
+  it("não mostra o grupo untracked quando não há arquivos untracked", () => {
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+    expect(
+      screen.queryByText("workbench_diff_group_untracked"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clicar em stage (+) chama apiGitFileAction e invalida o diff", async () => {
+    const spy = vi
+      .spyOn(api, "apiGitFileAction")
+      .mockResolvedValue({ status: "ok", message: "" });
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", unstaged_change: "M" })])}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle("workbench_git_ctx_stage"));
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith("ws1", "stage", "a.ts"),
+    );
+    await waitFor(() =>
+      expect(mockWorkbench.invalidateDiff).toHaveBeenCalledWith("ws1"),
+    );
+  });
+
+  it("clicar em unstage (−) chama apiGitFileAction com unstage", async () => {
+    const spy = vi
+      .spyOn(api, "apiGitFileAction")
+      .mockResolvedValue({ status: "ok", message: "" });
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle("workbench_git_ctx_unstage"));
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith("ws1", "unstage", "a.ts"),
+    );
+  });
+
+  it("clicar em discard (↩) abre o dialog de confirmação e só chama a API ao confirmar", async () => {
+    const spy = vi
+      .spyOn(api, "apiGitFileAction")
+      .mockResolvedValue({ status: "ok", message: "" });
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([
+          file({ path: "a.ts", unstaged_change: "M", untracked: false }),
+        ])}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle("workbench_git_ctx_discard"));
+    expect(screen.getByText("workbench_git_discard_title")).toBeInTheDocument();
+    expect(spy).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText("workbench_git_discard_confirm"));
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith("ws1", "discard", "a.ts"),
+    );
+  });
+
+  it("botão de commit fica desabilitado com mensagem vazia e habilita ao digitar", () => {
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+    const btn = screen
+      .getByText("workbench_diff_commit_button")
+      .closest("button")!;
+    expect(btn).toBeDisabled();
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_diff_commit_placeholder"),
+      { target: { value: "fix: bug" } },
+    );
+    expect(btn).not.toBeDisabled();
+  });
+
+  it("clicar em commit chama apiGitCommit com a mensagem e limpa o campo em sucesso", async () => {
+    const spy = vi
+      .spyOn(api, "apiGitCommit")
+      .mockResolvedValue({ status: "ok", message: "" });
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+
+    const textarea = screen.getByPlaceholderText(
+      "workbench_diff_commit_placeholder",
+    ) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "fix: bug" } });
+    fireEvent.click(screen.getByText("workbench_diff_commit_button"));
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith("ws1", "fix: bug"));
+    await waitFor(() => expect(textarea.value).toBe(""));
+  });
+
+  it("commit com erro mantém a mensagem no campo (não limpa)", async () => {
+    vi.spyOn(api, "apiGitCommit").mockResolvedValue({
+      status: "error",
+      message: "falhou",
+    });
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+
+    const textarea = screen.getByPlaceholderText(
+      "workbench_diff_commit_placeholder",
+    ) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "fix: bug" } });
+    fireEvent.click(screen.getByText("workbench_diff_commit_button"));
+
+    await waitFor(() => expect(api.apiGitCommit).toHaveBeenCalled());
+    expect(textarea.value).toBe("fix: bug");
+  });
+
+  it("clicar no nome do arquivo expande e chama setDiffOpenFile", () => {
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+    fireEvent.click(screen.getByText("a.ts"));
+    expect(mockWorkbench.setDiffOpenFile).toHaveBeenCalledWith(
+      "ws1",
+      "a.ts",
+      true,
+    );
+  });
+});

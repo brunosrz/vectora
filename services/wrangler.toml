@@ -30,12 +30,17 @@ bindings = [
   { name = "GATEWAY_SESSION", class_name = "GatewaySession" }
 ]
 
-# Sem clientes em produção usando o DO ainda (rename de dia zero) — recriado
-# do zero em vez de usar `renamed_classes`, mais simples e sem risco por não
-# haver storage real a preservar.
+# Migrations são cumulativas e imutáveis por tag — a Cloudflare rastreia
+# quais tags já foram aplicadas a este Worker independente do conteúdo local
+# do arquivo, então uma correção de migration precisa sempre de uma tag nova,
+# nunca editar uma tag já existente.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["GatewaySession"]
+
+[[migrations]]
+tag = "v2"
+renamed_classes = [{ from = "RelaySession", to = "GatewaySession" }]
 
 [[kv_namespaces]]
 binding = "GATEWAY_METRICS"

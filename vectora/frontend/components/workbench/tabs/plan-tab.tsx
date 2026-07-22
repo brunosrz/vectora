@@ -268,7 +268,7 @@ export function PlanTab({ threadId }: PlanTabProps) {
           {entries.map(({ slug, item }) =>
             slug === TODOS_SLUG ? (
               <AccordionItem key={slug} value={slug}>
-                <AccordionTrigger>
+                <AccordionTrigger data-testid="plan-todos-trigger">
                   <span className="flex items-center gap-2 min-w-0">
                     <CheckSquare className="w-3.5 h-3.5 shrink-0 text-amber-400" />
                     <span className="truncate">
@@ -277,10 +277,14 @@ export function PlanTab({ threadId }: PlanTabProps) {
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="divide-y divide-border/30">
+                  <div
+                    className="divide-y divide-border/30"
+                    data-testid="plan-todos-list"
+                  >
                     {todos.map((t, idx) => (
                       <div
                         key={idx}
+                        data-testid="plan-todo-item"
                         className="py-1.5 text-[11px] flex items-center gap-2"
                       >
                         <TodoStatusIcon status={t.status} />

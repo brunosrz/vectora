@@ -10,6 +10,17 @@ sentido com a stack inteira de pé:
 - **`session-recovery.spec.ts`** — o histórico **sobrevive ao reload** da
   página (zera o cache em memória → força `getHistory` ao backend); e o
   **título** da sessão é atribuído pela IA (não a cópia do prompt).
+- **`workbench-tabs.spec.ts`** — troca de aba do workbench (regressão do bug
+  real em que a troca de aba travava o conteúdo na primeira aba montada
+  enquanto só o header seguia trocando).
+- **`git-workflow.spec.ts`** — cria workspace real, edita/cria arquivo pela
+  aba Arquivos, vê a mudança na aba Git, stage + commit reais pela UI.
+- **`web-search-tool.spec.ts`** — prompt que força a tool `web_search` real
+  (Tavily, sem mock) e confirma que a resposta referencia o resultado.
+- **`settings-tabs.spec.ts`** — dialog Ambiente (Integrações / Provider
+  Routing): render das abas + interação básica, sem persistir credenciais.
+- **`plan-mode.spec.ts`** — prompt que pede um plano gera tarefas reais
+  (`write_todos`) visíveis na aba Plano.
 
 ## Pré-requisitos
 

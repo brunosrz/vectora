@@ -58,6 +58,7 @@ export function PlusMenu({
                 type="button"
                 aria-label={m.tooltip_chat_add_files()}
                 aria-expanded={open}
+                data-testid="plus-menu-trigger"
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -86,6 +87,7 @@ export function PlusMenu({
           </button>
 
           <button
+            data-testid="plus-menu-add-folder"
             className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
             onClick={() => {
               setOpen(false);
@@ -123,6 +125,7 @@ export function PlusMenu({
           <div className="border-t border-border/60 my-1" />
 
           <button
+            data-testid="plus-menu-connectors"
             className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
             onClick={() => {
               setOpen(false);

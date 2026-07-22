@@ -27,9 +27,9 @@ async def _run_storage_async(args: argparse.Namespace) -> None:
         except Exception:
             pass
     if not db_path:
-        from pathlib import Path as _Path
+        from backend.settings import settings as _s2
 
-        db_path = str(_Path.home() / ".vectora" / "data" / "vectora.db")
+        db_path = str(_s2.vectora_home / "data" / "vectora.db")
 
     action = getattr(args, "action", "info") or "info"
     subaction = getattr(args, "subaction", None)

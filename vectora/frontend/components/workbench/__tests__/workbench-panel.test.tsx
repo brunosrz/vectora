@@ -9,7 +9,7 @@
  * componente — travando a classe exata desse bug (peça pronta, nunca ligada).
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, act } from "@testing-library/react";
 
 vi.mock("@/lib/paraglide/messages", () => ({
   m: new Proxy(
@@ -158,6 +158,79 @@ describe("WorkbenchNavBar — ícone do Context Graph não fica mais atrás de f
       (b) => b.getAttribute("aria-disabled") !== "true",
     );
     expect(contextGraphBtn).toBeDefined();
+  });
+});
+
+describe("WorkbenchContent — troca de aba nunca trava no conteúdo anterior (regressão ao vivo)", () => {
+  // Bug real encontrado em raio-X manual: AnimatePresence mode="wait" na
+  // troca de aba podia nunca completar a animação de saída em produção,
+  // travando o conteúdo montado (ex. Plan) enquanto só o header seguia
+  // atualizando (activeTab é lido fora do AnimatePresence). O fix removeu
+  // o AnimatePresence da troca — este teste garante que, em sequência,
+  // header e conteúdo montado SEMPRE correspondem à mesma aba, nunca a uma
+  // aba anterior.
+  const ALL_TABS: WorkbenchTab[] = [
+    "terminal",
+    "files",
+    "diff",
+    "plan",
+    "preview",
+    "storage",
+    "tasks",
+    "context_graph",
+    "library",
+  ];
+  const STUB_TEXT: Record<WorkbenchTab, string> = {
+    terminal: "stub-terminal",
+    files: "stub-files",
+    diff: "stub-git",
+    plan: "stub-plan",
+    preview: "stub-preview",
+    storage: "stub-memory",
+    tasks: "stub-tasks",
+    context_graph: "stub-context-graph",
+    library: "stub-library",
+  };
+
+  it("percorrendo todas as 9 abas em sequência, o header e o conteúdo montado batem em cada troca", () => {
+    for (const tab of ALL_TABS) {
+      setActiveTab("t-sequencia", tab);
+      const { unmount } = renderContent({ threadId: "t-sequencia" });
+      expect(
+        screen.getByText(`workbench.tab.${tab}`, { exact: false }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(STUB_TEXT[tab])).toBeInTheDocument();
+      for (const other of ALL_TABS) {
+        if (other === tab) continue;
+        expect(screen.queryByText(STUB_TEXT[other])).not.toBeInTheDocument();
+      }
+      unmount();
+    }
+  });
+
+  it("trocando rapidamente entre 3 abas seguidas (Arquivos→Git→Plano) sem desmontar entre elas, o conteúdo final é sempre o da última aba selecionada", () => {
+    setActiveTab("t-rapido", "files");
+    const { rerender } = renderContent({ threadId: "t-rapido" });
+    expect(screen.getByText("stub-files")).toBeInTheDocument();
+
+    act(() => setActiveTab("t-rapido", "diff"));
+    rerender(
+      <TooltipProvider>
+        <WorkbenchContent threadId="t-rapido" />
+      </TooltipProvider>,
+    );
+    expect(screen.getByText("stub-git")).toBeInTheDocument();
+    expect(screen.queryByText("stub-files")).not.toBeInTheDocument();
+
+    act(() => setActiveTab("t-rapido", "plan"));
+    rerender(
+      <TooltipProvider>
+        <WorkbenchContent threadId="t-rapido" />
+      </TooltipProvider>,
+    );
+    expect(screen.getByText("stub-plan")).toBeInTheDocument();
+    expect(screen.queryByText("stub-git")).not.toBeInTheDocument();
+    expect(screen.queryByText("stub-files")).not.toBeInTheDocument();
   });
 });
 

@@ -43,6 +43,7 @@ import sys
 from pathlib import Path
 
 from backend.services.subprocess_logging import pipe_to_logger
+from backend.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +152,7 @@ async def ensure_nats_sidecar() -> str | None:
             )
             return None
 
-        store_dir = Path.home() / ".vectora" / "nats"
+        store_dir = settings.vectora_home / "nats"
         store_dir.mkdir(parents=True, exist_ok=True)
 
         # Órfão de uma sessão anterior que morreu sem passar pelo shutdown
@@ -316,7 +317,7 @@ async def stop_nats_sidecar() -> None:
         _log_task.cancel()
         _log_task = None
 
-    store_dir = Path.home() / ".vectora" / "nats"
+    store_dir = settings.vectora_home / "nats"
     _clear_pid_file(store_dir)
 
     if _proc is None:

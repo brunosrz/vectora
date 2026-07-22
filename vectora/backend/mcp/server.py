@@ -16,11 +16,14 @@ import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
+from backend.settings import settings
+
 # Logging to file only — never pollute stdout (JSON-RPC channel)
-_log_dir = Path.home() / ".vectora" / "logs"
+_log_dir = settings.logs_dir
+if _log_dir is None:
+    raise RuntimeError("settings.logs_dir deve estar setado após Settings.__init__")
 _log_dir.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(

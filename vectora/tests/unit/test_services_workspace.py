@@ -21,7 +21,7 @@ def _fresh_registry(tmp_path: Path) -> Iterator[WorkspaceRegistry]:
     """Cria um registry novo com workspaces.json em tmp_path."""
     reg = WorkspaceRegistry()
     json_file = tmp_path / "workspaces.json"
-    with patch("backend.workspace.workspace._WORKSPACES_FILE", json_file):
+    with patch("backend.workspace.workspace._workspaces_file", return_value=json_file):
         # Resetar estado interno
         reg._workspaces = {}
         reg._loaded = False
@@ -36,7 +36,7 @@ def registry(tmp_path: Path):
     reg._workspaces = {}
     reg._loaded = False
     # Patch o arquivo global
-    with patch("backend.workspace.workspace._WORKSPACES_FILE", json_file):
+    with patch("backend.workspace.workspace._workspaces_file", return_value=json_file):
         yield reg, json_file
 
 
@@ -241,7 +241,7 @@ def test_persistence_roundtrip(registry, tmp_path: Path):
     reg2 = WorkspaceRegistry()
     reg2._workspaces = {}
     reg2._loaded = False
-    with patch("backend.workspace.workspace._WORKSPACES_FILE", json_file):
+    with patch("backend.workspace.workspace._workspaces_file", return_value=json_file):
         loaded = reg2.get(ws.id)
     assert loaded is not None
     assert loaded.name == "meu-projeto"

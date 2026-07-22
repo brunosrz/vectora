@@ -262,7 +262,9 @@ def _resolve_workspace_root(workspace_id: str | None) -> Path:
         pass
 
     # Fallback: diretório padrão de workspaces
-    default_path = Path.home() / ".vectora" / "workspaces" / workspace_id
+    from backend.settings import settings
+
+    default_path = settings.vectora_home / "workspaces" / workspace_id
     if default_path.exists():
         return default_path
 

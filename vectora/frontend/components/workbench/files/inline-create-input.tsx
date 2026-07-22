@@ -33,6 +33,7 @@ export function InlineCreateInput({
         onBlur={() => onCancel()}
         placeholder={placeholder}
         className="flex-1 text-xs bg-background border border-primary/60 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-primary/40 font-mono"
+        data-testid="files-inline-create-input"
       />
     </div>
   );

@@ -20,12 +20,13 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
-from pathlib import Path
 from typing import Any
+
+from backend.settings import settings
 
 logger = logging.getLogger(__name__)
 
-_AUTH_FILE = Path.home() / ".vectora" / "auth.json"
+_AUTH_FILE = settings.vectora_home / "auth.json"
 _KEYRING_SERVICE = "vectora-cli"
 _KEYRING_USER = "session"
 

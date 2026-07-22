@@ -140,7 +140,7 @@ def test_run_qdrant_ok_persiste_env(
     from backend.workspace.runtime_settings import RuntimeSettings
 
     monkeypatch.setattr("backend.cli.infra.Console", _null_console)
-    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    monkeypatch.setattr(infra.settings, "vectora_home", tmp_path)
 
     fresh = RuntimeSettings(path=tmp_path / "checkpoints.db")
     monkeypatch.setattr(rs_module, "runtime_settings", fresh)
@@ -151,7 +151,7 @@ def test_run_qdrant_ok_persiste_env(
     monkeypatch.setattr(infra, "_test_qdrant", _ok)
     infra.run_qdrant("https://q.example", "secret")
 
-    env = (tmp_path / ".vectora" / ".env").read_text(encoding="utf-8")
+    env = (tmp_path / ".env").read_text(encoding="utf-8")
     assert "QDRANT_URL=https://q.example" in env
     assert "QDRANT_API_KEY=secret" in env
     # storage_mode agora vive em app_settings (SQLite), não no .env.

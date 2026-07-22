@@ -47,8 +47,9 @@ async def run_docker_sandboxed(
     timeout_s: float = 60.0,
 ) -> SandboxResult:
     """Roda `command` num container Docker efêmero. `docker` ausente do
-    sistema devolve `exit_code=127` com mensagem clara — nunca levanta
-    exceção (tools defensivas)."""
+    sistema devolve `exit_code=127` com mensagem clara; sem permissão de
+    execução (`PermissionError`) devolve `exit_code=126` (convenção POSIX)
+    — nunca levanta exceção (tools defensivas)."""
     argv = build_docker_command(policy, workspace_dir, command)
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -62,6 +63,13 @@ async def run_docker_sandboxed(
             stdout="",
             stderr="Error: Docker não está instalado neste sistema — sandbox indisponível.",
             exit_code=127,
+        )
+    except PermissionError:
+        logger.warning("sandbox.docker: sem permissão para executar o binário docker")
+        return SandboxResult(
+            stdout="",
+            stderr="Error: sem permissão para executar docker — sandbox indisponível.",
+            exit_code=126,
         )
 
     try:

@@ -131,6 +131,7 @@ export function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
           type="button"
           aria-disabled="true"
           tabIndex={-1}
+          data-testid={`workbench-nav-${tab}`}
           className="relative flex items-center justify-center w-8 h-8 rounded-md cursor-default text-muted-foreground/40"
         >
           <Icon className="w-4 h-4" />
@@ -176,6 +177,7 @@ function NavTabButton({
       <TooltipTrigger asChild>
         <button
           onClick={onSelect}
+          data-testid={`workbench-nav-${tab}`}
           className={`relative flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
             active
               ? "bg-muted text-foreground"
@@ -293,7 +295,11 @@ export function WorkbenchContent({
       } border-border/60`}
     >
       <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-sidebar">
-        <span className="flex items-center gap-2 text-sm font-medium">
+        <span
+          className="flex items-center gap-2 text-sm font-medium"
+          data-testid="workbench-header-title"
+          data-active-tab={activeTab}
+        >
           <ActiveIcon className="w-4 h-4 text-muted-foreground" />
           {mDyn(`workbench.tab.${activeTab}`)}
         </span>
@@ -311,35 +317,37 @@ export function WorkbenchContent({
         </Tooltip>
       </div>
 
-      {/* Body — só monta a aba ativa (poupa recurso); troca com slide suave */}
+      {/* Body — só monta a aba ativa (poupa recurso); entrada com slide suave.
+          Sem AnimatePresence: a troca de aba não pode depender de uma
+          animação de saída completar — em produção essa transição de exit
+          ficou presa (framer-motion nunca chamava onExitComplete), travando
+          o conteúdo renderizado na primeira aba montada para sempre enquanto
+          só o header seguia trocando. Unmount/mount é instantâneo agora;
+          só a entrada anima. */}
       <div className="flex-1 min-h-0 overflow-hidden relative">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, x: 6 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -6 }}
-            transition={PANEL_TRANSITION}
-            className="absolute inset-0"
-          >
-            {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}
-            {activeTab === "files" && (
-              <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
-            )}
-            {activeTab === "diff" && <GitTab threadId={threadId} />}
-            {activeTab === "plan" && <PlanTab threadId={threadId} />}
-            {activeTab === "preview" && <PreviewTab threadId={threadId} />}
-            {activeTab === "storage" && <MemoryTab threadId={threadId} />}
-            {activeTab === "tasks" && <TasksTab threadId={threadId} />}
-            {activeTab === "context_graph" && (
-              <ContextGraphTab
-                threadId={threadId}
-                onSendPrompt={onSendPrompt}
-              />
-            )}
-            {activeTab === "library" && <LibraryTab threadId={threadId} />}
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={PANEL_TRANSITION}
+          className="absolute inset-0"
+          data-testid="workbench-tab-content"
+          data-tab={activeTab}
+        >
+          {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}
+          {activeTab === "files" && (
+            <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
+          )}
+          {activeTab === "diff" && <GitTab threadId={threadId} />}
+          {activeTab === "plan" && <PlanTab threadId={threadId} />}
+          {activeTab === "preview" && <PreviewTab threadId={threadId} />}
+          {activeTab === "storage" && <MemoryTab threadId={threadId} />}
+          {activeTab === "tasks" && <TasksTab threadId={threadId} />}
+          {activeTab === "context_graph" && (
+            <ContextGraphTab threadId={threadId} onSendPrompt={onSendPrompt} />
+          )}
+          {activeTab === "library" && <LibraryTab threadId={threadId} />}
+        </motion.div>
       </div>
     </div>
   );

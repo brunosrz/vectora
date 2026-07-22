@@ -66,10 +66,12 @@ async def test_ensure_infra_uses_postgres_checkpointer_and_store_in_complete_mod
 
 
 @pytest.mark.asyncio
-async def test_ensure_infra_falls_back_to_sqlite_when_postgres_fails():
+async def test_ensure_infra_falls_back_to_sqlite_when_postgres_fails(tmp_path):
     """Edge — DSN ruim/Postgres fora do ar não impede a sessão de iniciar."""
     fake_settings = MagicMock(
-        storage_mode="complete", postgres_dsn="postgresql://bad/dsn"
+        storage_mode="complete",
+        postgres_dsn="postgresql://bad/dsn",
+        vectora_home=tmp_path,
     )
 
     with (
@@ -93,9 +95,11 @@ async def test_ensure_infra_falls_back_to_sqlite_when_postgres_fails():
 
 
 @pytest.mark.asyncio
-async def test_ensure_infra_uses_sqlite_in_lite_mode():
+async def test_ensure_infra_uses_sqlite_in_lite_mode(tmp_path):
     """Modo lite (default) nunca tenta abrir Postgres."""
-    fake_settings = MagicMock(storage_mode="lite", postgres_dsn=None)
+    fake_settings = MagicMock(
+        storage_mode="lite", postgres_dsn=None, vectora_home=tmp_path
+    )
 
     with (
         patch("backend.settings.settings", fake_settings),

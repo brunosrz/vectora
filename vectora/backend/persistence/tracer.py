@@ -151,7 +151,13 @@ class VectoraTracer:
                 return data_dir / "traces.db"
         except Exception:
             pass
-        return Path.home() / ".vectora" / "data" / "traces.db"
+        # Último fallback (settings indisponível) — lê VECTORA_HOME direto do
+        # ambiente para não vazar dados de teste no home real do usuário.
+        import os
+
+        home = os.environ.get("VECTORA_HOME")
+        base = Path(home) if home else Path.home() / ".vectora"
+        return base / "data" / "traces.db"
 
     def _ensure_sync(self) -> Path:
         """Cria banco e schema usando sqlite3 síncrono (thread-safe)."""

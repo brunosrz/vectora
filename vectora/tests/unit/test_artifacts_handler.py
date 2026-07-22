@@ -23,17 +23,17 @@ import pytest
 
 @pytest.fixture
 def fake_home(tmp_path, monkeypatch):
-    """Faz ``Path.home()`` apontar para tmp_path. Aplica em HOME e USERPROFILE
-    (Windows usa o segundo). Os helpers do handler chamam ``Path.home()``."""
-    monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    # Path.home() consulta os envs acima — não precisa de monkeypatch direto.
+    """Isola ``settings.vectora_home`` em tmp_path — os helpers do handler
+    resolvem o diretório de artifacts a partir dele."""
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "vectora_home", tmp_path)
     return tmp_path
 
 
 def _write_artifact(home: Path, session_id: str, slug: str, content: str) -> Path:
-    """Cria um arquivo de artifact dentro de ~/.vectora/artifacts/<session>/."""
-    base = home / ".vectora" / "artifacts" / session_id
+    """Cria um arquivo de artifact dentro de <vectora_home>/artifacts/<session>/."""
+    base = home / "artifacts" / session_id
     base.mkdir(parents=True, exist_ok=True)
     path = base / f"{slug}.md"
     path.write_text(content, encoding="utf-8")
@@ -181,7 +181,7 @@ class TestGetArtifact:
 
         # Cria um arquivo "real" na pasta da sessão e outro fora.
         _write_artifact(fake_home, "safe", "ok", "interno")
-        outside = fake_home / ".vectora" / "artifacts" / "safe.md"
+        outside = fake_home / "artifacts" / "safe.md"
         outside.write_text("FORA", encoding="utf-8")
 
         resp = await get_artifact("../safe", session_id="safe")

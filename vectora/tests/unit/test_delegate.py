@@ -7,6 +7,7 @@ workspace, propagação de erro claro, e idempotência da remoção.
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -137,3 +138,120 @@ async def test_workspace_without_git_repo_raises_delegate_error():
 
         with pytest.raises(DelegateError, match="não é um repositório git"):
             await create_task_worktree("ws1", "task-42")
+
+
+@pytest.mark.asyncio
+async def test_create_task_worktree_ja_existente_gera_erro_claro_de_conflito():
+    # Duplicado: criar worktree pra uma task_id que já tem um worktree
+    # (git recusa "already exists") deve propagar como DelegateError com a
+    # mensagem original do git, não mascarar o motivo do conflito.
+    with (
+        patch("backend.workspace.workspace.workspace_registry") as mock_registry,
+        patch("git.Repo") as mock_repo_cls,
+        patch("backend.tools.git._git_worktree_impl") as mock_impl,
+    ):
+        mock_registry.get.return_value = _fake_workspace()
+        mock_repo_cls.return_value = MagicMock()
+        mock_impl.return_value = {
+            "status": "error",
+            "message": "'task-42' already exists",
+        }
+
+        with pytest.raises(DelegateError, match="already exists"):
+            await create_task_worktree("ws1", "task-42")
+
+
+@pytest.mark.asyncio
+async def test_workspace_id_com_caracteres_especiais_e_repassado_intacto():
+    # Espaços, acentos, barras e unicode no workspace_id não devem quebrar
+    # a resolução — quem sanitiza pra path é _git_worktree_impl, este
+    # wrapper só precisa repassar o valor exato recebido.
+    workspace_id = "ws com espaço/e-título açúcar 糖"
+    with (
+        patch("backend.workspace.workspace.workspace_registry") as mock_registry,
+        patch("git.Repo") as mock_repo_cls,
+        patch("backend.tools.git._git_worktree_impl") as mock_impl,
+    ):
+        mock_registry.get.return_value = _fake_workspace()
+        mock_repo_cls.return_value = MagicMock()
+        mock_impl.return_value = {
+            "status": "ok",
+            "action": "add",
+            "path": "/home/user/.vectora/worktrees/ws-especial/task-1",
+        }
+
+        path = await create_task_worktree(workspace_id, "task-1")
+
+        assert path == "/home/user/.vectora/worktrees/ws-especial/task-1"
+        mock_registry.get.assert_called_once_with(workspace_id)
+        assert mock_impl.call_args.args[1] == workspace_id
+
+
+@pytest.mark.asyncio
+async def test_task_id_com_barra_e_caracteres_de_shell_e_repassado_como_name():
+    # Erro/borda: task_id vindo do LLM pode conter caracteres que
+    # pareceriam injeção de shell (`;`, `&&`) — o wrapper não escapa nem
+    # rejeita, só repassa como `name=` (a defesa real é em
+    # `_git_worktree_impl`, testada em outro arquivo).
+    with (
+        patch("backend.workspace.workspace.workspace_registry") as mock_registry,
+        patch("git.Repo") as mock_repo_cls,
+        patch("backend.tools.git._git_worktree_impl") as mock_impl,
+    ):
+        mock_registry.get.return_value = _fake_workspace()
+        mock_repo_cls.return_value = MagicMock()
+        mock_impl.return_value = {
+            "status": "ok",
+            "action": "add",
+            "path": "/tmp/wt",
+        }
+
+        await create_task_worktree("ws1", "task; rm -rf /")
+
+        assert mock_impl.call_args.kwargs["name"] == "task; rm -rf /"
+
+
+@pytest.mark.asyncio
+async def test_criacao_concorrente_de_dois_worktrees_para_tasks_diferentes_nao_colide():
+    # Concorrência: duas tasks distintas do mesmo workspace criando
+    # worktree ao mesmo tempo não podem ver o path uma da outra.
+    call_paths = {
+        "task-a": "/home/user/.vectora/worktrees/ws1/task-a",
+        "task-b": "/home/user/.vectora/worktrees/ws1/task-b",
+    }
+
+    def _fake_worktree_impl(_repo, _workspace_id, _action, *, name):
+        return {"status": "ok", "action": "add", "path": call_paths[name]}
+
+    with (
+        patch("backend.workspace.workspace.workspace_registry") as mock_registry,
+        patch("git.Repo") as mock_repo_cls,
+        patch("backend.tools.git._git_worktree_impl", side_effect=_fake_worktree_impl),
+    ):
+        mock_registry.get.return_value = _fake_workspace()
+        mock_repo_cls.return_value = MagicMock()
+
+        path_a, path_b = await asyncio.gather(
+            create_task_worktree("ws1", "task-a"),
+            create_task_worktree("ws1", "task-b"),
+        )
+
+        assert path_a == call_paths["task-a"]
+        assert path_b == call_paths["task-b"]
+        assert path_a != path_b
+
+
+@pytest.mark.asyncio
+async def test_remove_task_worktree_com_task_id_vazio_ainda_chama_impl():
+    with (
+        patch("backend.workspace.workspace.workspace_registry") as mock_registry,
+        patch("git.Repo") as mock_repo_cls,
+        patch("backend.tools.git._git_worktree_impl") as mock_impl,
+    ):
+        mock_registry.get.return_value = _fake_workspace()
+        mock_repo_cls.return_value = MagicMock()
+        mock_impl.return_value = {"status": "error", "message": "invalid name"}
+
+        await remove_task_worktree("ws1", "")  # não deve levantar
+
+        assert mock_impl.call_args.kwargs["name"] == ""

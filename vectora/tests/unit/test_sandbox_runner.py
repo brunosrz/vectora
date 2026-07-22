@@ -5,6 +5,7 @@ quando não há política configurada).
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -113,3 +114,200 @@ async def test_disabled_sandbox_section_runs_unsandboxed(tmp_path, monkeypatch):
     assert result.exit_code == 0
     called_args = create_mock.call_args.args
     assert called_args[0] == "true"
+
+
+@pytest.mark.asyncio
+async def test_ssh_backend_with_remote_host_dispatches_to_ssh_transport(
+    tmp_path, monkeypatch
+):
+    (tmp_path / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = "ssh"\nremote_host = "user@host"\n',
+        encoding="utf-8",
+    )
+    fake_result = MagicMock(exit_code=0, stdout="remoto\n", stderr="")
+    fake_transport = MagicMock()
+    fake_transport.run = AsyncMock(return_value=fake_result)
+    fake_transport.close = AsyncMock()
+    monkeypatch.setattr(
+        "backend.transport.ssh.SshTransport", MagicMock(return_value=fake_transport)
+    )
+
+    result = await runner.run_sandboxed(["ls"], str(tmp_path))
+
+    assert result.exit_code == 0
+    assert result.stdout == "remoto\n"
+
+
+@pytest.mark.asyncio
+async def test_modal_backend_without_sdk_installed_fails_with_clear_message(
+    tmp_path, monkeypatch
+):
+    import sys
+
+    (tmp_path / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = "modal"\n', encoding="utf-8"
+    )
+    monkeypatch.setitem(sys.modules, "modal", None)
+
+    result = await runner.run_sandboxed(["ls"], str(tmp_path))
+
+    assert result.exit_code == 127
+    assert "modal" in result.stderr.lower()
+
+
+@pytest.mark.asyncio
+async def test_empty_backend_string_fails_closed(tmp_path, monkeypatch):
+    (tmp_path / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = ""\n', encoding="utf-8"
+    )
+    create_mock = AsyncMock()
+    monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
+
+    result = await runner.run_sandboxed(["ls"], str(tmp_path))
+
+    assert result.exit_code == 126
+    create_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_malformed_vectora_toml_fails_closed_and_never_runs_command(
+    tmp_path, monkeypatch
+):
+    (tmp_path / "vectora.toml").write_text("[sandbox\nbroken", encoding="utf-8")
+    proc = _fake_proc(stdout=b"bwrap-output\n")
+    create_mock = AsyncMock(return_value=proc)
+    monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
+
+    result = await runner.run_sandboxed(["ls"], str(tmp_path))
+
+    # TOML malformado -> LOCKED_DOWN_POLICY (backend "local", lockdown=True)
+    # -> dispatcha pro bwrap, não roda o comando cru sem sandbox.
+    called_args = create_mock.call_args.args
+    assert called_args[0] == "bwrap"
+    assert result is not None
+
+
+@pytest.mark.asyncio
+async def test_timeout_propagates_through_dispatcher_for_unsandboxed_run(
+    tmp_path, monkeypatch
+):
+    proc = MagicMock()
+
+    async def _hang(*_args, **_kwargs):
+        import asyncio
+
+        await asyncio.sleep(10)
+
+    proc.communicate = _hang
+    proc.kill = MagicMock()
+    proc.wait = AsyncMock()
+    monkeypatch.setattr(
+        runner.asyncio, "create_subprocess_exec", AsyncMock(return_value=proc)
+    )
+
+    result = await runner.run_sandboxed(["sleep", "10"], str(tmp_path), timeout_s=0.05)
+
+    assert result.exit_code == 124
+    assert result.timed_out is True
+
+
+@pytest.mark.asyncio
+async def test_case_sensitive_backend_name_fails_closed(tmp_path, monkeypatch):
+    # "Local" com maiúscula não é igual a "local" registrado — fail-closed.
+    (tmp_path / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = "Local"\n', encoding="utf-8"
+    )
+    create_mock = AsyncMock()
+    monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
+
+    result = await runner.run_sandboxed(["ls"], str(tmp_path))
+
+    assert result.exit_code == 126
+    assert "Local" in result.stderr
+    create_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_comando_vazio_sem_policy_ainda_dispara_subprocess(tmp_path, monkeypatch):
+    # Borda: lista de comando vazia não é validada pelo runner — quem
+    # decide se isso é um erro é o subprocess/shell, não o dispatcher.
+    proc = _fake_proc()
+    create_mock = AsyncMock(return_value=proc)
+    monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
+
+    result = await runner.run_sandboxed([], str(tmp_path))
+
+    assert result.exit_code == 0
+    create_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_policy_e_relida_do_disco_a_cada_chamada_nao_e_cacheada(
+    tmp_path, monkeypatch
+):
+    # Duas chamadas sucessivas com vectora.toml alterado entre elas devem
+    # respeitar a política nova — não pode haver cache implícito de policy.
+    toml_path = tmp_path / "vectora.toml"
+    toml_path.write_text("[sandbox]\nenabled = false\n", encoding="utf-8")
+    proc = _fake_proc()
+    create_mock = AsyncMock(return_value=proc)
+    monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
+
+    await runner.run_sandboxed(["ls"], str(tmp_path))
+    first_call_argv = create_mock.call_args.args
+
+    toml_path.write_text(
+        '[sandbox]\nenabled = true\nbackend = "local"\n', encoding="utf-8"
+    )
+    await runner.run_sandboxed(["ls"], str(tmp_path))
+    second_call_argv = create_mock.call_args.args
+
+    assert first_call_argv[0] == "ls"
+    assert second_call_argv[0] == "bwrap"
+
+
+@pytest.mark.asyncio
+async def test_duas_workspaces_com_policies_diferentes_dispatcham_isoladamente(
+    tmp_path, monkeypatch
+):
+    # Concorrência/isolamento: dois workspaces distintos, um com sandbox
+    # ligado e outro desligado, não podem vazar a política um pro outro.
+    ws_sandboxed = tmp_path / "ws_a"
+    ws_sandboxed.mkdir()
+    (ws_sandboxed / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = "local"\n', encoding="utf-8"
+    )
+    ws_plain = tmp_path / "ws_b"
+    ws_plain.mkdir()
+
+    proc = _fake_proc()
+    create_mock = AsyncMock(return_value=proc)
+    monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
+
+    result_a, result_b = await asyncio.gather(
+        runner.run_sandboxed(["ls"], str(ws_sandboxed)),
+        runner.run_sandboxed(["ls"], str(ws_plain)),
+    )
+
+    assert result_a.exit_code == 0
+    assert result_b.exit_code == 0
+    argv_calls = [call.args[0] for call in create_mock.call_args_list]
+    assert "bwrap" in argv_calls
+    assert "ls" in argv_calls
+
+
+@pytest.mark.asyncio
+async def test_backend_none_via_toml_nulo_falha_fechado(tmp_path, monkeypatch):
+    # Erro/borda: backend explicitamente vazio já coberto; aqui um valor
+    # com espaços em branco também deve falhar fechado (não faz strip
+    # mágico que coincida com "local").
+    (tmp_path / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = "  local  "\n', encoding="utf-8"
+    )
+    create_mock = AsyncMock()
+    monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
+
+    result = await runner.run_sandboxed(["ls"], str(tmp_path))
+
+    assert result.exit_code == 126
+    create_mock.assert_not_awaited()

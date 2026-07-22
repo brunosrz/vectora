@@ -18,16 +18,33 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar
 
+from backend.settings import settings
 from backend.vtypes import Workspace
 
 logger = logging.getLogger(__name__)
 
-_WORKSPACES_FILE = Path.home() / ".vectora" / "workspaces.json"
+
+def _workspaces_file() -> Path:
+    """Caminho de ``workspaces.json``, sob ``settings.vectora_home``.
+
+    Resolvido a cada chamada (não congelado em import) para respeitar
+    ``VECTORA_HOME`` — tanto em subprocessos de teste que setam a env var
+    antes do boot quanto em testes no mesmo processo que sobrescrevem
+    ``settings.vectora_home`` diretamente.
+    """
+    return settings.vectora_home / "workspaces.json"
 
 
 def _session_workspaces_root() -> Path:
-    """Pasta base dos workspaces criados automaticamente por sessão."""
-    return Path.home() / "Documents" / "vectora"
+    """Pasta base dos workspaces criados automaticamente por sessão.
+
+    Por padrão mora em ``~/Documents/vectora`` (visível ao usuário no
+    Explorer/Finder). Deriva de ``settings.vectora_home.parent`` em vez de
+    ``Path.home()`` direto para respeitar ``VECTORA_HOME``: quando setado
+    para um diretório isolado (testes), o Documents derivado cai dentro
+    dessa mesma árvore isolada em vez de vazar para o home real.
+    """
+    return settings.vectora_home.parent / "Documents" / "vectora"
 
 
 class WorkspaceRegistry:
@@ -62,9 +79,10 @@ class WorkspaceRegistry:
         """Carrega workspaces.json (idempotente)."""
         if self._loaded:
             return
-        if _WORKSPACES_FILE.exists():
+        workspaces_file = _workspaces_file()
+        if workspaces_file.exists():
             try:
-                data = json.loads(_WORKSPACES_FILE.read_text(encoding="utf-8"))
+                data = json.loads(workspaces_file.read_text(encoding="utf-8"))
                 for item in data.get("workspaces", []):
                     try:
                         ws = Workspace(**item)
@@ -81,12 +99,13 @@ class WorkspaceRegistry:
     def _save(self) -> None:
         """Persiste workspaces.json."""
         try:
-            _WORKSPACES_FILE.parent.mkdir(parents=True, exist_ok=True)
+            workspaces_file = _workspaces_file()
+            workspaces_file.parent.mkdir(parents=True, exist_ok=True)
             data = {
                 "workspaces": [ws.model_dump() for ws in self._workspaces.values()],
                 "active": self._active,
             }
-            _WORKSPACES_FILE.write_text(
+            workspaces_file.write_text(
                 json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
             )
         except Exception:
@@ -289,7 +308,7 @@ class WorkspaceRegistry:
                 self.trust(wid, user_id)
             return ws
 
-        placeholder = Path.home() / ".vectora" / "remote-workspaces" / wid
+        placeholder = settings.vectora_home / "remote-workspaces" / wid
         placeholder.mkdir(parents=True, exist_ok=True)
 
         ws = Workspace(

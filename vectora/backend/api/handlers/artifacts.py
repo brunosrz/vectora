@@ -16,6 +16,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
+from backend.settings import settings
 from backend.vtypes.documents import DEFAULT_ARTIFACT_TYPE, ArtifactMetadata
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class ArtifactContent(BaseModel):
 def _artifacts_dir(session_id: str) -> Path:
     """Pasta de artifacts da sessão. Sanitiza o session_id (sem traversal)."""
     safe = session_id.replace("/", "").replace("\\", "").replace("..", "")
-    return Path.home() / ".vectora" / "artifacts" / safe
+    return settings.vectora_home / "artifacts" / safe
 
 
 def _read_preview(path: Path, limit: int = 200) -> str | None:

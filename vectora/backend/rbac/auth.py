@@ -24,13 +24,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constantes configuráveis via env
 # ---------------------------------------------------------------------------
 
-_SECRET_KEY_PATH = Path.home() / ".vectora" / "auth.key"
+_SECRET_KEY_PATH = settings.vectora_home / "auth.key"
 _ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("VECTORA_ACCESS_TOKEN_MINUTES", "15"))
 _REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("VECTORA_REFRESH_TOKEN_DAYS", "7"))
 _ALGORITHM = "HS256"
@@ -213,7 +215,7 @@ async def _get_db() -> Any:
 
     import aiosqlite
 
-    db_path = Path.home() / ".vectora" / "checkpoints.db"
+    db_path = settings.vectora_home / "checkpoints.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
     _db_conn = await aiosqlite.connect(str(db_path))
     _db_conn.row_factory = aiosqlite.Row

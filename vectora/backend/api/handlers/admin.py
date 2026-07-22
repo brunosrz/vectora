@@ -24,6 +24,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -832,7 +834,7 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
 
 
 def _env_file() -> Path:
-    p = Path.home() / ".vectora" / ".env"
+    p = settings.vectora_home / ".env"
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
 

@@ -28,6 +28,8 @@ from rich.panel import Panel
 from rich.rule import Rule
 from rich.table import Table
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 LLM_PROVIDERS: dict[str, dict[str, str]] = {
@@ -97,7 +99,7 @@ def upsert_env_key(env_file: Path, key: str, value: str) -> None:
 
 def save_keys_to_env(keys: dict[str, str]) -> None:
     """Salva as API keys em ``~/.vectora/.env``."""
-    env_file = Path.home() / ".vectora" / ".env"
+    env_file = settings.vectora_home / ".env"
     env_file.parent.mkdir(parents=True, exist_ok=True)
     for key, value in keys.items():
         if value:

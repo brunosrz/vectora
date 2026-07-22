@@ -22,6 +22,8 @@ import logging
 import os
 from pathlib import Path
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 # Keys secretas que o server.json declara em environmentVariables.
@@ -38,7 +40,7 @@ _MCP_ENV_KEYS: list[tuple[str, str]] = [
     ("LANGSMITH_PROJECT", "LangSmith project name"),
 ]
 
-_ENV_FILE = Path.home() / ".vectora" / ".env"
+_ENV_FILE = settings.vectora_home / ".env"
 
 
 def _bootstrap_llm_provider_from_mcp() -> bool:

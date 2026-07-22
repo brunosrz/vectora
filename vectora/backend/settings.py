@@ -18,9 +18,27 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from dotenv import dotenv_values, load_dotenv
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
+
+
+def _default_vectora_home() -> Path:
+    """Resolve o diretório base do Vectora a partir de ``VECTORA_HOME``, se setado.
+
+    Usado como default do campo ``vectora_home`` e pelo bootstrap de
+    ``_load_environment_hierarchy`` (roda dentro do ``__init__`` do próprio
+    ``Settings``, antes de ``self.vectora_home`` existir na instância — não
+    pode depender de ``self.vectora_home`` nem do singleton ``settings``, é o
+    próprio singleton sendo construído). Outros módulos que precisam resolver
+    o diretório base antes do singleton ``settings`` estar disponível (ex.:
+    ``backend/workspace/runtime_settings.py``, importado de dentro deste
+    bootstrap) replicam esta mesma leitura direta de ``os.environ`` em vez de
+    importar este helper, para não criar import circular com este módulo.
+    """
+    env_value = os.environ.get("VECTORA_HOME")
+    return Path(env_value) if env_value else Path.home() / ".vectora"
 
 
 class Settings(BaseSettings):
@@ -94,8 +112,8 @@ class Settings(BaseSettings):
     # DIRECTORIES (Roaming Profile Pattern)
     # ============================================================================
 
-    vectora_home: Path = Path.home() / ".vectora"
-    """Base directory for Vectora user data (~/.vectora/)."""
+    vectora_home: Path = Field(default_factory=_default_vectora_home)
+    """Base directory for Vectora user data (~/.vectora/), override via VECTORA_HOME."""
 
     data_dir: Path | None = None
     """Vector store, databases, embeddings (~/.vectora/data/)."""
@@ -678,7 +696,7 @@ class Settings(BaseSettings):
         # Level 3b: Load ~/.vectora/config.toml [server] (config admin persistida —
         # allow_public_signup, default_model, max_recursion). Mesmo arquivo onde
         # write_config_section() grava via PATCH /admin/config.
-        _config_toml = Path.home() / ".vectora" / "config.toml"
+        _config_toml = _default_vectora_home() / "config.toml"
         if _config_toml.exists():
             try:
                 import tomllib as _tomllib
@@ -703,7 +721,7 @@ class Settings(BaseSettings):
 
         # Level 2: Load user global ~/.vectora/.env (segredos pessoais do
         # usuário — fonte de verdade para chaves de LLM, ver abaixo).
-        user_env = Path.home() / ".vectora" / ".env"
+        user_env = _default_vectora_home() / ".env"
         user_env_values: dict[str, str | None] = {}
         if user_env.exists():
             load_dotenv(user_env, override=False)

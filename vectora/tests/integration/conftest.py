@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 import pytest
 
@@ -99,7 +100,6 @@ def integration_cleanup() -> None:  # type: ignore[return]
 @pytest.fixture(scope="session")
 def _storage_stack_ok() -> bool:
     """True se Postgres (5432), Redis (6379) e Qdrant (6333) respondem na porta."""
-    import os
     import socket
 
     if os.getenv("CI"):

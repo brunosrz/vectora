@@ -16,6 +16,8 @@ import re
 import sys
 from pathlib import Path
 
+from backend.settings import settings
+
 # ---------------------------------------------------------------------------
 # Mapeamento de modelos → providers (para auto-detecção)
 # ---------------------------------------------------------------------------
@@ -110,7 +112,7 @@ def _mask_key(value: str | None) -> str:
 
 
 def _env_file() -> Path:
-    return Path.home() / ".vectora" / ".env"
+    return settings.vectora_home / ".env"
 
 
 def _write_env(key: str, value: str) -> None:
@@ -270,7 +272,7 @@ def _show_or_set(args: argparse.Namespace) -> None:
 
     console.print()
     console.print(f"[dim]Modo de startup:[/dim] {start_mode}")
-    console.print(f"[dim]Settings:[/dim]  {Path.home() / '.vectora' / 'settings.json'}")
+    console.print(f"[dim]Settings:[/dim]  {settings.vectora_home / 'settings.json'}")
     console.print(f"[dim]Env file:[/dim]  {_env_file()}")
 
     # ── Subcommands ───────────────────────────────────────────────────

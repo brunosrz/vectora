@@ -460,7 +460,7 @@ async def _ensure_infra() -> None:
         if _checkpointer is None:
             from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
-            db_path = str(Path.home() / ".vectora" / "checkpoints.db")
+            db_path = str(_settings.vectora_home / "checkpoints.db")
             Path(db_path).parent.mkdir(parents=True, exist_ok=True)
             _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
             _checkpointer = await _checkpointer_ctx.__aenter__()

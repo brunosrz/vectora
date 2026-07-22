@@ -16,10 +16,11 @@ from pathlib import Path
 from rich.console import Console
 
 from backend.cli.keys import upsert_env_key
+from backend.settings import settings
 
 
 def _env_file() -> Path:
-    env_file = Path.home() / ".vectora" / ".env"
+    env_file = settings.vectora_home / ".env"
     env_file.parent.mkdir(parents=True, exist_ok=True)
     return env_file
 

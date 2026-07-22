@@ -27,11 +27,13 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["oauth"])
 
-_GATEWAY_TOKEN_PATH = Path.home() / ".vectora" / "gateway_token"
+_GATEWAY_TOKEN_PATH = settings.vectora_home / "gateway_token"
 
 
 def _gateway_callback_url(

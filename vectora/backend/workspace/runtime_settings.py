@@ -28,7 +28,23 @@ from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
-_DB_PATH = Path.home() / ".vectora" / "checkpoints.db"
+
+def _bootstrap_vectora_home() -> Path:
+    """Lê ``VECTORA_HOME`` direto de ``os.environ`` em vez de importar
+    ``backend.settings.settings``.
+
+    Este módulo é importado de dentro de
+    ``Settings._load_environment_hierarchy`` (import local, para evitar
+    ciclo) antes do singleton ``settings`` existir — importar
+    ``backend.settings.settings`` aqui levantaria ImportError de módulo
+    parcialmente inicializado. Espelha a mesma leitura de
+    ``backend.settings._default_vectora_home``.
+    """
+    env_value = os.environ.get("VECTORA_HOME")
+    return Path(env_value) if env_value else Path.home() / ".vectora"
+
+
+_DB_PATH = _bootstrap_vectora_home() / "checkpoints.db"
 
 _DEFAULTS: dict = {
     "active_provider": "google-genai",

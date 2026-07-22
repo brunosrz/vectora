@@ -481,6 +481,7 @@ export function WorkspaceTrustDialog({
                     spellCheck={false}
                     className="h-8 text-xs font-mono"
                     disabled={loading || offline}
+                    data-testid="workspace-path-input"
                   />
                   <Button
                     type="button"
@@ -492,6 +493,7 @@ export function WorkspaceTrustDialog({
                     title={
                       offline ? m.network_disabled_offline() : m.workspace_go()
                     }
+                    data-testid="workspace-go-btn"
                   >
                     <CornerDownLeft className="w-3.5 h-3.5" />
                   </Button>
@@ -524,6 +526,7 @@ export function WorkspaceTrustDialog({
                         ? m.network_disabled_offline()
                         : m.workspace_new_folder()
                     }
+                    data-testid="workspace-new-folder-btn"
                   >
                     <FolderPlus className="w-3.5 h-3.5" />
                   </Button>
@@ -549,6 +552,7 @@ export function WorkspaceTrustDialog({
                       spellCheck={false}
                       className="h-8 text-xs"
                       disabled={folderSubmitting}
+                      data-testid="workspace-new-folder-input"
                     />
                     <Button
                       type="button"
@@ -556,6 +560,7 @@ export function WorkspaceTrustDialog({
                       className="h-8 px-2.5 text-xs"
                       onClick={() => void handleCreateFolder()}
                       disabled={folderSubmitting || !newFolderName.trim()}
+                      data-testid="workspace-new-folder-create-btn"
                     >
                       {folderSubmitting ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -640,6 +645,7 @@ export function WorkspaceTrustDialog({
                       checked={gitInit}
                       onChange={(e) => setGitInit(e.target.checked)}
                       className="rounded border-border"
+                      data-testid="workspace-git-init-checkbox"
                     />
                     <GitBranch className="w-4 h-4 shrink-0 text-muted-foreground" />
                     {m.workspace_git_init_label()}
@@ -804,6 +810,7 @@ export function WorkspaceTrustDialog({
                   onClick={handleConfirm}
                   disabled={!listing || submitting || offline}
                   title={offline ? m.network_disabled_offline() : undefined}
+                  data-testid="workspace-trust-confirm-btn"
                 >
                   {mode === "ingest"
                     ? m.workspace_ingest_confirm()

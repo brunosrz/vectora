@@ -514,6 +514,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               onClick={() => handleRequestCreate("file", "")}
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
               aria-label={m.tooltip_files_new_file()}
+              data-testid="files-new-file-btn"
             >
               <FilePlus className="w-3.5 h-3.5" />
             </button>
@@ -817,6 +818,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                       }
                       aria-pressed={isEditing}
                       data-editing={isEditing ? "true" : "false"}
+                      data-testid="files-edit-toggle-btn"
                     >
                       <Pencil className="w-3 h-3" />
                     </button>
@@ -951,6 +953,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                       disabled={saving}
                       onClick={() => void handleSaveEdit()}
                       className="h-6 text-xs"
+                      data-testid="files-save-btn"
                     >
                       {saving ? (
                         <Loader2 className="w-3 h-3 animate-spin" />

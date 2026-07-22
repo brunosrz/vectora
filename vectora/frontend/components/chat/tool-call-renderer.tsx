@@ -573,10 +573,17 @@ export const ToolCallRenderer = memo(function ToolCallRenderer({
   return (
     <div
       className={`px-3 py-2 rounded-lg border text-xs ${tool.destructive ? "border-destructive/40 bg-destructive/5" : "border-border bg-muted/50"}`}
+      data-testid="tool-call"
+      data-tool-name={tool.name}
     >
       {/* Cabeçalho */}
       <div className="flex items-center gap-2 mb-1">
-        <span className="font-semibold text-primary">{tool.name}</span>
+        <span
+          className="font-semibold text-primary"
+          data-testid="tool-call-name"
+        >
+          {tool.name}
+        </span>
         {tool.destructive && (
           <span className="text-[10px] text-destructive/80 border border-destructive/40 rounded-sm px-1">
             destrutivo

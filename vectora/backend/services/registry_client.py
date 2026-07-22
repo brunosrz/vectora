@@ -85,10 +85,8 @@ async def fetch_catalog(kind: RegistryKind) -> list[dict]:
         return entries
     except Exception as exc:
         logger.warning("registry_client: falha ao buscar catálogo %s (%s)", kind, exc)
-        if cache is not None:
-            fresh = _cache_is_fresh(cache, CACHE_TTL_OFFLINE)
-            if fresh:
-                logger.info("registry_client: usando cache offline de %s", kind)
+        if cache is not None and _cache_is_fresh(cache, CACHE_TTL_OFFLINE):
+            logger.info("registry_client: usando cache offline de %s", kind)
             return list(cache.get("entries", []))
         return []
 
@@ -166,7 +164,7 @@ async def fetch_official_mcp_registry(*, max_entries: int = 200) -> list[dict]:
         logger.warning(
             "registry_client: falha ao buscar registry oficial de MCP (%s)", exc
         )
-        if cache is not None:
+        if cache is not None and _cache_is_fresh(cache, CACHE_TTL_OFFLINE):
             return list(cache.get("entries", []))
         return []
 

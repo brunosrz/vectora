@@ -36,6 +36,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/provider-routing", tags=["provider-routing"])
@@ -216,7 +218,7 @@ class OpenRouterCatalogResponse(BaseModel):
 
 
 def _env_file() -> Path:
-    p = Path.home() / ".vectora" / ".env"
+    p = settings.vectora_home / ".env"
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
 

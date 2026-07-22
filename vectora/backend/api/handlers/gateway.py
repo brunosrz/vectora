@@ -14,12 +14,13 @@ import aiohttp
 from fastapi import APIRouter, HTTPException, Request
 
 from backend.services.gateway.token import load_token
+from backend.settings import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/gateway", tags=["gateway"])
 
-_TOKEN_PATH = Path.home() / ".vectora" / "gateway_token"
+_TOKEN_PATH = settings.vectora_home / "gateway_token"
 _GATEWAY_BASE = os.environ.get("GATEWAY_URL", "https://gateway.vectora.chat")
 
 

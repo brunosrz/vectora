@@ -18,16 +18,28 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar
 
+from backend.settings import settings
 from backend.vtypes import SafeRoot
 
 logger = logging.getLogger(__name__)
 
-_SAFE_ROOTS_FILE = Path.home() / ".vectora" / "safe_roots.json"
+
+def _safe_roots_file() -> Path:
+    """Caminho de ``safe_roots.json``, sob ``settings.vectora_home``.
+
+    Resolvido a cada chamada (não congelado em import) para respeitar
+    ``VECTORA_HOME`` em testes que sobrescrevem ``settings.vectora_home``.
+    """
+    return settings.vectora_home / "safe_roots.json"
 
 
 def _default_builtin_root() -> Path:
-    """Pasta builtin garantida — espelha o root de workspaces de sessão."""
-    return Path.home() / "Documents" / "vectora"
+    """Pasta builtin garantida — espelha o root de workspaces de sessão
+    (``backend.workspace.workspace._session_workspaces_root``), mesma lógica
+    de derivar de ``settings.vectora_home.parent`` para respeitar
+    ``VECTORA_HOME`` sem mudar o default de produção (``~/Documents/vectora``).
+    """
+    return settings.vectora_home.parent / "Documents" / "vectora"
 
 
 class SafeRootRegistry:
@@ -54,9 +66,10 @@ class SafeRootRegistry:
     def _load(self) -> None:
         if self._loaded:
             return
-        if _SAFE_ROOTS_FILE.exists():
+        safe_roots_file = _safe_roots_file()
+        if safe_roots_file.exists():
             try:
-                data = json.loads(_SAFE_ROOTS_FILE.read_text(encoding="utf-8"))
+                data = json.loads(safe_roots_file.read_text(encoding="utf-8"))
                 for item in data.get("roots", []):
                     try:
                         r = SafeRoot(**item)
@@ -96,9 +109,10 @@ class SafeRootRegistry:
 
     def _save(self) -> None:
         try:
-            _SAFE_ROOTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            safe_roots_file = _safe_roots_file()
+            safe_roots_file.parent.mkdir(parents=True, exist_ok=True)
             data = {"roots": [r.model_dump() for r in self._roots.values()]}
-            _SAFE_ROOTS_FILE.write_text(
+            safe_roots_file.write_text(
                 json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
             )
         except Exception:

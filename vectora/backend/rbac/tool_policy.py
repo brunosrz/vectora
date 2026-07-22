@@ -18,6 +18,8 @@ import json
 import logging
 from pathlib import Path
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 #: "Usuário" virtual para o disable global (admin kill-switch), aplicado a
@@ -35,7 +37,7 @@ def policy_version(user_id: str) -> int:
 
 
 def _policy_dir() -> Path:
-    return Path.home() / ".vectora" / "tools"
+    return settings.vectora_home / "tools"
 
 
 def _user_file(user_id: str) -> Path:

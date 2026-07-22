@@ -35,7 +35,9 @@ async def run_local_sandboxed(
 ) -> SandboxResult:
     """Roda `command` dentro de `bwrap` conforme `policy`. `bwrap` ausente
     do sistema (`FileNotFoundError`) devolve `exit_code=127` com mensagem
-    clara em stderr; timeout mata o processo e devolve `exit_code=124`."""
+    clara em stderr; sem permissão de execução (`PermissionError`) devolve
+    `exit_code=126` (convenção POSIX); timeout mata o processo e devolve
+    `exit_code=124`."""
     argv = build_bwrap_command(policy, workspace_dir, command)
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -49,6 +51,13 @@ async def run_local_sandboxed(
             stdout="",
             stderr="Error: bwrap não está instalado neste sistema — sandbox indisponível.",
             exit_code=127,
+        )
+    except PermissionError:
+        logger.warning("sandbox: sem permissão para executar o binário bwrap")
+        return SandboxResult(
+            stdout="",
+            stderr="Error: sem permissão para executar bwrap — sandbox indisponível.",
+            exit_code=126,
         )
 
     try:

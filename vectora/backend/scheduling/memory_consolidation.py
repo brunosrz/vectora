@@ -14,6 +14,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from backend.settings import settings
+
 logger = logging.getLogger(__name__)
 
 _MAX_THREADS = 10
@@ -39,7 +41,7 @@ Inclua apenas informações factuais e úteis para o futuro — sem repetição.
 
 
 def _agents_md_path() -> Path:
-    return Path.home() / ".vectora" / "AGENTS.md"
+    return settings.vectora_home / "AGENTS.md"
 
 
 async def _fetch_recent_threads(

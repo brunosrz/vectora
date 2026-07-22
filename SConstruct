@@ -469,6 +469,26 @@ def _action_tests_storage(target, source, env):
     print("\n>> log completo em .scons-logs/tests-storage.txt")
 
 
+def _action_tests_live(target, source, env):
+    """Testes sem mock que chamam LLM (Google/Cohere) e Tavily reais.
+
+    Custam tempo/API real — nunca rodam como parte de `scons tests`. Pulam
+    automaticamente quando a key correspondente não está configurada (mesmo
+    padrão de skip-guard do resto da suíte).
+    """
+    with _open_log("tests-live") as log:
+        _run(
+            [
+                "uv", "run", "pytest", "tests",
+                "-q", "--tb=short",
+                "-m", "live",
+            ],
+            log=log,
+            cwd=VECTORA,
+        )
+    print("\n>> log completo em .scons-logs/tests-live.txt")
+
+
 def _run_full_suite(log, *, coverage: bool):
     """Suíte completa: vectora (vitest + pytest, inclui electron fundido no
     frontend) + company + services (vitest — gateway + updates unificados).
@@ -501,7 +521,10 @@ def _run_full_suite(log, *, coverage: bool):
     _run(vitest_cmd, log=log)
 
     # ── vectora/backend ───────────────────────────────────────────────────────
-    pytest_cmd = ["uv", "run", "pytest", "tests", "-q", "--tb=short"]
+    # "-m not live" exclui os testes sem mock que chamam LLM/Tavily reais
+    # (marker `live`) — só rodam via `scons tests-live`, nunca aqui
+    # (custariam API real a cada `scons tests`/`scons coverage`).
+    pytest_cmd = ["uv", "run", "pytest", "tests", "-q", "--tb=short", "-m", "not live"]
     if coverage:
         pytest_cmd += [
             "--cov=backend",
@@ -787,6 +810,7 @@ def _action_help(target, source, env):
     scons tests            suíte completa: vectora + services + company (sem cobertura)
     scons coverage         a mesma suíte COM relatório de cobertura
     scons tests-storage    só testes de storage (Postgres, Redis, Qdrant, SQLite, LanceDB)
+    scons tests-live       só testes sem mock (LLM + Tavily reais) — custa API real
     scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + company (eslint+tsc)
                            + docs (tsc) + services (tsc)
     scons clean            remove todos os outputs de build
@@ -930,6 +954,7 @@ _cmd("prod",           _action_prod)
 _cmd("tests",         _action_tests)
 _cmd("coverage",      _action_coverage)
 _cmd("tests-storage", _action_tests_storage)
+_cmd("tests-live", _action_tests_live)
 _cmd("lint",          _action_lint)
 _cmd("update",        _action_update)
 _cmd("nats",          _action_fetch_nats)

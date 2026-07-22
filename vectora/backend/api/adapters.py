@@ -333,8 +333,9 @@ async def _record_turn_checkpoint(
                 create_snapshot_checkpoint,
                 gc_snapshots,
             )
+            from backend.settings import settings
 
-            snap_dir = _Path.home() / ".vectora" / "snapshots" / workspace_id
+            snap_dir = settings.vectora_home / "snapshots" / workspace_id
             result = create_snapshot_checkpoint(str(ws.cwd), snap_dir, thread_id, msg)
             if result["status"] != "ok":
                 logger.warning("_record_turn_checkpoint: snapshot falhou: %s", result)

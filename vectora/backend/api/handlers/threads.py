@@ -140,11 +140,11 @@ async def _get_db() -> Any:
     """Retorna conexão aiosqlite com o banco de checkpoints/sessões."""
     global _db_conn
     if _db_conn is None:
-        from pathlib import Path
-
         import aiosqlite
 
-        db_path = Path.home() / ".vectora" / "checkpoints.db"
+        from backend.settings import settings
+
+        db_path = settings.vectora_home / "checkpoints.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         _db_conn = await aiosqlite.connect(str(db_path))
         # Sem busy_timeout, escritas concorrentes de outras conexões abertas

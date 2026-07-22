@@ -33,6 +33,14 @@ _WEEKDAYS = {
 _TIME_RE = r"(\d{1,2})(?:[:h](\d{2}))?h?"
 
 
+class _InvalidTimeError(ValueError):
+    """Horário reconhecido na expressão mas fora de faixa (0-23h/0-59min).
+
+    Distinto de "nenhum horário presente" (que usa o default 9h) — um
+    horário presente porém inválido não deve ser tratado como ausente,
+    senão a expressão vira um agendamento silenciosamente errado."""
+
+
 def _parse_time(text: str) -> tuple[int, int] | None:
     match = re.search(_TIME_RE, text)
     if not match:
@@ -40,7 +48,7 @@ def _parse_time(text: str) -> tuple[int, int] | None:
     hour = int(match.group(1))
     minute = int(match.group(2) or 0)
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
-        return None
+        raise _InvalidTimeError(f"horário fora de faixa: {hour}:{minute}")
     return hour, minute
 
 
@@ -65,14 +73,22 @@ def _parse_weekly(normalized: str) -> str | None:
     if not weekday_match:
         return None
     dow = _WEEKDAYS[weekday_match.group(1)]
-    hour, minute = _parse_time(normalized) or (9, 0)
+    try:
+        hour, minute = _parse_time(normalized) or (9, 0)
+    except _InvalidTimeError:
+        # Horário explícito fora de faixa ("toda segunda às 25h") — rejeita
+        # a expressão inteira em vez de cair no default 9h silenciosamente.
+        return None
     return f"{minute} {hour} * * {dow}"
 
 
 def _parse_daily(normalized: str) -> str | None:
     if not re.search(r"todo(?:s)?\s+(os?\s+)?dias?", normalized):
         return None
-    hour, minute = _parse_time(normalized) or (9, 0)
+    try:
+        hour, minute = _parse_time(normalized) or (9, 0)
+    except _InvalidTimeError:
+        return None
     return f"{minute} {hour} * * *"
 
 
@@ -92,7 +108,10 @@ def parse_natural_schedule(when: str) -> str | None:
         return None
 
     for parser in (_parse_every_n, _parse_weekly, _parse_daily):
-        result = parser(normalized)
+        try:
+            result = parser(normalized)
+        except _InvalidTimeError:
+            return None
         if result is not None:
             return result
     return None

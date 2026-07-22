@@ -135,6 +135,7 @@ function FileRow({
                 }
                 title={m.workbench_git_ctx_stage()}
                 className="p-0.5 text-green-500 hover:text-green-400 text-[10px] font-bold"
+                data-testid="git-stage-file-btn"
               >
                 +
               </button>
@@ -370,11 +371,13 @@ export function ChangesView({
               void handleCommit();
             }
           }}
+          data-testid="git-commit-message"
         />
         <button
           onClick={() => void handleCommit()}
           disabled={!commitMsg.trim() || committing}
           className="flex items-center justify-center gap-1.5 py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          data-testid="git-commit-btn"
         >
           {committing ? (
             <Loader2 className="w-3 h-3 animate-spin" />

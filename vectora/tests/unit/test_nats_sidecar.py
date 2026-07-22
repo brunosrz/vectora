@@ -25,7 +25,7 @@ def _reset_sidecar_state(tmp_path, monkeypatch):
     # contra um PID de verdade, tornando o teste dependente do disco do
     # host). Testes de `TestOrphanPidFile` pedem `tmp_path` de novo — é a
     # MESMA instância (cache por teste do pytest), então ficam coerentes.
-    monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(nats_sidecar.settings, "vectora_home", tmp_path)
 
     nats_sidecar._proc = None
     nats_sidecar._url = None
@@ -230,8 +230,8 @@ class TestOrphanPidFile:
     async def test_ensure_nats_sidecar_mata_orfao_registrado_antes_de_spawnar(
         self, tmp_path, monkeypatch
     ):
-        monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
-        store_dir = tmp_path / ".vectora" / "nats"
+        monkeypatch.setattr(nats_sidecar.settings, "vectora_home", tmp_path)
+        store_dir = tmp_path / "nats"
         store_dir.mkdir(parents=True)
         nats_sidecar._write_pid_file(store_dir, 9999)
 
@@ -262,8 +262,8 @@ class TestOrphanPidFile:
     ):
         # Par de erro/borda: pid file existe mas o processo já morreu sozinho
         # (ex.: crash) — não deve chamar kill à toa, só limpar e seguir.
-        monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
-        store_dir = tmp_path / ".vectora" / "nats"
+        monkeypatch.setattr(nats_sidecar.settings, "vectora_home", tmp_path)
+        store_dir = tmp_path / "nats"
         store_dir.mkdir(parents=True)
         nats_sidecar._write_pid_file(store_dir, 9999)
 
@@ -287,8 +287,8 @@ class TestOrphanPidFile:
 
     @pytest.mark.asyncio
     async def test_stop_nats_sidecar_limpa_o_pid_file(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(nats_sidecar.Path, "home", lambda: tmp_path)
-        store_dir = tmp_path / ".vectora" / "nats"
+        monkeypatch.setattr(nats_sidecar.settings, "vectora_home", tmp_path)
+        store_dir = tmp_path / "nats"
         store_dir.mkdir(parents=True)
         nats_sidecar._write_pid_file(store_dir, 4242)
 
