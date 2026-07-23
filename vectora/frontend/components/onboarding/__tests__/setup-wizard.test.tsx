@@ -52,7 +52,7 @@ describe("isOnboardingDone", () => {
 describe("SetupWizard", () => {
   it("renderiza o contador do passo 1/9 no primeiro passo", async () => {
     render(<SetupWizard userId="u1" onComplete={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText("1 / 9")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("1 / 10")).toBeInTheDocument());
   });
 
   it("área de conteúdo tem data-testid com altura mínima fixa", async () => {
@@ -69,11 +69,11 @@ describe("SetupWizard", () => {
 
 async function renderAtStepToken() {
   render(<SetupWizard userId="u3" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 9"));
+  await waitFor(() => screen.getByText("1 / 10"));
   fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 0 → 1
-  await waitFor(() => screen.getByText("2 / 9"));
+  await waitFor(() => screen.getByText("2 / 10"));
   fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 1 → 2
-  await waitFor(() => screen.getByText("3 / 9"));
+  await waitFor(() => screen.getByText("3 / 10"));
 }
 
 describe("StepToken", () => {
@@ -171,13 +171,13 @@ function mockStorageFetch(opts: {
 
 async function renderAtStepMode() {
   render(<SetupWizard userId="u-mode" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 9"));
+  await waitFor(() => screen.getByText("1 / 10"));
   await act(async () => {
     for (let i = 0; i < 3; i++) {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     }
   });
-  await waitFor(() => screen.getByText("4 / 9"));
+  await waitFor(() => screen.getByText("4 / 10"));
   await act(async () => {
     fireEvent.click(screen.getByText("Complete")); // modo completo → cards
   });
@@ -216,13 +216,13 @@ describe("StepMode — Completo é exclusivo do plano Pro", () => {
   it("usuário Free vê o card Completo travado (Lock + badge) e não consegue selecioná-lo", async () => {
     vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: true, pro: false }));
     render(<SetupWizard userId="u-free" onComplete={vi.fn()} />);
-    await waitFor(() => screen.getByText("1 / 9"));
+    await waitFor(() => screen.getByText("1 / 10"));
     await act(async () => {
       for (let i = 0; i < 3; i++) {
         fireEvent.click(screen.getByRole("button", { name: "Next" }));
       }
     });
-    await waitFor(() => screen.getByText("4 / 9"));
+    await waitFor(() => screen.getByText("4 / 10"));
 
     const completeBtn = screen.getByText("Complete").closest("button")!;
     await waitFor(() => expect(completeBtn).toBeDisabled());
@@ -314,13 +314,13 @@ function mockApiKeysFetch(
 
 async function renderAtStepApiKeys() {
   render(<SetupWizard userId="u-apikeys" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 9"));
+  await waitFor(() => screen.getByText("1 / 10"));
   await act(async () => {
     for (let i = 0; i < 4; i++) {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     }
   });
-  await waitFor(() => screen.getByText("5 / 9"));
+  await waitFor(() => screen.getByText("5 / 10"));
 }
 
 describe("StepApiKeys", () => {
@@ -388,5 +388,73 @@ describe("StepApiKeys", () => {
     // Par de erro/edge case: nenhum campo preenchido não bloqueia o avanço
     // do wizard — Cohere/Tavily continuam opcionais mesmo com a nova copy.
     expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled();
+  });
+});
+
+async function renderAtStepWorkspace() {
+  mockApiKeysFetch();
+  render(<SetupWizard userId="u-workspace" onComplete={vi.fn()} />);
+  await waitFor(() => screen.getByText("1 / 10"));
+  await act(async () => {
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    }
+  });
+  await waitFor(() => screen.getByText("6 / 10"));
+}
+
+describe("StepWorkspace — bullet do AI Jail", () => {
+  it("renderiza o bullet explicando o isolamento por workspace via [sandbox]", async () => {
+    await renderAtStepWorkspace();
+    expect(screen.getByText(/vectora\.toml/)).toBeInTheDocument();
+  });
+});
+
+async function renderAtStepMemory() {
+  mockApiKeysFetch();
+  render(<SetupWizard userId="u-memory" onComplete={vi.fn()} />);
+  await waitFor(() => screen.getByText("1 / 10"));
+  await act(async () => {
+    for (let i = 0; i < 7; i++) {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    }
+  });
+  await waitFor(() => screen.getByText("8 / 10"));
+}
+
+describe("StepMemory — três camadas", () => {
+  it("renderiza memória de conversa, Remember e RAG/Deep Memory", async () => {
+    await renderAtStepMemory();
+    expect(
+      screen.getByText((_, el) => el?.textContent === "Conversation memory"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, el) => el?.textContent === "Remember"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, el) => el?.textContent === "Deep Memory (RAG)"),
+    ).toBeInTheDocument();
+  });
+});
+
+async function renderAtStepCapabilities() {
+  mockApiKeysFetch();
+  render(<SetupWizard userId="u-capabilities" onComplete={vi.fn()} />);
+  await waitFor(() => screen.getByText("1 / 10"));
+  await act(async () => {
+    for (let i = 0; i < 8; i++) {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    }
+  });
+  await waitFor(() => screen.getByText("9 / 10"));
+}
+
+describe("StepCapabilities", () => {
+  it("renderiza e navega corretamente entre StepMemory e StepDone", async () => {
+    await renderAtStepCapabilities();
+    expect(screen.getByText(/AI Jail/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() => screen.getByText("10 / 10"));
   });
 });

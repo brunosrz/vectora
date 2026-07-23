@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SetupWizard — Wizard de primeiro acesso (9 passos).
+ * SetupWizard — Wizard de primeiro acesso (10 passos).
  *
  * Aparece uma única vez por usuário, determinado pela flag
  * `vectora:onboarding-done-<userId>` no localStorage.
@@ -37,7 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 10;
 
 const ONBOARDING_KEY = (userId: string) => `vectora:onboarding-done-${userId}`;
 
@@ -811,6 +811,7 @@ function StepWorkspace(_props: StepProps) {
         <li>{m.onboarding_workspace_bullet_1()}</li>
         <li>{m.onboarding_workspace_bullet_2()}</li>
         <li>{m.onboarding_workspace_bullet_3()}</li>
+        <li>{m.onboarding_workspace_bullet_ai_jail()}</li>
       </ul>
     </div>
   );
@@ -1201,10 +1202,45 @@ function StepApiKeys(_props: StepProps) {
   );
 }
 
-function StepRag(_props: StepProps) {
+function StepMemory(_props: StepProps) {
+  return (
+    <div className="space-y-4 py-2 text-sm text-muted-foreground">
+      <p>{m.onboarding_memory_intro()}</p>
+      <div className="space-y-3">
+        <div>
+          <p className="text-xs font-medium text-foreground">
+            {m.onboarding_memory_conversation_title()}
+          </p>
+          <p className="text-xs">{m.onboarding_memory_conversation_body()}</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-foreground">
+            {m.onboarding_memory_remember_title()}
+          </p>
+          <p className="text-xs">{m.onboarding_memory_remember_body()}</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-foreground">
+            {m.onboarding_memory_rag_title()}
+          </p>
+          <p className="text-xs">{m.onboarding_memory_rag_body()}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepCapabilities(_props: StepProps) {
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
-      <p>{m.onboarding_rag_body()}</p>
+      <p>{m.onboarding_capabilities_intro()}</p>
+      <ul className="list-disc list-inside space-y-1 text-xs">
+        <li>{m.onboarding_capabilities_bullet_files()}</li>
+        <li>{m.onboarding_capabilities_bullet_git()}</li>
+        <li>{m.onboarding_capabilities_bullet_browser()}</li>
+        <li>{m.onboarding_capabilities_bullet_library()}</li>
+        <li>{m.onboarding_capabilities_bullet_schedule()}</li>
+      </ul>
     </div>
   );
 }
@@ -1228,7 +1264,8 @@ const STEP_COMPONENTS = [
   StepApiKeys,
   StepWorkspace,
   StepWorkspaceSelect,
-  StepRag,
+  StepMemory,
+  StepCapabilities,
   StepDone,
 ];
 
@@ -1241,6 +1278,7 @@ const STEP_TITLE_KEYS = [
   "onboarding.step5_title",
   "onboarding.workspace_select_title",
   "onboarding.step6_title",
+  "onboarding.step_capabilities_title",
   "onboarding.step7_title",
 ] as const;
 
