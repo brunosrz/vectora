@@ -374,6 +374,88 @@ async def _set_session_pins(thread_id: str, pins: list[str]) -> list[str]:
     return clean
 
 
+# ---------------------------------------------------------------------------
+# Contador de turnos do Remember (WB-5) — gatilho automático a cada N turnos,
+# persistido em extra (mesmo padrão de pins acima) — sem coluna nova.
+# ---------------------------------------------------------------------------
+
+
+async def _mutate_session_extra(thread_id: str, mutate: Any) -> dict:
+    """Lê o ``extra`` atual da sessão, aplica ``mutate(extra) -> extra`` e
+    persiste (UPSERT) — helper comum aos mutadores de ``extra`` (pins,
+    contador do Remember). Devolve o ``extra`` resultante."""
+    db = await _get_db()
+    now = datetime.now(UTC).isoformat()
+
+    async with db.execute(
+        "SELECT extra FROM vectora_sessions WHERE thread_id = ?", (thread_id,)
+    ) as cur:
+        row = await cur.fetchone()
+    extra: dict[str, Any] = {}
+    if row:
+        try:
+            extra = json.loads(row[0] or "{}")
+        except Exception:
+            extra = {}
+    extra = mutate(extra)
+    extra_json = json.dumps(extra)
+
+    await db.execute(
+        """
+        INSERT INTO vectora_sessions
+            (thread_id, created_at, last_activity, message_count, extra)
+        VALUES (?, ?, ?, 0, ?)
+        ON CONFLICT(thread_id) DO UPDATE SET
+            last_activity = excluded.last_activity,
+            extra        = excluded.extra
+        """,
+        (thread_id, now, now, extra_json),
+    )
+    await db.commit()
+    return extra
+
+
+async def increment_remember_turn_count(thread_id: str) -> int:
+    """Incrementa ``extra["remember_turn_count"]`` e devolve o novo valor."""
+    count_holder: dict[str, int] = {}
+
+    def _mutate(extra: dict) -> dict:
+        count = int(extra.get("remember_turn_count", 0)) + 1
+        extra["remember_turn_count"] = count
+        count_holder["count"] = count
+        return extra
+
+    await _mutate_session_extra(thread_id, _mutate)
+    return count_holder["count"]
+
+
+async def get_remember_pending(thread_id: str) -> bool:
+    """Lê se há uma proposta do Remember pendente (ainda não resolvida) pra
+    essa thread — bloqueia um novo gatilho automático até ser resolvida."""
+    db = await _get_db()
+    async with db.execute(
+        "SELECT extra FROM vectora_sessions WHERE thread_id = ?", (thread_id,)
+    ) as cur:
+        row = await cur.fetchone()
+    if row is None:
+        return False
+    try:
+        extra = json.loads(row[0] or "{}")
+    except Exception:
+        return False
+    return bool(extra.get("remember_pending", False))
+
+
+async def set_remember_pending(thread_id: str, pending: bool) -> None:
+    """Marca (ou limpa) a proposta pendente do Remember para a thread."""
+
+    def _mutate(extra: dict) -> dict:
+        extra["remember_pending"] = pending
+        return extra
+
+    await _mutate_session_extra(thread_id, _mutate)
+
+
 _PIN_CONTENT_CAP = 4000  # chars por arquivo fixado injetados no contexto
 
 

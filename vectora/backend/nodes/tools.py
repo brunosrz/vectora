@@ -92,7 +92,11 @@ from backend.tools.git import (
 )
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
-from backend.tools.learning import install_learned_skill, learn_from_session
+from backend.tools.learning import (
+    install_learned_skill,
+    learn_from_session,
+    save_learned_fact,
+)
 from backend.tools.library import (
     install_mcp_from_registry,
     install_memory_bucket,
@@ -180,6 +184,7 @@ MEMORY_TOOLS: list[BaseTool] = [
     search_memory,
     learn_from_session,
     install_learned_skill,
+    save_learned_fact,
 ]
 
 #: Ferramentas da Library: auto-instalar MCP/Skills/Memory Library, invocar
@@ -303,6 +308,7 @@ for _t in [
     search_memory,
     learn_from_session,
     install_learned_skill,
+    save_learned_fact,
     call_mcp_tool,
     install_mcp_from_registry,
     install_skill_from_catalog,

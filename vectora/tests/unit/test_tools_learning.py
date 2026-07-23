@@ -1,4 +1,4 @@
-"""Remember — tools learn_from_session/install_learned_skill."""
+"""Remember — tools learn_from_session/install_learned_skill/save_learned_fact."""
 
 from __future__ import annotations
 
@@ -8,7 +8,11 @@ from unittest.mock import AsyncMock
 import pytest
 
 from backend.services.learning import DistillationResult, SkillDraft
-from backend.tools.learning import install_learned_skill, learn_from_session
+from backend.tools.learning import (
+    install_learned_skill,
+    learn_from_session,
+    save_learned_fact,
+)
 from backend.vtypes.skill import Skill
 
 
@@ -142,3 +146,104 @@ async def test_install_learned_skill_duplicate_returns_error_not_exception(
 
     assert result["status"] == "error"
     assert "já instalada" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_install_learned_skill_mirrors_artifact_and_resolves_pending(
+    monkeypatch, tmp_path
+):
+    """Instalar uma skill aprovada espelha um artifact na aba Plan e limpa
+    a proposta pendente do gatilho automático (WB-5)."""
+    from backend.workspace import skills as skills_module
+
+    monkeypatch.setattr(
+        skills_module, "_skills_dir", lambda user_id: tmp_path / user_id
+    )
+    skills_module._versions.clear()
+
+    create_artifact_calls: list[dict] = []
+
+    class _FakeCreateArtifact:
+        def invoke(self, payload: dict) -> str:
+            create_artifact_calls.append(payload)
+            return "{}"
+
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _FakeCreateArtifact())
+    resolve_calls: list[str] = []
+
+    async def _fake_set_pending(thread_id: str, pending: bool) -> None:
+        resolve_calls.append(thread_id)
+        assert pending is False
+
+    monkeypatch.setattr(
+        "backend.api.handlers.threads.set_remember_pending", _fake_set_pending
+    )
+
+    result = json.loads(
+        await install_learned_skill.ainvoke(
+            {
+                "name": "Skill espelhada",
+                "description": "quando usar",
+                "content": "passo a passo",
+            },
+            {"configurable": {"user_id": "u1", "thread_id": "t-mirror"}},
+        )
+    )
+
+    assert result["status"] == "installed"
+    assert create_artifact_calls[0]["artifact_type"] == "skill_learned"
+    assert resolve_calls == ["t-mirror"]
+
+
+@pytest.mark.asyncio
+async def test_save_learned_fact_persists_via_save_memory(monkeypatch):
+    save_memory_calls: list[dict] = []
+
+    class _FakeSaveMemory:
+        async def ainvoke(self, payload: dict) -> str:
+            save_memory_calls.append(payload)
+            return "ok"
+
+    class _FakeCreateArtifact:
+        def invoke(self, payload: dict) -> str:
+            return "{}"
+
+    monkeypatch.setattr("backend.tools.memory.save_memory", _FakeSaveMemory())
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _FakeCreateArtifact())
+    monkeypatch.setattr(
+        "backend.api.handlers.threads.set_remember_pending",
+        AsyncMock(),
+    )
+
+    result = json.loads(
+        await save_learned_fact.ainvoke(
+            {"fact": "usuário prefere respostas curtas"},
+            {"configurable": {"user_id": "u1", "thread_id": "t1"}},
+        )
+    )
+
+    assert result["status"] == "saved"
+    assert save_memory_calls[0]["content"] == "usuário prefere respostas curtas"
+    assert save_memory_calls[0]["metadata"] == {
+        "tag": "user_model",
+        "source": "learn_from_session",
+    }
+
+
+@pytest.mark.asyncio
+async def test_save_learned_fact_error_returns_status_error_not_raised(monkeypatch):
+    class _BoomSaveMemory:
+        async def ainvoke(self, payload: dict) -> str:
+            raise RuntimeError("store indisponível")
+
+    monkeypatch.setattr("backend.tools.memory.save_memory", _BoomSaveMemory())
+
+    result = json.loads(
+        await save_learned_fact.ainvoke(
+            {"fact": "fato qualquer"},
+            {"configurable": {"user_id": "u1", "thread_id": "t1"}},
+        )
+    )
+
+    assert result["status"] == "error"
+    assert "store indisponível" in result["error"]

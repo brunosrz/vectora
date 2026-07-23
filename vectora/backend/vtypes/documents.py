@@ -32,6 +32,13 @@ VALID_ARTIFACT_TYPES = frozenset(
         "guide",
         "architecture",
         "implementation",
+        # Remember (learning loop) — skill/fato aprovado vira artefato
+        # consultável na aba Plan em vez de sumir depois do diff de aprovação.
+        # "remember_proposal" é a proposta automática (ainda não aprovada)
+        # do gatilho a cada N turnos (backend/services/remember_trigger.py).
+        "skill_learned",
+        "fact_learned",
+        "remember_proposal",
     }
 )
 

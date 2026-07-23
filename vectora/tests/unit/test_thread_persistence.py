@@ -1058,6 +1058,68 @@ class TestPinnedColumn:
         assert result.pinned is True
 
     @pytest.mark.asyncio
+    async def test_increment_remember_turn_count_upserts_in_extra(self):
+        from backend.api.handlers import threads as th
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            first = await th.increment_remember_turn_count("t-remember")
+            second = await th.increment_remember_turn_count("t-remember")
+        await db.close()
+
+        assert first == 1
+        assert second == 2
+
+    @pytest.mark.asyncio
+    async def test_remember_pending_default_false_for_unknown_thread(self):
+        from backend.api.handlers import threads as th
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            pending = await th.get_remember_pending("does-not-exist")
+        await db.close()
+
+        assert pending is False
+
+    @pytest.mark.asyncio
+    async def test_set_and_get_remember_pending_round_trips(self):
+        from backend.api.handlers import threads as th
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            await th.set_remember_pending("t-pending", True)
+            pending_true = await th.get_remember_pending("t-pending")
+            await th.set_remember_pending("t-pending", False)
+            pending_false = await th.get_remember_pending("t-pending")
+        await db.close()
+
+        assert pending_true is True
+        assert pending_false is False
+
+    @pytest.mark.asyncio
+    async def test_increment_remember_turn_count_preserves_existing_extra(self):
+        """Erro/borda: incrementar o contador não pode apagar outros campos
+        já gravados em extra (title, pins etc.)."""
+        from backend.api.handlers import threads as th
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            await th._upsert_session("t-mixed", title="Título preservado")
+            await th.increment_remember_turn_count("t-mixed")
+
+            async with db.execute(
+                "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+                ("t-mixed",),
+            ) as cur:
+                row = await cur.fetchone()
+        await db.close()
+
+        assert row is not None
+        extra = json.loads(row[0])
+        assert extra["title"] == "Título preservado"
+        assert extra["remember_turn_count"] == 1
+
+    @pytest.mark.asyncio
     async def test_update_thread_nonexistent_returns_404_when_pinning(self):
         from fastapi import HTTPException
 

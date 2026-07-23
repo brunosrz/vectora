@@ -2,12 +2,16 @@
 
 ``learn_from_session`` destila o transcript da thread atual em skills e
 fatos duráveis, mas NÃO persiste nada — só devolve a proposta pro agente
-apresentar ao usuário. ``install_learned_skill`` é quem persiste (grava
-``SKILL.md`` via ``workspace.skills``) e está em ``_REQUIRE_APPROVAL``
-(``backend/services/middleware.py``) — pausa para aprovação HITL antes de
-gravar, mesmo tratamento de ``terminal``/``file_write``. Fatos duráveis
-reaproveitam a tool ``save_memory`` já existente, com ``metadata={"tag":
-"user_model"}`` — sem duplicar o mecanismo de persistência de memória.
+apresentar ao usuário. ``install_learned_skill`` (skills) e
+``save_learned_fact`` (fatos) são quem persiste, ambas em
+``_REQUIRE_APPROVAL`` (``backend/services/middleware.py``) — pausam para
+aprovação HITL antes de gravar, mesmo tratamento de
+``terminal``/``file_write``. ``save_learned_fact`` reaproveita a escrita de
+``save_memory`` (``metadata={"tag": "user_model"}``), sem duplicar o
+mecanismo de persistência de memória — a diferença é só a pausa HITL, que
+``save_memory`` direto (uso explícito do usuário) não tem. As duas, uma vez
+aprovadas, espelham o resultado como artifact (``create_artifact``) — fica
+visível na aba Plan em vez de sumir depois do diff de aprovação.
 """
 
 from __future__ import annotations
@@ -109,6 +113,96 @@ async def install_learned_skill(
 
         skill = install_skill_from_content(user_id, name, description, content)
         logger.info("learning: skill instalada id=%s user=%s", skill.id, user_id)
+        _mirror_to_plan_tab("skill_learned", name, description, content, config)
+        await _resolve_remember_pending(config)
         return json.dumps({"status": "installed", "skill_id": skill.id})
+    except Exception as exc:
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+async def _resolve_remember_pending(config: RunnableConfig | None) -> None:
+    """Limpa a proposta pendente do gatilho automático (WB-5) — instalar uma
+    skill ou salvar um fato aprendido é o sinal de que a proposta foi
+    resolvida, libera um novo gatilho automático a partir daqui."""
+    try:
+        thread_id = str((config or {}).get("configurable", {}).get("thread_id", ""))
+        if not thread_id:
+            return
+        from backend.api.handlers.threads import set_remember_pending
+
+        await set_remember_pending(thread_id, False)
+    except Exception:
+        logger.warning(
+            "learning: falha ao limpar remember_pending (não bloqueia)",
+            exc_info=True,
+        )
+
+
+def _mirror_to_plan_tab(
+    artifact_type: str,
+    title: str,
+    description: str,
+    content: str,
+    config: RunnableConfig | None,
+) -> None:
+    """Espelha uma skill/fato aprovado como artifact — aparece na aba Plan
+    em vez de sumir depois do diff de aprovação. Best-effort: falha aqui
+    nunca desfaz a gravação já concluída (skill/fato já persistidos)."""
+    try:
+        from backend.tools.fs import create_artifact
+
+        body = f"{description}\n\n---\n\n{content}" if description else content
+        create_artifact.invoke(
+            {
+                "artifact_type": artifact_type,
+                "title": title,
+                "content": body,
+                "config": config,
+            }
+        )
+    except Exception:
+        logger.warning(
+            "learning: falha ao espelhar artifact na aba Plan (não bloqueia)",
+            exc_info=True,
+        )
+
+
+@tool(
+    extras={
+        "invalidates": ["memory"],
+        "destructive": True,
+        "category": "memory",
+        "icon": "sparkles",
+    }
+)
+async def save_learned_fact(
+    fact: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Grava um fato durável proposto por ``learn_from_session`` na memória
+    do usuário — pausa para aprovação antes de executar (mesmo tratamento
+    HITL de ``install_learned_skill``). Distinto de ``save_memory`` direto
+    (uso explícito do usuário, sem pausa): este é o caminho específico para
+    fatos que o Remember descobriu sozinho.
+
+    Args:
+        fact: O fato durável a lembrar, em uma frase.
+    """
+    try:
+        from backend.tools.memory import save_memory
+
+        key = f"learned-fact-{abs(hash(fact)) % 10**8}"
+        await save_memory.ainvoke(
+            {
+                "key": key,
+                "content": fact,
+                "config": config,
+                "metadata": {"tag": "user_model", "source": "learn_from_session"},
+            }
+        )
+        logger.info("learning: fato aprendido salvo key=%s", key)
+        _mirror_to_plan_tab("fact_learned", fact[:80], "", fact, config)
+        await _resolve_remember_pending(config)
+        return json.dumps({"status": "saved", "key": key})
     except Exception as exc:
         return json.dumps({"status": "error", "error": str(exc)})

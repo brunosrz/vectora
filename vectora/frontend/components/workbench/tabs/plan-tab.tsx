@@ -86,6 +86,9 @@ const TYPE_ICON: Record<string, { icon: LucideIcon; className: string }> = {
   guide: { icon: BookOpen, className: "text-green-400" },
   architecture: { icon: Boxes, className: "text-orange-400" },
   implementation: { icon: Code2, className: "text-pink-400" },
+  skill_learned: { icon: Sparkles, className: "text-fuchsia-400" },
+  fact_learned: { icon: Sparkles, className: "text-fuchsia-400" },
+  remember_proposal: { icon: Sparkles, className: "text-fuchsia-300" },
 };
 const DEFAULT_TYPE_ICON = { icon: FileText, className: "text-primary" };
 

@@ -678,6 +678,16 @@ def adapt_stream(
                     if workspace_id:
                         await _record_turn_checkpoint(workspace_id, thread_id, event)
 
+                    # Remember: gatilho automático a cada N turnos (WB-5).
+                    # Fire-and-forget — nunca bloqueia nem corta o stream.
+                    from backend.services.remember_trigger import maybe_trigger_remember
+
+                    remember_task = asyncio.ensure_future(
+                        maybe_trigger_remember(thread_id, user_id or "local")
+                    )
+                    background_tasks.add(remember_task)
+                    remember_task.add_done_callback(background_tasks.discard)
+
                 # ── ToolActivityEvent: status line ao vivo ────────────────
                 # Emite antes do ToolCallEvent (start) e após ToolResultEvent (end).
                 if kind == "on_tool_start":
