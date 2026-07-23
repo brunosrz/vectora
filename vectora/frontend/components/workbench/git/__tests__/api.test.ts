@@ -221,7 +221,12 @@ describe("api — diff / commit", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/workspaces/ws1/git/commit",
       expect.objectContaining({
-        body: JSON.stringify({ message: "fix: bug", dry_run_hooks: false }),
+        body: JSON.stringify({
+          message: "fix: bug",
+          dry_run_hooks: false,
+          body: null,
+          amend: false,
+        }),
       }),
     );
   });

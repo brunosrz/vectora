@@ -215,8 +215,8 @@ vi.mock("@/components/workbench/git/git-tab", () => ({
 vi.mock("@/components/workbench/tabs/plan-tab", () => ({
   PlanTab: () => null,
 }));
-vi.mock("@/components/workbench/tabs/preview-tab", () => ({
-  PreviewTab: () => null,
+vi.mock("@/components/workbench/tabs/browser-tab", () => ({
+  BrowserTab: () => null,
 }));
 vi.mock("@/components/workbench/tabs/memory-tab", () => ({
   MemoryTab: () => null,

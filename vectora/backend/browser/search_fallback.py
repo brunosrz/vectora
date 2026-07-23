@@ -11,7 +11,7 @@ IP/rede, algo que afetaria igualmente ambientes de nuvem/VPS. A API JSON é
 oficial, sem chave e não tropeça nesse bloqueio.
 
 `fetch_fallback` usa Chromium real (Playwright, API síncrona, sessão
-isolada da de `backend/browser/session.py` usada pelo preview do
+isolada da de `backend/browser/session.py` usada pela aba Browser do
 workspace) — extrair o texto de uma URL específica (não é busca, não bate
 no anti-bot do DDG) funcionou de forma confiável nos testes.
 """

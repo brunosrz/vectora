@@ -1,9 +1,13 @@
-"""Tools de browser automation do agente sobre o preview do workspace (A2).
+"""Tools de browser do agente: automação sobre a página atual (dev server
+local do workspace OU qualquer URL http/https navegada livremente) mais
+gestão dos dev servers declarados em `.vectora/launch.json`.
 
-Todas navegam exclusivamente dentro do dev server que o workspace ativo já
-subiu (`.vectora/launch.json` + `preview_start`) — ver
-`backend.browser.preview.resolve_preview_url`. Nunca abrem uma URL livre da
-internet (isso é papel do `web_search`/`fetch_url`).
+`browser_navigate` é a porta de entrada pra navegação livre — nenhum
+guardrail de host/porta, só esquema (`http`/`https`). As demais tools de
+automação (`browser_click`/`browser_fill`/etc.) operam sobre a página já
+carregada na sessão Playwright persistente do workspace
+(`backend.browser.session.get_browser_page`); se nada foi navegado ainda,
+caem no dev server ativo do workspace (mesmo fallback de sempre).
 """
 
 from __future__ import annotations
@@ -12,20 +16,24 @@ import base64
 import json
 import logging
 from typing import Annotated, Any
+from urllib.parse import urlparse
 
 from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
-from backend.browser.preview import resolve_preview_url
-from backend.browser.session import get_browser_page
+from backend.browser.dev_server import resolve_dev_server_url
+from backend.browser.session import get_browser_page, has_browser_session
 
 logger = logging.getLogger(__name__)
 
-_NO_PREVIEW_ERROR = (
-    "Error: nenhum preview server está rodando neste workspace. "
-    "Inicie um (aba Preview ou `preview_start`) antes de usar tools de browser."
+_NO_PAGE_ERROR = (
+    "Error: nenhuma página aberta neste workspace. Use `browser_navigate` "
+    "(URL livre) ou inicie um dev server (`browser_start`) antes de usar "
+    "tools de browser."
 )
+
+_ALLOWED_SCHEMES = ("http", "https")
 
 
 def _workspace_id(config: RunnableConfig | None) -> str:
@@ -37,15 +45,70 @@ def _workspace_id(config: RunnableConfig | None) -> str:
 
 
 async def _resolve_page(config: RunnableConfig | None) -> tuple[Any, str]:
-    """Retorna (page, "") em sucesso, ou (None, error) se não houver preview ativo."""
+    """Retorna (page, "") em sucesso, ou (None, error) se não houver página
+    resolvível — nem já navegada, nem dev server ativo do workspace.
+
+    Só lança um browser Playwright novo (`get_browser_page`) quando já tem
+    algo pra mostrar nele — uma sessão existente (navegação anterior via
+    `browser_navigate`) ou um dev server confirmado — nunca à toa.
+    """
     workspace_id = _workspace_id(config)
-    base_url = await resolve_preview_url(workspace_id)
-    if base_url is None:
-        return None, _NO_PREVIEW_ERROR
-    page = await get_browser_page(workspace_id or "default")
-    if page.url == "about:blank":
+    session_key = workspace_id or "default"
+    if has_browser_session(session_key):
+        page = await get_browser_page(session_key)
+        if page.url != "about:blank":
+            return page, ""
+        base_url = await resolve_dev_server_url(workspace_id)
+        if base_url is None:
+            return None, _NO_PAGE_ERROR
         await page.goto(base_url, wait_until="domcontentloaded")
+        return page, ""
+
+    base_url = await resolve_dev_server_url(workspace_id)
+    if base_url is None:
+        return None, _NO_PAGE_ERROR
+    page = await get_browser_page(session_key)
+    await page.goto(base_url, wait_until="domcontentloaded")
     return page, ""
+
+
+@tool(
+    extras={
+        "render_hint": "text",
+        "category": "browser",
+        "destructive": False,
+        "icon": "globe",
+    }
+)
+async def browser_navigate(
+    url: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Navega a página do browser do workspace pra qualquer URL http(s) —
+    site externo (Google, GitHub, docs, ...) ou dev server local, sem
+    depender de nenhum servidor já rodando.
+
+    Args:
+        url: URL completa (`http://` ou `https://`) a navegar.
+
+    Returns:
+        Confirmação com a URL final carregada, ou mensagem de erro
+        (esquema não permitido, timeout, DNS, etc.)
+    """
+    scheme = urlparse(url).scheme.lower()
+    if scheme not in _ALLOWED_SCHEMES:
+        return (
+            f"Error: esquema {scheme!r} não permitido — só http:// e "
+            "https:// são aceitos pra navegação."
+        )
+    workspace_id = _workspace_id(config)
+    try:
+        page = await get_browser_page(workspace_id or "default")
+        await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+        return f"[OK] Navegado para {page.url}"
+    except Exception:
+        logger.exception("browser_navigate failed", extra={"url": url})
+        return f"Error: falha ao navegar para {url!r}. Veja logs."
 
 
 @tool(
@@ -59,7 +122,7 @@ async def _resolve_page(config: RunnableConfig | None) -> tuple[Any, str]:
 async def browser_screenshot(
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Tira um screenshot da página atual do preview (base64 PNG, data URL).
+    """Tira um screenshot da página atual do browser (base64 PNG, data URL).
 
     Returns:
         Data URL `data:image/png;base64,...` ou mensagem de erro.
@@ -88,7 +151,7 @@ async def browser_click(
     selector: str,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Clica no elemento do preview que casa com o seletor CSS.
+    """Clica no elemento da página atual que casa com o seletor CSS.
 
     Args:
         selector: Seletor CSS (ex.: "button.submit", "#login-form input[type=email]")
@@ -120,7 +183,7 @@ async def browser_scroll(
     amount: int = 600,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Rola a página do preview.
+    """Rola a página atual do browser.
 
     Args:
         direction: "down" ou "up"
@@ -156,7 +219,7 @@ async def browser_fill(
     value: str,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Preenche um campo do preview (input/textarea) com o valor indicado.
+    """Preenche um campo da página atual (input/textarea) com o valor indicado.
 
     Args:
         selector: Seletor CSS do campo
@@ -190,7 +253,7 @@ async def browser_read_dom(
     selector: str = "body",
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Lê o texto visível do preview (não o HTML cru).
+    """Lê o texto visível da página atual (não o HTML cru).
 
     Args:
         selector: Seletor CSS da raiz da leitura (padrão: página inteira)
@@ -206,10 +269,10 @@ async def browser_read_dom(
         return text or "(vazio)"
     except Exception:
         logger.exception("browser_read_dom failed", extra={"selector": selector})
-        return f"Error: seletor '{selector}' não encontrado no preview."
+        return f"Error: seletor '{selector}' não encontrado na página."
 
 
-async def _resolve_preview_name(
+async def _resolve_dev_server_name(
     workspace_id: str, name: str | None
 ) -> tuple[str | None, str]:
     """Resolve qual configuração de `.vectora/launch.json` usar.
@@ -223,7 +286,7 @@ async def _resolve_preview_name(
     if not launch.configurations:
         return (
             None,
-            "Error: nenhuma configuração de preview encontrada "
+            "Error: nenhuma configuração de dev server encontrada "
             "(.vectora/launch.json vazio ou ausente).",
         )
     if name:
@@ -239,7 +302,7 @@ async def _resolve_preview_name(
     available = ", ".join(c.name for c in launch.configurations)
     return (
         None,
-        f"Error: múltiplas configurações de preview existem ({available}) "
+        f"Error: múltiplas configurações de dev server existem ({available}) "
         "— especifique `name`.",
     )
 
@@ -252,12 +315,12 @@ async def _resolve_preview_name(
         "icon": "play",
     }
 )
-async def preview_start(
+async def browser_start(
     name: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Inicia o dev server de preview do workspace ativo (mesmo efeito que o
-    usuário clicar em "play" na aba Preview).
+    """Inicia o dev server do workspace ativo (mesmo efeito que o usuário
+    clicar em "play" na aba Browser).
 
     Args:
         name: Nome da configuração em `.vectora/launch.json`. Se omitido e
@@ -266,18 +329,18 @@ async def preview_start(
 
     Returns:
         JSON `{"status": "ok"|"pending"|"error", "message": "..."}`. Em
-        `"pending"`/`"error"`, chame `preview_logs` pra ver a saída real do
+        `"pending"`/`"error"`, chame `browser_logs` pra ver a saída real do
         processo antes de tentar de novo.
     """
-    from backend.api.handlers.workspaces import PreviewStartRequest
-    from backend.api.handlers.workspaces import preview_start as _http_preview_start
+    from backend.api.handlers.workspaces import BrowserStartRequest
+    from backend.api.handlers.workspaces import browser_start as _http_browser_start
 
     workspace_id = _workspace_id(config)
-    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
-    result = await _http_preview_start(
-        workspace_id, PreviewStartRequest(name=resolved_name)
+    result = await _http_browser_start(
+        workspace_id, BrowserStartRequest(name=resolved_name)
     )
     return json.dumps({"status": result.status, "message": result.message})
 
@@ -290,28 +353,28 @@ async def preview_start(
         "icon": "square",
     }
 )
-async def preview_stop(
+async def browser_stop(
     name: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Para o dev server de preview do workspace ativo.
+    """Para o dev server do workspace ativo.
 
     Args:
         name: Nome da configuração em `.vectora/launch.json` (mesma regra de
-            resolução de `preview_start`).
+            resolução de `browser_start`).
 
     Returns:
         JSON `{"status": "ok"|"error", "message": "..."}`.
     """
-    from backend.api.handlers.workspaces import PreviewStopRequest
-    from backend.api.handlers.workspaces import preview_stop as _http_preview_stop
+    from backend.api.handlers.workspaces import BrowserStopRequest
+    from backend.api.handlers.workspaces import browser_stop as _http_browser_stop
 
     workspace_id = _workspace_id(config)
-    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
-    result = await _http_preview_stop(
-        workspace_id, PreviewStopRequest(name=resolved_name)
+    result = await _http_browser_stop(
+        workspace_id, BrowserStopRequest(name=resolved_name)
     )
     return json.dumps({"status": result.status, "message": result.message})
 
@@ -324,33 +387,33 @@ async def preview_stop(
         "icon": "refresh-cw",
     }
 )
-async def preview_restart(
+async def browser_restart(
     name: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Reinicia o dev server de preview (para se estiver rodando, depois
-    inicia de novo) — útil depois de corrigir a causa de uma falha (ex.:
-    rodar `bun install`) pra confirmar que resolveu.
+    """Reinicia o dev server (para se estiver rodando, depois inicia de
+    novo) — útil depois de corrigir a causa de uma falha (ex.: rodar
+    `bun install`) pra confirmar que resolveu.
 
     Args:
         name: Nome da configuração em `.vectora/launch.json` (mesma regra de
-            resolução de `preview_start`).
+            resolução de `browser_start`).
 
     Returns:
         JSON `{"status": "ok"|"pending"|"error", "message": "..."}` do novo
         start.
     """
-    from backend.api.handlers.workspaces import PreviewStartRequest, PreviewStopRequest
-    from backend.api.handlers.workspaces import preview_start as _http_preview_start
-    from backend.api.handlers.workspaces import preview_stop as _http_preview_stop
+    from backend.api.handlers.workspaces import BrowserStartRequest, BrowserStopRequest
+    from backend.api.handlers.workspaces import browser_start as _http_browser_start
+    from backend.api.handlers.workspaces import browser_stop as _http_browser_stop
 
     workspace_id = _workspace_id(config)
-    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
-    await _http_preview_stop(workspace_id, PreviewStopRequest(name=resolved_name))
-    result = await _http_preview_start(
-        workspace_id, PreviewStartRequest(name=resolved_name)
+    await _http_browser_stop(workspace_id, BrowserStopRequest(name=resolved_name))
+    result = await _http_browser_start(
+        workspace_id, BrowserStartRequest(name=resolved_name)
     )
     return json.dumps({"status": result.status, "message": result.message})
 
@@ -363,33 +426,35 @@ async def preview_restart(
         "icon": "terminal",
     }
 )
-async def preview_logs(
+async def browser_logs(
     name: str | None = None,
     lines: int = 100,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Lê as últimas linhas de stdout/stderr do dev server de preview —
-    inclusive depois dele ter travado/morrido (o histórico não é apagado ao
-    parar). Use pra se autodiagnosticar quando `preview_start` retornar
-    `"error"`/`"pending"`, ou quando as tools de browser automation
+    """Lê as últimas linhas de stdout/stderr do dev server — inclusive
+    depois dele ter travado/morrido (o histórico não é apagado ao parar).
+    Use pra se autodiagnosticar quando `browser_start` retornar
+    `"error"`/`"pending"`, ou quando as tools de automação
     (`browser_screenshot` etc.) falharem.
 
     Args:
         name: Nome da configuração em `.vectora/launch.json` (mesma regra de
-            resolução de `preview_start`).
+            resolução de `browser_start`).
         lines: Quantidade de linhas mais recentes a retornar (padrão 100).
 
     Returns:
         As últimas `lines` linhas de saída, ou uma mensagem indicando que
-        esse preview nunca foi iniciado.
+        esse dev server nunca foi iniciado.
     """
-    from backend.api.handlers.workspaces import preview_logs as _http_preview_logs
+    from backend.api.handlers.workspaces import browser_logs as _http_browser_logs
 
     workspace_id = _workspace_id(config)
-    resolved_name, err = await _resolve_preview_name(workspace_id, name)
+    resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
-    result = await _http_preview_logs(workspace_id, resolved_name)
+    result = await _http_browser_logs(workspace_id, resolved_name)
     if not result.lines:
-        return f"(nenhum log disponível — preview '{resolved_name}' nunca foi iniciado)"
+        return (
+            f"(nenhum log disponível — dev server '{resolved_name}' nunca foi iniciado)"
+        )
     return "\n".join(result.lines[-lines:])

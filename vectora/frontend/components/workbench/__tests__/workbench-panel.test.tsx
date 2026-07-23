@@ -64,8 +64,8 @@ vi.mock("../files/files-tab", () => ({
 }));
 vi.mock("../git/git-tab", () => ({ GitTab: () => <div>stub-git</div> }));
 vi.mock("../tabs/plan-tab", () => ({ PlanTab: () => <div>stub-plan</div> }));
-vi.mock("../tabs/preview-tab", () => ({
-  PreviewTab: () => <div>stub-preview</div>,
+vi.mock("../tabs/browser-tab", () => ({
+  BrowserTab: () => <div>stub-browser</div>,
 }));
 vi.mock("../tabs/memory-tab", () => ({
   MemoryTab: () => <div>stub-memory</div>,
@@ -174,7 +174,7 @@ describe("WorkbenchContent — troca de aba nunca trava no conteúdo anterior (r
     "files",
     "diff",
     "plan",
-    "preview",
+    "browser",
     "storage",
     "tasks",
     "context_graph",
@@ -185,7 +185,7 @@ describe("WorkbenchContent — troca de aba nunca trava no conteúdo anterior (r
     files: "stub-files",
     diff: "stub-git",
     plan: "stub-plan",
-    preview: "stub-preview",
+    browser: "stub-browser",
     storage: "stub-memory",
     tasks: "stub-tasks",
     context_graph: "stub-context-graph",

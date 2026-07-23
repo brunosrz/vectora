@@ -1,6 +1,6 @@
 """Repassa stdout de um subprocess pro logger Python, linha a linha.
 
-Usado por sidecars/subprocessos filhos (preview de workspace, Electron,
+Usado por sidecars/subprocessos filhos (dev server do workspace, Electron,
 NATS) cujo stdout hoje é descartado (`DEVNULL`) ou herdado sem tratamento —
 ambos deixam o operador sem nenhuma pista quando o processo falha.
 """
@@ -28,7 +28,7 @@ async def pipe_to_logger(
     `stream=None` (subprocess sem stdout capturado) é um no-op silencioso —
     não é erro, só não há nada pra repassar. `on_line`, se informado, é
     chamado com cada linha (sem o prefixo) antes do log — usado por quem
-    também precisa reter as linhas (ex.: buffer de log do preview, lido
+    também precisa reter as linhas (ex.: buffer de log do dev server, lido
     depois pela UI e por tools do agente).
     """
     if stream is None:

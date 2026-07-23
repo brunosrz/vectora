@@ -15,6 +15,13 @@ logger = logging.getLogger(__name__)
 _sessions: dict[str, dict[str, Any]] = {}
 
 
+def has_browser_session(workspace_id: str) -> bool:
+    """True se já existe uma sessão (browser lançado) pra esse workspace —
+    sem criar uma nova. Usado pra evitar lançar Chromium à toa quando nem
+    há dev server nem uma navegação prévia (`browser_navigate`)."""
+    return workspace_id in _sessions
+
+
 async def get_browser_page(workspace_id: str) -> Any:
     """Retorna a `Page` ativa do workspace, criando o browser sob demanda."""
     session = _sessions.get(workspace_id)

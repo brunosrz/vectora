@@ -25,13 +25,14 @@ from backend.tools.background import (
 from backend.tools.browser import (
     browser_click,
     browser_fill,
+    browser_logs,
+    browser_navigate,
     browser_read_dom,
+    browser_restart,
     browser_screenshot,
     browser_scroll,
-    preview_logs,
-    preview_restart,
-    preview_start,
-    preview_stop,
+    browser_start,
+    browser_stop,
 )
 from backend.tools.context_graph import (
     build_knowledge_graph,
@@ -151,17 +152,18 @@ FS_TOOLS: list[BaseTool] = [
     create_artifact,
 ]
 
-#: Ferramentas de browser automation sobre o preview do workspace (A2)
+#: Ferramentas de browser: navegação livre + automação + dev server
 BROWSER_TOOLS: list[BaseTool] = [
+    browser_navigate,
     browser_screenshot,
     browser_click,
     browser_scroll,
     browser_fill,
     browser_read_dom,
-    preview_start,
-    preview_stop,
-    preview_restart,
-    preview_logs,
+    browser_start,
+    browser_stop,
+    browser_restart,
+    browser_logs,
 ]
 
 #: Ferramentas de memória (C4: search_memory adicionado; Remember: learning loop)
@@ -270,15 +272,16 @@ for _t in [
     list_dir,
     terminal,
     create_artifact,
+    browser_navigate,
     browser_screenshot,
     browser_click,
     browser_scroll,
     browser_fill,
     browser_read_dom,
-    preview_start,
-    preview_stop,
-    preview_restart,
-    preview_logs,
+    browser_start,
+    browser_stop,
+    browser_restart,
+    browser_logs,
     save_memory,
     get_memory,
     delete_memory,

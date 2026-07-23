@@ -1,6 +1,6 @@
 """Preview de workspace: health-check real de porta, não só "processo vivo".
 
-Bug reproduzido ao vivo: `preview_status` considerava um dev server "rodando"
+Bug reproduzido ao vivo: `browser_status` considerava um dev server "rodando"
 só porque o subprocesso existia (`proc.returncode is None`) — o iframe do
 Workbench navegava pra lá antes do `vite`/`next` de fato bindar a porta,
 resultando em `ERR_CONNECTION_REFUSED` repetido. Estes testes cobrem o novo
@@ -119,7 +119,7 @@ async def test_wait_port_open_or_exit_returns_early_when_process_dies():
 
 
 # ---------------------------------------------------------------------------
-# preview_status: running só quando processo vivo E porta aberta
+# browser_status: running só quando processo vivo E porta aberta
 # ---------------------------------------------------------------------------
 
 
@@ -136,10 +136,10 @@ class TestPreviewStatus:
         proc = MagicMock(returncode=None, pid=123)
 
         monkeypatch.setattr(ws_mod, "get_launch_json", AsyncMock(return_value=cfg))
-        monkeypatch.setattr(ws_mod, "_preview_procs", {"ws1::web": proc})
+        monkeypatch.setattr(ws_mod, "_browser_procs", {"ws1::web": proc})
         monkeypatch.setattr(ws_mod, "_is_port_open", AsyncMock(return_value=False))
 
-        result = await ws_mod.preview_status("ws1")
+        result = await ws_mod.browser_status("ws1")
 
         assert result.servers[0].running is False
 
@@ -155,17 +155,17 @@ class TestPreviewStatus:
         proc = MagicMock(returncode=None, pid=123)
 
         monkeypatch.setattr(ws_mod, "get_launch_json", AsyncMock(return_value=cfg))
-        monkeypatch.setattr(ws_mod, "_preview_procs", {"ws1::web": proc})
+        monkeypatch.setattr(ws_mod, "_browser_procs", {"ws1::web": proc})
         monkeypatch.setattr(ws_mod, "_is_port_open", AsyncMock(return_value=True))
 
-        result = await ws_mod.preview_status("ws1")
+        result = await ws_mod.browser_status("ws1")
 
         assert result.servers[0].running is True
         assert result.servers[0].pid == 123
 
 
 # ---------------------------------------------------------------------------
-# preview_start: erro cedo quando o processo morre antes da porta abrir —
+# browser_start: erro cedo quando o processo morre antes da porta abrir —
 # bug reproduzido ao vivo: "Full Stack (Turbo)" (bun run dev) travava
 # girando pra sempre com status="pending", sem nenhum log de erro.
 # ---------------------------------------------------------------------------
@@ -209,15 +209,15 @@ class TestPreviewStart:
         monkeypatch.setattr(
             ws_mod, "get_launch_json", AsyncMock(return_value=launch_cfg)
         )
-        monkeypatch.setattr(ws_mod, "_preview_procs", {})
-        monkeypatch.setattr(ws_mod, "_preview_log_tasks", {})
-        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {})
+        monkeypatch.setattr(ws_mod, "_browser_procs", {})
+        monkeypatch.setattr(ws_mod, "_browser_log_tasks", {})
+        monkeypatch.setattr(ws_mod, "_browser_log_buffers", {})
         monkeypatch.setattr(
             ws_mod._asyncio, "create_subprocess_exec", AsyncMock(return_value=proc)
         )
 
-        result = await ws_mod.preview_start(
-            "ws1", ws_mod.PreviewStartRequest(name="web")
+        result = await ws_mod.browser_start(
+            "ws1", ws_mod.BrowserStartRequest(name="web")
         )
 
         assert result.status == "error"
@@ -225,9 +225,9 @@ class TestPreviewStart:
 
 
 # ---------------------------------------------------------------------------
-# preview_logs (endpoint) + buffer: log sobrevive ao processo morrer/parar,
+# browser_logs (endpoint) + buffer: log sobrevive ao processo morrer/parar,
 # acessível tanto pela UI (este endpoint) quanto pelas tools do agente
-# (mesmo dict `_preview_log_buffers`).
+# (mesmo dict `_browser_log_buffers`).
 # ---------------------------------------------------------------------------
 
 
@@ -236,9 +236,9 @@ class TestPreviewLogsEndpoint:
     async def test_returns_empty_list_when_never_started(self, monkeypatch):
         import backend.api.handlers.workspaces as ws_mod
 
-        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {})
+        monkeypatch.setattr(ws_mod, "_browser_log_buffers", {})
 
-        result = await ws_mod.preview_logs("ws1", "web")
+        result = await ws_mod.browser_logs("ws1", "web")
 
         assert result.lines == []
 
@@ -249,9 +249,9 @@ class TestPreviewLogsEndpoint:
         import backend.api.handlers.workspaces as ws_mod
 
         buf: collections.deque[str] = collections.deque(["line1", "line2"], maxlen=500)
-        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {"ws1::web": buf})
+        monkeypatch.setattr(ws_mod, "_browser_log_buffers", {"ws1::web": buf})
 
-        result = await ws_mod.preview_logs("ws1", "web")
+        result = await ws_mod.browser_logs("ws1", "web")
 
         assert result.lines == ["line1", "line2"]
 
@@ -277,12 +277,12 @@ class TestPreviewLogsEndpoint:
         monkeypatch.setattr(
             ws_mod, "get_launch_json", AsyncMock(return_value=launch_cfg)
         )
-        monkeypatch.setattr(ws_mod, "_preview_procs", {"ws1::web": proc})
-        monkeypatch.setattr(ws_mod, "_preview_log_tasks", {})
-        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {"ws1::web": buf})
+        monkeypatch.setattr(ws_mod, "_browser_procs", {"ws1::web": proc})
+        monkeypatch.setattr(ws_mod, "_browser_log_tasks", {})
+        monkeypatch.setattr(ws_mod, "_browser_log_buffers", {"ws1::web": buf})
 
-        await ws_mod.preview_stop("ws1", ws_mod.PreviewStopRequest(name="web"))
-        result = await ws_mod.preview_logs("ws1", "web")
+        await ws_mod.browser_stop("ws1", ws_mod.BrowserStopRequest(name="web"))
+        result = await ws_mod.browser_logs("ws1", "web")
 
         assert result.lines == ["boom: error"]
 
@@ -331,9 +331,9 @@ class TestPreviewStartPopulatesLogBuffer:
         monkeypatch.setattr(
             ws_mod, "get_launch_json", AsyncMock(return_value=launch_cfg)
         )
-        monkeypatch.setattr(ws_mod, "_preview_procs", {})
-        monkeypatch.setattr(ws_mod, "_preview_log_tasks", {})
-        monkeypatch.setattr(ws_mod, "_preview_log_buffers", {})
+        monkeypatch.setattr(ws_mod, "_browser_procs", {})
+        monkeypatch.setattr(ws_mod, "_browser_log_tasks", {})
+        monkeypatch.setattr(ws_mod, "_browser_log_buffers", {})
         monkeypatch.setattr(
             ws_mod._asyncio, "create_subprocess_exec", AsyncMock(return_value=proc)
         )
@@ -341,11 +341,11 @@ class TestPreviewStartPopulatesLogBuffer:
             ws_mod, "_wait_port_open_or_exit", AsyncMock(return_value=(False, None))
         )
 
-        await ws_mod.preview_start("ws1", ws_mod.PreviewStartRequest(name="web"))
+        await ws_mod.browser_start("ws1", ws_mod.BrowserStartRequest(name="web"))
         # Dá um tick pra task de background (pipe_to_logger) consumir o fake stdout.
         for _ in range(5):
             await asyncio.sleep(0)
 
-        result = await ws_mod.preview_logs("ws1", "web")
+        result = await ws_mod.browser_logs("ws1", "web")
 
         assert result.lines == ["compiling...", "ready"]

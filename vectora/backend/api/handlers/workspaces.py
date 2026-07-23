@@ -2940,7 +2940,7 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
 
 
 # ---------------------------------------------------------------------------
-# Live Preview — launch.json + dev server management
+# Browser — launch.json + dev server management
 # ---------------------------------------------------------------------------
 
 import asyncio as _asyncio
@@ -2949,17 +2949,17 @@ import time as _time
 
 from backend.services.subprocess_logging import pipe_to_logger
 
-_preview_procs: dict[str, _asyncio.subprocess.Process] = {}
-_preview_log_tasks: dict[str, _asyncio.Task] = {}
-# Últimas linhas de stdout/stderr por preview — sobrevive ao processo
+_browser_procs: dict[str, _asyncio.subprocess.Process] = {}
+_browser_log_tasks: dict[str, _asyncio.Task] = {}
+# Últimas linhas de stdout/stderr por dev server — sobrevive ao processo
 # encerrar/morrer (só é sobrescrito por um deque novo no próximo start),
 # pra diagnóstico continuar disponível mesmo depois de um crash. Lido tanto
 # pelo endpoint HTTP (UI) quanto pelas tools do agente (mesma fonte de dado).
-_PREVIEW_LOG_MAXLEN = 500
-_preview_log_buffers: dict[str, _collections.deque[str]] = {}
+_BROWSER_LOG_MAXLEN = 500
+_browser_log_buffers: dict[str, _collections.deque[str]] = {}
 
 
-def _preview_key(workspace_id: str, name: str) -> str:
+def _browser_key(workspace_id: str, name: str) -> str:
     return f"{workspace_id}::{name}"
 
 
@@ -2982,7 +2982,7 @@ async def _is_port_open(host: str, port: int, timeout_s: float = 0.3) -> bool:
 async def _wait_port_open(
     host: str, port: int, *, total_timeout: float = 15.0, interval: float = 0.5
 ) -> bool:
-    """Poll limitado até a porta abrir — usado só no `preview/start` pra não
+    """Poll limitado até a porta abrir — usado só no `browser/start` pra não
     responder "ok" com o dev server ainda compilando."""
     deadline = _time.monotonic() + total_timeout
     while _time.monotonic() < deadline:
@@ -3040,26 +3040,26 @@ class LaunchJsonModel(BaseModel):
     configurations: list[LaunchConfigModel] = []
 
 
-class PreviewServerStatus(BaseModel):
+class BrowserServerStatus(BaseModel):
     name: str
     port: int
     running: bool
     pid: int | None = None
 
 
-class PreviewStatusResponse(BaseModel):
-    servers: list[PreviewServerStatus]
+class BrowserStatusResponse(BaseModel):
+    servers: list[BrowserServerStatus]
 
 
-class PreviewStartRequest(BaseModel):
+class BrowserStartRequest(BaseModel):
     name: str
 
 
-class PreviewStopRequest(BaseModel):
+class BrowserStopRequest(BaseModel):
     name: str
 
 
-class PreviewLogsResponse(BaseModel):
+class BrowserLogsResponse(BaseModel):
     lines: list[str]
 
 
@@ -3074,7 +3074,7 @@ class DetectResponse(BaseModel):
     configurations: list[DetectedServer]
 
 
-@view_router.get("/{workspace_id}/preview/launch", response_model=LaunchJsonModel)
+@view_router.get("/{workspace_id}/browser/launch", response_model=LaunchJsonModel)
 async def get_launch_json(workspace_id: str) -> LaunchJsonModel:
     """Lê .vectora/launch.json do workspace."""
     p = _launch_json_path(workspace_id)
@@ -3089,7 +3089,7 @@ async def get_launch_json(workspace_id: str) -> LaunchJsonModel:
         return LaunchJsonModel()
 
 
-@view_router.post("/{workspace_id}/preview/launch", response_model=StatusResponse)
+@view_router.post("/{workspace_id}/browser/launch", response_model=StatusResponse)
 async def save_launch_json(workspace_id: str, body: LaunchJsonModel) -> StatusResponse:
     """Grava .vectora/launch.json no workspace."""
     p = _launch_json_path(workspace_id)
@@ -3108,36 +3108,36 @@ async def save_launch_json(workspace_id: str, body: LaunchJsonModel) -> StatusRe
         return StatusResponse(status="error", message=str(exc))
 
 
-@view_router.get("/{workspace_id}/preview/status", response_model=PreviewStatusResponse)
-async def preview_status(workspace_id: str) -> PreviewStatusResponse:
-    """Retorna o status dos servidores de preview do workspace."""
+@view_router.get("/{workspace_id}/browser/status", response_model=BrowserStatusResponse)
+async def browser_status(workspace_id: str) -> BrowserStatusResponse:
+    """Retorna o status dos dev servers do workspace."""
     launch = await get_launch_json(workspace_id)
-    servers: list[PreviewServerStatus] = []
+    servers: list[BrowserServerStatus] = []
     for cfg in launch.configurations:
-        key = _preview_key(workspace_id, cfg.name)
-        proc = _preview_procs.get(key)
+        key = _browser_key(workspace_id, cfg.name)
+        proc = _browser_procs.get(key)
         alive = proc is not None and proc.returncode is None
         running = alive and await _is_port_open("127.0.0.1", cfg.port)
         pid = proc.pid if alive and proc else None
         servers.append(
-            PreviewServerStatus(name=cfg.name, port=cfg.port, running=running, pid=pid)
+            BrowserServerStatus(name=cfg.name, port=cfg.port, running=running, pid=pid)
         )
-    return PreviewStatusResponse(servers=servers)
+    return BrowserStatusResponse(servers=servers)
 
 
-@view_router.get("/{workspace_id}/preview/logs", response_model=PreviewLogsResponse)
-async def preview_logs(workspace_id: str, name: str) -> PreviewLogsResponse:
-    """Últimas linhas de stdout/stderr do preview `name` — disponível mesmo
-    com o processo parado/morto (buffer não é limpo em preview_stop nem
+@view_router.get("/{workspace_id}/browser/logs", response_model=BrowserLogsResponse)
+async def browser_logs(workspace_id: str, name: str) -> BrowserLogsResponse:
+    """Últimas linhas de stdout/stderr do dev server `name` — disponível mesmo
+    com o processo parado/morto (buffer não é limpo em browser_stop nem
     quando o processo encerra sozinho). Lista vazia = nunca foi iniciado."""
-    key = _preview_key(workspace_id, name)
-    buf = _preview_log_buffers.get(key)
-    return PreviewLogsResponse(lines=list(buf) if buf else [])
+    key = _browser_key(workspace_id, name)
+    buf = _browser_log_buffers.get(key)
+    return BrowserLogsResponse(lines=list(buf) if buf else [])
 
 
-@view_router.post("/{workspace_id}/preview/start", response_model=StatusResponse)
-async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusResponse:
-    """Inicia o dev server de preview com o nome indicado."""
+@view_router.post("/{workspace_id}/browser/start", response_model=StatusResponse)
+async def browser_start(workspace_id: str, body: BrowserStartRequest) -> StatusResponse:
+    """Inicia o dev server com o nome indicado."""
     from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
@@ -3151,8 +3151,8 @@ async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusR
             status="error", message=f"Configuração '{body.name}' não encontrada."
         )
 
-    key = _preview_key(workspace_id, cfg.name)
-    existing = _preview_procs.get(key)
+    key = _browser_key(workspace_id, cfg.name)
+    existing = _browser_procs.get(key)
     if existing and existing.returncode is None:
         return StatusResponse(status="ok", message="já em execução")
 
@@ -3166,14 +3166,14 @@ async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusR
             stdout=_asyncio.subprocess.PIPE,
             stderr=_asyncio.subprocess.STDOUT,
         )
-        _preview_procs[key] = proc
-        buf: _collections.deque[str] = _collections.deque(maxlen=_PREVIEW_LOG_MAXLEN)
-        _preview_log_buffers[key] = buf
-        _preview_log_tasks[key] = _asyncio.create_task(
+        _browser_procs[key] = proc
+        buf: _collections.deque[str] = _collections.deque(maxlen=_BROWSER_LOG_MAXLEN)
+        _browser_log_buffers[key] = buf
+        _browser_log_tasks[key] = _asyncio.create_task(
             pipe_to_logger(
                 proc.stdout,
                 logger,
-                prefix=f"preview:{cfg.name}",
+                prefix=f"browser:{cfg.name}",
                 on_line=buf.append,
             )
         )
@@ -3198,9 +3198,9 @@ async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusR
     return StatusResponse(status=status, message=message)
 
 
-@view_router.post("/{workspace_id}/preview/stop", response_model=StatusResponse)
-async def preview_stop(workspace_id: str, body: PreviewStopRequest) -> StatusResponse:
-    """Para o dev server de preview com o nome indicado."""
+@view_router.post("/{workspace_id}/browser/stop", response_model=StatusResponse)
+async def browser_stop(workspace_id: str, body: BrowserStopRequest) -> StatusResponse:
+    """Para o dev server com o nome indicado."""
     launch = await get_launch_json(workspace_id)
     cfg = next((c for c in launch.configurations if c.name == body.name), None)
     if cfg is None:
@@ -3208,9 +3208,9 @@ async def preview_stop(workspace_id: str, body: PreviewStopRequest) -> StatusRes
             status="error", message=f"Configuração '{body.name}' não encontrada."
         )
 
-    key = _preview_key(workspace_id, cfg.name)
-    proc = _preview_procs.pop(key, None)
-    log_task = _preview_log_tasks.pop(key, None)
+    key = _browser_key(workspace_id, cfg.name)
+    proc = _browser_procs.pop(key, None)
+    log_task = _browser_log_tasks.pop(key, None)
     if log_task is not None:
         log_task.cancel()
     if proc is None or proc.returncode is not None:
@@ -3227,8 +3227,8 @@ async def preview_stop(workspace_id: str, body: PreviewStopRequest) -> StatusRes
         return StatusResponse(status="error", message=str(exc))
 
 
-@view_router.get("/{workspace_id}/preview/detect", response_model=DetectResponse)
-async def preview_detect(workspace_id: str) -> DetectResponse:
+@view_router.get("/{workspace_id}/browser/detect", response_model=DetectResponse)
+async def browser_detect(workspace_id: str) -> DetectResponse:
     """Detecta dev servers comuns no workspace e sugere configurações para launch.json."""
     from backend.workspace.workspace import workspace_registry
 

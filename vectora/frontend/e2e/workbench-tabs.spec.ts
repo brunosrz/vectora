@@ -28,7 +28,7 @@ const CORE_TABS = [
   "diff",
   "plan",
   "tasks",
-  "preview",
+  "browser",
   "storage",
   "context_graph",
   "terminal",

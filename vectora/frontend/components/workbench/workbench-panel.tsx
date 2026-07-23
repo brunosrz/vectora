@@ -51,7 +51,7 @@ import { TerminalPanel } from "@/components/workbench/terminal/terminal-panel";
 import { FilesTab } from "./files/files-tab";
 import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
-import { PreviewTab } from "./tabs/preview-tab";
+import { BrowserTab } from "./tabs/browser-tab";
 import { MemoryTab } from "./tabs/memory-tab";
 import { TasksTab } from "./tabs/tasks-tab";
 import { ContextGraphTab } from "./tabs/context-graph-tab";
@@ -77,7 +77,7 @@ const TAB_ICON: Record<
   files: FolderTree,
   diff: GitCompare,
   plan: FileText,
-  preview: MonitorPlay,
+  browser: MonitorPlay,
   storage: Brain,
   tasks: Radar,
   context_graph: Waypoints,
@@ -111,7 +111,7 @@ function useTabBadge(
       return null;
     case "plan":
       return planItems > 0 ? String(planItems) : null;
-    case "preview":
+    case "browser":
     case "storage":
     case "tasks":
     case "context_graph":
@@ -340,7 +340,7 @@ export function WorkbenchContent({
           )}
           {activeTab === "diff" && <GitTab threadId={threadId} />}
           {activeTab === "plan" && <PlanTab threadId={threadId} />}
-          {activeTab === "preview" && <PreviewTab threadId={threadId} />}
+          {activeTab === "browser" && <BrowserTab threadId={threadId} />}
           {activeTab === "storage" && <MemoryTab threadId={threadId} />}
           {activeTab === "tasks" && <TasksTab threadId={threadId} />}
           {activeTab === "context_graph" && (

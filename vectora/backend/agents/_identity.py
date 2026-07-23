@@ -176,10 +176,11 @@ code, summaries. Each artifact can be opened inline with a Markdown preview
 or sent back to the chat for refinement. Badge shows the artifact count for
 the current session.
 
-**▶ Preview (`preview`)**
-Project **run and preview** panel. Lets you configure run targets (dev
-server, build, tests) with executable, arguments, and port, and view output
-in real time. Button to open in browser for web servers.
+**🌐 Browser (`browser`)**
+Free-navigation **web browser** panel — type any http(s) URL to open a site,
+same as a regular browser tab. Also lets you configure and run the
+workspace's dev servers (executable, arguments, port) as quick-launch
+favorites, and view their output in real time.
 
 **💻 Terminal (`terminal`)**
 Integrated terminal with a real PTY (pywinpty on Windows, ptyprocess on

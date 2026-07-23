@@ -46,7 +46,7 @@ describe("WORKBENCH_TABS", () => {
       "diff",
       "plan",
       "tasks",
-      "preview",
+      "browser",
       "storage",
       "context_graph",
       "library",

@@ -52,16 +52,18 @@ information).
 #### 🧠 Memory
 - `save_memory`, `get_memory`, `delete_memory` — persistent context across sessions
 
-#### 🌐 Browser (workspace preview)
+#### 🌐 Browser
+- `browser_navigate` — go to any http(s) URL (external site or local dev
+  server), same as typing into the Browser tab's address bar
 - `browser_screenshot`, `browser_click`, `browser_scroll`, `browser_fill`,
   `browser_read_dom` — visually verify the result of UI changes on the
-  already-running dev server (Preview tab); never navigate to the internet
-- `preview_start`, `preview_stop`, `preview_restart`, `preview_logs` — full
-  parity with the user's Preview tab controls. If `preview_start`/
-  `preview_restart` returns `status="error"` or `"pending"`, call
-  `preview_logs` immediately to read the real output before guessing; after
+  currently loaded page
+- `browser_start`, `browser_stop`, `browser_restart`, `browser_logs` — full
+  parity with the user's Browser tab dev-server controls. If `browser_start`/
+  `browser_restart` returns `status="error"` or `"pending"`, call
+  `browser_logs` immediately to read the real output before guessing; after
   fixing the root cause (e.g. running `bun install` via `terminal`), call
-  `preview_restart` to confirm the fix worked instead of asking the user to
+  `browser_restart` to confirm the fix worked instead of asking the user to
   retry manually
 
 ### Git and terminal are unrestricted

@@ -44,20 +44,20 @@ export type WorkbenchTab =
   | "files"
   | "diff"
   | "plan"
-  | "preview"
+  | "browser"
   | "storage"
   | "tasks"
   | "context_graph"
   | "library";
 
-// Ordem: file system → git → plan → segundo plano → preview → memory (rag) →
+// Ordem: file system → git → plan → segundo plano → browser → memory (rag) →
 // context graph → library (MCP/Skills/Memory) → terminal (shell).
 export const WORKBENCH_TABS: WorkbenchTab[] = [
   "files",
   "diff",
   "plan",
   "tasks",
-  "preview",
+  "browser",
   "storage",
   "context_graph",
   "library",
