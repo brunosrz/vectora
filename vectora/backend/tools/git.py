@@ -236,52 +236,300 @@ def _git_branch_impl(
     return {"status": "error", "message": f"Ação desconhecida: {action}"}
 
 
-def _git_checkout_impl(repo: git.Repo, ref: str) -> dict:
-    """Faz checkout para branch ou commit."""
+def _git_checkout_impl(repo: git.Repo, ref: str, create: bool = False) -> dict:
+    """Faz checkout para branch ou commit; `create=True` cria a branch antes
+    (equivalente a `git checkout -b`) — a UI já combina os dois numa chamada
+    só, as tools tinham só o checkout simples."""
     try:
-        repo.git.checkout(ref)
+        if create:
+            repo.git.checkout("-b", ref)
+        else:
+            repo.git.checkout(ref)
         try:
             branch = repo.active_branch.name
         except TypeError:
             branch = ref
-        return {"status": "ok", "branch": branch, "ref": ref}
+        return {"status": "ok", "branch": branch, "ref": ref, "created": create}
     except git.GitCommandError as exc:
         return {"status": "error", "message": str(exc)}
+
+
+def _full_message(message: str, body: str | None) -> str:
+    return f"{message}\n\n{body}" if body else message
 
 
 def _git_commit_impl(
     repo: git.Repo,
     message: str,
     all: bool = False,  # noqa: A002
+    body: str | None = None,
+    amend: bool = False,
 ) -> dict:
-    """Cria um commit.
+    """Cria um commit (ou emenda o último, se `amend=True`).
 
     Args:
-        message: Mensagem de commit (formato conventional commits recomendado).
+        message: Título do commit (formato conventional commits recomendado).
         all: Se True, stageia automaticamente arquivos modificados rastreados
              (equivalente a `git commit -a`).
+        body: Descrição opcional (corpo do commit), concatenada como
+              `title\n\nbody`.
+        amend: Se True, substitui o último commit em vez de criar um novo —
+               falha com mensagem clara se não houver commit anterior.
     """
-    # Stage -a se solicitado
     if all:
         repo.git.add("-u")
 
-    if not repo.index.diff("HEAD") and not repo.index.diff(None, staged=True):
-        # Verifica staged mais precisamente
-        if not repo.is_dirty(index=True):
+    full_message = _full_message(message, body)
+
+    if amend:
+        try:
+            repo.head.commit  # noqa: B018 — dispara ValueError se repo sem commits
+        except ValueError:
             return {
                 "status": "error",
-                "message": "Nada staged para commitar. Use git_status para ver o estado.",
+                "message": "Não há commit anterior para emendar (repo vazio).",
             }
+        try:
+            repo.git.commit("--amend", "-m", full_message)
+            commit = repo.head.commit
+            return {
+                "status": "ok",
+                "hash": commit.hexsha[:7],
+                "message": full_message,
+                "amended": True,
+            }
+        except git.GitCommandError as exc:
+            return {"status": "error", "message": str(exc)}
+
+    if not repo.is_dirty(index=True):
+        return {
+            "status": "error",
+            "message": "Nada staged para commitar. Use git_status para ver o estado.",
+        }
 
     try:
-        commit = repo.index.commit(message)
+        commit = repo.index.commit(full_message)
         return {
             "status": "ok",
             "hash": commit.hexsha[:7],
-            "message": message,
+            "message": full_message,
             "files_changed": len(commit.stats.files),
         }
     except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+def _git_squash_impl(
+    repo: git.Repo,
+    base_ref: str,
+    message: str,
+    body: str | None = None,
+) -> dict:
+    """Squasha todos os commits de `base_ref` até HEAD numa mensagem só —
+    `reset --soft` pra `base_ref` (mantém as mudanças staged) seguido de um
+    commit novo. `base_ref` inválido ou repo com working tree sujo (fora do
+    index) falha com mensagem clara, nunca deixa o repo em estado parcial."""
+    try:
+        base_commit = repo.commit(base_ref)
+    except Exception as exc:
+        return {"status": "error", "message": f"Ref inválida {base_ref!r}: {exc}"}
+
+    try:
+        head_before = repo.head.commit.hexsha
+    except ValueError:
+        return {"status": "error", "message": "Repo sem commits."}
+
+    if base_commit.hexsha == head_before:
+        return {
+            "status": "error",
+            "message": "base_ref já é o HEAD — nada para squashar.",
+        }
+
+    try:
+        repo.git.reset("--soft", base_ref)
+        commit = repo.index.commit(_full_message(message, body))
+        return {
+            "status": "ok",
+            "hash": commit.hexsha[:7],
+            "squashed_from": base_ref,
+            "previous_head": head_before[:7],
+        }
+    except git.GitCommandError as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+def _git_reorder_impl(repo: git.Repo, commits: list[str]) -> dict:
+    """Reordena commits locais (ainda não pushados) pra sequência exata de
+    `commits` — reset --hard pro parent do mais antigo do conjunto (não
+    necessariamente `commits[0]`, que reflete a ordem FINAL desejada, não a
+    ordem original no histórico), depois cherry-pick um a um na ordem
+    pedida. Sequência computada, não rebase interativo com editor de texto
+    livre. Conflito não resolvível automaticamente aborta o cherry-pick em
+    andamento e reporta — nunca deixa o repo pela metade."""
+    if not commits:
+        return {"status": "error", "message": "Lista de commits vazia."}
+
+    try:
+        resolved = [repo.commit(sha).hexsha for sha in commits]
+    except Exception as exc:
+        return {"status": "error", "message": f"Commit inválido: {exc}"}
+
+    try:
+        history = [c.hexsha for c in repo.iter_commits()]  # newest → oldest
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+    resolved_set = set(resolved)
+    oldest_sha = next((sha for sha in reversed(history) if sha in resolved_set), None)
+    if oldest_sha is None:
+        return {
+            "status": "error",
+            "message": "Nenhum dos commits informados está no histórico atual.",
+        }
+
+    oldest_commit = repo.commit(oldest_sha)
+    if not oldest_commit.parents:
+        return {
+            "status": "error",
+            "message": "Não é possível reordenar o commit raiz (sem parent).",
+        }
+    parent_sha = oldest_commit.parents[0].hexsha
+    original_head = repo.head.commit.hexsha
+
+    try:
+        repo.git.reset("--hard", parent_sha)
+    except git.GitCommandError as exc:
+        return {"status": "error", "message": str(exc)}
+
+    for sha in resolved:
+        try:
+            repo.git.cherry_pick(sha)
+        except git.GitCommandError as exc:
+            with contextlib.suppress(git.GitCommandError):
+                repo.git.cherry_pick("--abort")
+            with contextlib.suppress(git.GitCommandError):
+                repo.git.reset("--hard", original_head)
+            return {
+                "status": "error",
+                "message": f"Conflito ao reordenar em {sha}: {exc}",
+            }
+
+    return {
+        "status": "ok",
+        "commits": commits,
+        "new_head": repo.head.commit.hexsha[:7],
+    }
+
+
+def _git_cherry_pick_impl(
+    repo: git.Repo,
+    sha: str,
+    no_commit: bool = False,
+) -> dict:
+    """Cherry-pick de um commit de outra branch/ref. Commit já aplicado
+    (idempotente) devolve erro claro em vez de duplicar; conflito não
+    resolvível aborta o cherry-pick, nunca deixa o repo em estado pendente."""
+    try:
+        args = ["-n", sha] if no_commit else [sha]
+        repo.git.cherry_pick(*args)
+        return {
+            "status": "ok",
+            "sha": sha,
+            "no_commit": no_commit,
+            "head": None if no_commit else repo.head.commit.hexsha[:7],
+        }
+    except git.GitCommandError as exc:
+        msg = str(exc)
+        if "empty" in msg.lower() or "nothing to commit" in msg.lower():
+            with contextlib.suppress(git.GitCommandError):
+                repo.git.cherry_pick("--skip")
+            return {
+                "status": "error",
+                "message": "Commit já aplicado (idempotente) — nada a fazer.",
+            }
+        with contextlib.suppress(git.GitCommandError):
+            repo.git.cherry_pick("--abort")
+        return {"status": "error", "message": msg}
+
+
+def _git_fetch_impl(repo: git.Repo, remote: str = "origin") -> dict:
+    """Baixa refs do remote sem integrar (sem tocar no working tree)."""
+    try:
+        repo.git.fetch(remote)
+        return {"status": "ok", "remote": remote}
+    except git.GitCommandError as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+def _git_merge_impl(repo: git.Repo, branch: str, no_ff: bool = False) -> dict:
+    """Faz merge de `branch` na branch ativa. Conflito devolve erro
+    estruturado com o status atual (arquivos em conflito), não deixa a
+    exceção crua escapar."""
+    try:
+        args = [branch, "--no-ff"] if no_ff else [branch]
+        repo.git.merge(*args)
+        return {"status": "ok", "branch": branch, "no_ff": no_ff}
+    except git.GitCommandError as exc:
+        conflicted = [str(p) for p in repo.index.unmerged_blobs()]
+        return {
+            "status": "conflict" if conflicted else "error",
+            "message": str(exc),
+            "conflicted_files": conflicted,
+        }
+
+
+def _git_revert_impl(repo: git.Repo, sha: str, no_commit: bool = False) -> dict:
+    """Reverte um commit (cria um commit inverso, ou só stageia com
+    `no_commit=True` — equivalente a `git revert --no-commit`)."""
+    try:
+        args = [sha, "--no-commit"] if no_commit else [sha]
+        repo.git.revert(*args)
+        return {
+            "status": "ok",
+            "sha": sha,
+            "no_commit": no_commit,
+            "head": None if no_commit else repo.head.commit.hexsha[:7],
+        }
+    except git.GitCommandError as exc:
+        with contextlib.suppress(git.GitCommandError):
+            repo.git.revert("--abort")
+        return {"status": "error", "message": str(exc)}
+
+
+def _git_compare_impl(repo: git.Repo, base: str, head: str) -> dict:
+    """Compara dois refs — diff resumido (arquivos + status) entre `base` e
+    `head`, mesmo formato usado por `git diff base...head --name-status`."""
+    try:
+        name_status = repo.git.diff(f"{base}...{head}", "--name-status")
+    except git.GitCommandError as exc:
+        return {"status": "error", "message": str(exc)}
+
+    files = []
+    for line in name_status.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("\t")
+        if len(parts) >= 2:
+            files.append({"status": parts[0], "path": parts[-1]})
+    return {"status": "ok", "base": base, "head": head, "files": files}
+
+
+def _git_resolve_conflict_impl(repo: git.Repo, path: str, strategy: str) -> dict:
+    """Resolve um conflito de merge escolhendo um dos dois lados —
+    `strategy` é `"ours"` ou `"theirs"`. Estagia o arquivo resolvido depois
+    do checkout, pronto pra `git_commit` fechar o merge."""
+    if strategy not in ("ours", "theirs"):
+        return {
+            "status": "error",
+            "message": f"strategy deve ser 'ours' ou 'theirs', recebeu {strategy!r}.",
+        }
+    if not path:
+        return {"status": "error", "message": "path é obrigatório."}
+    try:
+        repo.git.checkout(f"--{strategy}", "--", path)
+        repo.git.add("--", path)
+        return {"status": "ok", "path": path, "strategy": strategy}
+    except git.GitCommandError as exc:
         return {"status": "error", "message": str(exc)}
 
 
@@ -674,15 +922,19 @@ async def git_branch(
 )
 async def git_checkout(
     ref: str = "",
+    create: bool = False,
     workspace_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Troca para uma branch ou commit.
+    """Troca para uma branch ou commit; `create=True` cria a branch antes.
 
     ⚠️ Mudanças não commitadas podem ser perdidas. Faça git_status antes.
 
     Args:
-        ref: Branch, tag ou commit hash para checkout.
+        ref: Branch, tag ou commit hash para checkout (ou nome da branch nova
+             quando `create=True`).
+        create: Se True, cria `ref` como branch nova antes do checkout
+                (equivalente a `git checkout -b`).
         workspace_id: ID do workspace.
     """
     repo, err = _open_repo(workspace_id, config)
@@ -690,7 +942,9 @@ async def git_checkout(
         return err
     if not ref:
         return json.dumps({"status": "error", "message": "ref é obrigatório."})
-    return json.dumps(_safe_call(lambda: _git_checkout_impl(repo, ref=ref)))
+    return json.dumps(
+        _safe_call(lambda: _git_checkout_impl(repo, ref=ref, create=create))
+    )
 
 
 @tool(
@@ -705,17 +959,21 @@ async def git_checkout(
 async def git_commit(
     message: str = "",
     all: bool = False,  # noqa: A002
+    body: str | None = None,
+    amend: bool = False,
     workspace_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Cria um commit com os arquivos staged.
+    """Cria um commit com os arquivos staged (ou emenda o último, com `amend`).
 
     Use conventional commits: feat:, fix:, refactor:, docs:, test:, chore:.
     Sempre escreva mensagens descritivas — nunca "wip" ou "update".
 
     Args:
-        message: Mensagem de commit (conventional commits recomendado).
+        message: Título do commit (conventional commits recomendado).
         all: Se True, stageia automaticamente modificações rastreadas (-a).
+        body: Descrição opcional do commit (corpo, separado do título).
+        amend: Se True, substitui o último commit em vez de criar um novo.
         workspace_id: ID do workspace.
     """
     repo, err = _open_repo(workspace_id, config)
@@ -726,8 +984,292 @@ async def git_commit(
             {"status": "error", "message": "Mensagem de commit é obrigatória."}
         )
     return json.dumps(
-        _safe_call(lambda: _git_commit_impl(repo, message=message, all=all))
+        _safe_call(
+            lambda: _git_commit_impl(
+                repo, message=message, all=all, body=body, amend=amend
+            )
+        )
     )
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": True,
+        "icon": "git-commit",
+        "invalidates": ["diff", "history"],
+    }
+)
+async def git_squash(
+    base_ref: str = "",
+    message: str = "",
+    body: str | None = None,
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Squasha os commits de `base_ref` até HEAD numa mensagem só.
+
+    Args:
+        base_ref: Ref (branch/SHA) a partir da qual squashar até HEAD.
+        message: Título do commit resultante.
+        body: Descrição opcional do commit resultante.
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not base_ref or not message:
+        return json.dumps(
+            {"status": "error", "message": "base_ref e message são obrigatórios."}
+        )
+    return json.dumps(
+        _safe_call(
+            lambda: _git_squash_impl(
+                repo, base_ref=base_ref, message=message, body=body
+            )
+        )
+    )
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": True,
+        "icon": "git-commit",
+        "invalidates": ["diff", "history"],
+    }
+)
+async def git_reorder(
+    commits: list[str] | None = None,
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Reordena commits locais (ainda não pushados) pra sequência de `commits`.
+
+    Args:
+        commits: SHAs na ordem final desejada (do mais antigo pro mais novo).
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    return json.dumps(
+        _safe_call(lambda: _git_reorder_impl(repo, commits=commits or []))
+    )
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": True,
+        "icon": "git-commit",
+        "invalidates": ["diff", "history"],
+    }
+)
+async def git_cherry_pick(
+    sha: str = "",
+    no_commit: bool = False,
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Aplica um commit de outra branch/ref na branch ativa.
+
+    Args:
+        sha: Hash do commit a aplicar.
+        no_commit: Se True, só stageia as mudanças (sem criar o commit).
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not sha:
+        return json.dumps({"status": "error", "message": "sha é obrigatório."})
+    return json.dumps(
+        _safe_call(lambda: _git_cherry_pick_impl(repo, sha=sha, no_commit=no_commit))
+    )
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": False,
+        "icon": "download-cloud",
+    }
+)
+async def git_fetch(
+    remote: str = "origin",
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Baixa refs do remote sem integrar (não toca no working tree).
+
+    Args:
+        remote: Nome do remote (default: "origin").
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    return json.dumps(_safe_call(lambda: _git_fetch_impl(repo, remote=remote)))
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": True,
+        "icon": "git-merge",
+        "invalidates": ["files", "diff", "history"],
+    }
+)
+async def git_merge(
+    branch: str = "",
+    no_ff: bool = False,
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Faz merge de `branch` na branch ativa.
+
+    Args:
+        branch: Branch a mesclar na branch ativa.
+        no_ff: Se True, força um merge commit mesmo quando fast-forward seria
+               possível.
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not branch:
+        return json.dumps({"status": "error", "message": "branch é obrigatório."})
+    return json.dumps(
+        _safe_call(lambda: _git_merge_impl(repo, branch=branch, no_ff=no_ff))
+    )
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": True,
+        "icon": "git-commit",
+        "invalidates": ["files", "diff", "history"],
+    }
+)
+async def git_revert(
+    sha: str = "",
+    no_commit: bool = False,
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Reverte um commit — cria um commit inverso (ou só stageia, com
+    `no_commit`).
+
+    Args:
+        sha: Hash do commit a reverter.
+        no_commit: Se True, só stageia as mudanças (sem criar o commit).
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not sha:
+        return json.dumps({"status": "error", "message": "sha é obrigatório."})
+    return json.dumps(
+        _safe_call(lambda: _git_revert_impl(repo, sha=sha, no_commit=no_commit))
+    )
+
+
+@tool(
+    extras={
+        "render_hint": "table",
+        "category": "git",
+        "destructive": False,
+        "icon": "git-compare",
+    }
+)
+async def git_compare(
+    base: str = "",
+    head: str = "",
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Compara dois refs — lista arquivos alterados entre `base` e `head`.
+
+    Args:
+        base: Ref base da comparação.
+        head: Ref alvo da comparação.
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not base or not head:
+        return json.dumps(
+            {"status": "error", "message": "base e head são obrigatórios."}
+        )
+    return json.dumps(_safe_call(lambda: _git_compare_impl(repo, base=base, head=head)))
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": True,
+        "icon": "git-merge",
+        "invalidates": ["files", "diff"],
+    }
+)
+async def git_resolve_conflict(
+    path: str = "",
+    strategy: str = "",
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Resolve um conflito de merge escolhendo um dos dois lados.
+
+    Args:
+        path: Caminho do arquivo em conflito.
+        strategy: "ours" (mantém o lado atual) ou "theirs" (usa o lado
+                  incoming).
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    return json.dumps(
+        _safe_call(
+            lambda: _git_resolve_conflict_impl(repo, path=path, strategy=strategy)
+        )
+    )
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": False,
+        "icon": "check-circle",
+    }
+)
+async def git_check_hooks(
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Roda os hooks de pre-commit configurados sem criar um commit
+    (dry-run) — útil pra checar se o working tree passaria antes de
+    commitar de verdade.
+
+    Args:
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    return json.dumps(_safe_call(lambda: _run_pre_commit_hooks(repo)))
 
 
 @tool(
