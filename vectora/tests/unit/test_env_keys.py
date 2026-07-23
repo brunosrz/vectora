@@ -34,9 +34,9 @@ class TestKnownLlmEnvKeys:
 
 class TestDefaultEnvFile:
     def test_returns_vectora_env_path(self, tmp_path, monkeypatch):
-        from pathlib import Path
+        from backend.settings import settings
 
-        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        monkeypatch.setattr(settings, "vectora_home", tmp_path / ".vectora")
         p = env_keys.default_env_file()
         assert p == tmp_path / ".vectora" / ".env"
         assert p.parent.exists()  # mkdir(parents=True, exist_ok=True)

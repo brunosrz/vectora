@@ -112,6 +112,10 @@ class FakeWebSocket {
   }
 }
 
+function ThrowingWebSocket(): never {
+  throw new DOMException("URL relativa inválida", "SyntaxError");
+}
+
 class FakeResizeObserver {
   static instances: FakeResizeObserver[] = [];
   observed: Element[] = [];
@@ -336,5 +340,46 @@ describe("XtermView", () => {
     );
     const { ws } = await renderView();
     expect(ws.url.endsWith("token=")).toBe(true);
+  });
+
+  describe("origem do WebSocket no desktop Electron", () => {
+    afterEach(() => {
+      delete (window as { vectora?: unknown }).vectora;
+    });
+
+    it("com window.vectora.getBackendWsOrigin disponível: usa a origem absoluta do backend, não uma URL relativa", async () => {
+      window.vectora = {
+        getBackendWsOrigin: async () => "ws://127.0.0.1:54321",
+      } as Window["vectora"];
+      const { ws } = await renderView();
+      expect(ws.url.startsWith("ws://127.0.0.1:54321/")).toBe(true);
+    });
+
+    it("sem window.vectora (browser/dev server): mantém a resolução relativa via VECTORA_API_URL (regressão)", async () => {
+      const { ws } = await renderView();
+      expect(ws.url.startsWith("/vectora.terminal.v1/ws")).toBe(true);
+    });
+
+    it("construtor do WebSocket lançando (ex.: URL relativa contra scheme custom) escreve erro no terminal em vez de quebrar o componente", async () => {
+      window.vectora = {
+        getBackendWsOrigin: async () => null,
+      } as Window["vectora"];
+      vi.stubGlobal("WebSocket", ThrowingWebSocket);
+      const utils = render(
+        <XtermView
+          terminalId="term-x"
+          threadId="thread-x"
+          workspaceId="ws-x"
+        />,
+      );
+      await waitFor(() =>
+        expect(FakeTerminal.instances.length).toBeGreaterThan(0),
+      );
+      const term = FakeTerminal.instances[FakeTerminal.instances.length - 1];
+      await waitFor(() =>
+        expect(term.written.join("")).toContain("terminal_conn_error"),
+      );
+      utils.unmount();
+    });
   });
 });

@@ -321,7 +321,9 @@ def _build_lc_embeddings() -> Any:
         "ollama": lambda: _build_ollama_embeddings(runtime_model),
         "openrouter": lambda: _build_openrouter_embeddings(runtime_model),
     }
-    preference = runtime_pref if runtime_pref in builders else _s.embedding_provider
+    preference = (
+        runtime_pref if runtime_pref in builders else (_s.embedding_provider or "")
+    )
     if preference in builders:
         preferred = builders[preference]()
         if preferred is not None:

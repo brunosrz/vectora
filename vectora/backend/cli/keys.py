@@ -271,7 +271,7 @@ async def _step_select_llm(
     console.print(table)
     console.print()
 
-    provider_choice = None
+    provider_choice = ""
     while provider_choice not in LLM_PROVIDERS:
         raw = (await asyncio.to_thread(input, "Escolha o provider (1-5): ")).strip()
         if raw in LLM_PROVIDERS:

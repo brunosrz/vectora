@@ -47,6 +47,14 @@ vi.mock("./sidebar-utils", () => ({
   shortWorkspaceName: (ws: WorkspaceInfo) => ws.name ?? ws.id,
 }));
 
+// Corta a cadeia transitiva até o docked editor (file-editor.tsx importa
+// @monaco-editor/react + lib/monaco/setup, que registra web workers reais
+// via imports `?worker` — sem sentido fora de um browser real).
+vi.mock("@monaco-editor/react", () => ({ default: () => null }));
+vi.mock("@/lib/monaco/setup", () => ({
+  languageFromPath: () => "plaintext",
+}));
+
 afterEach(cleanup);
 
 function makeThread(id: string): Thread {

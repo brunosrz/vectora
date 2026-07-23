@@ -204,7 +204,7 @@ def sanitize_semantic_fragment(fragment: dict) -> dict:
                 continue
             if e.get("source") != rn_id:
                 continue
-            target_id = e.get("target")
+            target_id = e.get("target", "")
             if target_id not in node_by_id or target_id in remove_ids:
                 continue
             rationale_attrs.setdefault(target_id, []).append(text)

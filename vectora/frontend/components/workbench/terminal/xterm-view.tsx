@@ -109,9 +109,24 @@ export function XtermView({
         // sem token: o backend recusa
       }
 
-      const wsBase = VECTORA_API_URL.replace(/^http/i, "ws");
+      // No desktop Electron, a página carrega de `vectora-app://app/` (scheme
+      // custom, não http/https) — uma URL relativa de WebSocket não resolve
+      // pra `ws://` contra essa origem (só fetch/HTTP passa pelo proxy de
+      // protocolo do main process) e o construtor lançaria SyntaxError.
+      // window.vectora expõe a origem real do backend nesse caso; fora do
+      // Electron (browser/dev server), VECTORA_API_URL já resolve certo.
+      const bridgeOrigin = await window.vectora?.getBackendWsOrigin?.();
+      const wsBase = bridgeOrigin ?? VECTORA_API_URL.replace(/^http/i, "ws");
       const url = `${wsBase}/vectora.terminal.v1/ws?terminal_id=${encodeURIComponent(terminalId)}&thread_id=${encodeURIComponent(threadId)}&workspace_id=${encodeURIComponent(workspaceId)}&token=${encodeURIComponent(token)}`;
-      const ws = new WebSocket(url);
+      if (cancelled) return;
+
+      let ws: WebSocket;
+      try {
+        ws = new WebSocket(url);
+      } catch {
+        term.write(`\r\n\x1b[31m[${m.terminal_conn_error()}]\x1b[0m\r\n`);
+        return;
+      }
       ws.binaryType = "arraybuffer";
       wsRef.current = ws;
 

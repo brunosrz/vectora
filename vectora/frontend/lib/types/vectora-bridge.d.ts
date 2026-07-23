@@ -29,6 +29,11 @@ export interface VectoraDesktopBridge {
   /** Dispara uma checagem manual de atualização — independente do toggle
    * de auto-update (que só gate os timers automáticos, ver main.ts). */
   checkForUpdate?: () => void;
+  /** Origem `ws://127.0.0.1:{porta}` do backend — necessária porque o
+   * renderer carrega de `vectora-app://`, scheme custom contra o qual uma
+   * URL relativa de WebSocket não resolve pra `ws://` (só HTTP/fetch passa
+   * pelo proxy de protocolo). `null` se o backend ainda não subiu porta. */
+  getBackendWsOrigin?: () => Promise<string | null>;
   windowControls?: {
     minimize: () => void;
     maximizeToggle: () => void;

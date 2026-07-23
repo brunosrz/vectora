@@ -717,6 +717,16 @@ function registerIpc(): void {
     "vectora:window-is-maximized",
     () => mainWindow?.isMaximized() ?? false,
   );
+
+  // WebSocket não passa pelo protocol.handle(APP_SCHEME, forwardToBackend)
+  // (só cobre fetch/HTTP) — o renderer carrega de vectora-app://, um scheme
+  // custom contra o qual `new WebSocket("/caminho")` não resolve pra ws://
+  // como resolveria numa origem http:// normal. O backend sempre escuta em
+  // TCP loopback (mesmo quando o transporte HTTP principal é UDS/named
+  // pipe), então expõe essa origem pro renderer construir URLs absolutas.
+  ipcMain.handle("vectora:get-backend-ws-origin", () =>
+    backendPort !== null ? `ws://127.0.0.1:${backendPort}` : null,
+  );
 }
 
 // ---------------------------------------------------------------------------
