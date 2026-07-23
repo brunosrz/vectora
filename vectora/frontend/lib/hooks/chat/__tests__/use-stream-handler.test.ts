@@ -1190,12 +1190,13 @@ describe("useStreamHandler — workspace de sessão nova", () => {
     markCreateNewWorkspace("t1");
 
     // Queda de transporte total — nenhum evento chega, nem o `thread` que
-    // confirmaria o workspace resolvido.
-    streamChatMock.mockReturnValue(
-      (async function* (): AsyncGenerator<StreamEvent> {
-        throw new Error("conexão perdida");
-      })(),
-    );
+    // confirmaria o workspace resolvido. Iterável assíncrono manual (não
+    // generator) porque a rejeição acontece antes de qualquer yield.
+    streamChatMock.mockReturnValue({
+      [Symbol.asyncIterator]: () => ({
+        next: () => Promise.reject(new Error("conexão perdida")),
+      }),
+    } as AsyncGenerator<StreamEvent>);
 
     const { result } = renderHook(() =>
       useStreamHandler({ threadId: "t1", setMessages }),

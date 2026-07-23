@@ -18,6 +18,10 @@ import {
 // extensão explícita, Node tentaria parsear este require() puro como ESM.
 const DUMMY_BACKEND = path.join(__dirname, "fixtures", "dummy-backend.cjs");
 
+function unreachableExistsFn(): never {
+  throw new Error("não deveria ser chamado com override setado");
+}
+
 let spawned: ChildProcess[] = [];
 
 function spawnDummy(env: NodeJS.ProcessEnv): ChildProcess {
@@ -30,13 +34,16 @@ function spawnDummy(env: NodeJS.ProcessEnv): ChildProcess {
 }
 
 afterEach(async () => {
-  for (const child of spawned) {
-    if (child.pid && child.exitCode === null) {
-      await new Promise<void>((resolve) => {
-        treeKill(child.pid!, () => resolve());
-      });
-    }
-  }
+  await Promise.all(
+    spawned
+      .filter((child) => child.pid && child.exitCode === null)
+      .map(
+        (child) =>
+          new Promise<void>((resolve) => {
+            treeKill(child.pid!, () => resolve());
+          }),
+      ),
+  );
   spawned = [];
 });
 
@@ -84,14 +91,11 @@ describe("backendPath", () => {
 
 describe("natsBinaryPath", () => {
   it("usa VECTORA_NATS_BINARY quando setado, sem checar filesystem", () => {
-    const existsFn = () => {
-      throw new Error("não deveria ser chamado com override setado");
-    };
     const p = natsBinaryPath(
       { VECTORA_NATS_BINARY: "/custom/nats-server" },
       "linux",
       "/resources",
-      existsFn,
+      unreachableExistsFn,
     );
     expect(p).toBe("/custom/nats-server");
   });

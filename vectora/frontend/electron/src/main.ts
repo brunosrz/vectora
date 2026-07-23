@@ -541,7 +541,8 @@ function createTray(): void {
   refreshTrayMenu();
   tray.on("click", () => {
     if (mainWindow) {
-      mainWindow.isVisible() ? mainWindow.focus() : mainWindow.show();
+      if (mainWindow.isVisible()) mainWindow.focus();
+      else mainWindow.show();
     } else {
       createWindow();
     }

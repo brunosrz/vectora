@@ -13,6 +13,7 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  act,
 } from "@testing-library/react";
 
 import type { TerminalInstance } from "@/lib/stores/terminals-store";
@@ -124,14 +125,21 @@ function term(
   return { id, title, workspaceId };
 }
 
+// TerminalPanel dispara um fetch (status do sandbox) no mount; sem isso, o
+// setState da resposta acontece depois do teste terminar e fora de act().
+async function flush(): Promise<void> {
+  await act(async () => {});
+}
+
 describe("TerminalPanel", () => {
-  it("sem workspace ativo: mostra mensagem de nenhum workspace", () => {
+  it("sem workspace ativo: mostra mensagem de nenhum workspace", async () => {
     mockWorkspace = null;
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     expect(screen.getByText("terminal_no_workspace")).toBeInTheDocument();
   });
 
-  it("workspace não confiável: mostra aviso e não abre terminal automático", () => {
+  it("workspace não confiável: mostra aviso e não abre terminal automático", async () => {
     mockWorkspace = {
       id: "ws1",
       name: "proj",
@@ -140,13 +148,15 @@ describe("TerminalPanel", () => {
       is_git_repo: false,
     };
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     expect(screen.getByText("terminal_untrusted_title")).toBeInTheDocument();
     expect(mockOpen).not.toHaveBeenCalled();
   });
 
-  it("workspace confiável sem terminais: abre 1 terminal automaticamente ao montar", () => {
+  it("workspace confiável sem terminais: abre 1 terminal automaticamente ao montar", async () => {
     mockList = [];
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     expect(mockOpen).toHaveBeenCalledTimes(1);
     const [threadId, instance] = mockOpen.mock.calls[0];
     expect(threadId).toBe("t1");
@@ -154,42 +164,47 @@ describe("TerminalPanel", () => {
     expect(typeof instance.id).toBe("string");
   });
 
-  it("workspace confiável com terminais existentes: não chama open() automaticamente", () => {
+  it("workspace confiável com terminais existentes: não chama open() automaticamente", async () => {
     mockList = [term("a", "shell 1")];
     mockActiveId = "a";
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     expect(mockOpen).not.toHaveBeenCalled();
   });
 
-  it("renderiza uma aba por terminal com o título correto", () => {
+  it("renderiza uma aba por terminal com o título correto", async () => {
     mockList = [term("a", "shell 1"), term("b", "shell 2")];
     mockActiveId = "a";
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     expect(screen.getByText("shell 1")).toBeInTheDocument();
     expect(screen.getByText("shell 2")).toBeInTheDocument();
   });
 
-  it("clicar no botão + (nova aba) chama open() com o threadId correto", () => {
+  it("clicar no botão + (nova aba) chama open() com o threadId correto", async () => {
     mockList = [term("a", "shell 1")];
     mockActiveId = "a";
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     fireEvent.click(screen.getByTitle("terminal_new"));
     expect(mockOpen).toHaveBeenCalledTimes(1);
     expect(mockOpen.mock.calls[0][0]).toBe("t1");
   });
 
-  it("clicar em uma aba inativa chama setActive com o id certo", () => {
+  it("clicar em uma aba inativa chama setActive com o id certo", async () => {
     mockList = [term("a", "shell 1"), term("b", "shell 2")];
     mockActiveId = "a";
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     fireEvent.click(screen.getByText("shell 2"));
     expect(mockSetActive).toHaveBeenCalledWith("t1", "b");
   });
 
-  it("clicar no X de uma aba chama close() sem também disparar setActive (stopPropagation)", () => {
+  it("clicar no X de uma aba chama close() sem também disparar setActive (stopPropagation)", async () => {
     mockList = [term("a", "shell 1")];
     mockActiveId = "a";
     const { container } = render(<TerminalPanel threadId="t1" />);
+    await flush();
     const closeHandle = container.querySelector(
       "[role='button']",
     ) as HTMLElement;
@@ -199,19 +214,21 @@ describe("TerminalPanel", () => {
     expect(mockSetActive).not.toHaveBeenCalled();
   });
 
-  it("aba sem terminal algum (list vazia após montar) não quebra a renderização das abas", () => {
+  it("aba sem terminal algum (list vazia após montar) não quebra a renderização das abas", async () => {
     mockList = [];
     mockActiveId = null;
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     // só o botão de nova aba deve existir, nenhuma aba de terminal
     expect(screen.queryByTestId("xterm-view")).not.toBeInTheDocument();
     expect(screen.getByTitle("terminal_new")).toBeInTheDocument();
   });
 
-  it("renderiza um XtermView por terminal, passando terminalId/threadId/workspaceId", () => {
+  it("renderiza um XtermView por terminal, passando terminalId/threadId/workspaceId", async () => {
     mockList = [term("a", "shell 1", "ws1"), term("b", "shell 2", "ws1")];
     mockActiveId = "a";
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     const views = screen.getAllByTestId("xterm-view");
     expect(views).toHaveLength(2);
     expect(views[0]).toHaveAttribute("data-terminal-id", "a");
@@ -219,19 +236,21 @@ describe("TerminalPanel", () => {
     expect(views[0]).toHaveAttribute("data-workspace-id", "ws1");
   });
 
-  it("só o terminal ativo fica visível (visibility:visible); os demais ficam hidden", () => {
+  it("só o terminal ativo fica visível (visibility:visible); os demais ficam hidden", async () => {
     mockList = [term("a", "shell 1"), term("b", "shell 2")];
     mockActiveId = "b";
     const { container } = render(<TerminalPanel threadId="t1" />);
+    await flush();
     const wrappers = container.querySelectorAll(".absolute.inset-0");
     expect(wrappers[0]).toHaveStyle({ visibility: "hidden" });
     expect(wrappers[1]).toHaveStyle({ visibility: "visible" });
   });
 
-  it("XtermView chamando onClosed() propaga para close() do store", () => {
+  it("XtermView chamando onClosed() propaga para close() do store", async () => {
     mockList = [term("a", "shell 1")];
     mockActiveId = "a";
     render(<TerminalPanel threadId="t1" />);
+    await flush();
     fireEvent.click(screen.getByTestId("xterm-view"));
     expect(mockClose).toHaveBeenCalledWith("t1", "a");
   });

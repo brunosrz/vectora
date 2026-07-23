@@ -65,6 +65,7 @@ class FakeFitAddon {
   }
 }
 
+// oxlint-disable-next-line typescript/no-extraneous-class -- mock constructível p/ vi.mock, sem estado próprio
 class FakeWebLinksAddon {}
 
 vi.mock("@xterm/xterm", () => ({ Terminal: FakeTerminal }));

@@ -20,7 +20,22 @@
     "unicorn/filename-case": "off",
     "import/no-cycle": "off",
     "react/no-unstable-nested-components": ["warn", { "allowAsProps": true }],
-    "import/no-unassigned-import": ["warn", { "allow": ["**/*.css", "react"] }]
+    "import/no-unassigned-import": ["warn", { "allow": ["**/*.css", "react"] }],
+    "no-await-in-loop": "off",
+    "no-underscore-dangle": [
+      "warn",
+      {
+        "allow": [
+          "_backendLog",
+          "_MAX_LOG_LINES",
+          "_BACKEND_PID_FILE",
+          "_HOP_BY_HOP",
+          "_cookieStore",
+          "_SESSION_STORE_FILE",
+          "_resourcesPath"
+        ]
+      }
+    ]
   },
   "ignorePatterns": [
     "node_modules",
