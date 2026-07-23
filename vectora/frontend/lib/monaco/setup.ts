@@ -6,6 +6,13 @@
  * Vectora). Aqui apontamos o loader para o pacote `monaco-editor` empacotado
  * pelo Vite e registramos os web workers via imports `?worker`.
  *
+ * Os workers são importados por caminho relativo a `node_modules`, não pelo
+ * specifier nu do pacote (`monaco-editor/esm/...`): o resolver do Rolldown
+ * (bundler do Vite 8) falha ao resolver o primeiro import `?worker` com
+ * specifier de pacote de cada build — não importa qual worker é o primeiro,
+ * sempre quebra; caminho relativo evita essa resolução via `exports` do
+ * `package.json` e não depende de ordem.
+ *
  * Importar este módulo (efeito colateral) antes de montar qualquer `<Editor>`.
  */
 
@@ -13,11 +20,11 @@
 // construtor Worker como default); o resolver do oxlint não os entende.
 /* oxlint-disable import/default */
 import * as monaco from "monaco-editor";
-import editorWorker from "monaco-editor/esm/vs/editor/editor.worker.js?worker";
-import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker.js?worker";
-import cssWorker from "monaco-editor/esm/vs/language/css/css.worker.js?worker";
-import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker.js?worker";
-import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker.js?worker";
+import editorWorker from "../../node_modules/monaco-editor/esm/vs/editor/editor.worker.js?worker";
+import jsonWorker from "../../node_modules/monaco-editor/esm/vs/language/json/json.worker.js?worker";
+import cssWorker from "../../node_modules/monaco-editor/esm/vs/language/css/css.worker.js?worker";
+import htmlWorker from "../../node_modules/monaco-editor/esm/vs/language/html/html.worker.js?worker";
+import tsWorker from "../../node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js?worker";
 import { loader } from "@monaco-editor/react";
 
 declare global {
