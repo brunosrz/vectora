@@ -46,6 +46,7 @@ interface MCPConnector {
   env_vars: string[];
   homepage: string;
   category: string;
+  vectora_verified: boolean;
 }
 
 async function fetchRegistry(): Promise<MCPConnector[]> {
@@ -232,17 +233,25 @@ function ConnectorCard({
           <Puzzle className="w-4 h-4 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium truncate">
-              {connector.name}
-            </span>
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+          <span className="block text-sm font-medium truncate">
+            {connector.name}
+          </span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Badge
+              variant="secondary"
+              className="text-[10px] h-4 px-1.5 shrink-0"
+            >
               {connector.category}
             </Badge>
+            {connector.vectora_verified && (
+              <Badge className="text-[10px] h-4 px-1.5 shrink-0">
+                {m.library_mcp_verified()}
+              </Badge>
+            )}
+            <p className="text-xs text-muted-foreground truncate">
+              {connector.description}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground truncate">
-            {connector.description}
-          </p>
         </div>
         <Button
           variant={installed ? "outline" : "default"}

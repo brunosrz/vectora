@@ -155,9 +155,156 @@ async def test_list_registry_merges_official_mcp_registry_entries(
     assert any(c.id == "com.example/foo" for c in result)
 
 
+@pytest.mark.asyncio
+async def test_list_registry_orders_verified_first_then_alphabetical(
+    monkeypatch, _no_remote_registry
+):
+    """Sem métrica real de popularidade na fonte, a ordenação é: conectores
+    curados (`vectora_verified`) primeiro, resto em ordem alfabética por
+    nome — nunca inventa relevância que a fonte não tem."""
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_official_mcp_registry",
+        AsyncMock(
+            return_value=[
+                {
+                    "id": "zzz-unverified",
+                    "name": "Zzz Unverified",
+                    "description": "d",
+                    "category": "community",
+                },
+                {
+                    "id": "aaa-unverified",
+                    "name": "Aaa Unverified",
+                    "description": "d",
+                    "category": "community",
+                },
+            ]
+        ),
+    )
+
+    result = await list_registry()
+
+    verified_names = [c.name for c in result if c.vectora_verified]
+    unverified_names = [c.name for c in result if not c.vectora_verified]
+    assert verified_names == sorted(verified_names, key=str.lower)
+    assert unverified_names == ["Aaa Unverified", "Zzz Unverified"]
+    # Todos os verificados vêm antes de todos os não-verificados.
+    assert result.index(next(c for c in result if c.vectora_verified)) == 0
+    first_unverified_idx = next(
+        i for i, c in enumerate(result) if not c.vectora_verified
+    )
+    assert all(c.vectora_verified for c in result[:first_unverified_idx])
+
+
+@pytest.mark.asyncio
+async def test_list_registry_no_real_source_has_no_verified_entries_still_sorts(
+    monkeypatch, _no_remote_registry
+):
+    """Erro/borda: lista só com entradas do registry externo (sem nenhum
+    verificado) ainda ordena alfabeticamente, não quebra."""
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(mcp_marketplace, "_REGISTRY", [])
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_official_mcp_registry",
+        AsyncMock(
+            return_value=[
+                {"id": "b", "name": "Bbb", "description": "d"},
+                {"id": "a", "name": "Aaa", "description": "d"},
+            ]
+        ),
+    )
+
+    result = await list_registry()
+
+    assert [c.name for c in result] == ["Aaa", "Bbb"]
+    assert all(not c.vectora_verified for c in result)
+
+
+@pytest.mark.asyncio
+async def test_list_registry_fetches_remote_and_official_in_parallel(
+    monkeypatch, _no_remote_registry
+):
+    """Regressão de performance: as duas fontes remotas são buscadas em
+    paralelo (asyncio.gather), não sequencialmente — o tempo total fica perto
+    do maior atraso individual, não da soma dos dois."""
+    import asyncio
+    import time
+
+    from backend.api.handlers import mcp_marketplace
+
+    async def _slow_catalog(kind):
+        await asyncio.sleep(0.1)
+        return []
+
+    async def _slow_official():
+        await asyncio.sleep(0.1)
+        return []
+
+    monkeypatch.setattr(mcp_marketplace.registry_client, "fetch_catalog", _slow_catalog)
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client, "fetch_official_mcp_registry", _slow_official
+    )
+
+    start = time.monotonic()
+    await list_registry()
+    elapsed = time.monotonic() - start
+
+    assert elapsed < 0.18
+
+
+@pytest.mark.asyncio
+async def test_install_mcp_resolves_connector_from_remote_or_official_registry(
+    _functional_store, monkeypatch
+):
+    """Fecha o gap encontrado: install_mcp só buscava em _REGISTRY (os 6
+    hardcoded) — agora resolve qualquer conector visível em list_registry(),
+    incluindo entradas do registry oficial de MCP."""
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_official_mcp_registry",
+        AsyncMock(
+            return_value=[
+                {
+                    "id": "com.example/foo",
+                    "name": "Foo",
+                    "description": "d",
+                    "install_cmd": "npx -y foo-mcp",
+                    "env_vars": [],
+                    "homepage": "",
+                    "category": "community",
+                }
+            ]
+        ),
+    )
+
+    result = await install_mcp(InstallRequest(mcp_id="com.example/foo"))
+
+    assert result["status"] == "installed"
+    servers = _functional_store.list_servers("local")
+    assert any(s.name == "com.example/foo" for s in servers)
+
+
 @pytest.fixture
-def _functional_store(tmp_path, monkeypatch):
-    """Aponta o store MCP funcional (plugins) para um dir temporário isolado."""
+def _functional_store(tmp_path, monkeypatch, _no_remote_registry):
+    """Aponta o store MCP funcional (plugins) para um dir temporário isolado.
+
+    Também isola dos registries remotos (`_no_remote_registry`) — `install_mcp`
+    resolve o conector via `list_registry()`, que sem isso tocaria rede real
+    nesses testes unitários.
+    """
     from backend.workspace import plugins
 
     monkeypatch.setattr(plugins, "_plugins_dir", lambda: tmp_path / "mcp")

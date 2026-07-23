@@ -712,6 +712,7 @@
   "library_mcp_error_missing_env": "{key} is required.",
   "library_mcp_error_install": "Error installing connector",
   "library_mcp_error_uninstall": "Error removing connector",
+  "library_mcp_verified": "Verified",
   "library_mcp_advanced_toggle": "Add MCP manually (advanced)",
   "library_skills_catalog_title": "Catalog",
   "library_skills_catalog_empty": "No curated skills available yet.",

@@ -35,6 +35,7 @@ const REGISTRY = [
     env_vars: [],
     homepage: "https://example.com",
     category: "filesystem",
+    vectora_verified: true,
   },
   {
     id: "brave-search",
@@ -44,6 +45,7 @@ const REGISTRY = [
     env_vars: ["BRAVE_API_KEY"],
     homepage: "https://example.com",
     category: "web",
+    vectora_verified: false,
   },
 ];
 
@@ -101,6 +103,15 @@ describe("McpSection", () => {
       expect(screen.getByText("Filesystem")).toBeTruthy();
       expect(screen.getByText("Brave Search")).toBeTruthy();
     });
+  });
+
+  it("mostra o badge 'Verificado' só para conectores curados (vectora_verified)", async () => {
+    render(<McpSection query="" onCountChange={() => {}} />);
+    await waitFor(() => {
+      expect(screen.getByText("Filesystem")).toBeTruthy();
+    });
+    const badges = screen.getAllByText("Verified");
+    expect(badges).toHaveLength(1);
   });
 
   it("reporta a contagem filtrada via onCountChange", async () => {

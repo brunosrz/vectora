@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 /**
- * SkillsSection — seção Skills da Library. Cobre a sub-área "Catálogo"
- * (Sprint 6): toggle abre/fecha, lista GET /skills/catalog, instalar chama
- * POST /skills {source}; erro/borda: catálogo vazio mostra estado
- * específico, não quebra a lista de instaladas ao lado (SkillsTab, mockado).
+ * SkillsSection — seção Skills da Library. Cobre a sub-área "Catálogo":
+ * vem expandida por padrão (não escondida atrás de um toggle fechado —
+ * regressão de descoberta), lista GET /skills/catalog, instalar chama
+ * POST /skills {source}, toggle ainda permite recolher/reabrir; erro/borda:
+ * catálogo vazio mostra estado específico, não quebra a lista de instaladas
+ * ao lado (SkillsTab, mockado).
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
@@ -52,12 +54,24 @@ function mockFetch(entries: typeof CATALOG = CATALOG, installOk = true) {
 }
 
 describe("SkillsSection — Catálogo", () => {
-  it("toggle abre o catálogo e lista as skills curadas do registry remoto", async () => {
+  it("vem expandido por padrão e lista as skills curadas do registry remoto sem precisar de clique", async () => {
     mockFetch();
     render(<SkillsSection query="" onCountChange={() => {}} />);
 
-    fireEvent.click(screen.getByText("Browse catalog"));
+    await waitFor(() => {
+      expect(screen.getByText("PDF Extract")).toBeTruthy();
+    });
+  });
 
+  it("toggle ainda permite recolher e reabrir o catálogo", async () => {
+    mockFetch();
+    render(<SkillsSection query="" onCountChange={() => {}} />);
+    await waitFor(() => screen.getByText("PDF Extract"));
+
+    fireEvent.click(screen.getByText("Browse catalog"));
+    expect(screen.queryByText("PDF Extract")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Browse catalog"));
     await waitFor(() => {
       expect(screen.getByText("PDF Extract")).toBeTruthy();
     });
@@ -66,7 +80,6 @@ describe("SkillsSection — Catálogo", () => {
   it("instalar chama POST /skills com o source da skill", async () => {
     mockFetch();
     render(<SkillsSection query="" onCountChange={() => {}} />);
-    fireEvent.click(screen.getByText("Browse catalog"));
     await waitFor(() => screen.getByText("PDF Extract"));
 
     fireEvent.click(screen.getByText("Install"));
@@ -86,8 +99,6 @@ describe("SkillsSection — Catálogo", () => {
     mockFetch([]);
     render(<SkillsSection query="" onCountChange={() => {}} />);
     expect(screen.getByText("stub-skills-tab")).toBeTruthy();
-
-    fireEvent.click(screen.getByText("Browse catalog"));
 
     await waitFor(() => {
       expect(screen.getByText("No curated skills available yet.")).toBeTruthy();

@@ -69,12 +69,15 @@ def _cache_is_fresh(payload: dict, ttl: timedelta) -> bool:
 async def fetch_catalog(kind: RegistryKind) -> list[dict]:
     """Busca o catálogo `kind` ("mcp" | "skills") do registry remoto.
 
-    Sucesso grava cache local (TTL 6h online). Falha de rede cai pro cache
-    existente (até 48h stale). Sem rede e sem cache: lista vazia — nunca
-    levanta exceção (tools/handlers que chamam isto degradam pro próprio
-    fallback, não travam).
+    Cache-first: com cache ainda dentro do TTL online (6h), serve direto
+    sem tocar rede. Sucesso de rede (cache ausente/expirado) grava cache
+    local. Falha de rede cai pro cache existente (até 48h stale). Sem rede
+    e sem cache: lista vazia — nunca levanta exceção (tools/handlers que
+    chamam isto degradam pro próprio fallback, não travam).
     """
     cache = _read_cache(kind)
+    if cache is not None and _cache_is_fresh(cache, CACHE_TTL_ONLINE):
+        return list(cache.get("entries", []))
     try:
         async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
             resp = await client.get(f"{_registry_url()}/{kind}")
@@ -127,18 +130,21 @@ def _official_entry_to_connector_dict(item: dict) -> dict | None:
     }
 
 
-async def fetch_official_mcp_registry(*, max_entries: int = 200) -> list[dict]:
+async def fetch_official_mcp_registry(*, max_entries: int = 100) -> list[dict]:
     """Busca o catálogo oficial de MCP servers em registry.modelcontextprotocol.io
     (mantido pela Anthropic/comunidade — não confundir com o registry próprio
     da Vectora em `services/`). Só inclui servers com pacote npm/stdio (único
     transporte que o fluxo de instalação atual suporta); servers remote-only
     (`remotes: [...]`, sem `packages`) são ignorados por ora.
 
-    Mesma política de cache/fallback de `fetch_catalog`: sucesso grava cache
-    (TTL 6h), falha de rede cai pro cache existente (até 48h), sem nada disso
-    devolve lista vazia — nunca propaga exceção.
+    Mesma política de cache/fallback de `fetch_catalog`: cache-first dentro
+    do TTL online (6h) sem tocar rede, sucesso de rede grava cache, falha de
+    rede cai pro cache existente (até 48h), sem nada disso devolve lista
+    vazia — nunca propaga exceção.
     """
     cache = _read_cache("mcp_official")
+    if cache is not None and _cache_is_fresh(cache, CACHE_TTL_ONLINE):
+        return list(cache.get("entries", []))
     try:
         connectors: dict[str, dict] = {}
         cursor: str | None = None

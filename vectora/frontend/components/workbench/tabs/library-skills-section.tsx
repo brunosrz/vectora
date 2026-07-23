@@ -102,7 +102,7 @@ function CatalogCard({ skill }: { skill: CatalogSkill }) {
 }
 
 function SkillsCatalog() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [entries, setEntries] = useState<CatalogSkill[]>([]);
   const [loading, setLoading] = useState(false);
 

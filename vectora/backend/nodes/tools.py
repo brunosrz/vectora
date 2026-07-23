@@ -93,11 +93,17 @@ from backend.tools.git import (
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.learning import install_learned_skill, learn_from_session
+from backend.tools.library import (
+    install_mcp_from_registry,
+    install_memory_bucket,
+    install_skill_from_catalog,
+)
 from backend.tools.linear import (
     linear_create_issue,
     linear_list_issues,
     linear_update_issue,
 )
+from backend.tools.mcp import call_mcp_tool
 from backend.tools.memory import delete_memory, get_memory, save_memory, search_memory
 from backend.tools.native import (
     base64_decode,
@@ -174,6 +180,15 @@ MEMORY_TOOLS: list[BaseTool] = [
     search_memory,
     learn_from_session,
     install_learned_skill,
+]
+
+#: Ferramentas da Library: auto-instalar MCP/Skills/Memory Library, invocar
+#: MCP externo já conectado
+LIBRARY_TOOLS: list[BaseTool] = [
+    call_mcp_tool,
+    install_mcp_from_registry,
+    install_skill_from_catalog,
+    install_memory_bucket,
 ]
 
 #: Ferramentas de workspace e manifests (B6)
@@ -288,6 +303,10 @@ for _t in [
     search_memory,
     learn_from_session,
     install_learned_skill,
+    call_mcp_tool,
+    install_mcp_from_registry,
+    install_skill_from_catalog,
+    install_memory_bucket,
     workspace_describe,
     workspace_list,
     bucket_summary,

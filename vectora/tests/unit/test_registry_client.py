@@ -341,7 +341,16 @@ async def test_fetch_catalog_corrupted_cache_file_is_ignored_not_raised(monkeypa
 
 @pytest.mark.asyncio
 async def test_fetch_catalog_empty_entries_from_remote_overwrites_cache(monkeypatch):
-    registry_client._write_cache("skills", [{"id": "old"}])
+    # Cache expirado (fora do TTL online) — precisa tocar rede, não é servido
+    # pelo fast path cache-first.
+    stale = {
+        "entries": [{"id": "old"}],
+        "fetched_at": (datetime.now(UTC) - timedelta(hours=20)).isoformat(),
+    }
+    registry_client._cache_path("skills").parent.mkdir(parents=True, exist_ok=True)
+    registry_client._cache_path("skills").write_text(
+        json.dumps(stale), encoding="utf-8"
+    )
 
     async def _fake_get(self, url, **kwargs):
         return httpx.Response(
@@ -356,6 +365,52 @@ async def test_fetch_catalog_empty_entries_from_remote_overwrites_cache(monkeypa
     cache_path = registry_client._cache_path("skills")
     cached = json.loads(cache_path.read_text(encoding="utf-8"))
     assert cached["entries"] == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_catalog_fresh_cache_is_served_without_touching_network(
+    monkeypatch,
+):
+    registry_client._write_cache("mcp", [{"id": "fresh-cached"}])
+    called = False
+
+    async def _fake_get(self, url, **kwargs):
+        nonlocal called
+        called = True
+        return httpx.Response(
+            200,
+            json={"entries": [{"id": "should-not-be-used"}]},
+            request=httpx.Request("GET", url),
+        )
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", _fake_get)
+
+    entries = await registry_client.fetch_catalog("mcp")
+
+    assert entries == [{"id": "fresh-cached"}]
+    assert called is False
+
+
+@pytest.mark.asyncio
+async def test_fetch_official_mcp_registry_fresh_cache_is_served_without_network(
+    monkeypatch,
+):
+    registry_client._write_cache("mcp_official", [{"id": "fresh-cached"}])
+    called = False
+
+    async def _fake_get(self, url, params=None, **kwargs):
+        nonlocal called
+        called = True
+        return httpx.Response(
+            200, json={"servers": []}, request=httpx.Request("GET", url)
+        )
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", _fake_get)
+
+    entries = await registry_client.fetch_official_mcp_registry()
+
+    assert entries == [{"id": "fresh-cached"}]
+    assert called is False
 
 
 @pytest.mark.asyncio

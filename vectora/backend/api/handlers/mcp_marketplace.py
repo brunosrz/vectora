@@ -12,6 +12,7 @@ Routes (montadas em server.py):
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import TYPE_CHECKING
@@ -42,6 +43,7 @@ class MCPConnector(BaseModel):
     env_vars: list[str] = []
     homepage: str = ""
     category: str = "general"
+    vectora_verified: bool = False
 
 
 class InstallRequest(BaseModel):
@@ -67,6 +69,7 @@ _REGISTRY: list[MCPConnector] = [
         env_vars=["BRAVE_API_KEY"],
         homepage="https://github.com/modelcontextprotocol/servers",
         category="web",
+        vectora_verified=True,
     ),
     MCPConnector(
         id="filesystem",
@@ -76,6 +79,7 @@ _REGISTRY: list[MCPConnector] = [
         env_vars=[],
         homepage="https://github.com/modelcontextprotocol/servers",
         category="filesystem",
+        vectora_verified=True,
     ),
     MCPConnector(
         id="github",
@@ -85,6 +89,7 @@ _REGISTRY: list[MCPConnector] = [
         env_vars=["GITHUB_PERSONAL_ACCESS_TOKEN"],
         homepage="https://github.com/modelcontextprotocol/servers",
         category="devtools",
+        vectora_verified=True,
     ),
     MCPConnector(
         id="postgres",
@@ -94,6 +99,7 @@ _REGISTRY: list[MCPConnector] = [
         env_vars=["POSTGRES_CONNECTION_STRING"],
         homepage="https://github.com/modelcontextprotocol/servers",
         category="database",
+        vectora_verified=True,
     ),
     MCPConnector(
         id="slack",
@@ -103,6 +109,7 @@ _REGISTRY: list[MCPConnector] = [
         env_vars=["SLACK_BOT_TOKEN", "SLACK_TEAM_ID"],
         homepage="https://github.com/modelcontextprotocol/servers",
         category="communication",
+        vectora_verified=True,
     ),
     MCPConnector(
         id="sequential-thinking",
@@ -112,6 +119,7 @@ _REGISTRY: list[MCPConnector] = [
         env_vars=[],
         homepage="https://github.com/modelcontextprotocol/servers",
         category="reasoning",
+        vectora_verified=True,
     ),
 ]
 
@@ -154,6 +162,7 @@ def _remote_entry_to_connector(entry: dict) -> MCPConnector | None:
             env_vars=list(env_vars) if env_vars else [],
             homepage=entry.get("homepage") or "",
             category=entry.get("category", "general"),
+            vectora_verified=bool(entry.get("vectora_verified")),
         )
     except Exception:
         logger.warning("mcp_marketplace: entrada remota malformada ignorada: %r", entry)
@@ -172,9 +181,17 @@ async def list_registry() -> list[MCPConnector]:
        suporta hoje).
     3. Fallback hardcoded local (`_REGISTRY`) — só entra se nem 1 nem 2
        responderem (sem rede/cache), nunca deixa a lista vazia.
+
+    As duas primeiras fontes são buscadas em paralelo (cada uma já é
+    cache-first dentro de `registry_client`) — nenhuma depende da outra.
+    A lista final ordena verificados primeiro (curados, `vectora_verified`),
+    resto em ordem alfabética por nome — nunca inventa métrica de
+    popularidade que a fonte não tem.
     """
-    remote = await registry_client.fetch_catalog("mcp")
-    official = await registry_client.fetch_official_mcp_registry()
+    remote, official = await asyncio.gather(
+        registry_client.fetch_catalog("mcp"),
+        registry_client.fetch_official_mcp_registry(),
+    )
     connectors: dict[str, MCPConnector] = {}
     for entry in remote:
         connector = _remote_entry_to_connector(entry)
@@ -186,11 +203,13 @@ async def list_registry() -> list[MCPConnector]:
             connectors.setdefault(connector.id, connector)
     for connector in _REGISTRY:
         connectors.setdefault(connector.id, connector)
-    return list(connectors.values())
+    return sorted(
+        connectors.values(), key=lambda c: (not c.vectora_verified, c.name.lower())
+    )
 
 
 async def install_mcp(req: InstallRequest, user_id: str = "local") -> dict:
-    connector = next((c for c in _REGISTRY if c.id == req.mcp_id), None)
+    connector = next((c for c in await list_registry() if c.id == req.mcp_id), None)
     if connector is None:
         return {
             "status": "error",

@@ -43,6 +43,9 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         "file_write",
         "file_write_tool",
         "install_learned_skill",
+        "install_mcp_from_registry",
+        "install_skill_from_catalog",
+        "install_memory_bucket",
     }
 )
 

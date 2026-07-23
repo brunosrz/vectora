@@ -712,6 +712,7 @@
   "library_mcp_error_missing_env": "{key} es obligatorio.",
   "library_mcp_error_install": "Error al instalar el conector",
   "library_mcp_error_uninstall": "Error al quitar el conector",
+  "library_mcp_verified": "Verificado",
   "library_mcp_advanced_toggle": "Agregar MCP manualmente (avanzado)",
   "library_skills_catalog_title": "Catálogo",
   "library_skills_catalog_empty": "Todavía no hay skills curadas disponibles.",
