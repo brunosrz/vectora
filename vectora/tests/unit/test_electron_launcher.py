@@ -28,27 +28,38 @@ def _patch_dirs(monkeypatch, frontend_dir: Path, electron_dir: Path) -> None:
 
 
 class TestResolveElectronLaunch:
-    def test_sem_main_js_retorna_none(self, tmp_path: Path, monkeypatch):
+    def test_sem_main_js_retorna_none(self, tmp_path: Path, monkeypatch, caplog):
         _patch_dirs(monkeypatch, tmp_path, tmp_path)
-        assert electron_launcher.resolve_electron_launch() is None
+        with caplog.at_level("WARNING"):
+            assert electron_launcher.resolve_electron_launch() is None
+        assert "ausente" in caplog.text
+        assert "electron:build" in caplog.text
 
-    def test_sem_path_txt_retorna_none(self, tmp_path: Path, monkeypatch):
+    def test_sem_path_txt_retorna_none(self, tmp_path: Path, monkeypatch, caplog):
         (tmp_path / "dist").mkdir()
         (tmp_path / "dist" / "main.js").write_text("// main", encoding="utf-8")
         _patch_dirs(monkeypatch, tmp_path, tmp_path)
-        assert electron_launcher.resolve_electron_launch() is None
+        with caplog.at_level("WARNING"):
+            assert electron_launcher.resolve_electron_launch() is None
+        # Erro/borda real encontrado ao vivo: `pnpm install --frozen-lockfile`
+        # reporta sucesso mesmo quando o postinstall do pacote `electron`
+        # nunca baixou o binário — o log precisa apontar o comando de reparo.
+        assert "postinstall" in caplog.text
+        assert "pnpm rebuild electron" in caplog.text
 
-    def test_path_txt_vazio_retorna_none(self, tmp_path: Path, monkeypatch):
+    def test_path_txt_vazio_retorna_none(self, tmp_path: Path, monkeypatch, caplog):
         (tmp_path / "dist").mkdir()
         (tmp_path / "dist" / "main.js").write_text("// main", encoding="utf-8")
         node_electron = tmp_path / "node_modules" / "electron"
         node_electron.mkdir(parents=True)
         (node_electron / "path.txt").write_text("", encoding="utf-8")
         _patch_dirs(monkeypatch, tmp_path, tmp_path)
-        assert electron_launcher.resolve_electron_launch() is None
+        with caplog.at_level("WARNING"):
+            assert electron_launcher.resolve_electron_launch() is None
+        assert "vazio" in caplog.text
 
     def test_binario_referenciado_nao_existe_retorna_none(
-        self, tmp_path: Path, monkeypatch
+        self, tmp_path: Path, monkeypatch, caplog
     ):
         # Par de erro: path.txt aponta para um executável que não foi
         # baixado (dist/ do pacote electron incompleto) — nunca lança.
@@ -58,7 +69,9 @@ class TestResolveElectronLaunch:
         node_electron.mkdir(parents=True)
         (node_electron / "path.txt").write_text("electron.exe", encoding="utf-8")
         _patch_dirs(monkeypatch, tmp_path, tmp_path)
-        assert electron_launcher.resolve_electron_launch() is None
+        with caplog.at_level("WARNING"):
+            assert electron_launcher.resolve_electron_launch() is None
+        assert "pnpm rebuild electron" in caplog.text
 
     def test_tudo_presente_resolve_executavel_e_main_js(
         self, tmp_path: Path, monkeypatch
