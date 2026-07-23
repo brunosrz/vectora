@@ -8,3 +8,9 @@ allowBuilds:
   workerd: true
   # sharp é transitivo e não é usado pelo worker — não compila o build nativo.
   sharp: false
+
+# Força a versão patched do sharp (CVE-2026-33327/33328/35590/35591 nas
+# libvips herdadas) mesmo com @cloudflare/vitest-pool-workers/wrangler
+# ainda resolvendo pra uma range mais antiga.
+overrides:
+  sharp: ">=0.35.0"
