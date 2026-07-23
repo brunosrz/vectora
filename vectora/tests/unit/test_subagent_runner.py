@@ -22,15 +22,15 @@ def test_subagent_types_cobre_coder_e_search():
 
 
 def test_spec_for_coder_retorna_spec_do_coder():
-    from backend.agents.coder import SUBAGENT_SPEC as coder_spec
+    from backend.agents import coder
 
-    assert _spec_for("coder") == coder_spec
+    assert _spec_for("coder") == coder.SUBAGENT_SPEC
 
 
 def test_spec_for_search_retorna_spec_do_search():
-    from backend.agents.search import SUBAGENT_SPEC as search_spec
+    from backend.agents import search
 
-    assert _spec_for("search") == search_spec
+    assert _spec_for("search") == search.SUBAGENT_SPEC
 
 
 def test_spec_for_tipo_invalido_levanta_value_error():
