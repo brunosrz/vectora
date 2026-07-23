@@ -160,6 +160,8 @@ export interface Thread {
   workspace_id?: string;
   /** Modo da sessão: "chat" | "dev". Sessões legadas sem modo são "dev". */
   mode?: string;
+  /** Sessão fixada — aparece no topo da lista da sidebar. */
+  pinned?: boolean;
 }
 
 export interface HistoryMessage {
@@ -354,11 +356,12 @@ export const deleteThread = (thread_id: string): Promise<{}> =>
 
 export const updateThread = (
   thread_id: string,
-  updates: { title?: string },
+  updates: { title?: string; pinned?: boolean },
 ): Promise<Thread> =>
   postRpc("/vectora.chat.v1.ThreadService/UpdateThread", {
     thread_id,
-    title: updates.title ?? "",
+    ...(updates.title !== undefined ? { title: updates.title } : {}),
+    ...(updates.pinned !== undefined ? { pinned: updates.pinned } : {}),
   });
 
 export const getHistory = (

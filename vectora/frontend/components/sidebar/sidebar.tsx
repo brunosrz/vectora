@@ -8,6 +8,7 @@ import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import { useWebhookEvents } from "@/lib/hooks/use-webhook-events";
+import { useUpdateThread } from "@/lib/queries/threads";
 import { groupThreads, groupThreadsByWorkspace } from "./sidebar-utils";
 import { CollapsedSidebar } from "./collapsed-sidebar";
 import { SidebarHeader } from "./sidebar-header";
@@ -53,6 +54,7 @@ export const Sidebar = memo(function Sidebar({
   const chatMode = useSettingsStore((s) => s.chatMode);
   const ragJobs = useRagJobsStore((s) => s.jobs);
   const applyRagEvent = useRagJobsStore((s) => s.applyEvent);
+  const updateThreadMutation = useUpdateThread();
 
   // Progresso de indexação RAG chega via SSE (bridge cross-réplica de
   // webhooks.py) em vez de depender só do polling de baixa frequência.
@@ -126,6 +128,20 @@ export const Sidebar = memo(function Sidebar({
   }, [pendingDeleteId, onDeleteThread]);
 
   const handleCancelDelete = useCallback(() => setPendingDeleteId(null), []);
+
+  const handleRenameThread = useCallback(
+    (threadId: string, title: string) => {
+      updateThreadMutation.mutate({ id: threadId, updates: { title } });
+    },
+    [updateThreadMutation],
+  );
+
+  const handleTogglePin = useCallback(
+    (threadId: string, pinned: boolean) => {
+      updateThreadMutation.mutate({ id: threadId, updates: { pinned } });
+    },
+    [updateThreadMutation],
+  );
 
   const handleClearSearch = useCallback(() => setSearchQuery(""), []);
 
@@ -206,6 +222,8 @@ export const Sidebar = memo(function Sidebar({
                 isSearching={isSearching}
                 onSelectThread={onSelectThread}
                 onDeleteThread={handleDeleteThread}
+                onRenameThread={handleRenameThread}
+                onTogglePinThread={handleTogglePin}
                 onToggleWorkspace={toggleWorkspaceGroup}
               />
 

@@ -13,6 +13,7 @@ import {
   createThread,
   getThreadPins,
   setThreadPins,
+  updateThread,
 } from "@/lib/api/vectora-client";
 
 function jsonResponse(data: unknown, status = 200) {
@@ -62,6 +63,50 @@ describe("RPCs simples", () => {
     await createThread();
     const [, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(opts.body as string)).toEqual({ workspace_id: "" });
+  });
+
+  it("updateThread: envia só title quando só title é passado (pinned ausente do body)", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ id: "t1", created_at: "", updated_at: "", title: "Novo" }),
+    );
+    await updateThread("t1", { title: "Novo" });
+    const [, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(opts.body as string);
+    expect(body).toEqual({ thread_id: "t1", title: "Novo" });
+    expect(body).not.toHaveProperty("pinned");
+  });
+
+  it("updateThread: envia só pinned quando só pinned é passado (title ausente do body, não reseta título)", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        id: "t1",
+        created_at: "",
+        updated_at: "",
+        title: "Preservado",
+        pinned: true,
+      }),
+    );
+    await updateThread("t1", { pinned: true });
+    const [, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(opts.body as string);
+    expect(body).toEqual({ thread_id: "t1", pinned: true });
+    expect(body).not.toHaveProperty("title");
+  });
+
+  it("updateThread: envia os dois campos quando ambos são passados", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        id: "t1",
+        created_at: "",
+        updated_at: "",
+        title: "Novo",
+        pinned: false,
+      }),
+    );
+    await updateThread("t1", { title: "Novo", pinned: false });
+    const [, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(opts.body as string);
+    expect(body).toEqual({ thread_id: "t1", title: "Novo", pinned: false });
   });
 });
 

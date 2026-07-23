@@ -47,6 +47,14 @@ export interface GroupedThreads {
   older: Thread[];
 }
 
+/** Ordena fixadas primeiro, preservando a ordem relativa dentro de cada
+ * grupo (fixadas entre si, não-fixadas entre si) — sort estável. */
+function pinnedFirst(threads: Thread[]): Thread[] {
+  return threads.toSorted(
+    (a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false),
+  );
+}
+
 export function groupThreads(threads: Thread[]): GroupedThreads {
   const now = new Date();
   const today: Thread[] = [];
@@ -66,7 +74,12 @@ export function groupThreads(threads: Thread[]): GroupedThreads {
     else older.push(thread);
   });
 
-  return { today, yesterday, last7Days, older };
+  return {
+    today: pinnedFirst(today),
+    yesterday: pinnedFirst(yesterday),
+    last7Days: pinnedFirst(last7Days),
+    older: pinnedFirst(older),
+  };
 }
 
 /**
@@ -111,7 +124,9 @@ export function groupThreadsByWorkspace(
   const groups: WorkspaceThreadGroup[] = [...byWorkspace.entries()]
     .map(([wsId, list]) => ({
       workspace: byId.get(wsId) ?? placeholderWorkspace(wsId),
-      threads: list.toSorted((a, b) => activityOf(b) - activityOf(a)),
+      threads: pinnedFirst(
+        list.toSorted((a, b) => activityOf(b) - activityOf(a)),
+      ),
     }))
     .toSorted((a, b) => activityOf(b.threads[0]) - activityOf(a.threads[0]));
 

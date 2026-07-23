@@ -259,7 +259,8 @@ class DeleteThreadRequest(BaseModel):
 
 class UpdateThreadRequest(BaseModel):
     thread_id: str
-    title: str = ""
+    title: str | None = None
+    pinned: bool | None = None
 
 
 class GetThreadPinsRequest(BaseModel):
@@ -546,6 +547,7 @@ class Thread(BaseModel):
     title: str = ""
     workspace_id: str = ""
     mode: str = "dev"  # "chat" | "dev" — sessões legadas sem modo são "dev"
+    pinned: bool = False
 
 
 class HistoryMessage(BaseModel):

@@ -86,10 +86,12 @@ async def _ensure_schema(db: Any) -> None:
             last_activity TEXT    NOT NULL,
             message_count INTEGER NOT NULL DEFAULT 0,
             extra         TEXT    NOT NULL DEFAULT '{}',
-            mode          TEXT    NOT NULL DEFAULT 'code'
+            mode          TEXT    NOT NULL DEFAULT 'code',
+            pinned        INTEGER NOT NULL DEFAULT 0
         )
     """)
     await _migrate_mode_column(db)
+    await _migrate_pinned_column(db)
     await db.execute("""
         CREATE TABLE IF NOT EXISTS vectora_checkpoint_artifacts (
             id              TEXT PRIMARY KEY,
@@ -134,6 +136,19 @@ async def _migrate_mode_column(db: Any) -> None:
                 (desired, thread_id),
             )
     await db.commit()
+
+
+async def _migrate_pinned_column(db: Any) -> None:
+    """Adiciona a coluna ``pinned`` (0/1) se ausente — idempotente, mesmo
+    padrão de ``_migrate_mode_column``. Sem backfill: não havia equivalente
+    em ``extra`` antes desta feature."""
+    async with db.execute("PRAGMA table_info(vectora_sessions)") as cur:
+        cols = {row[1] for row in await cur.fetchall()}
+    if "pinned" not in cols:
+        await db.execute(
+            "ALTER TABLE vectora_sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0"
+        )
+        await db.commit()
 
 
 async def _get_db() -> Any:
@@ -187,12 +202,13 @@ def _normalize_mode(mode: str | None) -> str:
 def _row_to_thread(row: tuple) -> Thread:
     """Converte uma linha da tabela vectora_sessions em Thread.
 
-    A linha traz 7 colunas (com ``mode`` de 1ª classe na última posição). O modo
-    vem da coluna; ``extra["mode"]`` é apenas fallback para linhas ainda não
-    migradas que cheguem por uma SELECT de 6 colunas.
+    A linha traz até 8 colunas (``mode`` e ``pinned`` de 1ª classe nas duas
+    últimas posições). Ambas têm fallback pra ``None``/``0`` quando a SELECT
+    de origem não as inclui (compatibilidade com chamadas mais antigas).
     """
     thread_id, _, created_at, last_activity, _, extra_json = row[:6]
     mode_col = row[6] if len(row) > 6 else None
+    pinned_col = row[7] if len(row) > 7 else 0
     title = ""
     workspace_id = ""
     try:
@@ -209,6 +225,7 @@ def _row_to_thread(row: tuple) -> Thread:
         title=title,
         workspace_id=workspace_id,
         mode=mode,
+        pinned=bool(pinned_col),
     )
 
 
@@ -481,7 +498,7 @@ async def create_thread(body: CreateThreadRequest, http_request: Request) -> Thr
 async def get_thread(request: GetThreadRequest) -> Thread:
     db = await _get_db()
     async with db.execute(
-        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode "
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode, pinned "
         "FROM vectora_sessions WHERE thread_id = ?",
         (request.thread_id,),
     ) as cur:
@@ -503,18 +520,21 @@ async def list_threads(request: ListThreadsRequest) -> ListThreadsResponse:
     limit = max(1, min(request.limit or 50, 200))
     db = await _get_db()
     cols = (
-        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode "
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode, pinned "
         "FROM vectora_sessions "
     )
     mode_filter = _normalize_mode(request.mode) if request.mode else ""
     if mode_filter:
         query = (
             cols + "WHERE mode = ? AND message_count > 0 "
-            "ORDER BY last_activity DESC LIMIT ?"
+            "ORDER BY pinned DESC, last_activity DESC LIMIT ?"
         )
         params: tuple[Any, ...] = (mode_filter, limit)
     else:
-        query = cols + "WHERE message_count > 0 ORDER BY last_activity DESC LIMIT ?"
+        query = (
+            cols + "WHERE message_count > 0 "
+            "ORDER BY pinned DESC, last_activity DESC LIMIT ?"
+        )
         params = (limit,)
     async with db.execute(query, params) as cur:
         rows = await cur.fetchall()
@@ -598,10 +618,14 @@ async def delete_thread(request: DeleteThreadRequest) -> dict:
 
 @router.post("/vectora.chat.v1.ThreadService/UpdateThread")
 async def update_thread(request: UpdateThreadRequest) -> Thread:
-    """Atualiza metadados (title) de uma thread existente."""
+    """Atualiza metadados (title/pinned) de uma thread existente.
+
+    Cada campo só é alterado quando enviado (não-``None``) — permite
+    atualizações parciais (ex.: só fixar, sem tocar no título).
+    """
     db = await _get_db()
     async with db.execute(
-        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode "
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode, pinned "
         "FROM vectora_sessions WHERE thread_id = ?",
         (request.thread_id,),
     ) as cur:
@@ -611,23 +635,28 @@ async def update_thread(request: UpdateThreadRequest) -> Thread:
             status_code=404, detail=f"Thread {request.thread_id!r} not found"
         )
     thread = _row_to_thread(row)
-    # Merge title no extra existente
     try:
         extra = json.loads(row[5] or "{}")
     except Exception:
         extra = {}
-    extra["title"] = request.title
+    if request.title is not None:
+        extra["title"] = request.title
+    pinned = thread.pinned if request.pinned is None else request.pinned
     now = datetime.now(UTC).isoformat()
     await db.execute(
-        "UPDATE vectora_sessions SET extra = ?, last_activity = ? WHERE thread_id = ?",
-        (json.dumps(extra), now, request.thread_id),
+        "UPDATE vectora_sessions SET extra = ?, pinned = ?, last_activity = ? "
+        "WHERE thread_id = ?",
+        (json.dumps(extra), int(pinned), now, request.thread_id),
     )
     await db.commit()
     return Thread(
         id=thread.id,
         created_at=thread.created_at,
         updated_at=now,
-        title=request.title,
+        title=extra.get("title", ""),
+        workspace_id=thread.workspace_id,
+        mode=thread.mode,
+        pinned=pinned,
     )
 
 

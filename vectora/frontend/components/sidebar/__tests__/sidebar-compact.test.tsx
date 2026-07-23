@@ -82,6 +82,8 @@ describe("ThreadGroup — layout compacto", () => {
         currentThreadId=""
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     const root = container.firstElementChild as HTMLElement;
@@ -97,6 +99,8 @@ describe("ThreadGroup — layout compacto", () => {
         currentThreadId=""
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     const h3 = container.querySelector("h3")!;
@@ -112,6 +116,8 @@ describe("ThreadGroup — layout compacto", () => {
         currentThreadId=""
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     expect(container.firstChild).toBeNull();
@@ -125,6 +131,8 @@ describe("ThreadGroup — layout compacto", () => {
         currentThreadId=""
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     const item = container.querySelector("[class*='py-1']")!;
@@ -140,6 +148,8 @@ describe("ThreadGroup — layout compacto", () => {
         currentThreadId=""
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     const span = screen.getByText("Conversa z");
@@ -161,6 +171,8 @@ describe("WorkspaceGroup — layout compacto", () => {
         onToggle={noop}
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     const btn = container.querySelector("button")!;
@@ -182,6 +194,8 @@ describe("WorkspaceGroup — layout compacto", () => {
         onToggle={noop}
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     const list = container.querySelector("[class*='space-y']")!;
@@ -201,6 +215,8 @@ describe("WorkspaceGroup — layout compacto", () => {
         onToggle={noop}
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     expect(screen.queryByText("Conversa t1")).toBeNull();
@@ -218,6 +234,8 @@ describe("WorkspaceGroup — layout compacto", () => {
         onToggle={noop}
         onSelect={noop}
         onDelete={noop}
+        onRename={noop}
+        onTogglePin={noop}
       />,
     );
     expect(screen.getByText("Conversa t2")).toBeInTheDocument();

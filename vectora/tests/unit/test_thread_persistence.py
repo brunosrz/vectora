@@ -950,3 +950,125 @@ class TestModeColumn:
                 row = await cur.fetchone()
         await db.close()
         assert row[0] == "code"
+
+
+# ---------------------------------------------------------------------------
+# Sessões fixadas (Sprint 4) — coluna pinned + ordenação + UpdateThread parcial
+# ---------------------------------------------------------------------------
+
+
+class TestPinnedColumn:
+    """pinned promovido a coluna de 1ª classe; aiosqlite real."""
+
+    async def _fresh_db(self):
+        import aiosqlite
+
+        from backend.api.handlers.threads import _ensure_schema
+
+        db = await aiosqlite.connect(":memory:")
+        await _ensure_schema(db)
+        return db
+
+    @pytest.mark.asyncio
+    async def test_migrate_adds_column_on_old_schema(self):
+        import aiosqlite
+
+        from backend.api.handlers.threads import _migrate_pinned_column
+
+        db = await aiosqlite.connect(":memory:")
+        # Schema antigo (sem coluna pinned).
+        await db.execute(
+            "CREATE TABLE vectora_sessions (thread_id TEXT PRIMARY KEY, "
+            "user_type TEXT, created_at TEXT, last_activity TEXT, "
+            "message_count INTEGER, extra TEXT, mode TEXT)"
+        )
+        await db.execute(
+            "INSERT INTO vectora_sessions VALUES (?,?,?,?,?,?,?)",
+            ("t-old", "human", "c", "a", 0, "{}", "code"),
+        )
+        await db.commit()
+
+        await _migrate_pinned_column(db)
+
+        async with db.execute("PRAGMA table_info(vectora_sessions)") as cur:
+            cols = {row[1] for row in await cur.fetchall()}
+        async with db.execute(
+            "SELECT pinned FROM vectora_sessions WHERE thread_id = ?", ("t-old",)
+        ) as cur:
+            row = await cur.fetchone()
+        await db.close()
+        assert "pinned" in cols
+        assert row is not None
+        assert row[0] == 0
+
+    @pytest.mark.asyncio
+    async def test_migrate_pinned_is_idempotent(self):
+        from backend.api.handlers.threads import _migrate_pinned_column
+
+        db = await self._fresh_db()
+        # Rodar de novo num schema que já tem a coluna não deve quebrar.
+        await _migrate_pinned_column(db)
+        async with db.execute("PRAGMA table_info(vectora_sessions)") as cur:
+            cols = [r[1] for r in await cur.fetchall()]
+        await db.close()
+        assert cols.count("pinned") == 1
+
+    @pytest.mark.asyncio
+    async def test_list_threads_orders_pinned_before_last_activity(self):
+        from backend.api.handlers import threads as th
+        from backend.api.schemas import ListThreadsRequest, UpdateThreadRequest
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            # Ordem de criação: older-not-pinned, newest-not-pinned, mid-pinned.
+            await th._upsert_session("older-not-pinned")
+            await th._increment_message_count("older-not-pinned")
+            await th._upsert_session("newest-not-pinned")
+            await th._increment_message_count("newest-not-pinned")
+            await th._upsert_session("mid-pinned")
+            await th._increment_message_count("mid-pinned")
+            await th.update_thread(
+                UpdateThreadRequest(thread_id="mid-pinned", pinned=True)
+            )
+
+            out = await th.list_threads(ListThreadsRequest(limit=50))
+        await db.close()
+
+        ids = [t.id for t in out.threads]
+        assert ids[0] == "mid-pinned"
+        assert set(ids[1:]) == {"older-not-pinned", "newest-not-pinned"}
+
+    @pytest.mark.asyncio
+    async def test_update_thread_pin_only_does_not_touch_title(self):
+        """Erro/borda: fixar uma sessão não deve resetar o título já gravado
+        (title vem `None` no request quando só se quer fixar)."""
+        from backend.api.handlers import threads as th
+        from backend.api.schemas import UpdateThreadRequest
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            await th._upsert_session("t-titled", title="Meu Título")
+
+            result = await th.update_thread(
+                UpdateThreadRequest(thread_id="t-titled", pinned=True)
+            )
+        await db.close()
+
+        assert result.title == "Meu Título"
+        assert result.pinned is True
+
+    @pytest.mark.asyncio
+    async def test_update_thread_nonexistent_returns_404_when_pinning(self):
+        from fastapi import HTTPException
+
+        from backend.api.handlers import threads as th
+        from backend.api.schemas import UpdateThreadRequest
+
+        db = await self._fresh_db()
+        with patch.object(th, "_get_db", new=AsyncMock(return_value=db)):
+            with pytest.raises(HTTPException) as exc_info:
+                await th.update_thread(
+                    UpdateThreadRequest(thread_id="does-not-exist", pinned=True)
+                )
+        await db.close()
+        assert exc_info.value.status_code == 404

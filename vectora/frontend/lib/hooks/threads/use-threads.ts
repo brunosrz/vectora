@@ -30,4 +30,6 @@ export interface Thread {
   workspace_id?: string;
   /** Modo da sessão: "chat" | "dev" (default "dev"). */
   mode?: string;
+  /** Sessão fixada — aparece no topo da lista da sidebar. */
+  pinned?: boolean;
 }

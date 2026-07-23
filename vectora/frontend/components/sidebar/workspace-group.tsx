@@ -19,6 +19,8 @@ interface WorkspaceGroupProps {
   onToggle: (workspaceId: string) => void;
   onSelect: (threadId: string) => void;
   onDelete: (threadId: string, e: React.MouseEvent) => void;
+  onRename: (threadId: string, title: string) => void;
+  onTogglePin: (threadId: string, pinned: boolean) => void;
 }
 
 export const WorkspaceGroup = memo(function WorkspaceGroup({
@@ -30,6 +32,8 @@ export const WorkspaceGroup = memo(function WorkspaceGroup({
   onToggle,
   onSelect,
   onDelete,
+  onRename,
+  onTogglePin,
 }: WorkspaceGroupProps) {
   const expanded = isSearching || !isCollapsed;
 
@@ -76,6 +80,8 @@ export const WorkspaceGroup = memo(function WorkspaceGroup({
                   isActive={thread.thread_id === currentThreadId}
                   onSelect={onSelect}
                   onDelete={onDelete}
+                  onRename={onRename}
+                  onTogglePin={onTogglePin}
                 />
               ))}
             </div>

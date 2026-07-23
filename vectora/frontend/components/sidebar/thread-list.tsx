@@ -20,6 +20,8 @@ interface ThreadListProps {
   isSearching: boolean;
   onSelectThread: (threadId: string) => void;
   onDeleteThread: (threadId: string, e: React.MouseEvent) => void;
+  onRenameThread: (threadId: string, title: string) => void;
+  onTogglePinThread: (threadId: string, pinned: boolean) => void;
   onToggleWorkspace: (workspaceId: string) => void;
 }
 
@@ -35,6 +37,8 @@ export const ThreadList = memo(function ThreadList({
   isSearching,
   onSelectThread,
   onDeleteThread,
+  onRenameThread,
+  onTogglePinThread,
   onToggleWorkspace,
 }: ThreadListProps) {
   const { today, yesterday, last7Days, older } = grouped;
@@ -69,6 +73,8 @@ export const ThreadList = memo(function ThreadList({
                 onToggle={onToggleWorkspace}
                 onSelect={onSelectThread}
                 onDelete={onDeleteThread}
+                onRename={onRenameThread}
+                onTogglePin={onTogglePinThread}
               />
             ))}
 
@@ -85,6 +91,8 @@ export const ThreadList = memo(function ThreadList({
                   currentThreadId={currentThreadId}
                   onSelect={onSelectThread}
                   onDelete={onDeleteThread}
+                  onRename={onRenameThread}
+                  onTogglePin={onTogglePinThread}
                 />
                 <ThreadGroup
                   threads={yesterday}
@@ -92,6 +100,8 @@ export const ThreadList = memo(function ThreadList({
                   currentThreadId={currentThreadId}
                   onSelect={onSelectThread}
                   onDelete={onDeleteThread}
+                  onRename={onRenameThread}
+                  onTogglePin={onTogglePinThread}
                 />
                 <ThreadGroup
                   threads={last7Days}
@@ -99,6 +109,8 @@ export const ThreadList = memo(function ThreadList({
                   currentThreadId={currentThreadId}
                   onSelect={onSelectThread}
                   onDelete={onDeleteThread}
+                  onRename={onRenameThread}
+                  onTogglePin={onTogglePinThread}
                 />
                 <ThreadGroup
                   threads={older}
@@ -106,6 +118,8 @@ export const ThreadList = memo(function ThreadList({
                   currentThreadId={currentThreadId}
                   onSelect={onSelectThread}
                   onDelete={onDeleteThread}
+                  onRename={onRenameThread}
+                  onTogglePin={onTogglePinThread}
                 />
               </>
             )}

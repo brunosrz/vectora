@@ -2,12 +2,18 @@
 
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { render as rtlRender, cleanup } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sidebar } from "../sidebar";
 import type { Thread } from "@/lib/hooks/threads";
 
 function render(ui: React.ReactElement) {
-  return rtlRender(<TooltipProvider>{ui}</TooltipProvider>);
+  const queryClient = new QueryClient();
+  return rtlRender(
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>{ui}</TooltipProvider>
+    </QueryClientProvider>,
+  );
 }
 
 vi.mock("@/lib/stores/workspaces-store", () => ({

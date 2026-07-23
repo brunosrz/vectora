@@ -44,6 +44,7 @@ function toSidebarThread(t: VectoraThread, userId: string): Thread {
     // Modo da sessão (backend: "code" | "chat"); default "code" alinha ao
     // _normalize_mode. A sidebar separa os pools por este campo.
     mode: t.mode ?? "code",
+    pinned: t.pinned ?? false,
   };
 }
 
@@ -100,11 +101,11 @@ export function useDeleteThread(): UseMutationResult<
   });
 }
 
-/** Atualiza título da thread com invalidação. */
+/** Atualiza título e/ou pin da thread com invalidação. */
 export function useUpdateThread(): UseMutationResult<
   VectoraThread,
   Error,
-  { id: string; updates: { title?: string } }
+  { id: string; updates: { title?: string; pinned?: boolean } }
 > {
   const qc = useQueryClient();
   return useMutation({

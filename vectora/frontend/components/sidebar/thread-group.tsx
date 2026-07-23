@@ -10,6 +10,8 @@ interface ThreadGroupProps {
   currentThreadId: string;
   onSelect: (threadId: string) => void;
   onDelete: (threadId: string, e: React.MouseEvent) => void;
+  onRename: (threadId: string, title: string) => void;
+  onTogglePin: (threadId: string, pinned: boolean) => void;
 }
 
 export const ThreadGroup = memo(function ThreadGroup({
@@ -18,6 +20,8 @@ export const ThreadGroup = memo(function ThreadGroup({
   currentThreadId,
   onSelect,
   onDelete,
+  onRename,
+  onTogglePin,
 }: ThreadGroupProps) {
   if (threads.length === 0) return null;
 
@@ -34,6 +38,8 @@ export const ThreadGroup = memo(function ThreadGroup({
             isActive={thread.thread_id === currentThreadId}
             onSelect={onSelect}
             onDelete={onDelete}
+            onRename={onRename}
+            onTogglePin={onTogglePin}
           />
         ))}
       </div>

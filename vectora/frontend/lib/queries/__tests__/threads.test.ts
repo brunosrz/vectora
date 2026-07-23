@@ -92,6 +92,24 @@ describe("useThreadsQuery", () => {
     expect(result.current.data![0].metadata.title).toBe("");
   });
 
+  it("propaga pinned da thread do backend", async () => {
+    listThreads.mockResolvedValueOnce({
+      threads: [vthread("t1", { pinned: true })],
+    });
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useThreadsQuery("u1"), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data![0].pinned).toBe(true);
+  });
+
+  it("erro/borda: pinned ausente no backend vira false", async () => {
+    listThreads.mockResolvedValueOnce({ threads: [vthread("t1")] });
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useThreadsQuery("u1"), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data![0].pinned).toBe(false);
+  });
+
   it("userId vazio mantém a query desabilitada", () => {
     const { wrapper } = makeWrapper();
     renderHook(() => useThreadsQuery(""), { wrapper });
@@ -168,6 +186,19 @@ describe("useUpdateThread", () => {
       });
     });
     expect(updateThread).toHaveBeenCalledWith("t1", { title: "Novo" });
+  });
+
+  it("mutateAsync chama updateThread com id e pinned (fixar sem tocar no título)", async () => {
+    updateThread.mockResolvedValue(vthread("t1", { pinned: true }));
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpdateThread(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: "t1",
+        updates: { pinned: true },
+      });
+    });
+    expect(updateThread).toHaveBeenCalledWith("t1", { pinned: true });
   });
 
   it("emite broadcast 'renamed' com o novo título", async () => {
