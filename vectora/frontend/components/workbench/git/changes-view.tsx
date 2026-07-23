@@ -234,6 +234,8 @@ export function ChangesView({
   const invalidateDiff = useWorkbenchStore((s) => s.invalidateDiff);
   const menu = useContextMenu();
   const [commitMsg, setCommitMsg] = useState("");
+  const [commitBody, setCommitBody] = useState("");
+  const [amend, setAmend] = useState(false);
   const [committing, setCommitting] = useState(false);
 
   const handleRefresh = useCallback(() => {
@@ -280,15 +282,20 @@ export function ChangesView({
     if (!commitMsg.trim()) return;
     setCommitting(true);
     try {
-      const result = await apiGitCommit(workspaceId, commitMsg.trim());
+      const result = await apiGitCommit(workspaceId, commitMsg.trim(), false, {
+        body: commitBody.trim(),
+        amend,
+      });
       if (result.status === "ok") {
         setCommitMsg("");
+        setCommitBody("");
+        setAmend(false);
         handleRefresh();
       }
     } finally {
       setCommitting(false);
     }
-  }, [workspaceId, commitMsg, handleRefresh]);
+  }, [workspaceId, commitMsg, commitBody, amend, handleRefresh]);
 
   const { staged, unstaged, untracked } = useMemo(() => {
     const stagedFiles: DiffFile[] = [];
@@ -360,12 +367,12 @@ export function ChangesView({
         )}
       </div>
       <div className="border-t border-border/60 p-2 flex flex-col gap-1.5 bg-muted/10 shrink-0">
-        <textarea
+        <input
+          type="text"
           value={commitMsg}
           onChange={(e) => setCommitMsg(e.target.value)}
           placeholder={m.workbench_diff_commit_placeholder()}
-          rows={2}
-          className="w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
               void handleCommit();
@@ -373,6 +380,28 @@ export function ChangesView({
           }}
           data-testid="git-commit-message"
         />
+        <textarea
+          value={commitBody}
+          onChange={(e) => setCommitBody(e.target.value)}
+          placeholder={m.workbench_diff_commit_body_placeholder()}
+          rows={2}
+          className="w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+              void handleCommit();
+            }
+          }}
+          data-testid="git-commit-body"
+        />
+        <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground select-none">
+          <input
+            type="checkbox"
+            checked={amend}
+            onChange={(e) => setAmend(e.target.checked)}
+            data-testid="git-commit-amend"
+          />
+          {m.workbench_diff_commit_amend_label()}
+        </label>
         <button
           onClick={() => void handleCommit()}
           disabled={!commitMsg.trim() || committing}

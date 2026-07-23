@@ -1518,6 +1518,23 @@ class GitCommitRequest(BaseModel):
     message: str
     all: bool = False
     dry_run_hooks: bool = False
+    body: str | None = None
+    amend: bool = False
+
+
+class GitSquashRequest(BaseModel):
+    base_ref: str
+    message: str
+    body: str | None = None
+
+
+class GitReorderRequest(BaseModel):
+    commits: list[str]
+
+
+class GitCherryPickRequest(BaseModel):
+    sha: str
+    no_commit: bool = False
 
 
 @view_router.post("/{workspace_id}/git/stage", response_model=StatusResponse)
@@ -1580,7 +1597,51 @@ async def git_commit_inline(
         return StatusResponse(
             status="hooks_failed", message=hook_result.get("output", "")
         )
-    result = _git_commit_impl(repo, body.message, body.all)
+    result = _git_commit_impl(
+        repo, body.message, body.all, body=body.body, amend=body.amend
+    )
+    return StatusResponse(status=result["status"], message=result.get("message", ""))
+
+
+@view_router.post("/{workspace_id}/git/squash", response_model=StatusResponse)
+async def git_squash_inline(
+    workspace_id: str, body: GitSquashRequest
+) -> StatusResponse:
+    """Squasha commits de `base_ref` até HEAD numa mensagem só."""
+    from backend.tools.git import _git_squash_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_squash_impl(repo, body.base_ref, body.message, body=body.body)
+    return StatusResponse(status=result["status"], message=result.get("message", ""))
+
+
+@view_router.post("/{workspace_id}/git/reorder", response_model=StatusResponse)
+async def git_reorder_inline(
+    workspace_id: str, body: GitReorderRequest
+) -> StatusResponse:
+    """Reordena commits locais ainda não pushados."""
+    from backend.tools.git import _git_reorder_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_reorder_impl(repo, body.commits)
+    return StatusResponse(status=result["status"], message=result.get("message", ""))
+
+
+@view_router.post("/{workspace_id}/git/cherry-pick", response_model=StatusResponse)
+async def git_cherry_pick_inline(
+    workspace_id: str, body: GitCherryPickRequest
+) -> StatusResponse:
+    """Aplica um commit de outra branch/ref na branch ativa."""
+    from backend.tools.git import _git_cherry_pick_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_cherry_pick_impl(repo, body.sha, no_commit=body.no_commit)
     return StatusResponse(status=result["status"], message=result.get("message", ""))
 
 

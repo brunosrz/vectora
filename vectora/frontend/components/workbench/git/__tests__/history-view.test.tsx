@@ -105,3 +105,125 @@ describe("HistoryView — paginação", () => {
     expect(scrollable?.className).toContain("min-h-0");
   });
 });
+
+describe("HistoryView — menu de contexto (amend/squash/reorder/cherry-pick)", () => {
+  it("cherry-pick chama apiCherryPick com o SHA do commit clicado", async () => {
+    vi.spyOn(api, "fetchGitLog").mockResolvedValue({
+      branch: "main",
+      commits: [commit("a1"), commit("a2")],
+      has_more: false,
+    });
+    const spy = vi
+      .spyOn(api, "apiCherryPick")
+      .mockResolvedValue({ status: "ok", message: "" });
+    const onChanged = vi.fn();
+
+    render(<HistoryView workspaceId="ws1" onChanged={onChanged} />);
+    await screen.findByText("commit a1");
+
+    fireEvent.contextMenu(screen.getByText("commit a1"));
+    fireEvent.click(screen.getByText("Cherry-pick"));
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith("ws1", "a1"));
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+  });
+
+  it("mover pra baixo chama apiReorder com [commit, mais antigo]", async () => {
+    vi.spyOn(api, "fetchGitLog").mockResolvedValue({
+      branch: "main",
+      commits: [commit("a1"), commit("a2")],
+      has_more: false,
+    });
+    const spy = vi
+      .spyOn(api, "apiReorder")
+      .mockResolvedValue({ status: "ok", message: "" });
+
+    render(<HistoryView workspaceId="ws1" onChanged={() => {}} />);
+    await screen.findByText("commit a1");
+
+    fireEvent.contextMenu(screen.getByText("commit a1"));
+    fireEvent.click(screen.getByText("Move down"));
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith("ws1", ["a1", "a2"]));
+  });
+
+  it("mover pra cima chama apiReorder com [mais recente, commit]", async () => {
+    vi.spyOn(api, "fetchGitLog").mockResolvedValue({
+      branch: "main",
+      commits: [commit("a1"), commit("a2")],
+      has_more: false,
+    });
+    const spy = vi
+      .spyOn(api, "apiReorder")
+      .mockResolvedValue({ status: "ok", message: "" });
+
+    render(<HistoryView workspaceId="ws1" onChanged={() => {}} />);
+    await screen.findByText("commit a2");
+
+    fireEvent.contextMenu(screen.getByText("commit a2"));
+    fireEvent.click(screen.getByText("Move up"));
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith("ws1", ["a1", "a2"]));
+  });
+
+  it("commit mais recente não mostra 'Move up' (não há commit mais novo)", async () => {
+    vi.spyOn(api, "fetchGitLog").mockResolvedValue({
+      branch: "main",
+      commits: [commit("a1"), commit("a2")],
+      has_more: false,
+    });
+
+    render(<HistoryView workspaceId="ws1" onChanged={() => {}} />);
+    await screen.findByText("commit a1");
+
+    fireEvent.contextMenu(screen.getByText("commit a1"));
+    expect(screen.queryByText("Move up")).not.toBeInTheDocument();
+  });
+
+  it("selecionar p/ squash + squashar até aqui chama apiSquash com base_ref e mensagem", async () => {
+    vi.spyOn(api, "fetchGitLog").mockResolvedValue({
+      branch: "main",
+      commits: [commit("a1"), commit("a2"), commit("a3")],
+      has_more: false,
+    });
+    const spy = vi
+      .spyOn(api, "apiSquash")
+      .mockResolvedValue({ status: "ok", message: "" });
+    vi.spyOn(window, "prompt").mockReturnValue("feat: squash message");
+
+    render(<HistoryView workspaceId="ws1" onChanged={() => {}} />);
+    await screen.findByText("commit a3");
+
+    // Seleciona a3 (mais antigo dos 3) como base do squash.
+    fireEvent.contextMenu(screen.getByText("commit a3"));
+    fireEvent.click(screen.getByText("Select for squash"));
+
+    // No commit mais recente (a1), "squash up to here" cobre os 3 commits.
+    fireEvent.contextMenu(screen.getByText("commit a1"));
+    fireEvent.click(screen.getByText("Squash up to here (3 commits)"));
+
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith("ws1", "a3", "feat: squash message"),
+    );
+  });
+
+  it("squash cancelado (prompt vazio) não chama apiSquash", async () => {
+    vi.spyOn(api, "fetchGitLog").mockResolvedValue({
+      branch: "main",
+      commits: [commit("a1"), commit("a2")],
+      has_more: false,
+    });
+    const spy = vi.spyOn(api, "apiSquash");
+    vi.spyOn(window, "prompt").mockReturnValue(null);
+
+    render(<HistoryView workspaceId="ws1" onChanged={() => {}} />);
+    await screen.findByText("commit a2");
+
+    fireEvent.contextMenu(screen.getByText("commit a2"));
+    fireEvent.click(screen.getByText("Select for squash"));
+    fireEvent.contextMenu(screen.getByText("commit a1"));
+    fireEvent.click(screen.getByText("Squash up to here (2 commits)"));
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+});

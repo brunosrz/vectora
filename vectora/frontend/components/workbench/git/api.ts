@@ -173,10 +173,44 @@ export async function apiGitCommit(
   workspaceId: string,
   message: string,
   dryRunHooks = false,
+  opts: { body?: string; amend?: boolean } = {},
 ): Promise<{ status: string; message: string }> {
   return postJson(`${base(workspaceId)}/git/commit`, {
     message,
     dry_run_hooks: dryRunHooks,
+    body: opts.body || null,
+    amend: opts.amend ?? false,
+  });
+}
+
+export function apiSquash(
+  workspaceId: string,
+  baseRef: string,
+  message: string,
+  body?: string,
+): Promise<{ status: string; message: string }> {
+  return postJson(`${base(workspaceId)}/git/squash`, {
+    base_ref: baseRef,
+    message,
+    body: body || null,
+  });
+}
+
+export function apiReorder(
+  workspaceId: string,
+  commits: string[],
+): Promise<{ status: string; message: string }> {
+  return postJson(`${base(workspaceId)}/git/reorder`, { commits });
+}
+
+export function apiCherryPick(
+  workspaceId: string,
+  sha: string,
+  noCommit = false,
+): Promise<{ status: string; message: string }> {
+  return postJson(`${base(workspaceId)}/git/cherry-pick`, {
+    sha,
+    no_commit: noCommit,
   });
 }
 

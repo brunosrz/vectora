@@ -203,14 +203,19 @@ describe("ChangesView", () => {
       />,
     );
 
-    const textarea = screen.getByPlaceholderText(
+    const input = screen.getByPlaceholderText(
       "workbench_diff_commit_placeholder",
-    ) as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "fix: bug" } });
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "fix: bug" } });
     fireEvent.click(screen.getByText("workbench_diff_commit_button"));
 
-    await waitFor(() => expect(spy).toHaveBeenCalledWith("ws1", "fix: bug"));
-    await waitFor(() => expect(textarea.value).toBe(""));
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith("ws1", "fix: bug", false, {
+        body: "",
+        amend: false,
+      }),
+    );
+    await waitFor(() => expect(input.value).toBe(""));
   });
 
   it("commit com erro mantém a mensagem no campo (não limpa)", async () => {
@@ -225,14 +230,69 @@ describe("ChangesView", () => {
       />,
     );
 
-    const textarea = screen.getByPlaceholderText(
+    const input = screen.getByPlaceholderText(
       "workbench_diff_commit_placeholder",
-    ) as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "fix: bug" } });
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "fix: bug" } });
     fireEvent.click(screen.getByText("workbench_diff_commit_button"));
 
     await waitFor(() => expect(api.apiGitCommit).toHaveBeenCalled());
-    expect(textarea.value).toBe("fix: bug");
+    expect(input.value).toBe("fix: bug");
+  });
+
+  it("preenche descrição e marca amend: passa body e amend pro apiGitCommit", async () => {
+    const spy = vi
+      .spyOn(api, "apiGitCommit")
+      .mockResolvedValue({ status: "ok", message: "" });
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_diff_commit_placeholder"),
+      { target: { value: "fix: bug" } },
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_diff_commit_body_placeholder"),
+      { target: { value: "detalhes" } },
+    );
+    fireEvent.click(screen.getByTestId("git-commit-amend"));
+    fireEvent.click(screen.getByText("workbench_diff_commit_button"));
+
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith("ws1", "fix: bug", false, {
+        body: "detalhes",
+        amend: true,
+      }),
+    );
+  });
+
+  it("sem descrição: passa body vazio (regressão — commit simples continua funcionando)", async () => {
+    const spy = vi
+      .spyOn(api, "apiGitCommit")
+      .mockResolvedValue({ status: "ok", message: "" });
+    render(
+      <ChangesView
+        workspaceId="ws1"
+        summary={summary([file({ path: "a.ts", staged_change: "M" })])}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_diff_commit_placeholder"),
+      { target: { value: "fix: bug" } },
+    );
+    fireEvent.click(screen.getByText("workbench_diff_commit_button"));
+
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith("ws1", "fix: bug", false, {
+        body: "",
+        amend: false,
+      }),
+    );
   });
 
   it("clicar no nome do arquivo expande e chama setDiffOpenFile", () => {

@@ -12,7 +12,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   apiCheckout,
+  apiCherryPick,
+  apiReorder,
   apiRevert,
+  apiSquash,
   fetchCommitDiff,
   fetchGitLog,
   type GitLogCommit,
@@ -126,6 +129,7 @@ export function HistoryView({
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [squashBase, setSquashBase] = useState<string | null>(null);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -155,6 +159,11 @@ export function HistoryView({
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, commit: GitLogCommit) => {
+      const commits = data?.commits ?? [];
+      const idx = commits.findIndex((c) => c.sha === commit.sha);
+      const older = commits[idx + 1]; // mais antigo (aparece depois no log)
+      const newer = idx > 0 ? commits[idx - 1] : undefined; // mais recente
+
       const items: ContextMenuItem[] = [
         {
           label: m.workbench_git_ctx_copy_sha(),
@@ -166,15 +175,67 @@ export function HistoryView({
             void apiCheckout(workspaceId, commit.sha).then(onChanged),
         },
         {
-          label: m.workbench_git_ctx_revert(),
-          danger: true,
+          label: m.workbench_git_ctx_cherry_pick(),
           onSelect: () =>
-            void apiRevert(workspaceId, commit.sha).then(onChanged),
+            void apiCherryPick(workspaceId, commit.sha).then(onChanged),
         },
       ];
+
+      if (older) {
+        items.push({
+          label: m.workbench_git_ctx_move_down(),
+          onSelect: () =>
+            void apiReorder(workspaceId, [commit.sha, older.sha]).then(
+              onChanged,
+            ),
+        });
+      }
+      if (newer) {
+        items.push({
+          label: m.workbench_git_ctx_move_up(),
+          onSelect: () =>
+            void apiReorder(workspaceId, [newer.sha, commit.sha]).then(
+              onChanged,
+            ),
+        });
+      }
+
+      if (squashBase === null) {
+        items.push({
+          label: m.workbench_git_ctx_squash_select(),
+          onSelect: () => setSquashBase(commit.sha),
+        });
+      } else if (squashBase !== commit.sha) {
+        const baseIdx = commits.findIndex((c) => c.sha === squashBase);
+        // squashBase precisa ser mais antigo (índice maior no log) que o alvo.
+        if (baseIdx > idx) {
+          const n = baseIdx - idx + 1;
+          items.push({
+            label: m.workbench_git_ctx_squash_here({ n }),
+            onSelect: () => {
+              const message = window.prompt(
+                m.workbench_diff_commit_placeholder(),
+              );
+              if (!message?.trim()) return;
+              void apiSquash(workspaceId, squashBase, message.trim()).then(
+                () => {
+                  setSquashBase(null);
+                  onChanged();
+                },
+              );
+            },
+          });
+        }
+      }
+
+      items.push({
+        label: m.workbench_git_ctx_revert(),
+        danger: true,
+        onSelect: () => void apiRevert(workspaceId, commit.sha).then(onChanged),
+      });
       menu.open(e, items);
     },
-    [workspaceId, onChanged, menu],
+    [workspaceId, onChanged, menu, data, squashBase],
   );
 
   if (loading) {
