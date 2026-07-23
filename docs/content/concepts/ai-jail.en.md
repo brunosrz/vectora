@@ -1,0 +1,48 @@
+---
+title: AI Jail
+weight: 5
+---
+
+AI Jail is Vectora's sandbox for the agent's terminal and filesystem access. It follows the original [ai-jail](https://github.com/akitaonrails/ai-jail) idea — the agent's actions run *inside* the jail, not behind a single sandboxed function call — adapted to Vectora's architecture: a single long-running backend process serving many concurrent workspaces, rather than one process per invocation.
+
+## Threat model
+
+Without a sandbox, `terminal`, `file_write`, and `file_edit` operate directly in the backend process — the agent (or a prompt injection) can read `~/.ssh`, exfiltrate secrets, or run destructive commands with the same privileges as the backend itself. AI Jail exists to bound that blast radius to a workspace's declared `rw_paths`/`ro_paths`, without giving up file and terminal access entirely (that would defeat the point of an autonomous coding agent).
+
+## Opt-in, per workspace
+
+AI Jail is **off by default**. It activates only when a workspace's `vectora.toml` has a `[sandbox]` section:
+
+```toml
+[sandbox]
+enabled = true
+backend = "local"          # local (bwrap, Linux) | docker | ssh | modal
+rw_paths = ["."]           # writable inside the jail
+ro_paths = []               # read-only inside the jail
+mask = [".env", "**/*.pem", "**/.ssh/**", "**/.aws/**"]
+no_gpu = true
+lockdown = false            # true: fail-closed on any policy ambiguity
+```
+
+No `[sandbox]` section → the workspace behaves exactly as before this feature existed. Malformed TOML or an invalid field, once `[sandbox]` is present, fails **closed** (locked down) instead of silently running unprotected.
+
+## How it works: one worker per workspace
+
+Instead of spawning a new sandboxed process for every tool call, Vectora keeps a single persistent jailed worker process alive per workspace with `[sandbox]` enabled — born on the first sandboxable action, killed when the workspace goes idle. `file_write`, `file_edit`, and one-shot `terminal` commands route through this worker via a small JSON-lines protocol (`exec`/`read_file`/`write_file`).
+
+On the `local` backend (Linux only), the worker runs under `bwrap` (Bubblewrap) with:
+
+- Filesystem namespacing restricted to `rw_paths`/`ro_paths`.
+- Masked paths (`mask`) never exposed inside the jail, even if they fall under an allowed path.
+- A real seccomp-BPF filter (via `libseccomp`) denying a fixed list of dangerous syscalls (`ptrace`, `mount`, `unshare`, `bpf`, kernel module loading, etc.) — if `libseccomp` isn't installed on the host, the worker still runs under namespace isolation, just without the syscall filter, and this degradation is logged.
+
+Other backends (`docker`, `ssh`, `modal`) run the same worker model against their respective isolation primitive; `docker` additionally denies network access under `lockdown`.
+
+## Known limitation: interactive terminal
+
+The one-shot `terminal` tool call and file tools are sandboxed today. An **interactive** terminal session (the Terminal tab, PTY-backed) is not yet routed through the jailed worker — starting an interactive terminal on a sandboxed workspace returns a clear error rather than silently falling back to an unsandboxed shell. This is scoped for a future iteration.
+
+## See also
+
+- [Using the Workbench](../../guides/using-the-workbench) — the Terminal and Files tabs in practice
+- [Sessions & Workspaces](../sessions-and-workspaces) — how a workspace is trusted and scoped

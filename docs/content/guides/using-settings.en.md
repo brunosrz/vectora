@@ -15,12 +15,12 @@ Personal settings, for your user.
 
 ## Environment
 
-Integration and extensibility settings.
+Integration and extensibility settings, in two tabs.
 
-- **Envs** — per-user environment variables (masked in the UI, never exposed in plain text), overriding the system env just for you.
-- **Skills** — the agent's skill manager. Install via git URL or local path, check each skill's health, remove. Each skill is a folder with a `SKILL.md` loaded on demand by the deep-agent.
-- **Plugins** — external MCP servers configured by the user. Supports `stdio` (command + args), `sse`, and `http` transports. Includes a **Tool Policy** panel to control which tools from that server are enabled.
-- **Integrations** — connection cards for external services: manual API key (e.g., some third-party service) or OAuth (GitHub, GitLab, Google, Slack). Shows connected/disconnected status and the webhook URL when applicable.
+- **Integrations** — external connectors (manual API key or OAuth — GitHub, GitLab, Google, Slack, etc.) side by side with your custom per-user environment variables (masked in the UI, never exposed in plain text). Shows connected/disconnected status and the webhook URL when applicable.
+- **Provider Routing** — local and dynamic LLM providers, e.g. discovering and selecting models served by a local Ollama instance.
+
+Installing MCP connectors and skills from a curated catalog is handled by the workbench's **Library** tab, not here — see [Using the Workbench](../using-the-workbench).
 
 ## Administration (root/admin)
 
