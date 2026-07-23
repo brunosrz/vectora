@@ -20,6 +20,7 @@ from backend.tools.background import (
     get_task_result,
     get_task_status,
     list_background_tasks,
+    schedule_subagent_task,
     schedule_task,
 )
 from backend.tools.browser import (
@@ -204,6 +205,7 @@ WORKSPACE_TOOLS: list[BaseTool] = [
     get_workbench_context,
     create_background_task,
     schedule_task,
+    schedule_subagent_task,
     list_background_tasks,
     get_task_status,
     get_task_result,
@@ -319,6 +321,7 @@ for _t in [
     get_workbench_context,
     create_background_task,
     schedule_task,
+    schedule_subagent_task,
     list_background_tasks,
     get_task_status,
     get_task_result,

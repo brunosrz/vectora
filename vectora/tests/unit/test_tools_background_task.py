@@ -12,7 +12,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from backend.tools.background import create_background_task, schedule_task
+from backend.tools.background import (
+    create_background_task,
+    schedule_subagent_task,
+    schedule_task,
+)
 
 
 def _cfg(thread_id: str = "t1", workspace_id: str = "ws1", user_id: str = "u1") -> Any:
@@ -222,6 +226,108 @@ async def test_schedule_task_missing_session_returns_error() -> None:
                 "name": "n",
                 "instruction": "i",
                 "when": "todo dia às 9h",
+            },
+            config={"configurable": {}},
+        )
+    )
+
+    assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# schedule_subagent_task
+# ---------------------------------------------------------------------------
+
+
+def _fake_subagent_task(
+    task_id: str = "task-sub-1", next_run_at: str = "2026-07-23T12:00:00+00:00"
+) -> Any:
+    class _FakeTask:
+        def __init__(self) -> None:
+            self.id = task_id
+            self.next_run_at = next_run_at
+
+    return _FakeTask()
+
+
+@pytest.mark.asyncio
+async def test_schedule_subagent_task_agenda_coder_com_sucesso() -> None:
+    with patch(
+        "backend.tools.background.background_tasks.create_task",
+        new=AsyncMock(return_value=_fake_subagent_task()),
+    ) as mock_create:
+        result = json.loads(
+            await schedule_subagent_task.ainvoke(
+                {
+                    "subagent_type": "coder",
+                    "description": "corrigir o bug do parser",
+                    "when": "em 30 minutos",
+                },
+                config=_cfg(),
+            )
+        )
+
+        assert result["status"] == "created"
+        assert result["task_id"] == "task-sub-1"
+        assert result["subagent_type"] == "coder"
+        assert result["run_at"] == "2026-07-23T12:00:00+00:00"
+        _, kwargs = mock_create.call_args
+        assert kwargs["trigger_type"] == "once"
+        assert kwargs["trigger_config"] == {"subagent_type": "coder"}
+        assert kwargs["next_run_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_schedule_subagent_task_tipo_invalido_nao_cria_tarefa() -> None:
+    with patch(
+        "backend.tools.background.background_tasks.create_task",
+        new=AsyncMock(),
+    ) as mock_create:
+        result = json.loads(
+            await schedule_subagent_task.ainvoke(
+                {
+                    "subagent_type": "orchestrator",
+                    "description": "não deveria rodar",
+                    "when": "em 10 minutos",
+                },
+                config=_cfg(),
+            )
+        )
+
+        assert result["status"] == "error"
+        assert "subagent_type inválido" in result["error"]
+        mock_create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_schedule_subagent_task_horario_nao_reconhecido_retorna_erro() -> None:
+    with patch(
+        "backend.tools.background.background_tasks.create_task",
+        new=AsyncMock(),
+    ) as mock_create:
+        result = json.loads(
+            await schedule_subagent_task.ainvoke(
+                {
+                    "subagent_type": "search",
+                    "description": "pesquisar concorrentes",
+                    "when": "algum dia desses",
+                },
+                config=_cfg(),
+            )
+        )
+
+        assert result["status"] == "error"
+        mock_create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_schedule_subagent_task_missing_session_returns_error() -> None:
+    result = json.loads(
+        await schedule_subagent_task.ainvoke(
+            {
+                "subagent_type": "search",
+                "description": "d",
+                "when": "em 5 minutos",
             },
             config={"configurable": {}},
         )

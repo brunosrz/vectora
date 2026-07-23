@@ -15,7 +15,8 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
 from backend.scheduling import background_tasks
-from backend.scheduling.nl_schedule import parse_natural_schedule
+from backend.scheduling.nl_schedule import parse_natural_schedule, parse_one_shot_delay
+from backend.scheduling.subagent_runner import SUBAGENT_TYPES
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +153,97 @@ async def schedule_task(
         return json.dumps({"status": "error", "error": str(e)})
     except Exception as e:
         logger.exception("schedule_task: erro inesperado")
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@tool(
+    extras={
+        "invalidates": ["tasks"],
+        "destructive": False,
+        "category": "workspace",
+        "icon": "bot",
+    }
+)
+async def schedule_subagent_task(
+    subagent_type: str,
+    description: str,
+    when: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Agenda um subagente ESPECÍFICO (coder ou search) — não o agente
+    principal completo — pra rodar sozinho numa hora futura, a partir de
+    uma descrição em linguagem natural do horário (ex.: "em 30 minutos",
+    "daqui 2 horas"). Distinto de `schedule_task`: aquela reagenda o
+    orchestrator completo recorrentemente; esta dispara só o subagente
+    pedido, uma única vez.
+
+    Quando `subagent_type="coder"` e a sessão tem um workspace ativo, a
+    execução roda num worktree isolado (mesma proteção contra concorrência
+    da delegação síncrona via `task()`) — nunca disputa arquivos com o
+    workspace principal do usuário.
+
+    Args:
+        subagent_type: "coder" ou "search".
+        description: O que o subagente deve fazer (vira a instrução).
+        when: Horário em linguagem natural (ex.: "em 30 minutos", "daqui 1 hora").
+
+    Returns:
+        JSON com `status`, e em caso de sucesso `task_id` + `run_at`.
+    """
+    if subagent_type not in SUBAGENT_TYPES:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": f"subagent_type inválido: {subagent_type!r}. "
+                f"Válidos: {SUBAGENT_TYPES}",
+            }
+        )
+
+    run_at = parse_one_shot_delay(when)
+    if run_at is None:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": (
+                    f"Não entendi o horário '{when}'. Tente algo como "
+                    "'em 30 minutos' ou 'daqui 2 horas'."
+                ),
+            }
+        )
+
+    try:
+        configurable = (config or {}).get("configurable") or {}
+        session_id = configurable.get("thread_id", "")
+        user_id = configurable.get("user_id", "")
+        workspace_id = configurable.get("workspace_id")
+        if not session_id:
+            return json.dumps(
+                {"status": "error", "error": "session_id ausente no config"}
+            )
+
+        task = await background_tasks.create_task(
+            session_id=session_id,
+            user_id=user_id,
+            kind="routine",
+            name=f"Subagente {subagent_type}: {description[:60]}",
+            instruction=description,
+            trigger_type="once",
+            trigger_config={"subagent_type": subagent_type},
+            workspace_id=workspace_id,
+            next_run_at=run_at,
+        )
+        return json.dumps(
+            {
+                "status": "created",
+                "task_id": task.id,
+                "subagent_type": subagent_type,
+                "run_at": task.next_run_at,
+            }
+        )
+    except ValueError as e:
+        return json.dumps({"status": "error", "error": str(e)})
+    except Exception as e:
+        logger.exception("schedule_subagent_task: erro inesperado")
         return json.dumps({"status": "error", "error": str(e)})
 
 

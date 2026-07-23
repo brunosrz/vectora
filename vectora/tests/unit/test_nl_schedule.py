@@ -6,7 +6,7 @@ adivinhada — retorna None, e quem chama pede esclarecimento.
 
 from __future__ import annotations
 
-from backend.scheduling.nl_schedule import parse_natural_schedule
+from backend.scheduling.nl_schedule import parse_natural_schedule, parse_one_shot_delay
 
 
 def test_daily_with_explicit_time():
@@ -157,3 +157,56 @@ def test_every_n_pattern_takes_precedence_over_daily_when_both_present():
 def test_only_whitespace_variants_all_return_none():
     assert parse_natural_schedule("\t\n") is None
     assert parse_natural_schedule("     ") is None
+
+
+# ---------------------------------------------------------------------------
+# parse_one_shot_delay
+# ---------------------------------------------------------------------------
+
+
+def test_one_shot_em_n_minutos_retorna_timestamp_futuro():
+    from datetime import UTC, datetime, timedelta
+
+    result = parse_one_shot_delay("em 30 minutos")
+
+    assert result is not None
+    parsed = datetime.fromisoformat(result)
+    now = datetime.now(UTC)
+    assert timedelta(minutes=25) < (parsed - now) < timedelta(minutes=35)
+
+
+def test_one_shot_daqui_n_horas_retorna_timestamp_futuro():
+    from datetime import UTC, datetime, timedelta
+
+    result = parse_one_shot_delay("daqui 2 horas")
+
+    assert result is not None
+    parsed = datetime.fromisoformat(result)
+    now = datetime.now(UTC)
+    assert (
+        timedelta(hours=1, minutes=55) < (parsed - now) < timedelta(hours=2, minutes=5)
+    )
+
+
+def test_one_shot_daqui_a_n_minutos_variante_com_preposicao():
+    result = parse_one_shot_delay("daqui a 10 minutos")
+    assert result is not None
+
+
+def test_one_shot_string_vazia_retorna_none():
+    assert parse_one_shot_delay("") is None
+    assert parse_one_shot_delay("   ") is None
+
+
+def test_one_shot_expressao_recorrente_nao_e_reconhecida():
+    # "todo dia às 9h" é recorrência, não execução única — não deve
+    # produzir um timestamp (o parser certo pra isso é parse_natural_schedule).
+    assert parse_one_shot_delay("todo dia às 9h") is None
+
+
+def test_one_shot_numero_zero_ou_negativo_e_rejeitado():
+    assert parse_one_shot_delay("em 0 minutos") is None
+
+
+def test_one_shot_expressao_nao_relacionada_retorna_none():
+    assert parse_one_shot_delay("quando der") is None

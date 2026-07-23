@@ -517,6 +517,15 @@ async def get_store() -> Any:
     return _store
 
 
+async def get_checkpointer() -> Any:
+    """Retorna o checkpointer compartilhado (mesmo usado pelo agente
+    principal) — para montar grafos avulsos (ex.: subagente isolado
+    agendado, ``backend.scheduling.subagent_runner``) que precisam do mesmo
+    backend de persistência sem duplicar conexão."""
+    await _ensure_infra()
+    return _checkpointer
+
+
 async def _build_graph_async(
     model_id: str = "",
     chat_mode: bool = False,

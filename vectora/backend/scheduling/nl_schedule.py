@@ -11,6 +11,7 @@ agendamento errado silenciosamente).
 from __future__ import annotations
 
 import re
+from datetime import UTC, datetime, timedelta
 
 _WEEKDAYS = {
     "domingo": 0,
@@ -90,6 +91,28 @@ def _parse_daily(normalized: str) -> str | None:
     except _InvalidTimeError:
         return None
     return f"{minute} {hour} * * *"
+
+
+def parse_one_shot_delay(when: str) -> str | None:
+    """Converte uma expressão de execução ÚNICA em linguagem natural pra um
+    timestamp ISO futuro (UTC) — distinto de ``parse_natural_schedule``, que
+    só produz recorrência (cron). Padrões suportados: "em N minutos/horas",
+    "daqui N minutos/horas". Retorna ``None`` fora desses padrões, incluindo
+    string vazia — nunca adivinha.
+    """
+    normalized = when.strip().lower()
+    if not normalized:
+        return None
+
+    match = re.search(r"(?:em|daqui(?:\s+a)?)\s+(\d+)\s*(minuto|hora)s?", normalized)
+    if not match:
+        return None
+    n = int(match.group(1))
+    unit = match.group(2)
+    if n <= 0:
+        return None
+    delta = timedelta(minutes=n) if unit == "minuto" else timedelta(hours=n)
+    return (datetime.now(UTC) + delta).isoformat()
 
 
 def parse_natural_schedule(when: str) -> str | None:

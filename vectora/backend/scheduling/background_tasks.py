@@ -28,7 +28,9 @@ from croniter import croniter
 logger = logging.getLogger(__name__)
 
 VALID_KINDS = {"routine", "heartbreak", "subagent"}
-VALID_TRIGGERS = {"interval", "webhook", "manual", "subagent"}
+#: "once" — execução única numa hora futura (``next_run_at`` explícito, sem
+#: ``cron_expr`` recorrente) — usado por ``schedule_subagent_task`` (WB-6).
+VALID_TRIGGERS = {"interval", "once", "webhook", "manual", "subagent"}
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +137,10 @@ def _validate(kind: str, trigger_type: str, trigger_config: dict[str, Any]) -> N
             raise ValueError("trigger 'interval' requer trigger_config.cron_expr")
         # croniter levanta se o cron for inválido.
         croniter(cron, datetime.now(UTC))
+    if trigger_type == "once" and (trigger_config or {}).get("cron_expr"):
+        raise ValueError(
+            "trigger 'once' não aceita trigger_config.cron_expr (não é recorrente)"
+        )
 
 
 def _next_run(cron_expr: str | None) -> str | None:
@@ -161,12 +167,24 @@ async def create_task(
     trigger_type: str,
     trigger_config: dict[str, Any] | None = None,
     workspace_id: str | None = None,
+    next_run_at: str | None = None,
 ) -> BackgroundTask:
-    """Cria uma tarefa. Levanta ValueError em kind/trigger/cron inválidos."""
+    """Cria uma tarefa. Levanta ValueError em kind/trigger/cron inválidos.
+
+    ``next_run_at`` — override explícito de quando disparar, usado por
+    agendamentos de execução única (sem ``cron_expr`` recorrente, ex.
+    ``schedule_subagent_task``). Sem isso, ``trigger_type="interval"``
+    calcula normalmente a partir de ``trigger_config["cron_expr"]``.
+    """
     cfg = trigger_config or {}
     _validate(kind, trigger_type, cfg)
     task_id = str(uuid4())
-    next_run = _next_run(cfg.get("cron_expr")) if trigger_type == "interval" else None
+    if next_run_at is not None:
+        next_run = next_run_at
+    else:
+        next_run = (
+            _next_run(cfg.get("cron_expr")) if trigger_type == "interval" else None
+        )
 
     conn = await _get_db()
     try:
@@ -547,6 +565,19 @@ def _emit_run_event(
         logger.debug("background_tasks: falha ao emitir SSE da run", exc_info=True)
 
 
+async def _worktree_workspace_id(workspace_id: str, task_id: str) -> str:
+    """Cria (ou reusa) um worktree isolado para a task e devolve o id do
+    workspace efêmero apontando pra ele — mesma proteção contra
+    concorrência que a delegação síncrona de `coder` já tem via
+    `create_task_worktree` (WB-6)."""
+    from backend.scheduling.delegate import create_task_worktree
+    from backend.workspace.workspace import workspace_registry
+
+    worktree_path = await create_task_worktree(workspace_id, task_id)
+    ws = workspace_registry.get_or_create(worktree_path)
+    return ws.id
+
+
 async def run_task(
     task: BackgroundTask,
     trigger_source: str,
@@ -584,9 +615,23 @@ async def run_task(
         }
         if task.workspace_id:
             configurable["workspace_id"] = task.workspace_id
-        config = {"configurable": configurable, "recursion_limit": 50}
 
-        agent = await agent_factory.get_user_agent(user_id=task.user_id)
+        subagent_type = task.trigger_config.get("subagent_type")
+        if subagent_type:
+            # Agendamento de subagente específico (WB-6) — usa um worktree
+            # isolado quando é "coder" e a task tem workspace (evita
+            # concorrência com o workspace principal do usuário).
+            if subagent_type == "coder" and task.workspace_id:
+                configurable["workspace_id"] = await _worktree_workspace_id(
+                    task.workspace_id, task.id
+                )
+            from backend.scheduling.subagent_runner import build_subagent_graph
+
+            agent = await build_subagent_graph(subagent_type)
+        else:
+            agent = await agent_factory.get_user_agent(user_id=task.user_id)
+
+        config = {"configurable": configurable, "recursion_limit": 50}
         result = await agent.ainvoke(
             {"messages": [HumanMessage(content=prompt)]},
             config=config,
@@ -844,7 +889,7 @@ async def _list_due_interval_tasks() -> list[BackgroundTask]:
     try:
         cur = await conn.execute(
             "SELECT * FROM vectora_background_tasks "
-            "WHERE enabled = 1 AND trigger_type = 'interval' "
+            "WHERE enabled = 1 AND trigger_type IN ('interval', 'once') "
             "AND next_run_at IS NOT NULL AND next_run_at <= ?",
             (now,),
         )
@@ -902,12 +947,19 @@ class BackgroundScheduler:
             pass
 
     async def tick(self) -> None:
-        """Executa as interval tasks vencidas e reagenda cada uma."""
+        """Executa as interval/once tasks vencidas.
+
+        "interval" reagenda pelo cron; "once" (execução única, WB-6) só
+        desabilita a task depois de rodar — nunca refira sozinha.
+        """
         for task in await _list_due_interval_tasks():
-            await run_task(task, "interval")
-            await _set_next_run(
-                task.id, _next_run(task.trigger_config.get("cron_expr"))
-            )
+            await run_task(task, task.trigger_type)
+            if task.trigger_type == "once":
+                await update_task(task.id, enabled=False)
+            else:
+                await _set_next_run(
+                    task.id, _next_run(task.trigger_config.get("cron_expr"))
+                )
 
 
 _scheduler: BackgroundScheduler | None = None
