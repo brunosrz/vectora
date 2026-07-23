@@ -65,6 +65,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pywinpty>=3.0.5 ; sys_platform == 'win32'",
     "ptyprocess>=0.7 ; sys_platform != 'win32'",
+    "pyseccomp>=0.1.2 ; sys_platform == 'linux'",
     "asyncssh>=2.23.1",
     "nuitka[all]>=4.1.2",
     "scons>=4.10.1",

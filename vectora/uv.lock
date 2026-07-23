@@ -3286,6 +3286,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyseccomp"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/08/e2/f761ad7bd34745af8c8aa6d76a71a240eef45ee4635e2022dcc1b133b4d8/pyseccomp-0.1.2.tar.gz", hash = "sha256:0d54efacf71bda4bdfd21233f5444b730cbecf593d602f796e6412a8682258bd", size = 4943, upload-time = "2021-01-02T22:48:01.278Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/5a/2c454fe11c9bf0d8d77a8d89d05e9f2f4203b39c000d0e38a060c273ab7f/pyseccomp-0.1.2-py3-none-any.whl", hash = "sha256:19177748e1202603ca4b2c41d728916402c018c4fee49dca1e3568ea218b7c23", size = 5667, upload-time = "2021-01-02T22:48:00.578Z" },
+]
+
+[[package]]
 name = "pystray"
 version = "0.19.5"
 source = { registry = "https://pypi.org/simple" }
@@ -3871,8 +3880,8 @@ name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography" },
-    { name = "jeepney" },
+    { name = "cryptography", marker = "sys_platform != 'win32'" },
+    { name = "jeepney", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
@@ -4559,6 +4568,7 @@ dependencies = [
     { name = "pykeepass" },
     { name = "pynacl" },
     { name = "pyright" },
+    { name = "pyseccomp", marker = "sys_platform == 'linux'" },
     { name = "pystray" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -4654,6 +4664,7 @@ requires-dist = [
     { name = "pykeepass", specifier = ">=4.1.1" },
     { name = "pynacl", specifier = ">=1.6.2" },
     { name = "pyright", specifier = ">=1.1.410" },
+    { name = "pyseccomp", marker = "sys_platform == 'linux'", specifier = ">=0.1.2" },
     { name = "pystray", specifier = ">=0.19.5" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", specifier = ">=1.4.0" },

@@ -28,6 +28,7 @@ def _req(
     tool_name: str = "file_write",
     mode: str | None = "ask",
     messages: list | None = None,
+    workspace_id: str = "ws-1",
 ) -> ToolCallRequest:
     """Request com ``runtime.context.permission_mode`` — como o grafo entrega.
 
@@ -35,7 +36,9 @@ def _req(
     """
     runtime = None
     if mode is not None:
-        runtime = SimpleNamespace(context=SimpleNamespace(permission_mode=mode))
+        runtime = SimpleNamespace(
+            context=SimpleNamespace(permission_mode=mode, workspace_id=workspace_id)
+        )
     return ToolCallRequest(
         tool_call={"name": tool_name, "args": {}, "id": "x"},
         tool=None,
@@ -101,6 +104,80 @@ def test_install_learned_skill_pausa_como_terminal_file_write():
     # terminal/file_write — nunca persiste silenciosamente.
     assert _dynamic_hitl_when(_req("install_learned_skill", "ask")) is True
     assert _dynamic_hitl_when(_req("install_learned_skill", "auto")) is False
+
+
+# ── Workspace jailada (0.8): terminal/file_write bypassam HITL redundante ────
+
+
+def test_workspace_jailada_bypassa_hitl_pra_terminal_e_file_write(monkeypatch):
+    import backend.services.middleware as mw
+
+    monkeypatch.setattr(mw, "_workspace_is_jailed", lambda wid: wid == "ws-jail")
+
+    assert _dynamic_hitl_when(_req("terminal", "ask", workspace_id="ws-jail")) is False
+    assert (
+        _dynamic_hitl_when(_req("file_write", "ask", workspace_id="ws-jail")) is False
+    )
+
+
+def test_workspace_nao_jailada_mantem_hitl_normal(monkeypatch):
+    import backend.services.middleware as mw
+
+    monkeypatch.setattr(mw, "_workspace_is_jailed", lambda wid: False)
+
+    assert _dynamic_hitl_when(_req("terminal", "ask", workspace_id="ws-1")) is True
+
+
+def test_bypass_nao_afeta_tools_fora_do_escopo_do_jail(monkeypatch):
+    # install_learned_skill não é terminal/file_write — jail não bypassa,
+    # continua exigindo aprovação normal mesmo em workspace sandboxada.
+    import backend.services.middleware as mw
+
+    monkeypatch.setattr(mw, "_workspace_is_jailed", lambda wid: True)
+
+    assert (
+        _dynamic_hitl_when(_req("install_learned_skill", "ask", workspace_id="ws-jail"))
+        is True
+    )
+
+
+def test_workspace_is_jailed_le_vectora_toml_da_workspace(tmp_path, monkeypatch):
+    from backend.services.middleware import _workspace_is_jailed
+
+    (tmp_path / "vectora.toml").write_text("[sandbox]\nenabled = true\n")
+    ws = SimpleNamespace(cwd=str(tmp_path))
+    monkeypatch.setattr(
+        "backend.workspace.workspace.workspace_registry.get", lambda wid: ws
+    )
+
+    assert _workspace_is_jailed("ws-1") is True
+
+
+def test_workspace_is_jailed_falso_sem_vectora_toml(tmp_path, monkeypatch):
+    from backend.services.middleware import _workspace_is_jailed
+
+    ws = SimpleNamespace(cwd=str(tmp_path))
+    monkeypatch.setattr(
+        "backend.workspace.workspace.workspace_registry.get", lambda wid: ws
+    )
+
+    assert _workspace_is_jailed("ws-1") is False
+
+
+def test_workspace_is_jailed_falso_workspace_desconhecida(monkeypatch):
+    from backend.services.middleware import _workspace_is_jailed
+
+    monkeypatch.setattr(
+        "backend.workspace.workspace.workspace_registry.get", lambda wid: None
+    )
+
+    assert _workspace_is_jailed("ws-inexistente") is False
+
+
+def test_workspace_is_jailed_falso_workspace_id_vazio():
+    from backend.services.middleware import _workspace_is_jailed
+
+    assert _workspace_is_jailed("") is False
 
 
 # ── _plan_mode_should_interrupt isolado (reuso pelo modo plan) ───────────────

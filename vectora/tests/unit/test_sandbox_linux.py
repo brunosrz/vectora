@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from backend.sandbox import linux as sandbox_linux
+from backend.sandbox.dry_run import DENIED_SYSCALLS
 from backend.sandbox.policy import SandboxPolicy
 
 
@@ -346,3 +347,87 @@ async def test_duas_execucoes_concorrentes_nao_compartilham_estado(
     assert result_a.exit_code == 0
     assert result_b.stdout == "saida-b"
     assert result_b.exit_code == 1
+
+
+class _FakeSeccompFilter:
+    """Fake mínimo de `seccomp.SyscallFilter` — captura as regras aplicadas
+    sem depender de libseccomp instalada (indisponível neste ambiente de
+    dev Windows e no CI)."""
+
+    def __init__(self, defaction):
+        self.defaction = defaction
+        self.rules: list[tuple[object, str]] = []
+
+    def add_rule(self, action, name):
+        if name == "syscall_inexistente":
+            raise OSError(f"syscall {name!r} desconhecida nesta arch")
+        self.rules.append((action, name))
+
+    def export_bpf(self, fileobj):
+        fileobj.write(b"BPF-PROGRAM")
+
+
+def _install_fake_seccomp_module(monkeypatch) -> list[_FakeSeccompFilter]:
+    import sys
+    import types
+
+    created: list[_FakeSeccompFilter] = []
+
+    def _syscall_filter(defaction):
+        f = _FakeSeccompFilter(defaction)
+        created.append(f)
+        return f
+
+    fake_module = types.SimpleNamespace(
+        SyscallFilter=_syscall_filter, ALLOW="ALLOW", KILL="KILL"
+    )
+    monkeypatch.setitem(sys.modules, "seccomp", fake_module)
+    return created
+
+
+def test_seccomp_ausente_degrada_para_none_sem_lancar(monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def _no_seccomp(name, *args, **kwargs):
+        if name == "seccomp":
+            raise ImportError("no module named seccomp")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _no_seccomp)
+
+    result = sandbox_linux.build_seccomp_filter()
+
+    assert result is None
+
+
+def test_seccomp_presente_nega_todas_as_denied_syscalls(monkeypatch):
+    created = _install_fake_seccomp_module(monkeypatch)
+
+    result = sandbox_linux.build_seccomp_filter()
+
+    assert result == b"BPF-PROGRAM"
+    (f,) = created
+    assert f.defaction == "ALLOW"
+    denied_names = {name for _action, name in f.rules}
+    assert denied_names == set(DENIED_SYSCALLS)
+
+
+def test_seccomp_syscall_desconhecida_na_arch_nao_e_fatal(monkeypatch):
+    import sys
+    import types
+
+    fake_module = types.SimpleNamespace(
+        SyscallFilter=_FakeSeccompFilter, ALLOW="ALLOW", KILL="KILL"
+    )
+    monkeypatch.setitem(sys.modules, "seccomp", fake_module)
+    monkeypatch.setattr(
+        sandbox_linux,
+        "DENIED_SYSCALLS",
+        (*DENIED_SYSCALLS, "syscall_inexistente"),
+    )
+
+    result = sandbox_linux.build_seccomp_filter()
+
+    assert result == b"BPF-PROGRAM"

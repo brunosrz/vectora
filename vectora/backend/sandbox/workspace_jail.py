@@ -12,14 +12,17 @@ arquitetura de processo único e multi-workspace do Vectora.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
+import os
 import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from backend.sandbox.dry_run import build_bwrap_command
+from backend.sandbox.linux import build_seccomp_filter
 from backend.sandbox.policy import SandboxPolicy
 
 logger = logging.getLogger(__name__)
@@ -95,12 +98,28 @@ class WorkspaceJailManager:
         argv = build_bwrap_command(
             policy, workspace_dir, [sys.executable, "-m", "backend.sandbox.worker"]
         )
+        # Filtro seccomp real (0.4) — negando DENIED_SYSCALLS via libseccomp,
+        # não só documental. `None` (libseccomp ausente) roda sem o filtro,
+        # namespaces do bwrap continuam valendo (never blocks execution).
+        seccomp_fd: int | None = None
+        try:
+            bpf = build_seccomp_filter()
+        except Exception:
+            logger.warning("sandbox: falha ao compilar filtro seccomp — ignorando")
+            bpf = None
+        if bpf is not None:
+            read_fd, write_fd = os.pipe()
+            os.write(write_fd, bpf)
+            os.close(write_fd)
+            seccomp_fd = read_fd
+            argv = [argv[0], "--seccomp", str(read_fd), *argv[1:]]
         try:
             proc = await asyncio.create_subprocess_exec(
                 *argv,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                pass_fds=(seccomp_fd,) if seccomp_fd is not None else (),
             )
         except FileNotFoundError as exc:
             logger.warning("sandbox: binário bwrap não encontrado no sistema")
@@ -112,6 +131,12 @@ class WorkspaceJailManager:
             raise WorkerSpawnError(
                 "sem permissão para executar bwrap — sandbox indisponível."
             ) from exc
+        finally:
+            # O filho já herdou sua própria cópia via pass_fds — fecha a
+            # nossa pra não vazar o fd no processo do backend.
+            if seccomp_fd is not None:
+                with contextlib.suppress(OSError):
+                    os.close(seccomp_fd)
         return JailedWorker(workspace_id=workspace_id, proc=proc)
 
     async def close(self, workspace_id: str) -> None:

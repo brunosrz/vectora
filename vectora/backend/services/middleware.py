@@ -55,6 +55,41 @@ _ACCEPT_EDITS_AUTO: frozenset[str] = frozenset({"file_write", "file_write_tool"}
 #: no frontend (banner "automático" vs "permissões ignoradas"), não de HITL.
 _NON_INTERRUPTING_MODES: frozenset[str] = frozenset({"auto", "bypass"})
 
+#: `terminal`/`file_write` dentro de uma workspace com `[sandbox]` habilitado
+#: já são executadas pelo worker jailado (backend.sandbox.workspace_jail) —
+#: pausar pra aprovação humana aqui é fricção redundante, não segurança
+#: adicional (o jail é o backstop real). git/install de MCP/skill continuam
+#: pedindo aprovação normalmente, fora do escopo do jail.
+_JAILED_BYPASS_TOOLS: frozenset[str] = frozenset(
+    {"terminal", "terminal_tool", "file_write", "file_write_tool"}
+)
+
+
+def _workspace_is_jailed(workspace_id: str) -> bool:
+    """True se `workspace_id` tem `[sandbox]` habilitado em `vectora.toml`.
+
+    Defensivo: workspace desconhecida, sem `cwd`, ou qualquer erro de I/O
+    ao ler o TOML volta `False` (nunca relaxa HITL por engano)."""
+    if not workspace_id:
+        return False
+    try:
+        from pathlib import Path
+
+        from backend.sandbox.policy import parse_policy
+        from backend.workspace.workspace import workspace_registry
+
+        ws = workspace_registry.get(workspace_id)
+        cwd = getattr(ws, "cwd", None)
+        if not cwd:
+            return False
+        return parse_policy(Path(cwd) / "vectora.toml").enabled
+    except Exception:
+        logger.debug(
+            "middleware: falha ao checar sandbox da workspace %s", workspace_id
+        )
+        return False
+
+
 #: Decisions permitidas no interrupt (todas — o predicate decide SE pausa; uma
 #: vez pausado, o revisor tem o leque completo de ações).
 _ALL_DECISIONS: list[DecisionType] = cast(  # type: ignore[assignment]
@@ -137,6 +172,12 @@ def _dynamic_hitl_when(req: ToolCallRequest) -> bool:
     """
     tool_call = getattr(req, "tool_call", {}) or {}
     tool_name = tool_call.get("name", "") if isinstance(tool_call, dict) else ""
+    if tool_name in _JAILED_BYPASS_TOOLS:
+        runtime = getattr(req, "runtime", None)
+        context = getattr(runtime, "context", None)
+        workspace_id = getattr(context, "workspace_id", "") if context else ""
+        if _workspace_is_jailed(workspace_id):
+            return False
     mode = _mode_from_runtime(req)
     return _mode_should_interrupt(mode, tool_name, req)
 

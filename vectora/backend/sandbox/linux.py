@@ -12,10 +12,39 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-from backend.sandbox.dry_run import build_bwrap_command
+from backend.sandbox.dry_run import DENIED_SYSCALLS, build_bwrap_command
 from backend.sandbox.policy import SandboxPolicy
 
 logger = logging.getLogger(__name__)
+
+
+def build_seccomp_filter() -> bytes | None:
+    """Compila `DENIED_SYSCALLS` num programa BPF via libseccomp — `ALLOW`
+    por default, `KILL` só nas syscalls perigosas da denylist (ptrace,
+    module loading, bpf, unshare, etc). `None` se `pyseccomp`/`libseccomp`
+    não estiver disponível no sistema — caller degrada rodando sem o
+    filtro (namespaces + Landlock do bwrap continuam valendo), nunca
+    quebra a execução por isso."""
+    try:
+        import io
+
+        import seccomp  # ty: ignore[unresolved-import]
+    except ImportError:
+        logger.warning(
+            "sandbox: pyseccomp/libseccomp indisponível — rodando sem filtro "
+            "seccomp (namespaces do bwrap continuam ativos)"
+        )
+        return None
+
+    f = seccomp.SyscallFilter(defaction=seccomp.ALLOW)
+    for name in DENIED_SYSCALLS:
+        try:
+            f.add_rule(seccomp.KILL, name)
+        except Exception:
+            logger.debug("sandbox: syscall %r não existe nesta arch/kernel", name)
+    buf = io.BytesIO()
+    f.export_bpf(buf)
+    return buf.getvalue()
 
 
 @dataclass(frozen=True)

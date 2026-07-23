@@ -15,7 +15,10 @@ import contextlib
 import logging
 import os
 import platform
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from backend.sandbox.policy import SandboxPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +99,7 @@ class PtySession:
         cols: int = 80,
         rows: int = 24,
         argv: list[str] | None = None,
+        policy: SandboxPolicy | None = None,
     ) -> PtySession:
         if _Backend is None:
             raise RuntimeError(
@@ -105,6 +109,32 @@ class PtySession:
 
         cmd = argv or _default_shell()
         merged_env = {**os.environ, **(env or {})}
+
+        # 0.3 — PTY interativo compartilha a MESMA política jailada
+        # (backend.sandbox.workspace_jail) que `terminal`/`file_write`
+        # daquela workspace: mesmos namespaces/rw_paths/ro_paths do bwrap.
+        # Só `backend="local"` suporta PTY interativo sandboxado nesta
+        # sprint (docker/ssh/modal exigiriam `-it`/`-tt`, sprint futura) —
+        # e só existe em Linux (bwrap). Nunca cai silenciosamente pra shell
+        # sem proteção quando o usuário configurou `[sandbox]`.
+        if policy is not None and policy.enabled:
+            if policy.backend != "local":
+                raise RuntimeError(
+                    f"Terminal interativo sandboxado ainda não suporta "
+                    f"backend={policy.backend!r} — use a tool `terminal` "
+                    "(comandos one-shot) ou desative [sandbox] pra essa "
+                    "workspace."
+                )
+            from shutil import which
+
+            if which("bwrap") is None:
+                raise RuntimeError(
+                    "bwrap não está disponível nesta plataforma — sandbox "
+                    "indisponível para terminal interativo."
+                )
+            from backend.sandbox.dry_run import build_bwrap_command
+
+            cmd = build_bwrap_command(policy, cwd, cmd)
 
         # pywinpty aceita lista ou string; ptyprocess espera argv (lista).
         try:

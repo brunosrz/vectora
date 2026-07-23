@@ -120,11 +120,17 @@ async def terminal_ws(ws: WebSocket) -> None:
     session = pty_registry.get(terminal_id)
     if session is None or not session.is_alive():
         try:
+            from pathlib import Path
+
+            from backend.sandbox.policy import parse_policy
+
+            policy = parse_policy(Path(workspace.cwd) / "vectora.toml")
             session = PtySession.create(
                 terminal_id=terminal_id,
                 workspace_id=workspace_id,
                 thread_id=thread_id,
                 cwd=workspace.cwd,
+                policy=policy,
             )
             pty_registry.add(session)
         except Exception as exc:

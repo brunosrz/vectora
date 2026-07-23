@@ -134,6 +134,43 @@ async def test_close_idle_keeps_recently_used_workers(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_spawn_aplica_seccomp_fd_quando_filtro_disponivel(tmp_path, monkeypatch):
+    proc = _fake_proc()
+    spawn_mock = AsyncMock(return_value=proc)
+    monkeypatch.setattr(wj.asyncio, "create_subprocess_exec", spawn_mock)
+    monkeypatch.setattr(wj, "build_seccomp_filter", lambda: b"BPF-PROGRAM")
+    manager = wj.WorkspaceJailManager()
+
+    await manager.get_or_spawn("ws-1", str(tmp_path), SandboxPolicy(enabled=True))
+
+    assert spawn_mock.await_args is not None
+    argv = spawn_mock.await_args.args
+    assert argv[0] == "bwrap"
+    assert "--seccomp" in argv
+    kwargs = spawn_mock.await_args.kwargs
+    assert kwargs["pass_fds"] != ()
+
+
+@pytest.mark.asyncio
+async def test_spawn_degrada_sem_seccomp_quando_libseccomp_ausente(
+    tmp_path, monkeypatch
+):
+    proc = _fake_proc()
+    spawn_mock = AsyncMock(return_value=proc)
+    monkeypatch.setattr(wj.asyncio, "create_subprocess_exec", spawn_mock)
+    monkeypatch.setattr(wj, "build_seccomp_filter", lambda: None)
+    manager = wj.WorkspaceJailManager()
+
+    await manager.get_or_spawn("ws-1", str(tmp_path), SandboxPolicy(enabled=True))
+
+    assert spawn_mock.await_args is not None
+    argv = spawn_mock.await_args.args
+    assert "--seccomp" not in argv
+    kwargs = spawn_mock.await_args.kwargs
+    assert kwargs["pass_fds"] == ()
+
+
+@pytest.mark.asyncio
 async def test_is_alive_reflects_returncode(tmp_path, monkeypatch):
     dead_proc = _fake_proc(returncode=1)
     spawn_mock = AsyncMock(return_value=dead_proc)
