@@ -678,6 +678,7 @@
   "terminal_untrusted_title": "Espacio no confiable",
   "terminal_untrusted_hint": "La terminal solo abre en carpetas marcadas como confiables.",
   "terminal_no_sandbox_warning": "Shell sin sandbox: tiene el mismo poder que un terminal local en la carpeta confiable.",
+  "terminal_sandbox_active": "Shell aislado: los comandos corren dentro del worker jailado de este workspace.",
   "terminal_conn_error": "error de conexión",
   "terminal_ended": "finalizado",
   "workbench_toggle": "Mostrar/ocultar workbench",

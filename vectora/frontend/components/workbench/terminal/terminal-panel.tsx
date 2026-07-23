@@ -6,8 +6,8 @@
  * backend (identificado por terminal_id).
  */
 
-import { Plug, Plus, TerminalSquare, X } from "lucide-react";
-import { useEffect } from "react";
+import { Plug, Plus, ShieldCheck, TerminalSquare, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   useTerminalsStore,
@@ -16,6 +16,35 @@ import {
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { XtermView } from "./xterm-view";
 import { m } from "@/lib/paraglide/messages";
+
+/** Consulta `GET /workspaces/{id}/sandbox/status` — reflete se o worker
+ * jailado (AI Jail) está ativo pra essa workspace. `null` enquanto carrega
+ * (não mostra nenhum dos dois avisos até saber de verdade). */
+function useSandboxStatus(workspaceId: string | undefined): boolean | null {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!workspaceId) {
+      setEnabled(null);
+      return;
+    }
+    let cancelled = false;
+    setEnabled(null);
+    fetch(`/workspaces/${encodeURIComponent(workspaceId)}/sandbox/status`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { enabled?: boolean } | null) => {
+        if (!cancelled) setEnabled(data?.enabled ?? false);
+      })
+      .catch(() => {
+        if (!cancelled) setEnabled(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId]);
+
+  return enabled;
+}
 
 interface TerminalPanelProps {
   threadId: string;
@@ -32,6 +61,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
   const close = useTerminalsStore((s) => s.close);
   const setActive = useTerminalsStore((s) => s.setActive);
   const workspace = useWorkspacesStore((s) => s.getActive());
+  const sandboxEnabled = useSandboxStatus(workspace?.id);
 
   // Abre 1 terminal automaticamente quando o painel monta sem nenhum.
   // Lê o store inline (não a captura reativa) — Strict Mode roda effects
@@ -112,10 +142,20 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
         </button>
       </div>
 
-      {/* Aviso de "sem sandbox" — recolhível, baixa fricção */}
-      <div className="px-3 py-1.5 text-[10px] text-amber-600 bg-amber-500/10 border-b border-amber-500/20">
-        {m.terminal_no_sandbox_warning()}
-      </div>
+      {/* Indicador dinâmico: sandboxed (informativo) vs sem sandbox (aviso).
+          sandboxEnabled === null enquanto o status ainda carrega — não
+          mostra nenhum dos dois até saber de verdade. */}
+      {sandboxEnabled === true && (
+        <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] text-emerald-600 bg-emerald-500/10 border-b border-emerald-500/20">
+          <ShieldCheck className="w-3 h-3 shrink-0" />
+          {m.terminal_sandbox_active()}
+        </div>
+      )}
+      {sandboxEnabled === false && (
+        <div className="px-3 py-1.5 text-[10px] text-amber-600 bg-amber-500/10 border-b border-amber-500/20">
+          {m.terminal_no_sandbox_warning()}
+        </div>
+      )}
 
       {/* Body — só renderiza o terminal ativo (poupa CPU; estado fica no PTY) */}
       <div className="flex-1 relative">

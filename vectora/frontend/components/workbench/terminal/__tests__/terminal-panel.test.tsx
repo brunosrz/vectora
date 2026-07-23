@@ -6,8 +6,14 @@
  * (isso é coberto em xterm-view.test.tsx).
  */
 
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 
 import type { TerminalInstance } from "@/lib/stores/terminals-store";
 
@@ -78,11 +84,29 @@ vi.mock("../xterm-view", () => ({
 
 import { TerminalPanel } from "../terminal-panel";
 
+let sandboxStatusResponse: { enabled: boolean } | null = { enabled: false };
+
+const fetchMock = vi.fn(async () => {
+  if (sandboxStatusResponse === null) {
+    return new Response("not found", { status: 404 });
+  }
+  return new Response(JSON.stringify(sandboxStatusResponse), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+});
+
+beforeEach(() => {
+  vi.stubGlobal("fetch", fetchMock);
+});
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
   mockList = [];
   mockActiveId = null;
+  sandboxStatusResponse = { enabled: false };
   mockWorkspace = {
     id: "ws1",
     name: "proj",
@@ -210,5 +234,60 @@ describe("TerminalPanel", () => {
     render(<TerminalPanel threadId="t1" />);
     fireEvent.click(screen.getByTestId("xterm-view"));
     expect(mockClose).toHaveBeenCalledWith("t1", "a");
+  });
+
+  describe("indicador de sandbox (AI Jail)", () => {
+    it("workspace sem [sandbox]: mostra o aviso âmbar de sempre", async () => {
+      sandboxStatusResponse = { enabled: false };
+      render(<TerminalPanel threadId="t1" />);
+      await waitFor(() =>
+        expect(
+          screen.getByText("terminal_no_sandbox_warning"),
+        ).toBeInTheDocument(),
+      );
+      expect(
+        screen.queryByText("terminal_sandbox_active"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("workspace com [sandbox] habilitado: mostra o indicador verde, não o aviso âmbar", async () => {
+      sandboxStatusResponse = { enabled: true };
+      render(<TerminalPanel threadId="t1" />);
+      await waitFor(() =>
+        expect(screen.getByText("terminal_sandbox_active")).toBeInTheDocument(),
+      );
+      expect(
+        screen.queryByText("terminal_no_sandbox_warning"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("antes da resposta chegar: não mostra nenhum dos dois avisos", () => {
+      // fetch nunca resolve nesta chamada (promise pendente) — o hook
+      // continua em estado "carregando" (enabled === null).
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => new Promise(() => {})),
+      );
+      render(<TerminalPanel threadId="t1" />);
+      expect(
+        screen.queryByText("terminal_no_sandbox_warning"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("terminal_sandbox_active"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("erro de rede degrada pro aviso âmbar (nunca alega sandbox sem confirmar)", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => Promise.reject(new Error("network down"))),
+      );
+      render(<TerminalPanel threadId="t1" />);
+      await waitFor(() =>
+        expect(
+          screen.getByText("terminal_no_sandbox_warning"),
+        ).toBeInTheDocument(),
+      );
+    });
   });
 });

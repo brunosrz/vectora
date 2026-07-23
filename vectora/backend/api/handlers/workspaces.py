@@ -885,6 +885,27 @@ def _resolve_inside(workspace_id: str, rel_path: str) -> Path | None:
     return resolve_within_workspace(str(candidate), base)
 
 
+class SandboxStatusResponse(BaseModel):
+    enabled: bool
+
+
+@view_router.get("/{workspace_id}/sandbox/status", response_model=SandboxStatusResponse)
+async def workspace_sandbox_status(workspace_id: str) -> SandboxStatusResponse:
+    """Reflete se o worker jailado (AI Jail) está habilitado pra essa
+    workspace — lê `vectora.toml`/`[sandbox]` na raiz do workspace, mesma
+    fonte que `backend/tools/fs.py`/`PtySession` já consultam antes de
+    rotear terminal/tools de arquivo pelo worker. Workspace inexistente
+    retorna `enabled=False` (nunca alega proteção que não existe)."""
+    from backend.sandbox.policy import parse_policy
+    from backend.workspace.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return SandboxStatusResponse(enabled=False)
+    policy = parse_policy(Path(ws.cwd) / "vectora.toml")
+    return SandboxStatusResponse(enabled=policy.enabled)
+
+
 @view_router.get("/{workspace_id}/tree", response_model=TreeResponse)
 async def workspace_tree(
     workspace_id: str,

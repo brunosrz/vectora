@@ -592,3 +592,52 @@ class TestPrEndpoints:
         )
         resp = await ws_mod.pr_list(workspace_id=wsid)
         assert resp.available is False
+
+
+class TestSandboxStatus:
+    """GET /workspaces/{id}/sandbox/status — reflete se o worker jailado
+    (AI Jail) está habilitado, lendo vectora.toml/[sandbox]."""
+
+    @pytest.mark.asyncio
+    async def test_enabled_true_when_sandbox_configured(self, trusted_ws):
+        from backend.api.handlers.workspaces import workspace_sandbox_status
+
+        wsid, root = trusted_ws
+        (root / "vectora.toml").write_text(
+            "[sandbox]\nenabled = true\n", encoding="utf-8"
+        )
+
+        resp = await workspace_sandbox_status(workspace_id=wsid)
+
+        assert resp.enabled is True
+
+    @pytest.mark.asyncio
+    async def test_enabled_false_without_vectora_toml(self, trusted_ws):
+        from backend.api.handlers.workspaces import workspace_sandbox_status
+
+        wsid, _root = trusted_ws
+
+        resp = await workspace_sandbox_status(workspace_id=wsid)
+
+        assert resp.enabled is False
+
+    @pytest.mark.asyncio
+    async def test_enabled_false_when_sandbox_disabled_explicitly(self, trusted_ws):
+        from backend.api.handlers.workspaces import workspace_sandbox_status
+
+        wsid, root = trusted_ws
+        (root / "vectora.toml").write_text(
+            "[sandbox]\nenabled = false\n", encoding="utf-8"
+        )
+
+        resp = await workspace_sandbox_status(workspace_id=wsid)
+
+        assert resp.enabled is False
+
+    @pytest.mark.asyncio
+    async def test_unknown_workspace_returns_disabled_not_error(self):
+        from backend.api.handlers.workspaces import workspace_sandbox_status
+
+        resp = await workspace_sandbox_status(workspace_id="does-not-exist")
+
+        assert resp.enabled is False
