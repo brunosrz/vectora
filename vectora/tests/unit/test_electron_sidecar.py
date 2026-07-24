@@ -16,16 +16,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from backend.services import electron_sidecar
+from backend.services.subprocess_sidecar_utils import LazyLock
 
 
 @pytest.fixture(autouse=True)
 def _reset_sidecar_state():
     electron_sidecar._proc = None
-    electron_sidecar._spawn_lock = None
+    electron_sidecar._spawn_lock = LazyLock()
     electron_sidecar._log_task = None
     yield
     electron_sidecar._proc = None
-    electron_sidecar._spawn_lock = None
+    electron_sidecar._spawn_lock = LazyLock()
     electron_sidecar._log_task = None
 
 

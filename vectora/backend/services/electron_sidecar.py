@@ -22,20 +22,14 @@ import os
 
 from backend.services.electron_launcher import resolve_electron_launch
 from backend.services.subprocess_logging import pipe_to_logger
+from backend.services.subprocess_sidecar_utils import LazyLock, terminate_gracefully
 from backend.services.tray import has_display
 
 logger = logging.getLogger(__name__)
 
 _proc: asyncio.subprocess.Process | None = None
 _log_task: asyncio.Task | None = None
-_spawn_lock: asyncio.Lock | None = None
-
-
-def _get_spawn_lock() -> asyncio.Lock:
-    global _spawn_lock
-    if _spawn_lock is None:
-        _spawn_lock = asyncio.Lock()
-    return _spawn_lock
+_spawn_lock = LazyLock()
 
 
 def should_spawn_electron() -> bool:
@@ -69,7 +63,7 @@ async def ensure_electron_sidecar() -> asyncio.subprocess.Process | None:
     """
     global _proc, _log_task
 
-    async with _get_spawn_lock():
+    async with _spawn_lock.get():
         if _proc is not None and _proc.returncode is None:
             return _proc
 
@@ -101,9 +95,9 @@ async def ensure_electron_sidecar() -> asyncio.subprocess.Process | None:
 
 async def stop_electron_sidecar() -> None:
     """Encerra o sidecar Electron, se estiver rodando. Idempotente."""
-    global _proc, _spawn_lock, _log_task
+    global _proc, _log_task
 
-    _spawn_lock = None  # mesmo motivo do nats_sidecar: solta o lock preso ao loop
+    _spawn_lock.reset()  # mesmo motivo do nats_sidecar: solta o lock preso ao loop
 
     if _log_task is not None:
         _log_task.cancel()
@@ -115,10 +109,6 @@ async def stop_electron_sidecar() -> None:
     _proc = None
     if proc.returncode is not None:
         return
-    try:
-        proc.terminate()
-        await asyncio.wait_for(proc.wait(), timeout=10.0)
-    except TimeoutError:
-        proc.kill()
-    except Exception:
-        logger.warning("electron_sidecar: erro ao encerrar", exc_info=True)
+    await terminate_gracefully(
+        proc, timeout_seconds=10.0, logger=logger, log_prefix="electron_sidecar"
+    )

@@ -80,13 +80,32 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _install_terminal_signals(server: Any, icon_ref: list[Any]) -> None:
-    """Instala handlers de SIGINT/SIGTERM/SIGHUP para shutdown limpo em modo TTY.
+def _should_install_terminal_signals(env: dict[str, str]) -> bool:
+    """Decide se o handler de sinal customizado (Ctrl+C/SIGTERM/SIGHUP →
+    shutdown gracioso do uvicorn, que aciona o `finally` do lifespan e
+    limpa sidecars como o NATS) deve ser instalado.
 
-    Chamado apenas quando o processo foi iniciado por um terminal interativo
-    (sys.stdin.isatty()) e não está sob Electron (VECTORA_DESKTOP). No VPS/
-    Docker sem TTY, o uvicorn gerencia os próprios sinais.
+    `VECTORA_DESKTOP=1` sozinho não diz quem é dono do processo: é setado
+    tanto quando o Electron spawna o backend (produção — o Electron já
+    mata a árvore inteira via `taskkill /T /F`, um handler custom aqui
+    disputaria esse shutdown) quanto quando é o PRÓPRIO backend quem se
+    autoelege primário e sobe o Electron como seu sidecar (`_run_start`,
+    "Electron-first em dev") — nesse segundo caso não existe nenhum
+    Electron dono cuidando da limpeza do lado de fora, e sem handler o
+    processo nunca aciona o shutdown gracioso, deixando sidecars filhos
+    (nats-server) órfãos. `VECTORA_SPAWN_ELECTRON=1` só é setado nesse
+    segundo caso — é o sinal de "este processo é dono de si mesmo".
     """
+    desktop = bool(env.get("VECTORA_DESKTOP"))
+    owns_itself = bool(env.get("VECTORA_SPAWN_ELECTRON"))
+    if desktop and not owns_itself:
+        return False
+    return sys.stdin.isatty()
+
+
+def _install_terminal_signals(server: Any, icon_ref: list[Any]) -> None:
+    """Instala handlers de SIGINT/SIGTERM/SIGHUP para shutdown limpo — ver
+    `_should_install_terminal_signals` para quando isso é chamado."""
 
     def _shutdown(_signum: int, _frame: Any) -> None:
         server.should_exit = True
@@ -260,6 +279,21 @@ def _build_parser() -> argparse.ArgumentParser:
         "sessions",
         help="Lista todas as sessões salvas",
         description="Mostra sessões com ID, data, contagem de mensagens e diretório.",
+    )
+
+    # ── doctor ────────────────────────────────────────────────────────────────
+    doctor_p = sub.add_parser(
+        "doctor",
+        help="Encontra e limpa sidecars órfãos (nats-server)",
+        description=(
+            "Varre o sistema por processos nats-server órfãos (por nome de "
+            "imagem, não só os PIDs conhecidos) e oferece finalizá-los."
+        ),
+    )
+    doctor_p.add_argument(
+        "--yes",
+        action="store_true",
+        help="Finaliza sem pedir confirmação (uso não-interativo/scriptável).",
     )
 
     # ── storage ───────────────────────────────────────────────────────────────
@@ -447,6 +481,13 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
         )
     server = uvicorn.Server(config)
 
+    # Aplicado ANTES do branch Windows named-pipe abaixo — esse branch tem um
+    # `return` próprio, e sem instalar o handler aqui primeiro ele nunca seria
+    # alcançado nesse caminho (o mais comum em dev desktop no Windows).
+    icon_ref: list[Any] = [None]
+    if _should_install_terminal_signals(dict(os.environ)):
+        _install_terminal_signals(server, icon_ref)
+
     # Windows + VECTORA_DESKTOP: named pipe em vez de TCP — nenhuma porta TCP é
     # exposta ao SO. O Electron conecta via \\.\pipe\vectora-<pid>, lido de stdout.
     if sys.platform == "win32" and os.environ.get("VECTORA_DESKTOP"):
@@ -467,10 +508,6 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
 
         asyncio.run(_run_win())
         return
-
-    icon_ref: list[Any] = [None]
-    if sys.stdin.isatty() and not os.environ.get("VECTORA_DESKTOP"):
-        _install_terminal_signals(server, icon_ref)
 
     if force_web:
         # vectora web: nem a bandeja sobe — só o servidor ASGI puro, igual ao
@@ -509,6 +546,71 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _run_config_command(args: argparse.Namespace) -> None:
+    from backend.cli.config import run_config
+
+    run_config(args)
+
+
+def _run_sessions_command(_args: argparse.Namespace) -> None:
+    from backend.cli.sessions import run_sessions
+
+    run_sessions()
+
+
+def _run_storage_command(args: argparse.Namespace) -> None:
+    from backend.cli.storage import run_storage
+
+    run_storage(args)
+
+
+def _run_doctor_command(args: argparse.Namespace) -> None:
+    from backend.cli.doctor import run_doctor
+
+    run_doctor(args)
+
+
+def _run_auth_command(args: argparse.Namespace) -> None:
+    from backend.auth import (
+        cmd_login,
+        cmd_logout,
+        cmd_refresh,
+        cmd_signup,
+        cmd_whoami,
+    )
+
+    action = getattr(args, "action", None)
+    handlers = {
+        "signup": cmd_signup,
+        "login": cmd_login,
+        "logout": cmd_logout,
+        "whoami": cmd_whoami,
+        "refresh": cmd_refresh,
+    }
+    handler = handlers.get(action or "")
+    if handler is None:
+        print(
+            "Uso: vectora auth <ação>\n"
+            "Ações: signup | login | logout | whoami | refresh\n"
+            "Exemplo: vectora auth login"
+        )
+        sys.exit(1)
+    sys.exit(handler(args))
+
+
+# Subcomandos que só precisam de "importa o módulo, chama o handler com
+# args" — start/web (têm variantes force_web) e auth (tratado à parte
+# acima, mas despachado pela mesma tabela) ficam fora por clareza no
+# restante de `run()`.
+_COMMAND_HANDLERS: dict[str, Any] = {
+    "config": _run_config_command,
+    "sessions": _run_sessions_command,
+    "storage": _run_storage_command,
+    "doctor": _run_doctor_command,
+    "auth": _run_auth_command,
+}
+
+
 def run() -> None:
     """Ponto de entrada síncrono — comando ``vectora``."""
     parser = _build_parser()
@@ -528,50 +630,10 @@ def run() -> None:
         _run_start(args, force_web=True)
         return
 
-    if command == "config":
-        from backend.cli.config import run_config
-
-        run_config(args)
+    handler = _COMMAND_HANDLERS.get(command)
+    if handler is not None:
+        handler(args)
         return
-
-    if command == "sessions":
-        from backend.cli.sessions import run_sessions
-
-        run_sessions()
-        return
-
-    if command == "storage":
-        from backend.cli.storage import run_storage
-
-        run_storage(args)
-        return
-
-    if command == "auth":
-        from backend.auth import (
-            cmd_login,
-            cmd_logout,
-            cmd_refresh,
-            cmd_signup,
-            cmd_whoami,
-        )
-
-        action = getattr(args, "action", None)
-        handlers = {
-            "signup": cmd_signup,
-            "login": cmd_login,
-            "logout": cmd_logout,
-            "whoami": cmd_whoami,
-            "refresh": cmd_refresh,
-        }
-        handler = handlers.get(action or "")
-        if handler is None:
-            print(
-                "Uso: vectora auth <ação>\n"
-                "Ações: signup | login | logout | whoami | refresh\n"
-                "Exemplo: vectora auth login"
-            )
-            sys.exit(1)
-        sys.exit(handler(args))
 
     parser.print_help()
 

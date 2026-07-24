@@ -318,4 +318,105 @@ describe("killBackendTree", () => {
     await new Promise((resolve) => setTimeout(resolve, 200)); // dá tempo do SO liberar o PID
     expect(() => process.kill(pid, 0)).toThrow();
   });
+
+  // Cenário real do bug de órfãos investigado nesta sprint: o processo
+  // Python spawna o nats-server como SEU filho — matar só o pai (sem
+  // matar a árvore) deixa o filho vivo. Este teste replica isso com um
+  // "neto" de verdade (child_process.spawn dentro do dummy-backend),
+  // confirmando que killBackendTree mata os dois, não só o pai.
+  it("mata a árvore inteira — o 'neto' spawnado pelo processo também morre", async () => {
+    const port = await getFreePort();
+    const parent = spawnDummy({
+      TEST_HEALTH_PORT: String(port),
+      SPAWN_CHILD: "1",
+    });
+    const parentPid = parent.pid!;
+
+    const childPid = await new Promise<number>((resolve, reject) => {
+      let buffer = "";
+      const timeout = setTimeout(
+        () => reject(new Error("CHILD_PID nunca apareceu no stdout")),
+        5_000,
+      );
+      parent.stdout!.on("data", (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const match = /CHILD_PID=(\d+)/.exec(buffer);
+        if (match) {
+          clearTimeout(timeout);
+          resolve(Number(match[1]));
+        }
+      });
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100)); // deixa os dois assentarem
+
+    await new Promise<void>((resolve) => {
+      if (process.platform === "win32") {
+        killBackendTree(parentPid, process.platform, () => {});
+        resolve();
+      } else {
+        killBackendTree(parentPid, process.platform, (killPid, cb) => {
+          treeKill(killPid, () => {
+            cb?.();
+            resolve();
+          });
+        });
+      }
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 300)); // dá tempo do SO liberar os PIDs
+    expect(() => process.kill(parentPid, 0)).toThrow();
+    expect(() => process.kill(childPid, 0)).toThrow();
+  });
+
+  it("edge case: neto já morto antes da chamada não lança", async () => {
+    const port = await getFreePort();
+    const parent = spawnDummy({
+      TEST_HEALTH_PORT: String(port),
+      SPAWN_CHILD: "1",
+    });
+    const parentPid = parent.pid!;
+
+    const childPid = await new Promise<number>((resolve, reject) => {
+      let buffer = "";
+      const timeout = setTimeout(
+        () => reject(new Error("CHILD_PID nunca apareceu no stdout")),
+        5_000,
+      );
+      parent.stdout!.on("data", (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const match = /CHILD_PID=(\d+)/.exec(buffer);
+        if (match) {
+          clearTimeout(timeout);
+          resolve(Number(match[1]));
+        }
+      });
+    });
+
+    // Mata o neto sozinho, adiantado — killBackendTree não deve lançar ao
+    // tentar matar uma árvore que já não tem esse membro vivo.
+    await new Promise<void>((resolve) => treeKill(childPid, () => resolve()));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(() => {
+      killBackendTree(parentPid, process.platform, (killPid, cb) => {
+        treeKill(killPid, () => cb?.());
+      });
+    }).not.toThrow();
+  });
+
+  it("edge case: fora do Windows, delega pro treeKillFn passado (não usa taskkill)", async () => {
+    const port = await getFreePort();
+    const parent = spawnDummy({ TEST_HEALTH_PORT: String(port) });
+    const parentPid = parent.pid!;
+    let calledWithPid: number | null = null;
+    const treeKillFn = (pid: number, cb?: (err?: Error) => void) => {
+      calledWithPid = pid;
+      cb?.();
+    };
+
+    killBackendTree(parentPid, "linux", treeKillFn);
+
+    expect(calledWithPid).toBe(parentPid);
+  });
 });

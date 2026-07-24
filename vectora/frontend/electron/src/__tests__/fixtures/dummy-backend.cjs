@@ -11,11 +11,23 @@
  *   DELAY_HEALTH_MS=N    — espera N ms antes de abrir o /health
  *   SPLIT_PIPE_WRITE=1   — escreve "VECTORA_IPC_PIPE=...” fatiado em dois
  *                          process.stdout.write() com um tick entre eles
+ *   SPAWN_CHILD=1        — spawna um "neto" (processo filho deste dummy,
+ *                          replicando o padrão real Python→nats-server)
+ *                          que fica vivo indefinidamente; imprime
+ *                          "CHILD_PID=<pid>" no stdout assim que nasce
  */
 const http = require("http");
+const { spawn } = require("child_process");
 
 if (process.env.CRASH_IMMEDIATELY === "1") {
   process.exit(1);
+}
+
+if (process.env.SPAWN_CHILD === "1") {
+  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+    stdio: "ignore",
+  });
+  process.stdout.write(`CHILD_PID=${child.pid}\n`);
 }
 
 const pipeValue = "\\\\.\\pipe\\test-dummy-backend";

@@ -43,30 +43,28 @@ import sys
 from pathlib import Path
 
 from backend.services.subprocess_logging import pipe_to_logger
+from backend.services.subprocess_sidecar_utils import LazyLock, terminate_gracefully
 from backend.settings import settings
 
 logger = logging.getLogger(__name__)
 
 _PID_FILE_NAME = "sidecar.pid"
+# Cap da lista de PIDs órfãos rastreados — best-effort, nunca deixa o
+# arquivo crescer indefinidamente se algum PID resistir a `_kill_pid`
+# repetidamente entre sessões.
+_PID_LIST_CAP = 10
 
 _proc: asyncio.subprocess.Process | None = None
 _url: str | None = None
 _log_task: asyncio.Task | None = None
-# Criado sob demanda (não no import) — um asyncio.Lock() de módulo, criado
-# antes de qualquer event loop rodar, fica "preso" ao primeiro loop que o
-# tocar; um segundo teste/processo com event loop novo (comum na suíte
-# pytest-asyncio, um loop por teste) levanta "Lock is bound to a different
-# event loop". Lazy-init garante que o lock sempre pertence ao loop atual.
-_spawn_lock: asyncio.Lock | None = None
+# Handle da Windows Job Object (ver _assign_to_job_object_best_effort) —
+# vive pelo tempo de vida do processo Python inteiro, nunca fechado
+# explicitamente (fechar cedo demais mataria o nats-server via
+# KILL_ON_JOB_CLOSE mesmo num shutdown gracioso intencional).
+_job_handle: int | None = None
+_spawn_lock = LazyLock()
 
 _READY_TIMEOUT_S = 10.0
-
-
-def _get_spawn_lock() -> asyncio.Lock:
-    global _spawn_lock
-    if _spawn_lock is None:
-        _spawn_lock = asyncio.Lock()
-    return _spawn_lock
 
 
 def _free_port() -> int:
@@ -141,7 +139,7 @@ async def ensure_nats_sidecar() -> str | None:
     """
     global _proc, _url, _log_task
 
-    async with _get_spawn_lock():
+    async with _spawn_lock.get():
         if _proc is not None and _proc.returncode is None:
             return _url
 
@@ -155,17 +153,27 @@ async def ensure_nats_sidecar() -> str | None:
         store_dir = settings.vectora_home / "nats"
         store_dir.mkdir(parents=True, exist_ok=True)
 
-        # Órfão de uma sessão anterior que morreu sem passar pelo shutdown
+        # Órfãos de sessões anteriores que morreram sem passar pelo shutdown
         # gracioso (kill forçado, crash, terminal fechado) — sem isso, cada
         # novo processo Python spawna um nats-server novo sem saber dos
-        # anteriores, e eles se acumulam indefinidamente.
-        stale_pid = _read_stale_pid(store_dir)
-        if stale_pid is not None and _pid_is_alive(stale_pid):
-            logger.info(
-                "nats_sidecar: matando sidecar órfão de sessão anterior (pid=%s)",
-                stale_pid,
-            )
-            _kill_pid(stale_pid)
+        # anteriores, e eles se acumulam indefinidamente. Best-effort por
+        # PID: uma falha ao verificar/matar um PID (ex. `_pid_is_alive`
+        # lançando) nunca aborta a subida do sidecar novo nem impede tentar
+        # os demais PIDs da lista.
+        for stale_pid in _read_stale_pids(store_dir):
+            try:
+                if _pid_is_alive(stale_pid):
+                    logger.info(
+                        "nats_sidecar: matando sidecar órfão de sessão anterior (pid=%s)",
+                        stale_pid,
+                    )
+                    _kill_pid(stale_pid)
+            except Exception:
+                logger.warning(
+                    "nats_sidecar: falha ao verificar/matar pid órfão %s — best-effort, seguindo",
+                    stale_pid,
+                    exc_info=True,
+                )
 
         port = _free_port()
 
@@ -194,9 +202,36 @@ async def ensure_nats_sidecar() -> str | None:
             pipe_to_logger(proc.stdout, logger, prefix="nats")
         )
         _url = f"nats://127.0.0.1:{port}"
-        _write_pid_file(store_dir, proc.pid)
+        _write_pid_list(store_dir, [proc.pid])
+        _assign_to_job_object_best_effort(proc.pid)
         logger.info("nats_sidecar: pronto em %s (store=%s)", _url, store_dir)
         return _url
+
+
+def _assign_to_job_object_best_effort(pid: int) -> None:
+    """Defesa em profundidade contra `SIGKILL`/"Finalizar tarefa" no
+    processo Python (Windows only — ver `backend/services/
+    win_job_object.py` pela limitação equivalente em POSIX, honestamente
+    documentada lá). Best-effort: qualquer falha aqui é só logada, nunca
+    impede o sidecar de funcionar via shutdown gracioso normal."""
+    global _job_handle
+    if sys.platform != "win32":
+        return
+    try:
+        from backend.services.win_job_object import (
+            assign_process_to_job,
+            create_job_object,
+        )
+
+        if _job_handle is None:
+            _job_handle = create_job_object()
+        if _job_handle is not None:
+            assign_process_to_job(_job_handle, pid)
+    except Exception:
+        logger.warning(
+            "nats_sidecar: falha ao associar sidecar à Job Object do Windows",
+            exc_info=True,
+        )
 
 
 async def _wait_ready(proc: asyncio.subprocess.Process) -> bool:
@@ -221,25 +256,45 @@ def _pid_file_path(store_dir: Path) -> Path:
     return store_dir / _PID_FILE_NAME
 
 
-def _write_pid_file(store_dir: Path, pid: int) -> None:
+def _write_pid_list(store_dir: Path, pids: list[int]) -> None:
     with contextlib.suppress(Exception):
-        _pid_file_path(store_dir).write_text(json.dumps({"pid": pid}), encoding="utf-8")
+        _pid_file_path(store_dir).write_text(
+            json.dumps({"pids": pids[-_PID_LIST_CAP:]}), encoding="utf-8"
+        )
 
 
-def _read_stale_pid(store_dir: Path) -> int | None:
+def _read_stale_pids(store_dir: Path) -> list[int]:
+    """Lê os PIDs de sidecars registrados por sessões anteriores.
+
+    Aceita o formato legado ``{"pid": N}`` (D3) além do formato atual
+    ``{"pids": [N, ...]}`` — sem isso, um pid file antigo já em disco no
+    momento do upgrade seria silenciosamente ignorado."""
     path = _pid_file_path(store_dir)
     if not path.is_file():
-        return None
+        return []
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return int(data["pid"])
+        if "pids" in data:
+            return [int(p) for p in data["pids"]]
+        return [int(data["pid"])]
     except Exception:
-        return None
+        return []
 
 
 def _clear_pid_file(store_dir: Path) -> None:
     with contextlib.suppress(FileNotFoundError):
         _pid_file_path(store_dir).unlink()
+
+
+def _remove_pid(store_dir: Path, pid: int) -> None:
+    """Remove um PID específico da lista registrada (usado no shutdown
+    gracioso do processo atual) — preserva quaisquer outros PIDs órfãos
+    ainda não resolvidos, em vez de apagar o arquivo inteiro."""
+    remaining = [p for p in _read_stale_pids(store_dir) if p != pid]
+    if remaining:
+        _write_pid_list(store_dir, remaining)
+    else:
+        _clear_pid_file(store_dir)
 
 
 def _pid_is_alive_posix(pid: int) -> bool:
@@ -269,6 +324,13 @@ def _pid_is_alive_win32(pid: int) -> bool:
     except Exception:
         return False
     return str(pid) in out.stdout
+
+
+def kill_orphan_pid(pid: int) -> None:
+    """Wrapper público de `_kill_pid` para uso fora deste módulo (ex.:
+    `vectora doctor`, `backend/cli/doctor.py`) — evita duplicar a lógica
+    de `taskkill`/`SIGKILL` por plataforma em outro lugar."""
+    _kill_pid(pid)
 
 
 def _pid_is_alive(pid: int) -> bool:
@@ -305,33 +367,32 @@ def with_kill(proc: asyncio.subprocess.Process) -> None:
 
 async def stop_nats_sidecar() -> None:
     """Encerra o sidecar, se estiver rodando. Idempotente."""
-    global _proc, _url, _spawn_lock, _log_task
+    global _proc, _url, _log_task
 
     # Solta a referência ao lock também quando não há processo rodando —
     # entre testes (cada um com seu próprio event loop via pytest-asyncio),
-    # sem isso o lock ficaria preso ao loop do teste anterior e o próximo
-    # `_get_spawn_lock()` levantaria "Lock is bound to a different event loop".
-    _spawn_lock = None
+    # sem isso o lock ficaria preso ao loop do teste anterior e a próxima
+    # `_spawn_lock.get()` levantaria "Lock is bound to a different event loop".
+    _spawn_lock.reset()
 
     if _log_task is not None:
         _log_task.cancel()
         _log_task = None
 
     store_dir = settings.vectora_home / "nats"
-    _clear_pid_file(store_dir)
+    if _proc is not None:
+        _remove_pid(store_dir, _proc.pid)
+    else:
+        _clear_pid_file(store_dir)
 
     if _proc is None:
         return
     proc = _proc
     _proc = None
     _url = None
-    try:
-        proc.terminate()
-        await asyncio.wait_for(proc.wait(), timeout=5.0)
-    except TimeoutError:
-        proc.kill()
-    except Exception:
-        logger.warning("nats_sidecar: erro ao encerrar", exc_info=True)
+    await terminate_gracefully(
+        proc, timeout_seconds=5.0, logger=logger, log_prefix="nats_sidecar"
+    )
 
 
 def current_url() -> str | None:
