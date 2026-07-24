@@ -823,6 +823,7 @@
   "workbench_browser_console_title": "Server console — {name}",
   "workbench_browser_console_empty": "No output yet — this server was never started.",
   "workbench_browser_console_refresh": "Refresh",
+  "workbench_browser_console_close": "Close console",
   "workbench_browser_back": "Back",
   "workbench_browser_forward": "Forward",
   "workbench_browser_url_placeholder": "Type a URL or search…",

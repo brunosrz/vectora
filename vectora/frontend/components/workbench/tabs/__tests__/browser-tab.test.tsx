@@ -7,13 +7,14 @@
  * backend confirma a porta aberta, nunca só porque o processo existe) e
  * as novas capacidades (URL externa sem servidor configurado, back/forward).
  */
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import {
   render,
   screen,
   cleanup,
   waitFor,
   fireEvent,
+  act,
 } from "@testing-library/react";
 
 import { BrowserTab } from "../browser-tab";
@@ -256,5 +257,127 @@ describe("BrowserTab — histórico voltar/avançar", () => {
 
     const forwardBtn = screen.getByTitle("workbench_browser_forward");
     expect(forwardBtn).toBeDisabled();
+  });
+});
+
+describe("BrowserTab — auto-navegação quando um servidor sobe (Sprint fix 9.2)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("servidor que passa de parado pra rodando entre polls navega sozinho, sem clique — mesmo caminho da tool do agente", async () => {
+    let running = false;
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith("/browser/launch")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => LAUNCH,
+        } as Response);
+      }
+      if (url.endsWith("/browser/status")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            servers: [
+              { name: "web", port: 3001, running, pid: running ? 1 : null },
+            ],
+          }),
+        } as Response);
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) } as Response);
+    });
+
+    render(<BrowserTab threadId="t1" />);
+
+    // Primeiro poll: parado — não é uma transição, não navega.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(document.querySelector("iframe")).toBeNull();
+
+    // O servidor sobe "por fora" (ex.: tool browser_start do agente) — o
+    // próximo poll (3s) já reflete running:true.
+    running = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+
+    const iframe = document.querySelector("iframe");
+    expect(iframe?.getAttribute("src")).toBe("http://localhost:3001");
+  });
+
+  it("servidor já rodando desde o primeiro poll não navega sozinho (só a transição conta, não o estado inicial)", async () => {
+    mockFetch({ startRunning: true });
+    render(<BrowserTab threadId="t1" />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(document.querySelector("iframe")).toBeNull();
+  });
+});
+
+describe("BrowserTab — console inline, não popup (Sprint fix 9.1)", () => {
+  it("painel do console renderiza dentro do container da própria aba, não num portal/dialog em document.body", async () => {
+    mockFetch({ startRunning: false, logLines: ["ready"] });
+    const { container } = render(<BrowserTab threadId="t1" />);
+
+    const consoleBtn = await screen.findByTitle("workbench_browser_console");
+    fireEvent.click(consoleBtn);
+
+    await waitFor(() => {
+      expect(container.textContent).toContain("ready");
+    });
+    // Nunca deve existir role="dialog" (Radix Sheet/Dialog) — é um painel
+    // inline, não um portal sobrepondo a janela.
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("botão de fechar o console some o painel sem afetar o iframe carregado", async () => {
+    mockFetch({ startRunning: true, logLines: ["ready"] });
+    render(<BrowserTab threadId="t1" />);
+
+    const openBtn = await screen.findByTitle("workbench_browser_open_server");
+    fireEvent.click(openBtn);
+    await screen.findByTitle("Browser");
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_console"));
+    await waitFor(() => expect(screen.getByText("ready")).toBeTruthy());
+
+    fireEvent.click(screen.getByTitle("workbench_browser_console_close"));
+    await waitFor(() => {
+      expect(screen.queryByText("ready")).toBeNull();
+    });
+    expect(screen.getByTitle("Browser")).toBeTruthy();
+  });
+});
+
+describe("BrowserTab — sandbox do iframe (Sprint fix 9.3)", () => {
+  it("servidor de dev do próprio workspace ganha allow-same-origin (CSS do Next.js precisa disso)", async () => {
+    mockFetch({ startRunning: true });
+    render(<BrowserTab threadId="t1" />);
+
+    const openBtn = await screen.findByTitle("workbench_browser_open_server");
+    fireEvent.click(openBtn);
+
+    const iframe = await screen.findByTitle("Browser");
+    expect(iframe.getAttribute("sandbox")).toContain("allow-same-origin");
+  });
+
+  it("URL externa navegada livremente nunca ganha allow-same-origin, mesmo depois de já ter aberto um servidor do workspace", async () => {
+    mockFetch({ startRunning: true });
+    render(<BrowserTab threadId="t1" />);
+
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+
+    const iframe = await screen.findByTitle("Browser");
+    expect(iframe.getAttribute("src")).toBe("https://example.com");
+    expect(iframe.getAttribute("sandbox")).not.toContain("allow-same-origin");
   });
 });

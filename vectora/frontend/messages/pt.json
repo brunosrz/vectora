@@ -823,6 +823,7 @@
   "workbench_browser_console_title": "Console do servidor — {name}",
   "workbench_browser_console_empty": "Nenhuma saída ainda — esse servidor nunca foi iniciado.",
   "workbench_browser_console_refresh": "Atualizar",
+  "workbench_browser_console_close": "Fechar console",
   "workbench_browser_back": "Voltar",
   "workbench_browser_forward": "Avançar",
   "workbench_browser_url_placeholder": "Digite uma URL ou pesquise…",
