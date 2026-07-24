@@ -2,7 +2,8 @@ import { cloudflarePool, cloudflareTest } from "@cloudflare/vitest-pool-workers"
 import { defineConfig } from "vitest/config";
 
 const workerOptions = {
-  wrangler: { configPath: "./wrangler.toml" },
+  // wrangler.test.toml, não wrangler.toml — ver comentário nesse arquivo.
+  wrangler: { configPath: "./wrangler.test.toml" },
   miniflare: {
     bindings: {
       VECTORA_APP_SECRET: "test-app-secret-fixo-por-produto",

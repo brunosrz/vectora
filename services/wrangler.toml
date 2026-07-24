@@ -30,15 +30,20 @@ bindings = [
   { name = "GATEWAY_SESSION", class_name = "GatewaySession" }
 ]
 
-# Sem clientes em produção usando o DO ainda (rename de dia zero) — recriado
-# do zero em vez de usar `renamed_classes`, mais simples e sem risco por não
-# haver storage real a preservar. `renamed_classes` só é válido quando a
-# classe de origem foi de fato declarada numa migration anterior (`new_classes`/
-# `new_sqlite_classes`) — não é o caso aqui: `RelaySession` nunca existiu
-# como classe deste Worker, só `GatewaySession` desde a v1.
+# Migrations de Durable Object são um ledger append-only rastreado pelo
+# `tag` do lado do Cloudflare: uma tag deployada nunca pode ser removida ou
+# editada aqui, mesmo que o conteúdo pareça semanticamente estranho —
+# qualquer correção é uma migration nova (v3+), nunca uma edição retroativa.
+# Editar/remover uma tag já deployada quebra `wrangler deploy` com "Cannot
+# apply ... migration to class ... that is already depended on by existing
+# Durable Objects".
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["GatewaySession"]
+
+[[migrations]]
+tag = "v2"
+renamed_classes = [{ from = "RelaySession", to = "GatewaySession" }]
 
 [[kv_namespaces]]
 binding = "GATEWAY_METRICS"
