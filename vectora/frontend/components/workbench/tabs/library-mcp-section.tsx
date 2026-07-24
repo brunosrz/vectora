@@ -13,7 +13,7 @@
  * o componente PluginsTab.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -36,31 +36,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { PluginsTab } from "@/components/settings/environment/tabs/plugins-tab";
 import { m } from "@/lib/paraglide/messages";
+import { useLibraryStore, type MCPConnector } from "@/lib/stores/library-store";
 import type { LibraryItem } from "./library-tab";
-
-interface MCPConnector {
-  id: string;
-  name: string;
-  description: string;
-  install_cmd: string;
-  env_vars: string[];
-  homepage: string;
-  category: string;
-  vectora_verified: boolean;
-}
-
-async function fetchRegistry(): Promise<MCPConnector[]> {
-  const res = await fetch("/mcp/registry");
-  if (!res.ok) return [];
-  return res.json();
-}
-
-async function fetchInstalledIds(): Promise<Set<string>> {
-  const res = await fetch("/plugins");
-  if (!res.ok) return new Set();
-  const data = (await res.json()) as { servers?: { name: string }[] };
-  return new Set((data.servers ?? []).map((s) => s.name));
-}
 
 async function saveEnvVar(key: string, value: string): Promise<void> {
   const res = await fetch("/auth/envs", {
@@ -229,14 +206,25 @@ function ConnectorCard({
   return (
     <div className="rounded-lg border bg-card p-3 space-y-2">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-          <Puzzle className="w-4 h-4 text-muted-foreground" />
+        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+          {connector.icon_url ? (
+            <img
+              src={connector.icon_url}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Puzzle className="w-4 h-4 text-muted-foreground" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <span className="block text-sm font-medium truncate">
             {connector.name}
           </span>
-          <div className="flex items-center gap-1.5 min-w-0">
+          <p className="text-xs text-muted-foreground truncate">
+            {connector.description}
+          </p>
+          <div className="flex items-center gap-1.5 min-w-0 pt-0.5">
             <Badge
               variant="secondary"
               className="text-[10px] h-4 px-1.5 shrink-0"
@@ -248,9 +236,6 @@ function ConnectorCard({
                 {m.library_mcp_verified()}
               </Badge>
             )}
-            <p className="text-xs text-muted-foreground truncate">
-              {connector.description}
-            </p>
           </div>
         </div>
         <Button
@@ -294,28 +279,24 @@ export function McpSection({
   query: string;
   onCountChange: (count: number) => void;
 }) {
-  const [connectors, setConnectors] = useState<MCPConnector[]>([]);
-  const [installedIds, setInstalledIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const connectors = useLibraryStore((s) => s.mcpItems);
+  const installedIds = useLibraryStore((s) => s.mcpInstalledIds);
+  const loading = useLibraryStore((s) => s.mcpLoading);
+  const ensureMcpLoaded = useLibraryStore((s) => s.ensureMcpLoaded);
+  const invalidateMcp = useLibraryStore((s) => s.invalidateMcp);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [registry, installed] = await Promise.all([
-        fetchRegistry(),
-        fetchInstalledIds(),
-      ]);
-      setConnectors(registry);
-      setInstalledIds(installed);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const load = useMemo(
+    () => async () => {
+      invalidateMcp();
+      await ensureMcpLoaded();
+    },
+    [invalidateMcp, ensureMcpLoaded],
+  );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void ensureMcpLoaded();
+  }, [ensureMcpLoaded]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

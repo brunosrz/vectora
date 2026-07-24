@@ -6,7 +6,7 @@
  * carregados de cada seção, sem endpoint agregado.
  */
 
-import { Blocks, Library as LibraryIcon, Puzzle, Search } from "lucide-react";
+import { Archive, Puzzle, Search, Sparkles } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import {
@@ -182,7 +182,7 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
               <AccordionItem value="skills">
                 <AccordionTrigger>
                   <span className="flex items-center gap-2 min-w-0">
-                    <Blocks className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                    <Sparkles className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">
                       {m.library_section_skills()} ({skillsCount})
                     </span>
@@ -201,7 +201,7 @@ export function LibraryTab({ threadId }: LibraryTabProps) {
               <AccordionItem value="memory">
                 <AccordionTrigger>
                   <span className="flex items-center gap-2 min-w-0">
-                    <LibraryIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                    <Archive className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">
                       {m.library_section_memory()} ({memoryCount})
                     </span>

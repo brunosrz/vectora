@@ -10,10 +10,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  ChevronDown,
+  ChevronUp,
   CheckCircle2,
   Loader2,
   Plus,
-  Sparkles,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -45,6 +46,7 @@ export function SkillsTab({ onSkillsChange }: SkillsTabProps = {}) {
   const [installing, setInstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verify, setVerify] = useState<Record<string, VerifyState>>({});
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -119,47 +121,52 @@ export function SkillsTab({ onSkillsChange }: SkillsTabProps = {}) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Sparkles className="w-4 h-4" />
-          {m.skills_title()}
-        </h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          {m.skills_description()}
-        </p>
-      </div>
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {showAdvanced ? (
+          <ChevronUp className="w-3.5 h-3.5" />
+        ) : (
+          <ChevronDown className="w-3.5 h-3.5" />
+        )}
+        {m.skills_install_toggle()}
+      </button>
 
-      <div className="space-y-2 rounded-md border border-border/60 p-3">
-        <label className="text-xs text-muted-foreground">
-          {m.skills_install_label()}
-        </label>
-        <div className="flex items-center gap-1.5">
-          <Input
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            placeholder={m.skills_install_placeholder()}
-            className="h-8 text-xs font-mono"
-            autoComplete="off"
-            spellCheck={false}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !installing) void handleInstall();
-            }}
-          />
-          <Button
-            size="sm"
-            onClick={handleInstall}
-            disabled={installing || !source.trim()}
-            className="h-8"
-          >
-            {installing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Plus className="w-3.5 h-3.5" />
-            )}
-          </Button>
+      {showAdvanced && (
+        <div className="space-y-2 rounded-md border border-border/60 p-3">
+          <label className="text-xs text-muted-foreground">
+            {m.skills_install_label()}
+          </label>
+          <div className="flex items-center gap-1.5">
+            <Input
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder={m.skills_install_placeholder()}
+              className="h-8 text-xs font-mono"
+              autoComplete="off"
+              spellCheck={false}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !installing) void handleInstall();
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={handleInstall}
+              disabled={installing || !source.trim()}
+              className="h-8"
+            >
+              {installing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Plus className="w-3.5 h-3.5" />
+              )}
+            </Button>
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">

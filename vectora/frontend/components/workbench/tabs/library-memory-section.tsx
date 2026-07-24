@@ -17,22 +17,7 @@ import { CheckCircle2, Database, Download, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { m } from "@/lib/paraglide/messages";
-
-interface MemoryBucket {
-  id: string;
-  name: string;
-  description: string;
-  embed_model: string;
-  verified: boolean;
-  downloads_count: number;
-  license?: string;
-}
-
-async function fetchCatalog(): Promise<MemoryBucket[]> {
-  const res = await fetch("/rag-library/catalog");
-  if (!res.ok) return [];
-  return res.json();
-}
+import { useLibraryStore, type MemoryBucket } from "@/lib/stores/library-store";
 
 async function installBucket(
   bucketId: string,
@@ -147,23 +132,13 @@ export function MemorySection({
   onCountChange: (count: number) => void;
   currentEmbedModel?: string | null;
 }) {
-  const [buckets, setBuckets] = useState<MemoryBucket[]>([]);
-  const [loading, setLoading] = useState(true);
+  const buckets = useLibraryStore((s) => s.memoryItems);
+  const loading = useLibraryStore((s) => s.memoryLoading);
+  const ensureMemoryLoaded = useLibraryStore((s) => s.ensureMemoryLoaded);
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetchCatalog()
-      .then((data) => {
-        if (!cancelled) setBuckets(data);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void ensureMemoryLoaded();
+  }, [ensureMemoryLoaded]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

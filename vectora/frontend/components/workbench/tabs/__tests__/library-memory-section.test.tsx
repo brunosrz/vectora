@@ -18,8 +18,17 @@ import {
 } from "@testing-library/react";
 
 import { MemorySection } from "../library-memory-section";
+import { useLibraryStore } from "@/lib/stores/library-store";
 
 afterEach(cleanup);
+
+beforeEach(() => {
+  useLibraryStore.setState({
+    memoryItems: [],
+    memoryLoading: false,
+    memoryFetchedAt: null,
+  });
+});
 
 const CATALOG = [
   {

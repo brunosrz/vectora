@@ -12,7 +12,7 @@
  * manual do SkillsTab).
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -24,20 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SkillsTab } from "@/components/settings/environment/tabs/skills-tab";
 import { m } from "@/lib/paraglide/messages";
-
-interface CatalogSkill {
-  id: string;
-  name: string;
-  description: string;
-  source: string;
-}
-
-async function fetchCatalog(): Promise<CatalogSkill[]> {
-  const res = await fetch("/skills/catalog");
-  if (!res.ok) return [];
-  const data = (await res.json()) as { entries?: CatalogSkill[] };
-  return data.entries ?? [];
-}
+import { useLibraryStore, type CatalogSkill } from "@/lib/stores/library-store";
 
 function CatalogCard({ skill }: { skill: CatalogSkill }) {
   const [busy, setBusy] = useState(false);
@@ -103,45 +90,29 @@ function CatalogCard({ skill }: { skill: CatalogSkill }) {
 
 function SkillsCatalog() {
   const [open, setOpen] = useState(true);
-  const [entries, setEntries] = useState<CatalogSkill[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setEntries(await fetchCatalog());
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const entries = useLibraryStore((s) => s.skillsItems);
+  const loading = useLibraryStore((s) => s.skillsLoading);
+  const ensureSkillsLoaded = useLibraryStore((s) => s.ensureSkillsLoaded);
 
   useEffect(() => {
-    if (open) void load();
-  }, [open, load]);
+    if (open) void ensureSkillsLoaded();
+  }, [open, ensureSkillsLoaded]);
 
-  const content = useMemo(() => {
-    if (loading) {
-      return (
-        <div className="flex justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        </div>
-      );
-    }
-    if (entries.length === 0) {
-      return (
-        <p className="text-xs text-muted-foreground text-center py-2">
-          {m.library_skills_catalog_empty()}
-        </p>
-      );
-    }
-    return (
-      <div className="space-y-2 py-1">
-        {entries.map((skill) => (
-          <CatalogCard key={skill.id} skill={skill} />
-        ))}
-      </div>
-    );
-  }, [entries, loading]);
+  const content = loading ? (
+    <div className="flex justify-center py-4">
+      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+    </div>
+  ) : entries.length === 0 ? (
+    <p className="text-xs text-muted-foreground text-center py-2">
+      {m.library_skills_catalog_empty()}
+    </p>
+  ) : (
+    <div className="space-y-2 py-1">
+      {entries.map((skill) => (
+        <CatalogCard key={skill.id} skill={skill} />
+      ))}
+    </div>
+  );
 
   return (
     <div className="pt-2">

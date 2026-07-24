@@ -23,8 +23,18 @@ vi.mock("@/components/settings/environment/tabs/plugins-tab", () => ({
 }));
 
 import { McpSection } from "../library-mcp-section";
+import { useLibraryStore } from "@/lib/stores/library-store";
 
 afterEach(cleanup);
+
+beforeEach(() => {
+  useLibraryStore.setState({
+    mcpItems: [],
+    mcpInstalledIds: new Set(),
+    mcpLoading: false,
+    mcpFetchedAt: null,
+  });
+});
 
 const REGISTRY = [
   {

@@ -7,7 +7,7 @@
  * catálogo vazio mostra estado específico, não quebra a lista de instaladas
  * ao lado (SkillsTab, mockado).
  */
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import {
   render,
   screen,
@@ -21,8 +21,17 @@ vi.mock("@/components/settings/environment/tabs/skills-tab", () => ({
 }));
 
 import { SkillsSection } from "../library-skills-section";
+import { useLibraryStore } from "@/lib/stores/library-store";
 
 afterEach(cleanup);
+
+beforeEach(() => {
+  useLibraryStore.setState({
+    skillsItems: [],
+    skillsLoading: false,
+    skillsFetchedAt: null,
+  });
+});
 
 const CATALOG = [
   {
