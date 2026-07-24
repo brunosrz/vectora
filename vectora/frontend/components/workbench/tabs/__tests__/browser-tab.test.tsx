@@ -70,10 +70,15 @@ const LAUNCH = {
 function mockFetch({
   configurations = LAUNCH.configurations,
   startRunning = false,
+  unmanagedRunning = false,
   logLines,
 }: {
   configurations?: typeof LAUNCH.configurations;
   startRunning?: boolean;
+  // Porta aberta (algo escutando) mas sem PID rastreado por este config —
+  // cenário de dois configs colidindo na mesma porta (ver Sprint fix
+  // "running externo").
+  unmanagedRunning?: boolean;
   logLines?: string[];
 } = {}) {
   global.fetch = vi
@@ -95,7 +100,7 @@ function mockFetch({
             servers: configurations.map((c) => ({
               name: c.name,
               port: c.port,
-              running: startRunning,
+              running: startRunning || unmanagedRunning,
               pid: startRunning ? 1 : null,
             })),
           }),
@@ -584,5 +589,28 @@ describe("BrowserTab — caminho desktop (WebContentsView real via window.vector
 
     unmount();
     expect(bridge.destroyView).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("BrowserTab — servidor rodando mas não gerenciado pelo Vectora (porta colidindo entre dois configs)", () => {
+  it("running=true com pid=null desabilita o botão de parar e mostra tooltip explicativo, sem quebrar o indicador visual", async () => {
+    mockFetch({ unmanagedRunning: true });
+    render(<BrowserTab threadId="t1" />);
+
+    // O indicador continua honesto (a porta está mesmo aberta), mas o
+    // botão de ação não oferece "parar" — não há PID rastreado pra matar.
+    const toggleBtn = await screen.findByTitle(
+      "workbench_browser_running_external",
+    );
+    expect(toggleBtn).toBeDisabled();
+    expect(screen.queryByTitle("workbench_browser_stop")).toBeNull();
+  });
+
+  it("running=true com pid definido continua oferecendo o botão de parar normalmente (regressão)", async () => {
+    mockFetch({ startRunning: true });
+    render(<BrowserTab threadId="t1" />);
+
+    const stopBtn = await screen.findByTitle("workbench_browser_stop");
+    expect(stopBtn).not.toBeDisabled();
   });
 });

@@ -588,6 +588,15 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
         configs.map((cfg) => {
           const status = getStatus(cfg.name);
           const isRunning = status?.running ?? false;
+          // `running` reflete só a porta estar aberta (qualquer processo,
+          // de qualquer config) — `pid` só existe quando ESTE config foi
+          // quem de fato subiu o processo rastreado pelo Vectora. Sem essa
+          // distinção, dois configs que colidem na mesma porta (ex.: "API
+          // (Local)" e o serviço web de "Full Stack (Turbo)" configurados
+          // pro mesmo 3333) mostravam os dois como "rodando", com um botão
+          // de parar que não fazia nada (nenhum processo rastreado sob
+          // aquele nome pra matar).
+          const isManaged = status?.pid != null;
           const isAction = actionLoading === cfg.name;
           const isActive = currentUrl === `http://localhost:${cfg.port}`;
 
@@ -640,13 +649,15 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6"
-                  disabled={isAction}
+                  disabled={isAction || (isRunning && !isManaged)}
                   onClick={() =>
                     isRunning ? handleStop(cfg.name) : handleStart(cfg)
                   }
                   title={
                     isRunning
-                      ? msg.workbench_browser_stop()
+                      ? isManaged
+                        ? msg.workbench_browser_stop()
+                        : msg.workbench_browser_running_external()
                       : msg.workbench_browser_start()
                   }
                 >

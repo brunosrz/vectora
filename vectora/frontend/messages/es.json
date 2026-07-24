@@ -806,6 +806,7 @@
   "workbench_browser_empty_description": "Escribe una URL arriba para navegar, o configura un dev server del workspace.",
   "workbench_browser_start": "Iniciar servidor",
   "workbench_browser_stop": "Detener servidor",
+  "workbench_browser_running_external": "Corriendo fuera de Vectora (puerto ya en uso) — no se puede detener desde aquí",
   "workbench_browser_open_preview": "Abrir en vista previa",
   "workbench_browser_open_external": "Abrir en navegador",
   "workbench_browser_servers": "Servidores",
