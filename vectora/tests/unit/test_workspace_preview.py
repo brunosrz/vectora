@@ -1,10 +1,22 @@
 """Preview de workspace: health-check real de porta, não só "processo vivo".
 
-Bug reproduzido ao vivo: `browser_status` considerava um dev server "rodando"
-só porque o subprocesso existia (`proc.returncode is None`) — o iframe do
-Workbench navegava pra lá antes do `vite`/`next` de fato bindar a porta,
-resultando em `ERR_CONNECTION_REFUSED` repetido. Estes testes cobrem o novo
-critério: a porta precisa aceitar conexão TCP de verdade.
+Dois bugs reproduzidos ao vivo, nas duas direções:
+- `browser_status` considerava um dev server "rodando" só porque o
+  subprocesso existia (`proc.returncode is None`), sem checar a porta —
+  o iframe do Workbench navegava pra lá antes do `vite`/`next` de fato
+  bindar a porta, `ERR_CONNECTION_REFUSED` repetido.
+- Depois de exigir porta aberta, `browser_status` também passou a exigir
+  o PID rastreado ainda vivo — quebra pra comandos como `turbo run dev`/
+  `pnpm dev` no Windows, que frequentemente encerram o processo pai
+  capturado em `browser_start` (`turbo`/`.cmd`) enquanto os processos
+  reais (Next.js etc.) seguem vivos, desanexados. Resultado: o ícone
+  nunca virava "rodando" e a navegação automática nunca disparava, mesmo
+  com o servidor de fato no ar.
+
+O critério atual: `running` é definido **só** pela porta aceitar conexão
+TCP de verdade — o PID interno (`_browser_procs`) informa apenas se o
+Vectora ainda consegue `stop` o processo (campo `pid`), não se ele está
+"rodando" do ponto de vista do usuário.
 """
 
 from __future__ import annotations
@@ -119,7 +131,8 @@ async def test_wait_port_open_or_exit_returns_early_when_process_dies():
 
 
 # ---------------------------------------------------------------------------
-# browser_status: running só quando processo vivo E porta aberta
+# browser_status: running é definido só pela porta — o PID rastreado
+# controla apenas o campo `pid` (usado por `stop`), não o `running`.
 # ---------------------------------------------------------------------------
 
 
@@ -162,6 +175,43 @@ class TestPreviewStatus:
 
         assert result.servers[0].running is True
         assert result.servers[0].pid == 123
+
+    @pytest.mark.asyncio
+    async def test_running_true_when_port_open_even_with_pid_dead_or_untracked(
+        self, monkeypatch
+    ):
+        # Caso central do bug "Full Stack (Turbo)": comandos tipo `turbo run
+        # dev`/`pnpm dev` no Windows encerram o processo pai capturado em
+        # browser_start enquanto os processos reais (Next.js etc.) seguem
+        # vivos, desanexados — a porta abre de verdade, mas o PID rastreado
+        # já morreu (ou nunca existiu, workspace_id::name fora de
+        # _browser_procs). running deve refletir a porta, não o PID; o
+        # campo pid fica None nesse caso (Vectora não consegue mais fazer
+        # `stop` desse processo específico via PID).
+        from unittest.mock import AsyncMock, MagicMock
+
+        import backend.api.handlers.workspaces as ws_mod
+
+        cfg = MagicMock()
+        cfg.configurations = [MagicMock(name="web", port=5173)]
+        cfg.configurations[0].name = "web"
+        dead_proc = MagicMock(returncode=1, pid=123)
+
+        monkeypatch.setattr(ws_mod, "get_launch_json", AsyncMock(return_value=cfg))
+        monkeypatch.setattr(ws_mod, "_browser_procs", {"ws1::web": dead_proc})
+        monkeypatch.setattr(ws_mod, "_is_port_open", AsyncMock(return_value=True))
+
+        result = await ws_mod.browser_status("ws1")
+
+        assert result.servers[0].running is True
+        assert result.servers[0].pid is None
+
+        # Nem sequer rastreado (nunca passou por browser_start deste
+        # backend) — mesmo assim, porta aberta = running True.
+        monkeypatch.setattr(ws_mod, "_browser_procs", {})
+        result2 = await ws_mod.browser_status("ws1")
+        assert result2.servers[0].running is True
+        assert result2.servers[0].pid is None
 
 
 # ---------------------------------------------------------------------------

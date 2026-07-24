@@ -3117,7 +3117,14 @@ async def browser_status(workspace_id: str) -> BrowserStatusResponse:
         key = _browser_key(workspace_id, cfg.name)
         proc = _browser_procs.get(key)
         alive = proc is not None and proc.returncode is None
-        running = alive and await _is_port_open("127.0.0.1", cfg.port)
+        # "Rodando" é definido pela porta estar aceitando conexão, não pelo
+        # PID rastreado ainda existir — comandos como `turbo run dev`/`pnpm
+        # dev` no Windows frequentemente encerram o processo pai (o PID que
+        # `browser_start` capturou) enquanto os processos reais (Next.js,
+        # etc.) seguem vivos em processos/consoles próprios, desanexados.
+        # Confiar só no PID fazia o ícone nunca virar "rodando" e a
+        # navegação automática nunca disparar mesmo com o servidor no ar.
+        running = await _is_port_open("127.0.0.1", cfg.port)
         pid = proc.pid if alive and proc else None
         servers.append(
             BrowserServerStatus(name=cfg.name, port=cfg.port, running=running, pid=pid)
