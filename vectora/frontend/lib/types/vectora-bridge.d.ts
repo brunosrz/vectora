@@ -16,6 +16,30 @@ export interface VectoraUpdateStatus {
   progress?: number;
 }
 
+export interface VectoraViewBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type VectoraBrowserViewEvent =
+  | {
+      type: "navigated";
+      url: string;
+      canGoBack: boolean;
+      canGoForward: boolean;
+    }
+  | { type: "titleUpdated"; title: string }
+  | { type: "faviconUpdated"; favicon: string }
+  | { type: "loadingChanged"; isLoading: boolean }
+  | {
+      type: "loadFailed";
+      errorCode: number;
+      errorDescription: string;
+      url: string;
+    };
+
 export interface VectoraDesktopBridge {
   readonly platform?: NodeJS.Platform;
   readonly appVersion?: string;
@@ -41,6 +65,26 @@ export interface VectoraDesktopBridge {
     isMaximized: () => Promise<boolean>;
     onStateChange: (
       handler: (state: { maximized: boolean }) => void,
+    ) => () => void;
+  };
+  /** Browser real da aba Browser do workbench (WebContentsView com sessão
+   * própria) — presente só no desktop; sem isso, a aba Browser cai no
+   * `<iframe>` de fallback (sujeito a X-Frame-Options). */
+  browserView?: {
+    createView: () => Promise<number>;
+    destroyView: (viewId: number) => void;
+    navigate: (
+      viewId: number,
+      url: string,
+    ) => Promise<{ ok: boolean; error?: string }>;
+    goBack: (viewId: number) => void;
+    goForward: (viewId: number) => void;
+    reload: (viewId: number) => void;
+    stop: (viewId: number) => void;
+    setBounds: (viewId: number, bounds: VectoraViewBounds) => void;
+    setVisible: (viewId: number, visible: boolean) => void;
+    onEvent: (
+      handler: (viewId: number, event: VectoraBrowserViewEvent) => void,
     ) => () => void;
   };
 }

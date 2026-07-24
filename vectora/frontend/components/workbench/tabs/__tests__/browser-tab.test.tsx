@@ -45,6 +45,16 @@ vi.mock("@/lib/stores/chat-input-store", () => ({
 
 afterEach(cleanup);
 
+// jsdom não implementa ResizeObserver — só o caminho desktop (efeito de
+// bounds da WebContentsView) o usa; um stub no-op basta pros testes.
+class StubResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(globalThis as any).ResizeObserver ??= StubResizeObserver;
+
 const LAUNCH = {
   version: "0.0.1",
   configurations: [
@@ -154,6 +164,42 @@ describe("BrowserTab — servidores de dev (paridade com o antigo Preview)", () 
     await waitFor(() => {
       expect(screen.getByText("workbench_browser_console_empty")).toBeTruthy();
     });
+  });
+
+  it("clicar no cabeçalho 'Servidores' recolhe a lista; clicar de novo expande", async () => {
+    mockFetch({ startRunning: false });
+    render(<BrowserTab threadId="t1" />);
+
+    await screen.findByTitle("workbench_browser_start");
+    expect(screen.getByText("web")).toBeTruthy();
+
+    fireEvent.click(screen.getByTitle("workbench_browser_servers_collapse"));
+    expect(screen.queryByText("web")).toBeNull();
+
+    fireEvent.click(screen.getByTitle("workbench_browser_servers_expand"));
+    expect(screen.getByText("web")).toBeTruthy();
+  });
+
+  it("recolher os servidores não fecha o formulário de adicionar manualmente por engano (botões independentes)", async () => {
+    mockFetch({ startRunning: false });
+    render(<BrowserTab threadId="t1" />);
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_manual_add"));
+    expect(
+      screen.getByPlaceholderText("workbench_browser_field_name"),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByTitle("workbench_browser_servers_collapse"));
+    // Recolhido: o formulário de adicionar servidor some junto com a lista,
+    // mas o botão "+" continua funcionando e independente do de colapsar.
+    expect(
+      screen.queryByPlaceholderText("workbench_browser_field_name"),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByTitle("workbench_browser_servers_expand"));
+    expect(
+      screen.getByPlaceholderText("workbench_browser_field_name"),
+    ).toBeTruthy();
   });
 });
 
@@ -379,5 +425,164 @@ describe("BrowserTab — sandbox do iframe (Sprint fix 9.3)", () => {
     const iframe = await screen.findByTitle("Browser");
     expect(iframe.getAttribute("src")).toBe("https://example.com");
     expect(iframe.getAttribute("sandbox")).not.toContain("allow-same-origin");
+  });
+});
+
+describe("BrowserTab — caminho desktop (WebContentsView real via window.vectora.browserView)", () => {
+  type EventHandler = (
+    viewId: number,
+    event: {
+      type: string;
+      url?: string;
+      canGoBack?: boolean;
+      canGoForward?: boolean;
+      isLoading?: boolean;
+      errorDescription?: string;
+    },
+  ) => void;
+
+  function mockBrowserView() {
+    const calls = {
+      createView: vi.fn(),
+      destroyView: vi.fn(),
+      navigate: vi.fn(async (_viewId: number, url: string) => {
+        if (url === "https://falha.invalid") {
+          return { ok: false, error: "esquema não permitido: ftp://x" };
+        }
+        return { ok: true };
+      }),
+      goBack: vi.fn(),
+      goForward: vi.fn(),
+      reload: vi.fn(),
+      setBounds: vi.fn(),
+      setVisible: vi.fn(),
+    };
+    let handler: EventHandler | null = null;
+    const bridge = {
+      ...calls,
+      createView: vi.fn(async () => 1),
+      onEvent: vi.fn((h: EventHandler) => {
+        handler = h;
+        return () => {
+          handler = null;
+        };
+      }),
+      emitEvent: (viewId: number, event: Parameters<EventHandler>[1]) =>
+        handler?.(viewId, event),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).vectora = { browserView: bridge };
+    return bridge;
+  }
+
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).vectora;
+  });
+
+  it("no desktop, digitar uma URL chama a bridge e renderiza a área da WebContentsView, nunca um <iframe>", async () => {
+    const bridge = mockBrowserView();
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+
+    await waitFor(() => expect(bridge.onEvent).toHaveBeenCalled());
+
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+
+    await waitFor(() => {
+      expect(bridge.navigate).toHaveBeenCalledWith(1, "https://example.com");
+    });
+    expect(document.querySelector("iframe")).toBeNull();
+    expect(
+      screen.getByTestId("browser-webcontentsview-container"),
+    ).toBeTruthy();
+  });
+
+  it("evento navigated do main atualiza a barra de URL e can-go-back/forward — nunca escritos manualmente", async () => {
+    const bridge = mockBrowserView();
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.onEvent).toHaveBeenCalled());
+
+    act(() => {
+      bridge.emitEvent(1, {
+        type: "navigated",
+        url: "https://example.com/pagina",
+        canGoBack: true,
+        canGoForward: false,
+      });
+    });
+
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    await waitFor(() => {
+      expect(urlBar).toHaveValue("https://example.com/pagina");
+    });
+    expect(screen.getByTitle("workbench_browser_back")).not.toBeDisabled();
+    expect(screen.getByTitle("workbench_browser_forward")).toBeDisabled();
+  });
+
+  it("voltar/avançar/recarregar chamam a bridge, nunca a lógica de histórico do iframe", async () => {
+    const bridge = mockBrowserView();
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.onEvent).toHaveBeenCalled());
+
+    act(() => {
+      bridge.emitEvent(1, {
+        type: "navigated",
+        url: "https://example.com",
+        canGoBack: true,
+        canGoForward: true,
+      });
+    });
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_back"));
+    fireEvent.click(screen.getByTitle("workbench_browser_forward"));
+    fireEvent.click(screen.getByTitle("workbench_files_refresh"));
+
+    expect(bridge.goBack).toHaveBeenCalledWith(1);
+    expect(bridge.goForward).toHaveBeenCalledWith(1);
+    expect(bridge.reload).toHaveBeenCalledWith(1);
+  });
+
+  it("falha ao navegar (esquema não permitido) mostra a mensagem de erro; navegação seguinte bem-sucedida a limpa", async () => {
+    const bridge = mockBrowserView();
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.onEvent).toHaveBeenCalled());
+
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "https://falha.invalid" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+
+    await waitFor(() => {
+      expect(screen.getByText("esquema não permitido: ftp://x")).toBeTruthy();
+    });
+
+    act(() => {
+      bridge.emitEvent(1, {
+        type: "navigated",
+        url: "https://outra.com",
+        canGoBack: false,
+        canGoForward: false,
+      });
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("esquema não permitido: ftp://x")).toBeNull();
+    });
+  });
+
+  it("desmontar a aba destroi a view (não deixa WebContentsView órfã)", async () => {
+    const bridge = mockBrowserView();
+    mockFetch({ configurations: [] });
+    const { unmount } = render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.onEvent).toHaveBeenCalled());
+
+    unmount();
+    expect(bridge.destroyView).toHaveBeenCalledWith(1);
   });
 });

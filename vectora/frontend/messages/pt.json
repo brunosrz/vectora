@@ -809,6 +809,8 @@
   "workbench_browser_open_preview": "Abrir no preview",
   "workbench_browser_open_external": "Abrir no navegador",
   "workbench_browser_servers": "Servidores",
+  "workbench_browser_servers_collapse": "Recolher servidores",
+  "workbench_browser_servers_expand": "Expandir servidores",
   "workbench_browser_ask_agent": "Perguntar ao agente",
   "workbench_browser_ask_agent_prompt": "Detecte os servidores de desenvolvimento do meu projeto e salve todas as configurações em .vectora/launch.json, depois pergunte quais iniciar.",
   "workbench_browser_ask_agent_note": "Use runtimeExecutable para o comando (ex. \"yarn\", \"npm\", \"node\", \"python\") e runtimeArgs para os argumentos. Após salvar, inicie cada servidor pelo painel de Preview.",

@@ -23,6 +23,7 @@ import {
   BrowserWindow,
   Menu,
   screen,
+  session,
   Tray,
   dialog,
   ipcMain,
@@ -30,6 +31,7 @@ import {
   protocol,
   safeStorage,
   shell,
+  WebContentsView,
 } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as http from "http";
@@ -51,6 +53,11 @@ import {
   killBackendTree,
   resolveExternalBackendConnection,
 } from "./backend-lifecycle.js";
+import {
+  BrowserViewManager,
+  type ManagedView,
+  type ViewBounds,
+} from "./browser-view-manager.js";
 import { computeDefaultWindowSize } from "./window-size.js";
 
 interface UpdateStatus {
@@ -79,6 +86,43 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let pendingDeepLink: string | null = null;
 let updateReady = false;
+let browserViewManager: BrowserViewManager | null = null;
+
+/**
+ * Browser real da aba Browser do workbench (não a SPA) — cada view é um
+ * `WebContentsView`, contexto de navegação de nível superior, imune a
+ * `X-Frame-Options`/`frame-ancestors` (não é uma sub-frame). Todas as views
+ * compartilham `session.fromPartition("persist:browser")`: cookies/cache
+ * nativos do Chromium, persistentes em disco, iguais a um perfil de browser
+ * real — deliberadamente sem `preload` (são páginas de terceiros, nunca
+ * recebem a bridge `window.vectora`).
+ */
+function getBrowserViewManager(): BrowserViewManager {
+  if (browserViewManager) return browserViewManager;
+  browserViewManager = new BrowserViewManager({
+    createView: () =>
+      new WebContentsView({
+        webPreferences: {
+          contextIsolation: true,
+          sandbox: true,
+          nodeIntegration: false,
+          session: session.fromPartition("persist:browser"),
+        },
+      }) as unknown as ManagedView,
+    attach: (view) => {
+      mainWindow?.contentView.addChildView(view as unknown as WebContentsView);
+    },
+    destroyView: (view) => {
+      mainWindow?.contentView.removeChildView(
+        view as unknown as WebContentsView,
+      );
+    },
+    emit: (viewId, event) => {
+      mainWindow?.webContents.send("vectora:browser-view-event", viewId, event);
+    },
+  });
+  return browserViewManager;
+}
 
 const PROTOCOL = "vectora";
 const APP_SCHEME = "vectora-app"; // origem da SPA no desktop (IPC, sem TCP)
@@ -727,6 +771,45 @@ function registerIpc(): void {
   // pipe), então expõe essa origem pro renderer construir URLs absolutas.
   ipcMain.handle("vectora:get-backend-ws-origin", () =>
     backendPort !== null ? `ws://127.0.0.1:${backendPort}` : null,
+  );
+
+  // Browser real da aba Browser (ver getBrowserViewManager) — comandos
+  // invoke/handle (resposta esperada) + eventos fire-and-forget, mesmo
+  // padrão do restante deste arquivo.
+  ipcMain.handle("vectora:browser-create-view", () =>
+    getBrowserViewManager().createView(),
+  );
+  ipcMain.on("vectora:browser-destroy-view", (_event, viewId: number) => {
+    getBrowserViewManager().destroyView(viewId);
+  });
+  ipcMain.handle(
+    "vectora:browser-navigate",
+    (_event, viewId: number, url: string) =>
+      getBrowserViewManager().navigate(viewId, url),
+  );
+  ipcMain.on("vectora:browser-go-back", (_event, viewId: number) => {
+    getBrowserViewManager().goBack(viewId);
+  });
+  ipcMain.on("vectora:browser-go-forward", (_event, viewId: number) => {
+    getBrowserViewManager().goForward(viewId);
+  });
+  ipcMain.on("vectora:browser-reload", (_event, viewId: number) => {
+    getBrowserViewManager().reload(viewId);
+  });
+  ipcMain.on("vectora:browser-stop", (_event, viewId: number) => {
+    getBrowserViewManager().stop(viewId);
+  });
+  ipcMain.on(
+    "vectora:browser-set-bounds",
+    (_event, viewId: number, bounds: ViewBounds) => {
+      getBrowserViewManager().setBounds(viewId, bounds);
+    },
+  );
+  ipcMain.on(
+    "vectora:browser-set-visible",
+    (_event, viewId: number, visible: boolean) => {
+      getBrowserViewManager().setVisible(viewId, visible);
+    },
   );
 }
 

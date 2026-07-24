@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  ChevronDown,
+  ChevronRight,
   ExternalLink,
   Loader2,
   Play,
@@ -66,11 +68,18 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
+  // Presente só no desktop Electron — quando ausente, cai no `<iframe>` de
+  // fallback abaixo (sujeito a X-Frame-Options, único caminho possível fora
+  // do Electron). Ver electron/src/browser-view-manager.ts.
+  const desktopBrowser =
+    typeof window !== "undefined" ? window.vectora?.browserView : undefined;
+
   const [configs, setConfigs] = useState<LaunchConfig[]>([]);
   const [statuses, setStatuses] = useState<ServerStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [serversCollapsed, setServersCollapsed] = useState(false);
   const [manual, setManual] = useState({
     name: "",
     runtimeExecutable: "",
@@ -90,6 +99,20 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   const [editingUrl, setEditingUrl] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
 
+  // Estado de navegação desktop — fonte de verdade é o Chromium (eventos do
+  // WebContentsView via bridge), não um histórico replicado à mão como no
+  // caminho web acima.
+  const [viewId, setViewId] = useState<number | null>(null);
+  const [desktopNav, setDesktopNav] = useState({
+    url: "",
+    canGoBack: false,
+    canGoForward: false,
+  });
+  const [desktopLoading, setDesktopLoading] = useState(false);
+  const [desktopLoadError, setDesktopLoadError] = useState<string | null>(null);
+  const pendingNavigateRef = useRef<string | null>(null);
+  const browserViewContainerRef = useRef<HTMLDivElement>(null);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consolePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -99,22 +122,44 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   // URL atual toda vez que a aba monta com um servidor já rodando).
   const prevRunningRef = useRef<Record<string, boolean> | null>(null);
 
-  const currentUrl = historyIndex >= 0 ? history[historyIndex] : "";
-  const canGoBack = historyIndex > 0;
-  const canGoForward = historyIndex < history.length - 1;
+  const currentUrl = desktopBrowser
+    ? desktopNav.url
+    : historyIndex >= 0
+      ? history[historyIndex]
+      : "";
+  const canGoBack = desktopBrowser ? desktopNav.canGoBack : historyIndex > 0;
+  const canGoForward = desktopBrowser
+    ? desktopNav.canGoForward
+    : historyIndex < history.length - 1;
 
-  const navigate = useCallback((raw: string) => {
-    const url = normalizeUrl(raw);
-    if (!url) return;
-    setHistory((prev) => {
-      const base = prev.slice(0, historyIndexRef.current + 1);
-      const next = [...base, url];
-      historyIndexRef.current = next.length - 1;
-      return next;
-    });
-    setHistoryIndex((i) => i + 1);
-    setIframeKey((k) => k + 1);
-  }, []);
+  const navigate = useCallback(
+    (raw: string) => {
+      const url = normalizeUrl(raw);
+      if (!url) return;
+      if (desktopBrowser) {
+        setDesktopNav((prev) => ({ ...prev, url }));
+        if (viewId === null) {
+          // View ainda não terminou de nascer (createView é async) — fica
+          // pendente e é disparada assim que o id chegar, ver efeito abaixo.
+          pendingNavigateRef.current = url;
+          return;
+        }
+        void desktopBrowser.navigate(viewId, url).then((result) => {
+          if (!result.ok) setDesktopLoadError(result.error ?? null);
+        });
+        return;
+      }
+      setHistory((prev) => {
+        const base = prev.slice(0, historyIndexRef.current + 1);
+        const next = [...base, url];
+        historyIndexRef.current = next.length - 1;
+        return next;
+      });
+      setHistoryIndex((i) => i + 1);
+      setIframeKey((k) => k + 1);
+    },
+    [desktopBrowser, viewId],
+  );
 
   // historyIndex muda via setState assíncrono — navigate() precisa do valor
   // atual síncrono pra cortar o histórico "à frente" corretamente quando o
@@ -126,15 +171,113 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
 
   const goBack = useCallback(() => {
     if (!canGoBack) return;
+    if (desktopBrowser && viewId !== null) {
+      desktopBrowser.goBack(viewId);
+      return;
+    }
     setHistoryIndex((i) => i - 1);
     setIframeKey((k) => k + 1);
-  }, [canGoBack]);
+  }, [canGoBack, desktopBrowser, viewId]);
 
   const goForward = useCallback(() => {
     if (!canGoForward) return;
+    if (desktopBrowser && viewId !== null) {
+      desktopBrowser.goForward(viewId);
+      return;
+    }
     setHistoryIndex((i) => i + 1);
     setIframeKey((k) => k + 1);
-  }, [canGoForward]);
+  }, [canGoForward, desktopBrowser, viewId]);
+
+  const refresh = useCallback(() => {
+    if (desktopBrowser && viewId !== null) {
+      desktopBrowser.reload(viewId);
+      return;
+    }
+    setIframeKey((k) => k + 1);
+  }, [desktopBrowser, viewId]);
+
+  // Nasce a WebContentsView uma vez por montagem da aba e a destrói ao
+  // desmontar (a aba já desmonta/remonta ao trocar de tab do workbench,
+  // ver workbench-panel.tsx — não precisa de esconder/mostrar, só nascer e
+  // morrer junto do componente).
+  useEffect(() => {
+    if (!desktopBrowser) return;
+    let cancelled = false;
+    let createdId: number | null = null;
+    void desktopBrowser.createView().then((id) => {
+      if (cancelled) {
+        desktopBrowser.destroyView(id);
+        return;
+      }
+      createdId = id;
+      setViewId(id);
+      if (pendingNavigateRef.current) {
+        void desktopBrowser.navigate(id, pendingNavigateRef.current);
+        pendingNavigateRef.current = null;
+      }
+    });
+    return () => {
+      cancelled = true;
+      if (createdId !== null) desktopBrowser.destroyView(createdId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Espelha os eventos de navegação nativos do Chromium (fonte de verdade)
+  // pro estado React — nunca escreve em desktopNav fora daqui, exceto a
+  // atualização otimista de `url` em navigate() acima (feedback imediato na
+  // barra antes do evento `navigated` real chegar).
+  useEffect(() => {
+    if (!desktopBrowser || viewId === null) return;
+    return desktopBrowser.onEvent((eventViewId, event) => {
+      if (eventViewId !== viewId) return;
+      if (event.type === "navigated") {
+        setDesktopNav({
+          url: event.url,
+          canGoBack: event.canGoBack,
+          canGoForward: event.canGoForward,
+        });
+        setDesktopLoadError(null);
+      } else if (event.type === "loadingChanged") {
+        setDesktopLoading(event.isLoading);
+      } else if (event.type === "loadFailed") {
+        setDesktopLoadError(event.errorDescription);
+      }
+    });
+  }, [desktopBrowser, viewId]);
+
+  // Reporta os bounds reais do container (ResizeObserver) pro main process
+  // posicionar a WebContentsView por cima — só existe depois da primeira
+  // navegação (currentUrl truthy é quando o container abaixo é renderizado).
+  // Depende de `hasUrl` (booleano), não da URL em si — o container é o
+  // mesmo nó DOM entre navegações subsequentes, reanexar o observer a cada
+  // troca de URL só piscaria a view escondendo/reexibindo à toa.
+  const hasUrl = Boolean(currentUrl);
+  useEffect(() => {
+    if (!desktopBrowser || viewId === null || !hasUrl) return;
+    const el = browserViewContainerRef.current;
+    if (!el) return;
+    desktopBrowser.setVisible(viewId, true);
+    const report = () => {
+      const rect = el.getBoundingClientRect();
+      desktopBrowser.setBounds(viewId, {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      });
+    };
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(el);
+    window.addEventListener("resize", report);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", report);
+      desktopBrowser.setVisible(viewId, false);
+    };
+  }, [desktopBrowser, viewId, hasUrl]);
 
   const fetchLaunch = useCallback(async () => {
     if (!wsId) return;
@@ -413,10 +556,23 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
 
   const serverFavorites = configs.length > 0 && (
     <div className="shrink-0 border-b border-border/60 bg-card/40 px-3 py-2 space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="flex w-full items-center justify-between">
+        <button
+          className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setServersCollapsed((v) => !v)}
+          title={
+            serversCollapsed
+              ? msg.workbench_browser_servers_expand()
+              : msg.workbench_browser_servers_collapse()
+          }
+        >
+          {serversCollapsed ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
           {msg.workbench_browser_servers()}
-        </span>
+        </button>
         <button
           onClick={() => setShowManualForm((v) => !v)}
           className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -425,82 +581,87 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
           <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
-      {showManualForm && <div className="pb-1">{manualForm}</div>}
-      {configs.map((cfg) => {
-        const status = getStatus(cfg.name);
-        const isRunning = status?.running ?? false;
-        const isAction = actionLoading === cfg.name;
-        const isActive = currentUrl === `http://localhost:${cfg.port}`;
+      {!serversCollapsed && showManualForm && (
+        <div className="pb-1">{manualForm}</div>
+      )}
+      {!serversCollapsed &&
+        configs.map((cfg) => {
+          const status = getStatus(cfg.name);
+          const isRunning = status?.running ?? false;
+          const isAction = actionLoading === cfg.name;
+          const isActive = currentUrl === `http://localhost:${cfg.port}`;
 
-        return (
-          <div
-            key={cfg.name}
-            className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40 transition-colors"
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span
-                  className={`h-1.5 w-1.5 rounded-full shrink-0 ${isRunning ? "bg-green-500" : "bg-muted-foreground/40"}`}
-                />
-                <span className="text-xs font-medium truncate">{cfg.name}</span>
-                {isRunning && (
-                  <span className="text-[10px] text-muted-foreground">
-                    :{cfg.port}
+          return (
+            <div
+              key={cfg.name}
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40 transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full shrink-0 ${isRunning ? "bg-green-500" : "bg-muted-foreground/40"}`}
+                  />
+                  <span className="text-xs font-medium truncate">
+                    {cfg.name}
                   </span>
-                )}
+                  {isRunning && (
+                    <span className="text-[10px] text-muted-foreground">
+                      :{cfg.port}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground/60 truncate pl-3">
+                  {cfg.runtimeExecutable} {cfg.runtimeArgs.join(" ")}
+                </p>
               </div>
-              <p className="text-[10px] text-muted-foreground/60 truncate pl-3">
-                {cfg.runtimeExecutable} {cfg.runtimeArgs.join(" ")}
-              </p>
-            </div>
 
-            <div className="flex shrink-0 items-center gap-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                title={msg.workbench_browser_console()}
-                onClick={() => setConsoleFor(cfg.name)}
-              >
-                <Terminal className="h-3 w-3" />
-              </Button>
-              {isRunning && (
+              <div className="flex shrink-0 items-center gap-1">
                 <Button
                   size="icon"
-                  variant={isActive ? "secondary" : "ghost"}
+                  variant="ghost"
                   className="h-6 w-6"
-                  title={msg.workbench_browser_open_server()}
-                  onClick={() => navigate(`http://localhost:${cfg.port}`)}
+                  title={msg.workbench_browser_console()}
+                  onClick={() => setConsoleFor(cfg.name)}
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <Terminal className="h-3 w-3" />
                 </Button>
-              )}
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                disabled={isAction}
-                onClick={() =>
-                  isRunning ? handleStop(cfg.name) : handleStart(cfg)
-                }
-                title={
-                  isRunning
-                    ? msg.workbench_browser_stop()
-                    : msg.workbench_browser_start()
-                }
-              >
-                {isAction ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : isRunning ? (
-                  <Square className="h-3 w-3 fill-current" />
-                ) : (
-                  <Play className="h-3 w-3 fill-current" />
+                {isRunning && (
+                  <Button
+                    size="icon"
+                    variant={isActive ? "secondary" : "ghost"}
+                    className="h-6 w-6"
+                    title={msg.workbench_browser_open_server()}
+                    onClick={() => navigate(`http://localhost:${cfg.port}`)}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  disabled={isAction}
+                  onClick={() =>
+                    isRunning ? handleStop(cfg.name) : handleStart(cfg)
+                  }
+                  title={
+                    isRunning
+                      ? msg.workbench_browser_stop()
+                      : msg.workbench_browser_start()
+                  }
+                >
+                  {isAction ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : isRunning ? (
+                    <Square className="h-3 w-3 fill-current" />
+                  ) : (
+                    <Play className="h-3 w-3 fill-current" />
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
     </div>
   );
 
@@ -528,11 +689,15 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
         </button>
         <button
           className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none"
-          onClick={() => setIframeKey((k) => k + 1)}
+          onClick={refresh}
           disabled={!currentUrl}
           title={msg.workbench_files_refresh()}
         >
-          <RefreshCw className="h-3 w-3" />
+          {desktopLoading ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3 w-3" />
+          )}
         </button>
         <input
           type="text"
@@ -566,19 +731,35 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col">
+        {desktopLoadError && (
+          <div className="shrink-0 border-b border-destructive/40 bg-destructive/10 px-3 py-1.5 text-[11px] text-destructive">
+            {desktopLoadError}
+          </div>
+        )}
         {currentUrl ? (
-          <iframe
-            ref={iframeRef}
-            key={iframeKey}
-            src={currentUrl}
-            className="flex-1 w-full border-0 bg-white"
-            title="Browser"
-            sandbox={
-              isTrustedWorkspaceServer(currentUrl)
-                ? "allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
-                : "allow-scripts allow-forms allow-modals allow-popups"
-            }
-          />
+          desktopBrowser ? (
+            // WebContentsView real (Electron) desenhada pelo main process por
+            // cima deste espaço reservado — este div fica sempre vazio, é só
+            // a referência de bounds (ver o efeito de ResizeObserver acima).
+            <div
+              ref={browserViewContainerRef}
+              data-testid="browser-webcontentsview-container"
+              className="flex-1 w-full bg-white"
+            />
+          ) : (
+            <iframe
+              ref={iframeRef}
+              key={iframeKey}
+              src={currentUrl}
+              className="flex-1 w-full border-0 bg-white"
+              title="Browser"
+              sandbox={
+                isTrustedWorkspaceServer(currentUrl)
+                  ? "allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
+                  : "allow-scripts allow-forms allow-modals allow-popups"
+              }
+            />
+          )
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center pb-[18%] gap-3 p-4 text-center">
             <Zap className="h-8 w-8 text-muted-foreground/40 shrink-0" />

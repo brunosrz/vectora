@@ -9,6 +9,7 @@
  */
 
 import { contextBridge, ipcRenderer } from "electron";
+import type { BrowserViewEvent, ViewBounds } from "./browser-view-manager.js";
 
 export interface VectoraDesktopBridge {
   /** "win32" | "darwin" | "linux" — útil para shortcuts e UI condicional. */
@@ -58,6 +59,28 @@ export interface VectoraDesktopBridge {
       handler: (state: { maximized: boolean }) => void,
     ) => () => void;
   };
+  /** Browser real da aba Browser do workbench — WebContentsView com sessão
+   * própria (cookies/cache persistentes, contexto de navegação de nível
+   * superior, imune a X-Frame-Options). Ver electron/src/browser-view-manager.ts. */
+  browserView: {
+    createView: () => Promise<number>;
+    destroyView: (viewId: number) => void;
+    navigate: (
+      viewId: number,
+      url: string,
+    ) => Promise<{ ok: boolean; error?: string }>;
+    goBack: (viewId: number) => void;
+    goForward: (viewId: number) => void;
+    reload: (viewId: number) => void;
+    stop: (viewId: number) => void;
+    setBounds: (viewId: number, bounds: ViewBounds) => void;
+    setVisible: (viewId: number, visible: boolean) => void;
+    /** Subscreve a eventos de navegação (navigated/titleUpdated/
+     * faviconUpdated/loadingChanged/loadFailed) de qualquer view criada. */
+    onEvent: (
+      handler: (viewId: number, event: BrowserViewEvent) => void,
+    ) => () => void;
+  };
 }
 
 const bridge: VectoraDesktopBridge = {
@@ -96,6 +119,33 @@ const bridge: VectoraDesktopBridge = {
       ipcRenderer.on("vectora:window-state", listener);
       return () => {
         ipcRenderer.removeListener("vectora:window-state", listener);
+      };
+    },
+  },
+  browserView: {
+    createView: () => ipcRenderer.invoke("vectora:browser-create-view"),
+    destroyView: (viewId) =>
+      ipcRenderer.send("vectora:browser-destroy-view", viewId),
+    navigate: (viewId, url) =>
+      ipcRenderer.invoke("vectora:browser-navigate", viewId, url),
+    goBack: (viewId) => ipcRenderer.send("vectora:browser-go-back", viewId),
+    goForward: (viewId) =>
+      ipcRenderer.send("vectora:browser-go-forward", viewId),
+    reload: (viewId) => ipcRenderer.send("vectora:browser-reload", viewId),
+    stop: (viewId) => ipcRenderer.send("vectora:browser-stop", viewId),
+    setBounds: (viewId, bounds) =>
+      ipcRenderer.send("vectora:browser-set-bounds", viewId, bounds),
+    setVisible: (viewId, visible) =>
+      ipcRenderer.send("vectora:browser-set-visible", viewId, visible),
+    onEvent: (handler) => {
+      const listener = (
+        _event: unknown,
+        viewId: number,
+        change: BrowserViewEvent,
+      ) => handler(viewId, change);
+      ipcRenderer.on("vectora:browser-view-event", listener);
+      return () => {
+        ipcRenderer.removeListener("vectora:browser-view-event", listener);
       };
     },
   },
