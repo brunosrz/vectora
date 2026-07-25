@@ -124,7 +124,7 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
     if provider_id == "google-genai":
         from langchain_google_genai import ChatGoogleGenerativeAI
 
-        return ChatGoogleGenerativeAI(api_key=api_key, model=model)
+        return ChatGoogleGenerativeAI(api_key=api_key, model=model, timeout=1200)
 
     if provider_id == "openai":
         from langchain_openai import ChatOpenAI

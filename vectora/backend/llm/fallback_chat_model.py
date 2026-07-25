@@ -25,9 +25,19 @@ from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.outputs import ChatGenerationChunk, ChatResult
 from langchain_core.runnables import RunnableBinding
+
+
+def _has_images(messages: list[BaseMessage]) -> bool:
+    """Verifica se há blocos de imagem em qualquer mensagem da lista."""
+    for msg in messages:
+        if isinstance(msg.content, list):
+            for block in msg.content:
+                if isinstance(block, dict) and block.get("type") == "image_url":
+                    return True
+    return False
 
 
 async def _emit_switch(from_model: str, to_model: str) -> None:
@@ -126,10 +136,26 @@ class FallbackChatModel(BaseChatModel):
 
     # -- candidatos / modelo interno --------------------------------------------
 
-    def _candidates(self) -> list[str]:
+    def _candidates(self, has_images: bool = False) -> list[str]:
         from backend.llm.provider_fallback import get_fallback_chain
+        from backend.settings import VISION_CAPABLE_PROVIDERS, find_provider_for_model
 
-        return [self.primary_model_id, *get_fallback_chain(self.primary_model_id)]
+        all_candidates = [
+            self.primary_model_id,
+            *get_fallback_chain(self.primary_model_id),
+        ]
+
+        if not has_images:
+            return all_candidates
+
+        # Se tem imagens, filtra apenas providers que suportam visão
+        filtered = []
+        for mid in all_candidates:
+            provider = find_provider_for_model(mid)
+            if provider in VISION_CAPABLE_PROVIDERS:
+                filtered.append(mid)
+
+        return filtered
 
     def _inner(self, model_id: str) -> Any:
         from backend.services.utils import load_llm
@@ -169,7 +195,8 @@ class FallbackChatModel(BaseChatModel):
         )
 
         messages = _strip_reasoning_blocks(messages)
-        candidates = self._candidates()
+        has_images = _has_images(messages)
+        candidates = self._candidates(has_images=has_images)
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidates):
             model, bind_kwargs = _unwrap_binding(self._inner(mid))
@@ -226,7 +253,8 @@ class FallbackChatModel(BaseChatModel):
         )
 
         messages = _strip_reasoning_blocks(messages)
-        candidates = self._candidates()
+        has_images = _has_images(messages)
+        candidates = self._candidates(has_images=has_images)
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidates):
             model, bind_kwargs = _unwrap_binding(self._inner(mid))

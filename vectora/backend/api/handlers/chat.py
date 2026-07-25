@@ -224,6 +224,19 @@ async def _build_human_message(content: str, attachments: list[Attachment]) -> A
 
     for att in attachments:
         if att.kind == AttachmentKind.IMAGE:
+            # Log de diagnóstico para imagens grandes
+            try:
+                # Truncamento defensivo: se a imagem for absurdamente grande (> 5MB),
+                # logamos um erro e avisamos que pode haver instabilidade.
+                # O limite do schema é 10MB, mas 5MB já é arriscado para o SQLite.
+                img_size = len(base64.b64decode(att.base64_data))
+                if img_size > 5 * 1024 * 1024:
+                    logger.error("chat: imagem MUITO grande recebida: %s (%d bytes). Isso pode corromper o checkpointer SQLite.", att.name, img_size)
+                elif img_size > 2 * 1024 * 1024:
+                    logger.warning("chat: imagem grande recebida: %s (%d bytes)", att.name, img_size)
+            except Exception:
+                pass
+
             parts.append(
                 {
                     "type": "image_url",

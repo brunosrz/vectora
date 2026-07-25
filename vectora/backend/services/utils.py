@@ -63,7 +63,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 model=model_name,
                 google_api_key=get_env("GOOGLE_API_KEY"),  # type: ignore[arg-type]
                 temperature=temperature,
-                timeout=30,
+                timeout=1200,
                 max_retries=2,
             )
         case "openai":

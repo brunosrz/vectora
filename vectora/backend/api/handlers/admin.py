@@ -775,7 +775,7 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
                 model=_s.google_model,
                 google_api_key=api_key,  # type: ignore[arg-type]
                 max_output_tokens=1,
-                timeout=30,
+                timeout=1200,
                 max_retries=0,
             )
             await llm.ainvoke("hi")

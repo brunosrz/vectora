@@ -43,9 +43,24 @@ interface ThreadCacheEntry {
 /** Estima o tamanho em bytes de um array de mensagens. */
 function estimateBytes(messages: Message[]): number {
   try {
-    return new TextEncoder().encode(JSON.stringify(messages)).byteLength;
+    // Otimização: se houver mensagens com base64 muito longo, o JSON.stringify
+    // pode travar a main thread. Usamos uma estimativa baseada no comprimento
+    // das strings se o array for muito grande ou contiver campos suspeitos.
+    let total = 0;
+    for (const msg of messages) {
+      total += (msg.content?.length || 0) * 2; // 2 bytes por char (UTF-16)
+      if (msg.images) {
+        for (const img of msg.images) {
+          total += (img.base64?.length || 0);
+          total += (img.url?.length || 0);
+        }
+      }
+      // Outros campos (metadados, tool calls)
+      total += 512; 
+    }
+    return total;
   } catch {
-    return messages.length * 512; // fallback conservador
+    return messages.length * 1024; // fallback conservador
   }
 }
 

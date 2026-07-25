@@ -1043,7 +1043,7 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
 # `api/handlers/chat.py::stream_chat` para recusar attachments de imagem
 # cedo, com um erro claro, em vez de deixar a API do provider estourar com
 # uma mensagem crua (ex.: Cohere "image content is not supported").
-VISION_CAPABLE_PROVIDERS: set[str] = {"google_genai", "openai", "anthropic"}
+VISION_CAPABLE_PROVIDERS: set[str] = {"google-genai", "openai", "anthropic"}
 
 # Modelos que rejeitam REPLAY de tool_calls no histórico da conversa — não é
 # sobre suportar bind_tools na primeira chamada, é sobre reprocessar um turno

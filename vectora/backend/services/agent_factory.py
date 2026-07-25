@@ -712,8 +712,14 @@ def _message_text(content: Any) -> str:
     if isinstance(content, list):
         parts: list[str] = []
         for block in content:
-            if isinstance(block, dict) and block.get("type") == "text":
-                parts.append(str(block.get("text", "")))
+            if isinstance(block, dict):
+                btype = block.get("type")
+                if btype == "text":
+                    parts.append(str(block.get("text", "")))
+                elif btype == "image_url":
+                    # Placeholder para imagem no histórico (evita base64 gigante no payload REST).
+                    # TODO: Implementar armazenamento de arquivos para persistir imagens reais no histórico.
+                    parts.append("\n[Imagem]\n")
             elif isinstance(block, str):
                 parts.append(block)
         return "".join(parts)
