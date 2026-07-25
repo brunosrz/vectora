@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 /**
- * WorkbenchNavBar — gating de BETA_TABS via enableFeaturesBeta.
+ * WorkbenchNavBar — renderização e navegação de abas.
  *
- * Cobre: ComingSoonTabButton (toast ao clicar), NavTabButton para tabs normais,
- * e a alternância entre os dois com base na feature flag.
+ * Cobre: NavTabButton para todas as abas e a chamada de selectTab ao clicar.
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
@@ -41,11 +40,6 @@ vi.mock("@/lib/hooks/use-workspace-watcher", () => ({
   useWorkspaceWatcher: () => undefined,
 }));
 
-let featuresBeta = false;
-vi.mock("@/lib/hooks/use-feature-flags", () => ({
-  useFeatureFlags: () => ({ enableFeaturesBeta: featuresBeta }),
-}));
-
 vi.mock("@/lib/paraglide/messages", () => ({
   m: new Proxy(
     {},
@@ -74,11 +68,7 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
-import {
-  WorkbenchNavBar,
-  WorkbenchContent,
-  ComingSoonTabButton,
-} from "../workbench-panel";
+import { WorkbenchNavBar, WorkbenchContent } from "../workbench-panel";
 
 afterEach(() => {
   cleanup();
@@ -87,8 +77,7 @@ afterEach(() => {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-function renderNav(beta: boolean) {
-  featuresBeta = beta;
+function renderNav() {
   return render(<WorkbenchNavBar threadId="t1" />);
 }
 
@@ -100,70 +89,38 @@ function getButtons(container: HTMLElement) {
 
 // ── Testes ───────────────────────────────────────────────────────────────────
 
-describe("WorkbenchNavBar — BETA_TABS vazio (context_graph promovido a estável)", () => {
-  describe("com enableFeaturesBeta = false (comportamento de produção)", () => {
-    it("context_graph renderiza como NavTabButton normal (sem aria-disabled)", () => {
-      const { container } = renderNav(false);
-      const btns = getButtons(container);
-      // 3 tabs no mock: files (0), context_graph (1), terminal (2)
-      expect(btns[1].hasAttribute("aria-disabled")).toBe(false);
-    });
-
-    it("context_graph fica na ordem de tab normal (sem tabIndex=-1)", () => {
-      const { container } = renderNav(false);
-      expect(getButtons(container)[1].tabIndex).not.toBe(-1);
-    });
-
-    it("clicar em context_graph chama selectTab normalmente (não é mais ComingSoon)", () => {
-      const { container } = renderNav(false);
-      fireEvent.click(getButtons(container)[1]);
-      expect(mockSelectTab).toHaveBeenCalledWith("t1", "context_graph");
-      expect(mockPush).not.toHaveBeenCalled();
-    });
-
-    it("clicar em tab normal (files) chama selectTab e NÃO despacha toast", () => {
-      const { container } = renderNav(false);
-      fireEvent.click(getButtons(container)[0]);
-      expect(mockSelectTab).toHaveBeenCalledWith("t1", "files");
-      expect(mockPush).not.toHaveBeenCalled();
-    });
+describe("WorkbenchNavBar — Todas as abas estáveis", () => {
+  it("context_graph renderiza como NavTabButton normal (sem aria-disabled)", () => {
+    const { container } = renderNav();
+    const btns = getButtons(container);
+    // 3 tabs no mock: files (0), context_graph (1), terminal (2)
+    expect(btns[1].hasAttribute("aria-disabled")).toBe(false);
   });
 
-  describe("edge cases", () => {
-    it("tab normal (terminal) chama selectTab independentemente da flag", () => {
-      const { container } = renderNav(false);
-      fireEvent.click(getButtons(container)[2]);
-      expect(mockSelectTab).toHaveBeenCalledWith("t1", "terminal");
-      expect(mockPush).not.toHaveBeenCalled();
-    });
-
-    it("múltiplos cliques em context_graph continuam chamando selectTab (não trava)", () => {
-      const { container } = renderNav(false);
-      const btn = getButtons(container)[1];
-      fireEvent.click(btn);
-      fireEvent.click(btn);
-      expect(mockSelectTab).toHaveBeenCalledTimes(2);
-      expect(mockPush).not.toHaveBeenCalled();
-    });
-  });
-});
-
-describe("ComingSoonTabButton — componente em isolamento (usado só se BETA_TABS ganhar entradas no futuro)", () => {
-  it("botão tem aria-disabled=true e tabIndex=-1 (não interativo)", () => {
-    const { container } = render(<ComingSoonTabButton tab="files" />);
-    const btn = container.querySelector("button")!;
-    expect(btn.getAttribute("aria-disabled")).toBe("true");
-    expect(btn.tabIndex).toBe(-1);
+  it("context_graph fica na ordem de tab normal (sem tabIndex=-1)", () => {
+    const { container } = renderNav();
+    expect(getButtons(container)[1].tabIndex).not.toBe(-1);
   });
 
-  it("mostra tooltip 'em breve' e clicar não dispara nenhum efeito colateral", () => {
-    const { container } = render(<ComingSoonTabButton tab="files" />);
-    expect(container.querySelector("[data-tooltip]")?.textContent).toBe(
-      "workbench_tab_coming_soon",
-    );
-    fireEvent.click(container.querySelector("button")!);
+  it("clicar em context_graph chama selectTab normalmente", () => {
+    const { container } = renderNav();
+    fireEvent.click(getButtons(container)[1]);
+    expect(mockSelectTab).toHaveBeenCalledWith("t1", "context_graph");
     expect(mockPush).not.toHaveBeenCalled();
-    expect(mockSelectTab).not.toHaveBeenCalled();
+  });
+
+  it("clicar em tab normal (files) chama selectTab e NÃO despacha toast", () => {
+    const { container } = renderNav();
+    fireEvent.click(getButtons(container)[0]);
+    expect(mockSelectTab).toHaveBeenCalledWith("t1", "files");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("tab normal (terminal) chama selectTab", () => {
+    const { container } = renderNav();
+    fireEvent.click(getButtons(container)[2]);
+    expect(mockSelectTab).toHaveBeenCalledWith("t1", "terminal");
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });
 

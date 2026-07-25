@@ -175,7 +175,7 @@ const DEFAULTS = {
   sidebarWidth: 224,
   sidebarPosition: "left" as SidebarPosition,
   chatMode: false,
-  ideMode: false,
+  ideMode: true,
   chatSidebarWidth: 256,
   selectedModel: getDefaultModel(),
   autoUpdateEnabled: true,

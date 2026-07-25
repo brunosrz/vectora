@@ -24,7 +24,6 @@ import { SessionSwitcher } from "@/components/header/session-switcher";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { PANEL_TRANSITION } from "@/lib/motion/transitions";
-import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { useWebhookWorkbench } from "@/lib/hooks/use-webhook-workbench";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
@@ -125,7 +124,6 @@ function SessionPage() {
   const chatMode = useSettingsStore((s) => s.chatMode);
   const setChatMode = useSettingsStore((s) => s.setChatMode);
   const ideMode = useSettingsStore((s) => s.ideMode);
-  const { enableFeaturesBeta } = useFeatureFlags();
   const chatSidebarWidth = useSettingsStore((s) => s.chatSidebarWidth);
   const setChatSidebarWidth = useSettingsStore((s) => s.setChatSidebarWidth);
   // Modelo do chat — lido do store persistido (sobrevive a restart/reload).
@@ -581,7 +579,7 @@ function SessionPage() {
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
       <AnimatePresence mode="wait" initial={false}>
-        {ideMode && !chatMode && enableFeaturesBeta ? (
+        {ideMode && !chatMode ? (
           // ── Layout IDE: sidebars ao topo, Header só acima do DockedEditor ──
           <motion.div
             key="ide"
@@ -627,7 +625,7 @@ function SessionPage() {
                 onToggleToolCalls={() => setShowToolCalls((v) => !v)}
                 onShowShortcuts={() => setShowShortcutsDialog(true)}
                 onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-                showModeSwitch={!chatMode && enableFeaturesBeta}
+                showModeSwitch={!chatMode}
               />
               <div className="flex-1 min-h-0 overflow-hidden">
                 <DockedEditor activeWorkspaceId={activeWorkspaceId} />
@@ -763,7 +761,7 @@ function SessionPage() {
                       onToggleToolCalls={() => setShowToolCalls((v) => !v)}
                       onShowShortcuts={() => setShowShortcutsDialog(true)}
                       onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-                      showModeSwitch={!chatMode && enableFeaturesBeta}
+                      showModeSwitch={!chatMode}
                     />
                     <div className="flex-1 min-h-0">
                       <ChatInterface

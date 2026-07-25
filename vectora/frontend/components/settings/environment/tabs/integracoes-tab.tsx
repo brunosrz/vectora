@@ -43,7 +43,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { m } from "@/lib/paraglide/messages";
-import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -163,12 +162,10 @@ function IntegrationCard({
   integ,
   onUpdated,
   gatewayWebhookBase,
-  enableFeaturesBeta,
 }: {
   integ: Integration;
   onUpdated: () => void;
   gatewayWebhookBase: string | null;
-  enableFeaturesBeta: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [keyValue, setKeyValue] = useState("");
@@ -446,8 +443,8 @@ function IntegrationCard({
         </div>
       )}
 
-      {/* OAuth section — apenas quando feature beta habilitada */}
-      {isOAuthProvider && enableFeaturesBeta && (
+      {/* OAuth section */}
+      {isOAuthProvider && (
         <div className="px-3 pb-3 border-t pt-3 space-y-2">
           {integ.connected ? (
             <div className="flex items-center justify-between">
@@ -587,7 +584,6 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
 // ---------------------------------------------------------------------------
 
 export function IntegracoesTab() {
-  const { enableFeaturesBeta } = useFeatureFlags();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [customEnvs, setCustomEnvs] = useState<Record<string, string>>({});
   const [customKeys, setCustomKeys] = useState<string[]>([]);
@@ -701,21 +697,19 @@ export function IntegracoesTab() {
         </Button>
       </div>
 
-      {/* Banner gateway — visível apenas quando OAuth/gateway está
-          habilitado. 3 estados distintos (não só conectado/desconectado):
+      {/* Banner gateway — 3 estados distintos (não só conectado/desconectado):
           nunca conectou (neutro, nada errado — normal antes da 1ª
           integração), erro real (gateway fora do ar/mal configurado, com
           detalhe), e conectado. */}
-      {enableFeaturesBeta && (
-        <div
-          className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${
-            gateway.state === "connected"
-              ? "border-green-500/30 bg-green-500/5"
-              : gateway.state === "error"
-                ? "border-destructive/30 bg-destructive/5"
-                : "border-border bg-muted/30"
-          }`}
-        >
+      <div
+        className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${
+          gateway.state === "connected"
+            ? "border-green-500/30 bg-green-500/5"
+            : gateway.state === "error"
+              ? "border-destructive/30 bg-destructive/5"
+              : "border-border bg-muted/30"
+        }`}
+      >
           <div className="flex items-center justify-between">
             <p
               className={`font-medium ${
@@ -755,7 +749,6 @@ export function IntegracoesTab() {
             <p className="text-muted-foreground">{m.gateway_no_token()}</p>
           )}
         </div>
-      )}
 
       {/* Cards por categoria */}
       {CATEGORIES.map((cat) => {
@@ -772,7 +765,6 @@ export function IntegracoesTab() {
                 integ={integ}
                 onUpdated={load}
                 gatewayWebhookBase={gateway.webhook_base}
-                enableFeaturesBeta={enableFeaturesBeta}
               />
             ))}
           </div>

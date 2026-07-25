@@ -25,22 +25,16 @@ def client(monkeypatch):
 
 
 class TestGetFlags:
-    def test_reflects_settings_by_default(self, client, monkeypatch):
+    def test_always_enabled_by_default(self, client, monkeypatch):
+        """Features beta agora são estáveis e habilitadas por padrão."""
         monkeypatch.delenv("VECTORA_DEV", raising=False)
-        resp = client.get("/settings/flags")
-        assert resp.status_code == 200
-        assert resp.json()["enable_features_beta"] is False
-
-    def test_vectora_dev_1_forces_beta_flags_on(self, client, monkeypatch):
-        monkeypatch.setenv("VECTORA_DEV", "1")
         resp = client.get("/settings/flags")
         assert resp.status_code == 200
         assert resp.json()["enable_features_beta"] is True
 
-    def test_vectora_dev_non_1_value_does_not_enable(self, client, monkeypatch):
-        for value in ("true", "0", "yes", ""):
+    def test_vectora_dev_does_not_affect_it(self, client, monkeypatch):
+        """Independente de VECTORA_DEV, agora é sempre True."""
+        for value in ("1", "0", "true", ""):
             monkeypatch.setenv("VECTORA_DEV", value)
             resp = client.get("/settings/flags")
-            assert resp.json()["enable_features_beta"] is False, (
-                f"VECTORA_DEV={value!r} não deveria ativar beta flags"
-            )
+            assert resp.json()["enable_features_beta"] is True

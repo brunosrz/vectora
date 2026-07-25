@@ -24,13 +24,10 @@ router = APIRouter(prefix="/settings", tags=["flags"])
 
 @router.get("/flags")
 async def get_flags() -> dict:
-    settings = get_settings()
-    # Electron propaga VECTORA_DEV pro processo do backend quando o app
-    # desktop roda em modo dev — nesse caso as beta flags (Context Graph,
-    # IDE mode) ficam ligadas independente do valor configurado.
-    dev_mode = os.environ.get("VECTORA_DEV") == "1"
+    # Features anteriormente em beta (IDE mode, Library, Context Graph) agora são
+    # estáveis e habilitadas por padrão para todos os usuários.
     return {
-        "enable_features_beta": settings.enable_features_beta or dev_mode,
+        "enable_features_beta": True,
         "auth_required": _auth_enabled(),
     }
 

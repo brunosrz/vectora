@@ -58,7 +58,6 @@ import { ContextGraphTab } from "./tabs/context-graph-tab";
 import { LibraryTab } from "./tabs/library-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
-import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { PANEL_TRANSITION } from "@/lib/motion/transitions";
 
 interface WorkbenchPanelProps {
@@ -120,29 +119,6 @@ function useTabBadge(
   }
 }
 
-const BETA_TABS = new Set<WorkbenchTab>(["library"]);
-
-export function ComingSoonTabButton({ tab }: { tab: WorkbenchTab }) {
-  const Icon = TAB_ICON[tab];
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-disabled="true"
-          tabIndex={-1}
-          data-testid={`workbench-nav-${tab}`}
-          className="relative flex items-center justify-center w-8 h-8 rounded-md cursor-default text-muted-foreground/40"
-        >
-          <Icon className="w-4 h-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="right">
-        {m.workbench_tab_coming_soon()}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
 
 function NavTabButton({
   tab,
@@ -234,7 +210,7 @@ export function WorkbenchNavBar({
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const isOpen = useWorkbenchStore((s) => s.isOpen(threadId));
   const selectTab = useWorkbenchStore((s) => s.selectTab);
-  const { enableFeaturesBeta } = useFeatureFlags();
+
   return (
     <div
       className={`h-full w-12 shrink-0 flex flex-col items-center bg-sidebar ${
@@ -245,21 +221,17 @@ export function WorkbenchNavBar({
           (sempre h-16, nos dois modos — ver comentário do JSDoc acima). */}
       <div className="h-16 w-full shrink-0 border-b border-border/60" />
       <div className="flex flex-col items-center gap-1 pt-2">
-        {WORKBENCH_TABS.map((tab) =>
-          !enableFeaturesBeta && BETA_TABS.has(tab) ? (
-            <ComingSoonTabButton key={tab} tab={tab} />
-          ) : (
-            <NavTabButton
-              key={tab}
-              tab={tab}
-              active={hydrated && isOpen && tab === activeTab}
-              threadId={threadId}
-              workspaceId={wsId}
-              hydrated={hydrated}
-              onSelect={() => selectTab(threadId, tab)}
-            />
-          ),
-        )}
+        {WORKBENCH_TABS.map((tab) => (
+          <NavTabButton
+            key={tab}
+            tab={tab}
+            active={hydrated && isOpen && tab === activeTab}
+            threadId={threadId}
+            workspaceId={wsId}
+            hydrated={hydrated}
+            onSelect={() => selectTab(threadId, tab)}
+          />
+        ))}
       </div>
     </div>
   );

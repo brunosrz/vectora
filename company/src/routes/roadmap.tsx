@@ -49,8 +49,8 @@ const SHIPPED = [
 ];
 
 const BUILDING = [
-  { label: "Context Graph nativo — tree-sitter + extração por LLM (beta)" },
-  { label: "IDE mode — layout de editor no workbench (beta)" },
+  { label: "Context Graph nativo — tree-sitter + extração por LLM" },
+  { label: "IDE mode — layout de editor no workbench" },
 ];
 
 const PLANNED = [
