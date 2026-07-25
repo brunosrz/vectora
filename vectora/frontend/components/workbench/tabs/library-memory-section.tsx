@@ -2,21 +2,40 @@
 
 /**
  * MemorySection — Memory Library: GET /rag-library/catalog,
- * POST /rag-library/install. Buckets RAG pré-vetorizados publicados pela
- * comunidade — download sempre grátis, sem gate de tier.
+ * POST /rag-library/install, POST /rag-library/publish. Buckets RAG
+ * pré-vetorizados publicados pela comunidade — download sempre grátis, sem
+ * gate de tier.
  *
- * "Publicar" não tem UI ainda: exige um `session_token` de conta
- * vectora.company que o backend local não tem como obter hoje (não existe
- * fluxo de login desktop↔company) — nota explicando isso em vez de um botão
- * que falha sempre.
+ * "Publicar" só fica habilitado com uma conta vectora.company conectada
+ * (`useLicenseStatus().status?.configured`, mesmo VECTORA_TOKEN que o
+ * license check usa) — sem conta conectada, mostra a nota explicativa em
+ * vez de um botão que falharia sempre.
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Database, Download, Loader2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Database,
+  Download,
+  Loader2,
+  Upload,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 import { m } from "@/lib/paraglide/messages";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useLibraryStore, type MemoryBucket } from "@/lib/stores/library-store";
 
 async function installBucket(
@@ -28,6 +47,129 @@ async function installBucket(
     body: JSON.stringify({ bucket_id: bucketId }),
   });
   return res.json();
+}
+
+async function publishBucket(payload: {
+  workspace_id: string;
+  name: string;
+  description: string;
+  license: string;
+}): Promise<{ status: string; bucket_id?: string; error?: string }> {
+  const res = await fetch("/rag-library/publish", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+function PublishDialog({
+  workspaceId,
+  onClose,
+  onPublished,
+}: {
+  workspaceId: string;
+  onClose: () => void;
+  onPublished: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [license, setLicense] = useState("MIT");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleConfirm = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const result = await publishBucket({
+        workspace_id: workspaceId,
+        name: name.trim(),
+        description: description.trim(),
+        license: license.trim() || "MIT",
+      });
+      if (result.status === "error") {
+        setError(result.error ?? m.library_memory_error_publish());
+        return;
+      }
+      onPublished();
+      onClose();
+    } catch {
+      setError(m.library_memory_error_publish());
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{m.library_memory_publish_title()}</DialogTitle>
+          <DialogDescription>
+            {m.library_memory_publish_desc()}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-1">
+          <div className="space-y-1.5">
+            <label
+              htmlFor="publish-memory-name"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              {m.library_memory_publish_name()}
+            </label>
+            <Input
+              id="publish-memory-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="text-sm"
+              autoComplete="off"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label
+              htmlFor="publish-memory-description"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              {m.library_memory_publish_description()}
+            </label>
+            <Textarea
+              id="publish-memory-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label
+              htmlFor="publish-memory-license"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              {m.library_memory_publish_license()}
+            </label>
+            <Input
+              id="publish-memory-license"
+              value={license}
+              onChange={(e) => setLicense(e.target.value)}
+              className="text-sm font-mono"
+              autoComplete="off"
+            />
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            {m.envs_cancel()}
+          </Button>
+          <Button onClick={handleConfirm} disabled={saving || !name.trim()}>
+            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            {m.library_memory_publish_confirm()}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function BucketCard({
@@ -135,6 +277,11 @@ export function MemorySection({
   const buckets = useLibraryStore((s) => s.memoryItems);
   const loading = useLibraryStore((s) => s.memoryLoading);
   const ensureMemoryLoaded = useLibraryStore((s) => s.ensureMemoryLoaded);
+  const invalidateMemory = useLibraryStore((s) => s.invalidateMemory);
+  const workspaceId = useWorkspacesStore((s) => s.getActive()?.id);
+  const { status: licenseStatus } = useLicenseStatus();
+  const [publishing, setPublishing] = useState(false);
+  const canPublish = Boolean(licenseStatus?.configured && workspaceId);
 
   useEffect(() => {
     void ensureMemoryLoaded();
@@ -177,9 +324,31 @@ export function MemorySection({
           />
         ))
       )}
-      <p className="text-[10px] text-muted-foreground/70 pt-1">
-        {m.library_memory_publish_note()}
-      </p>
+      {canPublish ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs w-full"
+          onClick={() => setPublishing(true)}
+        >
+          <Upload className="w-3 h-3 mr-1.5" />
+          {m.library_memory_publish_button()}
+        </Button>
+      ) : (
+        <p className="text-[10px] text-muted-foreground/70 pt-1">
+          {m.library_memory_publish_note()}
+        </p>
+      )}
+      {publishing && workspaceId && (
+        <PublishDialog
+          workspaceId={workspaceId}
+          onClose={() => setPublishing(false)}
+          onPublished={() => {
+            invalidateMemory();
+            void ensureMemoryLoaded();
+          }}
+        />
+      )}
     </div>
   );
 }

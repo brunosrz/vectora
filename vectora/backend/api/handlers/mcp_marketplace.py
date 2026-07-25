@@ -44,6 +44,7 @@ class MCPConnector(BaseModel):
     homepage: str = ""
     category: str = "general"
     vectora_verified: bool = False
+    icon_url: str | None = None
 
 
 class InstallRequest(BaseModel):
@@ -163,6 +164,7 @@ def _remote_entry_to_connector(entry: dict) -> MCPConnector | None:
             homepage=entry.get("homepage") or "",
             category=entry.get("category", "general"),
             vectora_verified=bool(entry.get("vectora_verified")),
+            icon_url=entry.get("icon_url") or None,
         )
     except Exception:
         logger.warning("mcp_marketplace: entrada remota malformada ignorada: %r", entry)

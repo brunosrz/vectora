@@ -12,8 +12,10 @@ import pytest
 
 from backend.api.handlers.memory_library import (
     InstallRequest,
+    PublishRequest,
     get_catalog,
     post_install,
+    post_publish,
 )
 from backend.services.memory_library import MemoryLibraryError
 
@@ -75,3 +77,70 @@ async def test_post_install_incompatible_embed_model_returns_error_not_exception
 
     assert result["status"] == "error"
     assert "embedder" in result["error"]
+
+
+def _publish_req() -> PublishRequest:
+    return PublishRequest(
+        workspace_id="ws1",
+        name="Docs internos",
+        description="Documentação vetorizada",
+        license="MIT",
+    )
+
+
+@pytest.mark.asyncio
+async def test_post_publish_returns_bucket_id_on_success(monkeypatch):
+    from backend.services import license
+
+    monkeypatch.setattr(license, "_get_token", lambda: "tok-123")
+    from backend.api.handlers import memory_library
+
+    monkeypatch.setattr(
+        memory_library,
+        "publish_memory_bucket",
+        AsyncMock(return_value="b-new"),
+    )
+
+    result = await post_publish(_publish_req())
+
+    assert result == {"status": "published", "bucket_id": "b-new"}
+
+
+@pytest.mark.asyncio
+async def test_post_publish_sem_vectora_token_retorna_erro_sem_tentar_publicar(
+    monkeypatch,
+):
+    """Erro/borda: sem VECTORA_TOKEN (nenhuma conta company conectada), o
+    endpoint devolve erro claro e nem chama publish_memory_bucket."""
+    from backend.services import license
+
+    monkeypatch.setattr(license, "_get_token", lambda: None)
+    from backend.api.handlers import memory_library
+
+    publish_mock = AsyncMock()
+    monkeypatch.setattr(memory_library, "publish_memory_bucket", publish_mock)
+
+    result = await post_publish(_publish_req())
+
+    assert result["status"] == "error"
+    assert "VECTORA_TOKEN" in result["error"]
+    publish_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_post_publish_falha_do_service_vira_status_error(monkeypatch):
+    from backend.services import license
+
+    monkeypatch.setattr(license, "_get_token", lambda: "tok-123")
+    from backend.api.handlers import memory_library
+
+    monkeypatch.setattr(
+        memory_library,
+        "publish_memory_bucket",
+        AsyncMock(side_effect=MemoryLibraryError("workspace sem coleção local")),
+    )
+
+    result = await post_publish(_publish_req())
+
+    assert result["status"] == "error"
+    assert "coleção local" in result["error"]

@@ -102,6 +102,45 @@ async def test_list_registry_prefers_remote_entry_over_local_when_id_matches(
 
 
 @pytest.mark.asyncio
+async def test_list_registry_propagates_icon_url_when_present_and_none_when_absent(
+    monkeypatch, _no_remote_registry
+):
+    """icon_url propaga do registry curado (D1) quando presente; entrada sem
+    o campo (ex. registry oficial de MCP, que não expõe ícone) vira None —
+    nunca inventa uma URL."""
+    from unittest.mock import AsyncMock
+
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace.registry_client,
+        "fetch_catalog",
+        AsyncMock(
+            return_value=[
+                {
+                    "id": "with-icon",
+                    "name": "Com Ícone",
+                    "description": "d",
+                    "icon_url": "https://example.com/icon.png",
+                },
+                {
+                    "id": "without-icon",
+                    "name": "Sem Ícone",
+                    "description": "d",
+                },
+            ]
+        ),
+    )
+
+    result = await list_registry()
+
+    with_icon = next(c for c in result if c.id == "with-icon")
+    without_icon = next(c for c in result if c.id == "without-icon")
+    assert with_icon.icon_url == "https://example.com/icon.png"
+    assert without_icon.icon_url is None
+
+
+@pytest.mark.asyncio
 async def test_list_registry_ignores_malformed_remote_entry(
     monkeypatch, _no_remote_registry
 ):

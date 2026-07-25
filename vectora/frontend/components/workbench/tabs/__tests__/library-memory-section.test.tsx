@@ -19,6 +19,7 @@ import {
 
 import { MemorySection } from "../library-memory-section";
 import { useLibraryStore } from "@/lib/stores/library-store";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
 afterEach(cleanup);
 
@@ -28,6 +29,7 @@ beforeEach(() => {
     memoryLoading: false,
     memoryFetchedAt: null,
   });
+  useWorkspacesStore.setState({ workspaces: [], active_id: null });
 });
 
 const CATALOG = [
@@ -54,6 +56,8 @@ const CATALOG = [
 function mockFetch({
   catalog = CATALOG as typeof CATALOG,
   installStatus = "installed" as string,
+  licenseConfigured = false,
+  publishStatus = "published" as string,
 } = {}) {
   global.fetch = vi
     .fn()
@@ -71,6 +75,21 @@ function mockFetch({
             installStatus === "error"
               ? { status: "error", error: "falha ao instalar" }
               : { status: installStatus, collection: "shared_b1" },
+        } as Response);
+      }
+      if (url === "/rag-library/publish" && init?.method === "POST") {
+        return Promise.resolve({
+          ok: true,
+          json: async () =>
+            publishStatus === "error"
+              ? { status: "error", error: "falha ao publicar" }
+              : { status: "published", bucket_id: "b-new" },
+        } as Response);
+      }
+      if (url === "/license/status") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ configured: licenseConfigured }),
         } as Response);
       }
       return Promise.resolve({ ok: true, json: async () => ({}) } as Response);
@@ -162,5 +181,111 @@ describe("MemorySection", () => {
     await waitFor(() => {
       expect(screen.getByText(/no memory buckets/i)).toBeTruthy();
     });
+  });
+
+  it("sem conta vectora.company conectada, mostra a nota em vez do botão de publicar", async () => {
+    mockFetch({ licenseConfigured: false });
+    useWorkspacesStore.setState({
+      workspaces: [
+        {
+          id: "ws1",
+          name: "ws",
+          cwd: "/x",
+          trusted: true,
+          is_git_repo: false,
+          git_remote: null,
+          git_current_branch: null,
+          git_default_branch: null,
+        },
+      ],
+      active_id: "ws1",
+    });
+    render(<MemorySection query="" onCountChange={() => {}} />);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Publishing from the app will be available/),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByText("Publish my memory")).toBeNull();
+  });
+
+  it("com conta conectada e workspace ativo, publica pelo diálogo (POST /rag-library/publish)", async () => {
+    mockFetch({ licenseConfigured: true, publishStatus: "published" });
+    useWorkspacesStore.setState({
+      workspaces: [
+        {
+          id: "ws1",
+          name: "ws",
+          cwd: "/x",
+          trusted: true,
+          is_git_repo: false,
+          git_remote: null,
+          git_current_branch: null,
+          git_default_branch: null,
+        },
+      ],
+      active_id: "ws1",
+    });
+    render(<MemorySection query="" onCountChange={() => {}} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Publish my memory")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByText("Publish my memory"));
+
+    await waitFor(() =>
+      expect(screen.getByText("Publish memory")).toBeTruthy(),
+    );
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Meus docs" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+
+    await waitFor(() => {
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const publishCall = calls.find(
+        (c) => c[0] === "/rag-library/publish" && c[1]?.method === "POST",
+      );
+      expect(publishCall).toBeTruthy();
+      const body = JSON.parse(publishCall![1].body as string);
+      expect(body).toMatchObject({ workspace_id: "ws1", name: "Meus docs" });
+    });
+  });
+
+  it("erro/borda: falha ao publicar mostra a mensagem sem fechar o diálogo", async () => {
+    mockFetch({ licenseConfigured: true, publishStatus: "error" });
+    useWorkspacesStore.setState({
+      workspaces: [
+        {
+          id: "ws1",
+          name: "ws",
+          cwd: "/x",
+          trusted: true,
+          is_git_repo: false,
+          git_remote: null,
+          git_current_branch: null,
+          git_default_branch: null,
+        },
+      ],
+      active_id: "ws1",
+    });
+    render(<MemorySection query="" onCountChange={() => {}} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Publish my memory")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByText("Publish my memory"));
+    await waitFor(() =>
+      expect(screen.getByText("Publish memory")).toBeTruthy(),
+    );
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Meus docs" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("falha ao publicar")).toBeTruthy();
+    });
+    expect(screen.getByText("Publish memory")).toBeTruthy();
   });
 });
