@@ -28,6 +28,9 @@ export interface Env {
   JOBS_QUEUE: Queue<JobMessage>;
   // license
   LICENSE_VALIDATE_LIMITER: RateLimit;
+  // registry/discovery.ts — sem token, discovery de skills via GitHub code
+  // search fica desligada (não é erro, ver discoverSkills).
+  GITHUB_TOKEN?: string;
 }
 
 export interface RegisterRequest {

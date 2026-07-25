@@ -2,6 +2,8 @@ import { env } from "cloudflare:test";
 import { beforeAll } from "vitest";
 // @ts-expect-error — Vite `?raw` import, resolvido em build/test time (esbuild).
 import schemaSql from "../migrations/0001_schema.sql?raw";
+// @ts-expect-error — Vite `?raw` import, resolvido em build/test time (esbuild).
+import discoverySql from "../migrations/0002_registry_discovery.sql?raw";
 
 // Guarda de rede hermética. O `queueConsumers: ["vectora-email"]` do
 // vitest.config faz o miniflare ENTREGAR de verdade os emails enfileirados
@@ -12,6 +14,13 @@ import schemaSql from "../migrations/0001_schema.sql?raw";
 // resto passa direto. Testes que precisam controlar a resposta do Resend
 // (queue-consumer.test.ts) sobrescrevem via `vi.stubGlobal("fetch", …)` e o
 // `unstubAllGlobals` do afterEach restaura para esta guarda.
+//
+// registry.modelcontextprotocol.io também entra aqui: `scheduled()`
+// (src/index.ts) dispara `runDiscovery` via `ctx.waitUntil`, e
+// `waitOnExecutionContext` nos testes de index.test.ts espera essa promise
+// terminar — sem essa guarda, os testes existentes de scheduled() fariam
+// uma chamada de rede real a cada run. Resposta vazia (`servers: []`) é
+// benigna: `discoverMcp` já trata lista vazia como "nada a inserir".
 const _realFetch: typeof fetch = globalThis.fetch;
 globalThis.fetch = function guardedFetch(
   input: RequestInfo | URL,
@@ -25,6 +34,14 @@ globalThis.fetch = function guardedFetch(
         : input.url;
   if (url.startsWith("https://api.resend.com")) {
     return Promise.resolve(new Response(null, { status: 200 }));
+  }
+  if (url.startsWith("https://registry.modelcontextprotocol.io")) {
+    return Promise.resolve(
+      new Response(JSON.stringify({ servers: [], metadata: {} }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
   }
   return _realFetch(input, init);
 } as typeof fetch;
@@ -45,4 +62,5 @@ async function applyMigration(sql: string): Promise<void> {
 
 beforeAll(async () => {
   await applyMigration(schemaSql as string);
+  await applyMigration(discoverySql as string);
 });

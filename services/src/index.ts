@@ -11,7 +11,9 @@
  *   na raiz via `.route("/", ...)`) — sem domínio dedicado.
  *
  * `queue()` processa as duas filas do Worker (`vectora-email`, `vectora-jobs`
- * — ver src/queue-consumer.ts e wrangler.toml).
+ * — ver src/queue-consumer.ts e wrangler.toml). `scheduled()` também roda
+ * `runDiscovery` (src/registry/discovery.ts) — popula mcp_catalog/
+ * skills_catalog automaticamente, além do seed manual da migration.
  */
 
 import { Hono } from "hono";
@@ -33,6 +35,7 @@ import { apiKeys } from "./api-keys/routes";
 import { issues } from "./issues/routes";
 import { ragLibrary } from "./rag-library/routes";
 import { registry } from "./registry/routes";
+import { runDiscovery } from "./registry/discovery";
 import { telemetry } from "./telemetry/routes";
 import { handleQueue } from "./queue-consumer";
 import type { Env } from "./gateway/types";
@@ -85,6 +88,7 @@ export default {
   ): Promise<void> {
     ctx.waitUntil(enqueueExpiredUserDeletions(env).then(() => undefined));
     ctx.waitUntil(expireGiftSubscriptions(env.DB).then(() => undefined));
+    ctx.waitUntil(runDiscovery(env));
   },
 
   async queue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
