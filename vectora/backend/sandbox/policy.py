@@ -9,6 +9,7 @@ nunca forkada, com nomes de campo ao estilo Vectora.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import tomllib
 from dataclasses import dataclass, field
@@ -95,3 +96,72 @@ def parse_policy(vectora_toml_path: Path) -> SandboxPolicy:
             vectora_toml_path,
         )
         return LOCKED_DOWN_POLICY
+
+
+class _Unset:
+    """Sentinel — distingue "ainda não checado" de "checado, sem distro" (None)."""
+
+
+_UNSET = _Unset()
+_wsl2_distro_cache: str | None | _Unset = _UNSET
+
+
+async def detect_wsl2() -> str | None:
+    """Detecta uma distro WSL2 elegível (kernel Linux real, WSL versão 2 —
+    não WSL1) via `wsl.exe -l -v`. É o único caminho real de sandbox no
+    Windows: bwrap não roda nativo (sem namespace/mount API equivalente),
+    e WSL2 é exatamente o caminho que o `ai-jail` original usa nesse SO —
+    Docker não entra nessa equação.
+
+    Cacheado por processo — o ambiente (WSL instalado ou não) não muda em
+    runtime. Retorna `None` (não levanta) se `wsl.exe` não existir, falhar,
+    ou nenhuma distro estiver em WSL2.
+    """
+    global _wsl2_distro_cache
+    if not isinstance(_wsl2_distro_cache, _Unset):
+        return _wsl2_distro_cache
+
+    distro = await _detect_wsl2_uncached()
+    _wsl2_distro_cache = distro
+    return distro
+
+
+async def _detect_wsl2_uncached() -> str | None:
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "wsl.exe",
+            "-l",
+            "-v",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout_b, _ = await asyncio.wait_for(proc.communicate(), timeout=10.0)
+    except (FileNotFoundError, TimeoutError, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+
+    # `wsl.exe -l -v` imprime UTF-16LE no Windows — decodificar como UTF-8
+    # produz lixo intercalado com bytes nulos.
+    try:
+        text = stdout_b.decode("utf-16-le")
+    except UnicodeDecodeError:
+        text = stdout_b.decode("utf-8", errors="replace")
+
+    default_distro: str | None = None
+    fallback_distro: str | None = None
+    for line in text.splitlines():
+        stripped = line.strip().lstrip("*").strip()
+        if not stripped or stripped.upper().startswith("NAME"):
+            continue
+        parts = stripped.split()
+        if len(parts) < 2:
+            continue
+        name, version = parts[0], parts[-1]
+        if version != "2":
+            continue
+        if line.strip().startswith("*"):
+            default_distro = name
+        elif fallback_distro is None:
+            fallback_distro = name
+    return default_distro or fallback_distro

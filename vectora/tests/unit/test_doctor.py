@@ -4,7 +4,9 @@ de imagem (não só os PIDs conhecidos pelo pid file de nats_sidecar.py)."""
 from __future__ import annotations
 
 import argparse
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from backend.cli import doctor
 
@@ -79,6 +81,14 @@ class TestFindNatsServerPidsPosix:
 
 
 class TestRunDoctor:
+    @pytest.fixture(autouse=True)
+    def _no_sandbox_check(self):
+        # run_doctor() também dispara _report_sandbox_status (checa WSL2 no
+        # Windows) — testes desta classe cobrem só a lógica de nats-server,
+        # então neutraliza pra não disparar `wsl.exe` de verdade (não-hermético).
+        with patch.object(doctor, "_report_sandbox_status", AsyncMock()):
+            yield
+
     def test_sem_orfaos_nao_mata_nada(self, capsys):
         with (
             patch.object(doctor, "find_nats_server_pids", return_value=[]),
@@ -98,6 +108,80 @@ class TestRunDoctor:
         assert kill_mock.call_count == 2
         kill_mock.assert_any_call(111)
         kill_mock.assert_any_call(222)
+
+    def test_reporta_status_do_sandbox_antes_de_procurar_orfaos(self):
+        # _report_sandbox_status roda mesmo sem nenhum órfão nats-server —
+        # é um diagnóstico independente, não condicionado ao resto.
+        with (
+            patch.object(doctor, "find_nats_server_pids", return_value=[]),
+            patch.object(doctor, "_report_sandbox_status", AsyncMock()) as sandbox_mock,
+        ):
+            doctor.run_doctor(argparse.Namespace(yes=False))
+
+        sandbox_mock.assert_awaited_once()
+
+
+class TestReportSandboxStatus:
+    """No Windows, `_report_sandbox_status` diagnostica o caminho real de
+    sandbox (WSL2 — bwrap não roda nativo, Docker não é a resposta certa
+    aqui)."""
+
+    @pytest.mark.asyncio
+    async def test_fora_do_windows_nao_faz_nada(self, monkeypatch):
+        monkeypatch.setattr(doctor.sys, "platform", "linux")
+        console = MagicMock()
+
+        await doctor._report_sandbox_status(console)
+
+        console.print.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sem_wsl2_orienta_a_instalar(self, monkeypatch):
+        monkeypatch.setattr(doctor.sys, "platform", "win32")
+        monkeypatch.setattr(
+            "backend.sandbox.policy.detect_wsl2", AsyncMock(return_value=None)
+        )
+        console = MagicMock()
+
+        await doctor._report_sandbox_status(console)
+
+        printed = " ".join(str(c.args[0]) for c in console.print.call_args_list)
+        assert "wsl --install" in printed
+
+    @pytest.mark.asyncio
+    async def test_com_wsl2_e_bwrap_reporta_tudo_ok(self, monkeypatch):
+        monkeypatch.setattr(doctor.sys, "platform", "win32")
+        monkeypatch.setattr(
+            "backend.sandbox.policy.detect_wsl2", AsyncMock(return_value="Ubuntu")
+        )
+        monkeypatch.setattr(
+            "backend.sandbox.workspace_jail._bwrap_available_in_distro",
+            AsyncMock(return_value=True),
+        )
+        console = MagicMock()
+
+        await doctor._report_sandbox_status(console)
+
+        printed = " ".join(str(c.args[0]) for c in console.print.call_args_list)
+        assert "Ubuntu" in printed
+        assert "bwrap instalado" in printed
+
+    @pytest.mark.asyncio
+    async def test_com_wsl2_mas_sem_bwrap_na_distro_orienta_instalar(self, monkeypatch):
+        monkeypatch.setattr(doctor.sys, "platform", "win32")
+        monkeypatch.setattr(
+            "backend.sandbox.policy.detect_wsl2", AsyncMock(return_value="Ubuntu")
+        )
+        monkeypatch.setattr(
+            "backend.sandbox.workspace_jail._bwrap_available_in_distro",
+            AsyncMock(return_value=False),
+        )
+        console = MagicMock()
+
+        await doctor._report_sandbox_status(console)
+
+        printed = " ".join(str(c.args[0]) for c in console.print.call_args_list)
+        assert "apt install bubblewrap" in printed
 
     def test_sem_yes_recusa_confirmacao_nao_mata(self):
         # Erro/borda: resposta diferente de y/yes/s/sim cancela, sem matar.

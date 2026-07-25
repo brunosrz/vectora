@@ -19,15 +19,50 @@ import os
 import sys
 import time
 from dataclasses import dataclass, field
+from pathlib import PureWindowsPath
 from typing import Any
 
 from backend.sandbox.dry_run import build_bwrap_command
 from backend.sandbox.linux import build_seccomp_filter
-from backend.sandbox.policy import SandboxPolicy
+from backend.sandbox.policy import SandboxPolicy, detect_wsl2
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_IDLE_TIMEOUT_S = 600.0
+
+
+def _is_windows() -> bool:
+    """Indireção sobre `sys.platform` — testável isoladamente sem
+    monkeypatchar o módulo `sys` global (afeta pytest-asyncio/outras libs
+    que também leem `sys.platform` no mesmo processo)."""
+    return sys.platform == "win32"
+
+
+def _windows_path_to_wsl(path: str) -> str:
+    """`C:\\Users\\a\\b` -> `/mnt/c/Users/a/b` — path do workspace visto de
+    dentro da distro WSL2 (todo drive Windows é montado em `/mnt/<letra>`)."""
+    pure = PureWindowsPath(path)
+    drive = pure.drive.rstrip(":").lower()
+    rest = "/".join(pure.parts[1:])
+    return f"/mnt/{drive}/{rest}" if rest else f"/mnt/{drive}"
+
+
+async def _bwrap_available_in_distro(distro: str) -> bool:
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "wsl.exe",
+            "-d",
+            distro,
+            "--",
+            "which",
+            "bwrap",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        await asyncio.wait_for(proc.communicate(), timeout=10.0)
+    except (FileNotFoundError, TimeoutError, OSError):
+        return False
+    return proc.returncode == 0
 
 
 class WorkerSpawnError(RuntimeError):
@@ -95,9 +130,14 @@ class WorkspaceJailManager:
     async def _spawn(
         self, workspace_id: str, workspace_dir: str, policy: SandboxPolicy
     ) -> JailedWorker:
-        argv = build_bwrap_command(
-            policy, workspace_dir, [sys.executable, "-m", "backend.sandbox.worker"]
-        )
+        if _is_windows():
+            argv = await self._build_wsl2_argv(workspace_dir, policy)
+        else:
+            argv = build_bwrap_command(
+                policy,
+                workspace_dir,
+                [sys.executable, "-m", "backend.sandbox.worker"],
+            )
         # Filtro seccomp real (0.4) — negando DENIED_SYSCALLS via libseccomp,
         # não só documental. `None` (libseccomp ausente) roda sem o filtro,
         # namespaces do bwrap continuam valendo (never blocks execution).
@@ -138,6 +178,36 @@ class WorkspaceJailManager:
                 with contextlib.suppress(OSError):
                     os.close(seccomp_fd)
         return JailedWorker(workspace_id=workspace_id, proc=proc)
+
+    async def _build_wsl2_argv(
+        self, workspace_dir: str, policy: SandboxPolicy
+    ) -> list[str]:
+        """bwrap não roda nativo no Windows (sem namespace/mount API
+        equivalente) — WSL2 é o caminho real que o `ai-jail` original usa
+        nesse SO, não Docker. Roteia o worker inteiro (bwrap + python3 +
+        `backend.sandbox.worker`) pra dentro da distro via `wsl.exe -d
+        <distro> --`; o path do workspace é traduzido de `C:\\...` pra
+        `/mnt/c/...` (todo drive Windows já vem montado assim no WSL2).
+        `rw_paths`/`ro_paths` da política, por outro lado, já devem estar
+        em formato Linux — são paths dentro do sandbox, não do host."""
+        distro = await detect_wsl2()
+        if distro is None:
+            raise WorkerSpawnError(
+                "bwrap não roda nativo no Windows. Instale o WSL2 (`wsl --install`, "
+                "reinicie e crie uma distro Linux) para habilitar o sandbox — "
+                "Docker não é o caminho certo pra isso."
+            )
+        if not await _bwrap_available_in_distro(distro):
+            raise WorkerSpawnError(
+                f"WSL2 (distro '{distro}') está disponível, mas o bwrap não está "
+                f"instalado dentro dela. Rode `wsl -d {distro} -- sudo apt install "
+                "bubblewrap` (ou o gerenciador de pacotes da sua distro) e tente de novo."
+            )
+        wsl_workspace_dir = _windows_path_to_wsl(workspace_dir)
+        bwrap_argv = build_bwrap_command(
+            policy, wsl_workspace_dir, ["python3", "-m", "backend.sandbox.worker"]
+        )
+        return ["wsl.exe", "-d", distro, "--", *bwrap_argv]
 
     async def close(self, workspace_id: str) -> None:
         worker = self._workers.pop(workspace_id, None)

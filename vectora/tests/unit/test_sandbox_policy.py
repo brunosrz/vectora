@@ -3,7 +3,17 @@ arquivo existe mas está malformado ou tem campo de tipo errado."""
 
 from __future__ import annotations
 
-from backend.sandbox.policy import DISABLED_POLICY, LOCKED_DOWN_POLICY, parse_policy
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from backend.sandbox import policy as policy_module
+from backend.sandbox.policy import (
+    DISABLED_POLICY,
+    LOCKED_DOWN_POLICY,
+    detect_wsl2,
+    parse_policy,
+)
 
 
 def test_missing_file_returns_disabled_policy(tmp_path):
@@ -344,3 +354,108 @@ def test_empty_rw_and_ro_paths_lists_are_valid(tmp_path):
 
     assert result.rw_paths == ()
     assert result.ro_paths == ()
+
+
+@pytest.fixture(autouse=True)
+def _reset_wsl2_cache():
+    policy_module._wsl2_distro_cache = policy_module._UNSET
+    yield
+    policy_module._wsl2_distro_cache = policy_module._UNSET
+
+
+def _fake_wsl_proc(stdout_bytes: bytes, returncode: int = 0):
+    proc = MagicMock()
+    proc.communicate = AsyncMock(return_value=(stdout_bytes, b""))
+    proc.returncode = returncode
+    return proc
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_retorna_a_distro_default_marcada_com_versao_2(
+    monkeypatch,
+):
+    output = "  NAME      STATE           VERSION\n* Ubuntu    Running         2\n  Debian    Stopped         1\n"
+    stdout_bytes = output.encode("utf-16-le")
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes)),
+    )
+
+    result = await detect_wsl2()
+
+    assert result == "Ubuntu"
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_sem_default_cai_pra_primeira_distro_versao_2(monkeypatch):
+    output = "  NAME      STATE           VERSION\n  Debian    Stopped         1\n  Fedora    Running         2\n"
+    stdout_bytes = output.encode("utf-16-le")
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes)),
+    )
+
+    result = await detect_wsl2()
+
+    assert result == "Fedora"
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_sem_nenhuma_distro_versao_2_retorna_none(monkeypatch):
+    output = "  NAME      STATE           VERSION\n  Debian    Stopped         1\n"
+    stdout_bytes = output.encode("utf-16-le")
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes)),
+    )
+
+    result = await detect_wsl2()
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_sem_wsl_exe_instalado_retorna_none_sem_lancar(monkeypatch):
+    # Erro/borda: wsl.exe ausente do sistema (não é Windows, ou WSL nunca
+    # foi instalado) — FileNotFoundError nunca deve propagar.
+    async def _raise(*args, **kwargs):
+        raise FileNotFoundError("wsl.exe not found")
+
+    monkeypatch.setattr(policy_module.asyncio, "create_subprocess_exec", _raise)
+
+    result = await detect_wsl2()
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_com_codigo_de_saida_diferente_de_zero_retorna_none(
+    monkeypatch,
+):
+    stdout_bytes = "".encode("utf-16-le")
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes, returncode=1)),
+    )
+
+    result = await detect_wsl2()
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_resultado_e_cacheado_entre_chamadas(monkeypatch):
+    output = "  NAME      STATE           VERSION\n* Ubuntu    Running         2\n"
+    stdout_bytes = output.encode("utf-16-le")
+    spawn_mock = AsyncMock(return_value=_fake_wsl_proc(stdout_bytes))
+    monkeypatch.setattr(policy_module.asyncio, "create_subprocess_exec", spawn_mock)
+
+    first = await detect_wsl2()
+    second = await detect_wsl2()
+
+    assert first == second == "Ubuntu"
+    spawn_mock.assert_called_once()

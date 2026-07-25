@@ -1,4 +1,5 @@
-"""``vectora doctor`` — encontra e limpa sidecars órfãos (nats-server).
+"""``vectora doctor`` — encontra e limpa sidecars órfãos (nats-server) e
+diagnostica o AI Jail no Windows.
 
 Mitigação imediata para processos já acumulados numa máquina antes desta
 correção existir (ver Sprint NATS fix): varre TODOS os processos
@@ -6,11 +7,17 @@ correção existir (ver Sprint NATS fix): varre TODOS os processos
 pelo pid file de ``backend/scheduling/nats_sidecar.py`` — órfãos de
 sessões anteriores ao fix (ou de bugs anteriores) podem ter caído fora
 até dessa lista.
+
+No Windows, também reporta o status do caminho real de sandbox (WSL2 —
+bwrap não roda nativo nesse SO, e Docker não é o caminho certo pra isso,
+ver ``backend/sandbox/workspace_jail.py``): WSL2 instalado ou não, distro
+WSL2 elegível encontrada, e se ``bwrap`` está instalado dentro dela.
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import shutil
 import subprocess  # nosec B404 — só consulta/mata processos já identificados por nome, sem shell
 import sys
@@ -68,12 +75,44 @@ def find_nats_server_pids() -> list[int]:
     return _find_nats_server_pids_posix()
 
 
+async def _report_sandbox_status(console: Console) -> None:
+    """Só roda no Windows — em Linux/macOS o `bwrap`/`sandbox-exec` nativo
+    já é o caminho, sem necessidade de checagem indireta."""
+    if sys.platform != "win32":
+        return
+
+    from backend.sandbox.policy import detect_wsl2
+    from backend.sandbox.workspace_jail import _bwrap_available_in_distro
+
+    console.print("\n[bold]Sandbox (AI Jail):[/bold]")
+    distro = await detect_wsl2()
+    if distro is None:
+        console.print(
+            "[yellow]✖ WSL2 não encontrado — o sandbox não roda nativo no "
+            "Windows (namespaces/mount API não existem aqui). Instale com "
+            "`wsl --install`, reinicie e crie uma distro Linux.[/yellow]"
+        )
+        return
+    console.print(f"[green]✔ WSL2 disponível[/green] (distro: {distro})")
+
+    if await _bwrap_available_in_distro(distro):
+        console.print(f"[green]✔ bwrap instalado dentro de '{distro}'[/green]")
+    else:
+        console.print(
+            f"[yellow]✖ bwrap não está instalado dentro de '{distro}' — "
+            f"rode `wsl -d {distro} -- sudo apt install bubblewrap` (ou o "
+            "gerenciador de pacotes da sua distro).[/yellow]"
+        )
+
+
 def run_doctor(args: argparse.Namespace) -> None:
     from rich.console import Console
 
     from backend.scheduling.nats_sidecar import kill_orphan_pid
 
     console = Console()
+    asyncio.run(_report_sandbox_status(console))
+
     pids = find_nats_server_pids()
 
     if not pids:

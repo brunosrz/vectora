@@ -12,6 +12,18 @@ from backend.sandbox import workspace_jail as wj
 from backend.sandbox.policy import SandboxPolicy
 
 
+@pytest.fixture(autouse=True)
+def _force_linux_platform(monkeypatch):
+    # Testes abaixo exercitam o caminho bwrap nativo (Linux) — forçar a
+    # plataforma torna isso determinístico independente do SO onde os
+    # testes rodam de verdade (esta máquina de dev é Windows). Monkeypatcha
+    # `_is_windows` (indireção local), não `sys.platform` direto — mexer no
+    # `sys` global quebra pytest-asyncio/outras libs que também leem
+    # `sys.platform` no mesmo processo. O caminho WSL2 (win32) tem sua
+    # própria seção de testes abaixo.
+    monkeypatch.setattr(wj, "_is_windows", lambda: False)
+
+
 def _fake_proc(returncode: int | None = None) -> MagicMock:
     proc = MagicMock()
     proc.returncode = returncode
@@ -183,3 +195,78 @@ async def test_is_alive_reflects_returncode(tmp_path, monkeypatch):
     await manager.get_or_spawn("ws-1", str(tmp_path), policy)
 
     assert spawn_mock.await_count == 2
+
+
+def test_windows_path_to_wsl_traduz_drive_e_barras():
+    assert wj._windows_path_to_wsl(r"C:\Users\dev\meu projeto") == (
+        "/mnt/c/Users/dev/meu projeto"
+    )
+
+
+def test_windows_path_to_wsl_raiz_do_drive_sem_barra_sobrando():
+    assert wj._windows_path_to_wsl("D:\\") == "/mnt/d"
+
+
+class TestWsl2Spawn:
+    """No Windows (`sys.platform == "win32"`), bwrap não roda nativo — o
+    worker é roteado inteiro por dentro de uma distro WSL2 via `wsl.exe`."""
+
+    @pytest.fixture(autouse=True)
+    def _win32(self, monkeypatch):
+        monkeypatch.setattr(wj, "_is_windows", lambda: True)
+
+    @pytest.mark.asyncio
+    async def test_roteia_via_wsl_exe_e_traduz_o_workspace_dir(self, monkeypatch):
+        proc = _fake_proc()
+        spawn_mock = AsyncMock(return_value=proc)
+        monkeypatch.setattr(wj.asyncio, "create_subprocess_exec", spawn_mock)
+        monkeypatch.setattr(wj, "detect_wsl2", AsyncMock(return_value="Ubuntu"))
+        monkeypatch.setattr(
+            wj, "_bwrap_available_in_distro", AsyncMock(return_value=True)
+        )
+        manager = wj.WorkspaceJailManager()
+
+        await manager.get_or_spawn(
+            "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
+        )
+
+        assert spawn_mock.await_args is not None
+        argv = spawn_mock.await_args.args
+        assert argv[0] == "wsl.exe"
+        assert argv[1:4] == ("-d", "Ubuntu", "--")
+        assert "bwrap" in argv
+        assert "/mnt/c/Users/dev/projeto" in argv
+        assert "python3" in argv
+        # sys.executable (path do Windows) nunca deve vazar pro argv do WSL.
+        assert wj.sys.executable not in argv
+
+    @pytest.mark.asyncio
+    async def test_sem_wsl2_disponivel_falha_com_mensagem_acionavel(self, monkeypatch):
+        spawn_mock = AsyncMock()
+        monkeypatch.setattr(wj.asyncio, "create_subprocess_exec", spawn_mock)
+        monkeypatch.setattr(wj, "detect_wsl2", AsyncMock(return_value=None))
+        manager = wj.WorkspaceJailManager()
+
+        with pytest.raises(wj.WorkerSpawnError, match="WSL2"):
+            await manager.get_or_spawn(
+                "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
+            )
+        spawn_mock.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_wsl2_disponivel_mas_sem_bwrap_dentro_da_distro_falha_com_mensagem_acionavel(
+        self, monkeypatch
+    ):
+        spawn_mock = AsyncMock()
+        monkeypatch.setattr(wj.asyncio, "create_subprocess_exec", spawn_mock)
+        monkeypatch.setattr(wj, "detect_wsl2", AsyncMock(return_value="Ubuntu"))
+        monkeypatch.setattr(
+            wj, "_bwrap_available_in_distro", AsyncMock(return_value=False)
+        )
+        manager = wj.WorkspaceJailManager()
+
+        with pytest.raises(wj.WorkerSpawnError, match="bubblewrap"):
+            await manager.get_or_spawn(
+                "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
+            )
+        spawn_mock.assert_not_awaited()
