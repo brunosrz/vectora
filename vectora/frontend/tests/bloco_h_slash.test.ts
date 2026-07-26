@@ -7,8 +7,24 @@ import {
   isSlashQuery,
   parseSlashCommand,
   filterCommands,
-  isKnownCommand,
+  type SlashCommand,
 } from "../lib/constants/slash-commands";
+
+const SAMPLE_COMMANDS: SlashCommand[] = [
+  { name: "help", description: "Mostra ajuda", usage: "/help" },
+  {
+    name: "model",
+    description: "Muda o modelo",
+    usage: "/model <nome>",
+    takesArg: true,
+  },
+  {
+    name: "remember",
+    description: "Salva na memória",
+    usage: "/remember",
+    takesArg: true,
+  },
+];
 
 describe("isSlashQuery", () => {
   it("true para '/' e '/mod' (ainda escolhendo comando)", () => {
@@ -45,30 +61,29 @@ describe("parseSlashCommand", () => {
   it("normaliza o nome para minúsculas e apara espaços", () => {
     expect(parseSlashCommand("  /HELP  ")).toEqual({ name: "help", arg: "" });
   });
+
+  it("suporta underscores no nome do comando", () => {
+    expect(parseSlashCommand("/learn_from_session")).toEqual({
+      name: "learn_from_session",
+      arg: "",
+    });
+  });
 });
 
 describe("filterCommands", () => {
   it("lista todos quando só há a barra", () => {
-    expect(filterCommands("/").length).toBeGreaterThanOrEqual(3);
+    expect(filterCommands("/", SAMPLE_COMMANDS).length).toBeGreaterThanOrEqual(
+      3,
+    );
   });
 
   it("filtra por prefixo", () => {
-    const r = filterCommands("/mo");
+    const r = filterCommands("/mo", SAMPLE_COMMANDS);
     expect(r).toHaveLength(1);
     expect(r[0].name).toBe("model");
   });
 
   it("vazio quando não começa com barra", () => {
-    expect(filterCommands("mo")).toEqual([]);
-  });
-});
-
-describe("isKnownCommand", () => {
-  it("reconhece comandos registrados", () => {
-    expect(isKnownCommand("help")).toBe(true);
-    expect(isKnownCommand("model")).toBe(true);
-  });
-  it("rejeita desconhecidos", () => {
-    expect(isKnownCommand("deploy")).toBe(false);
+    expect(filterCommands("mo", SAMPLE_COMMANDS)).toEqual([]);
   });
 });

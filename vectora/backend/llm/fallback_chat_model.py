@@ -222,6 +222,7 @@ class FallbackChatModel(BaseChatModel):
                         is_quota_error(exc)
                         or is_transient_error(exc)
                         or is_provider_incompatible_error(exc)
+                        or i > 0
                     )
                     or streamed
                 ):
@@ -269,6 +270,7 @@ class FallbackChatModel(BaseChatModel):
                     is_quota_error(exc)
                     or is_transient_error(exc)
                     or is_provider_incompatible_error(exc)
+                    or i > 0
                 ):
                     raise
                 last_exc = exc

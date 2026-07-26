@@ -44,11 +44,7 @@ import {
   getModelDisplayName,
   type ModelOption,
 } from "@/lib/config/deployment-config";
-import {
-  SLASH_COMMANDS,
-  parseSlashCommand,
-  isKnownCommand,
-} from "@/lib/constants/slash-commands";
+import { parseSlashCommand } from "@/lib/constants/slash-commands";
 import { detectAtMention } from "@/components/chat/features/at-mention-menu";
 
 /** Idioma da UI → código BCP-47 do reconhecimento de voz. */
@@ -841,61 +837,7 @@ export function ChatInterface({
     setMessages,
   ]);
 
-  // Dispatch de slash commands (Bloco H) — executa ações locais cuja
-  // funcionalidade já existe, sem enviar a mensagem ao agente.
-  const dispatchSlash = useCallback(
-    (name: string, arg: string) => {
-      const addSystemMsg = (content: string) => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: generateMessageId(),
-            role: "assistant",
-            content,
-            timestamp: new Date(),
-          },
-        ]);
-      };
-
-      if (name === "help") {
-        const lines = SLASH_COMMANDS.map(
-          (c) => `- \`${c.usage}\` — ${mDyn(c.descKey)}`,
-        ).join("\n");
-        addSystemMsg(`${msg.slash_help_intro()}\n\n${lines}`);
-        return;
-      }
-      if (name === "clear") {
-        router.push("/");
-        return;
-      }
-      if (name === "model") {
-        const models = getAllowedModels();
-        if (!arg) {
-          addSystemMsg(
-            msg.slash_model_usage({
-              models: models.map((m) => getModelDisplayName(m)).join(", "),
-            }),
-          );
-          return;
-        }
-        const term = arg.toLowerCase();
-        const found = models.find(
-          (m) =>
-            m.toLowerCase().includes(term) ||
-            getModelDisplayName(m).toLowerCase().includes(term),
-        );
-        if (found && onAgentConfigChange && agentConfig) {
-          onAgentConfigChange({ ...agentConfig, model: found });
-          addSystemMsg(
-            msg.slash_model_changed({ model: getModelDisplayName(found) }),
-          );
-        } else {
-          addSystemMsg(msg.slash_model_not_found({ name: arg }));
-        }
-      }
-    },
-    [setMessages, router, onAgentConfigChange, agentConfig],
-  );
+  // Dispatch local removido, os comandos agora vão diretamente para o agente.
 
   // Handler de seleção no AtMentionMenu: substitui @query pelo @path escolhido.
   const handleAtMentionSelect = useCallback(
@@ -977,16 +919,6 @@ export function ChatInterface({
       void Notification.requestPermission();
     }
 
-    // Slash command? Executa localmente e não envia ao agente.
-    const parsed = parseSlashCommand(uiState.input);
-    if (parsed && isKnownCommand(parsed.name)) {
-      setInput("");
-      setInputError(null);
-      clearFiles();
-      dispatchSlash(parsed.name, parsed.arg);
-      return;
-    }
-
     const rawInput = uiState.input;
     const userMessage = createUserMessage(rawInput);
     if (attachedFiles.length > 0) {
@@ -1053,7 +985,6 @@ export function ChatInterface({
     clearFiles,
     processMessage,
     processQueue,
-    dispatchSlash,
     resolveAtMentions,
     setMessages,
     inputLocked,

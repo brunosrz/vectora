@@ -174,6 +174,20 @@ export interface HistoryMessage {
   checkpoint_id?: string;
 }
 
+export interface ToolSchema {
+  name: string;
+  description: string;
+  render_hint: string;
+  category: string;
+  destructive: boolean;
+  icon: string;
+  args_schema_json: string;
+}
+
+export interface GetToolsResponse {
+  tools: ToolSchema[];
+}
+
 // ============================================================================
 // Token refresh automático
 // ============================================================================
@@ -488,6 +502,21 @@ export async function getSharedThread(
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`share/${token}: ${res.status}`);
   return res.json() as Promise<SharedThread>;
+}
+
+export async function getTools(): Promise<GetToolsResponse> {
+  const url = `${VECTORA_API_URL}/vectora.chat.v1.ChatService/GetTools`;
+  let res = await fetch(url, { credentials: "include" });
+  if (res.status === 401) {
+    const refreshed = await tryRefreshToken();
+    if (!refreshed) {
+      redirectToLogin();
+      throw new Error("unauthorized");
+    }
+    res = await fetch(url, { credentials: "include" });
+  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
 
 // ============================================================================

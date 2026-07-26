@@ -838,13 +838,13 @@ _VALID_ARTIFACT_TYPES = VALID_ARTIFACT_TYPES
 
 
 def _artifact_slug(title: str) -> str:
-    """Converte título em slug kebab-case para nome de arquivo (max 50 chars)."""
+    """Converte título em slug kebab-case para nome de arquivo."""
     slug = title.lower()
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[\s_]+", "-", slug)
     slug = re.sub(r"-+", "-", slug)
     slug = slug.strip("-")
-    return slug[:50] or "artifact"
+    return slug or "artifact"
 
 
 # Slugs genéricos demais por tipo — título como "Plano" vira "plano.md", sem

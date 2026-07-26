@@ -63,8 +63,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 model=model_name,
                 google_api_key=get_env("GOOGLE_API_KEY"),  # type: ignore[arg-type]
                 temperature=temperature,
-                timeout=1200,
-                max_retries=2,
+                timeout=None,
+                max_retries=0,
             )
         case "openai":
             from langchain_openai import ChatOpenAI
@@ -73,6 +73,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 model=model_name,
                 api_key=get_env("OPENAI_API_KEY"),
                 temperature=temperature,
+                timeout=None,
+                max_retries=0,
             )
         case "anthropic":
             from langchain_anthropic import ChatAnthropic
@@ -88,6 +90,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 api_key=get_env("ANTHROPIC_API_KEY"),
                 temperature=temperature,
                 betas=betas,
+                timeout=None,
+                max_retries=0,
             )
         case "cohere":
             from langchain_cohere import ChatCohere
@@ -102,6 +106,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 cohere_api_key=api_key,
                 model=model_name,
                 temperature=temperature,
+                timeout=None,
+                max_retries=0,
             )
         case "ollama":
             from langchain.chat_models import init_chat_model
@@ -129,6 +135,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 api_key=api_key,
                 base_url="https://openrouter.ai/api/v1",
                 temperature=temperature,
+                timeout=None,
+                max_retries=0,
             )
         case _:
             msg = (

@@ -288,9 +288,9 @@ class Settings(BaseSettings):
     enable_mcp: bool = False
     """Enable MCP (Model Context Protocol) server integration."""
 
-    enable_features_beta: bool = True
-    """Habilita features anteriormente em beta (Context Graph, IDE mode, Library).
-    Agora habilitadas por padrão."""
+    enable_features_beta: bool = False
+    """Habilita features em desenvolvimento (OAuth, Context Graph, Background Tasks).
+    False = oculta features ainda não prontas para produção."""
 
     max_context_tokens: int = 8000
     """Maximum tokens to keep in message history (sliding window)."""

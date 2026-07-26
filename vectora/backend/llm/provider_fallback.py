@@ -217,8 +217,6 @@ async def try_with_fallback[T](
         try:
             return await fn(next_mid)
         except Exception as exc2:
-            if not is_quota_error(exc2):
-                raise
             last_exc = exc2
             current = next_mid
 

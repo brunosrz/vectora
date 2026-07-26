@@ -525,20 +525,20 @@ def adapt_stream(
                         if not await request.is_disconnected():
                             disconnect_task = None
                             continue
-                        next_task.cancel()
+
+                        # Cliente desconectou. Para manter a execução em background (multi-tarefas),
+                        # transferimos o iterador para uma task separada em vez de fechar.
+                        async def _consume_remainder(pending_task, iterator):
+                            try:
+                                with contextlib.suppress(Exception):
+                                    await pending_task
+                                async for _ in iterator:
+                                    pass
+                            except Exception as e:
+                                logger.error("Background session error: %s", e)
+
+                        asyncio.create_task(_consume_remainder(next_task, events_iter))
                         term_task.cancel()
-                        # Espera as tasks canceladas de fato desenrolarem antes
-                        # de fechar o generator — sem isso o `aclose()` corre
-                        # concorrente com o `__anext__()` ainda "em voo" e o
-                        # `finally`/`except GeneratorExit` do generator (que
-                        # encerra a chamada real ao provider) nunca chega a
-                        # rodar.
-                        with contextlib.suppress(BaseException):
-                            await next_task
-                        with contextlib.suppress(BaseException):
-                            await term_task
-                        with contextlib.suppress(Exception):
-                            await events_iter.aclose()
                         break
                     disconnect_task.cancel()
 

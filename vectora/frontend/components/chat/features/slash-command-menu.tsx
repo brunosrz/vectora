@@ -4,11 +4,11 @@
  * SlashCommandMenu (Bloco H)
  *
  * Popup de autocomplete exibido ao digitar "/" no início do input. Lista os
- * comandos registrados; selecionar preenche o input com o comando (o envio é
- * tratado pelo dispatch no chat-interface).
+ * comandos registrados; selecionar preenche o input com o comando.
  */
 
 import { Slash } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   filterCommands,
@@ -16,16 +16,35 @@ import {
   type SlashCommand,
 } from "@/lib/constants/slash-commands";
 import { m } from "@/lib/paraglide/messages";
-import { mDyn } from "@/lib/i18n-dyn";
+import { getTools } from "@/lib/api/vectora-client";
+
 interface SlashCommandMenuProps {
   input: string;
   onSelect: (command: SlashCommand) => void;
 }
 
 export function SlashCommandMenu({ input, onSelect }: SlashCommandMenuProps) {
+  const [allCommands, setAllCommands] = useState<SlashCommand[]>([]);
+
+  useEffect(() => {
+    getTools()
+      .then((res) => {
+        const cmds: SlashCommand[] = res.tools.map((t) => ({
+          name: t.name,
+          description: t.description,
+          usage: `/${t.name}`,
+          takesArg: true,
+        }));
+        setAllCommands(cmds);
+      })
+      .catch((err) => {
+        console.warn("Failed to fetch tools for slash commands", err);
+      });
+  }, []);
+
   // Só aparece enquanto o usuário ainda escolhe o comando (sem espaço/arg).
   if (!isSlashQuery(input)) return null;
-  const commands = filterCommands(input);
+  const commands = filterCommands(input, allCommands);
   if (commands.length === 0) return null;
 
   return (
@@ -34,23 +53,27 @@ export function SlashCommandMenu({ input, onSelect }: SlashCommandMenuProps) {
         <Slash className="w-3 h-3" />
         {m.slash_title()}
       </div>
-      {commands.map((cmd) => (
-        <button
-          key={cmd.name}
-          type="button"
-          onMouseDown={(e) => {
-            // onMouseDown (não onClick) evita blur do textarea antes da seleção.
-            e.preventDefault();
-            onSelect(cmd);
-          }}
-          className="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-accent text-left transition-colors"
-        >
-          <span className="font-mono text-foreground">{cmd.usage}</span>
-          <span className="text-xs text-muted-foreground truncate">
-            {mDyn(cmd.descKey)}
-          </span>
-        </button>
-      ))}
+      <div className="max-h-60 overflow-y-auto">
+        {commands.map((cmd) => (
+          <button
+            key={cmd.name}
+            type="button"
+            onMouseDown={(e) => {
+              // onMouseDown (não onClick) evita blur do textarea antes da seleção.
+              e.preventDefault();
+              onSelect(cmd);
+            }}
+            className="w-full flex flex-col gap-1 px-3 py-2 text-sm hover:bg-accent text-left transition-colors"
+          >
+            <span className="font-mono text-foreground font-semibold">
+              {cmd.usage}
+            </span>
+            <span className="text-xs text-muted-foreground line-clamp-2">
+              {cmd.description}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -189,12 +189,45 @@ class NatsKV:
         self._kv: Any = None
         self._subs: dict[str, list[Subscriber]] = {}
         self._reader: asyncio.Task | None = None
+        self._failed: bool = (
+            False  # True após esgotar reconexões — força reset do singleton
+        )
 
     async def _connect(self) -> Any:
+        if self._failed:
+            raise RuntimeError("kv: NATS permanentemente desconectado — use fallback")
         if self._kv is None:
             import nats
 
-            self._nc = await nats.connect(self._url)
+            async def _error_cb(exc: Exception) -> None:
+                logger.warning("kv: NATS erro de conexão: %s", exc)
+
+            async def _disconnected_cb() -> None:
+                logger.warning("kv: NATS desconectado do sidecar")
+
+            async def _reconnected_cb() -> None:
+                logger.info("kv: NATS reconectado ao sidecar")
+
+            async def _closed_cb() -> None:
+                # Chamado quando os retries se esgotam — marcamos como falho
+                # para que a próxima operação force reset do singleton em get_kv().
+                logger.warning(
+                    "kv: NATS conexão encerrada após retries esgotados — fallback para memória"
+                )
+                self._failed = True
+                self._kv = None
+                reset_kv()
+
+            self._nc = await nats.connect(
+                self._url,
+                max_reconnect_attempts=5,  # não infinito; após 5 falhas, fecha
+                reconnect_time_wait=2,  # segundos entre tentativas
+                connect_timeout=5,  # timeout da conexão inicial
+                error_cb=_error_cb,
+                disconnected_cb=_disconnected_cb,
+                reconnected_cb=_reconnected_cb,
+                closed_cb=_closed_cb,
+            )
             js = self._nc.jetstream()
             try:
                 self._kv = await js.key_value(self._BUCKET)
