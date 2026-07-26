@@ -94,7 +94,19 @@ def upsert_env_key(env_file: Path, key: str, value: str) -> None:
                 lines.append(line)
     if not found:
         lines.append(f"{key}={value}")
-    env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    content = "\n".join(lines) + "\n"
+
+    import os
+    import tempfile
+
+    fd, temp_path = tempfile.mkstemp(dir=env_file.parent, prefix=".env.tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        os.replace(temp_path, env_file)
+    except Exception:
+        os.remove(temp_path)
+        raise
 
 
 def save_keys_to_env(keys: dict[str, str]) -> None:

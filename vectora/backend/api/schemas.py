@@ -559,6 +559,7 @@ class HistoryMessage(BaseModel):
     # quando o backend não conseguiu resolver (thread sem checkpointer, erro
     # de leitura do histórico) — ver ChatConfig.fork_from_checkpoint_id.
     checkpoint_id: str = ""
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ListThreadsResponse(BaseModel):

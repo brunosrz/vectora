@@ -50,7 +50,7 @@ async def maybe_trigger_remember(thread_id: str, user_id: str) -> None:
         from backend.workspace.skills import list_skills
 
         pairs = await agent_factory.aget_thread_messages(thread_id)
-        transcript = "\n".join(f"{role}: {text}" for role, text, _ in pairs)
+        transcript = "\n".join(f"{role}: {text}" for role, text, _, _att in pairs)
         if not transcript.strip():
             return
 

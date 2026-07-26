@@ -13,7 +13,7 @@
 
 import { create } from "zustand";
 
-export type EnvironmentTab = "provider_routing" | "integracoes";
+export type EnvironmentTab = "provider_routing" | "integracoes" | "connect";
 
 interface EnvironmentDialogState {
   open: boolean;

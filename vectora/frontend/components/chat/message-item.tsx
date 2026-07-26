@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Download,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { AgentStatusLine } from "./agent-status-line";
@@ -1266,6 +1267,17 @@ export const MessageItem = memo(
 
                 {message.isThinking && (
                   <AgentStatusLine activeTool={message.activeTool} />
+                )}
+
+                {message.checkpointId === "partial" && !message.isThinking && (
+                  <div className="mt-3 flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive border border-destructive/20">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>
+                      Esta resposta foi recuperada parcialmente. A conexão caiu
+                      ou a geração falhou antes do assistente concluir o
+                      pensamento.
+                    </span>
+                  </div>
                 )}
 
                 {message.subgraphOutputs &&

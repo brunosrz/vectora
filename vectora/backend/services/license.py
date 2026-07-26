@@ -402,3 +402,23 @@ def read_cached_status() -> LicenseStatusInfo | None:
         validated_at=cache.get("validated_at", ""),
         cached=True,
     )
+
+
+def get_effective_storage_mode() -> str:
+    """Retorna 'complete' apenas se o usuário tiver licença Pro configurada e storage_mode == 'complete'.
+    Caso contrário, faz fallback seguro para 'lite'."""
+    from backend.settings import settings
+
+    if settings.storage_mode != "complete":
+        return "lite"
+
+    cache = _read_cache()
+    tier = cache.get("tier", "free") if cache else "free"
+
+    if tier == "pro":
+        return "complete"
+
+    logger.warning(
+        "license: fallback para 'lite' (storage_mode='complete' requer licença Pro)"
+    )
+    return "lite"

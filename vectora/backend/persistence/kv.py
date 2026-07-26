@@ -319,7 +319,9 @@ async def get_kv() -> KV:
         from backend.settings import settings
 
         url = (settings.redis_url or "").strip()
-        if settings.storage_mode == "complete" and url and redis_reachable(url):
+        from backend.services.license import get_effective_storage_mode
+
+        if get_effective_storage_mode() == "complete" and url and redis_reachable(url):
             try:
                 _kv = RedisKV(url)
                 logger.info("kv: backend Redis (%s)", url.split("@")[-1])

@@ -32,6 +32,7 @@ import {
   type EnvironmentTab,
 } from "@/lib/stores/environment-dialog-store";
 import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { m } from "@/lib/paraglide/messages";
 
 const IntegracoesTab = lazyWithRetry(
@@ -48,6 +49,13 @@ const ProviderRoutingTab = lazyWithRetry(
     })),
   "provider-routing-tab",
 );
+const ConnectTab = lazyWithRetry(
+  () =>
+    import("./tabs/connect-tab").then((mod) => ({
+      default: mod.ConnectTab,
+    })),
+  "connect-tab",
+);
 
 function TabFallback() {
   return (
@@ -62,6 +70,7 @@ export function EnvironmentDialog() {
   const setOpen = useEnvironmentDialogStore((s) => s.setOpen);
   const tab = useEnvironmentDialogStore((s) => s.tab);
   const setTab = useEnvironmentDialogStore((s) => s.setTab);
+  const { enableFeaturesBeta } = useFeatureFlags();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -94,6 +103,11 @@ export function EnvironmentDialog() {
             >
               Provider Routing
             </TabsTrigger>
+            {enableFeaturesBeta && (
+              <TabsTrigger value="connect" className="rounded-md text-xs">
+                Connect
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="flex-1 overflow-y-auto pt-4">
@@ -105,6 +119,11 @@ export function EnvironmentDialog() {
                 <TabsContent value="provider_routing" className="mt-0">
                   <ProviderRoutingTab />
                 </TabsContent>
+                {enableFeaturesBeta && (
+                  <TabsContent value="connect" className="mt-0">
+                    <ConnectTab />
+                  </TabsContent>
+                )}
               </Suspense>
             </ErrorBoundary>
           </div>

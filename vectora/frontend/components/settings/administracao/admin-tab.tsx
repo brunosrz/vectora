@@ -1297,6 +1297,10 @@ function StoragePanel() {
   const [loading, setLoading] = useState(false);
   const [savingMode, setSavingMode] = useState(false);
 
+  const { status: license, loading: licenseLoading } = useLicenseStatus();
+  const isPro =
+    !licenseLoading && license?.configured && license?.tier === "pro";
+
   const fetchHealth = async () => {
     setLoading(true);
     try {
@@ -1379,8 +1383,8 @@ function StoragePanel() {
               <SelectItem value="lite">
                 {m.admin_storage_mode_lite()}
               </SelectItem>
-              <SelectItem value="complete">
-                {m.admin_storage_mode_complete()}
+              <SelectItem value="complete" disabled={!isPro}>
+                {m.admin_storage_mode_complete()} {!isPro && "(Pro)"}
               </SelectItem>
             </SelectContent>
           </Select>

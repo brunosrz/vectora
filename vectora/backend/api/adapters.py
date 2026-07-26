@@ -461,6 +461,10 @@ def adapt_stream(
         # disso, quando a mensagem do usuário foi enviada (`stream_chat`).
         content_started = False
 
+        # [F5 Resilience]
+        accumulated_partial_content = ""
+        last_kv_flush = 0.0
+
         # FallbackChatModel (services/fallback_chat_model.py) chama o
         # `.astream()` PÚBLICO do provider interno (ChatCohere, etc.) dentro do
         # próprio `_astream()` — isso instrumenta um segundo run "chat_model"
@@ -673,6 +677,12 @@ def adapt_stream(
                 # O grafo raiz tem name="" ou "LangGraph" — usamos o nome do
                 # grafo configurado em create_deep_agent("name='vectora'").
                 if kind == "on_chain_end" and name == "vectora":
+                    # [F5 Resilience] Run completou com sucesso (e salvará checkpoint).
+                    # Limpa a versão parcial do KV para evitar duplicação no history.
+                    from backend.persistence.kv import get_kv
+
+                    asyncio.ensure_future(get_kv().delete(f"partial:{thread_id}"))
+
                     # Grava checkpoint de rewind ao final de cada turno completo.
                     # (best-effort — falha silenciosa para não cortar o stream).
                     if workspace_id:
@@ -742,6 +752,24 @@ def adapt_stream(
                     if node_name:
                         current_token_node = node_name
                     token_buffer_nonempty = True
+
+                    # [F5 Resilience] Acumular stream parcial no KV (NATS/Redis)
+                    # p/ sobrevivência a recarregamento durante geração
+                    accumulated_partial_content += payload.content
+                    now = time.monotonic()
+                    if now - last_kv_flush > 0.5:
+                        last_kv_flush = now
+                        from backend.persistence.kv import get_kv
+
+                        # Salva com TTL curto para não poluir
+                        asyncio.ensure_future(
+                            get_kv().set(
+                                f"partial:{thread_id}",
+                                accumulated_partial_content,
+                                ttl_s=300,
+                            )
+                        )
+
                     if not content_started:
                         content_started = True
                         # Fire-and-forget: um `await` aqui adiciona um ponto de

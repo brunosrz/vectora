@@ -167,9 +167,10 @@ async def get_langchain_vector_store(
     Returns:
         ``langchain_core.vectorstores.VectorStore`` pronto para uso em chains.
     """
+    from backend.services.license import get_effective_storage_mode
     from backend.settings import settings as _s
 
-    effective_mode = mode or _s.storage_mode
+    effective_mode = mode or get_effective_storage_mode()
     cache_key = f"{effective_mode}::{path or ''}::{collection}"
 
     if cache_key in _lc_vector_stores:
@@ -643,9 +644,10 @@ async def storage_health() -> dict[str, Any]:
 
     # Postgres — testado apenas no modo complete
     try:
+        from backend.services.license import get_effective_storage_mode
         from backend.settings import settings as _s
 
-        if _s.storage_mode == "complete" and _s.postgres_dsn:
+        if get_effective_storage_mode() == "complete" and _s.postgres_dsn:
             pool = await get_pg_pool()
             async with pool.acquire() as conn:
                 await conn.execute("SELECT 1")
@@ -657,9 +659,10 @@ async def storage_health() -> dict[str, Any]:
 
     # Redis — testado apenas no modo complete
     try:
+        from backend.services.license import get_effective_storage_mode
         from backend.settings import settings as _s
 
-        if _s.storage_mode == "complete" and _s.redis_url:
+        if get_effective_storage_mode() == "complete" and _s.redis_url:
             import redis.asyncio as aredis
 
             client = aredis.from_url(_s.redis_url)

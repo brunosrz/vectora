@@ -124,8 +124,8 @@ class TestAgetThreadMessages:
             result = await af.aget_thread_messages("thread-ok")
 
         assert result == [
-            ("human", "Olá Vectora", "cp-inicial"),
-            ("assistant", "Olá! Como posso ajudar?", "cp-apos-human"),
+            ("human", "Olá Vectora", "cp-inicial", []),
+            ("assistant", "Olá! Como posso ajudar?", "cp-apos-human", []),
         ]
 
     @pytest.mark.asyncio
@@ -147,7 +147,7 @@ class TestAgetThreadMessages:
         ):
             result = await af.aget_thread_messages("thread-first")
 
-        assert result == [("human", "primeira mensagem", "")]
+        assert result == [("human", "primeira mensagem", "", [])]
 
     @pytest.mark.asyncio
     async def test_tool_messages_filtered_out(self):
@@ -173,7 +173,7 @@ class TestAgetThreadMessages:
         ):
             result = await af.aget_thread_messages("thread-tool")
 
-        roles = [r for r, _text, _cp in result]
+        roles = [r for r, _text, _cp, _att in result]
         assert "tool" not in roles
         assert len(result) == 2
 
@@ -201,7 +201,7 @@ class TestAgetThreadMessages:
         ):
             result = await af.aget_thread_messages("thread-notool")
 
-        texts = [(r, t) for r, t, _cp in result]
+        texts = [(r, t) for r, t, _cp, _att in result]
         assert ("assistant", "") not in texts
         assert ("assistant", "Feito!") in texts
 
@@ -242,7 +242,7 @@ class TestAgetThreadMessages:
         ):
             result = await af.aget_thread_messages("thread-multi")
 
-        assert result == [("assistant", "Parte 1 Parte 2", "cp0")]
+        assert result == [("assistant", "Parte 1 Parte 2", "cp0", [])]
 
 
 # ─────────────────────────── aget_thread_todos ────────────────────────────

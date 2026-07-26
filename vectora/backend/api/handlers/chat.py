@@ -231,9 +231,17 @@ async def _build_human_message(content: str, attachments: list[Attachment]) -> A
                 # O limite do schema é 10MB, mas 5MB já é arriscado para o SQLite.
                 img_size = len(base64.b64decode(att.base64_data))
                 if img_size > 5 * 1024 * 1024:
-                    logger.error("chat: imagem MUITO grande recebida: %s (%d bytes). Isso pode corromper o checkpointer SQLite.", att.name, img_size)
+                    logger.error(
+                        "chat: imagem MUITO grande recebida: %s (%d bytes). Isso pode corromper o checkpointer SQLite.",
+                        att.name,
+                        img_size,
+                    )
                 elif img_size > 2 * 1024 * 1024:
-                    logger.warning("chat: imagem grande recebida: %s (%d bytes)", att.name, img_size)
+                    logger.warning(
+                        "chat: imagem grande recebida: %s (%d bytes)",
+                        att.name,
+                        img_size,
+                    )
             except Exception:
                 pass
 
@@ -264,7 +272,21 @@ async def _build_human_message(content: str, attachments: list[Attachment]) -> A
 
             parts.append({"type": "text", "text": block})
 
-    return HumanMessage(content=parts)
+    metadata = {}
+    if attachments:
+        meta = []
+        for att in attachments:
+            meta.append(
+                {
+                    "name": att.name,
+                    "mimeType": att.mime_type,
+                    "kind": att.kind.value,
+                    "size": len(base64.b64decode(att.base64_data)),
+                }
+            )
+        metadata["attachments_meta"] = meta
+
+    return HumanMessage(content=parts, additional_kwargs=metadata)
 
 
 def _prepend_text_context(msg: Any, block: str) -> Any:

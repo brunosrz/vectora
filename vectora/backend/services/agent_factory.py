@@ -434,9 +434,10 @@ async def _ensure_infra() -> None:
     global _checkpointer_ctx, _checkpointer, _store, _store_ctx
 
     if _checkpointer is None:
+        from backend.services.license import get_effective_storage_mode
         from backend.settings import settings as _settings
 
-        if _settings.storage_mode == "complete" and _settings.postgres_dsn:
+        if get_effective_storage_mode() == "complete" and _settings.postgres_dsn:
             try:
                 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
@@ -476,9 +477,10 @@ async def _ensure_infra() -> None:
             )
 
     if _store is None:
+        from backend.services.license import get_effective_storage_mode
         from backend.settings import settings as _settings
 
-        if _settings.storage_mode == "complete" and _settings.postgres_dsn:
+        if get_effective_storage_mode() == "complete" and _settings.postgres_dsn:
             try:
                 from langgraph.store.postgres.aio import AsyncPostgresStore
 
@@ -726,8 +728,10 @@ def _message_text(content: Any) -> str:
     return str(content)
 
 
-async def aget_thread_messages(thread_id: str) -> list[tuple[str, str, str]]:
-    """Mensagens persistidas de uma thread como ``(role, text, checkpoint_id)``.
+async def aget_thread_messages(
+    thread_id: str,
+) -> list[tuple[str, str, str, list[dict[str, Any]]]]:
+    """Mensagens persistidas de uma thread como ``(role, text, checkpoint_id, attachments_meta)``.
 
     Usa o grafo deepagents compilado (schema idêntico ao que escreveu os
     checkpoints) para ler o histórico via ``aget_state_history`` — não só o
@@ -770,7 +774,7 @@ async def aget_thread_messages(thread_id: str) -> list[tuple[str, str, str]]:
         return []
     history.reverse()
 
-    out: list[tuple[str, str, str]] = []
+    out: list[tuple[str, str, str, list[dict[str, Any]]]] = []
     prev_len = 0
     for snapshot in history:
         msgs = snapshot.values.get("messages", []) if snapshot.values else []
@@ -788,7 +792,10 @@ async def aget_thread_messages(thread_id: str) -> list[tuple[str, str, str]]:
                 if not text:
                     continue
                 role = "human" if msg_type == "human" else "assistant"
-                out.append((role, text, parent_checkpoint_id))
+                attachments_meta = getattr(msg, "additional_kwargs", {}).get(
+                    "attachments_meta", []
+                )
+                out.append((role, text, parent_checkpoint_id, attachments_meta))
         prev_len = len(msgs)
     return out
 

@@ -760,7 +760,7 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
         pairs = await agent_factory.aget_thread_messages(request.thread_id)
         history = [
             HistoryMessage(role=role, content=text, checkpoint_id=checkpoint_id)
-            for role, text, checkpoint_id in pairs
+            for role, text, checkpoint_id, _att in pairs
         ]
         todos = await agent_factory.aget_thread_todos(request.thread_id)
         return GetHistoryResponse(messages=history, todos=todos)
@@ -839,8 +839,8 @@ async def generate_title(request: GenerateTitleRequest) -> GenerateTitleResponse
         from backend.services import agent_factory
 
         pairs = await agent_factory.aget_thread_messages(request.thread_id)
-        user_text = next((t for r, t, _cp in pairs if r == "human"), "")
-        assistant_text = next((t for r, t, _cp in pairs if r == "assistant"), "")
+        user_text = next((t for r, t, _cp, _att in pairs if r == "human"), "")
+        assistant_text = next((t for r, t, _cp, _att in pairs if r == "assistant"), "")
         if not user_text:
             return GenerateTitleResponse(title="")
 
@@ -1085,8 +1085,24 @@ async def get_thread_history_paginated(
 
     messages = [
         HistoryMessage(role=role, content=text, checkpoint_id=checkpoint_id)
-        for role, text, checkpoint_id in page
+        for role, text, checkpoint_id, _att in page
     ]
+
+    if offset == 0:
+        try:
+            from backend.persistence.kv import get_kv
+
+            partial_text = await get_kv().get(f"partial:{thread_id}")
+            if partial_text:
+                # Usa um checkpoint_id falso (ex: "partial") p/ indicar que não está na DB
+                messages.append(
+                    HistoryMessage(
+                        role="assistant", content=partial_text, checkpoint_id="partial"
+                    )
+                )
+        except Exception:
+            pass
+
     return PagedHistoryResponse(
         messages=messages,
         has_more=has_more,

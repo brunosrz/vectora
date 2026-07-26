@@ -600,7 +600,7 @@ function StepMode({ onValidityChange }: StepProps) {
   // Redis) é recurso exclusivo do Pro; Free fica preso ao Lite (SQLite +
   // LanceDB + NATS embutido).
   const { status: license } = useLicenseStatus();
-  const isFree = !license?.configured;
+  const isFree = !license?.configured || license?.tier !== "pro";
   const [mode, setMode] = useState<"lite" | "complete">("lite");
   const [saving, setSaving] = useState(false);
   const [connected, setConnected] = useState<Record<string, boolean>>({});

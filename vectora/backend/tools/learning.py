@@ -61,7 +61,7 @@ async def learn_from_session(
         from backend.services import agent_factory
 
         pairs = await agent_factory.aget_thread_messages(thread_id)
-        transcript = "\n".join(f"{role}: {text}" for role, text, _ in pairs)
+        transcript = "\n".join(f"{role}: {text}" for role, text, _, _att in pairs)
 
         result = await distill_transcript(transcript)
 
