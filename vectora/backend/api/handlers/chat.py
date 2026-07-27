@@ -274,17 +274,15 @@ async def _build_human_message(content: str, attachments: list[Attachment]) -> A
 
     metadata = {}
     if attachments:
-        meta = []
-        for att in attachments:
-            meta.append(
-                {
-                    "name": att.name,
-                    "mimeType": att.mime_type,
-                    "kind": att.kind.value,
-                    "size": len(base64.b64decode(att.base64_data)),
-                }
-            )
-        metadata["attachments_meta"] = meta
+        metadata["attachments_meta"] = [
+            {
+                "name": att.name,
+                "mimeType": att.mime_type,
+                "kind": att.kind.value,
+                "size": len(base64.b64decode(att.base64_data)),
+            }
+            for att in attachments
+        ]
 
     return HumanMessage(content=parts, additional_kwargs=metadata)
 

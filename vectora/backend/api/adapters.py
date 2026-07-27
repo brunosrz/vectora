@@ -40,6 +40,8 @@ from backend.api.schemas import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from fastapi import Request
 
 logger = logging.getLogger(__name__)
@@ -532,16 +534,22 @@ def adapt_stream(
 
                         # Cliente desconectou. Para manter a execução em background (multi-tarefas),
                         # transferimos o iterador para uma task separada em vez de fechar.
-                        async def _consume_remainder(pending_task, iterator):
+                        async def _consume_remainder(
+                            pending_task: asyncio.Task, iterator: AsyncIterator
+                        ) -> None:
                             try:
                                 with contextlib.suppress(Exception):
                                     await pending_task
                                 async for _ in iterator:
                                     pass
-                            except Exception as e:
-                                logger.error("Background session error: %s", e)
+                            except Exception:
+                                logger.exception("Background session error")
 
-                        asyncio.create_task(_consume_remainder(next_task, events_iter))
+                        remainder_task = asyncio.create_task(
+                            _consume_remainder(next_task, events_iter)
+                        )
+                        background_tasks.add(remainder_task)
+                        remainder_task.add_done_callback(background_tasks.discard)
                         term_task.cancel()
                         break
                     disconnect_task.cancel()
@@ -681,7 +689,7 @@ def adapt_stream(
                     # Limpa a versão parcial do KV para evitar duplicação no history.
                     from backend.persistence.kv import get_kv
 
-                    async def _clear_partial():
+                    async def _clear_partial() -> None:
                         kv = await get_kv()
                         await kv.delete(f"partial:{thread_id}")
 
@@ -768,7 +776,7 @@ def adapt_stream(
                         from backend.persistence.kv import get_kv
 
                         # Salva com TTL curto para não poluir
-                        async def _save_partial(content: str):
+                        async def _save_partial(content: str) -> None:
                             kv = await get_kv()
                             await kv.set(
                                 f"partial:{thread_id}",

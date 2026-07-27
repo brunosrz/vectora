@@ -99,13 +99,14 @@ def upsert_env_key(env_file: Path, key: str, value: str) -> None:
     import os
     import tempfile
 
-    fd, temp_path = tempfile.mkstemp(dir=env_file.parent, prefix=".env.tmp")
+    fd, temp_path_str = tempfile.mkstemp(dir=env_file.parent, prefix=".env.tmp")
+    temp_path = Path(temp_path_str)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(content)
-        os.replace(temp_path, env_file)
+        temp_path.replace(env_file)
     except Exception:
-        os.remove(temp_path)
+        temp_path.unlink()
         raise
 
 

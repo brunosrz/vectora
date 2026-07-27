@@ -234,8 +234,8 @@ describe("WorkbenchContent — troca de aba nunca trava no conteúdo anterior (r
   });
 });
 
-describe("WorkbenchNavBar — Library atrás de flag beta", () => {
-  it("com enableFeaturesBeta=false, o ícone da Library fica desabilitado (ComingSoonTabButton)", () => {
+describe("WorkbenchNavBar — Library estável", () => {
+  it("com enableFeaturesBeta=false, nenhum botão fica desabilitado (Library não é mais beta)", () => {
     setActiveTab("t1", "files");
     render(
       <TooltipProvider>
@@ -246,7 +246,7 @@ describe("WorkbenchNavBar — Library atrás de flag beta", () => {
     const anyDisabled = buttons.some(
       (b) => b.getAttribute("aria-disabled") === "true",
     );
-    expect(anyDisabled).toBe(true);
+    expect(anyDisabled).toBe(false);
   });
 
   it("com enableFeaturesBeta=true, todos os botões (incluindo Library) ficam clicáveis", () => {
