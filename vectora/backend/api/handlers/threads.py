@@ -1092,7 +1092,8 @@ async def get_thread_history_paginated(
         try:
             from backend.persistence.kv import get_kv
 
-            partial_text = await get_kv().get(f"partial:{thread_id}")
+            kv = await get_kv()
+            partial_text = await kv.get(f"partial:{thread_id}")
             if partial_text:
                 # Usa um checkpoint_id falso (ex: "partial") p/ indicar que não está na DB
                 messages.append(

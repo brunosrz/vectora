@@ -1,5 +1,5 @@
-import sqlite3
 import os
+import sqlite3
 from pathlib import Path
 
 db_path = Path.home() / ".vectora" / "data" / "backend.db"

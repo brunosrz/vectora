@@ -147,6 +147,37 @@ describe("ModelSelector", () => {
     });
   });
 
+  it("mostra modelos dinâmicos (OpenRouter) quando o dropdown é reaberto", async () => {
+    const value = getAllowedModels()[0];
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            providers: ["openrouter"],
+            dynamic_models: [
+              { id: "openrouter:openai/gpt-4o", label: "openai/gpt-4o" },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ModelSelector value={value} onChange={() => {}} />);
+
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    await waitFor(() => {
+      expect(screen.getAllByText("openai/gpt-4o").length).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getByRole("button", { expanded: true }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
+  });
+
   it("esconde modelo incompatível com tool-calling no code mode, mas mantém no chat mode", async () => {
     const models = getAllowedModels();
     const cohere = models.find((m) => m === "cohere:command-a-plus-05-2026");

@@ -710,45 +710,45 @@ export function IntegracoesTab() {
               : "border-border bg-muted/30"
         }`}
       >
-          <div className="flex items-center justify-between">
-            <p
-              className={`font-medium ${
-                gateway.state === "connected"
-                  ? "text-green-600 dark:text-green-400"
-                  : gateway.state === "error"
-                    ? "text-destructive"
-                    : "text-muted-foreground"
-              }`}
-            >
-              {gateway.state === "connected"
-                ? m.gateway_connected()
+        <div className="flex items-center justify-between">
+          <p
+            className={`font-medium ${
+              gateway.state === "connected"
+                ? "text-green-600 dark:text-green-400"
                 : gateway.state === "error"
-                  ? m.gateway_error()
-                  : m.gateway_never_connected()}
-            </p>
-            {gateway.subdomain && (
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {gateway.subdomain}
-              </span>
-            )}
-          </div>
-          {gateway.state === "connected" && gateway.webhook_base && (
-            <p className="text-muted-foreground">
-              {m.gateway_webhook_hint()}{" "}
-              <span className="font-mono">
-                {gateway.webhook_base}/webhook/&#123;provider&#125;
-              </span>
-            </p>
-          )}
-          {gateway.state === "error" && (
-            <p className="text-destructive/80">
-              {gateway.detail ?? m.gateway_error_retry()}
-            </p>
-          )}
-          {gateway.state === "never_connected" && (
-            <p className="text-muted-foreground">{m.gateway_no_token()}</p>
+                  ? "text-destructive"
+                  : "text-muted-foreground"
+            }`}
+          >
+            {gateway.state === "connected"
+              ? m.gateway_connected()
+              : gateway.state === "error"
+                ? m.gateway_error()
+                : m.gateway_never_connected()}
+          </p>
+          {gateway.subdomain && (
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {gateway.subdomain}
+            </span>
           )}
         </div>
+        {gateway.state === "connected" && gateway.webhook_base && (
+          <p className="text-muted-foreground">
+            {m.gateway_webhook_hint()}{" "}
+            <span className="font-mono">
+              {gateway.webhook_base}/webhook/&#123;provider&#125;
+            </span>
+          </p>
+        )}
+        {gateway.state === "error" && (
+          <p className="text-destructive/80">
+            {gateway.detail ?? m.gateway_error_retry()}
+          </p>
+        )}
+        {gateway.state === "never_connected" && (
+          <p className="text-muted-foreground">{m.gateway_no_token()}</p>
+        )}
+      </div>
 
       {/* Cards por categoria */}
       {CATEGORIES.map((cat) => {

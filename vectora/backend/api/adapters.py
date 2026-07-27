@@ -681,7 +681,13 @@ def adapt_stream(
                     # Limpa a versão parcial do KV para evitar duplicação no history.
                     from backend.persistence.kv import get_kv
 
-                    asyncio.ensure_future(get_kv().delete(f"partial:{thread_id}"))
+                    async def _clear_partial():
+                        kv = await get_kv()
+                        await kv.delete(f"partial:{thread_id}")
+
+                    task_clear = asyncio.create_task(_clear_partial())
+                    background_tasks.add(task_clear)
+                    task_clear.add_done_callback(background_tasks.discard)
 
                     # Grava checkpoint de rewind ao final de cada turno completo.
                     # (best-effort — falha silenciosa para não cortar o stream).
@@ -762,13 +768,19 @@ def adapt_stream(
                         from backend.persistence.kv import get_kv
 
                         # Salva com TTL curto para não poluir
-                        asyncio.ensure_future(
-                            get_kv().set(
+                        async def _save_partial(content: str):
+                            kv = await get_kv()
+                            await kv.set(
                                 f"partial:{thread_id}",
-                                accumulated_partial_content,
+                                content,
                                 ttl_s=300,
                             )
+
+                        task = asyncio.create_task(
+                            _save_partial(accumulated_partial_content)
                         )
+                        background_tasks.add(task)
+                        task.add_done_callback(background_tasks.discard)
 
                     if not content_started:
                         content_started = True

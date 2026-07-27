@@ -119,7 +119,6 @@ function useTabBadge(
   }
 }
 
-
 function NavTabButton({
   tab,
   active,

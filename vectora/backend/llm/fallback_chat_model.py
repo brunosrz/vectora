@@ -197,6 +197,12 @@ class FallbackChatModel(BaseChatModel):
         messages = _strip_reasoning_blocks(messages)
         has_images = _has_images(messages)
         candidates = self._candidates(has_images=has_images)
+        if not candidates:
+            raise QuotaExhaustedError(
+                "Nenhum provider de LLM disponível ou configurado para este modelo.",
+                model_id=self.primary_model_id,
+            )
+
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidates):
             model, bind_kwargs = _unwrap_binding(self._inner(mid))
@@ -231,9 +237,13 @@ class FallbackChatModel(BaseChatModel):
                 if i + 1 < len(candidates):
                     record_switch(mid, candidates[i + 1])
                     await _emit_switch(mid, candidates[i + 1])
+
+        # Se chegou aqui, candidates não é vazio (vazio raise acima) mas
+        # todos falharam.
+        last_mid = candidates[-1] if candidates else self.primary_model_id
         raise QuotaExhaustedError(
-            f"Todos os providers esgotaram a quota (último: {candidates[-1]}).",
-            model_id=candidates[-1],
+            f"Todos os providers esgotaram a quota (último: {last_mid}).",
+            model_id=last_mid,
         ) from last_exc
 
     # -- geração não-streaming --------------------------------------------------
@@ -256,6 +266,12 @@ class FallbackChatModel(BaseChatModel):
         messages = _strip_reasoning_blocks(messages)
         has_images = _has_images(messages)
         candidates = self._candidates(has_images=has_images)
+        if not candidates:
+            raise QuotaExhaustedError(
+                "Nenhum provider de LLM disponível ou configurado para este modelo.",
+                model_id=self.primary_model_id,
+            )
+
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidates):
             model, bind_kwargs = _unwrap_binding(self._inner(mid))
@@ -276,9 +292,11 @@ class FallbackChatModel(BaseChatModel):
                 last_exc = exc
                 if i + 1 < len(candidates):
                     record_switch(mid, candidates[i + 1])
+        # Se chegou aqui, candidates não é vazio mas todos falharam.
+        last_mid = candidates[-1] if candidates else self.primary_model_id
         raise QuotaExhaustedError(
-            f"Todos os providers esgotaram a quota (último: {candidates[-1]}).",
-            model_id=candidates[-1],
+            f"Todos os providers esgotaram a quota (último: {last_mid}).",
+            model_id=last_mid,
         ) from last_exc
 
     def _generate(

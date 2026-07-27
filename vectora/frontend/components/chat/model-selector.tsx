@@ -68,30 +68,64 @@ export function ModelSelector({
   useEffect(() => {
     if (typeof fetch === "undefined") return;
     let alive = true;
-    fetch("/models/providers")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(
-        (
-          data: {
-            providers?: string[];
-            dynamic_models?: DynamicModel[];
-            tool_incompatible_models?: string[];
-          } | null,
-        ) => {
-          if (!alive) return;
-          if (Array.isArray(data?.providers))
-            setConfiguredProviders(data.providers);
-          if (Array.isArray(data?.dynamic_models))
-            setDynamicModels(data.dynamic_models);
-          if (Array.isArray(data?.tool_incompatible_models))
-            setToolIncompatibleModels(data.tool_incompatible_models);
-        },
-      )
-      .catch(() => {});
+
+    const loadProviders = async () => {
+      try {
+        const response = await fetch("/models/providers");
+        if (!response.ok) return;
+        const data: {
+          providers?: string[];
+          dynamic_models?: DynamicModel[];
+          tool_incompatible_models?: string[];
+        } = await response.json();
+        if (!alive) return;
+        if (Array.isArray(data.providers))
+          setConfiguredProviders(data.providers);
+        if (Array.isArray(data.dynamic_models))
+          setDynamicModels(data.dynamic_models);
+        if (Array.isArray(data.tool_incompatible_models))
+          setToolIncompatibleModels(data.tool_incompatible_models);
+      } catch {
+        /* fallback silencioso: mantém a lista estática */
+      }
+    };
+
+    void loadProviders();
     return () => {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!open || typeof fetch === "undefined") return;
+    let alive = true;
+
+    const refreshProviders = async () => {
+      try {
+        const response = await fetch("/models/providers");
+        if (!response.ok) return;
+        const data: {
+          providers?: string[];
+          dynamic_models?: DynamicModel[];
+          tool_incompatible_models?: string[];
+        } = await response.json();
+        if (!alive) return;
+        if (Array.isArray(data.providers))
+          setConfiguredProviders(data.providers);
+        if (Array.isArray(data.dynamic_models))
+          setDynamicModels(data.dynamic_models);
+        if (Array.isArray(data.tool_incompatible_models))
+          setToolIncompatibleModels(data.tool_incompatible_models);
+      } catch {
+        /* fallback silencioso: mantém a lista atual */
+      }
+    };
+
+    void refreshProviders();
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   // Esconde modelos cujo provider não tem credencial. Mantém sempre o modelo
   // ativo visível (mesmo sem key) para não sumir com a seleção atual.

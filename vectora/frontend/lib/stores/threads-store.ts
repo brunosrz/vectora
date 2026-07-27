@@ -51,12 +51,12 @@ function estimateBytes(messages: Message[]): number {
       total += (msg.content?.length || 0) * 2; // 2 bytes por char (UTF-16)
       if (msg.images) {
         for (const img of msg.images) {
-          total += (img.base64?.length || 0);
-          total += (img.url?.length || 0);
+          total += img.base64?.length || 0;
+          total += img.url?.length || 0;
         }
       }
       // Outros campos (metadados, tool calls)
-      total += 512; 
+      total += 512;
     }
     return total;
   } catch {
