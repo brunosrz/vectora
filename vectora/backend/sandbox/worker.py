@@ -12,9 +12,12 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any
+
+from backend.sandbox.rlimits import apply_rlimits
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +53,12 @@ async def handle_request(req: dict[str, Any]) -> dict[str, Any]:
 
 
 async def main() -> None:
+    # Aplicado antes do loop RPC — todo `exec` subsequente (op="exec") herda
+    # os limites, contendo fork bombs/exaustão de descritores mesmo sem
+    # Landlock/seccomp cobrirem esse vetor. Perfil vem de env var setada por
+    # `workspace_jail.py` no spawn (`--setenv`, conforme `policy.lockdown`).
+    apply_rlimits(lockdown=os.environ.get("VECTORA_SANDBOX_LOCKDOWN") == "1")
+
     loop = asyncio.get_event_loop()
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)

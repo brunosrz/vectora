@@ -84,3 +84,48 @@ async def test_unknown_op_returns_error():
     resp = await worker.handle_request({"op": "delete_everything", "id": 7})
 
     assert resp == {"id": 7, "error": "op desconhecida: 'delete_everything'"}
+
+
+class _StubReader:
+    """Simula um StreamReader que já devolve EOF na primeira leitura —
+    `main()` sai do loop imediatamente após aplicar os rlimits."""
+
+    async def readline(self):
+        return b""
+
+
+def _stub_event_loop(monkeypatch):
+    loop_mock = MagicMock()
+    loop_mock.connect_read_pipe = AsyncMock(return_value=None)
+    monkeypatch.setattr(worker.asyncio, "get_event_loop", lambda: loop_mock)
+    monkeypatch.setattr(worker.asyncio, "StreamReader", _StubReader)
+    monkeypatch.setattr(
+        worker.asyncio, "StreamReaderProtocol", lambda _reader: MagicMock()
+    )
+
+
+@pytest.mark.asyncio
+async def test_main_aplica_rlimits_antes_do_loop_le_env_lockdown(monkeypatch):
+    # 4.2 — main() lê VECTORA_SANDBOX_LOCKDOWN (setado via --setenv pelo
+    # bwrap conforme policy.lockdown) e aplica o perfil de rlimits certo
+    # antes de entrar no loop RPC.
+    monkeypatch.setenv("VECTORA_SANDBOX_LOCKDOWN", "1")
+    applied = MagicMock()
+    monkeypatch.setattr(worker, "apply_rlimits", applied)
+    _stub_event_loop(monkeypatch)
+
+    await worker.main()
+
+    applied.assert_called_once_with(lockdown=True)
+
+
+@pytest.mark.asyncio
+async def test_main_sem_env_lockdown_usa_perfil_normal(monkeypatch):
+    monkeypatch.delenv("VECTORA_SANDBOX_LOCKDOWN", raising=False)
+    applied = MagicMock()
+    monkeypatch.setattr(worker, "apply_rlimits", applied)
+    _stub_event_loop(monkeypatch)
+
+    await worker.main()
+
+    applied.assert_called_once_with(lockdown=False)
