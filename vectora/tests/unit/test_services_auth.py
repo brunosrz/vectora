@@ -489,6 +489,66 @@ class TestEnvOverrides:
         assert overrides == {}
 
 
+class TestEnvOverridesLocalUser:
+    """O usuário virtual "local" (modo sem conta) nunca tem linha em
+    `users` — `get/set/delete_env_override` precisam desviar pra
+    `runtime_settings` em vez de fazer UPDATE/SELECT sem efeito (Sprint
+    11.2)."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated_runtime_settings(self, tmp_path, monkeypatch):
+        from backend.workspace import runtime_settings as rs_mod
+
+        fresh = rs_mod.RuntimeSettings(path=tmp_path / "runtime.db")
+        monkeypatch.setattr(rs_mod, "runtime_settings", fresh)
+        return fresh
+
+    @pytest.mark.asyncio
+    async def test_set_and_get_override_local_user(self):
+        from backend.rbac.auth import get_env_overrides, set_env_override
+
+        await set_env_override("local", "GOOGLE_API_KEY", "AIza-local")
+
+        overrides = await get_env_overrides("local")
+        assert overrides["GOOGLE_API_KEY"] == "AIza-local"
+
+    @pytest.mark.asyncio
+    async def test_delete_override_local_user(self):
+        from backend.rbac.auth import (
+            delete_env_override,
+            get_env_overrides,
+            set_env_override,
+        )
+
+        await set_env_override("local", "MY_KEY", "value")
+        await delete_env_override("local", "MY_KEY")
+
+        overrides = await get_env_overrides("local")
+        assert "MY_KEY" not in overrides
+
+    @pytest.mark.asyncio
+    async def test_empty_overrides_for_local_user_by_default(self):
+        from backend.rbac.auth import get_env_overrides
+
+        overrides = await get_env_overrides("local")
+        assert overrides == {}
+
+    @pytest.mark.asyncio
+    async def test_real_account_user_still_uses_users_table_regression(self):
+        """Regressão: um usuário real (id de conta company) continua
+        usando a tabela `users`, não `runtime_settings`."""
+        from backend.rbac.auth import get_env_overrides, set_env_override, signup
+
+        user, _, _ = await signup("real-account@example.com", "senhasegura1234")
+        await set_env_override(user.id, "REAL_KEY", "real-value")
+
+        local_overrides = await get_env_overrides("local")
+        assert "REAL_KEY" not in local_overrides
+
+        real_overrides = await get_env_overrides(user.id)
+        assert real_overrides["REAL_KEY"] == "real-value"
+
+
 # ---------------------------------------------------------------------------
 # Convites de signup (Q8)
 # ---------------------------------------------------------------------------

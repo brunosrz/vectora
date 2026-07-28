@@ -695,8 +695,32 @@ async def change_password(user_id: str, old_password: str, new_password: str) ->
 # ---------------------------------------------------------------------------
 
 
+_LOCAL_ENV_OVERRIDES_KEY = "local_env_overrides"
+
+
+def _local_env_overrides() -> dict[str, str]:
+    """Lê `local_env_overrides` de `runtime_settings`, tipado — `get()`
+    devolve `object` genérico (chave pode nunca ter sido setada)."""
+    from backend.workspace.runtime_settings import runtime_settings
+
+    raw = runtime_settings.get(_LOCAL_ENV_OVERRIDES_KEY, {})
+    if not isinstance(raw, dict):
+        return {}
+    return {str(k): str(v) for k, v in raw.items()}
+
+
 async def get_env_overrides(user_id: str) -> dict[str, str]:
-    """Retorna os env overrides do usuário."""
+    """Retorna os env overrides do usuário.
+
+    O usuário virtual `"local"` (modo sem conta, `AuthMiddleware`) nunca tem
+    linha própria em `users` — `UPDATE`/`SELECT` contra a tabela viram
+    no-op silencioso pra ele. Persiste via `runtime_settings` (SQLite
+    `app_settings`, mesmo mecanismo já usado por `local_user_name`/
+    `storage_mode`) em vez de inventar storage novo.
+    """
+    if user_id == "local":
+        return _local_env_overrides()
+
     import json
 
     db = await _get_db()
@@ -714,6 +738,14 @@ async def get_env_overrides(user_id: str) -> dict[str, str]:
 
 async def set_env_override(user_id: str, key: str, value: str) -> None:
     """Define (ou sobrescreve) um env override para o usuário."""
+    if user_id == "local":
+        from backend.workspace.runtime_settings import runtime_settings
+
+        overrides = _local_env_overrides()
+        overrides[key] = value
+        runtime_settings.set(_LOCAL_ENV_OVERRIDES_KEY, overrides)
+        return
+
     import json
 
     overrides = await get_env_overrides(user_id)
@@ -728,6 +760,14 @@ async def set_env_override(user_id: str, key: str, value: str) -> None:
 
 async def delete_env_override(user_id: str, key: str) -> None:
     """Remove um env override do usuário."""
+    if user_id == "local":
+        from backend.workspace.runtime_settings import runtime_settings
+
+        overrides = _local_env_overrides()
+        overrides.pop(key, None)
+        runtime_settings.set(_LOCAL_ENV_OVERRIDES_KEY, overrides)
+        return
+
     import json
 
     overrides = await get_env_overrides(user_id)
