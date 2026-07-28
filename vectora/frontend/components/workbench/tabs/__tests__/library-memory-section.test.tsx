@@ -53,11 +53,23 @@ const CATALOG = [
   },
 ];
 
+const RAG_BUCKETS = [
+  {
+    id: "rb-1",
+    name: "Docs internos",
+    description_md: "",
+    source_path: "/x/docs",
+    created_at: "2026-01-01T00:00:00Z",
+    active: true,
+  },
+];
+
 function mockFetch({
   catalog = CATALOG as typeof CATALOG,
   installStatus = "installed" as string,
   licenseConfigured = false,
   publishStatus = "published" as string,
+  ragBuckets = RAG_BUCKETS as typeof RAG_BUCKETS,
 } = {}) {
   global.fetch = vi
     .fn()
@@ -84,6 +96,12 @@ function mockFetch({
             publishStatus === "error"
               ? { status: "error", error: "falha ao publicar" }
               : { status: "published", bucket_id: "b-new" },
+        } as Response);
+      }
+      if (url === "/workspaces/ws1/rag/buckets") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ragBuckets,
         } as Response);
       }
       if (url === "/license/status") {
@@ -236,6 +254,8 @@ describe("MemorySection", () => {
     await waitFor(() =>
       expect(screen.getByText("Publish memory")).toBeTruthy(),
     );
+    fireEvent.click(await screen.findByText("Select a bucket"));
+    fireEvent.click(await screen.findByText("Docs internos"));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Meus docs" },
     });
@@ -248,7 +268,67 @@ describe("MemorySection", () => {
       );
       expect(publishCall).toBeTruthy();
       const body = JSON.parse(publishCall![1].body as string);
-      expect(body).toMatchObject({ workspace_id: "ws1", name: "Meus docs" });
+      expect(body).toMatchObject({ bucket_id: "rb-1", name: "Meus docs" });
+    });
+  });
+
+  it("erro/borda: sem buckets no workspace, mostra estado vazio e Publicar fica desabilitado", async () => {
+    mockFetch({ licenseConfigured: true, ragBuckets: [] });
+    useWorkspacesStore.setState({
+      workspaces: [
+        {
+          id: "ws1",
+          name: "ws",
+          cwd: "/x",
+          trusted: true,
+          is_git_repo: false,
+          git_remote: null,
+          git_current_branch: null,
+          git_default_branch: null,
+        },
+      ],
+      active_id: "ws1",
+    });
+    render(<MemorySection query="" onCountChange={() => {}} />);
+
+    fireEvent.click(await screen.findByText("Publish my memory"));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/No bucket indexed in this workspace yet/),
+      ).toBeTruthy(),
+    );
+    expect(screen.getByRole("button", { name: "Publish" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+  });
+
+  it("selecionar um bucket pré-preenche o campo Nome com o nome do bucket", async () => {
+    mockFetch({ licenseConfigured: true });
+    useWorkspacesStore.setState({
+      workspaces: [
+        {
+          id: "ws1",
+          name: "ws",
+          cwd: "/x",
+          trusted: true,
+          is_git_repo: false,
+          git_remote: null,
+          git_current_branch: null,
+          git_default_branch: null,
+        },
+      ],
+      active_id: "ws1",
+    });
+    render(<MemorySection query="" onCountChange={() => {}} />);
+
+    fireEvent.click(await screen.findByText("Publish my memory"));
+    fireEvent.click(await screen.findByText("Select a bucket"));
+    fireEvent.click(await screen.findByText("Docs internos"));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Name")).toHaveValue("Docs internos");
     });
   });
 
@@ -278,6 +358,8 @@ describe("MemorySection", () => {
     await waitFor(() =>
       expect(screen.getByText("Publish memory")).toBeTruthy(),
     );
+    fireEvent.click(await screen.findByText("Select a bucket"));
+    fireEvent.click(await screen.findByText("Docs internos"));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Meus docs" },
     });

@@ -22,6 +22,26 @@ if (typeof document !== "undefined" && !document.queryCommandSupported) {
   document.queryCommandSupported = () => false;
 }
 
+// Radix UI (Select/Popover/DropdownMenu) chama hasPointerCapture/
+// setPointerCapture/releasePointerCapture e scrollIntoView ao abrir —
+// jsdom não implementa nenhum dos dois, o que faz qualquer teste que
+// clica pra abrir esses componentes lançar. Stubs mínimos, sem
+// comportamento real de captura de ponteiro (não precisamos dele em teste).
+if (typeof Element !== "undefined") {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = () => false;
+  }
+  if (!Element.prototype.setPointerCapture) {
+    Element.prototype.setPointerCapture = () => {};
+  }
+  if (!Element.prototype.releasePointerCapture) {
+    Element.prototype.releasePointerCapture = () => {};
+  }
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = () => {};
+  }
+}
+
 class MemoryStorage implements Storage {
   private store = new Map<string, string>();
   get length(): number {

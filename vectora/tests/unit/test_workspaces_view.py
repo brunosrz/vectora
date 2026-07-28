@@ -594,6 +594,75 @@ class TestPrEndpoints:
         assert resp.available is False
 
 
+class TestListRagBuckets:
+    """GET /workspaces/{id}/rag/buckets — buckets do workspace (Sprint 1.1),
+    usado pelo seletor de publicação da Memory Library e pelo painel de
+    buckets do Memory tab."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated_runtime_settings(self, tmp_path, monkeypatch):
+        from backend.workspace import runtime_settings as rs_mod
+
+        isolated = rs_mod.RuntimeSettings(path=tmp_path / "checkpoints.db")
+        monkeypatch.setattr(rs_mod, "runtime_settings", isolated)
+        return isolated
+
+    @pytest.mark.asyncio
+    async def test_lista_buckets_do_workspace_com_flag_active(
+        self, trusted_ws, _isolated_runtime_settings
+    ):
+        from backend.api.handlers.workspaces import list_rag_buckets
+        from backend.services import rag_buckets
+
+        wsid, _root = trusted_ws
+        b1 = rag_buckets.create_bucket(
+            _isolated_runtime_settings, workspace_id=wsid, name="Docs"
+        )
+        rag_buckets.create_bucket(
+            _isolated_runtime_settings, workspace_id=wsid, name="Inativo"
+        )
+        rag_buckets.set_active(
+            _isolated_runtime_settings,
+            workspace_id=wsid,
+            bucket_id=b1.id,
+            active=True,
+        )
+
+        resp = await list_rag_buckets(workspace_id=wsid)
+
+        assert {b.name: b.active for b in resp} == {"Docs": True, "Inativo": False}
+
+    @pytest.mark.asyncio
+    async def test_workspace_sem_buckets_retorna_lista_vazia(
+        self, trusted_ws, _isolated_runtime_settings
+    ):
+        from backend.api.handlers.workspaces import list_rag_buckets
+
+        wsid, _root = trusted_ws
+
+        resp = await list_rag_buckets(workspace_id=wsid)
+
+        assert resp == []
+
+    @pytest.mark.asyncio
+    async def test_nao_mistura_buckets_de_outro_workspace(
+        self, trusted_ws, _isolated_runtime_settings
+    ):
+        from backend.api.handlers.workspaces import list_rag_buckets
+        from backend.services import rag_buckets
+
+        wsid, _root = trusted_ws
+        rag_buckets.create_bucket(
+            _isolated_runtime_settings,
+            workspace_id="outro-ws",
+            name="Não deveria aparecer",
+        )
+
+        resp = await list_rag_buckets(workspace_id=wsid)
+
+        assert resp == []
+
+
 class TestSandboxStatus:
     """GET /workspaces/{id}/sandbox/status — reflete se o worker jailado
     (AI Jail) está habilitado, lendo vectora.toml/[sandbox], e populado com

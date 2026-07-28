@@ -17,7 +17,9 @@ import {
   CheckCircle2,
   Database,
   Download,
+  Eye,
   Loader2,
+  Pencil,
   Upload,
 } from "lucide-react";
 
@@ -33,10 +35,34 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MarkdownView } from "@/components/workbench/markdown-view";
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 import { m } from "@/lib/paraglide/messages";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useLibraryStore, type MemoryBucket } from "@/lib/stores/library-store";
+
+interface RagBucketOption {
+  id: string;
+  name: string;
+}
+
+async function fetchWorkspaceBuckets(
+  workspaceId: string,
+): Promise<RagBucketOption[]> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/rag/buckets`,
+  );
+  if (!res.ok) return [];
+  const data = (await res.json()) as { id: string; name: string }[];
+  return data.map((b) => ({ id: b.id, name: b.name }));
+}
 
 async function installBucket(
   bucketId: string,
@@ -50,7 +76,7 @@ async function installBucket(
 }
 
 async function publishBucket(payload: {
-  workspace_id: string;
+  bucket_id: string;
   name: string;
   description: string;
   license: string;
@@ -72,19 +98,42 @@ function PublishDialog({
   onClose: () => void;
   onPublished: () => void;
 }) {
+  const [buckets, setBuckets] = useState<RagBucketOption[]>([]);
+  const [bucketsLoading, setBucketsLoading] = useState(true);
+  const [bucketId, setBucketId] = useState<string>("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [previewing, setPreviewing] = useState(false);
   const [license, setLicense] = useState("MIT");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    setBucketsLoading(true);
+    void fetchWorkspaceBuckets(workspaceId).then((list) => {
+      if (cancelled) return;
+      setBuckets(list);
+      setBucketsLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId]);
+
+  function handleSelectBucket(id: string) {
+    setBucketId(id);
+    const bucket = buckets.find((b) => b.id === id);
+    if (bucket) setName(bucket.name);
+  }
+
   const handleConfirm = async () => {
-    if (!name.trim()) return;
+    if (!bucketId || !name.trim()) return;
     setSaving(true);
     setError(null);
     try {
       const result = await publishBucket({
-        workspace_id: workspaceId,
+        bucket_id: bucketId,
         name: name.trim(),
         description: description.trim(),
         license: license.trim() || "MIT",
@@ -113,6 +162,36 @@ function PublishDialog({
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {m.library_memory_publish_bucket()}
+            </label>
+            {bucketsLoading ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground py-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                {m.library_memory_publish_bucket_loading()}
+              </div>
+            ) : buckets.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-1.5">
+                {m.library_memory_publish_no_buckets()}
+              </p>
+            ) : (
+              <Select value={bucketId} onValueChange={handleSelectBucket}>
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={m.library_memory_publish_bucket_placeholder()}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {buckets.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div className="space-y-1.5">
             <label
               htmlFor="publish-memory-name"
               className="text-xs font-medium text-muted-foreground"
@@ -128,18 +207,44 @@ function PublishDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <label
-              htmlFor="publish-memory-description"
-              className="text-xs font-medium text-muted-foreground"
-            >
-              {m.library_memory_publish_description()}
-            </label>
-            <Textarea
-              id="publish-memory-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="text-sm"
-            />
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="publish-memory-description"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                {m.library_memory_publish_description()}
+              </label>
+              <button
+                type="button"
+                onClick={() => setPreviewing((v) => !v)}
+                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                {previewing ? (
+                  <>
+                    <Pencil className="w-3 h-3" />
+                    {m.library_memory_publish_edit()}
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-3 h-3" />
+                    {m.library_memory_publish_preview()}
+                  </>
+                )}
+              </button>
+            </div>
+            {previewing ? (
+              <div className="rounded-md border px-3 py-2 text-sm min-h-24">
+                <MarkdownView content={description || "*(sem descrição)*"} />
+              </div>
+            ) : (
+              <Textarea
+                id="publish-memory-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="text-sm font-mono"
+                placeholder={m.library_memory_publish_description_placeholder()}
+              />
+            )}
           </div>
           <div className="space-y-1.5">
             <label
@@ -162,7 +267,10 @@ function PublishDialog({
           <Button variant="outline" onClick={onClose} disabled={saving}>
             {m.envs_cancel()}
           </Button>
-          <Button onClick={handleConfirm} disabled={saving || !name.trim()}>
+          <Button
+            onClick={handleConfirm}
+            disabled={saving || !bucketId || !name.trim()}
+          >
             {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             {m.library_memory_publish_confirm()}
           </Button>

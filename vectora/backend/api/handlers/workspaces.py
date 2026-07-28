@@ -3491,6 +3491,39 @@ async def _maybe_emit_job_event(job_id: str) -> None:
     )
 
 
+class RagBucketResponse(BaseModel):
+    id: str
+    name: str
+    description_md: str
+    source_path: str | None
+    created_at: str
+    active: bool
+
+
+@view_router.get("/{workspace_id}/rag/buckets", response_model=list[RagBucketResponse])
+async def list_rag_buckets(workspace_id: str) -> list[RagBucketResponse]:
+    """Buckets do workspace (Sprint 1.1) — usado pelo seletor de
+    publicação da Memory Library (Sprint 5) e pelo painel de buckets do
+    Memory tab (Sprint 6). `active` reflete se o bucket está na lista de
+    busca ativa deste workspace (`get_active_bucket_ids`)."""
+    from backend.services import rag_buckets
+    from backend.workspace.runtime_settings import runtime_settings
+
+    buckets = rag_buckets.list_buckets(runtime_settings, workspace_id)
+    active_ids = set(rag_buckets.get_active_bucket_ids(runtime_settings, workspace_id))
+    return [
+        RagBucketResponse(
+            id=b.id,
+            name=b.name,
+            description_md=b.description_md,
+            source_path=b.source_path,
+            created_at=b.created_at,
+            active=b.id in active_ids,
+        )
+        for b in buckets
+    ]
+
+
 @view_router.post("/{workspace_id}/rag/ingest", response_model=RagIngestResponse)
 async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResponse:
     """Indexa uma pasta no RAG diretamente (walk + chunk + enqueue por job).
