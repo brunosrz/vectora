@@ -259,20 +259,14 @@ export function ContextGraphTab({
           </div>
         )}
 
-        {/* Status: not built — CTA proeminente (não só texto passivo) */}
+        {/* Status: not built — texto descritivo; o CTA de build já está na
+            barra de ação acima (data-testid="graph-build-btn"), sem
+            duplicar botão aqui embaixo. */}
         {!isBuilt && !isRunning && !isPaused && status.status !== "error" && (
-          <div className="px-3 py-6 text-sm text-muted-foreground text-center space-y-3">
+          <div className="px-3 py-6 text-sm text-muted-foreground text-center space-y-2">
             <Waypoints className="h-8 w-8 mx-auto text-muted-foreground/50" />
             <p className="font-medium text-foreground">{m.graph_not_built()}</p>
             <p className="text-xs">{m.graph_build_description()}</p>
-            <button
-              onClick={handleBuild}
-              disabled={loading}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
-            >
-              <RefreshCw className="h-3 w-3" />
-              {m.graph_build_button()}
-            </button>
           </div>
         )}
 

@@ -92,23 +92,13 @@ describe("ContextGraphTab", () => {
       expect(screen.getByText("graph_not_built")).toBeTruthy();
     });
 
-    it("botão mostra graph_build_button (barra de ações e CTA vazio)", () => {
+    it("botão mostra graph_build_button só uma vez (sem CTA duplicado)", () => {
       setup();
       render(<ContextGraphTab threadId="t1" />);
-      // Aparece 2x: o botão compacto da barra de ações + o CTA proeminente
-      // no estado vazio (Sprint 2 — descoberta melhor, não só texto passivo).
-      expect(screen.getAllByText("graph_build_button")).toHaveLength(2);
-    });
-
-    it("clicar no CTA proeminente do estado vazio também chama build()", async () => {
-      setup();
-      render(<ContextGraphTab threadId="t1" />);
-      const buttons = screen.getAllByText("graph_build_button");
-      const ctaButton = buttons[1].closest("button") as HTMLButtonElement;
-      await act(async () => {
-        fireEvent.click(ctaButton);
-      });
-      expect(mockBuild).toHaveBeenCalledTimes(1);
+      // Só o botão da barra de ações — o CTA proeminente duplicado no
+      // estado vazio foi removido (Sprint 7).
+      expect(screen.getAllByText("graph_build_button")).toHaveLength(1);
+      expect(screen.getAllByTestId("graph-build-btn")).toHaveLength(1);
     });
 
     it("clicar no botão chama build() com mode + fileTypes dos settings", async () => {
