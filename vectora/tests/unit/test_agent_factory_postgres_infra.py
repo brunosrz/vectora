@@ -49,6 +49,10 @@ async def test_ensure_infra_uses_postgres_checkpointer_and_store_in_complete_mod
     with (
         patch("backend.settings.settings", fake_settings),
         patch(
+            "backend.services.license.get_effective_storage_mode",
+            return_value="complete",
+        ),
+        patch(
             "langgraph.checkpoint.postgres.aio.AsyncPostgresSaver.from_conn_string",
             return_value=_fake_pg_ctx(fake_checkpointer),
         ),
@@ -76,6 +80,10 @@ async def test_ensure_infra_falls_back_to_sqlite_when_postgres_fails(tmp_path):
 
     with (
         patch("backend.settings.settings", fake_settings),
+        patch(
+            "backend.services.license.get_effective_storage_mode",
+            return_value="complete",
+        ),
         patch(
             "langgraph.checkpoint.postgres.aio.AsyncPostgresSaver.from_conn_string",
             side_effect=RuntimeError("connection refused"),
