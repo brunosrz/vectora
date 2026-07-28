@@ -3322,7 +3322,9 @@ class RagIngestRequest(BaseModel):
     """Pedido de indexação de uma pasta no RAG."""
 
     path: str
-    file_types: str = "all"  # "code" | "markdown" | "all"
+    # "code" | "markdown" | "all", ou uma lista de extensões customizadas
+    # (ex. ["xml"]) — indexa só arquivos com essas extensões.
+    file_types: str | list[str] = "all"
     bucket_name: str | None = None
 
 

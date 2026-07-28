@@ -59,8 +59,17 @@ _CODE_EXTS = {
 }
 
 
-def _matches_file_type(path: Path, file_types: str) -> bool:
+def _matches_file_type(path: Path, file_types: str | list[str]) -> bool:
+    """`file_types` aceita os 3 atalhos (`"all"`/`"code"`/`"markdown"`) ou
+    uma lista de extensões customizadas (ex. `["xml"]`, sem ponto ou com —
+    normalizado) — usada pra indexar só um formato específico, como docs de
+    engine que só existem em XML."""
     ext = path.suffix.lstrip(".").lower()
+    if isinstance(file_types, list):
+        if not file_types:
+            return True
+        normalized = {t.lstrip(".").lower() for t in file_types}
+        return ext in normalized
     if file_types == "markdown":
         return ext in {"md", "markdown", "mdx"}
     if file_types == "code":
@@ -71,7 +80,7 @@ def _matches_file_type(path: Path, file_types: str) -> bool:
 async def ingest_directory(
     directory_path: str,
     *,
-    file_types: str = "all",
+    file_types: str | list[str] = "all",
     collection: str = "articles",
     workspace_id: str | None = None,
     job_id: str | None = None,

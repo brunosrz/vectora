@@ -52,6 +52,30 @@ def _make_tree(root: Path) -> None:
     (root / "c.txt").write_text("texto puro\n", encoding="utf-8")
 
 
+class TestMatchesFileTypeCustomExtensions:
+    def test_custom_extension_list_filters_to_only_that_extension(self) -> None:
+        assert rag_ingest._matches_file_type(Path("docs/class.xml"), ["xml"])
+        assert not rag_ingest._matches_file_type(Path("readme.md"), ["xml"])
+
+    def test_custom_extension_ignores_leading_dot(self) -> None:
+        assert rag_ingest._matches_file_type(Path("class.xml"), [".xml"])
+
+    def test_custom_extension_list_multiple_extensions(self) -> None:
+        assert rag_ingest._matches_file_type(Path("scene.tscn"), ["xml", "tscn"])
+        assert rag_ingest._matches_file_type(Path("docs.xml"), ["xml", "tscn"])
+        assert not rag_ingest._matches_file_type(Path("readme.md"), ["xml", "tscn"])
+
+    def test_empty_list_matches_everything_like_all_preset(self) -> None:
+        assert rag_ingest._matches_file_type(Path("readme.md"), [])
+        assert rag_ingest._matches_file_type(Path("class.xml"), [])
+
+    def test_presets_still_work_as_plain_strings(self) -> None:
+        assert rag_ingest._matches_file_type(Path("a.py"), "code")
+        assert not rag_ingest._matches_file_type(Path("a.md"), "code")
+        assert rag_ingest._matches_file_type(Path("a.md"), "markdown")
+        assert rag_ingest._matches_file_type(Path("qualquer.ext"), "all")
+
+
 @pytest.mark.asyncio
 async def test_ingest_markdown_only(tmp_path: Path, _patched: _FakeQueue) -> None:
     _make_tree(tmp_path)
@@ -80,6 +104,16 @@ async def test_ingest_all(tmp_path: Path, _patched: _FakeQueue) -> None:
     _make_tree(tmp_path)
     result = await rag_ingest.ingest_directory(str(tmp_path), file_types="all")
     assert result["total_files"] == 3
+
+
+@pytest.mark.asyncio
+async def test_ingest_custom_extension_only(
+    tmp_path: Path, _patched: _FakeQueue
+) -> None:
+    _make_tree(tmp_path)
+    (tmp_path / "docs.xml").write_text("<doc>xml</doc>\n", encoding="utf-8")
+    result = await rag_ingest.ingest_directory(str(tmp_path), file_types=["xml"])
+    assert result["total_files"] == 1  # só o .xml
 
 
 @pytest.mark.asyncio

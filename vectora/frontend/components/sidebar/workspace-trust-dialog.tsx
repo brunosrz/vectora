@@ -107,6 +107,10 @@ export function WorkspaceTrustDialog({
   const [fileTypes, setFileTypes] = useState<"code" | "markdown" | "all">(
     "all",
   );
+  // Extensões customizadas (ex. "xml, tscn") — quando preenchido, ignora o
+  // atalho `fileTypes` e filtra só por essas extensões.
+  const [customExtensions, setCustomExtensions] = useState("");
+  const [bucketName, setBucketName] = useState("");
   const [ingestJobId, setIngestJobId] = useState<string | null>(null);
   const ingestJob = useRagJobsStore((s) =>
     ingestJobId ? s.jobs[ingestJobId] : null,
@@ -316,7 +320,16 @@ export function WorkspaceTrustDialog({
       }
       onConfirmPath?.(listing.path);
       setSubmitting(true);
-      const jobId = await ragStart(wsId, listing.path, fileTypes);
+      const customList = customExtensions
+        .split(",")
+        .map((ext) => ext.trim())
+        .filter(Boolean);
+      const jobId = await ragStart(
+        wsId,
+        listing.path,
+        customList.length > 0 ? customList : fileTypes,
+        bucketName.trim() || undefined,
+      );
       setSubmitting(false);
       if (jobId) setIngestJobId(jobId);
       else setError(m.workspace_ingest_failed());
@@ -442,27 +455,51 @@ export function WorkspaceTrustDialog({
             {tab === "local" && (
               <>
                 {mode === "ingest" && (
-                  <Select
-                    value={fileTypes}
-                    onValueChange={(v) =>
-                      setFileTypes(v as "code" | "markdown" | "all")
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {m.workspace_ingest_types_all()}
-                      </SelectItem>
-                      <SelectItem value="code">
-                        {m.workspace_ingest_types_code()}
-                      </SelectItem>
-                      <SelectItem value="markdown">
-                        {m.workspace_ingest_types_markdown()}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select
+                      value={fileTypes}
+                      onValueChange={(v) =>
+                        setFileTypes(v as "code" | "markdown" | "all")
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          {m.workspace_ingest_types_all()}
+                        </SelectItem>
+                        <SelectItem value="code">
+                          {m.workspace_ingest_types_code()}
+                        </SelectItem>
+                        <SelectItem value="markdown">
+                          {m.workspace_ingest_types_markdown()}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        {m.workspace_ingest_custom_extensions_label()}
+                      </label>
+                      <Input
+                        className="h-8 text-xs"
+                        value={customExtensions}
+                        onChange={(e) => setCustomExtensions(e.target.value)}
+                        placeholder={m.workspace_ingest_custom_extensions_placeholder()}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        {m.workspace_ingest_bucket_name_label()}
+                      </label>
+                      <Input
+                        className="h-8 text-xs"
+                        value={bucketName}
+                        onChange={(e) => setBucketName(e.target.value)}
+                        placeholder={m.workspace_ingest_bucket_name_placeholder()}
+                      />
+                    </div>
+                  </div>
                 )}
                 {/* Path editável — Enter ou botão "Ir" navega para o destino.
             Backend recusa (403) se o usuário comum sair das pastas seguras. */}

@@ -29,11 +29,15 @@ export interface RagJob {
 
 interface RagJobsState {
   jobs: Record<string, RagJob>;
-  /** Dispara a indexação; retorna o jobId (ou null em falha) e inicia o poll. */
+  /** Dispara a indexação; retorna o jobId (ou null em falha) e inicia o poll.
+   * `fileTypes` aceita os 3 atalhos ou uma lista de extensões customizadas
+   * (ex. `["xml"]`). `bucketName` nomeia o bucket criado (default: nome
+   * da pasta, decidido pelo backend quando omitido). */
   start: (
     workspaceId: string,
     path: string,
-    fileTypes: "code" | "markdown" | "all",
+    fileTypes: "code" | "markdown" | "all" | string[],
+    bucketName?: string,
   ) => Promise<string | null>;
   /** Remove um job da lista (não cancela o processamento no backend). */
   dismiss: (jobId: string) => void;
@@ -63,7 +67,7 @@ function stopPoll(jobId: string) {
 export const useRagJobsStore = create<RagJobsState>((set) => ({
   jobs: {},
 
-  start: async (workspaceId, path, fileTypes) => {
+  start: async (workspaceId, path, fileTypes, bucketName) => {
     let data: {
       job_id: string;
       total_chunks: number;
@@ -76,7 +80,11 @@ export const useRagJobsStore = create<RagJobsState>((set) => ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ path, file_types: fileTypes }),
+          body: JSON.stringify({
+            path,
+            file_types: fileTypes,
+            bucket_name: bucketName || undefined,
+          }),
         },
       );
       if (!res.ok) return null;

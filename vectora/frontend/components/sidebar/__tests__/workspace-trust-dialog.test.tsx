@@ -15,6 +15,7 @@ import {
 } from "@testing-library/react";
 
 import { WorkspaceTrustDialog } from "../workspace-trust-dialog";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
 const FETCH = vi.fn();
 
@@ -135,5 +136,99 @@ describe("WorkspaceTrustDialog — reload e nova pasta", () => {
     );
     // Formulário continua aberto — usuário pode corrigir o nome.
     expect(screen.getByPlaceholderText("Folder name")).toBeTruthy();
+  });
+});
+
+describe("WorkspaceTrustDialog — mode=ingest, filtro de formato e bucket", () => {
+  beforeEach(() => {
+    useWorkspacesStore.getState().setWorkspaces(
+      [
+        {
+          id: "ws-1",
+          name: "vectora",
+          cwd: listing.path,
+          trusted: true,
+        } as unknown as ReturnType<
+          typeof useWorkspacesStore.getState
+        >["workspaces"][number],
+      ],
+      "ws-1",
+    );
+  });
+
+  it("digitar extensões customizadas e nome do bucket envia ambos no POST de ingest", async () => {
+    FETCH.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.startsWith("/workspaces/browse")) return jsonRes(listing);
+      if (url === "/workspaces/ws-1/rag/ingest") {
+        return jsonRes({
+          job_id: "job-1",
+          total_files: 0,
+          total_chunks: 0,
+          status: "indexing",
+          bucket_id: "b-1",
+        });
+      }
+      return jsonRes({}, 404);
+    });
+
+    render(<WorkspaceTrustDialog open onOpenChange={() => {}} mode="ingest" />);
+    await waitFor(() => screen.getByText("projeto-a"));
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. xml, tscn"), {
+      target: { value: "xml, tscn" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Bucket name"), {
+      target: { value: "Godot Docs" },
+    });
+    fireEvent.click(screen.getByText("Index this folder"));
+
+    await waitFor(() =>
+      expect(
+        FETCH.mock.calls.some(
+          (call) => call[0] === "/workspaces/ws-1/rag/ingest",
+        ),
+      ).toBe(true),
+    );
+    const ingestCall = FETCH.mock.calls.find(
+      (call) => call[0] === "/workspaces/ws-1/rag/ingest",
+    ) as [string, RequestInit];
+    const body = JSON.parse(ingestCall[1].body as string);
+    expect(body.file_types).toEqual(["xml", "tscn"]);
+    expect(body.bucket_name).toBe("Godot Docs");
+  });
+
+  it("sem extensões customizadas, envia o atalho selecionado (regressão)", async () => {
+    FETCH.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.startsWith("/workspaces/browse")) return jsonRes(listing);
+      if (url === "/workspaces/ws-1/rag/ingest") {
+        return jsonRes({
+          job_id: "job-1",
+          total_files: 0,
+          total_chunks: 0,
+          status: "indexing",
+          bucket_id: "b-1",
+        });
+      }
+      return jsonRes({}, 404);
+    });
+
+    render(<WorkspaceTrustDialog open onOpenChange={() => {}} mode="ingest" />);
+    await waitFor(() => screen.getByText("projeto-a"));
+
+    fireEvent.click(screen.getByText("Index this folder"));
+
+    await waitFor(() =>
+      expect(
+        FETCH.mock.calls.some(
+          (call) => call[0] === "/workspaces/ws-1/rag/ingest",
+        ),
+      ).toBe(true),
+    );
+    const ingestCall = FETCH.mock.calls.find(
+      (call) => call[0] === "/workspaces/ws-1/rag/ingest",
+    ) as [string, RequestInit];
+    const body = JSON.parse(ingestCall[1].body as string);
+    expect(body.file_types).toBe("all");
+    expect(body.bucket_name).toBeUndefined();
   });
 });
