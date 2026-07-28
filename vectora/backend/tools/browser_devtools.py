@@ -8,8 +8,11 @@ Lighthouse.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import uuid
+from pathlib import Path
 from typing import Annotated, Any
 
 from langchain.tools import tool
@@ -462,3 +465,355 @@ async def browser_emulate(
     except Exception as exc:
         logger.exception("browser_emulate failed")
         return json.dumps({"status": "error", "error": str(exc)})
+
+
+#: Buffers de trace/heap em voo, chaveados por `id(TabState)` — não fica no
+#: TabState em si porque é um estado transitório de uma chamada de tool,
+#: não algo que a aba carrega durante toda sua vida (diferente de
+#: console_log/network_log).
+_trace_buffers: dict[int, list[dict[str, Any]]] = {}
+
+
+def _artifacts_dir(workspace_id: str) -> Path | None:
+    """Diretório `.vectora/browser-artifacts/` do workspace, criado sob
+    demanda. `None` se o workspace não existir/não tiver `cwd` — quem chama
+    trata como "sem onde persistir" sem lançar."""
+    try:
+        from backend.workspace.workspace import workspace_registry
+
+        ws = workspace_registry.get(workspace_id)
+        cwd = getattr(ws, "cwd", None)
+        if not cwd:
+            return None
+        d = Path(cwd) / ".vectora" / "browser-artifacts"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+    except Exception:
+        logger.debug(
+            "browser_devtools: falha ao resolver artifacts_dir de %s", workspace_id
+        )
+        return None
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "activity",
+    }
+)
+async def browser_start_trace(
+    tab_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Inicia a captura de um trace de performance (CDP Tracing) na aba —
+    use antes de disparar a interação que você quer medir, depois chame
+    `browser_stop_trace` pra encerrar e obter o resumo.
+
+    Args:
+        tab_id: id da aba (padrão: aba ativa).
+    """
+    workspace_id = _workspace_id(config)
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return _NO_SESSION_ERROR
+
+    key = id(tab)
+    if key in _trace_buffers:
+        return json.dumps(
+            {"status": "error", "error": "já existe um trace em andamento nesta aba"}
+        )
+
+    events: list[dict[str, Any]] = []
+    _trace_buffers[key] = events
+
+    def _on_data(params: dict[str, Any]) -> None:
+        events.extend(params.get("value", []))
+
+    try:
+        tab.cdp.on("Tracing.dataCollected", _on_data)
+        await tab.cdp.send(
+            "Tracing.start",
+            {
+                "categories": "devtools.timeline,disabled-by-default-devtools.timeline",
+                "transferMode": "ReportEvents",
+            },
+        )
+        return json.dumps({"status": "ok"})
+    except Exception as exc:
+        _trace_buffers.pop(key, None)
+        logger.exception("browser_start_trace failed")
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "activity",
+    }
+)
+async def browser_stop_trace(
+    tab_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Encerra a captura de trace iniciada por `browser_start_trace` e
+    devolve um resumo (contagem de eventos por categoria) + o caminho do
+    artifact com os eventos brutos.
+
+    Args:
+        tab_id: id da aba (padrão: aba ativa).
+    """
+    workspace_id = _workspace_id(config)
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return _NO_SESSION_ERROR
+
+    key = id(tab)
+    if key not in _trace_buffers:
+        return json.dumps(
+            {"status": "error", "error": "nenhum trace em andamento nesta aba"}
+        )
+
+    try:
+        done = asyncio.Event()
+
+        def _on_complete(_params: dict[str, Any]) -> None:
+            done.set()
+
+        tab.cdp.on("Tracing.tracingComplete", _on_complete)
+        await tab.cdp.send("Tracing.end")
+        try:
+            await asyncio.wait_for(done.wait(), timeout=10)
+        except TimeoutError:
+            logger.debug("browser_stop_trace: timeout esperando tracingComplete")
+
+        events = _trace_buffers.pop(key, [])
+        categories: dict[str, int] = {}
+        for ev in events:
+            cat = ev.get("cat", "unknown")
+            categories[cat] = categories.get(cat, 0) + 1
+
+        artifact_path = None
+        artifacts_dir = _artifacts_dir(workspace_id)
+        if artifacts_dir is not None:
+            path = artifacts_dir / f"trace-{uuid.uuid4().hex[:8]}.json"
+            path.write_text(json.dumps(events), encoding="utf-8")
+            artifact_path = str(path)
+
+        return json.dumps(
+            {
+                "status": "ok",
+                "summary": {"event_count": len(events), "categories": categories},
+                "artifact_path": artifact_path,
+            }
+        )
+    except Exception as exc:
+        _trace_buffers.pop(key, None)
+        logger.exception("browser_stop_trace failed")
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+async def _take_heap_snapshot_via_cdp(cdp: Any) -> dict[str, Any]:
+    """`HeapProfiler.takeHeapSnapshot` chega em chunks de string via evento
+    (`HeapProfiler.addHeapSnapshotChunk`), concatenados aqui e parseados
+    como o JSON único do formato de heap snapshot do V8."""
+    chunks: list[str] = []
+
+    def _on_chunk(params: dict[str, Any]) -> None:
+        chunks.append(params.get("chunk", ""))
+
+    cdp.on("HeapProfiler.addHeapSnapshotChunk", _on_chunk)
+    await cdp.send("HeapProfiler.takeHeapSnapshot", {"reportProgress": False})
+    return json.loads("".join(chunks))
+
+
+def _summarize_heap_snapshot(
+    data: dict[str, Any], top_n: int = 15
+) -> list[dict[str, Any]]:
+    """Agrega os nós do heap snapshot por (tipo, nome) — soma de
+    `self_size` e contagem. Não é um analisador de grafo de retenção
+    completo (sem cálculo de retained size via arestas), só um resumo
+    suficiente pra apontar onde a memória está concentrada."""
+    meta = data["snapshot"]["meta"]
+    node_fields: list[str] = meta["node_fields"]
+    node_types: list[Any] = meta["node_types"]
+    strings: list[str] = data["strings"]
+    nodes: list[int] = data["nodes"]
+
+    fields_per_node = len(node_fields)
+    type_idx = node_fields.index("type")
+    name_idx = node_fields.index("name")
+    size_idx = node_fields.index("self_size")
+    type_names = node_types[type_idx] if isinstance(node_types[type_idx], list) else []
+
+    totals: dict[str, int] = {}
+    counts: dict[str, int] = {}
+    for i in range(0, len(nodes) - fields_per_node + 1, fields_per_node):
+        type_i = nodes[i + type_idx]
+        name_i = nodes[i + name_idx]
+        self_size = nodes[i + size_idx]
+        type_name = type_names[type_i] if 0 <= type_i < len(type_names) else "unknown"
+        name = strings[name_i] if 0 <= name_i < len(strings) else "?"
+        key = f"{type_name}:{name}" if type_name == "object" else type_name
+        totals[key] = totals.get(key, 0) + self_size
+        counts[key] = counts.get(key, 0) + 1
+
+    top = sorted(totals.items(), key=lambda kv: kv[1], reverse=True)[:top_n]
+    return [
+        {"constructor": key, "total_size": size, "count": counts[key]}
+        for key, size in top
+    ]
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "database",
+    }
+)
+async def browser_take_heap_snapshot(
+    tab_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Tira um heap snapshot (CDP HeapProfiler) da aba e devolve um resumo
+    dos construtores que mais ocupam memória. O snapshot bruto (formato V8)
+    é persistido como artifact pra inspeção mais profunda se necessário.
+
+    Args:
+        tab_id: id da aba (padrão: aba ativa).
+    """
+    workspace_id = _workspace_id(config)
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return _NO_SESSION_ERROR
+
+    try:
+        data = await _take_heap_snapshot_via_cdp(tab.cdp)
+        top = _summarize_heap_snapshot(data)
+
+        artifact_path = None
+        artifacts_dir = _artifacts_dir(workspace_id)
+        if artifacts_dir is not None:
+            path = artifacts_dir / f"heap-{uuid.uuid4().hex[:8]}.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            artifact_path = str(path)
+
+        return json.dumps(
+            {
+                "status": "ok",
+                "top_constructors": top,
+                "artifact_path": artifact_path,
+            }
+        )
+    except Exception as exc:
+        logger.exception("browser_take_heap_snapshot failed")
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "gauge",
+    }
+)
+async def browser_lighthouse_audit(
+    url: str | None = None,
+    tab_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Roda um audit Lighthouse (performance/acessibilidade/best-practices/
+    SEO) — via `npx lighthouse`, único ponto desta suíte que depende de
+    Node instalado no sistema. Degrada com erro claro se Node/npx não
+    estiverem disponíveis, sem quebrar as demais tools de browser.
+
+    Args:
+        url: URL a auditar (padrão: URL atual da aba).
+        tab_id: id da aba usada só pra resolver a URL padrão.
+    """
+    workspace_id = _workspace_id(config)
+    target_url = url
+    if target_url is None:
+        tab = get_tab_state(workspace_id, tab_id)
+        if tab is None:
+            return _NO_SESSION_ERROR
+        target_url = tab.page.url
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "npx",
+            "lighthouse",
+            target_url,
+            "--output=json",
+            "--quiet",
+            "--chrome-flags=--headless",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+    except FileNotFoundError:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": (
+                    "Lighthouse requer Node/npx instalado no sistema — não encontrado."
+                ),
+            }
+        )
+    except Exception as exc:
+        logger.exception("browser_lighthouse_audit failed to spawn")
+        return json.dumps({"status": "error", "error": str(exc)})
+
+    if proc.returncode != 0:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": (
+                    f"lighthouse saiu com código {proc.returncode}: "
+                    f"{stderr.decode(errors='replace')[:500]}"
+                ),
+            }
+        )
+
+    try:
+        report = json.loads(stdout)
+    except Exception as exc:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": f"saída do lighthouse não é JSON válido: {exc}",
+            }
+        )
+
+    categories = report.get("categories", {})
+    scores = {
+        name: (cat.get("score") if cat else None) for name, cat in categories.items()
+    }
+    audits = report.get("audits", {})
+    opportunities = sorted(
+        (
+            a
+            for a in audits.values()
+            if a.get("details", {}).get("type") == "opportunity"
+        ),
+        key=lambda a: a.get("numericValue") or 0,
+        reverse=True,
+    )[:5]
+    top_opportunities = [
+        {
+            "id": o.get("id"),
+            "title": o.get("title"),
+            "savings_ms": o.get("numericValue"),
+        }
+        for o in opportunities
+    ]
+
+    return json.dumps(
+        {"status": "ok", "scores": scores, "top_opportunities": top_opportunities}
+    )

@@ -6,6 +6,7 @@ test_browser_session_real.py)."""
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -442,3 +443,310 @@ async def test_browser_emulate_sem_parametros_nao_aplica_nada(monkeypatch):
     assert result == {"status": "ok", "applied": []}
     tab.page.set_viewport_size.assert_not_awaited()
     tab.cdp.send.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------------
+# browser_start_trace / browser_stop_trace
+# ---------------------------------------------------------------------------
+
+
+class _FakeCDPForTrace:
+    def __init__(self) -> None:
+        self._handlers: dict[str, list] = {}
+
+        async def _send(method, params=None):
+            if method == "Tracing.end":
+                for h in self._handlers.get("Tracing.tracingComplete", []):
+                    h({})
+
+        self.send = AsyncMock(side_effect=_send)
+
+    def on(self, event, handler):
+        self._handlers.setdefault(event, []).append(handler)
+
+    def emit(self, event, params):
+        for h in self._handlers.get(event, []):
+            h(params)
+
+
+def _fake_tab_for_trace():
+    return SimpleNamespace(cdp=_FakeCDPForTrace())
+
+
+@pytest.mark.asyncio
+async def test_browser_start_trace_sem_sessao_retorna_erro(monkeypatch):
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
+
+    result = json.loads(await bd.browser_start_trace.ainvoke({}, config=_config()))
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_start_trace_ja_em_andamento_retorna_erro(monkeypatch):
+    tab = _fake_tab_for_trace()
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    first = json.loads(await bd.browser_start_trace.ainvoke({}, config=_config()))
+    second = json.loads(await bd.browser_start_trace.ainvoke({}, config=_config()))
+
+    assert first["status"] == "ok"
+    assert second["status"] == "error"
+
+    # limpa o estado global pra não vazar entre testes
+    await bd.browser_stop_trace.ainvoke({}, config=_config())
+
+
+@pytest.mark.asyncio
+async def test_stop_trace_sem_start_retorna_erro(monkeypatch):
+    tab = _fake_tab_for_trace()
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    result = json.loads(await bd.browser_stop_trace.ainvoke({}, config=_config()))
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_start_e_stop_trace_resume_eventos_coletados(monkeypatch, tmp_path):
+    tab = _fake_tab_for_trace()
+    ws = SimpleNamespace(cwd=str(tmp_path))
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+    monkeypatch.setattr(
+        "backend.workspace.workspace.workspace_registry",
+        SimpleNamespace(get=lambda _id: ws),
+    )
+
+    await bd.browser_start_trace.ainvoke({}, config=_config())
+    tab.cdp.emit(
+        "Tracing.dataCollected",
+        {"value": [{"cat": "toplevel", "name": "a"}, {"cat": "toplevel", "name": "b"}]},
+    )
+
+    result = json.loads(await bd.browser_stop_trace.ainvoke({}, config=_config()))
+
+    assert result["status"] == "ok"
+    assert result["summary"]["event_count"] == 2
+    assert result["summary"]["categories"] == {"toplevel": 2}
+    assert result["artifact_path"] is not None
+    assert Path(result["artifact_path"]).exists()
+
+
+# ---------------------------------------------------------------------------
+# browser_take_heap_snapshot
+# ---------------------------------------------------------------------------
+
+
+def _sample_heap_snapshot() -> dict:
+    return {
+        "snapshot": {
+            "meta": {
+                "node_fields": [
+                    "type",
+                    "name",
+                    "id",
+                    "self_size",
+                    "edge_count",
+                    "trace_node_id",
+                    "detachedness",
+                ],
+                "node_types": [
+                    [
+                        "hidden",
+                        "array",
+                        "string",
+                        "object",
+                        "code",
+                        "closure",
+                        "regexp",
+                        "number",
+                        "native",
+                        "synthetic",
+                        "concatenated string",
+                        "sliced string",
+                        "symbol",
+                        "bigint",
+                    ],
+                    "string",
+                    "number",
+                    "number",
+                    "number",
+                    "number",
+                    "number",
+                ],
+            }
+        },
+        "nodes": [3, 0, 1, 100, 0, 0, 0, 3, 1, 2, 50, 0, 0, 0],
+        "edges": [],
+        "strings": ["Foo", "Bar"],
+    }
+
+
+def _fake_tab_for_heap(snapshot: dict):
+    cdp = SimpleNamespace()
+    payload = json.dumps(snapshot)
+
+    async def _send(method, params=None):
+        if method == "HeapProfiler.takeHeapSnapshot":
+            for h in cdp._handlers.get("HeapProfiler.addHeapSnapshotChunk", []):
+                h({"chunk": payload})
+
+    cdp._handlers = {}
+    cdp.on = lambda event, handler: cdp._handlers.setdefault(event, []).append(handler)
+    cdp.send = AsyncMock(side_effect=_send)
+    return SimpleNamespace(cdp=cdp)
+
+
+@pytest.mark.asyncio
+async def test_browser_take_heap_snapshot_sem_sessao_retorna_erro(monkeypatch):
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
+
+    result = json.loads(
+        await bd.browser_take_heap_snapshot.ainvoke({}, config=_config())
+    )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_take_heap_snapshot_resume_top_construtores(
+    monkeypatch, tmp_path
+):
+    tab = _fake_tab_for_heap(_sample_heap_snapshot())
+    ws = SimpleNamespace(cwd=str(tmp_path))
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+    monkeypatch.setattr(
+        "backend.workspace.workspace.workspace_registry",
+        SimpleNamespace(get=lambda _id: ws),
+    )
+
+    result = json.loads(
+        await bd.browser_take_heap_snapshot.ainvoke({}, config=_config())
+    )
+
+    assert result["status"] == "ok"
+    top = {c["constructor"]: c for c in result["top_constructors"]}
+    assert top["object:Foo"]["total_size"] == 100
+    assert top["object:Bar"]["total_size"] == 50
+    assert result["artifact_path"] is not None
+
+
+# ---------------------------------------------------------------------------
+# browser_lighthouse_audit
+# ---------------------------------------------------------------------------
+
+
+class _FakeLighthouseProc:
+    def __init__(self, stdout: bytes, stderr: bytes = b"", returncode: int = 0) -> None:
+        self._stdout = stdout
+        self._stderr = stderr
+        self.returncode = returncode
+
+    async def communicate(self):
+        return self._stdout, self._stderr
+
+
+@pytest.mark.asyncio
+async def test_browser_lighthouse_audit_npx_ausente_retorna_erro_tipado(monkeypatch):
+    monkeypatch.setattr(
+        bd.asyncio,
+        "create_subprocess_exec",
+        AsyncMock(side_effect=FileNotFoundError()),
+    )
+
+    result = json.loads(
+        await bd.browser_lighthouse_audit.ainvoke(
+            {"url": "http://localhost:3000"}, config=_config()
+        )
+    )
+
+    assert result["status"] == "error"
+    assert "node" in result["error"].lower() or "npx" in result["error"].lower()
+
+
+@pytest.mark.asyncio
+async def test_browser_lighthouse_audit_parseia_scores_e_oportunidades(monkeypatch):
+    report = {
+        "categories": {
+            "performance": {"score": 0.8},
+            "accessibility": {"score": 0.9},
+        },
+        "audits": {
+            "render-blocking-resources": {
+                "id": "render-blocking-resources",
+                "title": "Eliminate render-blocking resources",
+                "numericValue": 300,
+                "details": {"type": "opportunity"},
+            },
+            "not-an-opportunity": {
+                "id": "not-an-opportunity",
+                "title": "x",
+                "details": {"type": "table"},
+            },
+        },
+    }
+    monkeypatch.setattr(
+        bd.asyncio,
+        "create_subprocess_exec",
+        AsyncMock(return_value=_FakeLighthouseProc(json.dumps(report).encode("utf-8"))),
+    )
+
+    result = json.loads(
+        await bd.browser_lighthouse_audit.ainvoke(
+            {"url": "http://localhost:3000"}, config=_config()
+        )
+    )
+
+    assert result["status"] == "ok"
+    assert result["scores"]["performance"] == 0.8
+    assert len(result["top_opportunities"]) == 1
+    assert result["top_opportunities"][0]["id"] == "render-blocking-resources"
+
+
+@pytest.mark.asyncio
+async def test_browser_lighthouse_audit_exit_code_nao_zero_retorna_erro(monkeypatch):
+    monkeypatch.setattr(
+        bd.asyncio,
+        "create_subprocess_exec",
+        AsyncMock(
+            return_value=_FakeLighthouseProc(b"", b"chrome not found", returncode=1)
+        ),
+    )
+
+    result = json.loads(
+        await bd.browser_lighthouse_audit.ainvoke(
+            {"url": "http://localhost:3000"}, config=_config()
+        )
+    )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_lighthouse_audit_sem_url_usa_url_da_aba_ativa(monkeypatch):
+    tab = SimpleNamespace(page=SimpleNamespace(url="http://localhost:9999"))
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    captured = {}
+
+    async def _fake_exec(*args, **kwargs):
+        captured["args"] = args
+        return _FakeLighthouseProc(
+            json.dumps({"categories": {}, "audits": {}}).encode()
+        )
+
+    monkeypatch.setattr(bd.asyncio, "create_subprocess_exec", _fake_exec)
+
+    result = json.loads(await bd.browser_lighthouse_audit.ainvoke({}, config=_config()))
+
+    assert result["status"] == "ok"
+    assert "http://localhost:9999" in captured["args"]
+
+
+@pytest.mark.asyncio
+async def test_browser_lighthouse_audit_sem_url_e_sem_sessao_retorna_erro(monkeypatch):
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
+
+    result = json.loads(await bd.browser_lighthouse_audit.ainvoke({}, config=_config()))
+
+    assert result["status"] == "error"
