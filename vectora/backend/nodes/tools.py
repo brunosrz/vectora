@@ -41,6 +41,7 @@ from backend.tools.browser import (
 from backend.tools.browser_devtools import (
     browser_clear_console,
     browser_close_tab,
+    browser_emulate,
     browser_evaluate,
     browser_get_network_request,
     browser_list_console_messages,
@@ -210,6 +211,7 @@ BROWSER_TOOLS: list[BaseTool] = [
     browser_get_network_request,
     browser_evaluate,
     browser_set_dialog_policy,
+    browser_emulate,
 ]
 
 #: Ferramentas de memória (C4: search_memory adicionado; Remember: learning loop)
@@ -361,6 +363,7 @@ for _t in [
     browser_get_network_request,
     browser_evaluate,
     browser_set_dialog_policy,
+    browser_emulate,
     save_memory,
     get_memory,
     delete_memory,

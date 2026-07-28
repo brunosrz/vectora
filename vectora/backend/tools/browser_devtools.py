@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 
 from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
@@ -37,6 +37,29 @@ def _workspace_id(config: RunnableConfig | None) -> str:
     )
     return raw or "default"
 
+
+#: Perfis de `Network.emulateNetworkConditions` (CDP) — latência em ms,
+#: throughput em bytes/s. "offline" zera o throughput.
+_NETWORK_PROFILES: dict[str, dict[str, Any]] = {
+    "offline": {
+        "offline": True,
+        "latency": 0,
+        "downloadThroughput": 0,
+        "uploadThroughput": 0,
+    },
+    "slow-3g": {
+        "offline": False,
+        "latency": 400,
+        "downloadThroughput": 50 * 1024 // 8,
+        "uploadThroughput": 50 * 1024 // 8,
+    },
+    "fast-3g": {
+        "offline": False,
+        "latency": 150,
+        "downloadThroughput": 180 * 1024 // 8,
+        "uploadThroughput": 84 * 1024 // 8,
+    },
+}
 
 _NO_SESSION_ERROR = json.dumps(
     {
@@ -355,3 +378,87 @@ async def browser_set_dialog_policy(
     if not ok:
         return _NO_SESSION_ERROR
     return json.dumps({"status": "ok"})
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": False,
+        "icon": "smartphone",
+    }
+)
+async def browser_emulate(
+    viewport_width: int | None = None,
+    viewport_height: int | None = None,
+    device_scale_factor: float | None = None,
+    cpu_throttle: float | None = None,
+    network_throttle: str | None = None,
+    tab_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Emula viewport/device/throttling na aba — útil pra testar layouts
+    mobile ou comportamento sob rede/CPU lentos antes de screenshot.
+
+    Args:
+        viewport_width: largura do viewport em px (omitido não muda).
+        viewport_height: altura do viewport em px (omitido não muda).
+        device_scale_factor: fator de escala (ex.: 2 para retina/mobile).
+        cpu_throttle: fator de desaceleração de CPU (ex.: 4 = 4x mais
+            lento). Omitido não muda.
+        network_throttle: perfil de rede — "offline", "slow-3g", "fast-3g",
+            ou `None` pra remover throttling de rede.
+        tab_id: id da aba (padrão: aba ativa).
+
+    Returns:
+        JSON `{"status": "ok", "applied": [...]}` com o que foi aplicado.
+    """
+    workspace_id = _workspace_id(config)
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return _NO_SESSION_ERROR
+
+    applied: list[str] = []
+    try:
+        if viewport_width is not None and viewport_height is not None:
+            await tab.page.set_viewport_size(
+                {"width": viewport_width, "height": viewport_height}
+            )
+            applied.append("viewport")
+
+        if device_scale_factor is not None:
+            await tab.cdp.send(
+                "Emulation.setDeviceMetricsOverride",
+                {
+                    "width": viewport_width or 0,
+                    "height": viewport_height or 0,
+                    "deviceScaleFactor": device_scale_factor,
+                    "mobile": False,
+                },
+            )
+            applied.append("device_scale_factor")
+
+        if cpu_throttle is not None:
+            await tab.cdp.send("Emulation.setCPUThrottlingRate", {"rate": cpu_throttle})
+            applied.append("cpu_throttle")
+
+        if network_throttle is not None:
+            await tab.cdp.send(
+                "Network.emulateNetworkConditions", _NETWORK_PROFILES[network_throttle]
+            )
+            applied.append("network_throttle")
+
+        return json.dumps({"status": "ok", "applied": applied})
+    except KeyError:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": (
+                    f"network_throttle {network_throttle!r} inválido — use "
+                    f"{sorted(_NETWORK_PROFILES)}"
+                ),
+            }
+        )
+    except Exception as exc:
+        logger.exception("browser_emulate failed")
+        return json.dumps({"status": "error", "error": str(exc)})

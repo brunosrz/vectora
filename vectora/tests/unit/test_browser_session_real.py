@@ -223,6 +223,17 @@ async def test_dialog_policy_sem_sessao_retorna_false():
 
 
 @pytest.mark.asyncio
+async def test_cdp_session_permite_emular_viewport_mobile_real():
+    page = await browser_session.get_browser_page("ws-emulate-1")
+    await page.goto("about:blank")
+
+    await page.set_viewport_size({"width": 375, "height": 812})
+    size = page.viewport_size
+
+    assert size == {"width": 375, "height": 812}
+
+
+@pytest.mark.asyncio
 async def test_network_log_captura_navegacao_real(local_http_server):
     page = await browser_session.get_browser_page("ws-network-1")
     tab = browser_session.get_tab_state("ws-network-1")

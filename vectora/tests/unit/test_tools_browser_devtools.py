@@ -348,3 +348,97 @@ async def test_browser_set_dialog_policy_sucesso(monkeypatch):
 
     assert result == {"status": "ok"}
     assert calls == [("ws1", "accept", "ok", None)]
+
+
+# ---------------------------------------------------------------------------
+# browser_emulate
+# ---------------------------------------------------------------------------
+
+
+def _fake_tab_for_emulate():
+    page = SimpleNamespace(set_viewport_size=AsyncMock())
+    cdp = SimpleNamespace(send=AsyncMock())
+    return SimpleNamespace(page=page, cdp=cdp)
+
+
+@pytest.mark.asyncio
+async def test_browser_emulate_sem_sessao_retorna_erro(monkeypatch):
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
+
+    result = json.loads(
+        await bd.browser_emulate.ainvoke(
+            {"viewport_width": 375, "viewport_height": 812}, config=_config()
+        )
+    )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_emulate_aplica_viewport(monkeypatch):
+    tab = _fake_tab_for_emulate()
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    result = json.loads(
+        await bd.browser_emulate.ainvoke(
+            {"viewport_width": 375, "viewport_height": 812}, config=_config()
+        )
+    )
+
+    assert result == {"status": "ok", "applied": ["viewport"]}
+    tab.page.set_viewport_size.assert_awaited_once_with({"width": 375, "height": 812})
+
+
+@pytest.mark.asyncio
+async def test_browser_emulate_aplica_cpu_throttle_via_cdp(monkeypatch):
+    tab = _fake_tab_for_emulate()
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    result = json.loads(
+        await bd.browser_emulate.ainvoke({"cpu_throttle": 4}, config=_config())
+    )
+
+    assert result == {"status": "ok", "applied": ["cpu_throttle"]}
+    tab.cdp.send.assert_awaited_once_with("Emulation.setCPUThrottlingRate", {"rate": 4})
+
+
+@pytest.mark.asyncio
+async def test_browser_emulate_network_throttle_invalido_retorna_erro(monkeypatch):
+    tab = _fake_tab_for_emulate()
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    result = json.loads(
+        await bd.browser_emulate.ainvoke(
+            {"network_throttle": "not-a-profile"}, config=_config()
+        )
+    )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_emulate_network_throttle_valido_chama_cdp(monkeypatch):
+    tab = _fake_tab_for_emulate()
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    result = json.loads(
+        await bd.browser_emulate.ainvoke(
+            {"network_throttle": "slow-3g"}, config=_config()
+        )
+    )
+
+    assert result == {"status": "ok", "applied": ["network_throttle"]}
+    tab.cdp.send.assert_awaited_once()
+    assert tab.cdp.send.await_args.args[0] == "Network.emulateNetworkConditions"
+
+
+@pytest.mark.asyncio
+async def test_browser_emulate_sem_parametros_nao_aplica_nada(monkeypatch):
+    tab = _fake_tab_for_emulate()
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
+
+    result = json.loads(await bd.browser_emulate.ainvoke({}, config=_config()))
+
+    assert result == {"status": "ok", "applied": []}
+    tab.page.set_viewport_size.assert_not_awaited()
+    tab.cdp.send.assert_not_awaited()
