@@ -521,3 +521,74 @@ async def test_build_ast_mode_passed_to_pipeline(tmp_path):
             {"model": "", "mode": "ast"}, config=_config("ws1")
         )
     assert mb.call_args.kwargs.get("mode") == "ast"
+
+
+# ---------------------------------------------------------------------------
+# graph_cancel_build
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_graph_cancel_build_no_workspace():
+    from backend.tools.context_graph import graph_cancel_build
+
+    result = await graph_cancel_build.ainvoke(
+        {}, config=cast("RunnableConfig", {"configurable": {}})
+    )
+    assert "nenhum workspace ativo" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_graph_cancel_build_sem_build_em_andamento():
+    from backend.tools.context_graph import graph_cancel_build
+
+    with patch("backend.api.handlers.context_graph._active_builds", {}):
+        result = await graph_cancel_build.ainvoke({}, config=_config("ws1"))
+    assert "nenhum build em andamento" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_graph_cancel_build_cancela_task_ativa(tmp_path):
+    from backend.tools.context_graph import graph_cancel_build
+
+    ws, _ = _make_ws(tmp_path)
+    status_file = tmp_path / ".vectora" / "context-graph" / "build_status.json"
+    status_file.write_text("{}", encoding="utf-8")
+
+    async def _never_finishes():
+        import asyncio
+
+        await asyncio.sleep(999)
+
+    import asyncio as _asyncio
+
+    task = _asyncio.get_event_loop().create_task(_never_finishes())
+    try:
+        with (
+            _patch_registry(ws),
+            patch("backend.api.handlers.context_graph._active_builds", {"ws1": task}),
+        ):
+            result = await graph_cancel_build.ainvoke({}, config=_config("ws1"))
+        assert "cancelado" in result.lower()
+        assert task.cancelled() or task.cancelling()
+        assert not status_file.exists()
+    finally:
+        task.cancel()
+
+
+@pytest.mark.asyncio
+async def test_graph_cancel_build_task_ja_concluida_nao_conta_como_ativa():
+    from backend.tools.context_graph import graph_cancel_build
+
+    async def _noop():
+        return None
+
+    task = None
+    import asyncio as _asyncio
+
+    task = _asyncio.get_event_loop().create_task(_noop())
+    await task  # já terminou
+
+    with patch("backend.api.handlers.context_graph._active_builds", {"ws1": task}):
+        result = await graph_cancel_build.ainvoke({}, config=_config("ws1"))
+    assert "nenhum build em andamento" in result.lower()

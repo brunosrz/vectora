@@ -132,6 +132,53 @@ async def graph_update(
         return f"Erro ao atualizar o grafo: {exc}"
 
 
+@tool(
+    extras={
+        "render_hint": "text",
+        "category": "workspace",
+        "destructive": True,
+        "icon": "square-x",
+    }
+)
+async def graph_cancel_build(
+    config: Annotated[RunnableConfig, InjectedToolArg],
+) -> str:
+    """Cancela um build (ou update) do Context Graph em andamento, disparado
+    via ``POST /workspaces/{id}/context-graph/build`` (REST, ex.: pelo
+    usuário na aba Context Graph).
+
+    Não cancela um build rodando dentro desta mesma chamada de
+    ``build_knowledge_graph``/``graph_update`` (essas rodam síncronas até o
+    fim, sem uma task em segundo plano para cancelar).
+
+    Returns:
+        Confirmação de cancelamento, ou aviso claro se não havia build
+        em andamento neste workspace.
+    """
+    try:
+        workspace_id = _active_workspace_id(config)
+        if not workspace_id:
+            return "Erro: nenhum workspace ativo. Abra um workspace primeiro."
+
+        from backend.api.handlers.context_graph import _active_builds, _graph_dir
+
+        task = _active_builds.pop(workspace_id, None)
+        if task is None or task.done():
+            return "Nenhum build em andamento neste workspace."
+        task.cancel()
+
+        d = _graph_dir(workspace_id)
+        if d is not None:
+            status_file = d / "build_status.json"
+            if status_file.exists():
+                status_file.unlink()
+        return "Build cancelado."
+
+    except Exception as exc:
+        logger.exception("graph: falha em graph_cancel_build")
+        return f"Erro ao cancelar o build: {exc}"
+
+
 @tool
 async def graph_query(
     question: str,

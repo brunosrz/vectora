@@ -41,6 +41,7 @@ from backend.tools.browser import (
 from backend.tools.context_graph import (
     build_knowledge_graph,
     graph_affected,
+    graph_cancel_build,
     graph_explain,
     graph_path,
     graph_query,
@@ -230,6 +231,7 @@ GRAPH_TOOLS: list[BaseTool] = [
     graph_path,
     graph_affected,
     graph_update,
+    graph_cancel_build,
 ]
 
 #: Ferramentas RAG de ingestão e gestão
@@ -399,6 +401,7 @@ for _t in [
     graph_path,
     graph_affected,
     graph_update,
+    graph_cancel_build,
     sequential_thinking,
     # Utilitários nativos
     time_now,
