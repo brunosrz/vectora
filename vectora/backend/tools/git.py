@@ -496,9 +496,26 @@ def _git_revert_impl(repo: git.Repo, sha: str, no_commit: bool = False) -> dict:
         return {"status": "error", "message": str(exc)}
 
 
-def _git_compare_impl(repo: git.Repo, base: str, head: str) -> dict:
-    """Compara dois refs — diff resumido (arquivos + status) entre `base` e
-    `head`, mesmo formato usado por `git diff base...head --name-status`."""
+def _git_compare_impl(
+    repo: git.Repo, base: str, head: str, file_path: str | None = None
+) -> dict:
+    """Compara dois refs. Sem `file_path`: diff resumido (arquivos +
+    status), mesmo formato de `git diff base...head --name-status`. Com
+    `file_path`: hunks do diff daquele arquivo específico entre os dois
+    refs (`git diff base...head -- <file_path>`)."""
+    if file_path:
+        try:
+            patch = repo.git.diff(f"{base}...{head}", "--", file_path)
+        except git.GitCommandError as exc:
+            return {"status": "error", "message": str(exc)}
+        return {
+            "status": "ok",
+            "base": base,
+            "head": head,
+            "path": file_path,
+            "patch": patch,
+        }
+
     try:
         name_status = repo.git.diff(f"{base}...{head}", "--name-status")
     except git.GitCommandError as exc:
@@ -587,6 +604,13 @@ def _git_stash_impl(
         try:
             repo.git.stash("pop")
             return {"status": "ok", "action": "pop"}
+        except git.GitCommandError as exc:
+            return {"status": "error", "message": str(exc)}
+
+    if action == "apply":
+        try:
+            repo.git.stash("apply")
+            return {"status": "ok", "action": "apply"}
         except git.GitCommandError as exc:
             return {"status": "error", "message": str(exc)}
 
@@ -1194,14 +1218,18 @@ async def git_revert(
 async def git_compare(
     base: str = "",
     head: str = "",
+    file_path: str | None = None,
     workspace_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Compara dois refs — lista arquivos alterados entre `base` e `head`.
+    """Compara dois refs — lista arquivos alterados entre `base` e `head`,
+    ou (com `file_path`) o diff (hunks) de um arquivo específico.
 
     Args:
         base: Ref base da comparação.
         head: Ref alvo da comparação.
+        file_path: Opcional — devolve os hunks do diff só desse arquivo em
+            vez da lista de arquivos alterados.
         workspace_id: ID do workspace.
     """
     repo, err = _open_repo(workspace_id, config)
@@ -1211,7 +1239,11 @@ async def git_compare(
         return json.dumps(
             {"status": "error", "message": "base e head são obrigatórios."}
         )
-    return json.dumps(_safe_call(lambda: _git_compare_impl(repo, base=base, head=head)))
+    return json.dumps(
+        _safe_call(
+            lambda: _git_compare_impl(repo, base=base, head=head, file_path=file_path)
+        )
+    )
 
 
 @tool(
@@ -1355,7 +1387,8 @@ async def git_stash(
     """Gerencia o stash: salva, aplica ou lista mudanças temporárias.
 
     Args:
-        action: "push" | "pop" | "list" | "drop"
+        action: "push" | "pop" | "apply" | "list" | "drop" — "pop" aplica
+            e remove do stash; "apply" aplica sem remover.
         name: Nome descritivo do stash (opcional, apenas para push).
         workspace_id: ID do workspace.
     """
@@ -1490,6 +1523,39 @@ async def git_unstage(
     return json.dumps(_safe_call(lambda: _git_unstage_impl(repo, path=path)))
 
 
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": True,
+        "icon": "undo-2",
+        "invalidates": ["diff", "files"],
+    }
+)
+async def git_discard(
+    path: str = "",
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Descarta mudanças não staged de um arquivo (`git restore -- <path>`,
+    mesma paridade do botão "Descartar" da aba Git — reaproveita
+    `_git_restore_impl`, já usado internamente).
+
+    Atenção: operação destrutiva — as mudanças no worktree são perdidas
+    permanentemente, sem confirmação adicional além da aprovação HITL.
+
+    Args:
+        path: Caminho do arquivo cujas mudanças serão descartadas.
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not path:
+        return json.dumps({"status": "error", "message": "path é obrigatório."})
+    return json.dumps(_safe_call(lambda: _git_restore_impl(repo, path=path)))
+
+
 # Sincroniza .extras → .metadata para compatibilidade com testes e endpoint GetTools
 for _t in (
     git_status,
@@ -1505,6 +1571,7 @@ for _t in (
     git_worktree,
     git_stage,
     git_unstage,
+    git_discard,
 ):
     if _t.extras:
         _t.metadata = _t.extras

@@ -6,7 +6,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.tools.git import git_stage, git_unstage
+from backend.tools.git import (
+    git_compare,
+    git_discard,
+    git_stage,
+    git_stash,
+    git_unstage,
+)
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -209,6 +215,146 @@ async def test_git_unstage_real_repo_removes_from_index(real_repo_ws):
     assert result["status"] == "ok"
     # git reset HEAD tira do index mas mantém o arquivo como untracked/modified.
     assert repo.is_dirty(untracked_files=True)
+
+
+# ---------------------------------------------------------------------------
+# git_discard — descarta mudanças não staged
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_git_discard_real_repo_reverte_mudanca_nao_staged(real_repo_ws):
+    ws, repo, root = real_repo_ws
+    readme = root / "README.md"
+    readme.write_text("# repo\nmudança não staged\n", encoding="utf-8")
+    assert repo.is_dirty()
+
+    result_raw = await git_discard.ainvoke(
+        {"path": "README.md", "workspace_id": ws.id}, config=_make_config(ws.id)
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+    assert readme.read_text(encoding="utf-8") == "# repo\n"
+
+
+@pytest.mark.asyncio
+async def test_git_discard_path_vazio(mock_ws):
+    mock_repo = MagicMock()
+    with patch("backend.tools.git.git.Repo", return_value=mock_repo):
+        result_raw = await git_discard.ainvoke(
+            {"path": "", "workspace_id": mock_ws.id},
+            config=_make_config(mock_ws.id),
+        )
+    result = json.loads(result_raw)
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_git_discard_arquivo_sem_mudanca_nao_lanca(real_repo_ws):
+    ws, _repo, _root = real_repo_ws
+
+    result_raw = await git_discard.ainvoke(
+        {"path": "README.md", "workspace_id": ws.id}, config=_make_config(ws.id)
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+
+
+def test_git_discard_e_destructive():
+    meta = git_discard.extras or git_discard.metadata or {}
+    assert meta.get("destructive") is True
+
+
+# ---------------------------------------------------------------------------
+# git_stash — action="apply" aplica sem remover do stash
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_git_stash_apply_aplica_sem_remover(real_repo_ws):
+    ws, repo, root = real_repo_ws
+    (root / "README.md").write_text("# repo\nstashed\n", encoding="utf-8")
+    repo.git.stash("push")
+    assert not repo.is_dirty()
+
+    result_raw = await git_stash.ainvoke(
+        {"action": "apply", "workspace_id": ws.id}, config=_make_config(ws.id)
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+    assert result["action"] == "apply"
+    assert repo.is_dirty()
+    # apply, ao contrário de pop, mantém a entrada no stash.
+    stash_list = repo.git.stash("list")
+    assert stash_list.strip() != ""
+
+
+@pytest.mark.asyncio
+async def test_git_stash_pop_ainda_remove_do_stash_regressao(real_repo_ws):
+    ws, repo, root = real_repo_ws
+    (root / "README.md").write_text("# repo\nstashed\n", encoding="utf-8")
+    repo.git.stash("push")
+
+    result_raw = await git_stash.ainvoke(
+        {"action": "pop", "workspace_id": ws.id}, config=_make_config(ws.id)
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+    assert repo.git.stash("list").strip() == ""
+
+
+# ---------------------------------------------------------------------------
+# git_compare — file_path devolve hunks de um arquivo específico
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_git_compare_sem_file_path_mantem_lista_de_arquivos_regressao(
+    real_repo_ws,
+):
+    ws, repo, root = real_repo_ws
+    repo.git.checkout("-b", "feature")
+    (root / "README.md").write_text("# repo\nmudou\n", encoding="utf-8")
+    repo.index.add(["README.md"])
+    repo.index.commit("update readme")
+
+    result_raw = await git_compare.ainvoke(
+        {"base": "master", "head": "feature", "workspace_id": ws.id},
+        config=_make_config(ws.id),
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+    assert any(f["path"] == "README.md" for f in result["files"])
+    assert "patch" not in result
+
+
+@pytest.mark.asyncio
+async def test_git_compare_com_file_path_devolve_hunks_do_arquivo(real_repo_ws):
+    ws, repo, root = real_repo_ws
+    repo.git.checkout("-b", "feature")
+    (root / "README.md").write_text("# repo\nlinha nova\n", encoding="utf-8")
+    repo.index.add(["README.md"])
+    repo.index.commit("update readme")
+
+    result_raw = await git_compare.ainvoke(
+        {
+            "base": "master",
+            "head": "feature",
+            "file_path": "README.md",
+            "workspace_id": ws.id,
+        },
+        config=_make_config(ws.id),
+    )
+    result = json.loads(result_raw)
+
+    assert result["status"] == "ok"
+    assert result["path"] == "README.md"
+    assert "linha nova" in result["patch"]
 
 
 # ---------------------------------------------------------------------------
