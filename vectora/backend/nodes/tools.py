@@ -41,12 +41,14 @@ from backend.tools.browser import (
 from backend.tools.browser_devtools import (
     browser_clear_console,
     browser_close_tab,
+    browser_evaluate,
     browser_get_network_request,
     browser_list_console_messages,
     browser_list_network_requests,
     browser_list_tabs,
     browser_new_tab,
     browser_select_tab,
+    browser_set_dialog_policy,
 )
 from backend.tools.context_graph import (
     build_knowledge_graph,
@@ -206,6 +208,8 @@ BROWSER_TOOLS: list[BaseTool] = [
     browser_clear_console,
     browser_list_network_requests,
     browser_get_network_request,
+    browser_evaluate,
+    browser_set_dialog_policy,
 ]
 
 #: Ferramentas de memória (C4: search_memory adicionado; Remember: learning loop)
@@ -355,6 +359,8 @@ for _t in [
     browser_clear_console,
     browser_list_network_requests,
     browser_get_network_request,
+    browser_evaluate,
+    browser_set_dialog_policy,
     save_memory,
     get_memory,
     delete_memory,

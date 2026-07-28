@@ -242,3 +242,109 @@ async def test_browser_get_network_request_nao_encontrada_retorna_erro(monkeypat
     )
 
     assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# browser_evaluate
+# ---------------------------------------------------------------------------
+
+
+def _fake_tab_with_page(evaluate_result=None, evaluate_error=None):
+    async def _evaluate(script):
+        if evaluate_error is not None:
+            raise evaluate_error
+        return evaluate_result
+
+    page = SimpleNamespace(evaluate=_evaluate)
+    return SimpleNamespace(page=page)
+
+
+@pytest.mark.asyncio
+async def test_browser_evaluate_retorna_resultado_serializado(monkeypatch):
+    monkeypatch.setattr(
+        bd, "get_tab_state", lambda _wid, _tid: _fake_tab_with_page(evaluate_result=42)
+    )
+
+    result = json.loads(
+        await bd.browser_evaluate.ainvoke({"script": "1 + 41"}, config=_config())
+    )
+
+    assert result == {"status": "ok", "result": 42}
+
+
+@pytest.mark.asyncio
+async def test_browser_evaluate_sem_sessao_retorna_erro(monkeypatch):
+    monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
+
+    result = json.loads(
+        await bd.browser_evaluate.ainvoke({"script": "1"}, config=_config())
+    )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_evaluate_erro_de_script_nao_propaga(monkeypatch):
+    monkeypatch.setattr(
+        bd,
+        "get_tab_state",
+        lambda _wid, _tid: _fake_tab_with_page(
+            evaluate_error=RuntimeError("SyntaxError: unexpected token")
+        ),
+    )
+
+    result = json.loads(
+        await bd.browser_evaluate.ainvoke({"script": "{{{"}, config=_config())
+    )
+
+    assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# browser_set_dialog_policy
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_browser_set_dialog_policy_action_invalida_retorna_erro():
+    result = json.loads(
+        await bd.browser_set_dialog_policy.ainvoke(
+            {"action": "close"}, config=_config()
+        )
+    )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_set_dialog_policy_sem_sessao_retorna_erro(monkeypatch):
+    monkeypatch.setattr(bd, "set_dialog_policy", lambda *a, **k: False)
+
+    result = json.loads(
+        await bd.browser_set_dialog_policy.ainvoke(
+            {"action": "accept"}, config=_config()
+        )
+    )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_browser_set_dialog_policy_sucesso(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        bd,
+        "set_dialog_policy",
+        lambda wid, action, prompt_text=None, tab_id=None: (
+            calls.append((wid, action, prompt_text, tab_id)) or True
+        ),
+    )
+
+    result = json.loads(
+        await bd.browser_set_dialog_policy.ainvoke(
+            {"action": "accept", "prompt_text": "ok"}, config=_config()
+        )
+    )
+
+    assert result == {"status": "ok"}
+    assert calls == [("ws1", "accept", "ok", None)]

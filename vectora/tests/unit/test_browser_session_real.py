@@ -204,6 +204,25 @@ async def test_console_log_captura_mensagens_reais_da_pagina():
 
 
 @pytest.mark.asyncio
+async def test_dialog_policy_accept_evita_travamento_em_alert_real():
+    page = await browser_session.get_browser_page("ws-dialog-1")
+    await page.goto("about:blank")
+    ok = browser_session.set_dialog_policy("ws-dialog-1", "accept")
+    assert ok is True
+
+    # Sem a política, um alert() trava a chamada até alguém decidir — com
+    # "accept" registrado, o listener no session.py resolve sozinho.
+    result = await page.evaluate("() => { alert('oi'); return 'depois-do-alert'; }")
+
+    assert result == "depois-do-alert"
+
+
+@pytest.mark.asyncio
+async def test_dialog_policy_sem_sessao_retorna_false():
+    assert browser_session.set_dialog_policy("workspace-sem-sessao", "accept") is False
+
+
+@pytest.mark.asyncio
 async def test_network_log_captura_navegacao_real(local_http_server):
     page = await browser_session.get_browser_page("ws-network-1")
     tab = browser_session.get_tab_state("ws-network-1")

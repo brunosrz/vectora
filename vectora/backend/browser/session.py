@@ -22,6 +22,7 @@ browser dentro do jail acumule cookies/sessões que vazem entre workspaces.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from collections import deque
@@ -35,6 +36,10 @@ _LOG_MAXLEN = 500
 
 _sessions: dict[str, dict[str, Any]] = {}
 
+#: Referências às tasks de accept/dismiss de dialog em voo — sem isso o
+#: garbage collector pode coletar a task antes dela rodar (RUF006).
+_pending_dialog_tasks: set[asyncio.Task[Any]] = set()
+
 
 @dataclass
 class TabState:
@@ -44,6 +49,7 @@ class TabState:
     cdp: Any
     console_log: deque = field(default_factory=lambda: deque(maxlen=_LOG_MAXLEN))
     network_log: deque = field(default_factory=lambda: deque(maxlen=_LOG_MAXLEN))
+    dialog_policy: dict[str, Any] | None = None
     _request_entries: dict[int, dict[str, Any]] = field(default_factory=dict)
 
 
@@ -126,10 +132,29 @@ def _register_page_listeners(tab: TabState) -> None:
         except Exception:
             logger.debug("browser_session: falha ao capturar falha de request")
 
+    def _on_dialog(dialog: Any) -> None:
+        policy = tab.dialog_policy
+        if policy is None:
+            # Sem política definida — mesmo comportamento de hoje: o dialog
+            # fica pendente (bloqueia a próxima ação até alguém decidir).
+            return
+        try:
+            coro = (
+                dialog.accept(policy.get("prompt_text") or "")
+                if policy["action"] == "accept"
+                else dialog.dismiss()
+            )
+            task = asyncio.create_task(coro)
+            _pending_dialog_tasks.add(task)
+            task.add_done_callback(_pending_dialog_tasks.discard)
+        except Exception:
+            logger.debug("browser_session: falha ao aplicar política de dialog")
+
     page.on("console", _on_console)
     page.on("request", _on_request)
     page.on("response", _on_response)
     page.on("requestfailed", _on_request_failed)
+    page.on("dialog", _on_dialog)
 
 
 async def _create_tab_state(page: Any) -> TabState:
@@ -262,6 +287,21 @@ async def get_cdp_session(workspace_id: str, tab_id: str | None = None) -> Any:
     """Sessão CDP da aba resolvida, ou `None` se a sessão/aba não existir."""
     tab = get_tab_state(workspace_id, tab_id)
     return tab.cdp if tab is not None else None
+
+
+def set_dialog_policy(
+    workspace_id: str,
+    action: str,
+    prompt_text: str | None = None,
+    tab_id: str | None = None,
+) -> bool:
+    """Define a política de resposta automática a `alert`/`confirm`/`prompt`
+    futuros da aba. `False` se a sessão/aba não existir."""
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return False
+    tab.dialog_policy = {"action": action, "prompt_text": prompt_text}
+    return True
 
 
 async def close_browser_session(workspace_id: str) -> None:

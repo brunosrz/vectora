@@ -23,6 +23,7 @@ from backend.browser.session import (
     list_tabs,
     new_tab,
     select_tab,
+    set_dialog_policy,
 )
 
 logger = logging.getLogger(__name__)
@@ -280,3 +281,77 @@ async def browser_get_network_request(
     return json.dumps(
         {"status": "error", "error": f"request '{request_id}' não encontrada"}
     )
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": True,
+        "icon": "code",
+    }
+)
+async def browser_evaluate(
+    script: str,
+    tab_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Executa JavaScript arbitrário no contexto da página e devolve o
+    valor serializado do resultado. Perigoso (`destructive`) — o script
+    roda com acesso total ao DOM/JS da página, pode mutar estado.
+
+    Args:
+        script: expressão ou função JS (ex.: `"document.title"`,
+            `"() => document.querySelectorAll('a').length"`).
+        tab_id: id da aba (padrão: aba ativa).
+
+    Returns:
+        JSON `{"status": "ok", "result": <valor>}` ou erro (sintaxe
+        inválida, exceção lançada pelo script, etc. — nunca propaga crua).
+    """
+    workspace_id = _workspace_id(config)
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return _NO_SESSION_ERROR
+    try:
+        result = await tab.page.evaluate(script)
+        return json.dumps({"status": "ok", "result": result}, default=str)
+    except Exception as exc:
+        logger.exception("browser_evaluate failed")
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "render_hint": "text",
+        "category": "browser",
+        "destructive": False,
+        "icon": "message-square",
+    }
+)
+async def browser_set_dialog_policy(
+    action: str,
+    prompt_text: str | None = None,
+    tab_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Define como a aba responde automaticamente a `alert`/`confirm`/
+    `prompt` futuros — sem isso, um dialog trava a próxima ação
+    (`browser_click` etc.) esperando decisão manual, que não existe no
+    modo headless.
+
+    Args:
+        action: "accept" ou "dismiss".
+        prompt_text: texto a preencher se o dialog for um `prompt()` e a
+            ação for "accept" (ignorado em alert/confirm).
+        tab_id: id da aba (padrão: aba ativa).
+    """
+    if action not in ("accept", "dismiss"):
+        return json.dumps(
+            {"status": "error", "error": "action deve ser 'accept' ou 'dismiss'"}
+        )
+    workspace_id = _workspace_id(config)
+    ok = set_dialog_policy(workspace_id, action, prompt_text=prompt_text, tab_id=tab_id)
+    if not ok:
+        return _NO_SESSION_ERROR
+    return json.dumps({"status": "ok"})
