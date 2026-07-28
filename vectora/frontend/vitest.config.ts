@@ -8,6 +8,12 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     reporters: ["dot"],
     testTimeout: 15000,
+    // Sem limite, o pool "forks" usa 1 worker por núcleo — sob scons tests
+    // (suíte inteira + outros processos concorrentes), isso satura a CPU e
+    // produz timeouts intermitentes de hook/worker mesmo em arquivos leves.
+    // Cap conservador reduz a contenção sem alongar o tempo total de forma
+    // perceptível (a suíte já é I/O-bound em boa parte via jsdom/imports).
+    maxForks: 4,
     onConsoleLog(log: string): false | void {
       if (
         log.includes("[Logger] Initialized") ||

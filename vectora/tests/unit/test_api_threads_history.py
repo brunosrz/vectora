@@ -21,12 +21,12 @@ def _make_app() -> Any:
     return create_app()
 
 
-def _pairs(n: int, start: int = 0) -> list[tuple[str, str, str]]:
-    """Gera n trios (role, text, checkpoint_id) alternando human/assistant."""
+def _pairs(n: int, start: int = 0) -> list[tuple[str, str, str, list]]:
+    """Gera n quadras (role, text, checkpoint_id, attachments_meta) alternando human/assistant."""
     out = []
     for i in range(n):
         role = "human" if i % 2 == 0 else "assistant"
-        out.append((role, f"message {start + i}", f"cp{start + i}"))
+        out.append((role, f"message {start + i}", f"cp{start + i}", []))
     return out
 
 
@@ -139,9 +139,9 @@ async def test_history_thread_sem_mensagens_retorna_vazio() -> None:
 async def test_history_mensagens_na_ordem_cronologica() -> None:
     """Mensagens retornadas na ordem mais-antiga→mais-recente."""
     pairs = [
-        ("human", "first", "cp0"),
-        ("assistant", "second", "cp1"),
-        ("human", "third", "cp2"),
+        ("human", "first", "cp0", []),
+        ("assistant", "second", "cp1", []),
+        ("human", "third", "cp2", []),
     ]
     with patch(
         "backend.services.agent_factory.aget_thread_messages",

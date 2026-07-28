@@ -66,7 +66,7 @@ async def test_multiple_of_n_without_pending_distills_and_writes_proposal(
     monkeypatch.setattr(
         agent_factory,
         "aget_thread_messages",
-        AsyncMock(return_value=[("human", "gosto de respostas curtas", "")]),
+        AsyncMock(return_value=[("human", "gosto de respostas curtas", "", [])]),
     )
     monkeypatch.setattr(
         "backend.services.learning.distill_transcript",
@@ -114,7 +114,7 @@ async def test_nothing_reusable_does_not_mark_pending_nor_write_artifact(
     monkeypatch.setattr(
         agent_factory,
         "aget_thread_messages",
-        AsyncMock(return_value=[("human", "oi", "")]),
+        AsyncMock(return_value=[("human", "oi", "", [])]),
     )
     monkeypatch.setattr(
         "backend.services.learning.distill_transcript",

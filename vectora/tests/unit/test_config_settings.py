@@ -248,6 +248,7 @@ class TestConfiguredLlmProviders:
         s.openai_api_key = None
         s.anthropic_api_key = None
         s.cohere_api_key = "c-key"
+        s.openrouter_api_key = None
         s.ollama_base_url = None
         assert s.configured_llm_providers() == ["google-genai", "cohere"]
 
@@ -257,6 +258,7 @@ class TestConfiguredLlmProviders:
         s.openai_api_key = None
         s.anthropic_api_key = None
         s.cohere_api_key = None
+        s.openrouter_api_key = None
         s.ollama_base_url = None
         # COHERE_API_KEY do ambiente pode existir; isola para o caso vazio.
         import os as _os
@@ -274,6 +276,7 @@ class TestConfiguredLlmProviders:
         s.openai_api_key = "o-key"
         s.anthropic_api_key = "a-key"
         s.cohere_api_key = None
+        s.openrouter_api_key = None
         s.ollama_base_url = None
         import os as _os
 
@@ -290,6 +293,7 @@ class TestConfiguredLlmProviders:
         s.openai_api_key = None
         s.anthropic_api_key = None
         s.cohere_api_key = None
+        s.openrouter_api_key = None
         s.ollama_base_url = "http://localhost:11434"
         import os as _os
 

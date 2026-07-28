@@ -838,7 +838,13 @@ _VALID_ARTIFACT_TYPES = VALID_ARTIFACT_TYPES
 
 
 def _artifact_slug(title: str) -> str:
-    """Converte título em slug kebab-case para nome de arquivo."""
+    """Converte título em slug kebab-case para nome de arquivo.
+
+    Nunca trunca — títulos longos e descritivos são o comportamento
+    desejado (ver tests/unit/test_artifact_slug.py, que existe
+    especificamente para travar contra reintroduzir um limite de 50
+    caracteres).
+    """
     slug = title.lower()
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[\s_]+", "-", slug)

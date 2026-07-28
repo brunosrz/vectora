@@ -526,8 +526,14 @@ async def stream_chat(
     if planning_mode:
         configurable["planning_mode"] = True
 
+    # Usa o model spec BRUTO (pré-normalização de `_build_configurable`) —
+    # `configurable["model"]` já converteu o provider pra underscore
+    # (`_normalize_model_spec`, formato que o `init_chat_model` exige), mas
+    # `VISION_CAPABLE_PROVIDERS`/`AVAILABLE_MODELS` usam a convenção com
+    # hífen do resto de settings.py; comparar contra a forma normalizada
+    # bloqueava até modelos com suporte real a visão (ex.: Gemini).
     has_image = any(att.kind == AttachmentKind.IMAGE for att in request.attachments)
-    if has_image and _resolve_provider(configurable.get("model", "")) not in (
+    if has_image and _resolve_provider(request.config.model) not in (
         VISION_CAPABLE_PROVIDERS
     ):
         return StreamingResponse(

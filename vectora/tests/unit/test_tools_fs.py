@@ -606,11 +606,13 @@ class TestArtifactSlug:
         slug = _artifact_slug("Plano de Implementacao")
         assert slug == "plano-de-implementacao"
 
-    def test_max_length(self):
+    def test_long_title_not_truncated(self):
+        """Sem limite de comprimento (ver tests/unit/test_artifact_slug.py —
+        um limite de 50 chars foi um bug já corrigido de propósito)."""
         from backend.tools.fs import _artifact_slug
 
         long_title = "a" * 100
-        assert len(_artifact_slug(long_title)) <= 50
+        assert len(_artifact_slug(long_title)) == 100
 
     def test_empty_falls_back(self):
         from backend.tools.fs import _artifact_slug

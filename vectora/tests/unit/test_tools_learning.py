@@ -32,7 +32,10 @@ async def test_learn_from_session_returns_deduped_proposal(monkeypatch):
         agent_factory,
         "aget_thread_messages",
         AsyncMock(
-            return_value=[("human", "bug no streaming", ""), ("ai", "corrigido", "")]
+            return_value=[
+                ("human", "bug no streaming", "", []),
+                ("ai", "corrigido", "", []),
+            ]
         ),
     )
     monkeypatch.setattr(
@@ -82,7 +85,7 @@ async def test_learn_from_session_no_signal_returns_empty_lists_not_error(
     monkeypatch.setattr(
         agent_factory,
         "aget_thread_messages",
-        AsyncMock(return_value=[("human", "oi", "")]),
+        AsyncMock(return_value=[("human", "oi", "", [])]),
     )
     monkeypatch.setattr(
         "backend.tools.learning.distill_transcript",

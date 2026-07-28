@@ -20,6 +20,7 @@ def _make_msg(type_: str, content: str) -> MagicMock:
     msg = MagicMock()
     msg.type = type_
     msg.content = content
+    msg.additional_kwargs = {}
     return msg
 
 
@@ -231,6 +232,7 @@ class TestAgetThreadMessages:
             {"type": "text", "text": "Parte 1"},
             {"type": "text", "text": " Parte 2"},
         ]
+        msg.additional_kwargs = {}
         history = _mock_history([([msg], "cp0")])
         mock_graph = AsyncMock()
         mock_graph.aget_state_history = MagicMock(return_value=_async_iter(history))

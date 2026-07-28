@@ -178,12 +178,21 @@ async def test_no_token_never_marks_thread_as_having_content():
 
 
 @pytest.mark.asyncio
-async def test_stops_consuming_events_when_client_disconnects_mid_stream():
+async def test_stops_consuming_events_when_client_disconnects_mid_stream(
+    _no_nats_sidecar,
+):
     """Regressão: cancelar o fetch no cliente não tinha efeito enquanto o
     modelo estivesse "pensando" sem produzir token — o backend seguia
     rodando o LangGraph até o próximo evento aparecer sozinho. Agora a
     checagem de desconexão corre em paralelo ao consumo de cada evento
     (asyncio.wait/FIRST_COMPLETED), não só depois que um evento chegar.
+
+    A resposta ao cliente termina em ``done`` assim que a desconexão é
+    confirmada — mas o generator NÃO é fechado: é transferido pra uma task
+    de background (``_consume_remainder``), pra manter a sessão viva
+    (multi-tarefas, ver persistência de sessão em background) mesmo depois
+    do cliente sair. Cortar o generator de verdade mataria a geração da
+    resposta no meio, perdendo o trabalho já em andamento.
     """
     torn_down = {"value": False}
 
@@ -210,9 +219,9 @@ async def test_stops_consuming_events_when_client_disconnects_mid_stream():
     tokens = [e for e in out if e["type"] == "token"]
     assert [t["content"] for t in tokens] == ["um"]
     assert out[-1]["type"] == "done"
-    # O generator (e tudo que ele estivesse aguardando — a chamada real ao
-    # provider) foi encerrado, não só abandonado enquanto seguia rodando.
-    assert torn_down["value"] is True
+    # O generator segue vivo em background (não foi fechado) — ainda está
+    # bloqueado no `asyncio.sleep(10)`, então o `finally` ainda não rodou.
+    assert torn_down["value"] is False
 
 
 @pytest.mark.asyncio

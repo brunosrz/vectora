@@ -102,9 +102,9 @@ async def test_aget_thread_messages_filters_tool_and_empty(
     pairs = await aget_thread_messages("t1")
 
     assert pairs == [
-        ("human", "oi", "cp-inicial"),
-        ("assistant", "olá", "cp-apos-human"),
-        ("assistant", "resposta final", "cp-apos-human"),
+        ("human", "oi", "cp-inicial", []),
+        ("assistant", "olá", "cp-apos-human", []),
+        ("assistant", "resposta final", "cp-apos-human", []),
     ]
 
 

@@ -75,10 +75,10 @@ async def test_returns_clean_human_assistant_pairs(monkeypatch):
     pairs = await agent_factory.aget_thread_messages("tid")
 
     assert pairs == [
-        ("human", "oi", ""),
-        ("assistant", "Olá! Como posso ajudar?", ""),
-        ("human", "liste arquivos", ""),
-        ("assistant", "Encontrei 2 arquivos.", ""),
+        ("human", "oi", "", []),
+        ("assistant", "Olá! Como posso ajudar?", "", []),
+        ("human", "liste arquivos", "", []),
+        ("assistant", "Encontrei 2 arquivos.", "", []),
     ]
 
 
@@ -91,7 +91,10 @@ async def test_multimodal_assistant_content_extracted(monkeypatch):
     _patch_graph(monkeypatch, messages)
 
     pairs = await agent_factory.aget_thread_messages("tid")
-    assert pairs == [("human", "oi", ""), ("assistant", "resposta multimodal", "")]
+    assert pairs == [
+        ("human", "oi", "", []),
+        ("assistant", "resposta multimodal", "", []),
+    ]
 
 
 @pytest.mark.asyncio
