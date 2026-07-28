@@ -24,11 +24,50 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module")
-def app():
+def app(tmp_path_factory):
+    """App FastAPI com banco de registro (Ollama/OpenRouter) isolado.
+
+    ``provider_routing._get_db()`` reusa o MESMO singleton de
+    ``threads._get_db()`` (``~/.vectora/checkpoints.db`` real por padrão) —
+    sem isolar aqui, os testes de registro/duplicata (``dup-model``,
+    ``dup/model``) gravam permanentemente no banco real do usuário.
+    """
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+
+    import aiosqlite
+
+    import backend.api.handlers.threads as threads_mod
+
+    tmp = tmp_path_factory.mktemp("provider_routing")
+    db_file = str(tmp / "test_provider_routing.db")
+    threads_mod._db_conn = None
+
+    async def _patched_get_db():
+        if threads_mod._db_conn is not None:
+            return threads_mod._db_conn
+        conn = await aiosqlite.connect(db_file)
+        await conn.executescript(
+            "PRAGMA journal_mode=WAL;"
+            "PRAGMA busy_timeout=30000;"
+            "PRAGMA synchronous=NORMAL;"
+        )
+        threads_mod._db_conn = conn
+        return conn
+
+    threads_mod._get_db = _patched_get_db  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
+
     from backend.api.server import create_app
 
-    return create_app(serve_static=False)
+    yield create_app(serve_static=False)
+
+    import asyncio
+
+    async def _close():
+        if threads_mod._db_conn is not None:
+            await threads_mod._db_conn.close()
+            threads_mod._db_conn = None
+
+    asyncio.run(_close())
 
 
 @pytest.fixture(scope="module")
@@ -49,7 +88,19 @@ def clean_openrouter_key():
 
 class TestOllamaDiscovery:
     def test_host_unreachable_returns_reachable_false_not_500(self, client):
-        resp = client.get("/provider-routing/ollama/models")
+        # Mocka a falha de conexão explicitamente — não depende da ausência
+        # de um Ollama real rodando na máquina de dev (ver memória
+        # test-hermeticity-ambient-binary.md: contar com a ausência de um
+        # binário/serviço externo quebra assim que ele existir de verdade).
+        with patch("httpx.AsyncClient") as mock_httpx:
+            mock_ctx = AsyncMock()
+            mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
+            mock_ctx.__aexit__ = AsyncMock(return_value=False)
+            mock_ctx.get = AsyncMock(side_effect=httpx.ConnectError("refused"))
+            mock_httpx.return_value = mock_ctx
+
+            resp = client.get("/provider-routing/ollama/models")
+
         assert resp.status_code == 200
         body = resp.json()
         assert body["reachable"] is False

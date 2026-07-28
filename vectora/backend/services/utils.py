@@ -75,6 +75,10 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 temperature=temperature,
                 timeout=None,
                 max_retries=0,
+                # langchain_openai aplica um timeout de 120s entre chunks de
+                # streaming por padrão — dispara em pausas normais de
+                # raciocínio (modelo "pensando" minutos sem emitir token).
+                stream_chunk_timeout=None,
             )
         case "anthropic":
             from langchain_anthropic import ChatAnthropic
@@ -137,6 +141,10 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 temperature=temperature,
                 timeout=None,
                 max_retries=0,
+                # Mesmo motivo do caso "openai" acima: sem isso, modelos de
+                # raciocínio via OpenRouter derrubam o stream após 120s de
+                # silêncio "pensando".
+                stream_chunk_timeout=None,
             )
         case _:
             msg = (
