@@ -8,26 +8,162 @@
  * (trechos da base de conhecimento + resultados web) em pílulas expansíveis.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Brain,
   ChevronRight,
   Database,
+  Folder,
   Globe,
   Loader2,
+  Plus,
   Search,
+  Trash2,
 } from "lucide-react";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { MarkdownView } from "@/components/workbench/markdown-view";
+import { Switch } from "@/components/ui/switch";
+import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
 import {
   RagSettingsButton,
   RagSettingsSlidePanel,
   useRagSettings,
 } from "@/components/workbench/rag-settings-panel";
 import { m } from "@/lib/paraglide/messages";
+
+interface RagBucketEntry {
+  id: string;
+  name: string;
+  description_md: string;
+  source_path: string | null;
+  created_at: string;
+  active: boolean;
+}
+
+/** Painel de buckets do workspace (Sprint 6) — lista + toggle ativo/
+ * inativo + remover + atalho pra indexar pasta nova sem depender do
+ * composer de chat (Sprint 1.1/1.2, `GET/PATCH/DELETE
+ * /workspaces/{id}/rag/buckets`). */
+function useWorkspaceRagBuckets(workspaceId: string | undefined) {
+  const [buckets, setBuckets] = useState<RagBucketEntry[]>([]);
+
+  const refetch = useCallback(() => {
+    if (!workspaceId) {
+      setBuckets([]);
+      return;
+    }
+    fetch(`/workspaces/${encodeURIComponent(workspaceId)}/rag/buckets`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: RagBucketEntry[]) =>
+        setBuckets(Array.isArray(data) ? data : []),
+      )
+      .catch(() => setBuckets([]));
+  }, [workspaceId]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { buckets, refetch };
+}
+
+function BucketsPanel() {
+  const workspaceId = useWorkspacesStore((s) => s.getActive()?.id);
+  const { buckets, refetch } = useWorkspaceRagBuckets(workspaceId);
+  const [ingestOpen, setIngestOpen] = useState(false);
+
+  async function handleToggle(bucketId: string, active: boolean) {
+    if (!workspaceId) return;
+    await fetch(
+      `/workspaces/${encodeURIComponent(workspaceId)}/rag/buckets/${encodeURIComponent(bucketId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active }),
+      },
+    );
+    refetch();
+  }
+
+  async function handleRemove(bucketId: string) {
+    if (!workspaceId) return;
+    if (!window.confirm(m.workbench_memory_buckets_remove_confirm())) return;
+    await fetch(
+      `/workspaces/${encodeURIComponent(workspaceId)}/rag/buckets/${encodeURIComponent(bucketId)}`,
+      { method: "DELETE" },
+    );
+    refetch();
+  }
+
+  if (!workspaceId) return null;
+
+  return (
+    <section className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Folder className="h-3 w-3" />
+          {m.workbench_memory_buckets_title()}
+        </h3>
+        <button
+          type="button"
+          onClick={() => setIngestOpen(true)}
+          className="flex items-center gap-1 text-[10px] text-primary hover:underline"
+        >
+          <Plus className="h-3 w-3" />
+          {m.workbench_memory_buckets_index_button()}
+        </button>
+      </div>
+      {buckets.length === 0 ? (
+        <p className="px-2.5 py-2 text-xs text-muted-foreground">
+          {m.workbench_memory_buckets_empty()}
+        </p>
+      ) : (
+        buckets.map((bucket) => (
+          <div
+            key={bucket.id}
+            className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-foreground">
+                {bucket.name}
+              </p>
+              {bucket.source_path && (
+                <p className="truncate text-[10px] text-muted-foreground">
+                  {bucket.source_path}
+                </p>
+              )}
+            </div>
+            <Switch
+              checked={bucket.active}
+              onCheckedChange={(checked) =>
+                void handleToggle(bucket.id, checked)
+              }
+            />
+            <button
+              type="button"
+              onClick={() => void handleRemove(bucket.id)}
+              aria-label={m.workbench_memory_buckets_remove()}
+              className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))
+      )}
+      <WorkspaceTrustDialog
+        open={ingestOpen}
+        onOpenChange={(open) => {
+          setIngestOpen(open);
+          if (!open) refetch();
+        }}
+        mode="ingest"
+      />
+    </section>
+  );
+}
 
 interface WorkspaceRagCollection {
   name: string;
@@ -321,27 +457,27 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
           />
         </div>
         <RagSettingsSlidePanel {...ragSettings} />
-        {searchSection ? (
-          <div className="flex-1 space-y-4 overflow-auto px-3 py-3">
-            {searchSection}
-          </div>
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-            <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
-            <div className="max-w-[240px]">
-              <p className="text-sm font-medium text-foreground">
-                {indexedInWorkspace > 0
-                  ? m.workbench_memory_indexed_title()
-                  : m.workbench_memory_empty_title()}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                {indexedInWorkspace > 0
-                  ? m.workbench_memory_indexed_desc({ n: indexedInWorkspace })
-                  : m.workbench_memory_empty_desc()}
-              </p>
+        <div className="flex-1 space-y-4 overflow-auto px-3 py-3">
+          <BucketsPanel />
+          {searchSection}
+          {!searchSection && (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+              <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
+              <div className="max-w-[240px]">
+                <p className="text-sm font-medium text-foreground">
+                  {indexedInWorkspace > 0
+                    ? m.workbench_memory_indexed_title()
+                    : m.workbench_memory_empty_title()}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {indexedInWorkspace > 0
+                    ? m.workbench_memory_indexed_desc({ n: indexedInWorkspace })
+                    : m.workbench_memory_empty_desc()}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   }
@@ -357,6 +493,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
       </div>
       <RagSettingsSlidePanel {...ragSettings} />
       <div className="flex-1 space-y-4 overflow-auto px-3 pb-3 pt-3">
+        <BucketsPanel />
         {searchSection}
         {hasActivity && (
           <section className="space-y-1.5">

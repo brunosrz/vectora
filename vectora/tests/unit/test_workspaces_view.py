@@ -663,6 +663,97 @@ class TestListRagBuckets:
         assert resp == []
 
 
+class TestToggleAndDeleteRagBucket:
+    """PATCH/DELETE /workspaces/{id}/rag/buckets/{bucket_id} — reaproveitam
+    rag_buckets.set_active/delete_bucket, usados pelo toggle e pelo botão
+    remover do painel de buckets (Sprint 6)."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated_runtime_settings(self, tmp_path, monkeypatch):
+        from backend.workspace import runtime_settings as rs_mod
+
+        isolated = rs_mod.RuntimeSettings(path=tmp_path / "checkpoints.db")
+        monkeypatch.setattr(rs_mod, "runtime_settings", isolated)
+        return isolated
+
+    @pytest.mark.asyncio
+    async def test_toggle_desativa_bucket(self, trusted_ws, _isolated_runtime_settings):
+        from backend.api.handlers.workspaces import (
+            RagBucketToggleRequest,
+            list_rag_buckets,
+            toggle_rag_bucket,
+        )
+        from backend.services import rag_buckets
+
+        wsid, _root = trusted_ws
+        bucket = rag_buckets.create_bucket(
+            _isolated_runtime_settings, workspace_id=wsid, name="Docs"
+        )
+        rag_buckets.set_active(
+            _isolated_runtime_settings,
+            workspace_id=wsid,
+            bucket_id=bucket.id,
+            active=True,
+        )
+
+        await toggle_rag_bucket(
+            workspace_id=wsid,
+            bucket_id=bucket.id,
+            body=RagBucketToggleRequest(active=False),
+        )
+
+        listed = await list_rag_buckets(workspace_id=wsid)
+        assert listed[0].active is False
+
+    @pytest.mark.asyncio
+    async def test_toggle_bucket_inexistente_nao_lanca(
+        self, trusted_ws, _isolated_runtime_settings
+    ):
+        from backend.api.handlers.workspaces import (
+            RagBucketToggleRequest,
+            toggle_rag_bucket,
+        )
+
+        wsid, _root = trusted_ws
+
+        resp = await toggle_rag_bucket(
+            workspace_id=wsid,
+            bucket_id="nao-existe",
+            body=RagBucketToggleRequest(active=True),
+        )
+
+        assert resp.active is True
+
+    @pytest.mark.asyncio
+    async def test_delete_remove_do_catalogo(
+        self, trusted_ws, _isolated_runtime_settings
+    ):
+        from backend.api.handlers.workspaces import delete_rag_bucket, list_rag_buckets
+        from backend.services import rag_buckets
+
+        wsid, _root = trusted_ws
+        bucket = rag_buckets.create_bucket(
+            _isolated_runtime_settings, workspace_id=wsid, name="Docs"
+        )
+
+        resp = await delete_rag_bucket(workspace_id=wsid, bucket_id=bucket.id)
+
+        assert resp == {"ok": True}
+        assert await list_rag_buckets(workspace_id=wsid) == []
+
+    @pytest.mark.asyncio
+    async def test_delete_idempotente_bucket_ja_ausente(
+        self, trusted_ws, _isolated_runtime_settings
+    ):
+        from backend.api.handlers.workspaces import delete_rag_bucket
+
+        wsid, _root = trusted_ws
+
+        resp = await delete_rag_bucket(workspace_id=wsid, bucket_id="nao-existe")
+
+        assert resp == {"ok": True}
+
+
 class TestSandboxStatus:
     """GET /workspaces/{id}/sandbox/status — reflete se o worker jailado
     (AI Jail) está habilitado, lendo vectora.toml/[sandbox], e populado com

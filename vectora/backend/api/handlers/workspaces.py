@@ -3524,6 +3524,45 @@ async def list_rag_buckets(workspace_id: str) -> list[RagBucketResponse]:
     ]
 
 
+class RagBucketToggleRequest(BaseModel):
+    active: bool
+
+
+@view_router.patch(
+    "/{workspace_id}/rag/buckets/{bucket_id}", response_model=RagBucketToggleRequest
+)
+async def toggle_rag_bucket(
+    workspace_id: str, bucket_id: str, body: RagBucketToggleRequest
+) -> RagBucketToggleRequest:
+    """Ativa/desativa `bucket_id` na busca do workspace — reaproveita
+    `rag_buckets.set_active` (Sprint 1.1), sem lógica nova."""
+    from backend.services import rag_buckets
+    from backend.workspace.runtime_settings import runtime_settings
+
+    rag_buckets.set_active(
+        runtime_settings,
+        workspace_id=workspace_id,
+        bucket_id=bucket_id,
+        active=body.active,
+    )
+    return body
+
+
+@view_router.delete("/{workspace_id}/rag/buckets/{bucket_id}")
+async def delete_rag_bucket(workspace_id: str, bucket_id: str) -> dict:
+    """Remove o bucket do catálogo e de qualquer lista de ativos —
+    reaproveita `rag_buckets.delete_bucket` (idempotente). Não apaga a
+    tabela LanceDB (`bucket_{bucket_id}`) — só o registro no catálogo,
+    mesmo padrão de "soft" já usado por outras remoções de metadata do
+    produto (a tabela vetorial fica órfã, mas nunca é lida sem o registro
+    no catálogo apontando pra ela)."""
+    from backend.services import rag_buckets
+    from backend.workspace.runtime_settings import runtime_settings
+
+    rag_buckets.delete_bucket(runtime_settings, bucket_id)
+    return {"ok": True}
+
+
 @view_router.post("/{workspace_id}/rag/ingest", response_model=RagIngestResponse)
 async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResponse:
     """Indexa uma pasta no RAG diretamente (walk + chunk + enqueue por job).

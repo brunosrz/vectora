@@ -101,6 +101,9 @@ describe("MemoryTab", () => {
             }),
           );
         }
+        if (String(url).includes("/rag/buckets")) {
+          return new Response(JSON.stringify([]));
+        }
         throw new Error(`unmocked fetch: ${url}`);
       }),
     );
@@ -196,6 +199,9 @@ describe("MemoryTab", () => {
           }),
         );
       }
+      if (String(url).includes("/rag/buckets")) {
+        return new Response(JSON.stringify([]));
+      }
       throw new Error(`unmocked fetch: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -211,7 +217,7 @@ describe("MemoryTab", () => {
       () => expect(screen.getAllByText("articles").length).toBeGreaterThan(0),
       { timeout: 2000 },
     );
-    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: /articles/ }));
     expect(screen.getByText("trecho sobre auth")).toBeInTheDocument();
   });
 
@@ -224,6 +230,9 @@ describe("MemoryTab", () => {
         }
         if (String(url) === "/rag/search") {
           return new Response(JSON.stringify({ results: [] }));
+        }
+        if (String(url).includes("/rag/buckets")) {
+          return new Response(JSON.stringify([]));
         }
         throw new Error(`unmocked fetch: ${url}`);
       }),
@@ -243,5 +252,169 @@ describe("MemoryTab", () => {
         ).toBeInTheDocument(),
       { timeout: 2000 },
     );
+  });
+
+  describe("painel de buckets (Sprint 6)", () => {
+    function bucketsFetchMock(
+      buckets: {
+        id: string;
+        name: string;
+        description_md: string;
+        source_path: string | null;
+        created_at: string;
+        active: boolean;
+      }[],
+    ) {
+      return vi.fn(async (url: string, init?: RequestInit) => {
+        if (String(url).includes("/rag/workspace-summary")) {
+          return new Response(JSON.stringify({ collections: [] }));
+        }
+        if (String(url) === "/workspaces/ws-1/rag/buckets") {
+          return new Response(JSON.stringify(buckets));
+        }
+        if (
+          String(url).startsWith("/workspaces/ws-1/rag/buckets/") &&
+          init?.method === "PATCH"
+        ) {
+          return new Response(JSON.stringify({ active: true }));
+        }
+        if (
+          String(url).startsWith("/workspaces/ws-1/rag/buckets/") &&
+          init?.method === "DELETE"
+        ) {
+          return new Response(JSON.stringify({ ok: true }));
+        }
+        throw new Error(`unmocked fetch: ${url}`);
+      });
+    }
+
+    it("lista os buckets do workspace ativo", async () => {
+      vi.stubGlobal(
+        "fetch",
+        bucketsFetchMock([
+          {
+            id: "b1",
+            name: "Docs internos",
+            description_md: "",
+            source_path: "/x/docs",
+            created_at: "2026-01-01T00:00:00Z",
+            active: true,
+          },
+        ]),
+      );
+
+      render(<MemoryTab threadId="t1" />);
+
+      await waitFor(() =>
+        expect(screen.getByText("Docs internos")).toBeInTheDocument(),
+      );
+      expect(screen.getByText("/x/docs")).toBeInTheDocument();
+    });
+
+    it("erro/borda: workspace sem buckets mostra o estado vazio do painel", async () => {
+      vi.stubGlobal("fetch", bucketsFetchMock([]));
+
+      render(<MemoryTab threadId="t1" />);
+
+      await waitFor(() =>
+        expect(
+          screen.getByText("workbench_memory_buckets_empty"),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it("alternar o switch de um bucket chama PATCH com o novo estado", async () => {
+      const fetchMock = bucketsFetchMock([
+        {
+          id: "b1",
+          name: "Docs internos",
+          description_md: "",
+          source_path: null,
+          created_at: "2026-01-01T00:00:00Z",
+          active: true,
+        },
+      ]);
+      vi.stubGlobal("fetch", fetchMock);
+
+      render(<MemoryTab threadId="t1" />);
+
+      await waitFor(() =>
+        expect(screen.getByText("Docs internos")).toBeInTheDocument(),
+      );
+      fireEvent.click(screen.getByRole("switch"));
+
+      await waitFor(() => {
+        const calls = fetchMock.mock.calls;
+        expect(
+          calls.some(
+            (c) =>
+              c[0] === "/workspaces/ws-1/rag/buckets/b1" &&
+              (c[1] as RequestInit)?.method === "PATCH",
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it("remover um bucket pede confirmação e chama DELETE", async () => {
+      const fetchMock = bucketsFetchMock([
+        {
+          id: "b1",
+          name: "Docs internos",
+          description_md: "",
+          source_path: null,
+          created_at: "2026-01-01T00:00:00Z",
+          active: true,
+        },
+      ]);
+      vi.stubGlobal("fetch", fetchMock);
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+      render(<MemoryTab threadId="t1" />);
+
+      await waitFor(() =>
+        expect(screen.getByText("Docs internos")).toBeInTheDocument(),
+      );
+      fireEvent.click(screen.getByLabelText("workbench_memory_buckets_remove"));
+
+      await waitFor(() => {
+        const calls = fetchMock.mock.calls;
+        expect(
+          calls.some(
+            (c) =>
+              c[0] === "/workspaces/ws-1/rag/buckets/b1" &&
+              (c[1] as RequestInit)?.method === "DELETE",
+          ),
+        ).toBe(true);
+      });
+      confirmSpy.mockRestore();
+    });
+
+    it("erro/borda: cancelar a confirmação não chama DELETE", async () => {
+      const fetchMock = bucketsFetchMock([
+        {
+          id: "b1",
+          name: "Docs internos",
+          description_md: "",
+          source_path: null,
+          created_at: "2026-01-01T00:00:00Z",
+          active: true,
+        },
+      ]);
+      vi.stubGlobal("fetch", fetchMock);
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+      render(<MemoryTab threadId="t1" />);
+
+      await waitFor(() =>
+        expect(screen.getByText("Docs internos")).toBeInTheDocument(),
+      );
+      fireEvent.click(screen.getByLabelText("workbench_memory_buckets_remove"));
+
+      const calls = fetchMock.mock.calls;
+      expect(
+        calls.some((c) => (c[1] as RequestInit)?.method === "DELETE"),
+      ).toBe(false);
+      confirmSpy.mockRestore();
+    });
   });
 });
