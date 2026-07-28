@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  ChevronRight,
   Loader2,
   Plus,
   Play,
@@ -57,6 +58,109 @@ function statusLabel(status: string): string {
   if (status === "awaiting_approval") return m.background_status_awaiting();
   if (status === "cancelled") return m.background_status_cancelled();
   return m.background_status_running();
+}
+
+interface BackgroundRun {
+  id: string;
+  task_id: string;
+  run_thread_id: string | null;
+  trigger_source: string;
+  status: string;
+  summary: string | null;
+  started_at: string;
+  finished_at: string | null;
+}
+
+/** Card de execução — colapsado por padrão (título curto, quebra em
+ * múltiplas linhas nunca overflow horizontal); clicar expande revelando o
+ * `summary` completo. Botões de ação (aprovar/rejeitar/cancelar/abrir
+ * thread) ficam sempre visíveis no cabeçalho, independente do estado de
+ * expansão — nunca escondidos atrás de um clique extra. */
+function RunItem({
+  run,
+  onResolve,
+  onOpenThread,
+}: {
+  run: BackgroundRun;
+  onResolve: (decision: "approve" | "reject" | "cancel") => void;
+  onOpenThread: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasDetail = Boolean(run.summary?.trim());
+
+  return (
+    <li className="border border-border/40 rounded overflow-hidden">
+      <div className="flex items-center justify-between gap-2 px-2 py-1">
+        <button
+          type="button"
+          onClick={() => hasDetail && setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          disabled={!hasDetail}
+          className="flex min-w-0 flex-1 items-center gap-1 text-left disabled:cursor-default"
+        >
+          {hasDetail && (
+            <ChevronRight
+              className={`w-3 h-3 shrink-0 text-muted-foreground transition-transform ${
+                expanded ? "rotate-90" : ""
+              }`}
+            />
+          )}
+          <span
+            className={`shrink-0 ${
+              run.status === "error"
+                ? "text-destructive"
+                : run.status === "done"
+                  ? "text-emerald-500"
+                  : "text-amber-500"
+            }`}
+          >
+            {statusLabel(run.status)}
+          </span>
+          <span className="min-w-0 flex-1 break-words text-muted-foreground line-clamp-1">
+            {run.summary ?? ""}
+          </span>
+        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {run.status === "awaiting_approval" && (
+            <>
+              <button
+                onClick={() => onResolve("approve")}
+                className="px-1.5 py-0.5 text-[10px] rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25"
+              >
+                {m.background_approve()}
+              </button>
+              <button
+                onClick={() => onResolve("reject")}
+                className="px-1.5 py-0.5 text-[10px] rounded bg-muted hover:bg-muted/70"
+              >
+                {m.background_reject()}
+              </button>
+              <button
+                onClick={() => onResolve("cancel")}
+                className="px-1.5 py-0.5 text-[10px] rounded bg-destructive/15 text-destructive hover:bg-destructive/25"
+              >
+                {m.background_cancel_run()}
+              </button>
+            </>
+          )}
+          {run.run_thread_id && (
+            <button
+              onClick={onOpenThread}
+              title={m.background_open_thread()}
+              className="p-1 text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      {expanded && hasDetail && (
+        <pre className="mx-2 mb-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/30 p-2 text-[10px] text-muted-foreground">
+          {run.summary}
+        </pre>
+      )}
+    </li>
+  );
 }
 
 /** Resolve uma run pausada em HITL (approve/reject/cancel) via o endpoint. */
@@ -366,77 +470,21 @@ export function TasksTab({ threadId }: { threadId: string }) {
             ) : (
               <ul className="space-y-1" data-testid="background-run-list">
                 {runs.map((r) => (
-                  <li
+                  <RunItem
                     key={r.id}
-                    className="flex items-center justify-between gap-2 border border-border/40 rounded px-2 py-1"
-                  >
-                    <div className="min-w-0">
-                      <span
-                        className={
-                          r.status === "error"
-                            ? "text-destructive"
-                            : r.status === "done"
-                              ? "text-emerald-500"
-                              : "text-amber-500"
-                        }
-                      >
-                        {statusLabel(r.status)}
-                      </span>
-                      <span className="text-muted-foreground ml-2 truncate">
-                        {r.summary ?? ""}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      {r.status === "awaiting_approval" && (
-                        <>
-                          <button
-                            onClick={() =>
-                              void resolveRun(threadId, r.id, "approve").then(
-                                () => refetch(),
-                              )
-                            }
-                            className="px-1.5 py-0.5 text-[10px] rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25"
-                          >
-                            {m.background_approve()}
-                          </button>
-                          <button
-                            onClick={() =>
-                              void resolveRun(threadId, r.id, "reject").then(
-                                () => refetch(),
-                              )
-                            }
-                            className="px-1.5 py-0.5 text-[10px] rounded bg-muted hover:bg-muted/70"
-                          >
-                            {m.background_reject()}
-                          </button>
-                          <button
-                            onClick={() =>
-                              void resolveRun(threadId, r.id, "cancel").then(
-                                () => refetch(),
-                              )
-                            }
-                            className="px-1.5 py-0.5 text-[10px] rounded bg-destructive/15 text-destructive hover:bg-destructive/25"
-                          >
-                            {m.background_cancel_run()}
-                          </button>
-                        </>
-                      )}
-                      {r.run_thread_id && (
-                        <button
-                          onClick={() =>
-                            void navigate({
-                              to: "/session/$threadId",
-                              params: { threadId: r.run_thread_id as string },
-                            })
-                          }
-                          title={m.background_open_thread()}
-                          className="p-1 text-muted-foreground hover:text-foreground"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </li>
+                    run={r}
+                    onResolve={(decision) =>
+                      void resolveRun(threadId, r.id, decision).then(() =>
+                        refetch(),
+                      )
+                    }
+                    onOpenThread={() =>
+                      void navigate({
+                        to: "/session/$threadId",
+                        params: { threadId: r.run_thread_id as string },
+                      })
+                    }
+                  />
                 ))}
               </ul>
             )}

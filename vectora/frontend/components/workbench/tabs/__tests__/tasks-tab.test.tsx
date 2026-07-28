@@ -5,7 +5,7 @@
  * aplicam a uma tarefa-âncora auto-gerenciada pelo backend.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { TasksTab } from "../tasks-tab";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -96,7 +96,6 @@ describe("TasksTab", () => {
   });
 
   it("run awaiting_approval mostra aprovar/rejeitar/cancelar e aprova via endpoint (Sprint 3.4)", async () => {
-    const { fireEvent } = await import("@testing-library/react");
     const fetchMock = vi
       .fn()
       .mockResolvedValue({ ok: true, json: async () => ({}) });
@@ -141,7 +140,6 @@ describe("TasksTab", () => {
   });
 
   it("rejeitar envia decision='reject' e refetch depois; cancelar envia decision='cancel'", async () => {
-    const { fireEvent } = await import("@testing-library/react");
     const fetchMock = vi
       .fn()
       .mockResolvedValue({ ok: true, json: async () => ({}) });
@@ -242,5 +240,103 @@ describe("TasksTab", () => {
     render(<TasksTab threadId="t1" />);
 
     expect(screen.getByTestId("background-run-now")).toBeInTheDocument();
+  });
+
+  describe("card de execução colapsado (Sprint 8)", () => {
+    function runsHook(summary: string, status = "done") {
+      return baseHook({
+        runs: [
+          {
+            id: "run-1",
+            task_id: "t1",
+            run_thread_id: "bg-t1-1",
+            trigger_source: "manual",
+            status,
+            summary,
+            started_at: "2025",
+            finished_at: "2025",
+          },
+        ],
+      });
+    }
+
+    it("mostra o card fechado por padrão (aria-expanded=false)", () => {
+      mockTasks.mockReturnValue(
+        runsHook(
+          "Command(update={'files': {'a.py': 'conteúdo bem longo...'}})",
+        ),
+      );
+
+      render(<TasksTab threadId="t1" />);
+
+      expect(
+        screen.getByRole("button", { name: /background_status_done/ }),
+      ).toHaveAttribute("aria-expanded", "false");
+    });
+
+    it("clicar no card expande e mostra o summary completo em <pre>", () => {
+      const longSummary =
+        "Command(update={'files': {'a.py': 'conteúdo bem longo que não cabe numa linha só'}})";
+      mockTasks.mockReturnValue(runsHook(longSummary));
+
+      render(<TasksTab threadId="t1" />);
+      const toggle = screen.getByRole("button", {
+        name: /background_status_done/,
+      });
+      fireEvent.click(toggle);
+
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      const pre = document.querySelector("pre");
+      expect(pre?.textContent).toBe(longSummary);
+    });
+
+    it("erro/borda: run sem summary não vira botão clicável (nada pra expandir)", () => {
+      mockTasks.mockReturnValue(runsHook(""));
+
+      render(<TasksTab threadId="t1" />);
+
+      const toggle = screen.getByRole("button", {
+        name: /background_status_done/,
+      });
+      expect(toggle).toBeDisabled();
+    });
+
+    it("múltiplos cards expandem independentemente", () => {
+      mockTasks.mockReturnValue(
+        baseHook({
+          runs: [
+            {
+              id: "run-1",
+              task_id: "t1",
+              run_thread_id: "bg-t1-1",
+              trigger_source: "manual",
+              status: "done",
+              summary: "resumo 1",
+              started_at: "2025",
+              finished_at: "2025",
+            },
+            {
+              id: "run-2",
+              task_id: "t1",
+              run_thread_id: "bg-t1-2",
+              trigger_source: "manual",
+              status: "error",
+              summary: "resumo 2",
+              started_at: "2025",
+              finished_at: "2025",
+            },
+          ],
+        }),
+      );
+
+      render(<TasksTab threadId="t1" />);
+      const toggles = screen.getAllByRole("button", {
+        name: /background_status/,
+      });
+      fireEvent.click(toggles[0]);
+
+      expect(toggles[0]).toHaveAttribute("aria-expanded", "true");
+      expect(toggles[1]).toHaveAttribute("aria-expanded", "false");
+    });
   });
 });
