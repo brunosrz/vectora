@@ -1,8 +1,18 @@
-"""Sessão de browser headless (Playwright) persistente por workspace.
+"""Sessão de browser headless (Playwright) persistente por workspace,
+multi-aba, com buffers de observabilidade (console/network) por aba.
 
-Uma aba (`Page`) sobrevive entre chamadas de tool dentro do mesmo
-workspace — clicar/preencher/rolar constroem em cima da navegação
-anterior, em vez de reabrir a página do zero a cada tool call.
+Uma sessão (`browser`/`context`) sobrevive entre chamadas de tool dentro do
+mesmo workspace, e cada aba (`TabState`) sobrevive entre chamadas — clicar/
+preencher/rolar constroem em cima da navegação anterior, em vez de reabrir a
+página do zero a cada tool call. `get_browser_page(workspace_id)` sem
+`tab_id` sempre resolve pra aba ATIVA — retrocompatível com todas as tools
+de `backend/tools/browser.py`, que nunca precisam saber de abas.
+
+Cada aba ganha sua própria `CDPSession` (`context.new_cdp_session(page)`,
+criada uma vez, reaproveitada) e dois ring buffers (`console_log`/
+`network_log`, `collections.deque(maxlen=500)`) populados ao vivo via
+listeners do Playwright (`page.on("console"/"request"/"response"/
+"requestfailed")`) — usados por `backend/tools/browser_devtools.py`.
 
 Workspaces com `[sandbox]` habilitado (`vectora.toml`) ganham um perfil de
 browser isolado (`launch_persistent_context` num diretório próprio, nunca
@@ -13,12 +23,28 @@ browser dentro do jail acumule cookies/sessões que vazem entre workspaces.
 from __future__ import annotations
 
 import logging
+import uuid
+from collections import deque
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
+_LOG_MAXLEN = 500
+
 _sessions: dict[str, dict[str, Any]] = {}
+
+
+@dataclass
+class TabState:
+    """Estado de uma aba: página Playwright + sessão CDP + buffers de log."""
+
+    page: Any
+    cdp: Any
+    console_log: deque = field(default_factory=lambda: deque(maxlen=_LOG_MAXLEN))
+    network_log: deque = field(default_factory=lambda: deque(maxlen=_LOG_MAXLEN))
+    _request_entries: dict[int, dict[str, Any]] = field(default_factory=dict)
 
 
 def has_browser_session(workspace_id: str) -> bool:
@@ -57,11 +83,72 @@ def _jailed_profile_dir(workspace_id: str) -> Path | None:
         return None
 
 
-async def get_browser_page(workspace_id: str) -> Any:
-    """Retorna a `Page` ativa do workspace, criando o browser sob demanda."""
+def _register_page_listeners(tab: TabState) -> None:
+    """Popula os ring buffers de console/network ao vivo — cada listener é
+    defensivo (nunca deixa uma falha de parsing derrubar o evento seguinte).
+    """
+    page = tab.page
+
+    def _on_console(msg: Any) -> None:
+        try:
+            tab.console_log.append({"type": msg.type, "text": msg.text})
+        except Exception:
+            logger.debug("browser_session: falha ao capturar console log")
+
+    def _on_request(request: Any) -> None:
+        try:
+            entry = {
+                "request_id": str(id(request)),
+                "url": request.url,
+                "method": request.method,
+                "resource_type": request.resource_type,
+                "status": None,
+            }
+            tab.network_log.append(entry)
+            tab._request_entries[id(request)] = entry
+        except Exception:
+            logger.debug("browser_session: falha ao capturar network request")
+
+    def _on_response(response: Any) -> None:
+        try:
+            entry = tab._request_entries.get(id(response.request))
+            if entry is not None:
+                entry["status"] = response.status
+        except Exception:
+            logger.debug("browser_session: falha ao capturar network response")
+
+    def _on_request_failed(request: Any) -> None:
+        try:
+            entry = tab._request_entries.get(id(request))
+            if entry is not None:
+                entry["status"] = "failed"
+                entry["error"] = getattr(request.failure, "error_text", None)
+        except Exception:
+            logger.debug("browser_session: falha ao capturar falha de request")
+
+    page.on("console", _on_console)
+    page.on("request", _on_request)
+    page.on("response", _on_response)
+    page.on("requestfailed", _on_request_failed)
+
+
+async def _create_tab_state(page: Any) -> TabState:
+    cdp = await page.context.new_cdp_session(page)
+    tab = TabState(page=page, cdp=cdp)
+    _register_page_listeners(tab)
+    return tab
+
+
+async def get_browser_page(workspace_id: str, tab_id: str | None = None) -> Any:
+    """Retorna a `Page` da aba resolvida (ativa, se `tab_id` omitido),
+    criando o browser (e a primeira aba) sob demanda."""
     session = _sessions.get(workspace_id)
     if session is not None:
-        return session["page"]
+        resolved = tab_id or session["active_tab_id"]
+        tab = session["tabs"].get(resolved)
+        if tab is None:
+            raise ValueError(f"aba '{resolved}' não encontrada")
+        return tab.page
 
     from playwright.async_api import async_playwright
 
@@ -72,25 +159,109 @@ async def get_browser_page(workspace_id: str) -> Any:
             str(profile_dir), headless=True, viewport={"width": 1280, "height": 800}
         )
         page = context.pages[0] if context.pages else await context.new_page()
+        tab = await _create_tab_state(page)
+        first_tab_id = uuid.uuid4().hex[:12]
         _sessions[workspace_id] = {
             "playwright": playwright,
             "browser": context,
-            "page": page,
+            "tabs": {first_tab_id: tab},
+            "active_tab_id": first_tab_id,
         }
         logger.info(
             "browser_session_started_jailed", extra={"workspace_id": workspace_id}
         )
-        return page
+        return tab.page
 
     browser = await playwright.chromium.launch(headless=True)
     page = await browser.new_page(viewport={"width": 1280, "height": 800})
+    tab = await _create_tab_state(page)
+    first_tab_id = uuid.uuid4().hex[:12]
     _sessions[workspace_id] = {
         "playwright": playwright,
         "browser": browser,
-        "page": page,
+        "tabs": {first_tab_id: tab},
+        "active_tab_id": first_tab_id,
     }
     logger.info("browser_session_started", extra={"workspace_id": workspace_id})
-    return page
+    return tab.page
+
+
+async def list_tabs(workspace_id: str) -> list[dict[str, Any]]:
+    """Lista as abas da sessão, com a URL atual e qual está ativa."""
+    session = _sessions.get(workspace_id)
+    if session is None:
+        return []
+    active = session["active_tab_id"]
+    return [
+        {"tab_id": tid, "url": tab.page.url, "active": tid == active}
+        for tid, tab in session["tabs"].items()
+    ]
+
+
+async def new_tab(workspace_id: str, url: str | None = None) -> str:
+    """Cria uma aba nova na sessão do workspace (lança o browser se ainda
+    não existir sessão) e a torna a aba ativa. Retorna o `tab_id`."""
+    if not has_browser_session(workspace_id):
+        await get_browser_page(workspace_id)
+    session = _sessions[workspace_id]
+    page = await session["browser"].new_page()
+    if url:
+        await page.goto(url, wait_until="domcontentloaded")
+    tab = await _create_tab_state(page)
+    tab_id = uuid.uuid4().hex[:12]
+    session["tabs"][tab_id] = tab
+    session["active_tab_id"] = tab_id
+    return tab_id
+
+
+async def close_tab(workspace_id: str, tab_id: str) -> bool:
+    """Fecha uma aba. Nunca deixa a sessão sem nenhuma aba — fechar a
+    última abre uma nova em branco no lugar (mesmo padrão da aba Browser do
+    frontend)."""
+    session = _sessions.get(workspace_id)
+    if session is None:
+        return False
+    tab = session["tabs"].pop(tab_id, None)
+    if tab is None:
+        return False
+    try:
+        await tab.page.close()
+    except Exception:
+        logger.debug("browser_session: falha ao fechar aba %s", tab_id)
+
+    if not session["tabs"]:
+        blank_page = await session["browser"].new_page()
+        blank_tab = await _create_tab_state(blank_page)
+        blank_id = uuid.uuid4().hex[:12]
+        session["tabs"][blank_id] = blank_tab
+        session["active_tab_id"] = blank_id
+    elif session["active_tab_id"] == tab_id:
+        session["active_tab_id"] = next(iter(session["tabs"]))
+    return True
+
+
+async def select_tab(workspace_id: str, tab_id: str) -> bool:
+    """Torna `tab_id` a aba ativa da sessão. `False` se a aba não existe."""
+    session = _sessions.get(workspace_id)
+    if session is None or tab_id not in session["tabs"]:
+        return False
+    session["active_tab_id"] = tab_id
+    return True
+
+
+def get_tab_state(workspace_id: str, tab_id: str | None = None) -> TabState | None:
+    """Estado completo (página + CDP + logs) da aba resolvida, ou `None`."""
+    session = _sessions.get(workspace_id)
+    if session is None:
+        return None
+    resolved = tab_id or session["active_tab_id"]
+    return session["tabs"].get(resolved)
+
+
+async def get_cdp_session(workspace_id: str, tab_id: str | None = None) -> Any:
+    """Sessão CDP da aba resolvida, ou `None` se a sessão/aba não existir."""
+    tab = get_tab_state(workspace_id, tab_id)
+    return tab.cdp if tab is not None else None
 
 
 async def close_browser_session(workspace_id: str) -> None:

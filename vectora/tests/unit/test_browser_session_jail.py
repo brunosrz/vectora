@@ -71,6 +71,10 @@ async def test_get_browser_page_usa_launch_persistent_context_quando_jailado(
     (tmp_path / "vectora.toml").write_text("[sandbox]\nenabled = true\n")
 
     fake_page = MagicMock()
+    fake_page.on = MagicMock()
+    fake_page.context = SimpleNamespace(
+        new_cdp_session=AsyncMock(return_value=MagicMock())
+    )
     fake_context = SimpleNamespace(pages=[fake_page], close=AsyncMock())
     fake_playwright = SimpleNamespace(
         chromium=SimpleNamespace(
@@ -96,6 +100,10 @@ async def test_get_browser_page_usa_launch_efemero_sem_sandbox(monkeypatch):
     monkeypatch.setattr("backend.browser.session._jailed_profile_dir", lambda _id: None)
 
     fake_page = MagicMock()
+    fake_page.on = MagicMock()
+    fake_page.context = SimpleNamespace(
+        new_cdp_session=AsyncMock(return_value=MagicMock())
+    )
     fake_browser = SimpleNamespace(
         new_page=AsyncMock(return_value=fake_page), close=AsyncMock()
     )

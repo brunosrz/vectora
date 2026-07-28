@@ -8,9 +8,35 @@ verdade e valida o ciclo de vida completo de `backend/browser/session.py`.
 
 from __future__ import annotations
 
+import http.server
+import threading
+
 import pytest
 
 from backend.browser import session as browser_session
+
+
+class _EchoHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+        self.wfile.write(b"<html><body>ok</body></html>")
+
+    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+        pass  # silencia o log padrão do BaseHTTPRequestHandler nos testes
+
+
+@pytest.fixture
+def local_http_server():
+    server = http.server.HTTPServer(("127.0.0.1", 0), _EchoHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}/"
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
 
 
 def _chromium_available() -> bool:
@@ -87,3 +113,103 @@ async def test_close_all_browser_sessions_fecha_multiplos_workspaces_reais():
 async def test_close_browser_session_workspace_inexistente_e_noop():
     # Nenhuma sessão aberta pra esse workspace — não deve lançar.
     await browser_session.close_browser_session("workspace-que-nunca-existiu")
+
+
+@pytest.mark.asyncio
+async def test_new_tab_cria_segunda_aba_com_cdp_session_propria():
+    first_page = await browser_session.get_browser_page("ws-tabs-1")
+    await first_page.goto("about:blank")
+
+    second_tab_id = await browser_session.new_tab("ws-tabs-1", url="about:blank")
+
+    tabs = await browser_session.list_tabs("ws-tabs-1")
+    assert len(tabs) == 2
+    assert any(t["tab_id"] == second_tab_id and t["active"] for t in tabs)
+
+    cdp_first = await browser_session.get_cdp_session(
+        "ws-tabs-1", tabs[0]["tab_id"] if tabs[0]["tab_id"] != second_tab_id else None
+    )
+    cdp_second = await browser_session.get_cdp_session("ws-tabs-1", second_tab_id)
+    assert cdp_first is not cdp_second
+
+
+@pytest.mark.asyncio
+async def test_select_tab_troca_a_aba_ativa():
+    first_page = await browser_session.get_browser_page("ws-tabs-2")
+    await first_page.goto("about:blank")
+    first_tab_id = (await browser_session.list_tabs("ws-tabs-2"))[0]["tab_id"]
+    second_tab_id = await browser_session.new_tab("ws-tabs-2", url="about:blank")
+
+    ok = await browser_session.select_tab("ws-tabs-2", first_tab_id)
+    assert ok is True
+
+    tabs = {t["tab_id"]: t for t in await browser_session.list_tabs("ws-tabs-2")}
+    assert tabs[first_tab_id]["active"] is True
+    assert tabs[second_tab_id]["active"] is False
+
+
+@pytest.mark.asyncio
+async def test_select_tab_inexistente_retorna_false():
+    await browser_session.get_browser_page("ws-tabs-3")
+
+    assert await browser_session.select_tab("ws-tabs-3", "nao-existe") is False
+
+
+@pytest.mark.asyncio
+async def test_close_tab_fechando_a_ultima_abre_uma_aba_em_branco_no_lugar():
+    page = await browser_session.get_browser_page("ws-tabs-4")
+    await page.goto("about:blank")
+    only_tab_id = (await browser_session.list_tabs("ws-tabs-4"))[0]["tab_id"]
+
+    ok = await browser_session.close_tab("ws-tabs-4", only_tab_id)
+
+    assert ok is True
+    tabs = await browser_session.list_tabs("ws-tabs-4")
+    assert len(tabs) == 1
+    assert tabs[0]["tab_id"] != only_tab_id
+
+
+@pytest.mark.asyncio
+async def test_close_tab_nao_ativa_promove_outra_aba_a_ativa():
+    first_page = await browser_session.get_browser_page("ws-tabs-5")
+    await first_page.goto("about:blank")
+    first_tab_id = (await browser_session.list_tabs("ws-tabs-5"))[0]["tab_id"]
+    second_tab_id = await browser_session.new_tab("ws-tabs-5", url="about:blank")
+
+    ok = await browser_session.close_tab("ws-tabs-5", first_tab_id)
+
+    assert ok is True
+    tabs = {t["tab_id"]: t for t in await browser_session.list_tabs("ws-tabs-5")}
+    assert first_tab_id not in tabs
+    assert tabs[second_tab_id]["active"] is True
+
+
+@pytest.mark.asyncio
+async def test_close_tab_id_inexistente_retorna_false():
+    await browser_session.get_browser_page("ws-tabs-6")
+
+    assert await browser_session.close_tab("ws-tabs-6", "nao-existe") is False
+
+
+@pytest.mark.asyncio
+async def test_console_log_captura_mensagens_reais_da_pagina():
+    page = await browser_session.get_browser_page("ws-console-1")
+    tab = browser_session.get_tab_state("ws-console-1")
+    await page.goto("about:blank")
+    await page.evaluate("console.log('hello from page')")
+    await page.wait_for_timeout(200)
+
+    assert tab is not None
+    assert any("hello from page" in entry["text"] for entry in tab.console_log)
+
+
+@pytest.mark.asyncio
+async def test_network_log_captura_navegacao_real(local_http_server):
+    page = await browser_session.get_browser_page("ws-network-1")
+    tab = browser_session.get_tab_state("ws-network-1")
+    await page.goto(local_http_server, wait_until="domcontentloaded")
+
+    assert tab is not None
+    assert len(tab.network_log) > 0
+    assert any(e["url"].startswith(local_http_server) for e in tab.network_log)
+    assert any(e["status"] == 200 for e in tab.network_log)
