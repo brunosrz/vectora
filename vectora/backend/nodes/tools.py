@@ -125,6 +125,7 @@ from backend.tools.native import (
 from backend.tools.notion import notion_create_page, notion_read_page, notion_search
 from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
+from backend.tools.terminal import close_terminal, list_terminals
 from backend.tools.thinking import sequential_thinking
 from backend.tools.web import fetch_url, web_search
 from backend.tools.workspace import (
@@ -162,6 +163,8 @@ FS_TOOLS: list[BaseTool] = [
     list_dir,
     terminal,
     create_artifact,
+    list_terminals,
+    close_terminal,
 ]
 
 #: Ferramentas de browser: navegação livre + automação + dev server
@@ -296,6 +299,8 @@ for _t in [
     list_dir,
     terminal,
     create_artifact,
+    list_terminals,
+    close_terminal,
     browser_navigate,
     browser_screenshot,
     browser_click,
