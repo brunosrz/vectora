@@ -614,3 +614,235 @@ describe("BrowserTab — servidor rodando mas não gerenciado pelo Vectora (port
     expect(stopBtn).not.toBeDisabled();
   });
 });
+
+describe("BrowserTab — múltiplas abas (Sprint 11)", () => {
+  it("clicar em '+' cria uma aba nova em branco e a foca (nenhuma URL carregada ainda)", async () => {
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_new_tab"));
+
+    const items = screen.getAllByTestId("browser-tab-strip-item");
+    expect(items).toHaveLength(2);
+    // A aba nova (em branco) virou ativa — nenhum iframe carregado ainda.
+    expect(document.querySelector("iframe")).toBeNull();
+  });
+
+  it("cada aba mantém seu próprio histórico — navegar na aba ativa não afeta as demais", async () => {
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_new_tab"));
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+    await screen.findByTitle("Browser");
+
+    const items = screen.getAllByTestId("browser-tab-strip-item");
+    // Volta pra primeira aba (a original, ainda em branco).
+    fireEvent.click(items[0]);
+    expect(document.querySelector("iframe")).toBeNull();
+  });
+
+  it("fechar uma aba não-ativa não muda a aba ativa nem afeta seu conteúdo", async () => {
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+    await screen.findByTitle("Browser");
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_new_tab"));
+    expect(document.querySelector("iframe")).toBeNull();
+
+    const items = screen.getAllByTestId("browser-tab-strip-item");
+    const closeBtn = items[0].querySelector(
+      `[title="workbench_browser_close_tab"]`,
+    ) as HTMLElement;
+    fireEvent.click(closeBtn);
+
+    // A aba nova (ativa) continua ativa e em branco.
+    expect(document.querySelector("iframe")).toBeNull();
+    expect(screen.getAllByTestId("browser-tab-strip-item")).toHaveLength(1);
+  });
+
+  it("fechar a aba ativa foca a aba vizinha", async () => {
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+    await screen.findByTitle("Browser");
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_new_tab"));
+    expect(document.querySelector("iframe")).toBeNull();
+
+    // Fecha a aba ativa (a segunda, em branco) — deve voltar pra primeira,
+    // que tem example.com carregado.
+    const items = screen.getAllByTestId("browser-tab-strip-item");
+    const closeBtn = items[1].querySelector(
+      `[title="workbench_browser_close_tab"]`,
+    ) as HTMLElement;
+    fireEvent.click(closeBtn);
+
+    await waitFor(() => {
+      expect(document.querySelector("iframe")?.getAttribute("src")).toBe(
+        "https://example.com",
+      );
+    });
+  });
+
+  it("fechar a única aba mantém uma aba em branco, nunca lista vazia", async () => {
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+    await screen.findByTitle("Browser");
+
+    const items = screen.getAllByTestId("browser-tab-strip-item");
+    expect(items).toHaveLength(1);
+    const closeBtn = items[0].querySelector(
+      `[title="workbench_browser_close_tab"]`,
+    ) as HTMLElement;
+    fireEvent.click(closeBtn);
+
+    expect(screen.getAllByTestId("browser-tab-strip-item")).toHaveLength(1);
+    expect(document.querySelector("iframe")).toBeNull();
+  });
+
+  it("servidor de dev que sobe via poll abre em aba nova, sem fechar/substituir a aba já aberta pelo usuário", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let running = false;
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith("/browser/launch")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => LAUNCH,
+        } as Response);
+      }
+      if (url.endsWith("/browser/status")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            servers: [
+              { name: "web", port: 3001, running, pid: running ? 1 : null },
+            ],
+          }),
+        } as Response);
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) } as Response);
+    });
+
+    render(<BrowserTab threadId="t1" />);
+
+    // Usuário já navegou manualmente na aba original antes do servidor subir.
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+    await screen.findByTitle("Browser");
+
+    running = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+
+    // O servidor abriu numa aba NOVA (2 abas agora), a nova ficou ativa.
+    await waitFor(() => {
+      expect(screen.getAllByTestId("browser-tab-strip-item")).toHaveLength(2);
+    });
+    expect(document.querySelector("iframe")?.getAttribute("src")).toBe(
+      "http://localhost:3001",
+    );
+
+    // A aba original com example.com continua intacta — voltando pra ela.
+    const items = screen.getAllByTestId("browser-tab-strip-item");
+    fireEvent.click(items[0]);
+    expect(document.querySelector("iframe")?.getAttribute("src")).toBe(
+      "https://example.com",
+    );
+
+    vi.useRealTimers();
+  });
+});
+
+describe("BrowserTab — múltiplas abas no caminho desktop (WebContentsView por aba)", () => {
+  type EventHandler = (
+    viewId: number,
+    event: {
+      type: string;
+      url?: string;
+      canGoBack?: boolean;
+      canGoForward?: boolean;
+    },
+  ) => void;
+
+  function mockBrowserViewMultiTab() {
+    let nextViewId = 1;
+    let handler: EventHandler | null = null;
+    const bridge = {
+      createView: vi.fn(async () => nextViewId++),
+      destroyView: vi.fn(),
+      navigate: vi.fn(async () => ({ ok: true })),
+      goBack: vi.fn(),
+      goForward: vi.fn(),
+      reload: vi.fn(),
+      setBounds: vi.fn(),
+      setVisible: vi.fn(),
+      onEvent: vi.fn((h: EventHandler) => {
+        handler = h;
+        return () => {
+          handler = null;
+        };
+      }),
+      emitEvent: (viewId: number, event: Parameters<EventHandler>[1]) =>
+        handler?.(viewId, event),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).vectora = { browserView: bridge };
+    return bridge;
+  }
+
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).vectora;
+  });
+
+  it("cada aba nasce com sua própria WebContentsView — trocar de aba esconde a antiga e mostra a nova", async () => {
+    const bridge = mockBrowserViewMultiTab();
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_new_tab"));
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalledTimes(2));
+
+    // setVisible reflete: view 1 (aba antiga) escondida, view 2 (nova, ativa) visível.
+    await waitFor(() => {
+      expect(bridge.setVisible).toHaveBeenCalledWith(1, false);
+      expect(bridge.setVisible).toHaveBeenCalledWith(2, true);
+    });
+  });
+
+  it("desmontar com múltiplas abas abertas destroi TODAS as WebContentsView, não só a ativa", async () => {
+    const bridge = mockBrowserViewMultiTab();
+    mockFetch({ configurations: [] });
+    const { unmount } = render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(await screen.findByTitle("workbench_browser_new_tab"));
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalledTimes(2));
+
+    unmount();
+    expect(bridge.destroyView).toHaveBeenCalledWith(1);
+    expect(bridge.destroyView).toHaveBeenCalledWith(2);
+  });
+});

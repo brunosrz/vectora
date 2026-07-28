@@ -57,11 +57,51 @@ const LAUNCH_JSON_TEMPLATE = `\`\`\`json
 }
 \`\`\``;
 
+function genId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `tab-${Math.random().toString(36).slice(2)}`;
+}
+
 function normalizeUrl(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
+}
+
+interface TabState {
+  id: string;
+  title: string;
+  // caminho web (iframe) — histórico próprio, cross-origin não expõe API de
+  // histórico do navegador nativo pra fora.
+  history: string[];
+  historyIndex: number;
+  iframeKey: number;
+  // caminho desktop (WebContentsView) — fonte de verdade é o Chromium
+  // (eventos via bridge), nunca escrito à mão fora do listener de eventos.
+  viewId: number | null;
+  desktopUrl: string;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  loading: boolean;
+  loadError: string | null;
+}
+
+function makeTab(id: string): TabState {
+  return {
+    id,
+    title: "",
+    history: [],
+    historyIndex: -1,
+    iframeKey: 0,
+    viewId: null,
+    desktopUrl: "",
+    canGoBack: false,
+    canGoForward: false,
+    loading: false,
+    loadError: null,
+  };
 }
 
 export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
@@ -90,27 +130,22 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   const [consoleLines, setConsoleLines] = useState<string[]>([]);
   const [consoleLoading, setConsoleLoading] = useState(false);
 
-  // Navegação livre — histórico próprio (iframe cross-origin não expõe API
-  // de histórico do navegador nativo pra fora), voltar/avançar operam sobre
-  // ele. `history[historyIndex]` é a URL efetiva carregada no iframe.
-  const [history, setHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  // Múltiplas abas — cada uma com seu próprio histórico (web) ou sua
+  // própria WebContentsView (desktop, cada uma com viewId próprio; o
+  // BrowserViewManager do main process já suporta N views por design, ver
+  // electron/src/browser-view-manager.ts — esta camada é só a UI de gestão).
+  const [tabs, setTabs] = useState<TabState[]>(() => [makeTab(genId())]);
+  const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0].id);
+  const tabsRef = useRef(tabs);
+  useEffect(() => {
+    tabsRef.current = tabs;
+  }, [tabs]);
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
+
   const [urlInput, setUrlInput] = useState("");
   const [editingUrl, setEditingUrl] = useState(false);
-  const [iframeKey, setIframeKey] = useState(0);
 
-  // Estado de navegação desktop — fonte de verdade é o Chromium (eventos do
-  // WebContentsView via bridge), não um histórico replicado à mão como no
-  // caminho web acima.
-  const [viewId, setViewId] = useState<number | null>(null);
-  const [desktopNav, setDesktopNav] = useState({
-    url: "",
-    canGoBack: false,
-    canGoForward: false,
-  });
-  const [desktopLoading, setDesktopLoading] = useState(false);
-  const [desktopLoadError, setDesktopLoadError] = useState<string | null>(null);
-  const pendingNavigateRef = useRef<string | null>(null);
+  const pendingNavigateRef = useRef<Map<string, string>>(new Map());
   const browserViewContainerRef = useRef<HTMLDivElement>(null);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -123,145 +158,258 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   const prevRunningRef = useRef<Record<string, boolean> | null>(null);
 
   const currentUrl = desktopBrowser
-    ? desktopNav.url
-    : historyIndex >= 0
-      ? history[historyIndex]
+    ? activeTab.desktopUrl
+    : activeTab.historyIndex >= 0
+      ? activeTab.history[activeTab.historyIndex]
       : "";
-  const canGoBack = desktopBrowser ? desktopNav.canGoBack : historyIndex > 0;
+  const canGoBack = desktopBrowser
+    ? activeTab.canGoBack
+    : activeTab.historyIndex > 0;
   const canGoForward = desktopBrowser
-    ? desktopNav.canGoForward
-    : historyIndex < history.length - 1;
+    ? activeTab.canGoForward
+    : activeTab.historyIndex < activeTab.history.length - 1;
+  const desktopLoading = activeTab.loading;
+  const desktopLoadError = activeTab.loadError;
 
-  const navigate = useCallback(
-    (raw: string) => {
+  const updateTab = useCallback(
+    (id: string, patch: Partial<TabState> | ((t: TabState) => TabState)) => {
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.id === id
+            ? typeof patch === "function"
+              ? patch(t)
+              : { ...t, ...patch }
+            : t,
+        ),
+      );
+    },
+    [],
+  );
+
+  const navigateInTab = useCallback(
+    (tabId: string, raw: string) => {
       const url = normalizeUrl(raw);
       if (!url) return;
       if (desktopBrowser) {
-        setDesktopNav((prev) => ({ ...prev, url }));
-        if (viewId === null) {
+        updateTab(tabId, { desktopUrl: url });
+        const tab = tabsRef.current.find((t) => t.id === tabId);
+        if (!tab || tab.viewId === null) {
           // View ainda não terminou de nascer (createView é async) — fica
-          // pendente e é disparada assim que o id chegar, ver efeito abaixo.
-          pendingNavigateRef.current = url;
+          // pendente e é disparada assim que o id chegar.
+          pendingNavigateRef.current.set(tabId, url);
           return;
         }
-        void desktopBrowser.navigate(viewId, url).then((result) => {
-          if (!result.ok) setDesktopLoadError(result.error ?? null);
+        void desktopBrowser.navigate(tab.viewId, url).then((result) => {
+          if (!result.ok) updateTab(tabId, { loadError: result.error ?? null });
         });
         return;
       }
-      setHistory((prev) => {
-        const base = prev.slice(0, historyIndexRef.current + 1);
+      updateTab(tabId, (t) => {
+        const base = t.history.slice(0, t.historyIndex + 1);
         const next = [...base, url];
-        historyIndexRef.current = next.length - 1;
-        return next;
+        return {
+          ...t,
+          history: next,
+          historyIndex: next.length - 1,
+          iframeKey: t.iframeKey + 1,
+        };
       });
-      setHistoryIndex((i) => i + 1);
-      setIframeKey((k) => k + 1);
     },
-    [desktopBrowser, viewId],
+    [desktopBrowser, updateTab],
   );
 
-  // historyIndex muda via setState assíncrono — navigate() precisa do valor
-  // atual síncrono pra cortar o histórico "à frente" corretamente quando o
-  // usuário navega depois de ter voltado (senão duplicaria ramos velhos).
-  const historyIndexRef = useRef(historyIndex);
-  useEffect(() => {
-    historyIndexRef.current = historyIndex;
-  }, [historyIndex]);
+  const navigate = useCallback(
+    (raw: string) => navigateInTab(activeTabId, raw),
+    [navigateInTab, activeTabId],
+  );
+
+  const createDesktopView = useCallback(
+    (tabId: string) => {
+      if (!desktopBrowser) return;
+      void desktopBrowser.createView().then((viewId) => {
+        const pending = pendingNavigateRef.current.get(tabId);
+        updateTab(tabId, {
+          viewId,
+          ...(pending ? { desktopUrl: pending } : {}),
+        });
+        if (pending) {
+          pendingNavigateRef.current.delete(tabId);
+          void desktopBrowser.navigate(viewId, pending).then((result) => {
+            if (!result.ok)
+              updateTab(tabId, { loadError: result.error ?? null });
+          });
+        }
+      });
+    },
+    [desktopBrowser, updateTab],
+  );
+
+  const addTab = useCallback(
+    (url?: string) => {
+      const id = genId();
+      setTabs((prev) => [...prev, makeTab(id)]);
+      setActiveTabId(id);
+      if (url) {
+        if (desktopBrowser) {
+          pendingNavigateRef.current.set(id, normalizeUrl(url));
+        } else {
+          const normalized = normalizeUrl(url);
+          setTabs((prev) =>
+            prev.map((t) =>
+              t.id === id
+                ? { ...t, history: [normalized], historyIndex: 0 }
+                : t,
+            ),
+          );
+        }
+      }
+      if (desktopBrowser) createDesktopView(id);
+      return id;
+    },
+    [desktopBrowser, createDesktopView],
+  );
+
+  const closeTab = useCallback(
+    (id: string) => {
+      const closing = tabsRef.current.find((t) => t.id === id);
+      if (desktopBrowser && closing?.viewId != null) {
+        desktopBrowser.destroyView(closing.viewId);
+      }
+      const remaining = tabsRef.current.filter((t) => t.id !== id);
+      if (remaining.length === 0) {
+        const freshId = genId();
+        setTabs([makeTab(freshId)]);
+        setActiveTabId(freshId);
+        if (desktopBrowser) createDesktopView(freshId);
+        return;
+      }
+      setTabs(remaining);
+      if (id === activeTabId) {
+        const idx = tabsRef.current.findIndex((t) => t.id === id);
+        const neighbor = remaining[Math.min(idx, remaining.length - 1)];
+        setActiveTabId(neighbor.id);
+      }
+    },
+    [desktopBrowser, activeTabId, createDesktopView],
+  );
 
   const goBack = useCallback(() => {
     if (!canGoBack) return;
-    if (desktopBrowser && viewId !== null) {
-      desktopBrowser.goBack(viewId);
+    if (desktopBrowser && activeTab.viewId !== null) {
+      desktopBrowser.goBack(activeTab.viewId);
       return;
     }
-    setHistoryIndex((i) => i - 1);
-    setIframeKey((k) => k + 1);
-  }, [canGoBack, desktopBrowser, viewId]);
+    updateTab(activeTabId, (t) => ({
+      ...t,
+      historyIndex: t.historyIndex - 1,
+      iframeKey: t.iframeKey + 1,
+    }));
+  }, [canGoBack, desktopBrowser, activeTab.viewId, activeTabId, updateTab]);
 
   const goForward = useCallback(() => {
     if (!canGoForward) return;
-    if (desktopBrowser && viewId !== null) {
-      desktopBrowser.goForward(viewId);
+    if (desktopBrowser && activeTab.viewId !== null) {
+      desktopBrowser.goForward(activeTab.viewId);
       return;
     }
-    setHistoryIndex((i) => i + 1);
-    setIframeKey((k) => k + 1);
-  }, [canGoForward, desktopBrowser, viewId]);
+    updateTab(activeTabId, (t) => ({
+      ...t,
+      historyIndex: t.historyIndex + 1,
+      iframeKey: t.iframeKey + 1,
+    }));
+  }, [canGoForward, desktopBrowser, activeTab.viewId, activeTabId, updateTab]);
 
   const refresh = useCallback(() => {
-    if (desktopBrowser && viewId !== null) {
-      desktopBrowser.reload(viewId);
+    if (desktopBrowser && activeTab.viewId !== null) {
+      desktopBrowser.reload(activeTab.viewId);
       return;
     }
-    setIframeKey((k) => k + 1);
-  }, [desktopBrowser, viewId]);
+    updateTab(activeTabId, (t) => ({ ...t, iframeKey: t.iframeKey + 1 }));
+  }, [desktopBrowser, activeTab.viewId, activeTabId, updateTab]);
 
-  // Nasce a WebContentsView uma vez por montagem da aba e a destrói ao
-  // desmontar (a aba já desmonta/remonta ao trocar de tab do workbench,
-  // ver workbench-panel.tsx — não precisa de esconder/mostrar, só nascer e
-  // morrer junto do componente).
+  // Nasce a WebContentsView da aba inicial uma vez por montagem e destroi
+  // TODAS as views (de todas as abas abertas) ao desmontar — a aba do
+  // workbench já desmonta/remonta ao trocar de tab, ver workbench-panel.tsx.
   useEffect(() => {
     if (!desktopBrowser) return;
     let cancelled = false;
-    let createdId: number | null = null;
-    void desktopBrowser.createView().then((id) => {
+    void desktopBrowser.createView().then((viewId) => {
       if (cancelled) {
-        desktopBrowser.destroyView(id);
+        desktopBrowser.destroyView(viewId);
         return;
       }
-      createdId = id;
-      setViewId(id);
-      if (pendingNavigateRef.current) {
-        void desktopBrowser.navigate(id, pendingNavigateRef.current);
-        pendingNavigateRef.current = null;
-      }
+      setTabs((prev) => prev.map((t, i) => (i === 0 ? { ...t, viewId } : t)));
     });
     return () => {
       cancelled = true;
-      if (createdId !== null) desktopBrowser.destroyView(createdId);
+      for (const t of tabsRef.current) {
+        if (t.viewId !== null) desktopBrowser.destroyView(t.viewId);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Espelha os eventos de navegação nativos do Chromium (fonte de verdade)
-  // pro estado React — nunca escreve em desktopNav fora daqui, exceto a
-  // atualização otimista de `url` em navigate() acima (feedback imediato na
-  // barra antes do evento `navigated` real chegar).
+  // pro estado React, roteando por viewId pra achar a aba certa (pode ser
+  // uma aba em segundo plano, não necessariamente a ativa) — nunca escreve
+  // em desktopUrl/canGoBack/canGoForward fora daqui, exceto a atualização
+  // otimista de `desktopUrl` em navigateInTab() (feedback imediato na barra
+  // antes do evento `navigated` real chegar).
   useEffect(() => {
-    if (!desktopBrowser || viewId === null) return;
+    if (!desktopBrowser) return;
     return desktopBrowser.onEvent((eventViewId, event) => {
-      if (eventViewId !== viewId) return;
-      if (event.type === "navigated") {
-        setDesktopNav({
-          url: event.url,
-          canGoBack: event.canGoBack,
-          canGoForward: event.canGoForward,
-        });
-        setDesktopLoadError(null);
-      } else if (event.type === "loadingChanged") {
-        setDesktopLoading(event.isLoading);
-      } else if (event.type === "loadFailed") {
-        setDesktopLoadError(event.errorDescription);
-      }
+      setTabs((prev) =>
+        prev.map((t) => {
+          if (t.viewId !== eventViewId) return t;
+          if (event.type === "navigated") {
+            return {
+              ...t,
+              desktopUrl: event.url ?? t.desktopUrl,
+              canGoBack: event.canGoBack ?? t.canGoBack,
+              canGoForward: event.canGoForward ?? t.canGoForward,
+              loadError: null,
+            };
+          }
+          if (event.type === "loadingChanged") {
+            return { ...t, loading: event.isLoading ?? t.loading };
+          }
+          if (event.type === "loadFailed") {
+            return { ...t, loadError: event.errorDescription ?? null };
+          }
+          if (event.type === "titleUpdated" && event.title) {
+            return { ...t, title: event.title };
+          }
+          return t;
+        }),
+      );
     });
-  }, [desktopBrowser, viewId]);
+  }, [desktopBrowser]);
+
+  // Visibilidade: só a view da aba ATIVA fica visível — todas as outras
+  // (abas em segundo plano) ficam escondidas, senão desenhariam por cima
+  // umas das outras (WebContentsView é sempre desenhada por cima do DOM).
+  useEffect(() => {
+    if (!desktopBrowser) return;
+    for (const t of tabs) {
+      if (t.viewId !== null)
+        desktopBrowser.setVisible(t.viewId, t.id === activeTabId);
+    }
+  }, [desktopBrowser, tabs, activeTabId]);
 
   // Reporta os bounds reais do container (ResizeObserver) pro main process
-  // posicionar a WebContentsView por cima — só existe depois da primeira
-  // navegação (currentUrl truthy é quando o container abaixo é renderizado).
-  // Depende de `hasUrl` (booleano), não da URL em si — o container é o
-  // mesmo nó DOM entre navegações subsequentes, reanexar o observer a cada
-  // troca de URL só piscaria a view escondendo/reexibindo à toa.
+  // posicionar a WebContentsView ATIVA por cima — só existe depois da
+  // primeira navegação daquela aba (currentUrl truthy é quando o container
+  // abaixo é renderizado). Depende de `hasUrl`/viewId da aba ativa, não da
+  // URL em si — o container é o mesmo nó DOM entre navegações subsequentes.
   const hasUrl = Boolean(currentUrl);
+  const activeViewId = activeTab.viewId;
   useEffect(() => {
-    if (!desktopBrowser || viewId === null || !hasUrl) return;
+    if (!desktopBrowser || activeViewId === null || !hasUrl) return;
     const el = browserViewContainerRef.current;
     if (!el) return;
-    desktopBrowser.setVisible(viewId, true);
     const report = () => {
       const rect = el.getBoundingClientRect();
-      desktopBrowser.setBounds(viewId, {
+      desktopBrowser.setBounds(activeViewId, {
         x: Math.round(rect.x),
         y: Math.round(rect.y),
         width: Math.round(rect.width),
@@ -275,9 +423,8 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", report);
-      desktopBrowser.setVisible(viewId, false);
     };
-  }, [desktopBrowser, viewId, hasUrl]);
+  }, [desktopBrowser, activeViewId, hasUrl]);
 
   const fetchLaunch = useCallback(async () => {
     if (!wsId) return;
@@ -308,15 +455,17 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
         setStatuses(servers);
 
         // Auto-navegação: qualquer servidor que passe de parado pra rodando
-        // entre um poll e outro abre sozinho na URL bar — funciona tanto pro
-        // clique manual (handleStart) quanto pra tool `browser_start` do
+        // entre um poll e outro abre sozinho numa aba NOVA — funciona tanto
+        // pro clique manual (handleStart) quanto pra tool `browser_start` do
         // agente, que sobe o servidor sem passar por nenhum handler do UI.
+        // Aba nova (não substitui a ativa) preserva a navegação livre que o
+        // usuário já tinha aberto.
         const prevRunning = prevRunningRef.current;
         const nextRunning: Record<string, boolean> = {};
         for (const server of servers) {
           nextRunning[server.name] = server.running;
           if (prevRunning && server.running && !prevRunning[server.name]) {
-            navigate(`http://localhost:${server.port}`);
+            addTab(`http://localhost:${server.port}`);
           }
         }
         prevRunningRef.current = nextRunning;
@@ -327,7 +476,7 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
       // silently ignore
     }
     return null;
-  }, [wsId, navigate]);
+  }, [wsId, addTab]);
 
   const fetchConsoleLogs = useCallback(
     async (name: string) => {
@@ -680,6 +829,54 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
     <div className="flex h-full flex-col overflow-hidden">
       {serverFavorites}
 
+      {/* Tab strip — favicon/título truncado + fechar por aba, "+" pra nova
+          aba. Sempre visível (mesmo com 1 aba só), consistente com um
+          browser real. */}
+      <div className="flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-border/60 bg-card/10 px-1 pt-1">
+        {tabs.map((t) => {
+          const tUrl = desktopBrowser
+            ? t.desktopUrl
+            : t.historyIndex >= 0
+              ? t.history[t.historyIndex]
+              : "";
+          const label = t.title || tUrl || msg.workbench_browser_tab_untitled();
+          const isTabActive = t.id === activeTabId;
+          return (
+            <div
+              key={t.id}
+              data-testid="browser-tab-strip-item"
+              onClick={() => setActiveTabId(t.id)}
+              className={`group flex max-w-[160px] shrink-0 items-center gap-1 rounded-t-md px-2 py-1 text-[11px] cursor-pointer transition-colors ${
+                isTabActive
+                  ? "bg-background text-foreground"
+                  : "text-muted-foreground hover:bg-accent/40"
+              }`}
+            >
+              <span className="min-w-0 flex-1 truncate">{label}</span>
+              <button
+                type="button"
+                className="shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity"
+                title={msg.workbench_browser_close_tab()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeTab(t.id);
+                }}
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          );
+        })}
+        <button
+          type="button"
+          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          title={msg.workbench_browser_new_tab()}
+          onClick={() => addTab()}
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      </div>
+
       {/* Barra de navegação — sempre ativa, não depende de nenhum servidor */}
       <div className="flex items-center gap-1 border-b border-border/60 bg-card/20 px-2 py-1">
         <button
@@ -760,7 +957,7 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
           ) : (
             <iframe
               ref={iframeRef}
-              key={iframeKey}
+              key={`${activeTab.id}-${activeTab.iframeKey}`}
               src={currentUrl}
               className="flex-1 w-full border-0 bg-white"
               title="Browser"
