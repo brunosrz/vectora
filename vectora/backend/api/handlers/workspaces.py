@@ -3323,6 +3323,7 @@ class RagIngestRequest(BaseModel):
 
     path: str
     file_types: str = "all"  # "code" | "markdown" | "all"
+    bucket_name: str | None = None
 
 
 class RagIngestResponse(BaseModel):
@@ -3330,6 +3331,7 @@ class RagIngestResponse(BaseModel):
     total_files: int
     total_chunks: int
     status: str
+    bucket_id: str
 
 
 class RagJobStatus(BaseModel):
@@ -3454,12 +3456,26 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
     from fastapi import HTTPException
 
     from backend.embedding.rag_ingest import ingest_directory
+    from backend.services import rag_buckets
     from backend.services.security import is_safe_file_path
+    from backend.workspace.runtime_settings import runtime_settings
 
     if not is_safe_file_path(body.path) or not Path(body.path).is_dir():
         raise HTTPException(
             status_code=400, detail="Caminho inválido ou fora do escopo."
         )
+
+    bucket_name = body.bucket_name or Path(body.path).name or body.path
+    bucket = rag_buckets.create_bucket(
+        runtime_settings,
+        workspace_id=workspace_id,
+        name=bucket_name,
+        source_path=body.path,
+    )
+    rag_buckets.set_active(
+        runtime_settings, workspace_id=workspace_id, bucket_id=bucket.id, active=True
+    )
+    collection = f"bucket_{bucket.id}"
 
     job_id = str(uuid4())
     _RAG_JOBS[job_id] = {
@@ -3474,6 +3490,7 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
             result = await ingest_directory(
                 body.path,
                 file_types=body.file_types,
+                collection=collection,
                 workspace_id=workspace_id or None,
                 job_id=job_id,
             )
@@ -3496,7 +3513,11 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
     task.add_done_callback(_RAG_TASKS.discard)
 
     return RagIngestResponse(
-        job_id=job_id, total_files=0, total_chunks=0, status="indexing"
+        job_id=job_id,
+        total_files=0,
+        total_chunks=0,
+        status="indexing",
+        bucket_id=bucket.id,
     )
 
 

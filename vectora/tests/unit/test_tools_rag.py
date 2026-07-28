@@ -123,6 +123,175 @@ class TestVectorSearch:
         assert data.get("status") in ("failed", "error")
 
 
+class TestVectorSearchBucketFanout:
+    """Sem `collection` explícito, a busca varre só os buckets ativos do
+    workspace (backend/services/rag_buckets.py) — não a tabela `articles`
+    inteira sempre."""
+
+    def _mock_lancedb(self, tables: dict[str, list[dict]]):
+        """`tables` mapeia nome de coleção -> lista de linhas (dicts com
+        id/_distance/text/metadata) que essa tabela "contém"."""
+
+        async def _open_table(name: str):
+            if name not in tables:
+                raise Exception(f"table {name} not found")
+            rows = tables[name]
+            mock_df = MagicMock()
+
+            def _row(d):
+                r = MagicMock()
+                r.get.side_effect = lambda k, default=None: d.get(k, default)
+                r.__getitem__ = lambda self, k, d=d: d[k]
+                return r
+
+            mock_df.iterrows.return_value = iter(
+                [(i, _row(d)) for i, d in enumerate(rows)]
+            )
+            table = MagicMock()
+            table.vector_search.return_value.limit.return_value.to_pandas = AsyncMock(
+                return_value=mock_df
+            )
+            return table
+
+        mock_db = AsyncMock()
+        mock_db.open_table = AsyncMock(side_effect=_open_table)
+        mock_lancedb = MagicMock()
+        mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+        return mock_lancedb
+
+    @pytest.mark.asyncio
+    async def test_searches_only_active_buckets_of_workspace(self, tmp_path):
+        from backend.services import rag_buckets
+        from backend.tools.rag import vector_search
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "checkpoints.db")
+        active = rag_buckets.create_bucket(rs, workspace_id="ws1", name="Godot")
+        inactive = rag_buckets.create_bucket(rs, workspace_id="ws1", name="TS libs")
+        rag_buckets.set_active(rs, workspace_id="ws1", bucket_id=active.id, active=True)
+        # inactive nunca é ativado — não deve aparecer na busca.
+
+        tables = {
+            f"bucket_{active.id}": [
+                {"id": "1", "_distance": 0.1, "text": "godot doc", "metadata": "{}"}
+            ],
+            f"bucket_{inactive.id}": [
+                {"id": "2", "_distance": 0.05, "text": "ts lib doc", "metadata": "{}"}
+            ],
+        }
+        mock_lancedb = self._mock_lancedb(tables)
+        mock_embeddings = MagicMock()
+        mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+
+        with (
+            patch("backend.tools.rag.settings") as ms,
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+        ):
+            ms.get_cohere_api_key.return_value = "test-key"
+            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
+            ms.embedding_model = "embed-english-v3.0"
+            with (
+                patch("backend.tools.rag.lancedb", mock_lancedb),
+                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
+                patch("backend.tools.rag.SecretStr", lambda x: x),
+                patch("backend.tools.rag.CohereRerank", None),
+            ):
+                result = await vector_search.ainvoke(
+                    {"query": "test", "limit": 5},
+                    config={"configurable": {"workspace_id": "ws1"}},
+                )
+
+        data = json.loads(result)
+        contents = [r["content"] for r in data["results"]]
+        assert contents == ["godot doc"]
+
+    @pytest.mark.asyncio
+    async def test_no_active_buckets_falls_back_to_legacy_articles_table(
+        self, tmp_path
+    ):
+        from backend.tools.rag import vector_search
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "checkpoints.db")
+        tables = {
+            "articles": [
+                {"id": "1", "_distance": 0.1, "text": "dado legado", "metadata": "{}"}
+            ]
+        }
+        mock_lancedb = self._mock_lancedb(tables)
+        mock_embeddings = MagicMock()
+        mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+
+        with (
+            patch("backend.tools.rag.settings") as ms,
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+        ):
+            ms.get_cohere_api_key.return_value = "test-key"
+            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
+            ms.embedding_model = "embed-english-v3.0"
+            with (
+                patch("backend.tools.rag.lancedb", mock_lancedb),
+                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
+                patch("backend.tools.rag.SecretStr", lambda x: x),
+                patch("backend.tools.rag.CohereRerank", None),
+            ):
+                result = await vector_search.ainvoke(
+                    {"query": "test", "limit": 5},
+                    config={"configurable": {"workspace_id": "ws-sem-buckets"}},
+                )
+
+        data = json.loads(result)
+        assert [r["content"] for r in data["results"]] == ["dado legado"]
+
+    @pytest.mark.asyncio
+    async def test_explicit_collection_overrides_active_buckets(self, tmp_path):
+        """Passar `collection` manualmente ignora os buckets ativos —
+        comportamento avançado preservado (regressão)."""
+        from backend.services import rag_buckets
+        from backend.tools.rag import vector_search
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "checkpoints.db")
+        bucket = rag_buckets.create_bucket(rs, workspace_id="ws1", name="Godot")
+        rag_buckets.set_active(rs, workspace_id="ws1", bucket_id=bucket.id, active=True)
+        tables = {
+            f"bucket_{bucket.id}": [
+                {"id": "1", "_distance": 0.1, "text": "bucket doc", "metadata": "{}"}
+            ],
+            "custom_collection": [
+                {"id": "2", "_distance": 0.1, "text": "manual doc", "metadata": "{}"}
+            ],
+        }
+        mock_lancedb = self._mock_lancedb(tables)
+        mock_embeddings = MagicMock()
+        mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+
+        with (
+            patch("backend.tools.rag.settings") as ms,
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+        ):
+            ms.get_cohere_api_key.return_value = "test-key"
+            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
+            ms.embedding_model = "embed-english-v3.0"
+            with (
+                patch("backend.tools.rag.lancedb", mock_lancedb),
+                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
+                patch("backend.tools.rag.SecretStr", lambda x: x),
+                patch("backend.tools.rag.CohereRerank", None),
+            ):
+                result = await vector_search.ainvoke(
+                    {
+                        "query": "test",
+                        "collection": "custom_collection",
+                        "limit": 5,
+                    },
+                    config={"configurable": {"workspace_id": "ws1"}},
+                )
+
+        data = json.loads(result)
+        assert [r["content"] for r in data["results"]] == ["manual doc"]
+
+
 class TestEmbedding:
     @pytest.mark.asyncio
     async def test_queue_not_enabled_returns_error(self):

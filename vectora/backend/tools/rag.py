@@ -243,6 +243,58 @@ async def embedding(
         )
 
 
+def _resolve_search_collections(workspace_id: str | None) -> list[str]:
+    """Coleções LanceDB a varrer numa busca sem `collection` explícito.
+
+    Workspace com buckets ativos (`backend.services.rag_buckets`) varre só
+    essas tabelas — indexar a Godot e 10 libs TypeScript não faz uma busca
+    sobre o jogo Godot varrer as libs junto. Sem `workspace_id` ou sem
+    nenhum bucket ainda cadastrado (inclusive todo dado indexado antes dos
+    buckets existirem), cai na tabela legada `"articles"` — mesmo
+    comportamento de sempre, sem perda de dado nem migração física."""
+    if not workspace_id:
+        return ["articles"]
+    from backend.services import rag_buckets
+    from backend.workspace.runtime_settings import runtime_settings
+
+    bucket_ids = rag_buckets.get_active_bucket_ids(runtime_settings, workspace_id)
+    if not bucket_ids:
+        return ["articles"]
+    return [f"bucket_{bid}" for bid in bucket_ids]
+
+
+async def _search_one_collection(
+    db: Any, collection: str, query_vector: Any, limit: int
+) -> list[dict[str, Any]]:
+    """Busca vetorial numa única tabela LanceDB. Tabela ausente/timeout
+    devolve lista vazia (nunca lança) — chamador decide o que fazer com
+    zero resultados de uma coleção específica dentro de um fan-out."""
+    try:
+        async with asyncio.timeout(10):
+            table = await db.open_table(collection)
+    except Exception:
+        logger.debug("vector_search: coleção %s indisponível", collection)
+        return []
+    try:
+        async with asyncio.timeout(10):
+            search_results = await (
+                table.vector_search(query_vector).limit(limit).to_pandas()
+            )
+    except TimeoutError:
+        logger.warning("vector_search: timeout na coleção %s", collection)
+        return []
+    return [
+        {
+            "id": str(row["id"]),
+            "score": float(row.get("_distance", 0.0)),
+            "content": row["text"],
+            "metadata": json.loads(row.get("metadata", "{}")),
+            "collection": collection,
+        }
+        for _, row in search_results.iterrows()
+    ]
+
+
 @tool(
     extras={
         "render_hint": "search_results",
@@ -252,7 +304,10 @@ async def embedding(
     }
 )
 async def vector_search(
-    query: str, collection: str = "articles", limit: int = 5
+    query: str,
+    collection: str | None = None,
+    limit: int = 5,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Busca o banco de dados vetorial LanceDB por documentos similares.
 
@@ -260,8 +315,13 @@ async def vector_search(
 
     Args:
         query: String da consulta de busca
-        collection: Nome da tabela LanceDB
-        limit: Número máximo de resultados a retornar
+        collection: Nome de uma tabela LanceDB específica — quando omitido,
+            busca nos buckets ativos do workspace (`manage_retriever`/aba
+            Memória controlam quais estão ativos); passar um nome força
+            busca só naquela tabela, ignorando os buckets ativos.
+        limit: Número máximo de resultados a retornar (por coleção, quando
+            varrendo múltiplos buckets — os resultados finais são
+            reordenados por score e cortados no mesmo `limit`)
 
     Returns:
         JSON com documentos e scores de similaridade
@@ -277,29 +337,16 @@ async def vector_search(
                 {"status": "failed", "error": "COHERE_API_KEY not configured"}
             )
 
-        # Verificar existência da coleção ANTES de fazer embedding.
-        # embed_query() é síncrono e usa tenacity com time.sleep() em retry,
-        # o que bloqueia o event loop indefinidamente se a API Cohere falhar.
-        # Ao checar o LanceDB primeiro, evitamos qualquer chamada à API para
-        # coleções que não existem.
-        db = await lancedb.connect_async(str(settings.lancedb_dir))
+        workspace_id = (
+            (config.get("configurable") or {}).get("workspace_id")
+            if config is not None
+            else None
+        )
+        collections = (
+            [collection] if collection else _resolve_search_collections(workspace_id)
+        )
 
-        try:
-            async with asyncio.timeout(10):
-                table = await db.open_table(collection)
-        except TimeoutError:
-            logger.exception(f"LanceDB open_table timed out for {collection}")
-            return json.dumps(
-                {"status": "error", "error": "Vector store access timed out"}
-            )
-        except Exception:
-            logger.warning("LanceDB table not found", extra={"collection": collection})
-            return json.dumps(
-                {
-                    "status": "no_results",
-                    "message": f"Collection '{collection}' not found or empty",
-                }
-            )
+        db = await lancedb.connect_async(str(settings.lancedb_dir))
 
         # NOTE: do NOT wrap in SecretStr here.
         # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
@@ -318,26 +365,21 @@ async def vector_search(
             query, settings.embedding_model, embeddings_model.embed_query
         )
 
-        try:
-            async with asyncio.timeout(10):
-                search_results = await (
-                    table.vector_search(query_vector).limit(limit).to_pandas()
-                )
-        except TimeoutError:
-            logger.exception(f"vector_search timed out for collection {collection}")
-            return json.dumps(
-                {"status": "error", "error": "Search timed out after 10s"}
-            )
-
-        results = [
-            {
-                "id": str(row["id"]),
-                "score": float(row.get("_distance", 0.0)),
-                "content": row["text"],
-                "metadata": json.loads(row.get("metadata", "{}")),
-            }
-            for _, row in search_results.iterrows()
+        fanned_out = [
+            await _search_one_collection(db, coll, query_vector, limit)
+            for coll in collections
         ]
+        results = sorted(
+            (r for batch in fanned_out for r in batch), key=lambda r: r["score"]
+        )[:limit]
+
+        if not results:
+            return json.dumps(
+                {
+                    "status": "no_results",
+                    "message": f"Nenhum resultado em {collections}",
+                }
+            )
 
         # Reranking opcional — melhora precisão (Cohere ou VoyageAI)
         reranker = _build_reranker()
@@ -366,7 +408,7 @@ async def vector_search(
             "vector_search completed",
             extra={
                 "query": query,
-                "collection": collection,
+                "collections": collections,
                 "result_count": len(results),
             },
         )
@@ -375,7 +417,9 @@ async def vector_search(
 
             async with _tr.span("vector_search_tool", "search") as _s:
                 _s.set(
-                    collection=collection, n_results=len(results), query_len=len(query)
+                    collections=collections,
+                    n_results=len(results),
+                    query_len=len(query),
                 )
         except Exception:
             pass
@@ -385,15 +429,13 @@ async def vector_search(
                 "status": "success",
                 "results": results,
                 "query": query,
-                "collection": collection,
+                "collections": collections,
             }
         )
 
     except Exception as e:
         err = str(e)
-        logger.exception(
-            "vector_search_failed", extra={"query": query, "collection": collection}
-        )
+        logger.exception("vector_search_failed", extra={"query": query})
         if _is_cohere_quota_error(err):
             return json.dumps(
                 {

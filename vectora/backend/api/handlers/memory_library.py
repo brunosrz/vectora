@@ -40,7 +40,7 @@ class InstallRequest(BaseModel):
 
 
 class PublishRequest(BaseModel):
-    workspace_id: str
+    bucket_id: str
     name: str
     description: str
     license: str
@@ -71,8 +71,8 @@ async def post_publish(req: PublishRequest) -> dict:
             "error": "Nenhuma conta vectora.company conectada (VECTORA_TOKEN ausente).",
         }
     try:
-        bucket_id = await publish_memory_bucket(
-            req.workspace_id,
+        remote_bucket_id = await publish_memory_bucket(
+            req.bucket_id,
             req.name,
             req.description,
             req.license,
@@ -80,4 +80,4 @@ async def post_publish(req: PublishRequest) -> dict:
         )
     except MemoryLibraryError as exc:
         return {"status": "error", "error": str(exc)}
-    return {"status": "published", "bucket_id": bucket_id}
+    return {"status": "published", "bucket_id": remote_bucket_id}

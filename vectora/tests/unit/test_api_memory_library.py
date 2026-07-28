@@ -81,7 +81,7 @@ async def test_post_install_incompatible_embed_model_returns_error_not_exception
 
 def _publish_req() -> PublishRequest:
     return PublishRequest(
-        workspace_id="ws1",
+        bucket_id="b1",
         name="Docs internos",
         description="Documentação vetorizada",
         license="MIT",

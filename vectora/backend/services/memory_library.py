@@ -93,7 +93,9 @@ async def download_memory_bucket(
         ) from exc
 
     collection = f"shared_{bucket_id}"
-    target_dir = Path(lancedb_dir or settings.lancedb_dir or "") / collection
+    # LanceDB grava cada tabela num diretório `{collection}.lance` — extrair
+    # pra qualquer outro nome deixa `open_table(collection)` sem achar nada.
+    target_dir = Path(lancedb_dir or settings.lancedb_dir or "") / f"{collection}.lance"
     target_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -109,7 +111,7 @@ async def download_memory_bucket(
 
 
 async def publish_memory_bucket(
-    workspace_id: str,
+    bucket_id: str,
     name: str,
     description: str,
     license: str,  # noqa: A002 — nome de campo do domínio (licença), não a builtin
@@ -117,21 +119,30 @@ async def publish_memory_bucket(
     session_token: str,
     lancedb_dir: Path | None = None,
 ) -> str:
-    """Empacota a coleção LanceDB `workspace_id` do workspace ativo num
-    tar.gz e publica via `POST /rag-library/publish`. Retorna o `id` do
-    bucket recém-publicado (sempre `verified=false` até curadoria manual).
+    """Empacota o bucket local `bucket_id` (uma tabela LanceDB isolada,
+    `backend/services/rag_buckets.py`) num tar.gz e publica via
+    `POST /rag-library/publish`. Retorna o `id` do bucket recém-publicado
+    na Memory Library (sempre `verified=false` até curadoria manual) —
+    distinto do `bucket_id` local que originou a publicação.
     """
     from backend.settings import settings
 
-    source_dir = Path(lancedb_dir or settings.lancedb_dir or "") / workspace_id
+    collection = f"bucket_{bucket_id}"
+    # LanceDB grava cada tabela num diretório `{collection}.lance`.
+    source_dir = Path(lancedb_dir or settings.lancedb_dir or "") / f"{collection}.lance"
     if not source_dir.is_dir():
         raise MemoryLibraryError(
-            f"Workspace '{workspace_id}' não tem coleção LanceDB local pra publicar."
+            f"Bucket '{bucket_id}' não tem tabela LanceDB local pra publicar."
         )
 
+    # Empacota o CONTEÚDO do diretório .lance, não o diretório em si —
+    # o nome do bucket muda ao ser instalado do outro lado
+    # (`download_memory_bucket` usa `shared_{bucket_id}` remoto), então o
+    # arquivo não pode carregar o nome local da coleção.
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
-        tar.add(source_dir, arcname=workspace_id)
+        for item in source_dir.iterdir():
+            tar.add(item, arcname=item.name)
     buffer.seek(0)
 
     try:
@@ -145,7 +156,7 @@ async def publish_memory_bucket(
                     "embed_model": settings.embedding_model,
                     "license": license,
                 },
-                files={"file": (f"{workspace_id}.tar.gz", buffer, "application/gzip")},
+                files={"file": (f"{collection}.tar.gz", buffer, "application/gzip")},
             )
             resp.raise_for_status()
             data = resp.json()
@@ -156,10 +167,10 @@ async def publish_memory_bucket(
     except Exception as exc:
         raise MemoryLibraryError(f"Falha ao publicar o bucket: {exc}") from exc
 
-    bucket_id = data.get("id")
-    if not bucket_id:
+    remote_bucket_id = data.get("id")
+    if not remote_bucket_id:
         raise MemoryLibraryError("Resposta inesperada do rag-library/publish (sem id).")
     logger.info(
-        "memory_library: bucket publicado id=%s workspace=%s", bucket_id, workspace_id
+        "memory_library: bucket %s publicado como %s", bucket_id, remote_bucket_id
     )
-    return bucket_id
+    return remote_bucket_id

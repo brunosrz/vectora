@@ -97,16 +97,16 @@ async def test_download_compatible_bucket_extracts_into_isolated_collection(
     collection = await download_memory_bucket("b1", lancedb_dir=tmp_path)
 
     assert collection == "shared_b1"
-    assert (tmp_path / "shared_b1" / "data.lance").is_file()
+    assert (tmp_path / "shared_b1.lance" / "data.lance").is_file()
     assert (tmp_path / "meu_workspace_local").is_dir()
     assert list((tmp_path / "meu_workspace_local").iterdir()) == []
 
 
 @pytest.mark.asyncio
 async def test_publish_missing_local_workspace_raises_clear_error(tmp_path):
-    with pytest.raises(MemoryLibraryError, match="não tem coleção"):
+    with pytest.raises(MemoryLibraryError, match="não tem tabela"):
         await publish_memory_bucket(
-            "nonexistent-ws",
+            "nonexistent-bucket",
             "Nome",
             "Descrição",
             "MIT",
@@ -117,9 +117,9 @@ async def test_publish_missing_local_workspace_raises_clear_error(tmp_path):
 
 @pytest.mark.asyncio
 async def test_publish_success_returns_bucket_id(tmp_path, monkeypatch):
-    ws_dir = tmp_path / "ws1"
-    ws_dir.mkdir()
-    (ws_dir / "table.lance").write_bytes(b"data")
+    bucket_dir = tmp_path / "bucket_b1.lance"
+    bucket_dir.mkdir()
+    (bucket_dir / "table.lance").write_bytes(b"data")
 
     captured: dict = {}
 
@@ -137,8 +137,8 @@ async def test_publish_success_returns_bucket_id(tmp_path, monkeypatch):
         "backend.settings.settings.embedding_model", "embed-multilingual-v3.0"
     )
 
-    bucket_id = await publish_memory_bucket(
-        "ws1",
+    remote_bucket_id = await publish_memory_bucket(
+        "b1",
         "Meu bucket",
         "descrição",
         "MIT",
@@ -146,7 +146,7 @@ async def test_publish_success_returns_bucket_id(tmp_path, monkeypatch):
         lancedb_dir=tmp_path,
     )
 
-    assert bucket_id == "new-bucket-id"
+    assert remote_bucket_id == "new-bucket-id"
     assert captured["headers"]["Authorization"] == "Bearer tok123"
     assert captured["data"]["embed_model"] == "embed-multilingual-v3.0"
 
@@ -155,9 +155,9 @@ async def test_publish_success_returns_bucket_id(tmp_path, monkeypatch):
 async def test_publish_network_failure_raises_memory_library_error(
     tmp_path, monkeypatch
 ):
-    ws_dir = tmp_path / "ws1"
-    ws_dir.mkdir()
-    (ws_dir / "table.lance").write_bytes(b"data")
+    bucket_dir = tmp_path / "bucket_b1.lance"
+    bucket_dir.mkdir()
+    (bucket_dir / "table.lance").write_bytes(b"data")
 
     async def _fake_post(self, url, **kwargs):
         raise httpx.ConnectError("offline")
@@ -166,7 +166,7 @@ async def test_publish_network_failure_raises_memory_library_error(
 
     with pytest.raises(MemoryLibraryError, match="Falha ao publicar"):
         await publish_memory_bucket(
-            "ws1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
+            "b1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
         )
 
 
@@ -318,9 +318,9 @@ async def test_download_embed_model_case_sensitive_nao_normaliza(tmp_path, monke
 async def test_publish_resposta_sem_id_levanta_erro_claro(tmp_path, monkeypatch):
     # Payload malformado do servidor: 200 OK mas sem o campo `id` esperado
     # — não deve devolver None silenciosamente pro caller tratar como sucesso.
-    ws_dir = tmp_path / "ws1"
-    ws_dir.mkdir()
-    (ws_dir / "table.lance").write_bytes(b"data")
+    bucket_dir = tmp_path / "bucket_b1.lance"
+    bucket_dir.mkdir()
+    (bucket_dir / "table.lance").write_bytes(b"data")
 
     async def _fake_post(self, url, **kwargs):
         return httpx.Response(
@@ -334,7 +334,7 @@ async def test_publish_resposta_sem_id_levanta_erro_claro(tmp_path, monkeypatch)
 
     with pytest.raises(MemoryLibraryError, match="sem id"):
         await publish_memory_bucket(
-            "ws1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
+            "b1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
         )
 
 
@@ -344,8 +344,8 @@ async def test_publish_workspace_com_pasta_vazia_ainda_empacota_sem_erro(
 ):
     # Borda: diretório existe mas está vazio (coleção LanceDB sem dados
     # ainda) — is_dir() passa, tarfile.add funciona com pasta vazia.
-    ws_dir = tmp_path / "ws-vazio"
-    ws_dir.mkdir()
+    bucket_dir = tmp_path / "bucket_b-vazio.lance"
+    bucket_dir.mkdir()
 
     async def _fake_post(self, url, **kwargs):
         return httpx.Response(
@@ -357,20 +357,20 @@ async def test_publish_workspace_com_pasta_vazia_ainda_empacota_sem_erro(
         "backend.settings.settings.embedding_model", "embed-multilingual-v3.0"
     )
 
-    bucket_id = await publish_memory_bucket(
-        "ws-vazio", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
+    remote_bucket_id = await publish_memory_bucket(
+        "b-vazio", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
     )
 
-    assert bucket_id == "bucket-vazio"
+    assert remote_bucket_id == "bucket-vazio"
 
 
 @pytest.mark.asyncio
 async def test_publish_http_401_por_session_token_invalido_levanta_erro_claro(
     tmp_path, monkeypatch
 ):
-    ws_dir = tmp_path / "ws1"
-    ws_dir.mkdir()
-    (ws_dir / "table.lance").write_bytes(b"data")
+    bucket_dir = tmp_path / "bucket_b1.lance"
+    bucket_dir.mkdir()
+    (bucket_dir / "table.lance").write_bytes(b"data")
 
     async def _fake_post(self, url, **kwargs):
         return httpx.Response(
@@ -384,7 +384,7 @@ async def test_publish_http_401_por_session_token_invalido_levanta_erro_claro(
 
     with pytest.raises(MemoryLibraryError, match="401"):
         await publish_memory_bucket(
-            "ws1", "n", "d", "MIT", session_token="tok-invalido", lancedb_dir=tmp_path
+            "b1", "n", "d", "MIT", session_token="tok-invalido", lancedb_dir=tmp_path
         )
 
 
@@ -521,9 +521,9 @@ async def test_list_catalog_network_error_returns_empty_list_not_exception(
 async def test_publish_http_error_status_includes_status_code_in_message(
     tmp_path, monkeypatch
 ):
-    ws_dir = tmp_path / "ws1"
-    ws_dir.mkdir()
-    (ws_dir / "table.lance").write_bytes(b"data")
+    bucket_dir = tmp_path / "bucket_b1.lance"
+    bucket_dir.mkdir()
+    (bucket_dir / "table.lance").write_bytes(b"data")
 
     async def _fake_post(self, url, **kwargs):
         return httpx.Response(
@@ -537,7 +537,7 @@ async def test_publish_http_error_status_includes_status_code_in_message(
 
     with pytest.raises(MemoryLibraryError, match="403"):
         await publish_memory_bucket(
-            "ws1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
+            "b1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
         )
 
 
@@ -545,9 +545,9 @@ async def test_publish_http_error_status_includes_status_code_in_message(
 async def test_publish_response_without_id_raises_clear_error(tmp_path, monkeypatch):
     # Erro/borda: resposta 200 mas sem "id" — payload inesperado do backend,
     # não deve devolver bucket_id vazio/None silenciosamente.
-    ws_dir = tmp_path / "ws1"
-    ws_dir.mkdir()
-    (ws_dir / "table.lance").write_bytes(b"data")
+    bucket_dir = tmp_path / "bucket_b1.lance"
+    bucket_dir.mkdir()
+    (bucket_dir / "table.lance").write_bytes(b"data")
 
     async def _fake_post(self, url, **kwargs):
         return httpx.Response(
@@ -561,7 +561,7 @@ async def test_publish_response_without_id_raises_clear_error(tmp_path, monkeypa
 
     with pytest.raises(MemoryLibraryError, match="sem id"):
         await publish_memory_bucket(
-            "ws1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
+            "b1", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
         )
 
 
@@ -569,10 +569,10 @@ async def test_publish_response_without_id_raises_clear_error(tmp_path, monkeypa
 async def test_publish_empty_workspace_dir_still_packages_empty_archive(
     tmp_path, monkeypatch
 ):
-    # Borda: workspace existe mas está vazio (sem tabelas .lance ainda) —
+    # Borda: bucket existe mas está vazio (sem tabelas .lance ainda) —
     # empacota um tar.gz vazio em vez de falhar.
-    ws_dir = tmp_path / "ws-empty"
-    ws_dir.mkdir()
+    bucket_dir = tmp_path / "bucket_b-empty.lance"
+    bucket_dir.mkdir()
 
     async def _fake_post(self, url, **kwargs):
         return httpx.Response(
@@ -586,8 +586,8 @@ async def test_publish_empty_workspace_dir_still_packages_empty_archive(
         "backend.settings.settings.embedding_model", "embed-multilingual-v3.0"
     )
 
-    bucket_id = await publish_memory_bucket(
-        "ws-empty", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
+    remote_bucket_id = await publish_memory_bucket(
+        "b-empty", "n", "d", "MIT", session_token="tok", lancedb_dir=tmp_path
     )
 
-    assert bucket_id == "empty-bucket-id"
+    assert remote_bucket_id == "empty-bucket-id"
