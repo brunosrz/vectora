@@ -7,6 +7,7 @@ validar a lógica de montagem de mounts/flags sem precisar do binário
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from backend.sandbox.policy import SandboxPolicy
@@ -111,6 +112,12 @@ def build_bwrap_command(
     if policy.lockdown:
         argv += ["--unshare-net"]
     argv += ["--setenv", "VECTORA_SANDBOX_LOCKDOWN", "1" if policy.lockdown else "0"]
+    # Propaga rw_paths/ro_paths/workspace pro worker aplicar Landlock (4.1)
+    # de dentro do próprio processo — landlock_restrict_self só afeta quem
+    # o chama, não pode ser feito de fora via bwrap.
+    argv += ["--setenv", "VECTORA_SANDBOX_WORKSPACE_DIR", workspace_dir]
+    argv += ["--setenv", "VECTORA_SANDBOX_RW_PATHS", json.dumps(list(policy.rw_paths))]
+    argv += ["--setenv", "VECTORA_SANDBOX_RO_PATHS", json.dumps(list(policy.ro_paths))]
     argv += ["--chdir", workspace_dir]
     argv += ["--", *command]
     return argv

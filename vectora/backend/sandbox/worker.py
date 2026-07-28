@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from backend.sandbox.landlock import apply_landlock
 from backend.sandbox.rlimits import apply_rlimits
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,19 @@ async def main() -> None:
     # Landlock/seccomp cobrirem esse vetor. Perfil vem de env var setada por
     # `workspace_jail.py` no spawn (`--setenv`, conforme `policy.lockdown`).
     apply_rlimits(lockdown=os.environ.get("VECTORA_SANDBOX_LOCKDOWN") == "1")
+
+    # Landlock (4.1) — defesa em profundidade complementar aos binds do
+    # bwrap. Só roda se o worker foi spawnado via workspace_jail.py (que
+    # sempre seta VECTORA_SANDBOX_WORKSPACE_DIR); ausência da env var
+    # (ex. worker chamado direto em teste) pula sem tentar.
+    workspace_dir = os.environ.get("VECTORA_SANDBOX_WORKSPACE_DIR")
+    if workspace_dir:
+        rw_paths = [
+            workspace_dir,
+            *json.loads(os.environ.get("VECTORA_SANDBOX_RW_PATHS", "[]")),
+        ]
+        ro_paths = json.loads(os.environ.get("VECTORA_SANDBOX_RO_PATHS", "[]"))
+        apply_landlock(rw_paths, ro_paths)
 
     loop = asyncio.get_event_loop()
     reader = asyncio.StreamReader()
