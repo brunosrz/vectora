@@ -153,3 +153,184 @@ async def install_memory_bucket(bucket_id: str) -> str:
     except Exception as exc:
         logger.exception("install_memory_bucket failed", extra={"bucket_id": bucket_id})
         return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "invalidates": ["mcp"],
+        "destructive": True,
+        "category": "library",
+        "icon": "puzzle",
+    }
+)
+async def uninstall_mcp(
+    connector_id: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Desinstala um conector MCP previamente instalado (o inverso de
+    `install_mcp_from_registry`).
+
+    Args:
+        connector_id: id do conector a remover.
+    """
+    try:
+        from backend.api.handlers.mcp_marketplace import UninstallRequest
+        from backend.api.handlers.mcp_marketplace import (
+            uninstall_mcp as _http_uninstall,
+        )
+
+        user_id = _user_id(config)
+        result = await _http_uninstall(UninstallRequest(mcp_id=connector_id), user_id)
+        return json.dumps(result)
+    except Exception as exc:
+        logger.exception("uninstall_mcp failed", extra={"connector_id": connector_id})
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "invalidates": ["skills"],
+        "destructive": True,
+        "category": "library",
+        "icon": "trash-2",
+    }
+)
+async def delete_skill(
+    skill_id: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Remove uma skill instalada do usuário.
+
+    Args:
+        skill_id: id da skill (de `list_skills`/aba Library).
+    """
+    try:
+        from backend.workspace.skills import remove_skill
+
+        user_id = _user_id(config)
+        removed = remove_skill(user_id, skill_id)
+        if not removed:
+            return json.dumps(
+                {"status": "error", "error": f"skill '{skill_id}' não encontrada"}
+            )
+        return json.dumps({"status": "removed", "skill_id": skill_id})
+    except Exception as exc:
+        logger.exception("delete_skill failed", extra={"skill_id": skill_id})
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "invalidates": ["skills"],
+        "destructive": False,
+        "category": "library",
+        "icon": "check-circle",
+    }
+)
+async def verify_skill(
+    skill_id: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Revalida o SKILL.md de uma skill instalada (útil após edição manual
+    do arquivo no disco).
+
+    Args:
+        skill_id: id da skill a revalidar.
+    """
+    try:
+        from backend.workspace.skills import verify_skill as _verify
+
+        user_id = _user_id(config)
+        result = _verify(user_id, skill_id)
+        return json.dumps(result)
+    except Exception as exc:
+        logger.exception("verify_skill failed", extra={"skill_id": skill_id})
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "invalidates": ["memory"],
+        "destructive": True,
+        "category": "library",
+        "icon": "upload",
+    }
+)
+async def publish_memory_bucket_tool(
+    bucket_id: str,
+    name: str,
+    description: str,
+    license: str = "CC-BY-4.0",  # noqa: A002 — nome de campo do domínio (licença)
+) -> str:
+    """Publica um bucket RAG local na Vectora Memory Library remota — exige
+    conta vectora.company conectada (`VECTORA_TOKEN`).
+
+    Args:
+        bucket_id: id do bucket local a publicar (de `list_buckets`).
+        name: nome de exibição no catálogo remoto.
+        description: descrição em markdown do conteúdo do bucket.
+        license: licença de distribuição (ex.: "CC-BY-4.0", "MIT").
+    """
+    from backend.services import license as license_service
+    from backend.services.memory_library import (
+        MemoryLibraryError,
+        publish_memory_bucket,
+    )
+
+    token = license_service._get_token()
+    if not token:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": "Nenhuma conta vectora.company conectada (VECTORA_TOKEN ausente).",
+            }
+        )
+    try:
+        remote_bucket_id = await publish_memory_bucket(
+            bucket_id, name, description, license, session_token=token
+        )
+        return json.dumps({"status": "published", "bucket_id": remote_bucket_id})
+    except MemoryLibraryError as exc:
+        return json.dumps({"status": "error", "error": str(exc)})
+    except Exception as exc:
+        logger.exception(
+            "publish_memory_bucket_tool failed", extra={"bucket_id": bucket_id}
+        )
+        return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "invalidates": ["mcp"],
+        "destructive": True,
+        "category": "library",
+        "icon": "key",
+    }
+)
+async def save_mcp_env_var(
+    connector_id: str,
+    key: str,
+    value: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Salva uma variável de ambiente exigida por um conector MCP (ex.: a
+    que `install_mcp_from_registry` listou como faltante em
+    `missing_env_vars`) — mesmo mecanismo de `POST /auth/envs`. Não instala
+    o conector sozinho; chame `install_mcp_from_registry` de novo depois.
+
+    Args:
+        connector_id: id do conector que precisa da variável (só para o log).
+        key: nome da variável de ambiente (ex.: "GITHUB_TOKEN").
+        value: valor a salvar.
+    """
+    try:
+        from backend.rbac.auth import set_env_override
+
+        user_id = _user_id(config)
+        await set_env_override(user_id, key, value)
+        return json.dumps({"status": "saved", "connector_id": connector_id, "key": key})
+    except Exception as exc:
+        logger.exception(
+            "save_mcp_env_var failed", extra={"connector_id": connector_id, "key": key}
+        )
+        return json.dumps({"status": "error", "error": str(exc)})

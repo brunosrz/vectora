@@ -104,9 +104,14 @@ from backend.tools.learning import (
     save_learned_fact,
 )
 from backend.tools.library import (
+    delete_skill,
     install_mcp_from_registry,
     install_memory_bucket,
     install_skill_from_catalog,
+    publish_memory_bucket_tool,
+    save_mcp_env_var,
+    uninstall_mcp,
+    verify_skill,
 )
 from backend.tools.linear import (
     linear_create_issue,
@@ -203,6 +208,11 @@ LIBRARY_TOOLS: list[BaseTool] = [
     install_mcp_from_registry,
     install_skill_from_catalog,
     install_memory_bucket,
+    uninstall_mcp,
+    delete_skill,
+    verify_skill,
+    publish_memory_bucket_tool,
+    save_mcp_env_var,
 ]
 
 #: Ferramentas de workspace e manifests (B6)
@@ -330,6 +340,11 @@ for _t in [
     install_mcp_from_registry,
     install_skill_from_catalog,
     install_memory_bucket,
+    uninstall_mcp,
+    delete_skill,
+    verify_skill,
+    publish_memory_bucket_tool,
+    save_mcp_env_var,
     workspace_describe,
     workspace_list,
     bucket_summary,

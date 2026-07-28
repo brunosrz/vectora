@@ -68,7 +68,7 @@ def test_search_memory_registered():
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas — atualize ao
     # adicionar/remover tool em backend/nodes/tools.py.
-    assert len(ALL_TOOLS) == 115
+    assert len(ALL_TOOLS) == 120
 
 
 def test_background_task_tools_registered():

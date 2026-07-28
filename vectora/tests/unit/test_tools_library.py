@@ -13,9 +13,14 @@ from unittest.mock import AsyncMock
 import pytest
 
 from backend.tools.library import (
+    delete_skill,
     install_mcp_from_registry,
     install_memory_bucket,
     install_skill_from_catalog,
+    publish_memory_bucket_tool,
+    save_mcp_env_var,
+    uninstall_mcp,
+    verify_skill,
 )
 
 
@@ -198,3 +203,221 @@ async def test_install_memory_bucket_error_returns_status_error_not_raised(
 
     assert result["status"] == "error"
     assert "embed_model incompatível" in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# uninstall_mcp
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_uninstall_mcp_removes_connector(monkeypatch):
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace,
+        "uninstall_mcp",
+        AsyncMock(return_value={"status": "removed", "mcp_id": "filesystem"}),
+    )
+
+    result = json.loads(
+        await uninstall_mcp.ainvoke({"connector_id": "filesystem", "config": _config()})
+    )
+
+    assert result == {"status": "removed", "mcp_id": "filesystem"}
+
+
+@pytest.mark.asyncio
+async def test_uninstall_mcp_not_installed_returns_not_found(monkeypatch):
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace,
+        "uninstall_mcp",
+        AsyncMock(return_value={"status": "not_found", "mcp_id": "nope"}),
+    )
+
+    result = json.loads(
+        await uninstall_mcp.ainvoke({"connector_id": "nope", "config": _config()})
+    )
+
+    assert result["status"] == "not_found"
+
+
+# ---------------------------------------------------------------------------
+# delete_skill
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_delete_skill_removes_installed_skill(monkeypatch):
+    from backend.workspace import skills as skills_mod
+
+    monkeypatch.setattr(skills_mod, "remove_skill", lambda user_id, skill_id: True)
+
+    result = json.loads(
+        await delete_skill.ainvoke({"skill_id": "pdf-extract", "config": _config()})
+    )
+
+    assert result == {"status": "removed", "skill_id": "pdf-extract"}
+
+
+@pytest.mark.asyncio
+async def test_delete_skill_unknown_skill_returns_error(monkeypatch):
+    from backend.workspace import skills as skills_mod
+
+    monkeypatch.setattr(skills_mod, "remove_skill", lambda user_id, skill_id: False)
+
+    result = json.loads(
+        await delete_skill.ainvoke({"skill_id": "does-not-exist", "config": _config()})
+    )
+
+    assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# verify_skill
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_verify_skill_revalidates_and_returns_status(monkeypatch):
+    from backend.workspace import skills as skills_mod
+
+    monkeypatch.setattr(
+        skills_mod,
+        "verify_skill",
+        lambda user_id, skill_id: {"status": "valid", "skill_id": skill_id},
+    )
+
+    result = json.loads(
+        await verify_skill.ainvoke({"skill_id": "pdf-extract", "config": _config()})
+    )
+
+    assert result == {"status": "valid", "skill_id": "pdf-extract"}
+
+
+@pytest.mark.asyncio
+async def test_verify_skill_propagates_internal_error_as_typed_error(monkeypatch):
+    from backend.workspace import skills as skills_mod
+
+    def _boom(user_id, skill_id):
+        raise FileNotFoundError("SKILL.md ausente")
+
+    monkeypatch.setattr(skills_mod, "verify_skill", _boom)
+
+    result = json.loads(
+        await verify_skill.ainvoke({"skill_id": "pdf-extract", "config": _config()})
+    )
+
+    assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# publish_memory_bucket_tool
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_publish_memory_bucket_tool_publishes_with_token(monkeypatch):
+    from backend.services import license as license_service
+    from backend.services import memory_library
+
+    monkeypatch.setattr(license_service, "_get_token", lambda: "tok-123")
+    monkeypatch.setattr(
+        memory_library,
+        "publish_memory_bucket",
+        AsyncMock(return_value="remote-bucket-1"),
+    )
+
+    result = json.loads(
+        await publish_memory_bucket_tool.ainvoke(
+            {
+                "bucket_id": "docs-2024",
+                "name": "Docs 2024",
+                "description": "# Docs",
+                "license": "MIT",
+            }
+        )
+    )
+
+    assert result == {"status": "published", "bucket_id": "remote-bucket-1"}
+
+
+@pytest.mark.asyncio
+async def test_publish_memory_bucket_tool_no_token_returns_error_without_publishing(
+    monkeypatch,
+):
+    from backend.services import license as license_service
+    from backend.services import memory_library
+
+    monkeypatch.setattr(license_service, "_get_token", lambda: None)
+    publish_spy = AsyncMock()
+    monkeypatch.setattr(memory_library, "publish_memory_bucket", publish_spy)
+
+    result = json.loads(
+        await publish_memory_bucket_tool.ainvoke(
+            {
+                "bucket_id": "docs-2024",
+                "name": "Docs 2024",
+                "description": "# Docs",
+            }
+        )
+    )
+
+    assert result["status"] == "error"
+    publish_spy.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# save_mcp_env_var
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_save_mcp_env_var_persists_override(monkeypatch):
+    from backend.rbac import auth as auth_svc
+
+    set_spy = AsyncMock()
+    monkeypatch.setattr(auth_svc, "set_env_override", set_spy)
+
+    result = json.loads(
+        await save_mcp_env_var.ainvoke(
+            {
+                "connector_id": "brave-search",
+                "key": "BRAVE_API_KEY",
+                "value": "sk-abc",
+                "config": _config(),
+            }
+        )
+    )
+
+    assert result == {
+        "status": "saved",
+        "connector_id": "brave-search",
+        "key": "BRAVE_API_KEY",
+    }
+    set_spy.assert_awaited_once_with("local", "BRAVE_API_KEY", "sk-abc")
+
+
+@pytest.mark.asyncio
+async def test_save_mcp_env_var_internal_error_returns_typed_error(monkeypatch):
+    from backend.rbac import auth as auth_svc
+
+    async def _boom(user_id, key, value):
+        raise RuntimeError("banco indisponível")
+
+    monkeypatch.setattr(auth_svc, "set_env_override", _boom)
+
+    result = json.loads(
+        await save_mcp_env_var.ainvoke(
+            {
+                "connector_id": "brave-search",
+                "key": "BRAVE_API_KEY",
+                "value": "sk-abc",
+                "config": _config(),
+            }
+        )
+    )
+
+    assert result["status"] == "error"
