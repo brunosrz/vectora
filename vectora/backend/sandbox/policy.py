@@ -105,17 +105,23 @@ class _Unset:
 _UNSET = _Unset()
 _wsl2_distro_cache: str | None | _Unset = _UNSET
 
+# VMs internas do Docker Desktop — nomes reservados e conhecidos, sem rootfs
+# de uso geral (sem `/bin/sh` utilizável por um worker jailado). Nunca são
+# uma distro WSL2 elegível pro sandbox, mesmo aparecendo em `wsl.exe -l -v`.
+_DOCKER_RESERVED_DISTROS = {"docker-desktop", "docker-desktop-data"}
+
 
 async def detect_wsl2() -> str | None:
-    """Detecta uma distro WSL2 elegível (kernel Linux real, WSL versão 2 —
-    não WSL1) via `wsl.exe -l -v`. É o único caminho real de sandbox no
-    Windows: bwrap não roda nativo (sem namespace/mount API equivalente),
-    e WSL2 é exatamente o caminho que o `ai-jail` original usa nesse SO —
-    Docker não entra nessa equação.
+    """Detecta uma distro WSL2 elegível (kernel Linux real, WSL versão 2,
+    de uso geral — nunca a VM interna do Docker Desktop) via `wsl.exe -l -v`.
+    É o único caminho real de sandbox no Windows: bwrap não roda nativo (sem
+    namespace/mount API equivalente), e WSL2 é exatamente o caminho que o
+    `ai-jail` original usa nesse SO — Docker não entra nessa equação.
 
     Cacheado por processo — o ambiente (WSL instalado ou não) não muda em
     runtime. Retorna `None` (não levanta) se `wsl.exe` não existir, falhar,
-    ou nenhuma distro estiver em WSL2.
+    nenhuma distro estiver em WSL2, ou a(s) única(s) candidata(s) forem
+    reservadas do Docker Desktop / sem `/bin/sh` utilizável.
     """
     global _wsl2_distro_cache
     if not isinstance(_wsl2_distro_cache, _Unset):
@@ -126,7 +132,13 @@ async def detect_wsl2() -> str | None:
     return distro
 
 
-async def _detect_wsl2_uncached() -> str | None:
+async def _list_wsl2_candidates() -> list[str]:
+    """Lista os nomes de distro WSL2 (versão 2) elegíveis, na ordem: a
+    distro default primeiro (se ela for WSL2 e de uso geral), depois as
+    demais na ordem em que `wsl.exe -l -v` as lista. Exclui as VMs
+    reservadas do Docker Desktop. Lista vazia (nunca levanta) se `wsl.exe`
+    não existir/falhar ou nenhuma distro WSL2 de uso geral existir.
+    """
     try:
         proc = await asyncio.create_subprocess_exec(
             "wsl.exe",
@@ -137,9 +149,9 @@ async def _detect_wsl2_uncached() -> str | None:
         )
         stdout_b, _ = await asyncio.wait_for(proc.communicate(), timeout=10.0)
     except (FileNotFoundError, TimeoutError, OSError):
-        return None
+        return []
     if proc.returncode != 0:
-        return None
+        return []
 
     # `wsl.exe -l -v` imprime UTF-16LE no Windows — decodificar como UTF-8
     # produz lixo intercalado com bytes nulos.
@@ -149,7 +161,7 @@ async def _detect_wsl2_uncached() -> str | None:
         text = stdout_b.decode("utf-8", errors="replace")
 
     default_distro: str | None = None
-    fallback_distro: str | None = None
+    others: list[str] = []
     for line in text.splitlines():
         stripped = line.strip().lstrip("*").strip()
         if not stripped or stripped.upper().startswith("NAME"):
@@ -158,10 +170,70 @@ async def _detect_wsl2_uncached() -> str | None:
         if len(parts) < 2:
             continue
         name, version = parts[0], parts[-1]
-        if version != "2":
+        if version != "2" or name.lower() in _DOCKER_RESERVED_DISTROS:
             continue
         if line.strip().startswith("*"):
             default_distro = name
-        elif fallback_distro is None:
-            fallback_distro = name
-    return default_distro or fallback_distro
+        else:
+            others.append(name)
+    return ([default_distro] if default_distro else []) + others
+
+
+async def _distro_has_usable_shell(name: str) -> bool:
+    """Testa `/bin/sh -c true` dentro da distro — confirma que ela tem um
+    rootfs de uso geral utilizável pelo worker jailado, não só que aparece
+    listada. Nunca levanta; qualquer falha (timeout, distro corrompida,
+    `wsl.exe` sumiu no meio do caminho) vira `False`."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "wsl.exe",
+            "-d",
+            name,
+            "--",
+            "test",
+            "-x",
+            "/bin/sh",
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await asyncio.wait_for(proc.wait(), timeout=10.0)
+    except (FileNotFoundError, TimeoutError, OSError):
+        return False
+    return proc.returncode == 0
+
+
+async def _detect_wsl2_uncached() -> str | None:
+    for name in await _list_wsl2_candidates():
+        if await _distro_has_usable_shell(name):
+            return name
+    return None
+
+
+async def _wsl_available() -> bool:
+    """`wsl.exe --status` só pra confirmar que o binário existe e responde —
+    não usa a saída (formato muda entre versões do Windows)."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "wsl.exe",
+            "--status",
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await asyncio.wait_for(proc.wait(), timeout=10.0)
+    except (FileNotFoundError, TimeoutError, OSError):
+        return False
+    return True
+
+
+async def wsl2_diagnostic() -> str:
+    """Explica por que `detect_wsl2()` não achou uma distro elegível —
+    devolve um código curto (não texto pronto: tradução vive no frontend
+    via `m()`, mesmo padrão de erro tipado do resto do produto). Só faz
+    sentido chamar depois de `detect_wsl2()` já ter retornado `None`.
+    """
+    if not await _wsl_available():
+        return "wsl_not_installed"
+    candidates = await _list_wsl2_candidates()
+    if not candidates:
+        return "no_general_purpose_distro"
+    return "distro_missing_shell"

@@ -596,7 +596,8 @@ class TestPrEndpoints:
 
 class TestSandboxStatus:
     """GET /workspaces/{id}/sandbox/status — reflete se o worker jailado
-    (AI Jail) está habilitado, lendo vectora.toml/[sandbox]."""
+    (AI Jail) está habilitado, lendo vectora.toml/[sandbox], e populado com
+    um `diagnostic` acionável quando desabilitado."""
 
     @pytest.mark.asyncio
     async def test_enabled_true_when_sandbox_configured(self, trusted_ws):
@@ -610,16 +611,42 @@ class TestSandboxStatus:
         resp = await workspace_sandbox_status(workspace_id=wsid)
 
         assert resp.enabled is True
+        assert resp.diagnostic is None
 
     @pytest.mark.asyncio
-    async def test_enabled_false_without_vectora_toml(self, trusted_ws):
-        from backend.api.handlers.workspaces import workspace_sandbox_status
+    async def test_enabled_false_without_vectora_toml_e_wsl2_disponivel(
+        self, trusted_ws, monkeypatch
+    ):
+        from backend.api.handlers import workspaces as ws_mod
 
         wsid, _root = trusted_ws
+        monkeypatch.setattr(ws_mod, "detect_wsl2", None, raising=False)
+        import backend.sandbox.policy as policy_mod
 
-        resp = await workspace_sandbox_status(workspace_id=wsid)
+        monkeypatch.setattr(policy_mod, "detect_wsl2", _async_return("Ubuntu"))
+
+        resp = await ws_mod.workspace_sandbox_status(workspace_id=wsid)
 
         assert resp.enabled is False
+        assert resp.diagnostic == "no_vectora_toml"
+
+    @pytest.mark.asyncio
+    async def test_enabled_false_without_vectora_toml_e_sem_wsl2(
+        self, trusted_ws, monkeypatch
+    ):
+        import backend.sandbox.policy as policy_mod
+        from backend.api.handlers import workspaces as ws_mod
+
+        wsid, _root = trusted_ws
+        monkeypatch.setattr(policy_mod, "detect_wsl2", _async_return(None))
+        monkeypatch.setattr(
+            policy_mod, "wsl2_diagnostic", _async_return("wsl_not_installed")
+        )
+
+        resp = await ws_mod.workspace_sandbox_status(workspace_id=wsid)
+
+        assert resp.enabled is False
+        assert resp.diagnostic == "wsl_not_installed"
 
     @pytest.mark.asyncio
     async def test_enabled_false_when_sandbox_disabled_explicitly(self, trusted_ws):
@@ -633,6 +660,7 @@ class TestSandboxStatus:
         resp = await workspace_sandbox_status(workspace_id=wsid)
 
         assert resp.enabled is False
+        assert resp.diagnostic == "sandbox_disabled_in_config"
 
     @pytest.mark.asyncio
     async def test_unknown_workspace_returns_disabled_not_error(self):
@@ -641,3 +669,57 @@ class TestSandboxStatus:
         resp = await workspace_sandbox_status(workspace_id="does-not-exist")
 
         assert resp.enabled is False
+        assert resp.diagnostic == "no_workspace"
+
+
+def _async_return(value):
+    async def _fn(*_args, **_kwargs):
+        return value
+
+    return _fn
+
+
+class TestSandboxInit:
+    """POST /workspaces/{id}/sandbox/init — cria vectora.toml com [sandbox]
+    habilitado, nunca sobrescrevendo um arquivo já existente."""
+
+    @pytest.mark.asyncio
+    async def test_cria_vectora_toml_com_sandbox_habilitado(self, trusted_ws):
+        from backend.api.handlers.workspaces import workspace_sandbox_init
+
+        wsid, root = trusted_ws
+
+        resp = await workspace_sandbox_init(workspace_id=wsid)
+
+        assert resp.ok is True
+        toml_path = root / "vectora.toml"
+        assert toml_path.is_file()
+        assert "[sandbox]" in toml_path.read_text(encoding="utf-8")
+        assert "enabled = true" in toml_path.read_text(encoding="utf-8")
+
+    @pytest.mark.asyncio
+    async def test_nao_sobrescreve_vectora_toml_ja_existente(self, trusted_ws):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.workspaces import workspace_sandbox_init
+
+        wsid, root = trusted_ws
+        (root / "vectora.toml").write_text('[other]\nkey = "value"\n', encoding="utf-8")
+
+        with pytest.raises(HTTPException) as exc_info:
+            await workspace_sandbox_init(workspace_id=wsid)
+
+        assert exc_info.value.status_code == 409
+        # Conteúdo original preservado — não some por causa da tentativa.
+        assert "[other]" in (root / "vectora.toml").read_text(encoding="utf-8")
+
+    @pytest.mark.asyncio
+    async def test_workspace_inexistente_retorna_404(self):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.workspaces import workspace_sandbox_init
+
+        with pytest.raises(HTTPException) as exc_info:
+            await workspace_sandbox_init(workspace_id="does-not-exist")
+
+        assert exc_info.value.status_code == 404

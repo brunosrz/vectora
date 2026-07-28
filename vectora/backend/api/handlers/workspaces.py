@@ -887,6 +887,7 @@ def _resolve_inside(workspace_id: str, rel_path: str) -> Path | None:
 
 class SandboxStatusResponse(BaseModel):
     enabled: bool
+    diagnostic: str | None = None
 
 
 @view_router.get("/{workspace_id}/sandbox/status", response_model=SandboxStatusResponse)
@@ -895,15 +896,62 @@ async def workspace_sandbox_status(workspace_id: str) -> SandboxStatusResponse:
     workspace — lê `vectora.toml`/`[sandbox]` na raiz do workspace, mesma
     fonte que `backend/tools/fs.py`/`PtySession` já consultam antes de
     rotear terminal/tools de arquivo pelo worker. Workspace inexistente
-    retorna `enabled=False` (nunca alega proteção que não existe)."""
-    from backend.sandbox.policy import parse_policy
+    retorna `enabled=False` (nunca alega proteção que não existe).
+
+    `diagnostic` só é populado quando desabilitado (`None` quando já
+    habilitado) — código curto explicando a causa real (ver
+    `backend/sandbox/policy.py::wsl2_diagnostic`), pro frontend virar um
+    aviso acionável em vez de só "sem sandbox"."""
+    from backend.sandbox.policy import detect_wsl2, parse_policy, wsl2_diagnostic
     from backend.workspace.workspace import workspace_registry
 
     ws = workspace_registry.get(workspace_id)
     if ws is None:
-        return SandboxStatusResponse(enabled=False)
+        return SandboxStatusResponse(enabled=False, diagnostic="no_workspace")
     policy = parse_policy(Path(ws.cwd) / "vectora.toml")
-    return SandboxStatusResponse(enabled=policy.enabled)
+    if policy.enabled:
+        return SandboxStatusResponse(enabled=True)
+
+    toml_path = Path(ws.cwd) / "vectora.toml"
+    if not toml_path.is_file():
+        distro = await detect_wsl2()
+        diagnostic = "no_vectora_toml" if distro else await wsl2_diagnostic()
+    else:
+        diagnostic = "sandbox_disabled_in_config"
+    return SandboxStatusResponse(enabled=False, diagnostic=diagnostic)
+
+
+class SandboxInitResponse(BaseModel):
+    ok: bool
+
+
+@view_router.post("/{workspace_id}/sandbox/init", response_model=SandboxInitResponse)
+async def workspace_sandbox_init(workspace_id: str) -> SandboxInitResponse:
+    """Cria `vectora.toml` na raiz do workspace com `[sandbox] enabled = true`
+    (config mínima, sem os comentários explicativos do template de
+    referência — o usuário já está agindo a partir de um diagnóstico
+    acionável na UI). Nunca sobrescreve um `vectora.toml` já existente
+    (mesmo sem seção `[sandbox]`) — evita apagar config que o usuário já
+    tenha escrito à mão."""
+    from fastapi import HTTPException
+
+    from backend.workspace.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        raise HTTPException(status_code=404, detail="Workspace não encontrado.")
+
+    toml_path = Path(ws.cwd) / "vectora.toml"
+    if toml_path.exists():
+        raise HTTPException(
+            status_code=409,
+            detail="vectora.toml já existe — edite manualmente pra habilitar [sandbox].",
+        )
+
+    toml_path.write_text(
+        '[sandbox]\nenabled = true\nbackend = "local"\n', encoding="utf-8"
+    )
+    return SandboxInitResponse(ok=True)
 
 
 @view_router.get("/{workspace_id}/tree", response_model=TreeResponse)

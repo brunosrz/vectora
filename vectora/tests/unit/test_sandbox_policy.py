@@ -13,6 +13,7 @@ from backend.sandbox.policy import (
     LOCKED_DOWN_POLICY,
     detect_wsl2,
     parse_policy,
+    wsl2_diagnostic,
 )
 
 
@@ -363,11 +364,34 @@ def _reset_wsl2_cache():
     policy_module._wsl2_distro_cache = policy_module._UNSET
 
 
-def _fake_wsl_proc(stdout_bytes: bytes, returncode: int = 0):
+def _fake_wsl_proc(stdout_bytes: bytes = b"", returncode: int = 0):
     proc = MagicMock()
     proc.communicate = AsyncMock(return_value=(stdout_bytes, b""))
+    proc.wait = AsyncMock(return_value=returncode)
     proc.returncode = returncode
     return proc
+
+
+def _mock_wsl_exec(list_output: str, usable_distros: set[str] | None = None):
+    """Mock de `create_subprocess_exec` que distingue `wsl.exe -l -v`
+    (lista de distros) de `wsl.exe -d <nome> -- test -x /bin/sh` (checagem
+    de shell) e de `wsl.exe --status` (disponibilidade) pelos args reais —
+    reflete o fluxo de duas fases de `detect_wsl2()`."""
+    stdout_bytes = list_output.encode("utf-16-le")
+    usable = usable_distros if usable_distros is not None else None
+
+    async def _exec(*args, **_kwargs):
+        if args[:2] == ("wsl.exe", "-l"):
+            return _fake_wsl_proc(stdout_bytes, returncode=0)
+        if args[0] == "wsl.exe" and args[1] == "--status":
+            return _fake_wsl_proc(returncode=0)
+        if args[:2] == ("wsl.exe", "-d"):
+            name = args[2]
+            ok = usable is None or name in usable
+            return _fake_wsl_proc(returncode=0 if ok else 1)
+        return _fake_wsl_proc(returncode=1)
+
+    return _exec
 
 
 @pytest.mark.asyncio
@@ -375,11 +399,10 @@ async def test_detect_wsl2_retorna_a_distro_default_marcada_com_versao_2(
     monkeypatch,
 ):
     output = "  NAME      STATE           VERSION\n* Ubuntu    Running         2\n  Debian    Stopped         1\n"
-    stdout_bytes = output.encode("utf-16-le")
     monkeypatch.setattr(
         policy_module.asyncio,
         "create_subprocess_exec",
-        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes)),
+        _mock_wsl_exec(output),
     )
 
     result = await detect_wsl2()
@@ -390,11 +413,10 @@ async def test_detect_wsl2_retorna_a_distro_default_marcada_com_versao_2(
 @pytest.mark.asyncio
 async def test_detect_wsl2_sem_default_cai_pra_primeira_distro_versao_2(monkeypatch):
     output = "  NAME      STATE           VERSION\n  Debian    Stopped         1\n  Fedora    Running         2\n"
-    stdout_bytes = output.encode("utf-16-le")
     monkeypatch.setattr(
         policy_module.asyncio,
         "create_subprocess_exec",
-        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes)),
+        _mock_wsl_exec(output),
     )
 
     result = await detect_wsl2()
@@ -405,11 +427,10 @@ async def test_detect_wsl2_sem_default_cai_pra_primeira_distro_versao_2(monkeypa
 @pytest.mark.asyncio
 async def test_detect_wsl2_sem_nenhuma_distro_versao_2_retorna_none(monkeypatch):
     output = "  NAME      STATE           VERSION\n  Debian    Stopped         1\n"
-    stdout_bytes = output.encode("utf-16-le")
     monkeypatch.setattr(
         policy_module.asyncio,
         "create_subprocess_exec",
-        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes)),
+        _mock_wsl_exec(output),
     )
 
     result = await detect_wsl2()
@@ -435,12 +456,10 @@ async def test_detect_wsl2_sem_wsl_exe_instalado_retorna_none_sem_lancar(monkeyp
 async def test_detect_wsl2_com_codigo_de_saida_diferente_de_zero_retorna_none(
     monkeypatch,
 ):
-    stdout_bytes = "".encode("utf-16-le")
-    monkeypatch.setattr(
-        policy_module.asyncio,
-        "create_subprocess_exec",
-        AsyncMock(return_value=_fake_wsl_proc(stdout_bytes, returncode=1)),
-    )
+    async def _exec(*args, **_kwargs):
+        return _fake_wsl_proc(b"", returncode=1)
+
+    monkeypatch.setattr(policy_module.asyncio, "create_subprocess_exec", _exec)
 
     result = await detect_wsl2()
 
@@ -450,12 +469,130 @@ async def test_detect_wsl2_com_codigo_de_saida_diferente_de_zero_retorna_none(
 @pytest.mark.asyncio
 async def test_detect_wsl2_resultado_e_cacheado_entre_chamadas(monkeypatch):
     output = "  NAME      STATE           VERSION\n* Ubuntu    Running         2\n"
-    stdout_bytes = output.encode("utf-16-le")
-    spawn_mock = AsyncMock(return_value=_fake_wsl_proc(stdout_bytes))
+    spawn_mock = AsyncMock(side_effect=_mock_wsl_exec(output))
     monkeypatch.setattr(policy_module.asyncio, "create_subprocess_exec", spawn_mock)
 
     first = await detect_wsl2()
     second = await detect_wsl2()
 
     assert first == second == "Ubuntu"
-    spawn_mock.assert_called_once()
+    # 1ª chamada: `-l -v` + `-d Ubuntu -- test -x /bin/sh`. 2ª chamada
+    # (cache hit) não dispara nenhum subprocess novo.
+    assert spawn_mock.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_ignora_docker_desktop_mesmo_sendo_a_distro_default(
+    monkeypatch,
+):
+    # docker-desktop é a VM interna do Docker Desktop — nunca é uma distro
+    # elegível de sandbox, mesmo marcada como default (`*`) na listagem.
+    output = (
+        "  NAME                   STATE           VERSION\n"
+        "* docker-desktop         Running         2\n"
+        "  docker-desktop-data    Running         2\n"
+        "  Ubuntu                 Running         2\n"
+    )
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        _mock_wsl_exec(output),
+    )
+
+    result = await detect_wsl2()
+
+    assert result == "Ubuntu"
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_so_com_docker_desktop_retorna_none(monkeypatch):
+    # Regressão do bug real: `wsl --status` só mostra `docker-desktop` —
+    # não deve ser aceita como distro de uso geral.
+    output = "  NAME               STATE           VERSION\n* docker-desktop     Running         2\n"
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        _mock_wsl_exec(output),
+    )
+
+    result = await detect_wsl2()
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_distro_listada_sem_bin_sh_utilizavel_e_pulada(
+    monkeypatch,
+):
+    # Distro aparece na listagem (existe, WSL2) mas não passa no teste de
+    # `/bin/sh -x` — não é uma distro de uso geral utilizável.
+    output = (
+        "  NAME      STATE           VERSION\n"
+        "* Broken    Running         2\n"
+        "  Ubuntu    Running         2\n"
+    )
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        _mock_wsl_exec(output, usable_distros={"Ubuntu"}),
+    )
+
+    result = await detect_wsl2()
+
+    assert result == "Ubuntu"
+
+
+@pytest.mark.asyncio
+async def test_detect_wsl2_nenhuma_distro_com_shell_utilizavel_retorna_none(
+    monkeypatch,
+):
+    output = "  NAME      STATE           VERSION\n* Broken    Running         2\n"
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        _mock_wsl_exec(output, usable_distros=set()),
+    )
+
+    result = await detect_wsl2()
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_wsl2_diagnostic_sem_wsl_instalado(monkeypatch):
+    async def _raise(*args, **kwargs):
+        raise FileNotFoundError("wsl.exe not found")
+
+    monkeypatch.setattr(policy_module.asyncio, "create_subprocess_exec", _raise)
+
+    result = await wsl2_diagnostic()
+
+    assert result == "wsl_not_installed"
+
+
+@pytest.mark.asyncio
+async def test_wsl2_diagnostic_so_docker_desktop_instalado(monkeypatch):
+    output = "  NAME               STATE           VERSION\n* docker-desktop     Running         2\n"
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        _mock_wsl_exec(output),
+    )
+
+    result = await wsl2_diagnostic()
+
+    assert result == "no_general_purpose_distro"
+
+
+@pytest.mark.asyncio
+async def test_wsl2_diagnostic_distro_sem_shell_utilizavel(monkeypatch):
+    output = "  NAME      STATE           VERSION\n* Broken    Running         2\n"
+    monkeypatch.setattr(
+        policy_module.asyncio,
+        "create_subprocess_exec",
+        _mock_wsl_exec(output, usable_distros=set()),
+    )
+
+    result = await wsl2_diagnostic()
+
+    assert result == "distro_missing_shell"

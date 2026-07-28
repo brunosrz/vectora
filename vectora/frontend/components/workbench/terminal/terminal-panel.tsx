@@ -7,7 +7,7 @@
  */
 
 import { Plug, Plus, ShieldCheck, TerminalSquare, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   useTerminalsStore,
@@ -16,34 +16,128 @@ import {
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { XtermView } from "./xterm-view";
 import { m } from "@/lib/paraglide/messages";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+interface SandboxStatus {
+  enabled: boolean;
+  diagnostic: string | null;
+}
+
+const SANDBOX_DIAGNOSTIC_MESSAGE: Record<string, () => string> = {
+  no_workspace: m.terminal_sandbox_diagnostic_no_workspace,
+  no_vectora_toml: m.terminal_sandbox_diagnostic_no_vectora_toml,
+  sandbox_disabled_in_config:
+    m.terminal_sandbox_diagnostic_sandbox_disabled_in_config,
+  wsl_not_installed: m.terminal_sandbox_diagnostic_wsl_not_installed,
+  no_general_purpose_distro:
+    m.terminal_sandbox_diagnostic_no_general_purpose_distro,
+  distro_missing_shell: m.terminal_sandbox_diagnostic_distro_missing_shell,
+};
 
 /** Consulta `GET /workspaces/{id}/sandbox/status` — reflete se o worker
- * jailado (AI Jail) está ativo pra essa workspace. `null` enquanto carrega
- * (não mostra nenhum dos dois avisos até saber de verdade). */
-function useSandboxStatus(workspaceId: string | undefined): boolean | null {
-  const [enabled, setEnabled] = useState<boolean | null>(null);
+ * jailado (AI Jail) está ativo pra essa workspace, e por quê não quando
+ * desabilitado. `null` enquanto carrega (não mostra nenhum dos dois
+ * avisos até saber de verdade). */
+function useSandboxStatus(workspaceId: string | undefined): {
+  status: SandboxStatus | null;
+  refetch: () => void;
+} {
+  const [status, setStatus] = useState<SandboxStatus | null>(null);
 
-  useEffect(() => {
+  const refetch = useCallback(() => {
     if (!workspaceId) {
-      setEnabled(null);
+      setStatus(null);
       return;
     }
-    let cancelled = false;
-    setEnabled(null);
     fetch(`/workspaces/${encodeURIComponent(workspaceId)}/sandbox/status`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: { enabled?: boolean } | null) => {
-        if (!cancelled) setEnabled(data?.enabled ?? false);
+      .then((data: SandboxStatus | null) => {
+        setStatus(
+          data
+            ? { enabled: data.enabled, diagnostic: data.diagnostic ?? null }
+            : { enabled: false, diagnostic: null },
+        );
       })
       .catch(() => {
-        if (!cancelled) setEnabled(false);
+        setStatus({ enabled: false, diagnostic: null });
       });
-    return () => {
-      cancelled = true;
-    };
   }, [workspaceId]);
 
-  return enabled;
+  useEffect(() => {
+    setStatus(null);
+    refetch();
+  }, [refetch]);
+
+  return { status, refetch };
+}
+
+function SandboxConfigDialog({
+  workspaceId,
+  diagnostic,
+  open,
+  onOpenChange,
+  onInitDone,
+}: {
+  workspaceId: string;
+  diagnostic: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onInitDone: () => void;
+}) {
+  const [initializing, setInitializing] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  const message = diagnostic
+    ? (SANDBOX_DIAGNOSTIC_MESSAGE[diagnostic]?.() ?? diagnostic)
+    : "";
+
+  async function handleInit() {
+    setInitializing(true);
+    setInitError(null);
+    try {
+      const res = await fetch(
+        `/workspaces/${encodeURIComponent(workspaceId)}/sandbox/init`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        setInitError(m.terminal_sandbox_init_error());
+        return;
+      }
+      onOpenChange(false);
+      onInitDone();
+    } catch {
+      setInitError(m.terminal_sandbox_init_error());
+    } finally {
+      setInitializing(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{m.terminal_sandbox_dialog_title()}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">{message}</p>
+        {initError && <p className="text-xs text-destructive">{initError}</p>}
+        {diagnostic === "no_vectora_toml" && (
+          <Button
+            size="sm"
+            onClick={() => void handleInit()}
+            disabled={initializing}
+          >
+            {m.terminal_sandbox_init_button()}
+          </Button>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 interface TerminalPanelProps {
@@ -61,7 +155,9 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
   const close = useTerminalsStore((s) => s.close);
   const setActive = useTerminalsStore((s) => s.setActive);
   const workspace = useWorkspacesStore((s) => s.getActive());
-  const sandboxEnabled = useSandboxStatus(workspace?.id);
+  const { status: sandboxStatus, refetch: refetchSandboxStatus } =
+    useSandboxStatus(workspace?.id);
+  const [sandboxDialogOpen, setSandboxDialogOpen] = useState(false);
 
   // Abre 1 terminal automaticamente quando o painel monta sem nenhum.
   // Lê o store inline (não a captura reativa) — Strict Mode roda effects
@@ -142,19 +238,36 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
         </button>
       </div>
 
-      {/* Indicador dinâmico: sandboxed (informativo) vs sem sandbox (aviso).
-          sandboxEnabled === null enquanto o status ainda carrega — não
-          mostra nenhum dos dois até saber de verdade. */}
-      {sandboxEnabled === true && (
+      {/* Indicador dinâmico: sandboxed (informativo) vs sem sandbox (aviso,
+          acionável via dialog de diagnóstico). sandboxStatus === null
+          enquanto o status ainda carrega — não mostra nenhum dos dois até
+          saber de verdade. */}
+      {sandboxStatus?.enabled === true && (
         <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] text-emerald-600 bg-emerald-500/10 border-b border-emerald-500/20">
           <ShieldCheck className="w-3 h-3 shrink-0" />
           {m.terminal_sandbox_active()}
         </div>
       )}
-      {sandboxEnabled === false && (
-        <div className="px-3 py-1.5 text-[10px] text-amber-600 bg-amber-500/10 border-b border-amber-500/20">
-          {m.terminal_no_sandbox_warning()}
+      {sandboxStatus?.enabled === false && (
+        <div className="flex items-center gap-2 px-3 py-1.5 text-[10px] text-amber-600 bg-amber-500/10 border-b border-amber-500/20">
+          <span>{m.terminal_no_sandbox_warning()}</span>
+          <button
+            type="button"
+            className="underline underline-offset-2 hover:text-amber-500 shrink-0"
+            onClick={() => setSandboxDialogOpen(true)}
+          >
+            {m.terminal_sandbox_configure_link()}
+          </button>
         </div>
+      )}
+      {workspace && (
+        <SandboxConfigDialog
+          workspaceId={workspace.id}
+          diagnostic={sandboxStatus?.diagnostic ?? null}
+          open={sandboxDialogOpen}
+          onOpenChange={setSandboxDialogOpen}
+          onInitDone={refetchSandboxStatus}
+        />
       )}
 
       {/* Body — só renderiza o terminal ativo (poupa CPU; estado fica no PTY) */}
