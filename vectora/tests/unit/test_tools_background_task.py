@@ -6,6 +6,7 @@ tipo de trigger inválido e invariante de invalidates metadata.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -14,8 +15,11 @@ import pytest
 
 from backend.tools.background import (
     create_background_task,
+    delete_background_task,
+    run_background_task_now,
     schedule_subagent_task,
     schedule_task,
+    toggle_background_task,
 )
 
 
@@ -334,3 +338,122 @@ async def test_schedule_subagent_task_missing_session_returns_error() -> None:
     )
 
     assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# toggle_background_task
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_toggle_desativa_tarefa() -> None:
+    fake = _fake_task("Rotina X")
+    fake.enabled = False
+    with patch(
+        "backend.tools.background.background_tasks.update_task",
+        new=AsyncMock(return_value=fake),
+    ) as mock_update:
+        result = json.loads(
+            await toggle_background_task.ainvoke(
+                {"task_id": "task-123", "enabled": False}
+            )
+        )
+
+    assert result == {"status": "ok", "task_id": "task-123", "enabled": False}
+    mock_update.assert_awaited_once_with("task-123", enabled=False)
+
+
+@pytest.mark.asyncio
+async def test_toggle_tarefa_inexistente_retorna_erro() -> None:
+    with patch(
+        "backend.tools.background.background_tasks.update_task",
+        new=AsyncMock(return_value=None),
+    ):
+        result = json.loads(
+            await toggle_background_task.ainvoke(
+                {"task_id": "nao-existe", "enabled": True}
+            )
+        )
+
+    assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# delete_background_task
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_delete_remove_tarefa() -> None:
+    with patch(
+        "backend.tools.background.background_tasks.delete_task",
+        new=AsyncMock(return_value=True),
+    ) as mock_delete:
+        result = json.loads(
+            await delete_background_task.ainvoke({"task_id": "task-123"})
+        )
+
+    assert result == {"status": "ok", "task_id": "task-123"}
+    mock_delete.assert_awaited_once_with("task-123")
+
+
+@pytest.mark.asyncio
+async def test_delete_e_idempotente_ja_removida_nao_lanca() -> None:
+    # delete_task retorna False quando a tarefa já não existia — a tool
+    # não trata isso como erro (deletar de novo não deveria quebrar o agente).
+    with patch(
+        "backend.tools.background.background_tasks.delete_task",
+        new=AsyncMock(return_value=False),
+    ):
+        result = json.loads(
+            await delete_background_task.ainvoke({"task_id": "ja-removida"})
+        )
+
+    assert result["status"] == "ok"
+
+
+# ---------------------------------------------------------------------------
+# run_background_task_now
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_run_now_dispara_execucao_em_background() -> None:
+    fake = _fake_task("Rotina Y")
+    with (
+        patch(
+            "backend.tools.background.background_tasks.get_task",
+            new=AsyncMock(return_value=fake),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.run_task",
+            new=AsyncMock(),
+        ) as mock_run,
+    ):
+        result = json.loads(
+            await run_background_task_now.ainvoke({"task_id": "task-123"})
+        )
+        await asyncio.sleep(0)  # deixa o create_task agendado rodar
+
+    assert result == {"status": "queued", "task_id": "task-123"}
+    mock_run.assert_awaited_once_with(fake, "manual")
+
+
+@pytest.mark.asyncio
+async def test_run_now_tarefa_inexistente_retorna_erro_sem_disparar() -> None:
+    with (
+        patch(
+            "backend.tools.background.background_tasks.get_task",
+            new=AsyncMock(return_value=None),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.run_task",
+            new=AsyncMock(),
+        ) as mock_run,
+    ):
+        result = json.loads(
+            await run_background_task_now.ainvoke({"task_id": "nao-existe"})
+        )
+
+    assert result["status"] == "error"
+    mock_run.assert_not_awaited()

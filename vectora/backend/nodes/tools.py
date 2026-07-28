@@ -17,11 +17,14 @@ from langgraph.prebuilt import ToolNode
 from backend.tools.background import (
     approve_task_action,
     create_background_task,
+    delete_background_task,
     get_task_result,
     get_task_status,
     list_background_tasks,
+    run_background_task_now,
     schedule_subagent_task,
     schedule_task,
+    toggle_background_task,
 )
 from backend.tools.browser import (
     browser_click,
@@ -214,6 +217,9 @@ WORKSPACE_TOOLS: list[BaseTool] = [
     get_task_status,
     get_task_result,
     approve_task_action,
+    toggle_background_task,
+    delete_background_task,
+    run_background_task_now,
 ]
 
 #: Ferramentas do Context Graph (grafo de conhecimento do workspace)
@@ -333,6 +339,9 @@ for _t in [
     get_task_status,
     get_task_result,
     approve_task_action,
+    toggle_background_task,
+    delete_background_task,
+    run_background_task_now,
     # G3 — Git + GitHub CLI
     git_status,
     git_log,

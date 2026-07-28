@@ -6,6 +6,7 @@ tarefas manuais em nome da sessão ativa.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Annotated, Any
@@ -385,6 +386,92 @@ async def approve_task_action(
         return json.dumps({"status": "ok", "run_status": res})
     except Exception as e:
         logger.exception("approve_task_action: erro inesperado")
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@tool(
+    extras={
+        "invalidates": ["tasks"],
+        "destructive": False,
+        "category": "workspace",
+        "icon": "power",
+    }
+)
+async def toggle_background_task(task_id: str, enabled: bool) -> str:
+    """Liga ou desliga uma tarefa em segundo plano já existente, sem apagá-la.
+
+    Args:
+        task_id: id da tarefa (de ``list_background_tasks``).
+        enabled: ``True`` reativa, ``False`` pausa (não dispara mais sozinha).
+
+    Returns:
+        JSON com o novo estado ou erro se a tarefa não existe.
+    """
+    try:
+        task = await background_tasks.update_task(task_id, enabled=enabled)
+        if task is None:
+            return json.dumps({"status": "error", "error": "task não encontrada"})
+        return json.dumps({"status": "ok", "task_id": task.id, "enabled": task.enabled})
+    except Exception as e:
+        logger.exception("toggle_background_task: erro inesperado")
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@tool(
+    extras={
+        "invalidates": ["tasks"],
+        "destructive": True,
+        "category": "workspace",
+        "icon": "trash-2",
+    }
+)
+async def delete_background_task(task_id: str) -> str:
+    """Remove uma tarefa em segundo plano permanentemente.
+
+    Args:
+        task_id: id da tarefa a remover.
+
+    Returns:
+        JSON com ``status="ok"`` (idempotente — remover de novo não é erro).
+    """
+    try:
+        await background_tasks.delete_task(task_id)
+        return json.dumps({"status": "ok", "task_id": task_id})
+    except Exception as e:
+        logger.exception("delete_background_task: erro inesperado")
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@tool(
+    extras={
+        "invalidates": ["tasks"],
+        "destructive": False,
+        "category": "workspace",
+        "icon": "play",
+    }
+)
+async def run_background_task_now(task_id: str) -> str:
+    """Dispara a execução imediata de uma tarefa agendada, sem esperar o
+    próximo horário do cron.
+
+    Args:
+        task_id: id da tarefa a executar agora.
+
+    Returns:
+        JSON com ``status="queued"`` (a execução roda em background — consulte
+        ``get_task_status``/``list_background_tasks`` para acompanhar), ou
+        erro se a tarefa não existe.
+    """
+    try:
+        task = await background_tasks.get_task(task_id)
+        if task is None:
+            return json.dumps({"status": "error", "error": "task não encontrada"})
+        asyncio.create_task(  # noqa: RUF006 — fire-and-forget, mesmo padrão do endpoint REST
+            background_tasks.run_task(task, "manual")
+        )
+        return json.dumps({"status": "queued", "task_id": task_id})
+    except Exception as e:
+        logger.exception("run_background_task_now: erro inesperado")
         return json.dumps({"status": "error", "error": str(e)})
 
 
