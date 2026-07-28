@@ -360,21 +360,23 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         logger.warning("api/server: falha ao iniciar cleanup de threads: %s", exc)
 
     # Gateway client (ex-relay) — WebSocket persistente para receber webhooks
-    # e callbacks OAuth. Só inicia quando GATEWAY_ENABLED=true (padrão) E o
-    # secret fixo do produto está configurado — sem VECTORA_APP_SECRET o
-    # handshake de /register nunca autenticaria, então nem tenta (degrada
-    # pro fallback sem gateway, nunca impede o backend de iniciar).
+    # e callbacks OAuth. Só inicia quando GATEWAY_ENABLED=true (padrão);
+    # VECTORA_APP_SECRET é auto-gerado por instalação na primeira vez (nunca
+    # embutido no binário, único por máquina) — sem isso o handshake de
+    # /register nunca autenticaria.
     _gateway_client = None
     try:
         from backend.settings import get_settings as _gs_gateway
 
         _cfg = _gs_gateway()
-        if _cfg.gateway_enabled and _cfg.vectora_app_secret:
+        if _cfg.gateway_enabled:
             from backend.services.gateway import GatewayClient
+            from backend.services.gateway.secret import ensure_app_secret
 
+            app_secret = ensure_app_secret()
             _gateway_client = GatewayClient(
                 gateway_url=_cfg.gateway_url,
-                app_secret=_cfg.vectora_app_secret,
+                app_secret=app_secret,
             )
             _gateway_client.start()
     except Exception as exc:
