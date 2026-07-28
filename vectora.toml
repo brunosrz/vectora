@@ -20,3 +20,17 @@ name = "vectora"
 # [agent]
 # allowed_models = ["claude-sonnet-4-6"]
 # default_model = "claude-sonnet-4-6"
+
+# [sandbox]
+# AI Jail — isola terminal, PTY interativo e tools de arquivo (agente e
+# usuário) num worker jailado por workspace. Ausente = sandbox desligado
+# (comportamento atual do produto, sem regressão).
+# enabled = true
+# backend = "local"              # "local" (bwrap/WSL2) | "docker" | "ssh" | "modal"
+# rw_paths = ["."]                # paths com leitura+escrita liberada dentro do jail
+# ro_paths = []                   # paths só-leitura adicionais
+# mask = [".env", "**/*.pem", "**/.ssh/**", "**/.aws/**"]  # nunca visíveis ao worker
+# no_gpu = true                   # nega acesso a dispositivos de GPU
+# docker_image = "python:3.13-slim"  # só relevante com backend = "docker"
+# remote_host = ""                # só relevante com backend = "ssh"
+# ssh_key_id = ""                 # só relevante com backend = "ssh"

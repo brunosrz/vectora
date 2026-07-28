@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import ctypes
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ class _JobObjectExtendedLimitInformation(ctypes.Structure):
     ]
 
 
-def _kernel32() -> ctypes.WinDLL:
+def _kernel32() -> Any:
     """`ctypes.windll.kernel32` com `argtypes`/`restype` explícitos nas
     funções usadas aqui — sem isso, ctypes assume `c_int` (32 bits) pra
     todo handle, o que trunca/corrompe silenciosamente valores de HANDLE
@@ -84,10 +85,17 @@ def _kernel32() -> ctypes.WinDLL:
     verdade — bug real encontrado na verificação ao vivo desta correção).
     `ctypes.windll` já cacheia a mesma instância de `WinDLL` entre
     chamadas, então redefinir os tipos aqui é idempotente e barato.
+
+    Acesso via `getattr` (não `ctypes.windll` direto): `windll`/`WinDLL`
+    só existem no stub de tipos Windows — `ty` roda tanto localmente
+    (Windows) quanto no CI (Linux), e um `# ty: ignore` fixo vira erro
+    "unused" numa das duas plataformas. `getattr` devolve `Any`,
+    resolvível nas duas sem suprimir nada; o módulo inteiro só é
+    importado sob `sys.platform == "win32"` em runtime.
     """
     from ctypes import wintypes
 
-    kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+    kernel32 = getattr(ctypes, "windll").kernel32  # noqa: B009
     kernel32.CreateJobObjectW.argtypes = [wintypes.LPVOID, wintypes.LPCWSTR]
     kernel32.CreateJobObjectW.restype = wintypes.HANDLE
     kernel32.SetInformationJobObject.argtypes = [
