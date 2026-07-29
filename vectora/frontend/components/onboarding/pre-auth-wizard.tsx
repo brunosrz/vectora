@@ -38,7 +38,11 @@ import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 import { signalVpsGatePassed } from "@/lib/stores/onboarding-signal";
 import { useOnboardingDraftStore } from "@/lib/stores/onboarding-draft-store";
-import { checkUsername, type UsernameStatus } from "@/lib/api/username";
+import {
+  checkUsername,
+  slugifyUsername,
+  type UsernameStatus,
+} from "@/lib/api/username";
 import {
   Select,
   SelectContent,
@@ -119,6 +123,14 @@ export function PreAuthWizard({
   );
 
   const [nameError, setNameError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  // Enquanto o usuário não editar o username manualmente, ele segue o slug
+  // do nome (mesmo padrão do /auth/signup real) — um username já restaurado
+  // do rascunho que diverge do slug atual conta como "editado", pra não
+  // sobrescrever uma customização ao voltar de um reload (troca de idioma).
+  const [usernameEdited, setUsernameEdited] = useState(
+    () => !!username.trim() && username.trim() !== slugifyUsername(name),
+  );
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus | null>(
     null,
   );
@@ -127,6 +139,12 @@ export function PreAuthWizard({
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const [settingUpLocal, setSettingUpLocal] = useState(false);
+
+  // Auto-preenche o username a partir do nome enquanto não houver edição
+  // manual — mesmo padrão do /auth/signup real.
+  useEffect(() => {
+    if (!usernameEdited) setUsername(slugifyUsername(name));
+  }, [name, usernameEdited, setUsername]);
 
   // Checagem de disponibilidade com debounce — mesmo padrão do /auth/signup
   // real (lib/api/username.ts::checkUsername), reaproveitado aqui.
@@ -157,14 +175,22 @@ export function PreAuthWizard({
   }, [continuationIndex]);
 
   function handleIdentityNext() {
+    let hasError = false;
     if (!name.trim()) {
       setNameError(m.onboarding_pre_name_required());
-      return;
+      hasError = true;
+    } else {
+      setNameError(null);
     }
-    if (usernameStatus && !usernameStatus.available) {
-      return;
+    if (!username.trim()) {
+      setUsernameError(m.auth_signup_username_required());
+      hasError = true;
+    } else if (usernameStatus && !usernameStatus.available) {
+      hasError = true;
+    } else {
+      setUsernameError(null);
     }
-    setNameError(null);
+    if (hasError) return;
     setStep("mode");
   }
 
@@ -361,11 +387,17 @@ export function PreAuthWizard({
                   type="text"
                   autoComplete="off"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsernameEdited(true);
+                    setUsername(e.target.value);
+                  }}
                   placeholder={m.auth_signup_username_ph()}
                   className="w-full bg-transparent py-2 pl-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
               </div>
+              {usernameError && (
+                <p className="text-xs text-destructive">{usernameError}</p>
+              )}
               {checkingUsername ? (
                 <p className="text-xs text-muted-foreground">
                   {m.auth_signup_username_checking()}
@@ -382,7 +414,10 @@ export function PreAuthWizard({
                     {m.auth_signup_username_taken()}{" "}
                     <button
                       type="button"
-                      onClick={() => setUsername(usernameStatus.suggestion)}
+                      onClick={() => {
+                        setUsernameEdited(true);
+                        setUsername(usernameStatus.suggestion);
+                      }}
                       className="text-primary hover:underline"
                     >
                       {m.auth_signup_username_use_suggestion({

@@ -59,7 +59,11 @@ export function AdminDialog() {
           <DialogDescription>{msg.admin_dialog_desc()}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        {/* pr-2: mantém a barra de rolagem nativa dentro do padding lateral
+            do dialog (p-6), em vez de colada ao conteúdo — sem Radix
+            ScrollArea (Viewport mede largura por `display:table` e estoura
+            o modal com conteúdo sem quebra: paths, URLs, chaves mascaradas). */}
+        <div className="flex-1 overflow-y-auto pr-2">
           <ErrorBoundary>
             <Suspense fallback={<AdminFallback />}>
               <AdminTab />

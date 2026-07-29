@@ -8,6 +8,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { useOnboardingDraftStore } from "@/lib/stores/onboarding-draft-store";
 import { PreAuthWizard } from "../pre-auth-wizard";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -16,10 +17,16 @@ vi.mock("@tanstack/react-router", () => ({
 
 beforeEach(() => {
   useSettingsStore.setState({ theme: "system", language: "en" });
+  useOnboardingDraftStore.getState().reset();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({ ok: false, json: async () => ({}) })),
+  );
 });
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
 });
 
 describe("PreAuthWizard — seletores de idioma e tema", () => {
@@ -49,5 +56,49 @@ describe("PreAuthWizard — seletores de idioma e tema", () => {
       "aria-pressed",
       "false",
     );
+  });
+});
+
+describe("PreAuthWizard — username: autocomplete a partir do nome + obrigatório", () => {
+  it("digitar o nome preenche o username automaticamente (slug) até edição manual", () => {
+    render(<PreAuthWizard />);
+
+    fireEvent.change(screen.getByLabelText("Your name"), {
+      target: { value: "Bruno Soares" },
+    });
+
+    expect(screen.getByLabelText("Username")).toHaveValue("brunosoares");
+  });
+
+  it("editar o username manualmente para de seguir o nome (par de erro: mudar o nome depois não sobrescreve)", () => {
+    render(<PreAuthWizard />);
+
+    fireEvent.change(screen.getByLabelText("Your name"), {
+      target: { value: "Bruno" },
+    });
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "bsoares" },
+    });
+    fireEvent.change(screen.getByLabelText("Your name"), {
+      target: { value: "Bruno Soares" },
+    });
+
+    expect(screen.getByLabelText("Username")).toHaveValue("bsoares");
+  });
+
+  it("clicar em Next sem username bloqueia o avanço com erro (par de erro: nome preenchido não basta)", () => {
+    render(<PreAuthWizard />);
+
+    fireEvent.change(screen.getByLabelText("Your name"), {
+      target: { value: "Bruno" },
+    });
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByText("Next"));
+
+    expect(screen.getByText("Choose a username.")).toBeInTheDocument();
+    // Não avançou pro step "mode" — o formulário de identidade continua na tela.
+    expect(screen.getByLabelText("Username")).toBeInTheDocument();
   });
 });
