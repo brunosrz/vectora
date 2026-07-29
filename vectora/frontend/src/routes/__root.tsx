@@ -69,25 +69,44 @@ function redirectToSignin(currentPath: string): never {
  * chamadas via `credentials: "include"`. O auth-store NUNCA é a fonte
  * de verdade — sempre validamos contra o backend.
  */
-/** Lê `auth_required` do backend em runtime — decidido pelo wizard
- * (`POST /auth/setup-local`), não fixado em build-time. Sem resposta (rede
- * offline/backend não subiu ainda), cai no `AUTH_REQUIRED` estático como
- * fallback seguro (mesmo comportamento de antes desta mudança). */
-async function isAuthRequired(): Promise<boolean> {
+interface AuthFlags {
+  authRequired: boolean;
+  /** `false` quando `auth_required=false` mas o wizard (`POST
+   * /auth/setup-local`) nunca rodou de verdade — ex.: `VECTORA_AUTH_REQUIRED
+   * =false` esquecido num `.env` de projeto/dev. Sem essa distinção,
+   * `auth_required=false` sozinho bastava pra pular o onboarding e fabricar
+   * um usuário "Local User" fantasma sem o usuário nunca ter escolhido nome
+   * nem modo — ver backend/api/handlers/flags.py. */
+  localConfigured: boolean;
+}
+
+/** Lê `auth_required`/`local_configured` do backend em runtime — decidido
+ * pelo wizard (`POST /auth/setup-local`), não fixado em build-time. Sem
+ * resposta (rede offline/backend não subiu ainda), cai no `AUTH_REQUIRED`
+ * estático como fallback seguro (mesmo comportamento de antes desta
+ * mudança) e assume `localConfigured=true` pra não travar quem já tinha
+ * sessão local válida antes do backend responder. */
+async function getAuthFlags(): Promise<AuthFlags> {
   try {
     const res = await fetch("/settings/flags");
-    if (!res.ok) return AUTH_REQUIRED;
-    const data = (await res.json()) as { auth_required?: boolean };
-    return data.auth_required ?? AUTH_REQUIRED;
+    if (!res.ok) return { authRequired: AUTH_REQUIRED, localConfigured: true };
+    const data = (await res.json()) as {
+      auth_required?: boolean;
+      local_configured?: boolean;
+    };
+    return {
+      authRequired: data.auth_required ?? AUTH_REQUIRED,
+      localConfigured: data.local_configured ?? true,
+    };
   } catch {
-    return AUTH_REQUIRED;
+    return { authRequired: AUTH_REQUIRED, localConfigured: true };
   }
 }
 
 export async function ensureAuthenticated(currentPath: string): Promise<void> {
   if (isPublicPath(currentPath)) return;
 
-  const authRequired = await isAuthRequired();
+  const { authRequired, localConfigured } = await getAuthFlags();
 
   // Aguarda o rehydrate do persist antes de inspecionar o store: o
   // contrato do `persist` em Zustand é assíncrono e ler o estado vazio
@@ -114,11 +133,21 @@ export async function ensureAuthenticated(currentPath: string): Promise<void> {
   const store = useAuthStore.getState();
 
   // Primeiro acesso (backend sem usuários) → wizard de identidade/modo
-  // (local vs VPS). Só verificado quando auth é exigido: depois do wizard
+  // (local vs VPS). Verificado quando auth é exigida — depois do wizard
   // rodar (`POST /auth/setup-local`), auth_required vira false e o modo
-  // local nunca cria linha em `users` — checar has-users incondicionalmente
-  // prenderia toda visita local num loop de volta pro onboarding.
-  if (authRequired) {
+  // local nunca cria linha em `users`, então checar has-users
+  // incondicionalmente prenderia toda visita local num loop de volta pro
+  // onboarding.
+  //
+  // `!localConfigured` cobre o caso auth_required=false SEM o wizard ter
+  // rodado (env var externa desligando auth por engano) — sem isso o guard
+  // pulava direto pro app com um usuário "Local User" fabricado, sem o
+  // usuário nunca ter escolhido nome/username/modo.
+  if (authRequired || !localConfigured) {
+    if (!authRequired) {
+      store.clearUser();
+      throw redirect({ to: "/onboarding" });
+    }
     try {
       const hasUsersRes = await fetch("/auth/has-users", {
         credentials: "include",

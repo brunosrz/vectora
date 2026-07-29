@@ -8,6 +8,15 @@ antes do login para renderizar a UI corretamente.
 ``AuthMiddleware`` usa pra decidir se bloqueia rotas privadas — o guard de
 rota do frontend (`__root.tsx`) lê daqui pra saber se pula o fluxo de
 login/signup (modo local, sem conta) sem precisar de rebuild.
+
+``local_configured`` distingue "auth desabilitada porque o wizard rodou"
+de "auth desabilitada por acidente" (ex.: `VECTORA_AUTH_REQUIRED=false`
+esquecido num `.env` de projeto/dev) — só vira `true` depois de
+`POST /auth/setup-local` persistir `local_user_name`. O guard do
+frontend usa isso pra nunca pular o onboarding silenciosamente: sem
+essa distinção, `auth_required=false` sozinho bastava pra fabricar um
+usuário "Local User" fantasma sem o usuário nunca ter escolhido nome
+nem modo.
 """
 
 from __future__ import annotations
@@ -24,11 +33,14 @@ router = APIRouter(prefix="/settings", tags=["flags"])
 
 @router.get("/flags")
 async def get_flags() -> dict:
+    from backend.workspace.runtime_settings import runtime_settings
+
     # Features anteriormente em beta (IDE mode, Library, Context Graph) agora são
     # estáveis e habilitadas por padrão para todos os usuários.
     return {
         "enable_features_beta": True,
         "auth_required": _auth_enabled(),
+        "local_configured": bool(runtime_settings.local_user_name),
     }
 
 

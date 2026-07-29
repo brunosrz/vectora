@@ -79,7 +79,7 @@ export function NewChatDialog({
           </DialogHeader>
 
           <ScrollArea className="max-h-72">
-            <div className="space-y-1 pr-3">
+            <div className="space-y-1">
               <button
                 type="button"
                 onClick={() => setSelected(null)}

@@ -40,8 +40,11 @@ function jsonRes(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: async () => body } as unknown as Response;
 }
 
-function flagsRes(authRequired: boolean): Response {
-  return jsonRes({ auth_required: authRequired });
+function flagsRes(authRequired: boolean, localConfigured = true): Response {
+  return jsonRes({
+    auth_required: authRequired,
+    local_configured: localConfigured,
+  });
 }
 
 const VIRTUAL_LOCAL_USER = {
@@ -92,12 +95,12 @@ describe("ensureAuthenticated — path público", () => {
   });
 });
 
-describe("ensureAuthenticated — auth_required=false (modo Free)", () => {
+describe("ensureAuthenticated — auth_required=false + local_configured=true (modo Free, wizard já rodou)", () => {
   it("nunca chama /auth/has-users e popula o store via /auth/me (fix da causa-raiz)", async () => {
     const calledUrls: string[] = [];
     const fetchSpy = vi.fn(async (url: string) => {
       calledUrls.push(url);
-      if (url === "/settings/flags") return flagsRes(false);
+      if (url === "/settings/flags") return flagsRes(false, true);
       if (url === "/auth/me") return jsonRes(VIRTUAL_LOCAL_USER);
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -114,7 +117,7 @@ describe("ensureAuthenticated — auth_required=false (modo Free)", () => {
 
   it("não força redirect pro signin mesmo se /auth/me falhar (Free nunca exige login)", async () => {
     const fetchSpy = vi.fn(async (url: string) => {
-      if (url === "/settings/flags") return flagsRes(false);
+      if (url === "/settings/flags") return flagsRes(false, true);
       if (url === "/auth/me") throw new Error("offline");
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -123,6 +126,40 @@ describe("ensureAuthenticated — auth_required=false (modo Free)", () => {
     await expect(ensureAuthenticated("/")).resolves.toBeUndefined();
     expect(redirectSpy).not.toHaveBeenCalled();
     expect(useAuthStore.getState().user).toBeNull();
+  });
+});
+
+describe("ensureAuthenticated — auth_required=false + local_configured=false (bug real: auth desabilitada sem o wizard ter rodado)", () => {
+  it("redireciona pro /onboarding sem nunca chamar /auth/me — nunca fabrica um 'Local User' fantasma", async () => {
+    const calledUrls: string[] = [];
+    const fetchSpy = vi.fn(async (url: string) => {
+      calledUrls.push(url);
+      if (url === "/settings/flags") return flagsRes(false, false);
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await expect(ensureAuthenticated("/")).rejects.toMatchObject({
+      to: "/onboarding",
+    });
+
+    expect(calledUrls).not.toContain("/auth/me");
+    expect(calledUrls).not.toContain("/auth/has-users");
+    expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  it("par de erro: /settings/flags sem o campo local_configured (backend antigo) assume configurado — não trava quem já tinha sessão local válida", async () => {
+    const fetchSpy = vi.fn(async (url: string) => {
+      if (url === "/settings/flags") return jsonRes({ auth_required: false });
+      if (url === "/auth/me") return jsonRes(VIRTUAL_LOCAL_USER);
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await ensureAuthenticated("/");
+
+    expect(redirectSpy).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().user).toEqual(VIRTUAL_LOCAL_USER);
   });
 });
 
