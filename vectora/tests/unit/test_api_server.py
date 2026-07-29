@@ -222,10 +222,7 @@ class TestWorkspacesActive:
 
 
 class TestMcpMount:
-    """O MCP sobe com todo boot do backend, montado em /mcp, e o ``_lifespan``
-    do FastAPI compõe o bootstrap de env do MCP — o Starlette NÃO roda o
-    lifespan de um sub-app montado, então sem isso o lifespan do MCP nunca
-    executa no `vectora start`."""
+    """O MCP sobe com todo boot do backend, montado em /mcp."""
 
     def test_mcp_mounted_at_slash_mcp(self, headless_app):
         paths = _collect_route_paths(headless_app.routes)
@@ -235,7 +232,16 @@ class TestMcpMount:
         paths = _collect_route_paths(headless_app.routes)
         assert "/api/tools/schema" in paths
 
-    def test_lifespan_runs_mcp_env_bootstrap(self, headless_app, monkeypatch):
+    def test_lifespan_nao_roda_bootstrap_de_env_do_mcp(self, headless_app, monkeypatch):
+        """Regressão: `vectora start`/`vectora web` não deve absorver
+        silenciosamente GOOGLE_API_KEY/COHERE_API_KEY/TAVILY_API_KEY/
+        VECTORA_TOKEN etc. de qualquer variável de ambiente do processo em
+        todo boot — isso persistia keys "fantasma" (sobras de ambiente do
+        SO de sessões antigas) como se o usuário as tivesse configurado, sem
+        indicar a origem. O bootstrap via env só é legítimo no entrypoint
+        stdio real (`vectora-mcp`, `backend/mcp/server.py::_mcp_lifespan`),
+        onde um cliente MCP registry de fato injeta as keys — nunca no boot
+        HTTP do FastAPI."""
         import backend.mcp.env_bootstrap as eb
 
         called = {"value": False}
@@ -249,10 +255,7 @@ class TestMcpMount:
         with TestClient(headless_app, raise_server_exceptions=False):
             pass
 
-        assert called["value"], (
-            "_lifespan não compôs o bootstrap de env do MCP — o lifespan do "
-            "MCP montado em /mcp nunca roda no boot do backend."
-        )
+        assert not called["value"]
 
 
 # ---------------------------------------------------------------------------

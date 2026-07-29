@@ -28,6 +28,23 @@ def _write_cache_fixture(payload: dict) -> None:
     lic.CACHE_PATH.write_text(json.dumps(payload), encoding="utf-8")
 
 
+class TestBootstrapVectoraHome:
+    """CACHE_PATH/CONFIG_PATH precisam respeitar VECTORA_HOME — sem isso,
+    uma instância isolada (testes, verificação ao vivo) lê/escreve
+    silenciosamente no `~/.vectora` real do usuário, vazando token/cache de
+    licença reais pra fora do isolamento pretendido."""
+
+    def test_respeita_vectora_home_quando_setado(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.setenv("VECTORA_HOME", str(tmp_path))
+        assert lic._bootstrap_vectora_home() == tmp_path
+
+    def test_cai_pro_home_real_sem_vectora_home(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.delenv("VECTORA_HOME", raising=False)
+        assert lic._bootstrap_vectora_home() == Path.home() / ".vectora"
+
+
 def test_bypass_returns_active_pro(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
     info = lic.validate_license_sync()

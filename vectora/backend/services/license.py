@@ -48,8 +48,23 @@ LicenseTier = Literal["free", "pro"]
 LicenseStatus = Literal["active", "trial", "expired", "revoked", "unknown"]
 
 DEFAULT_LICENSE_URL = "https://services.vectora.company/license/validate"
-CACHE_PATH = Path.home() / ".vectora" / "license_cache.json"
-CONFIG_PATH = Path.home() / ".vectora" / "config.toml"
+
+
+def _bootstrap_vectora_home() -> Path:
+    """Lê ``VECTORA_HOME`` direto de ``os.environ`` — mesmo padrão de
+    ``backend/workspace/runtime_settings.py::_bootstrap_vectora_home``, pra
+    não depender do singleton ``backend.settings.settings`` (evita import
+    circular) e, principalmente, pra não vazar pro `~/.vectora` real numa
+    instância isolada via `VECTORA_HOME` (ex.: testes, instâncias de
+    verificação) — sem isso, o cache/token de licença de uma instância
+    isolada silenciosamente lia/escrevia no diretório real do usuário.
+    """
+    env_value = os.environ.get("VECTORA_HOME")
+    return Path(env_value) if env_value else Path.home() / ".vectora"
+
+
+CACHE_PATH = _bootstrap_vectora_home() / "license_cache.json"
+CONFIG_PATH = _bootstrap_vectora_home() / "config.toml"
 
 CACHE_TTL_ONLINE = timedelta(hours=6)
 CACHE_TTL_OFFLINE = timedelta(hours=48)
