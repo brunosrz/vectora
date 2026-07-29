@@ -137,7 +137,7 @@ async def _watch_for_unexpected_exit(proc: asyncio.subprocess.Process) -> None:
     Ctrl+C — ver `backend/main.py::_install_terminal_signals`) quando o
     Electron sai por conta própria (ex.: usuário clicou "Sair" no tray).
 
-    Sem isso, no modo "Electron-first em dev", fechar o Electron pelo
+    Sem isso, no modo backend-primário em dev, fechar o Electron pelo
     tray derruba só a janela — o processo `vectora start` que o spawnou
     continua rodando pra sempre no terminal. Não dispara se a saída foi
     pedida por `stop_electron_sidecar()` (que já zera `_proc` antes de

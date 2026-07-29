@@ -64,7 +64,7 @@ export function backendPath(
 }
 
 /**
- * Resolução de conexão pra Electron-first em dev (Fase 1): quando o backend
+ * Resolução de conexão pro modo backend-primário em dev: quando o backend
  * Python já é o processo primário e nos spawnou (invertendo a direção usual
  * Electron→backend), ele sinaliza isso via `VECTORA_EXTERNAL_BACKEND=1` e já
  * conhece porta/pipe de antemão — retorna `null` no caminho normal

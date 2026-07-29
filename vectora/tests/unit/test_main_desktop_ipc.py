@@ -166,7 +166,7 @@ def test_non_desktop_uses_tcp_host() -> None:
         patch("backend.main._kill_vite", create=True),
         patch("backend.services.tray.run_server_with_tray"),
         patch("os._exit"),
-        # Neutraliza a auto-eleição do Electron-first (Fase 1) — este teste
+        # Neutraliza a auto-eleição do modo backend-primário — este teste
         # cobre especificamente o caminho servidor/VPS sem Electron; não deve
         # depender de um build de dev do Electron estar (ou não) presente no
         # disco de quem roda o teste (padrão: nunca contar com ausência de
@@ -275,7 +275,7 @@ def test_desktop_windows_no_tcp_host() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Electron-first em dev — auto-eleição (Fase 1). O SPAWN em si não mora mais
+# Modo backend-primário em dev — auto-eleição. O SPAWN em si não mora mais
 # aqui — saiu de `_run_start` (bootstrap síncrono da CLI) pra dentro do
 # lifespan async do FastAPI (`backend/services/electron_sidecar.py`, mesmo
 # padrão do NATS — ver test_electron_sidecar.py). `_run_start` só decide

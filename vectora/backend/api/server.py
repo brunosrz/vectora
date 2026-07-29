@@ -258,7 +258,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
         await awarm_graph()
 
-    # Electron-first em dev: sobe como sidecar (mesmo padrão do NATS) quando
+    # Backend-primário em dev: sobe o Electron como sidecar (mesmo padrão do NATS) quando
     # backend/main.py::_run_start já decidiu, cedo (antes do uvicorn subir,
     # porque também define o transporte IPC), que este processo deve se
     # autoeleger — sinalizado via VECTORA_SPAWN_ELECTRON. O spawn em si só

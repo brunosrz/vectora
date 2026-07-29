@@ -90,7 +90,7 @@ def _should_install_terminal_signals(env: dict[str, str]) -> bool:
     mata a árvore inteira via `taskkill /T /F`, um handler custom aqui
     disputaria esse shutdown) quanto quando é o PRÓPRIO backend quem se
     autoelege primário e sobe o Electron como seu sidecar (`_run_start`,
-    "Electron-first em dev") — nesse segundo caso não existe nenhum
+    modo backend-primário em dev) — nesse segundo caso não existe nenhum
     Electron dono cuidando da limpeza do lado de fora, e sem handler o
     processo nunca aciona o shutdown gracioso, deixando sidecars filhos
     (nats-server) órfãos. `VECTORA_SPAWN_ELECTRON=1` só é setado nesse
@@ -397,7 +397,7 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
     os.environ["VECTORA_PORT"] = str(port)  # lido pelo sidecar Electron no lifespan
     uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
 
-    # Electron-first mesmo em dev: em produção é o Electron quem spawna o
+    # Backend-primário mesmo em dev: em produção é o Electron quem spawna o
     # backend (VECTORA_DESKTOP=1 já vem setado por ele). Quando rodado direto
     # (`uv run vectora start`/binário fora do Electron) e nenhum dos dois já
     # está setado, este processo se autoelege "primário" — só a DECISÃO

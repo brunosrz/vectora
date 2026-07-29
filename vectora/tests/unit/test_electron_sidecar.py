@@ -199,7 +199,7 @@ async def test_stop_electron_sidecar_sem_processo_e_noop():
 
 
 class TestJobObjectIntegration:
-    """Fechar o terminal que rodou `vectora start` (Electron-first em dev)
+    """Fechar o terminal que rodou `vectora start` (modo backend-primário)
     não deve deixar o Electron (e o ícone do tray) órfão — ver
     `backend/services/win_job_object.py`. Windows-only, best-effort."""
 
@@ -304,7 +304,7 @@ class TestJobObjectIntegration:
 class TestWatchForUnexpectedExit:
     """Fechar o Electron pelo tray ("Sair") deve encerrar também o processo
     `vectora start` que o spawnou — sem isso, o terminal fica vivo pra
-    sempre no modo "Electron-first em dev"."""
+    sempre no modo backend-primário em dev."""
 
     @pytest.mark.asyncio
     async def test_saida_espontanea_do_electron_envia_sigterm_ao_proprio_processo(

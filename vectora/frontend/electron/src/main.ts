@@ -342,7 +342,7 @@ const _resourcesPath = (): string =>
   process.resourcesPath || path.join(__dirname, "..");
 
 async function startBackend(): Promise<void> {
-  // Electron-first em dev (Fase 1): quando o backend Python já é o processo
+  // Modo backend-primário em dev: quando o backend Python já é o processo
   // primário (`uv run vectora start` rodado direto, fora do Electron) e se
   // autoelegeu, é ELE quem nos spawna — inverte a direção de controle que em
   // produção é sempre Electron→backend. Nesse modo não somos donos do

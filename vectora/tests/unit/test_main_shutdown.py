@@ -163,9 +163,9 @@ def test_tray_exposes_icon_via_icon_ref() -> None:
 class TestShouldInstallTerminalSignals:
     """`VECTORA_DESKTOP=1` sozinho não diz quem é dono do processo — só
     `VECTORA_SPAWN_ELECTRON` (setado só quando o próprio backend sobe o
-    Electron como seu sidecar, `_run_start`) distingue "Electron-first em
-    dev" (sem dono externo, precisa se auto-limpar) de produção real
-    (Electron possui o backend e mata a árvore sozinho)."""
+    Electron como seu sidecar, `_run_start`) distingue o modo
+    backend-primário em dev (sem dono externo, precisa se auto-limpar) de
+    produção real (Electron possui o backend e mata a árvore sozinho)."""
 
     def test_terminal_interativo_puro_instala(self, monkeypatch):
         from backend.main import _should_install_terminal_signals
@@ -173,7 +173,7 @@ class TestShouldInstallTerminalSignals:
         monkeypatch.setattr("sys.stdin.isatty", lambda: True)
         assert _should_install_terminal_signals({}) is True
 
-    def test_electron_first_dev_instala_mesmo_com_desktop_setado(self, monkeypatch):
+    def test_backend_primario_dev_instala_mesmo_com_desktop_setado(self, monkeypatch):
         # Caso central desta correção: o próprio backend se autoelegeu
         # primário e subiu o Electron — sem handler, Ctrl+C/fechar o
         # terminal nunca aciona o shutdown gracioso, deixando o nats-server
