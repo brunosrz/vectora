@@ -36,7 +36,7 @@ export function SettingsGroupTabs({ active }: Props) {
   ];
 
   return (
-    <div className="flex gap-1 border-b pb-2 mb-1 -mt-1">
+    <div className="flex gap-1 border-b pb-2 mb-1 -mt-1 -ml-2">
       {groups.map(({ id, label }) => {
         const isActive = id === active;
         return (

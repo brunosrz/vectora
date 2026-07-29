@@ -58,4 +58,15 @@ describe("EnvironmentDialog", () => {
     expect(labels[0]).toBe("Integrações");
     expect(labels).toEqual(["Integrações", "Provider Routing"]);
   });
+
+  it("barra de sub-abas compensa o px-3 do TabsTrigger com -ml-3, alinhando o texto com o conteúdo abaixo (Sprint 12)", async () => {
+    render(<EnvironmentDialog />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("tab").length).toBeGreaterThan(0);
+    });
+
+    const tabsList = screen.getAllByRole("tab")[0].closest('[role="tablist"]');
+    expect(tabsList?.className).toContain("-ml-3");
+  });
 });

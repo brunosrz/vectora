@@ -93,7 +93,7 @@ export function EnvironmentDialog() {
           onValueChange={(v) => setTab(v as EnvironmentTab)}
           className="flex-1 overflow-hidden flex flex-col"
         >
-          <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2">
+          <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2 -ml-3">
             <TabsTrigger value="integracoes" className="rounded-md text-xs">
               Integrações
             </TabsTrigger>

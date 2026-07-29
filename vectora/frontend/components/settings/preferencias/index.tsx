@@ -89,7 +89,7 @@ export function PreferenciasDialog() {
           onValueChange={(v) => setTab(v as PreferenciasTab)}
           className="flex-1 overflow-hidden flex flex-col"
         >
-          <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2">
+          <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2 -ml-3">
             <TabsTrigger value="preferencias" className="rounded-md text-xs">
               Geral
             </TabsTrigger>

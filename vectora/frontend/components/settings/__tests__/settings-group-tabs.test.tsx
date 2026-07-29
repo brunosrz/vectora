@@ -96,4 +96,10 @@ describe("SettingsGroupTabs", () => {
     expect(mockOpenEnv).not.toHaveBeenCalled();
     expect(mockOpenAdmin).not.toHaveBeenCalled();
   });
+
+  it("container compensa o padding do primeiro botão (px-2) com -ml-2, alinhando o texto com o conteúdo abaixo (Sprint 12)", () => {
+    const { container } = render(<SettingsGroupTabs active="preferencias" />);
+    const wrapper = container.firstElementChild;
+    expect(wrapper?.className).toContain("-ml-2");
+  });
 });
