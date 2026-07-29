@@ -10,6 +10,7 @@
 
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -273,6 +274,58 @@ function AutoUpdateSection({
 /** Aparência — 4 escalas de fonte independentes (UI, chat, markdown, Monaco).
  * Cada uma aplicada só na superfície correspondente (ver __root.tsx e
  * markdown-view.tsx/message-item.tsx/file-editor.tsx). */
+export function FontScaleNumberInput({
+  id,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  id: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+}) {
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  const commit = useCallback(() => {
+    const n = Number(text);
+    if (text.trim() === "" || Number.isNaN(n)) {
+      setText(String(value));
+      return;
+    }
+    const clamped = Math.max(min, Math.min(max, Math.round(n)));
+    setText(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  }, [text, value, min, max, onChange]);
+
+  return (
+    <Input
+      id={`${id}-number`}
+      type="number"
+      min={min}
+      max={max}
+      value={text}
+      onChange={(e) => {
+        const raw = e.target.value;
+        setText(raw);
+        const n = Number(raw);
+        if (raw.trim() !== "" && !Number.isNaN(n)) onChange(n);
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commit();
+      }}
+      className="h-7 w-16 shrink-0 px-2 text-right text-xs tabular-nums"
+    />
+  );
+}
+
 function FontScaleSection({
   fontScaleUi,
   fontScaleChat,
@@ -309,8 +362,8 @@ function FontScaleSection({
       onChange: setFontScaleUi,
       min: FONT_SCALE_MIN,
       max: FONT_SCALE_MAX,
-      step: 10,
-      unit: "%",
+      step: 1,
+      unit: "px",
     },
     {
       id: "font-scale-chat",
@@ -319,8 +372,8 @@ function FontScaleSection({
       onChange: setFontScaleChat,
       min: FONT_SCALE_MIN,
       max: FONT_SCALE_MAX,
-      step: 10,
-      unit: "%",
+      step: 1,
+      unit: "px",
     },
     {
       id: "font-scale-markdown",
@@ -329,8 +382,8 @@ function FontScaleSection({
       onChange: setFontScaleMarkdown,
       min: FONT_SCALE_MIN,
       max: FONT_SCALE_MAX,
-      step: 10,
-      unit: "%",
+      step: 1,
+      unit: "px",
     },
     {
       id: "monaco-font-size",
@@ -362,8 +415,14 @@ function FontScaleSection({
             onChange={(e) => row.onChange(Number(e.target.value))}
             className="w-32 accent-primary"
           />
-          <span className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-            {row.value}
+          <FontScaleNumberInput
+            id={row.id}
+            value={row.value}
+            min={row.min}
+            max={row.max}
+            onChange={row.onChange}
+          />
+          <span className="w-4 shrink-0 text-left text-xs text-muted-foreground">
             {row.unit}
           </span>
         </div>

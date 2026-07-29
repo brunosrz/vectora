@@ -103,11 +103,12 @@ export interface SettingsState {
    *  próximo boot (só toma efeito na próxima abertura do app, não em
    *  runtime). Sem efeito no navegador/modo servidor. */
   autoUpdateEnabled: boolean;
-  /** Escala de fonte da interface geral (%), aplicada via CSS var --font-scale-ui. */
+  /** Tamanho de fonte da interface geral (px), aplicado via CSS var
+   *  --font-scale-ui (convertida pra razão contra FONT_SCALE_BASE_PX). */
   fontScaleUi: number;
-  /** Escala de fonte das mensagens do chat (%), --font-scale-chat. */
+  /** Tamanho de fonte das mensagens do chat (px), --font-scale-chat. */
   fontScaleChat: number;
-  /** Escala de fonte do markdown renderizado (Plan/Memory/Files/preview), --font-scale-markdown. */
+  /** Tamanho de fonte do markdown renderizado (Plan/Memory/Files/preview, px), --font-scale-markdown. */
   fontScaleMarkdown: number;
   /** Tamanho de fonte (px) do editor Monaco. */
   monacoFontSize: number;
@@ -140,15 +141,31 @@ export interface SettingsState {
 const SIDEBAR_MIN_WIDTH = 180;
 const SIDEBAR_MAX_WIDTH = 480;
 
-/** Limites de escala de fonte (%) — 80% a 150%, passo de 10 na UI. */
-export const FONT_SCALE_MIN = 80;
-export const FONT_SCALE_MAX = 150;
+/** Referência de conversão: 16px = "100%" no range antigo (pré-Sprint 13). */
+export const FONT_SCALE_BASE_PX = 16;
+/** Limites de tamanho de fonte (px) — 13px a 24px, equivalente ao antigo
+ *  80%-150% sobre a base de 16px. */
+export const FONT_SCALE_MIN = 13;
+export const FONT_SCALE_MAX = 24;
 /** Limites de tamanho de fonte do Monaco (px). */
 export const MONACO_FONT_SIZE_MIN = 10;
 export const MONACO_FONT_SIZE_MAX = 24;
 
 function clampFontScale(v: number): number {
   return Math.max(FONT_SCALE_MIN, Math.min(FONT_SCALE_MAX, Math.round(v)));
+}
+
+/** Converte um valor de fontScale persistido no formato antigo (%, 80-150)
+ * pro novo formato (px, 13-24) — os dois ranges nunca se sobrepõem, então a
+ * heurística de "acima do novo máximo" identifica o formato antigo sem
+ * precisar de um marcador de versão explícito. Valores já em px passam
+ * direto pelo clamp, sem reconversão (idempotente). */
+export function migrateFontScaleValue(v: unknown): number {
+  const n = typeof v === "number" ? v : FONT_SCALE_BASE_PX;
+  if (n > FONT_SCALE_MAX) {
+    return clampFontScale(Math.round((n / 100) * FONT_SCALE_BASE_PX));
+  }
+  return clampFontScale(n);
 }
 
 function clampMonacoFontSize(v: number): number {
@@ -179,9 +196,9 @@ const DEFAULTS = {
   chatSidebarWidth: 256,
   selectedModel: getDefaultModel(),
   autoUpdateEnabled: true,
-  fontScaleUi: 100,
-  fontScaleChat: 100,
-  fontScaleMarkdown: 100,
+  fontScaleUi: FONT_SCALE_BASE_PX,
+  fontScaleChat: FONT_SCALE_BASE_PX,
+  fontScaleMarkdown: FONT_SCALE_BASE_PX,
   monacoFontSize: 13,
 };
 
@@ -277,6 +294,19 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
+      version: 1, // v1: fontScale* migrou de % (80-150) pra px (13-24)
+      migrate: (persistedState) => {
+        const s = persistedState as Record<string, unknown>;
+        if (s && typeof s === "object") {
+          if ("fontScaleUi" in s)
+            s.fontScaleUi = migrateFontScaleValue(s.fontScaleUi);
+          if ("fontScaleChat" in s)
+            s.fontScaleChat = migrateFontScaleValue(s.fontScaleChat);
+          if ("fontScaleMarkdown" in s)
+            s.fontScaleMarkdown = migrateFontScaleValue(s.fontScaleMarkdown);
+        }
+        return s;
+      },
       storage: createJSONStorage(() =>
         typeof window !== "undefined"
           ? localStorage

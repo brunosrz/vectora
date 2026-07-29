@@ -12,6 +12,7 @@ import { useSessionExpiry } from "@/lib/hooks/use-session-expiry";
 import {
   useSettingsStore,
   hydrateFromBackend,
+  FONT_SCALE_BASE_PX,
   type Lang,
 } from "@/lib/stores/settings-store";
 import {
@@ -294,11 +295,17 @@ function RootComponent() {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    root.style.setProperty("--font-scale-ui", String(fontScaleUi / 100));
-    root.style.setProperty("--font-scale-chat", String(fontScaleChat / 100));
+    root.style.setProperty(
+      "--font-scale-ui",
+      String(fontScaleUi / FONT_SCALE_BASE_PX),
+    );
+    root.style.setProperty(
+      "--font-scale-chat",
+      String(fontScaleChat / FONT_SCALE_BASE_PX),
+    );
     root.style.setProperty(
       "--font-scale-markdown",
-      String(fontScaleMarkdown / 100),
+      String(fontScaleMarkdown / FONT_SCALE_BASE_PX),
     );
   }, [fontScaleUi, fontScaleChat, fontScaleMarkdown]);
 
