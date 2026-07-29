@@ -513,4 +513,88 @@ describe("IntegracoesTab", () => {
     fireEvent.click(screen.getAllByLabelText(/mostrar valor/i)[0]);
     expect(keyInput.type).toBe("text");
   });
+
+  it("erro real do backend (com detail) aparece na UI da variável customizada, não a mensagem genérica (Sprint 11.3)", async () => {
+    global.fetch = vi
+      .fn()
+      .mockImplementation((url: string, init?: RequestInit) => {
+        if (url === "/auth/envs" && init?.method === "POST") {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+            json: async () => ({ detail: "Não autenticado" }),
+          } as Response);
+        }
+        if (url === "/gateway/status") {
+          return Promise.resolve({
+            ok: true,
+            json: async () => GATEWAY_FALLBACK,
+          } as Response);
+        }
+        if (url === "/auth/envs") {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ envs: {}, keys: [] }),
+          } as Response);
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ integrations: BASE_INTEGRATIONS }),
+        } as Response);
+      });
+
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText("GitHub")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText(/adicionar variável customizada/i));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/OPENAI_API_KEY/i)).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/OPENAI_API_KEY/i), {
+      target: { value: "MY_KEY" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/enter the value|valor/i), {
+      target: { value: "secret-value" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^save$|^salvar$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Não autenticado")).toBeTruthy();
+    });
+  });
+
+  it("fetchIntegrations loga o erro no console quando a resposta falha, em vez de engolir silenciosamente (Sprint 11.3)", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url === "/integrations/") {
+        return Promise.resolve({ ok: false, status: 500 } as Response);
+      }
+      if (url === "/gateway/status") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => GATEWAY_FALLBACK,
+        } as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ envs: {}, keys: [] }),
+      } as Response);
+    });
+
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
 });

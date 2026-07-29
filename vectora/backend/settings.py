@@ -1119,6 +1119,7 @@ PROVIDER_API_KEY_ENV: dict[str, str | None] = {
     "ollama": None,
     "cohere": "COHERE_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
+    "tavily": "TAVILY_API_KEY",
 }
 
 # Variável de ambiente do modelo ativo por provider.

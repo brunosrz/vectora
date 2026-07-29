@@ -76,7 +76,10 @@ const OAUTH_PROVIDERS = new Set(["github", "gitlab", "google", "slack"]);
 
 async function fetchIntegrations(): Promise<Integration[]> {
   const res = await fetch("/integrations/");
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.error(`fetchIntegrations: ${res.status} ${res.statusText}`);
+    return [];
+  }
   const data = (await res.json()) as { integrations?: Integration[] };
   return data.integrations ?? [];
 }
@@ -128,14 +131,20 @@ async function saveApiKey(envVar: string, value: string): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key: envVar, value }),
   });
-  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: "" }));
+    throw new Error(body.detail || `Erro ${res.status}`);
+  }
 }
 
 async function removeApiKey(envVar: string): Promise<void> {
   const res = await fetch(`/auth/envs/${encodeURIComponent(envVar)}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: "" }));
+    throw new Error(body.detail || `Erro ${res.status}`);
+  }
 }
 
 async function verifyIntegration(
@@ -654,8 +663,8 @@ export function IntegracoesTab() {
       setAddCustomOpen(false);
       setNewCustomKey("");
       setNewCustomValue("");
-    } catch {
-      setCustomError(m.envs_error_save());
+    } catch (err) {
+      setCustomError(err instanceof Error ? err.message : m.envs_error_save());
     } finally {
       setSavingCustom(false);
     }
