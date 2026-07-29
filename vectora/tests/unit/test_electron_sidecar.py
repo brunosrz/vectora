@@ -20,14 +20,27 @@ from backend.services.subprocess_sidecar_utils import LazyLock
 
 
 @pytest.fixture(autouse=True)
-def _reset_sidecar_state():
+def _reset_sidecar_state(monkeypatch: pytest.MonkeyPatch):
+    # Job Object real (Windows) não deve rodar nos testes que não a testam
+    # de verdade — `TestJobObjectIntegration` sobrescreve este patch
+    # localmente pra testar o caminho de verdade.
+    monkeypatch.setattr(
+        "backend.services.win_job_object.create_job_object", lambda: None
+    )
+
     electron_sidecar._proc = None
     electron_sidecar._spawn_lock = LazyLock()
     electron_sidecar._log_task = None
+    electron_sidecar._watch_task = None
+    electron_sidecar._job_handle = None
     yield
+    if electron_sidecar._watch_task is not None:
+        electron_sidecar._watch_task.cancel()
     electron_sidecar._proc = None
     electron_sidecar._spawn_lock = LazyLock()
     electron_sidecar._log_task = None
+    electron_sidecar._watch_task = None
+    electron_sidecar._job_handle = None
 
 
 # ---------------------------------------------------------------------------
@@ -178,3 +191,200 @@ async def test_stop_electron_sidecar_termina_e_limpa_estado():
 async def test_stop_electron_sidecar_sem_processo_e_noop():
     await electron_sidecar.stop_electron_sidecar()
     assert electron_sidecar._proc is None
+
+
+# ---------------------------------------------------------------------------
+# Job Object (Windows) — defesa contra Electron órfão se o terminal fechar
+# ---------------------------------------------------------------------------
+
+
+class TestJobObjectIntegration:
+    """Fechar o terminal que rodou `vectora start` (Electron-first em dev)
+    não deve deixar o Electron (e o ícone do tray) órfão — ver
+    `backend/services/win_job_object.py`. Windows-only, best-effort."""
+
+    @pytest.mark.asyncio
+    async def test_nao_associa_job_object_fora_do_windows(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.setattr(electron_sidecar.sys, "platform", "linux")
+        fake_proc = MagicMock()
+        fake_proc.pid = 4242
+        fake_proc.returncode = None
+        fake_proc.stdout = None
+
+        with (
+            patch(
+                "backend.services.electron_sidecar.resolve_electron_launch",
+                return_value=("electron.exe", ["main.js"]),
+            ),
+            patch(
+                "asyncio.create_subprocess_exec",
+                new=AsyncMock(return_value=fake_proc),
+            ),
+            patch("backend.services.win_job_object.create_job_object") as create_mock,
+        ):
+            await electron_sidecar.ensure_electron_sidecar()
+            await asyncio.sleep(0)
+
+        create_mock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_associa_processo_a_job_object_no_windows(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.setattr(electron_sidecar.sys, "platform", "win32")
+        fake_proc = MagicMock()
+        fake_proc.pid = 4242
+        fake_proc.returncode = None
+        fake_proc.stdout = None
+
+        with (
+            patch(
+                "backend.services.electron_sidecar.resolve_electron_launch",
+                return_value=("electron.exe", ["main.js"]),
+            ),
+            patch(
+                "asyncio.create_subprocess_exec",
+                new=AsyncMock(return_value=fake_proc),
+            ),
+            patch(
+                "backend.services.win_job_object.create_job_object",
+                return_value=99,
+            ) as create_mock,
+            patch(
+                "backend.services.win_job_object.assign_process_to_job",
+                return_value=True,
+            ) as assign_mock,
+        ):
+            await electron_sidecar.ensure_electron_sidecar()
+            await asyncio.sleep(0)
+
+        create_mock.assert_called_once()
+        assign_mock.assert_called_once_with(99, 4242)
+        assert electron_sidecar._job_handle == 99
+
+    @pytest.mark.asyncio
+    async def test_job_object_falhando_nao_impede_sidecar_de_subir(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        # Par de erro/borda: exceção na criação da Job Object nunca deve
+        # impedir o Electron de subir — best-effort, só loga.
+        monkeypatch.setattr(electron_sidecar.sys, "platform", "win32")
+        fake_proc = MagicMock()
+        fake_proc.pid = 4242
+        fake_proc.returncode = None
+        fake_proc.stdout = None
+
+        with (
+            patch(
+                "backend.services.electron_sidecar.resolve_electron_launch",
+                return_value=("electron.exe", ["main.js"]),
+            ),
+            patch(
+                "asyncio.create_subprocess_exec",
+                new=AsyncMock(return_value=fake_proc),
+            ),
+            patch(
+                "backend.services.win_job_object.create_job_object",
+                side_effect=RuntimeError("boom"),
+            ),
+        ):
+            proc = await electron_sidecar.ensure_electron_sidecar()
+            await asyncio.sleep(0)
+
+        assert proc is fake_proc
+
+
+# ---------------------------------------------------------------------------
+# Watch de saída inesperada — Electron fechado pelo tray derruba o backend
+# ---------------------------------------------------------------------------
+
+
+class TestWatchForUnexpectedExit:
+    """Fechar o Electron pelo tray ("Sair") deve encerrar também o processo
+    `vectora start` que o spawnou — sem isso, o terminal fica vivo pra
+    sempre no modo "Electron-first em dev"."""
+
+    @pytest.mark.asyncio
+    async def test_saida_espontanea_do_electron_envia_sigterm_ao_proprio_processo(
+        self,
+    ):
+        fake_proc = MagicMock()
+        fake_proc.pid = 4242
+        fake_proc.returncode = None
+        fake_proc.stdout = None
+        wait_future: asyncio.Future = asyncio.get_event_loop().create_future()
+
+        async def _wait():
+            return await wait_future
+
+        fake_proc.wait = AsyncMock(side_effect=_wait)
+
+        with (
+            patch(
+                "backend.services.electron_sidecar.resolve_electron_launch",
+                return_value=("electron.exe", ["main.js"]),
+            ),
+            patch(
+                "asyncio.create_subprocess_exec",
+                new=AsyncMock(return_value=fake_proc),
+            ),
+            patch("backend.services.electron_sidecar.os.kill") as kill_mock,
+        ):
+            await electron_sidecar.ensure_electron_sidecar()
+            await asyncio.sleep(0)
+
+            fake_proc.returncode = 0
+            wait_future.set_result(None)
+            await asyncio.sleep(0)
+
+        kill_mock.assert_called_once()
+        args = kill_mock.call_args[0]
+        assert args[1] == electron_sidecar.signal.SIGTERM
+
+    @pytest.mark.asyncio
+    async def test_stop_deliberado_nao_dispara_sigterm(self):
+        # Par de erro/borda: `stop_electron_sidecar()` (shutdown gracioso
+        # do FastAPI) zera `_proc` antes de terminar o processo — o watcher
+        # não deve confundir isso com uma saída espontânea do Electron.
+        fake_proc = MagicMock()
+        fake_proc.pid = 4242
+        fake_proc.returncode = None
+        fake_proc.stdout = None
+        fake_proc.terminate = MagicMock()
+        wait_future: asyncio.Future = asyncio.get_event_loop().create_future()
+        call_count = 0
+
+        async def _wait():
+            # 1ª chamada: o watcher, esperando a saída "espontânea" (nunca
+            # resolvida aqui). 2ª chamada: `terminate_gracefully`, depois do
+            # watcher já ter sido cancelado — resolve na hora, como um
+            # processo que já morreu de verdade.
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return await wait_future
+            return None
+
+        fake_proc.wait = AsyncMock(side_effect=_wait)
+
+        with (
+            patch(
+                "backend.services.electron_sidecar.resolve_electron_launch",
+                return_value=("electron.exe", ["main.js"]),
+            ),
+            patch(
+                "asyncio.create_subprocess_exec",
+                new=AsyncMock(return_value=fake_proc),
+            ),
+            patch("backend.services.electron_sidecar.os.kill") as kill_mock,
+        ):
+            await electron_sidecar.ensure_electron_sidecar()
+            await asyncio.sleep(0)
+
+            await electron_sidecar.stop_electron_sidecar()
+            fake_proc.returncode = 0
+            await asyncio.sleep(0)
+
+        kill_mock.assert_not_called()

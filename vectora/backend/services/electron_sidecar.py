@@ -19,6 +19,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import signal
+import sys
 
 from backend.services.electron_launcher import resolve_electron_launch
 from backend.services.subprocess_logging import pipe_to_logger
@@ -29,7 +31,13 @@ logger = logging.getLogger(__name__)
 
 _proc: asyncio.subprocess.Process | None = None
 _log_task: asyncio.Task | None = None
+_watch_task: asyncio.Task | None = None
 _spawn_lock = LazyLock()
+
+# Handle da Windows Job Object (ver `_assign_to_job_object_best_effort`) —
+# vive pelo tempo de vida do processo Python inteiro, nunca fechado
+# explicitamente (mesmo padrão de `backend/scheduling/nats_sidecar.py`).
+_job_handle: int | None = None
 
 
 def should_spawn_electron() -> bool:
@@ -61,7 +69,7 @@ async def ensure_electron_sidecar() -> asyncio.subprocess.Process | None:
     próprio processo — nunca lança, retorna ``None`` em qualquer falha (o
     backend segue de pé sem janela).
     """
-    global _proc, _log_task
+    global _proc, _log_task, _watch_task
 
     async with _spawn_lock.get():
         if _proc is not None and _proc.returncode is None:
@@ -87,21 +95,77 @@ async def ensure_electron_sidecar() -> asyncio.subprocess.Process | None:
 
         logger.info("electron_sidecar: Electron (dev) spawnado, pid=%d", proc.pid)
         _proc = proc
+        _assign_to_job_object_best_effort(proc.pid)
         _log_task = asyncio.create_task(
             pipe_to_logger(proc.stdout, logger, prefix="electron")
         )
+        _watch_task = asyncio.create_task(_watch_for_unexpected_exit(proc))
         return proc
+
+
+def _assign_to_job_object_best_effort(pid: int) -> None:
+    """Defesa em profundidade (Windows only) contra o processo Electron
+    sobreviver a um `SIGKILL`/fechamento abrupto do terminal que rodou
+    `vectora start` — sem isso, fechar o terminal deixa o Electron (e o
+    ícone do tray) órfão, ainda segurando arquivos abertos em
+    `~/.vectora`. Mesmo mecanismo (`KILL_ON_JOB_CLOSE`) já usado pelo
+    `nats-server` em `backend/scheduling/nats_sidecar.py`. Best-effort:
+    qualquer falha aqui é só logada, nunca impede o sidecar de subir.
+    """
+    global _job_handle
+    if sys.platform != "win32":
+        return
+    try:
+        from backend.services.win_job_object import (
+            assign_process_to_job,
+            create_job_object,
+        )
+
+        if _job_handle is None:
+            _job_handle = create_job_object()
+        if _job_handle is not None:
+            assign_process_to_job(_job_handle, pid)
+    except Exception:
+        logger.warning(
+            "electron_sidecar: falha ao associar Electron à Job Object do Windows",
+            exc_info=True,
+        )
+
+
+async def _watch_for_unexpected_exit(proc: asyncio.subprocess.Process) -> None:
+    """Sinaliza o próprio processo Python (SIGTERM, mesmo caminho de
+    Ctrl+C — ver `backend/main.py::_install_terminal_signals`) quando o
+    Electron sai por conta própria (ex.: usuário clicou "Sair" no tray).
+
+    Sem isso, no modo "Electron-first em dev", fechar o Electron pelo
+    tray derruba só a janela — o processo `vectora start` que o spawnou
+    continua rodando pra sempre no terminal. Não dispara se a saída foi
+    pedida por `stop_electron_sidecar()` (que já zera `_proc` antes de
+    terminar o processo, então este `proc` deixa de ser o `_proc` atual).
+    """
+    await proc.wait()
+    if _proc is not proc:
+        return
+    logger.info(
+        "electron_sidecar: Electron saiu por conta própria (code=%s) — "
+        "encerrando o processo backend junto",
+        proc.returncode,
+    )
+    os.kill(os.getpid(), signal.SIGTERM)
 
 
 async def stop_electron_sidecar() -> None:
     """Encerra o sidecar Electron, se estiver rodando. Idempotente."""
-    global _proc, _log_task
+    global _proc, _log_task, _watch_task
 
     _spawn_lock.reset()  # mesmo motivo do nats_sidecar: solta o lock preso ao loop
 
     if _log_task is not None:
         _log_task.cancel()
         _log_task = None
+    if _watch_task is not None:
+        _watch_task.cancel()
+        _watch_task = None
 
     if _proc is None:
         return
