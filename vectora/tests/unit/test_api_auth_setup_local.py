@@ -76,3 +76,24 @@ def test_setup_local_empresa_opcional_vai_pro_store(_isolated_runtime_settings):
     assert result.ok is True
     assert _isolated_runtime_settings.local_user_name == "Bruno"
     assert _isolated_runtime_settings.local_user_company == ""
+
+
+def test_setup_local_persiste_username_normalizado(_isolated_runtime_settings):
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
+        result = asyncio.run(
+            setup_local_endpoint(
+                SetupLocalRequest(name="Bruno", username="Bruno Soares!")
+            )
+        )
+
+    assert result.ok is True
+    assert _isolated_runtime_settings.local_username == "brunosoares"
+
+
+def test_setup_local_username_ausente_nao_quebra(_isolated_runtime_settings):
+    """Regressão: request sem username continua funcionando (fallback pro slugify)."""
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
+        result = asyncio.run(setup_local_endpoint(SetupLocalRequest(name="Bruno")))
+
+    assert result.ok is True
+    assert _isolated_runtime_settings.local_username == ""

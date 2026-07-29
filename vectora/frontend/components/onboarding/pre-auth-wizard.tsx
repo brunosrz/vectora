@@ -3,23 +3,31 @@
 /**
  * PreAuthWizard — primeiro acesso, antes de qualquer conta existir.
  *
- * Substitui o antigo redirect direto pra /auth/signup. Pergunta nome
- * (+ empresa opcional) e o modo de operação:
+ * Único welcome do produto (tela cheia, multi-step): identidade (nome +
+ * username + empresa + idioma + tema) → modo (Local vs VPS) → continuação
+ * compartilhada pelos dois caminhos (token, storage, chaves de API,
+ * workspace, memória, capacidades) → concluir.
  *
  * - Local: chama POST /auth/setup-local (persiste VECTORA_AUTH_REQUIRED=false
- *   + nome/empresa) e recarrega a raiz — a partir daí o guard de rota vê
- *   auth_required=false e libera direto pro app, sem nenhuma conta real.
+ *   + nome/username/empresa) e segue direto pros passos de continuação na
+ *   mesma SPA — o AuthMiddleware já trata qualquer request como o usuário
+ *   virtual "local" assim que auth_required=false, sem depender de cookie.
+ *   O reload real só acontece uma vez, no fim (StepDone → Concluir).
  * - VPS: recurso Pro — pede um VECTORA_TOKEN, valida via
  *   POST /license/validate-token (só funciona no primeiro acesso, mesma
  *   guarda do setup-local) e, se válido e tier=pro, segue pro /auth/signup
- *   de verdade (conta real, multi-usuário) com o nome pré-preenchido.
+ *   de verdade (conta real, multi-usuário) com nome/username pré-preenchidos;
+ *   de lá, o signup bem-sucedido volta pra cá com `?continue=1` pra entrar
+ *   nos mesmos passos de continuação antes do reload final.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Loader2,
   Check,
+  CheckCircle2,
+  XCircle,
   Monitor,
   Server,
   Moon,
@@ -27,7 +35,10 @@ import {
   Laptop,
 } from "lucide-react";
 import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 import { signalVpsGatePassed } from "@/lib/stores/onboarding-signal";
+import { useOnboardingDraftStore } from "@/lib/stores/onboarding-draft-store";
+import { checkUsername, type UsernameStatus } from "@/lib/api/username";
 import {
   Select,
   SelectContent,
@@ -41,8 +52,13 @@ import {
   type Lang,
   type Theme,
 } from "@/lib/stores/settings-store";
+import {
+  ONBOARDING_CONTINUATION_STEPS,
+  ONBOARDING_CONTINUATION_TITLE_KEYS,
+  StepIndicator,
+} from "./setup-wizard";
 
-type Step = "identity" | "mode" | "vps-token";
+type Step = "identity" | "mode" | "vps-token" | "continuation";
 
 const VPS_FEATURE_LABELS = [
   m.onboarding_pre_vps_feature_1,
@@ -70,24 +86,82 @@ const THEME_OPTIONS: {
   { value: "light", label: m.onboarding_pre_theme_light, icon: Sun },
 ];
 
-export function PreAuthWizard() {
+interface PreAuthWizardProps {
+  /** `true` quando chega aqui depois de um `/auth/signup` (VPS) bem-sucedido
+   * — pula identity/mode/vps-token direto pros passos compartilhados. */
+  startAtContinuation?: boolean;
+}
+
+export function PreAuthWizard({
+  startAtContinuation = false,
+}: PreAuthWizardProps) {
   const navigate = useNavigate();
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
-  const [step, setStep] = useState<Step>("identity");
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
+
+  const name = useOnboardingDraftStore((s) => s.name);
+  const setName = useOnboardingDraftStore((s) => s.setName);
+  const username = useOnboardingDraftStore((s) => s.username);
+  const setUsername = useOnboardingDraftStore((s) => s.setUsername);
+  const company = useOnboardingDraftStore((s) => s.company);
+  const setCompany = useOnboardingDraftStore((s) => s.setCompany);
+  const resetDraft = useOnboardingDraftStore((s) => s.reset);
+
+  const [step, setStep] = useState<Step>(
+    startAtContinuation ? "continuation" : "identity",
+  );
+  const [continuationIndex, setContinuationIndex] = useState(0);
+  const [continuationValid, setContinuationValid] = useState(true);
+  const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(
+    null,
+  );
+
   const [nameError, setNameError] = useState<string | null>(null);
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus | null>(
+    null,
+  );
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [token, setToken] = useState("");
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const [settingUpLocal, setSettingUpLocal] = useState(false);
 
+  // Checagem de disponibilidade com debounce — mesmo padrão do /auth/signup
+  // real (lib/api/username.ts::checkUsername), reaproveitado aqui.
+  useEffect(() => {
+    const u = username.trim();
+    if (!u) {
+      setUsernameStatus(null);
+      setCheckingUsername(false);
+      return;
+    }
+    setCheckingUsername(true);
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      void checkUsername(u).then((status) => {
+        if (cancelled) return;
+        setUsernameStatus(status);
+        setCheckingUsername(false);
+      });
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [username]);
+
+  useEffect(() => {
+    setContinuationValid(true);
+  }, [continuationIndex]);
+
   function handleIdentityNext() {
     if (!name.trim()) {
       setNameError(m.onboarding_pre_name_required());
+      return;
+    }
+    if (usernameStatus && !usernameStatus.available) {
       return;
     }
     setNameError(null);
@@ -101,7 +175,11 @@ export function PreAuthWizard() {
       const res = await fetch("/auth/setup-local", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), company: company.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          company: company.trim(),
+          username: username.trim(),
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -112,9 +190,9 @@ export function PreAuthWizard() {
         setSettingUpLocal(false);
         return;
       }
-      // Full reload: o guard de __root.tsx precisa reavaliar auth_required
-      // do zero (o valor já foi lido em memória antes do setup rodar).
-      window.location.href = "/";
+      setSettingUpLocal(false);
+      setStep("continuation");
+      setContinuationIndex(0);
     } catch {
       setNameError(m.onboarding_pre_setup_error());
       setSettingUpLocal(false);
@@ -144,13 +222,86 @@ export function PreAuthWizard() {
       signalVpsGatePassed();
       void navigate({
         to: "/auth/signup",
-        search: { name: name.trim() },
+        search: { name: name.trim(), username: username.trim() },
       });
     } catch {
       setTokenError(m.onboarding_pre_vps_token_invalid());
     } finally {
       setValidating(false);
     }
+  }
+
+  function handleContinuationNext() {
+    if (continuationIndex < ONBOARDING_CONTINUATION_STEPS.length - 1) {
+      setContinuationIndex((i) => i + 1);
+      return;
+    }
+    resetDraft();
+    window.location.href = "/";
+  }
+
+  function handleContinuationBack() {
+    setContinuationIndex((i) => Math.max(0, i - 1));
+  }
+
+  const ContinuationStep = ONBOARDING_CONTINUATION_STEPS[continuationIndex]!;
+  const continuationTotal = ONBOARDING_CONTINUATION_STEPS.length;
+  const isFirstContinuationStep = continuationIndex === 0;
+  const isLastContinuationStep = continuationIndex === continuationTotal - 1;
+
+  if (step === "continuation") {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm space-y-4">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2.5">
+              <img src="/vectora.svg" alt="Vectora" width={36} height={36} />
+              <h1
+                className="text-2xl font-semibold tracking-tight text-foreground"
+                style={{ fontFamily: "var(--font-aeonik-mono)" }}
+              >
+                Vectora
+              </h1>
+            </div>
+            <p className="text-sm font-medium text-foreground text-center">
+              {mDyn(ONBOARDING_CONTINUATION_TITLE_KEYS[continuationIndex]!)}
+            </p>
+          </div>
+
+          <div data-testid="step-content-area">
+            <ContinuationStep
+              onValidityChange={setContinuationValid}
+              onWorkspaceSelect={setSelectedWorkspace}
+            />
+          </div>
+
+          <StepIndicator step={continuationIndex} total={continuationTotal} />
+
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={handleContinuationBack}
+              disabled={isFirstContinuationStep}
+              className={`text-xs text-muted-foreground hover:text-foreground transition-colors ${
+                isFirstContinuationStep ? "invisible" : ""
+              }`}
+            >
+              {m.onboarding_back()}
+            </button>
+            <button
+              type="button"
+              onClick={handleContinuationNext}
+              disabled={!continuationValid}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
+            >
+              {isLastContinuationStep
+                ? m.onboarding_finish()
+                : m.onboarding_next()}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -193,6 +344,54 @@ export function PreAuthWizard() {
               {nameError && (
                 <p className="text-xs text-destructive">{nameError}</p>
               )}
+            </div>
+            <div className="space-y-1">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="pre-username"
+              >
+                {m.auth_signup_username()}
+              </label>
+              <div className="flex items-center rounded-md border border-border bg-background px-3 focus-within:ring-2 focus-within:ring-primary/60">
+                <span className="text-sm text-muted-foreground select-none">
+                  @
+                </span>
+                <input
+                  id="pre-username"
+                  type="text"
+                  autoComplete="off"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={m.auth_signup_username_ph()}
+                  className="w-full bg-transparent py-2 pl-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                />
+              </div>
+              {checkingUsername ? (
+                <p className="text-xs text-muted-foreground">
+                  {m.auth_signup_username_checking()}
+                </p>
+              ) : usernameStatus && username.trim() ? (
+                usernameStatus.available ? (
+                  <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    {m.auth_signup_username_available()}
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-1 text-xs text-destructive">
+                    <XCircle className="w-3.5 h-3.5 shrink-0" />
+                    {m.auth_signup_username_taken()}{" "}
+                    <button
+                      type="button"
+                      onClick={() => setUsername(usernameStatus.suggestion)}
+                      className="text-primary hover:underline"
+                    >
+                      {m.auth_signup_username_use_suggestion({
+                        suggestion: usernameStatus.suggestion,
+                      })}
+                    </button>
+                  </p>
+                )
+              ) : null}
             </div>
             <div className="space-y-1">
               <label

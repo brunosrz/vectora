@@ -158,6 +158,24 @@ class TestGetVirtualLocalUser:
         assert user.name == "Bruno"
         assert user.username == "bruno"
 
+    def test_usa_username_persistido_quando_presente(self, _isolated_runtime_settings):
+        """Username escolhido no onboarding tem prioridade sobre o slugify do
+        nome — regressão: instância sem username ainda cai no fallback."""
+        from backend.api.middleware.auth import _get_virtual_local_user
+
+        _isolated_runtime_settings.set_local_user(
+            "Bruno", "Vectora", username="brunosoares"
+        )
+        user = _get_virtual_local_user()
+        assert user.username == "brunosoares"
+
+    def test_sem_username_cai_no_slugify_do_nome(self, _isolated_runtime_settings):
+        from backend.api.middleware.auth import _get_virtual_local_user
+
+        _isolated_runtime_settings.set_local_user("Ada Lovelace", "")
+        user = _get_virtual_local_user()
+        assert user.username == "adalovelace"
+
 
 # ---------------------------------------------------------------------------
 # AuthMiddleware via TestClient (integração mínima)

@@ -20,6 +20,7 @@ const NAME_MAX = 100;
 const searchSchema = z.object({
   invite: z.string().optional(),
   name: z.string().optional(),
+  username: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth/signup")({
@@ -29,7 +30,11 @@ export const Route = createFileRoute("/auth/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const { invite: inviteFromUrl, name: nameFromUrl } = Route.useSearch();
+  const {
+    invite: inviteFromUrl,
+    name: nameFromUrl,
+    username: usernameFromUrl,
+  } = Route.useSearch();
   const setUser = useAuthStore((s) => s.setUser);
 
   const schema = useMemo(
@@ -56,11 +61,17 @@ function SignUpPage() {
 
   const [name, setName] = useState(nameFromUrl ?? "");
   const [username, setUsername] = useState(() =>
-    slugifyUsername(nameFromUrl ?? ""),
+    usernameFromUrl?.trim()
+      ? slugifyUsername(usernameFromUrl)
+      : slugifyUsername(nameFromUrl ?? ""),
   );
   // Enquanto o usuário não editar o username manualmente, ele segue o slug do
-  // nome. Após a primeira edição, para de auto-sincronizar.
-  const [usernameEdited, setUsernameEdited] = useState(false);
+  // nome. Após a primeira edição, para de auto-sincronizar — um username já
+  // escolhido no wizard de onboarding (usernameFromUrl) conta como "editado"
+  // pra não ser sobrescrito pelo slug do nome no primeiro render.
+  const [usernameEdited, setUsernameEdited] = useState(
+    () => !!usernameFromUrl?.trim(),
+  );
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus | null>(
     null,
   );
@@ -214,7 +225,10 @@ function SignUpPage() {
       }
 
       setUser(data.user as AuthUser);
-      void navigate({ to: "/" });
+      // Continua no mesmo welcome multi-step (token/storage/chaves/workspace/
+      // memória/capacidades) antes do reload final — unifica local e VPS num
+      // único fluxo em vez de cair direto no app.
+      void navigate({ to: "/onboarding", search: { continue: "1" } });
     } catch {
       setServerError(m.auth_conn_error());
     } finally {

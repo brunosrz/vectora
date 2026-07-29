@@ -340,3 +340,23 @@ class TestLocalUser:
         rs2 = RuntimeSettings(path=tmp_settings_path)
         assert rs2.local_user_name == "Bruno"
         assert rs2.local_user_company == "Vectora"
+
+    def test_local_username_default_vazio(self, rs: RuntimeSettings) -> None:
+        assert rs.local_username == ""
+
+    def test_set_local_user_com_username_roundtrip(self, rs: RuntimeSettings) -> None:
+        rs.set_local_user("Bruno", "Vectora", username="brunosoares")
+        assert rs.local_username == "brunosoares"
+
+    def test_set_local_user_sem_username_nao_sobrescreve(
+        self, rs: RuntimeSettings
+    ) -> None:
+        rs.set_local_user("Bruno", "Vectora", username="brunosoares")
+        rs.set_local_user("Bruno", "Vectora Corp")
+        assert rs.local_username == "brunosoares"
+
+    def test_local_username_persiste_apos_reload(self, tmp_settings_path: Path) -> None:
+        rs1 = RuntimeSettings(path=tmp_settings_path)
+        rs1.set_local_user("Bruno", "Vectora", username="brunosoares")
+        rs2 = RuntimeSettings(path=tmp_settings_path)
+        assert rs2.local_username == "brunosoares"

@@ -61,7 +61,6 @@ import {
   BROADCAST_WORKSPACES,
 } from "@/lib/hooks/use-broadcast-sync";
 import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
-import { isOnboardingDone } from "@/components/onboarding/setup-wizard";
 import { m } from "@/lib/paraglide/messages";
 export const Route = createFileRoute("/session/$threadId")({
   // Prefetch em paralelo: lista de threads (sidebar) + histórico da thread ativa.
@@ -775,18 +774,12 @@ function SessionPage() {
                         inputLocked={inputLocked}
                         isNewThread={isNew(threadId)}
                         onStartChat={
-                          hydrated &&
-                          isNewRoute &&
-                          !isWorkspaceChosen(threadId) &&
-                          (!userId || isOnboardingDone(userId))
+                          hydrated && isNewRoute && !isWorkspaceChosen(threadId)
                             ? handleStartChatFromWelcome
                             : undefined
                         }
                         onStartCode={
-                          hydrated &&
-                          isNewRoute &&
-                          !isWorkspaceChosen(threadId) &&
-                          (!userId || isOnboardingDone(userId))
+                          hydrated && isNewRoute && !isWorkspaceChosen(threadId)
                             ? () => setShowNewChatDialog(true)
                             : undefined
                         }

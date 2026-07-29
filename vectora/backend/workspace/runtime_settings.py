@@ -207,13 +207,22 @@ class RuntimeSettings:
     def local_user_company(self) -> str:
         return str(self.get("local_user_company", ""))
 
-    def set_local_user(self, name: str, company: str) -> None:
-        """Define nome/empresa do usuário local (modo sem conta) e persiste."""
+    @property
+    def local_username(self) -> str:
+        """Username escolhido no onboarding local. Vazio = ainda não escolhido
+        (`_get_virtual_local_user` cai pro slugify do nome nesse caso)."""
+        return str(self.get("local_username", ""))
+
+    def set_local_user(self, name: str, company: str, username: str = "") -> None:
+        """Define nome/empresa/username do usuário local (modo sem conta) e persiste."""
         with self._lock:
             self._data["local_user_name"] = name
             self._persist("local_user_name", name)
             self._data["local_user_company"] = company
             self._persist("local_user_company", company)
+            if username:
+                self._data["local_username"] = username
+                self._persist("local_username", username)
 
     # ─── Auth ─────────────────────────────────────────────────────────────────
 

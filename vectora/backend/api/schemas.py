@@ -745,6 +745,7 @@ class HasUsersResponse(BaseModel):
 class SetupLocalRequest(BaseModel):
     name: str
     company: str = ""
+    username: str = ""
 
 
 class SetupLocalResponse(BaseModel):

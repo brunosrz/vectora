@@ -1,6 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { PreAuthWizard } from "@/components/onboarding/pre-auth-wizard";
 
-export const Route = createFileRoute("/onboarding")({
-  component: PreAuthWizard,
+const searchSchema = z.object({
+  /** "1" quando chega de volta de um /auth/signup (VPS) bem-sucedido —
+   * pula identity/mode/vps-token direto pros passos compartilhados. */
+  continue: z.literal("1").optional(),
 });
+
+export const Route = createFileRoute("/onboarding")({
+  validateSearch: searchSchema,
+  component: OnboardingRoute,
+});
+
+function OnboardingRoute() {
+  const { continue: cont } = Route.useSearch();
+  return <PreAuthWizard startAtContinuation={cont === "1"} />;
+}

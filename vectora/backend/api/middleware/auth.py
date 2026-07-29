@@ -160,9 +160,10 @@ def _get_virtual_local_user() -> Any:
     from backend.workspace.runtime_settings import runtime_settings
 
     name = runtime_settings.local_user_name or "Local User"
+    username = runtime_settings.local_username or slugify_username(name)
     return User(
         id="local",
-        username=slugify_username(name),
+        username=username,
         email="",
         role="root",
         name=name,

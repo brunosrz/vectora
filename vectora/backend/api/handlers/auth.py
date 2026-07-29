@@ -180,8 +180,14 @@ async def setup_local_endpoint(body: SetupLocalRequest) -> SetupLocalResponse:
         raise HTTPException(status_code=422, detail="Nome é obrigatório.")
     company = body.company.strip()
 
+    username = ""
+    if body.username.strip():
+        from backend.rbac.username import normalize_username
+
+        username = normalize_username(body.username.strip())
+
     runtime_settings.auth_required = False
-    runtime_settings.set_local_user(name, company)
+    runtime_settings.set_local_user(name, company, username=username)
 
     logger.info(
         "auth/setup-local: instância configurada em modo local (auth desabilitado)"

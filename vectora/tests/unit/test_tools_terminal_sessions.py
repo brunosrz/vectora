@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from backend.services.pty_registry import pty_registry
-from backend.tools.terminal import close_terminal, list_terminals
+from backend.tools.terminal_sessions import close_terminal, list_terminals
 
 
 def _fake_session(

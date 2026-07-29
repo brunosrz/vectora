@@ -1,5 +1,13 @@
 // @vitest-environment jsdom
 
+/**
+ * Passos compartilhados do onboarding (StepToken/StepMode/StepApiKeys/
+ * StepWorkspace/StepMemory/StepCapabilities) — portados de um Dialog próprio
+ * (SetupWizard, removido) pra continuação do PreAuthWizard. Testados
+ * isoladamente, renderizando cada passo direto (sem a máquina de passos, que
+ * é responsabilidade do PreAuthWizard).
+ */
+
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import {
   render,
@@ -7,12 +15,17 @@ import {
   cleanup,
   waitFor,
   fireEvent,
-  act,
 } from "@testing-library/react";
-import { SetupWizard, isOnboardingDone } from "../setup-wizard";
+import {
+  StepToken,
+  StepMode,
+  StepApiKeys,
+  StepWorkspace,
+  StepMemory,
+  StepCapabilities,
+} from "../setup-wizard";
 
 beforeEach(() => {
-  localStorage.clear();
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({
@@ -27,68 +40,19 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("isOnboardingDone", () => {
-  it("retorna false quando a flag não está setada", () => {
-    expect(isOnboardingDone("u1")).toBe(false);
-  });
-
-  it("retorna true quando a flag do usuário está marcada", () => {
-    localStorage.setItem("vectora:onboarding-done-u1", "1");
-    expect(isOnboardingDone("u1")).toBe(true);
-  });
-
-  it("isola a flag por usuário — flag de outro userId não se aplica", () => {
-    localStorage.setItem("vectora:onboarding-done-u1", "1");
-    expect(isOnboardingDone("u2")).toBe(false);
-  });
-
-  it("erro: flag de userId não relacionado não concede acesso", () => {
-    localStorage.setItem("vectora:onboarding-done-admin", "1");
-    expect(isOnboardingDone("u1")).toBe(false);
-    expect(isOnboardingDone("u2")).toBe(false);
-  });
-});
-
-describe("SetupWizard", () => {
-  it("renderiza o contador do passo 1/9 no primeiro passo", async () => {
-    render(<SetupWizard userId="u1" onComplete={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText("1 / 10")).toBeInTheDocument());
-  });
-
-  it("área de conteúdo tem data-testid com altura mínima fixa", async () => {
-    const { container } = render(
-      <SetupWizard userId="u2" onComplete={vi.fn()} />,
-    );
-    await waitFor(() =>
-      expect(
-        document.querySelector("[data-testid='step-content-area']"),
-      ).not.toBeNull(),
-    );
-  });
-});
-
-async function renderAtStepToken() {
-  render(<SetupWizard userId="u3" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 10"));
-  fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 0 → 1
-  await waitFor(() => screen.getByText("2 / 10"));
-  fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 1 → 2
-  await waitFor(() => screen.getByText("3 / 10"));
-}
-
 describe("StepToken", () => {
   it("campo de token usa autocomplete=new-password para desabilitar o autofill/sugestão de senha salva do browser", async () => {
     // "off" é ignorado por Chrome/Edge em campos type="password" desde 2014
     // (o browser mostra a sugestão de senha salva mesmo assim) — o valor
     // que de fato suprime isso é "new-password".
-    await renderAtStepToken();
-    const input = screen.getByPlaceholderText("vct_…");
+    render(<StepToken />);
+    const input = await screen.findByPlaceholderText("vct_…");
     expect(input).toHaveAttribute("autocomplete", "new-password");
   });
 
   it("erro: campo de token não deve ter hint semântico que reative sugestões do browser", async () => {
-    await renderAtStepToken();
-    const input = screen.getByPlaceholderText("vct_…");
+    render(<StepToken />);
+    const input = await screen.findByPlaceholderText("vct_…");
     expect(input).not.toHaveAttribute("autocomplete", "off");
     expect(input).not.toHaveAttribute("autocomplete", "current-password");
     expect(input).not.toHaveAttribute("autocomplete", "email");
@@ -169,41 +133,27 @@ function mockStorageFetch(opts: {
   });
 }
 
-async function renderAtStepMode() {
-  render(<SetupWizard userId="u-mode" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 10"));
-  await act(async () => {
-    for (let i = 0; i < 3; i++) {
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    }
-  });
-  await waitFor(() => screen.getByText("4 / 10"));
-  await act(async () => {
-    fireEvent.click(screen.getByText("Complete")); // modo completo → cards
-  });
-}
-
 describe("StepMode — pré-preenchimento com defaults reais", () => {
   it("pré-preenche o card com a URL default e o comando self-hosted", async () => {
     vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: true }));
-    await renderAtStepMode();
+    render(<StepMode />);
+    fireEvent.click(await screen.findByText("Complete"));
 
     await waitFor(() =>
       expect(
         screen.getByDisplayValue("redis://:vectora@localhost:6379/0"),
       ).toBeInTheDocument(),
     );
-    // Comando self-hosted também vem preenchido (toggle ligado).
     expect(
       screen.getByDisplayValue("docker compose up -d redis"),
     ).toBeInTheDocument();
-    // Qdrant traz a API key default no campo dedicado.
     expect(screen.getByDisplayValue("vectora")).toBeInTheDocument();
   });
 
   it("erro: sem defaults do backend, o card fica vazio (só placeholder)", async () => {
     vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: false }));
-    await renderAtStepMode();
+    render(<StepMode />);
+    fireEvent.click(await screen.findByText("Complete"));
 
     const input = (await screen.findByPlaceholderText(
       "redis://localhost:6379/0",
@@ -215,29 +165,23 @@ describe("StepMode — pré-preenchimento com defaults reais", () => {
 describe("StepMode — Completo é exclusivo do plano Pro", () => {
   it("usuário Free vê o card Completo travado (Lock + badge) e não consegue selecioná-lo", async () => {
     vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: true, pro: false }));
-    render(<SetupWizard userId="u-free" onComplete={vi.fn()} />);
-    await waitFor(() => screen.getByText("1 / 10"));
-    await act(async () => {
-      for (let i = 0; i < 3; i++) {
-        fireEvent.click(screen.getByRole("button", { name: "Next" }));
-      }
-    });
-    await waitFor(() => screen.getByText("4 / 10"));
+    render(<StepMode />);
 
-    const completeBtn = screen.getByText("Complete").closest("button")!;
+    const completeBtn = (await screen.findByText("Complete")).closest(
+      "button",
+    )!;
     await waitFor(() => expect(completeBtn).toBeDisabled());
     expect(screen.getByText("Available on the Pro plan")).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.click(completeBtn);
-    });
+    fireEvent.click(completeBtn);
     // Clique num botão disabled não abre os cards de conexão manual.
     expect(screen.queryByPlaceholderText(/redis:\/\//)).toBeNull();
   });
 
   it("usuário Pro consegue selecionar Completo normalmente (sem cadeado)", async () => {
     vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: true, pro: true }));
-    await renderAtStepMode();
+    render(<StepMode />);
+    fireEvent.click(await screen.findByText("Complete"));
 
     expect(screen.queryByText("Available on the Pro plan")).toBeNull();
     await waitFor(() =>
@@ -288,64 +232,34 @@ function mockApiKeysFetch(
       if (u.includes("/admin/api-keys")) {
         return { ok: true, json: async () => ({ google, cohere, tavily }) };
       }
-      if (u.includes("/admin/storage/defaults")) {
-        return { ok: true, json: async () => ({}) };
-      }
-      if (u.includes("/admin/storage")) {
-        return {
-          ok: true,
-          json: async () => ({
-            config: {
-              storage_mode: "lite",
-              postgres_configured: false,
-              redis_configured: false,
-              qdrant_configured: false,
-            },
-          }),
-        };
-      }
-      return {
-        ok: true,
-        json: async () => ({ has_token: false, mode: "lite" }),
-      };
+      return { ok: true, json: async () => ({}) };
     }),
   );
-}
-
-async function renderAtStepApiKeys() {
-  render(<SetupWizard userId="u-apikeys" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 10"));
-  await act(async () => {
-    for (let i = 0; i < 4; i++) {
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    }
-  });
-  await waitFor(() => screen.getByText("5 / 10"));
 }
 
 describe("StepApiKeys", () => {
   it("renderiza os 3 campos de chave", async () => {
     mockApiKeysFetch();
-    await renderAtStepApiKeys();
-    expect(screen.getByPlaceholderText("AIza…")).toBeInTheDocument();
+    render(<StepApiKeys />);
+    expect(await screen.findByPlaceholderText("AIza…")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("…")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("tvly-…")).toBeInTheDocument();
   });
 
   it("erro: campos sem valor configurado ficam vazios", async () => {
     mockApiKeysFetch();
-    await renderAtStepApiKeys();
+    render(<StepApiKeys />);
     for (const placeholder of ["AIza…", "…", "tvly-…"]) {
-      const input = screen.getByPlaceholderText(
+      const input = (await screen.findByPlaceholderText(
         placeholder,
-      ) as HTMLInputElement;
+      )) as HTMLInputElement;
       expect(input.value).toBe("");
     }
   });
 
   it("pré-preenche masked value quando key está configurada", async () => {
     mockApiKeysFetch({ google: { configured: true, masked: "AIzaS•••e7wQ" } });
-    await renderAtStepApiKeys();
+    render(<StepApiKeys />);
     await waitFor(() => {
       const input = screen.getByPlaceholderText("AIza…") as HTMLInputElement;
       expect(input.value).toBe("AIzaS•••e7wQ");
@@ -354,9 +268,9 @@ describe("StepApiKeys", () => {
 
   it("ao desfocar campo com valor, chama PATCH + test", async () => {
     mockApiKeysFetch();
-    await renderAtStepApiKeys();
+    render(<StepApiKeys />);
     const fetchMock = vi.mocked(global.fetch);
-    const input = screen.getByPlaceholderText("tvly-…");
+    const input = await screen.findByPlaceholderText("tvly-…");
     fireEvent.change(input, { target: { value: "tvly-abc123" } });
     fireEvent.blur(input);
     await waitFor(() => {
@@ -370,10 +284,10 @@ describe("StepApiKeys", () => {
 
   it("erro: campo desativado sem valor não dispara PATCH nem test", async () => {
     mockApiKeysFetch();
-    await renderAtStepApiKeys();
+    render(<StepApiKeys />);
     const fetchMock = vi.mocked(global.fetch);
+    const input = await screen.findByPlaceholderText("tvly-…");
     const countBefore = fetchMock.mock.calls.length;
-    const input = screen.getByPlaceholderText("tvly-…");
     fireEvent.blur(input);
     await waitFor(() => {
       expect(fetchMock.mock.calls.length).toBe(countBefore);
@@ -382,49 +296,22 @@ describe("StepApiKeys", () => {
 
   it("mostra a alternativa 100% local via Ollama sem exigir preencher nenhuma chave", async () => {
     mockApiKeysFetch();
-    await renderAtStepApiKeys();
-    expect(screen.getByText(/Ollama/)).toBeInTheDocument();
+    render(<StepApiKeys />);
+    expect(await screen.findByText(/Ollama/)).toBeInTheDocument();
     expect(screen.getByText(/Gateways/)).toBeInTheDocument();
-    // Par de erro/edge case: nenhum campo preenchido não bloqueia o avanço
-    // do wizard — Cohere/Tavily continuam opcionais mesmo com a nova copy.
-    expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled();
   });
 });
 
-async function renderAtStepWorkspace() {
-  mockApiKeysFetch();
-  render(<SetupWizard userId="u-workspace" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 10"));
-  await act(async () => {
-    for (let i = 0; i < 5; i++) {
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    }
-  });
-  await waitFor(() => screen.getByText("6 / 10"));
-}
-
 describe("StepWorkspace — bullet do AI Jail", () => {
-  it("renderiza o bullet explicando o isolamento por workspace via [sandbox]", async () => {
-    await renderAtStepWorkspace();
+  it("renderiza o bullet explicando o isolamento por workspace via [sandbox]", () => {
+    render(<StepWorkspace />);
     expect(screen.getByText(/vectora\.toml/)).toBeInTheDocument();
   });
 });
 
-async function renderAtStepMemory() {
-  mockApiKeysFetch();
-  render(<SetupWizard userId="u-memory" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 10"));
-  await act(async () => {
-    for (let i = 0; i < 7; i++) {
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    }
-  });
-  await waitFor(() => screen.getByText("8 / 10"));
-}
-
 describe("StepMemory — três camadas", () => {
-  it("renderiza memória de conversa, Remember e RAG/Deep Memory", async () => {
-    await renderAtStepMemory();
+  it("renderiza memória de conversa, Remember e RAG/Deep Memory", () => {
+    render(<StepMemory />);
     expect(
       screen.getByText((_, el) => el?.textContent === "Conversation memory"),
     ).toBeInTheDocument();
@@ -437,24 +324,9 @@ describe("StepMemory — três camadas", () => {
   });
 });
 
-async function renderAtStepCapabilities() {
-  mockApiKeysFetch();
-  render(<SetupWizard userId="u-capabilities" onComplete={vi.fn()} />);
-  await waitFor(() => screen.getByText("1 / 10"));
-  await act(async () => {
-    for (let i = 0; i < 8; i++) {
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    }
-  });
-  await waitFor(() => screen.getByText("9 / 10"));
-}
-
 describe("StepCapabilities", () => {
-  it("renderiza e navega corretamente entre StepMemory e StepDone", async () => {
-    await renderAtStepCapabilities();
+  it("renderiza a introdução de capacidades do agente", () => {
+    render(<StepCapabilities />);
     expect(screen.getByText(/AI Jail/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    await waitFor(() => screen.getByText("10 / 10"));
   });
 });

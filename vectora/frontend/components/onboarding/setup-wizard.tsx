@@ -1,14 +1,13 @@
 "use client";
 
 /**
- * SetupWizard — Wizard de primeiro acesso (10 passos).
- *
- * Aparece uma única vez por usuário, determinado pela flag
- * `vectora:onboarding-done-<userId>` no localStorage.
+ * Passos compartilhados do wizard de primeiro acesso, portados de um Dialog
+ * próprio (SetupWizard) pra continuação do PreAuthWizard (tela cheia) —
+ * StepToken → StepMode → StepApiKeys → StepWorkspace → StepWorkspaceSelect →
+ * StepMemory → StepCapabilities → StepDone.
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import Image from "next/image";
 import {
   Loader2,
   CheckCircle2,
@@ -23,124 +22,15 @@ import {
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
-import { mDyn } from "@/lib/i18n-dyn";
-const TOTAL_STEPS = 10;
-
-const ONBOARDING_KEY = (userId: string) => `vectora:onboarding-done-${userId}`;
-
-export function isOnboardingDone(userId: string): boolean {
-  if (typeof localStorage === "undefined") return true;
-  return localStorage.getItem(ONBOARDING_KEY(userId)) === "1";
-}
-
-function markOnboardingDone(userId: string): void {
-  if (typeof localStorage !== "undefined") {
-    localStorage.setItem(ONBOARDING_KEY(userId), "1");
-  }
-}
-
-interface SetupWizardProps {
-  userId: string;
-  /** Chamado ao terminar; `workspaceId` é null para criar workspace dedicado. */
-  onComplete: (workspaceId: string | null) => void;
-}
 
 /** Props comuns a todos os passos. */
-interface StepProps {
+export interface StepProps {
   onValidityChange?: (valid: boolean) => void;
   onWorkspaceSelect?: (id: string | null) => void;
-}
-
-// ===========================================================================
-// Step components
-// ===========================================================================
-
-function StepWelcome(_props: StepProps) {
-  return (
-    <div className="flex flex-col items-center gap-4 py-4">
-      <Image
-        src="/vectora.svg"
-        alt="Vectora"
-        width={72}
-        height={72}
-        className="h-16 w-16"
-      />
-      <p className="text-sm text-muted-foreground text-center max-w-xs">
-        {m.onboarding_welcome_body()}
-      </p>
-    </div>
-  );
-}
-
-const LANGUAGES: { code: Lang; label: string }[] = [
-  { code: "en", label: "English" },
-  { code: "es", label: "Español" },
-  { code: "pt", label: "Português (BR)" },
-];
-
-function StepLanguage(_props: StepProps) {
-  const lang = useSettingsStore((s) => s.language);
-  const setLanguage = useSettingsStore((s) => s.setLanguage);
-  const theme = useSettingsStore((s) => s.theme);
-  const setTheme = useSettingsStore((s) => s.setTheme);
-
-  return (
-    <div className="space-y-4 py-2">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-2">
-          {m.onboarding_language_label()}
-        </p>
-        <div className="flex gap-2">
-          {LANGUAGES.map((l) => (
-            <button
-              key={l.code}
-              onClick={() => setLanguage(l.code)}
-              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
-                lang === l.code
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-2">
-          {m.onboarding_theme_label()}
-        </p>
-        <div className="flex gap-2">
-          {(["dark", "light", "system"] as const).map((th) => (
-            <button
-              key={th}
-              onClick={() => setTheme(th)}
-              className={`px-3 py-1.5 rounded-md text-xs border capitalize transition-colors ${
-                theme === th
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {th}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +75,7 @@ function LicenseResultBadge({ result }: { result: LicenseResult }) {
 
 type OAuthState = "idle" | "pending" | "success" | "error";
 
-function StepToken(_props: StepProps) {
+export function StepToken(_props: StepProps) {
   const [config, setConfig] = useState<ConfigSummary | null>(null);
   const [result, setResult] = useState<LicenseResult | null>(null);
 
@@ -594,7 +484,7 @@ function ServiceConnectionCard({
   );
 }
 
-function StepMode({ onValidityChange }: StepProps) {
+export function StepMode({ onValidityChange }: StepProps) {
   // `configured=false` (sem VECTORA_TOKEN) é o estado Free — mesma fonte de
   // admin-tab.tsx (GET /license/status). O modo "Completo" (Postgres+Qdrant+
   // Redis) é recurso exclusivo do Pro; Free fica preso ao Lite (SQLite +
@@ -803,7 +693,7 @@ function StepMode({ onValidityChange }: StepProps) {
   );
 }
 
-function StepWorkspace(_props: StepProps) {
+export function StepWorkspace(_props: StepProps) {
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
       <p>{m.onboarding_workspace_body()}</p>
@@ -817,7 +707,7 @@ function StepWorkspace(_props: StepProps) {
   );
 }
 
-function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
+export function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const activeId = useWorkspacesStore((s) => s.active_id);
   const hydrate = useWorkspacesStore((s) => s.hydrate);
@@ -999,7 +889,7 @@ function KeyStatusIcon({ status }: { status: KeyStatus }) {
   return null;
 }
 
-function StepApiKeys(_props: StepProps) {
+export function StepApiKeys(_props: StepProps) {
   const [keys, setKeys] = useState<Record<ApiKeyProvider, ApiKeyState>>({
     google: {
       value: "",
@@ -1202,7 +1092,7 @@ function StepApiKeys(_props: StepProps) {
   );
 }
 
-function StepMemory(_props: StepProps) {
+export function StepMemory(_props: StepProps) {
   return (
     <div className="space-y-4 py-2 text-sm text-muted-foreground">
       <p>{m.onboarding_memory_intro()}</p>
@@ -1230,7 +1120,7 @@ function StepMemory(_props: StepProps) {
   );
 }
 
-function StepCapabilities(_props: StepProps) {
+export function StepCapabilities(_props: StepProps) {
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
       <p>{m.onboarding_capabilities_intro()}</p>
@@ -1245,7 +1135,7 @@ function StepCapabilities(_props: StepProps) {
   );
 }
 
-function StepDone(_props: StepProps) {
+export function StepDone(_props: StepProps) {
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
       <span className="text-4xl">🎉</span>
@@ -1256,9 +1146,10 @@ function StepDone(_props: StepProps) {
   );
 }
 
-const STEP_COMPONENTS = [
-  StepWelcome,
-  StepLanguage,
+/** Passos compartilhados (Local e VPS) após o gate de identidade/modo do
+ * PreAuthWizard — StepWelcome/StepLanguage não entram aqui: já cobertos
+ * pelo passo "identity" do PreAuthWizard. */
+export const ONBOARDING_CONTINUATION_STEPS = [
   StepToken,
   StepMode,
   StepApiKeys,
@@ -1269,9 +1160,7 @@ const STEP_COMPONENTS = [
   StepDone,
 ];
 
-const STEP_TITLE_KEYS = [
-  "onboarding.step1_title",
-  "onboarding.step2_title",
+export const ONBOARDING_CONTINUATION_TITLE_KEYS = [
   "onboarding.step3_title",
   "onboarding.step4_title",
   "onboarding.step4b_title",
@@ -1286,7 +1175,13 @@ const STEP_TITLE_KEYS = [
 // Step indicator — bolinhas de progresso conectadas por "ganchos"
 // ===========================================================================
 
-function StepIndicator({ step, total }: { step: number; total: number }) {
+export function StepIndicator({
+  step,
+  total,
+}: {
+  step: number;
+  total: number;
+}) {
   return (
     <div className="flex items-center justify-center gap-1.5 py-1">
       {Array.from({ length: total }).map((_, i) => (
@@ -1310,96 +1205,5 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
         </div>
       ))}
     </div>
-  );
-}
-
-// ===========================================================================
-// Wizard
-// ===========================================================================
-
-export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
-  const [step, setStep] = useState(0);
-  const [valid, setValid] = useState(true);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(
-    null,
-  );
-
-  useEffect(() => {
-    setValid(true);
-  }, [step]);
-
-  const handleNext = useCallback(() => {
-    if (step < TOTAL_STEPS - 1) {
-      setStep((s) => s + 1);
-    } else {
-      markOnboardingDone(userId);
-      onComplete(selectedWorkspace);
-    }
-  }, [step, userId, onComplete, selectedWorkspace]);
-
-  const handleBack = useCallback(() => {
-    setStep((s) => Math.max(0, s - 1));
-  }, []);
-
-  const handleSkip = useCallback(() => {
-    markOnboardingDone(userId);
-    onComplete(selectedWorkspace);
-  }, [userId, onComplete, selectedWorkspace]);
-
-  const StepContent = STEP_COMPONENTS[step]!;
-  const isFirstStep = step === 0;
-  const isLastStep = step === TOTAL_STEPS - 1;
-
-  return (
-    <Dialog open onOpenChange={() => void 0}>
-      <DialogContent
-        className="max-w-sm min-h-[420px]"
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>{mDyn(STEP_TITLE_KEYS[step]!)}</DialogTitle>
-          <DialogDescription className="sr-only">
-            {step + 1} / {TOTAL_STEPS}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="min-h-[220px]" data-testid="step-content-area">
-          <StepContent
-            onValidityChange={setValid}
-            onWorkspaceSelect={setSelectedWorkspace}
-          />
-        </div>
-
-        <StepIndicator step={step} total={TOTAL_STEPS} />
-
-        <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            disabled={isFirstStep}
-            className={`text-xs ${isFirstStep ? "invisible" : ""}`}
-          >
-            {m.onboarding_back()}
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {!isLastStep && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSkip}
-                className="text-xs"
-              >
-                {m.onboarding_skip()}
-              </Button>
-            )}
-            <Button size="sm" onClick={handleNext} disabled={!valid} autoFocus>
-              {isLastStep ? m.onboarding_finish() : m.onboarding_next()}
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
