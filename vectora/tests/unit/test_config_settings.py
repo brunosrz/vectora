@@ -333,7 +333,7 @@ class TestLlmKeyPrecedence:
         monkeypatch.chdir(project_dir)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
-        with caplog.at_level(logging.WARNING, logger="backend.settings"):
+        with caplog.at_level(logging.DEBUG, logger="backend.settings"):
             Settings()
 
         assert os.environ["GOOGLE_API_KEY"] == "user-real-paid-key"
@@ -356,7 +356,7 @@ class TestLlmKeyPrecedence:
         monkeypatch.chdir(project_dir)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
-        with caplog.at_level(logging.WARNING, logger="backend.settings"):
+        with caplog.at_level(logging.DEBUG, logger="backend.settings"):
             Settings()
 
         assert os.environ["GOOGLE_API_KEY"] == "same-key"

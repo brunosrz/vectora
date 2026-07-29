@@ -757,7 +757,7 @@ class Settings(BaseSettings):
                 continue
             _user_value = user_env_values.get(_key_name)
             if _user_value and os.environ.get(_key_name) != _user_value:
-                logger.warning(
+                logger.debug(
                     f"settings: {_key_name} de .env de projeto/cwd "
                     f"sobrescreveu ~/.vectora/.env — restaurando o valor "
                     f"do usuário (fonte de verdade para chaves de LLM)"

@@ -75,7 +75,7 @@ const OAUTH_PROVIDERS = new Set(["github", "gitlab", "google", "slack"]);
 // ---------------------------------------------------------------------------
 
 async function fetchIntegrations(): Promise<Integration[]> {
-  const res = await fetch("/integrations/");
+  const res = await fetch("/integrations", { credentials: "include" });
   if (!res.ok) {
     console.error(`fetchIntegrations: ${res.status} ${res.statusText}`);
     return [];
@@ -106,7 +106,7 @@ const GATEWAY_STATUS_FALLBACK: GatewayStatus = {
 
 async function fetchGatewayStatus(): Promise<GatewayStatus> {
   try {
-    const res = await fetch("/gateway/status");
+    const res = await fetch("/gateway/status", { credentials: "include" });
     if (!res.ok) return GATEWAY_STATUS_FALLBACK;
     return (await res.json()) as GatewayStatus;
   } catch {
@@ -120,7 +120,7 @@ interface EnvsResponse {
 }
 
 async function fetchEnvs(): Promise<EnvsResponse> {
-  const res = await fetch("/auth/envs");
+  const res = await fetch("/auth/envs", { credentials: "include" });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
@@ -128,6 +128,7 @@ async function fetchEnvs(): Promise<EnvsResponse> {
 async function saveApiKey(envVar: string, value: string): Promise<void> {
   const res = await fetch("/auth/envs", {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key: envVar, value }),
   });
@@ -140,6 +141,7 @@ async function saveApiKey(envVar: string, value: string): Promise<void> {
 async function removeApiKey(envVar: string): Promise<void> {
   const res = await fetch(`/auth/envs/${encodeURIComponent(envVar)}`, {
     method: "DELETE",
+    credentials: "include",
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: "" }));
@@ -150,13 +152,19 @@ async function removeApiKey(envVar: string): Promise<void> {
 async function verifyIntegration(
   id: string,
 ): Promise<{ ok: boolean; message: string }> {
-  const res = await fetch(`/integrations/${id}/verify`, { method: "POST" });
+  const res = await fetch(`/integrations/${id}/verify`, {
+    method: "POST",
+    credentials: "include",
+  });
   if (!res.ok) return { ok: false, message: `Erro ${res.status}` };
   return res.json() as Promise<{ ok: boolean; message: string }>;
 }
 
 async function disconnectOAuth(provider: string): Promise<void> {
-  await fetch(`/auth/${provider}`, { method: "DELETE" });
+  await fetch(`/auth/${provider}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
 }
 
 function startOAuth(provider: string): void {
@@ -577,7 +585,7 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
   { label: "Git", ids: ["github", "gitlab"] },
   {
     label: "IA",
-    ids: ["openai", "anthropic", "cohere", "tavily"],
+    ids: ["gemini", "openai", "anthropic", "cohere", "tavily"],
   },
   {
     label: "Google",

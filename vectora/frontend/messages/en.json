@@ -461,7 +461,7 @@
   "onboarding_workspace_bullet_1": "Add a folder in the Workspace selector in the chat composer.",
   "onboarding_workspace_bullet_2": "Vectora can read and write files only inside trusted folders.",
   "onboarding_workspace_bullet_3": "Each conversation remembers its workspace.",
-  "onboarding_workspace_bullet_ai_jail": "Terminal and file access can be sandboxed per workspace (AI Jail) by adding a [sandbox] section to vectora.toml — off by default until you configure it.",
+  "onboarding_workspace_bullet_ai_jail": "Terminal and file access can be sandboxed per workspace (AI Jail) via a [sandbox] section in vectora.toml — auto-enabled when a usable WSL2 distro is detected, otherwise off until you configure it.",
   "onboarding_memory_intro": "Vectora keeps context in three layers, each working differently.",
   "onboarding_memory_conversation_title": "Conversation memory",
   "onboarding_memory_conversation_body": "Every agent already remembers everything said in the current conversation — no setup needed.",

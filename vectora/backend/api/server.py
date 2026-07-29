@@ -279,6 +279,18 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     # servidor nunca validava o VECTORA_TOKEN.
     license_task = asyncio.create_task(_license_revalidation_loop())
 
+    # Popula o cache de detecção do WSL2 cedo — sem isso, parse_policy()
+    # (síncrono, chamado no hot path de file_edit/file_write/terminal) só
+    # vê o cache _UNSET e nunca auto-habilita o AI Jail na primeira leitura
+    # real de um workspace sem vectora.toml.
+    wsl2_warmup_task: asyncio.Task[None] | None = None
+    try:
+        from backend.sandbox.policy import warm_wsl2_cache
+
+        wsl2_warmup_task = asyncio.create_task(warm_wsl2_cache())
+    except Exception as exc:
+        logger.warning("api/server: warmup de detecção WSL2 falhou: %s", exc)
+
     # Sincronização de caches entre réplicas (pub/sub via Redis quando
     # REDIS_URL configurado; no modo lite é local e inofensivo).
     try:
@@ -400,6 +412,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         except Exception:
             pass
         license_task.cancel()
+        if wsl2_warmup_task is not None:
+            wsl2_warmup_task.cancel()
         try:
             from backend.embedding.cache_sync import stop_cache_sync
 

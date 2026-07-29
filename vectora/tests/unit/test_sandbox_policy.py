@@ -9,10 +9,12 @@ import pytest
 
 from backend.sandbox import policy as policy_module
 from backend.sandbox.policy import (
+    AUTO_ENABLED_POLICY,
     DISABLED_POLICY,
     LOCKED_DOWN_POLICY,
     detect_wsl2,
     parse_policy,
+    warm_wsl2_cache,
     wsl2_diagnostic,
 )
 
@@ -362,6 +364,49 @@ def _reset_wsl2_cache():
     policy_module._wsl2_distro_cache = policy_module._UNSET
     yield
     policy_module._wsl2_distro_cache = policy_module._UNSET
+
+
+class TestAutoEnableSemVectoraToml:
+    """Workspace sem `vectora.toml` nenhum: sandbox se auto-habilita quando
+    o cache de `detect_wsl2()` (populado por `warm_wsl2_cache()` no startup
+    do backend) já achou uma distro elegível — sem exigir opt-in manual."""
+
+    def test_cache_unset_mantem_desabilitado(self, tmp_path):
+        """Regressão: antes do warmup rodar (cache ainda _UNSET), nunca
+        auto-habilita — nunca um falso positivo por checar cedo demais."""
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == DISABLED_POLICY
+
+    def test_cache_com_distro_elegivel_auto_habilita(self, tmp_path):
+        policy_module._wsl2_distro_cache = "Ubuntu"
+
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == AUTO_ENABLED_POLICY
+        assert result.enabled is True
+
+    def test_cache_none_mantem_desabilitado(self, tmp_path):
+        """Regressão: detecção já rodou mas não achou distro elegível
+        (cache=None, distinto de _UNSET) — continua desabilitado."""
+        policy_module._wsl2_distro_cache = None
+
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == DISABLED_POLICY
+
+    @pytest.mark.asyncio
+    async def test_warm_wsl2_cache_popula_o_cache_sincrono(self, monkeypatch):
+        output = "  NAME      STATE           VERSION\n* Ubuntu    Running         2\n"
+        monkeypatch.setattr(
+            policy_module.asyncio,
+            "create_subprocess_exec",
+            _mock_wsl_exec(output),
+        )
+
+        await warm_wsl2_cache()
+
+        assert policy_module._wsl2_eligible_sync() is True
 
 
 def _fake_wsl_proc(stdout_bytes: bytes = b"", returncode: int = 0):

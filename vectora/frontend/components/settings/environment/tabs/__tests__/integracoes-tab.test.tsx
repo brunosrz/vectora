@@ -184,6 +184,16 @@ const BASE_INTEGRATIONS = [
     icon: "linear",
     connected: false,
   },
+  {
+    id: "gemini",
+    name: "Gemini",
+    env_var: "GOOGLE_API_KEY",
+    kind: "apikey",
+    description: "Google Gemini",
+    docs_url: "https://aistudio.google.com/apikey",
+    icon: "gemini",
+    connected: false,
+  },
 ];
 
 describe("IntegracoesTab", () => {
@@ -203,10 +213,44 @@ describe("IntegracoesTab", () => {
         "Slack",
         "OpenAI",
         "Linear",
+        "Gemini",
       ]) {
         expect(screen.getAllByText(name).length).toBeGreaterThan(0);
       }
     });
+  });
+
+  it("todas as chamadas de fetch enviam o cookie de sessão (credentials: include) — sem isso o backend responde 401 e o catálogo aparece vazio", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0);
+    });
+
+    const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    for (const [url, init] of calls) {
+      expect(
+        init?.credentials,
+        `fetch(${String(url)}) sem credentials: include`,
+      ).toBe("include");
+    }
+  });
+
+  it("erro: fetchIntegrations usa /integrations sem barra final — com barra cai no fallback HTML da SPA e o catálogo aparece vazio", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0);
+    });
+
+    const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const integrationsCall = calls.find(
+      ([url]) =>
+        String(url).startsWith("/integrations") &&
+        !String(url).includes("/verify"),
+    );
+    expect(integrationsCall?.[0]).toBe("/integrations");
   });
 
   it("GitHub conectado exibe badge 'Conectado'", async () => {
@@ -573,7 +617,7 @@ describe("IntegracoesTab", () => {
       .spyOn(console, "error")
       .mockImplementation(() => {});
     global.fetch = vi.fn().mockImplementation((url: string) => {
-      if (url === "/integrations/") {
+      if (url === "/integrations") {
         return Promise.resolve({ ok: false, status: 500 } as Response);
       }
       if (url === "/gateway/status") {

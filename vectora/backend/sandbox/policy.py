@@ -39,6 +39,15 @@ class SandboxPolicy:
 
 DISABLED_POLICY = SandboxPolicy(enabled=False)
 
+# Habilitada por padrão quando `detect_wsl2()` já achou uma distro elegível
+# (cache populado no startup do backend, ver `warm_wsl2_cache()`) e o
+# workspace não tem `vectora.toml` nenhum — o worker jailado ainda tem RW
+# completo dentro do próprio workspace (rw_paths é só pra paths extras fora
+# dele), então isso não quebra operação normal, só adiciona a defesa em
+# profundidade (Landlock/seccomp/rlimits) sem exigir opt-in manual por
+# workspace quando o ambiente já suporta.
+AUTO_ENABLED_POLICY = SandboxPolicy(enabled=True, backend="local")
+
 # Política mais restritiva possível — usada quando o parse falha (fail-closed:
 # preferimos negar execução a rodar sem proteção por um TOML corrompido).
 LOCKED_DOWN_POLICY = SandboxPolicy(
@@ -57,7 +66,7 @@ def parse_policy(vectora_toml_path: Path) -> SandboxPolicy:
     o erro e desabilitar a proteção silenciosamente.
     """
     if not vectora_toml_path.is_file():
-        return DISABLED_POLICY
+        return AUTO_ENABLED_POLICY if _wsl2_eligible_sync() else DISABLED_POLICY
     try:
         raw = tomllib.loads(vectora_toml_path.read_text(encoding="utf-8"))
     except Exception:
@@ -104,6 +113,24 @@ class _Unset:
 
 _UNSET = _Unset()
 _wsl2_distro_cache: str | None | _Unset = _UNSET
+
+
+def _wsl2_eligible_sync() -> bool:
+    """Leitura síncrona do cache de `detect_wsl2()` — populado no startup do
+    backend via `warm_wsl2_cache()`. Antes da primeira detecção rodar (cache
+    ainda `_UNSET`), retorna `False`: mesmo comportamento de hoje (sandbox
+    não se auto-habilita até a detecção real terminar), nunca um falso
+    positivo por checar cedo demais."""
+    return not isinstance(_wsl2_distro_cache, _Unset) and _wsl2_distro_cache is not None
+
+
+async def warm_wsl2_cache() -> None:
+    """Roda `detect_wsl2()` uma vez no startup do backend pra popular o cache
+    antes de qualquer tool call — sem isso, `parse_policy()` (síncrono, chamado
+    no hot path de file_edit/file_write/terminal) sempre veria o cache
+    `_UNSET` e nunca auto-habilitaria o sandbox na primeira leitura real."""
+    await detect_wsl2()
+
 
 # VMs internas do Docker Desktop — nomes reservados e conhecidos, sem rootfs
 # de uso geral (sem `/bin/sh` utilizável por um worker jailado). Nunca são

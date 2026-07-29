@@ -461,7 +461,7 @@
   "onboarding_workspace_bullet_1": "Adicione uma pasta no seletor de workspace no composer do chat.",
   "onboarding_workspace_bullet_2": "O Vectora só lê e escreve dentro de pastas confiáveis.",
   "onboarding_workspace_bullet_3": "Cada conversa lembra o seu workspace.",
-  "onboarding_workspace_bullet_ai_jail": "Acesso a terminal e arquivos pode ser isolado por workspace (AI Jail) adicionando uma seção [sandbox] ao vectora.toml — desligado por padrão até você configurar.",
+  "onboarding_workspace_bullet_ai_jail": "Acesso a terminal e arquivos pode ser isolado por workspace (AI Jail) via seção [sandbox] no vectora.toml — auto-habilita quando detecta uma distro WSL2 utilizável, senão fica desligado até você configurar.",
   "onboarding_memory_intro": "O Vectora guarda contexto em três camadas, cada uma funcionando de um jeito diferente.",
   "onboarding_memory_conversation_title": "Memória de conversa",
   "onboarding_memory_conversation_body": "Todo agente já lembra tudo que foi dito na conversa atual — sem nenhuma configuração.",
