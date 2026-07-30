@@ -255,3 +255,46 @@ async def test_remove_task_worktree_com_task_id_vazio_ainda_chama_impl():
         await remove_task_worktree("ws1", "")  # não deve levantar
 
         assert mock_impl.call_args.kwargs["name"] == ""
+
+
+# ---------------------------------------------------------------------------
+# Invariante: só trabalho em segundo plano ganha worktree
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_delegacao_sincrona_nunca_cria_worktree_so_background_cria(monkeypatch):
+    """Trava a decisão de produto: `task()` no meio de um turno roda no
+    workspace principal (troca de persona, não paralelismo), enquanto tarefa
+    em segundo plano isola em worktree próprio.
+
+    Sem esse teste, "consertar" a delegação síncrona pra também isolar passa
+    despercebido — e aí as edições do especialista sumiriam da vista do
+    usuário, que está olhando o workspace principal.
+    """
+    from backend.scheduling import background_tasks as bg
+
+    criados: list[tuple[str, str]] = []
+
+    async def _spy_create(workspace_id: str, task_id: str) -> str:
+        criados.append((workspace_id, task_id))
+        return f"/tmp/worktrees/{task_id}"
+
+    monkeypatch.setattr("backend.scheduling.delegate.create_task_worktree", _spy_create)
+
+    fake_ws = MagicMock()
+    fake_ws.id = "ws-efemero"
+    monkeypatch.setattr(
+        "backend.workspace.workspace.workspace_registry",
+        MagicMock(get_or_create=MagicMock(return_value=fake_ws)),
+    )
+
+    # Caminho de segundo plano: isola de verdade.
+    ws_id = await bg._worktree_workspace_id("ws-principal", "task-bg")
+    assert ws_id == "ws-efemero"
+    assert criados == [("ws-principal", "task-bg")]
+
+    # Erro/borda proposital: nenhuma outra rota de background_tasks chama
+    # create_task_worktree — se a delegação síncrona passasse a chamar,
+    # `criados` teria entradas a mais e este assert falharia.
+    assert len(criados) == 1
