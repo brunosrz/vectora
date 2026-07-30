@@ -44,6 +44,9 @@ export interface VectoraDesktopBridge {
   readonly platform?: NodeJS.Platform;
   readonly appVersion?: string;
   openExternal?: (url: string) => Promise<void>;
+  /** Seletor nativo de pasta. `null` = cancelado (distinto de pasta escolhida).
+   * Opcional como o resto da bridge: no modo web `window.vectora` não existe. */
+  pickDirectory?: () => Promise<string | null>;
   acknowledgeDeepLink?: (url: string) => void;
   onDeepLink?: (handler: (url: string) => void) => () => void;
   onUpdateStatus?: (

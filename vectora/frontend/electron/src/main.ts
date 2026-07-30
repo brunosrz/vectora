@@ -737,6 +737,18 @@ function registerIpc(): void {
   ipcMain.handle("vectora:open-external", (_event, url: string) =>
     shell.openExternal(url),
   );
+  // Seletor nativo de pasta (Pastas Seguras). Devolve `null` no cancelamento —
+  // o renderer distingue "cancelou" de "escolheu" pra não limpar o campo.
+  ipcMain.handle("vectora:pick-directory", async () => {
+    const opts = {
+      properties: ["openDirectory", "createDirectory"] as const,
+    };
+    const result = mainWindow
+      ? await dialog.showOpenDialog(mainWindow, { ...opts })
+      : await dialog.showOpenDialog({ ...opts });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return result.filePaths[0];
+  });
   ipcMain.on("vectora:deep-link-ack", (_event, url: string) => {
     console.log(`[deep-link] renderer ack: ${url}`);
   });

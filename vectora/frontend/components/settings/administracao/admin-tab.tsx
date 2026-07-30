@@ -7,7 +7,7 @@
  * - Usuários: lista, muda role, deleta
  * - Ferramentas: habilita/desabilita tools globalmente
  * - Sistema: versão, serviços, métricas
- * - Configuração: allow_public_signup, default_model, max_recursion
+ * - Configuração: allow_public_signup, token da licença
  */
 
 import {
@@ -17,6 +17,7 @@ import {
   Cpu,
   Database,
   FolderLock,
+  FolderOpen,
   HardDrive,
   Loader2,
   Pencil,
@@ -47,11 +48,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import {
-  getAllowedModels,
-  getModelDisplayName,
-  type ModelOption,
-} from "@/lib/config/deployment-config";
 import { m } from "@/lib/paraglide/messages";
 
 // ---------------------------------------------------------------------------
@@ -92,8 +88,6 @@ interface SystemInfo {
 }
 
 interface ServerConfig {
-  default_model: string;
-  max_recursion: number;
   allow_public_signup: boolean;
   db_dsn: string;
   vectora_token_masked: string;
@@ -685,8 +679,6 @@ function ConfigSection() {
     try {
       await api.config.patch({
         allow_public_signup: config.allow_public_signup,
-        default_model: config.default_model,
-        max_recursion: config.max_recursion,
         ...(tokenInput.trim() ? { vectora_token: tokenInput.trim() } : {}),
       });
       // Re-fetch para refletir o masked atualizado.
@@ -789,50 +781,6 @@ function ConfigSection() {
         />
       </div>
 
-      <div className="space-y-1.5">
-        <p className="text-sm font-medium">{m.admin_config_model_title()}</p>
-        <Select
-          value={config.default_model}
-          onValueChange={(v) =>
-            setConfig((prev) => prev && { ...prev, default_model: v })
-          }
-        >
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder={m.admin_config_model_placeholder()} />
-          </SelectTrigger>
-          <SelectContent>
-            {getAllowedModels().map((modelId) => (
-              <SelectItem key={modelId} value={modelId}>
-                {getModelDisplayName(modelId as ModelOption)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <p className="text-sm font-medium">
-          {m.admin_config_recursion_title()}
-        </p>
-        <Input
-          type="number"
-          value={config.max_recursion}
-          onChange={(e) =>
-            setConfig(
-              (prev) =>
-                prev && {
-                  ...prev,
-                  max_recursion: parseInt(e.target.value) || 50,
-                },
-            )
-          }
-          autoComplete="off"
-          className="h-8 text-xs w-24"
-          min={5}
-          max={200}
-        />
-      </div>
-
       <Button size="sm" onClick={handleSave} disabled={saving}>
         {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
         {saved ? m.admin_config_saved() : m.toolpolicy_save()}
@@ -856,6 +804,8 @@ interface SafeRootRow {
 
 function SafeRootsPanel() {
   const [roots, setRoots] = useState<SafeRootRow[]>([]);
+  // Só existe no desktop — no web a bridge inteira é undefined.
+  const pickDirectory = window.vectora?.pickDirectory;
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
@@ -936,6 +886,13 @@ function SafeRootsPanel() {
     await reload();
   };
 
+  const handleBrowse = async () => {
+    if (!pickDirectory) return;
+    const picked = await pickDirectory();
+    // `null` é cancelamento: preservar o que já estava digitado.
+    if (picked) setNewPath(picked);
+  };
+
   return (
     <div className="space-y-4">
       <div className="text-xs text-muted-foreground">
@@ -948,13 +905,30 @@ function SafeRootsPanel() {
           {m.admin_saferoots_add_title()}
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Input
-            value={newPath}
-            onChange={(e) => setNewPath(e.target.value)}
-            placeholder={m.admin_saferoots_path_placeholder()}
-            autoComplete="off"
-            className="font-mono text-xs"
-          />
+          <div className="flex flex-1 gap-1.5 min-w-0">
+            <Input
+              value={newPath}
+              onChange={(e) => setNewPath(e.target.value)}
+              placeholder={m.admin_saferoots_path_placeholder()}
+              autoComplete="off"
+              className="font-mono text-xs"
+            />
+            {/* Só no desktop: no modo web não há bridge, e o campo de texto
+             * continua sendo o único caminho. */}
+            {pickDirectory && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                aria-label={m.admin_saferoots_browse()}
+                title={m.admin_saferoots_browse()}
+                onClick={handleBrowse}
+              >
+                <FolderOpen className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
           <Input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
@@ -1183,6 +1157,7 @@ function BackendConfigCard({
   fields,
   testBackend,
   onSave,
+  disabled = false,
 }: {
   title: string;
   status?: StorageBackendStatus;
@@ -1194,6 +1169,9 @@ function BackendConfigCard({
   }[];
   testBackend: string;
   onSave: (values: Record<string, string>) => Promise<void>;
+  /** Sem licença Pro os campos ficam só de leitura: o backend recusa o
+   * PATCH com 402, então deixar digitar seria oferecer um caminho morto. */
+  disabled?: boolean;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<StorageTestResult | null>(null);
@@ -1256,6 +1234,7 @@ function BackendConfigCard({
             }
             autoComplete={f.type === "password" ? "new-password" : "off"}
             placeholder={f.placeholder}
+            disabled={disabled}
             className="h-7 text-xs font-mono"
           />
         ))}
@@ -1265,7 +1244,7 @@ function BackendConfigCard({
           size="sm"
           variant="outline"
           onClick={handleTest}
-          disabled={testing || !hasInput}
+          disabled={disabled || testing || !hasInput}
           className="h-7 text-xs"
         >
           {testing ? (
@@ -1277,7 +1256,7 @@ function BackendConfigCard({
         <Button
           size="sm"
           onClick={handleSave}
-          disabled={saving || !hasInput}
+          disabled={disabled || saving || !hasInput}
           className="h-7 text-xs"
         >
           {saving ? (
@@ -1437,6 +1416,7 @@ function StoragePanel() {
                 },
               ]}
               onSave={(v) => patchStorage(v)}
+              disabled={!isPro}
             />
             <BackendConfigCard
               title={m.admin_storage_redis_title()}
@@ -1450,6 +1430,7 @@ function StoragePanel() {
                 },
               ]}
               onSave={(v) => patchStorage(v)}
+              disabled={!isPro}
             />
             <BackendConfigCard
               title={m.admin_storage_qdrant_title()}
@@ -1469,6 +1450,7 @@ function StoragePanel() {
                 },
               ]}
               onSave={(v) => patchStorage(v)}
+              disabled={!isPro}
             />
           </div>
         </div>

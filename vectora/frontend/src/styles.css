@@ -243,3 +243,12 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
+
+/* Reserva a calha da barra de rolagem mesmo quando ela está invisível.
+   Sem isto, o conteúdo ocupa a largura toda e a barra desenha por cima
+   dele quando aparece — e a largura do conteúdo pula no momento em que
+   o container passa a ter overflow. Usado nos modais de Settings, onde
+   o conteúdo (paths, chaves) encosta na borda direita. */
+.scroll-gutter-stable {
+  scrollbar-gutter: stable;
+}

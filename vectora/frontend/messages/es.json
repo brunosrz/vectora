@@ -585,9 +585,6 @@
   "admin_config_token_show": "Mostrar",
   "admin_config_signup_title": "Registro público",
   "admin_config_signup_desc": "Permite que nuevos usuarios se registren sin invitación",
-  "admin_config_model_title": "Modelo predeterminado",
-  "admin_config_model_placeholder": "ej: gemini-2.5-flash",
-  "admin_config_recursion_title": "Límite de recursión",
   "admin_config_saved": "¡Guardado!",
   "admin_saferoots_desc": "Los usuarios comunes solo pueden crear workspaces dentro de estas carpetas. La entrada builtin (Documents/vectora) no se puede eliminar.",
   "admin_saferoots_add_title": "Agregar carpeta segura",
@@ -1259,5 +1256,6 @@
   "prefs_media_models_ollama_tts": "Ollama — voz",
   "prefs_media_models_openrouter_image": "OpenRouter — imagen",
   "prefs_media_models_openrouter_tts": "OpenRouter — voz",
-  "prefs_media_models_error": "No se pudo guardar el modelo."
+  "prefs_media_models_error": "No se pudo guardar el modelo.",
+  "admin_saferoots_browse": "Elegir carpeta"
 }

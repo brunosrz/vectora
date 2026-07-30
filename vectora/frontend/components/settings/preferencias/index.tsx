@@ -106,7 +106,7 @@ export function PreferenciasDialog() {
               Radix ScrollArea, cujo Viewport mede largura por `display:table`
               e estoura o modal com conteúdo sem quebra (paths/URLs/chaves),
               já revertido nesse motivo no wizard (ver StepWorkspaceSelect). */}
-          <div className="flex-1 overflow-y-auto pt-4 pr-2">
+          <div className="flex-1 overflow-y-auto pt-4 custom-scrollbar scroll-gutter-stable">
             <ErrorBoundary>
               <Suspense fallback={<TabFallback />}>
                 <TabsContent value="preferencias" className="mt-0">

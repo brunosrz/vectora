@@ -242,3 +242,109 @@ class TestFallbackOrderEndpoint:
         resp = await admin_client.patch("/admin/model/fallback-order", json={})
         # order tem default [] — aceita sem 422
         assert resp.status_code in (200, 401, 403)
+
+
+class TestPatchStorageRequiresPro:
+    """Storage Completo (Postgres/Redis/Qdrant) é recurso do Vectora Pro.
+
+    O frontend já desabilita a opção pra não-Pro, mas o gate visual é
+    decoração enquanto o handler não checa tier: uma chamada direta à API
+    ligava o modo completo sem licença.
+    """
+
+    @staticmethod
+    def _write_license(tmp_path, monkeypatch, tier: str):
+        import json
+        from datetime import UTC, datetime
+
+        from backend.services import license as lic
+
+        cache_path = tmp_path / "license_cache.json"
+        cache_path.write_text(
+            json.dumps(
+                {
+                    "tier": tier,
+                    "status": "active",
+                    "days_remaining": 30,
+                    "expires_at": "2027-01-01",
+                    "validated_at": datetime.now(UTC).isoformat(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(lic, "CACHE_PATH", cache_path)
+
+    @staticmethod
+    def _request(body: dict):
+        from unittest.mock import AsyncMock, MagicMock
+
+        request = MagicMock()
+        request.state.user = MagicMock(role="admin", id="u1")
+        request.json = AsyncMock(return_value=body)
+        return request
+
+    @pytest.mark.asyncio
+    async def test_free_nao_liga_modo_completo(self, tmp_path, monkeypatch):
+        """402 **e** o modo persistido não muda — o par de erro é o que prova
+        o gate: recusar a resposta sem recusar a escrita não gatearia nada."""
+        from backend.api.handlers.admin import update_storage_config
+        from backend.settings import settings as _s
+        from backend.workspace.runtime_settings import runtime_settings
+
+        self._write_license(tmp_path, monkeypatch, "free")
+        monkeypatch.setattr(_s, "storage_mode", "lite", raising=False)
+        monkeypatch.setattr(runtime_settings, "storage_mode", "lite", raising=False)
+
+        with pytest.raises(Exception) as exc:
+            await update_storage_config(self._request({"storage_mode": "complete"}))
+        assert exc.value.status_code == 402  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+        assert _s.storage_mode == "lite"
+        assert runtime_settings.storage_mode == "lite"
+
+    @pytest.mark.asyncio
+    async def test_free_nao_configura_conexao_do_modo_completo(
+        self, tmp_path, monkeypatch
+    ):
+        """Sem Pro, também não dá pra preencher DSN/URL dos serviços do modo
+        completo — senão o não-Pro deixa tudo pronto e só falta o flip."""
+        from backend.api.handlers.admin import update_storage_config
+
+        self._write_license(tmp_path, monkeypatch, "free")
+
+        with pytest.raises(Exception) as exc:
+            await update_storage_config(
+                self._request({"postgres_dsn": "postgresql://x/y"})
+            )
+        assert exc.value.status_code == 402  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+
+    @pytest.mark.asyncio
+    async def test_free_pode_voltar_pra_lite(self, tmp_path, monkeypatch):
+        """`lite` nunca é bloqueado — gatear a volta prenderia um usuário que
+        perdeu a licença no modo que ele não pode mais usar."""
+        from backend.api.handlers.admin import update_storage_config
+        from backend.settings import settings as _s
+        from backend.workspace.runtime_settings import runtime_settings
+
+        self._write_license(tmp_path, monkeypatch, "free")
+        monkeypatch.setattr(_s, "storage_mode", "complete", raising=False)
+        monkeypatch.setattr(runtime_settings, "storage_mode", "complete", raising=False)
+
+        result = await update_storage_config(self._request({"storage_mode": "lite"}))
+        assert result["storage_mode"] == "lite"
+        assert _s.storage_mode == "lite"
+
+    @pytest.mark.asyncio
+    async def test_pro_liga_modo_completo(self, tmp_path, monkeypatch):
+        from backend.api.handlers.admin import update_storage_config
+        from backend.settings import settings as _s
+        from backend.workspace.runtime_settings import runtime_settings
+
+        self._write_license(tmp_path, monkeypatch, "pro")
+        monkeypatch.setattr(_s, "storage_mode", "lite", raising=False)
+        monkeypatch.setattr(runtime_settings, "storage_mode", "lite", raising=False)
+
+        result = await update_storage_config(
+            self._request({"storage_mode": "complete"})
+        )
+        assert result["storage_mode"] == "complete"
+        assert _s.storage_mode == "complete"

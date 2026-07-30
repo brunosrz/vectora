@@ -114,7 +114,7 @@ export function EnvironmentDialog() {
               do dialog (p-6), em vez de colada ao conteúdo — sem Radix
               ScrollArea (Viewport mede largura por `display:table` e estoura
               o modal com conteúdo sem quebra: URLs, chaves mascaradas). */}
-          <div className="flex-1 overflow-y-auto pt-4 pr-2">
+          <div className="flex-1 overflow-y-auto pt-4 custom-scrollbar scroll-gutter-stable">
             <ErrorBoundary>
               <Suspense fallback={<TabFallback />}>
                 <TabsContent value="integracoes" className="mt-0">

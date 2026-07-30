@@ -63,7 +63,7 @@ export function AdminDialog() {
             do dialog (p-6), em vez de colada ao conteúdo — sem Radix
             ScrollArea (Viewport mede largura por `display:table` e estoura
             o modal com conteúdo sem quebra: paths, URLs, chaves mascaradas). */}
-        <div className="flex-1 overflow-y-auto pr-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar scroll-gutter-stable">
           <ErrorBoundary>
             <Suspense fallback={<AdminFallback />}>
               <AdminTab />

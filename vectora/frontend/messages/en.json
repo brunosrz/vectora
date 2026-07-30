@@ -585,9 +585,6 @@
   "admin_config_token_show": "Show",
   "admin_config_signup_title": "Public signup",
   "admin_config_signup_desc": "Allows new users to sign up without an invite",
-  "admin_config_model_title": "Default model",
-  "admin_config_model_placeholder": "e.g. gemini-2.5-flash",
-  "admin_config_recursion_title": "Recursion limit",
   "admin_config_saved": "Saved!",
   "admin_saferoots_desc": "Regular users can only create workspaces inside these folders. The builtin entry (Documents/vectora) cannot be removed.",
   "admin_saferoots_add_title": "Add safe folder",
@@ -1259,5 +1256,6 @@
   "prefs_media_models_ollama_tts": "Ollama — voice",
   "prefs_media_models_openrouter_image": "OpenRouter — image",
   "prefs_media_models_openrouter_tts": "OpenRouter — voice",
-  "prefs_media_models_error": "Could not save the model."
+  "prefs_media_models_error": "Could not save the model.",
+  "admin_saferoots_browse": "Choose folder"
 }
