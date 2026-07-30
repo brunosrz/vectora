@@ -4,14 +4,24 @@ O1 — API Key integrations:
     GET  /integrations                  — lista integrações com status (conectado/não)
     POST /integrations/{id}/verify      — testa se a API key configurada é válida
 
-O2 — GitHub OAuth + GitLab OAuth + Google OAuth + Slack OAuth:
-    GET  /auth/{provider}               — inicia o fluxo OAuth
+O2 — GitHub (via GitHub App) + GitLab/Google/Slack (via OAuth App clássico):
+    GET  /auth/{provider}               — inicia o fluxo de autorização
     GET  /auth/{provider}/callback      — callback, salva token
     GET  /auth/{provider}/status        — {connected: bool, ...}
     DELETE /auth/{provider}             — desconecta
 
+GitHub usa GitHub App (não OAuth App clássico, deprecado pelo GitHub pra
+integrações novas) — mesmos endpoints `login/oauth/authorize` e
+`login/oauth/access_token`, então o código de troca `code → token` é
+idêntico ao de um OAuth App. Só muda o cadastro: registre um GitHub App
+em https://github.com/settings/apps/new com "Request user authorization
+(OAuth) during installation" marcado, e desmarque a expiração de 8h do
+token do usuário em "Optional features" (senão o token expira e precisa
+de refresh, não implementado aqui) — GITHUB_OAUTH_CLIENT_ID/SECRET vêm
+das credenciais desse GitHub App.
+
 Configuração necessária (env vars):
-    GITHUB_OAUTH_CLIENT_ID / GITHUB_OAUTH_CLIENT_SECRET
+    GITHUB_OAUTH_CLIENT_ID / GITHUB_OAUTH_CLIENT_SECRET   (GitHub App)
     GITLAB_OAUTH_CLIENT_ID / GITLAB_OAUTH_CLIENT_SECRET / GITLAB_BASE_URL
     GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET
     SLACK_OAUTH_CLIENT_ID / SLACK_OAUTH_CLIENT_SECRET
@@ -108,10 +118,11 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "id": "github",
         "name": "GitHub",
         "env_var": "GITHUB_TOKEN",
-        # híbrido: aceita OAuth (delegado) OU um Personal Access Token colado
-        # manualmente. Ambos gravam GITHUB_TOKEN nos env_overrides do user —
-        # o `gh` CLI e as git tools leem essa env. Permite quem não quer
-        # registrar um OAuth App usar só um PAT.
+        # híbrido: aceita OAuth (delegado, via GitHub App — ver docstring do
+        # módulo) OU um Personal Access Token colado manualmente. Ambos
+        # gravam GITHUB_TOKEN nos env_overrides do user — o `gh` CLI e as
+        # git tools leem essa env. Permite quem não quer registrar um
+        # GitHub App usar só um PAT.
         "kind": "hybrid",
         "description": "Acesso a repositórios, PRs e issues (OAuth ou token)",
         "docs_url": "https://github.com/settings/tokens",
@@ -250,8 +261,25 @@ def _get_user(request: Request) -> Any:
     return user
 
 
+def _oauth_configured(provider_id: str) -> bool:
+    """True quando o operador desta instância registrou o app próprio no
+    provider (GitHub App pro GitHub, OAuth App clássico pros demais — ver
+    docstring do módulo) e setou CLIENT_ID + CLIENT_SECRET — sem isso, o
+    fluxo `/auth/{provider}` sempre falha com 503 (ver
+    `_github_cfg`/`_gitlab_cfg`/etc.). A UI usa isto pra só oferecer
+    "Conectar via OAuth" quando o botão de fato funciona, caindo pro token
+    manual (sempre disponível) caso contrário."""
+    prefix = provider_id.upper().replace("-", "_")
+    return bool(
+        os.environ.get(f"{prefix}_OAUTH_CLIENT_ID")
+        and os.environ.get(f"{prefix}_OAUTH_CLIENT_SECRET")
+    )
+
+
 def _github_cfg() -> tuple[str, str, str]:
-    """Lê configuração OAuth do GitHub nas env vars.
+    """Lê configuração do GitHub App nas env vars (client_id/secret do App
+    registrado em https://github.com/settings/apps, não de um OAuth App
+    clássico — ver docstring do módulo).
 
     Retorna (client_id, client_secret, redirect_uri).
     Levanta HTTPException 503 se não configurado.
@@ -267,7 +295,7 @@ def _github_cfg() -> tuple[str, str, str]:
         raise HTTPException(
             status_code=503,
             detail=(
-                "GitHub OAuth não configurado. "
+                "GitHub App não configurado. "
                 "Defina GITHUB_OAUTH_CLIENT_ID e GITHUB_OAUTH_CLIENT_SECRET."
             ),
         )
@@ -296,11 +324,17 @@ async def list_integrations(request: Request) -> dict:
         # Considera conectado se há override do usuário OU env global setada,
         # em qualquer um dos nomes aceitos (env_var principal ou alias).
         connected = any(overrides.get(v) or os.environ.get(v) for v in env_vars)
+        oauth_provider_id = integ.get("parent", integ["id"])
         items.append(
             {
                 **integ,
                 "connected": connected,
                 # Nunca expõe o valor — apenas informa se existe
+                "oauth_configured": (
+                    _oauth_configured(oauth_provider_id)
+                    if integ["kind"] in ("oauth", "hybrid")
+                    else False
+                ),
             }
         )
     return {"integrations": items}

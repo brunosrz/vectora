@@ -31,6 +31,7 @@ import {
   cleanup,
   waitFor,
   fireEvent,
+  within,
 } from "@testing-library/react";
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
@@ -122,6 +123,7 @@ const BASE_INTEGRATIONS = [
     docs_url: "https://github.com/settings/tokens",
     icon: "github",
     connected: true,
+    oauth_configured: false,
   },
   {
     id: "gitlab",
@@ -132,6 +134,7 @@ const BASE_INTEGRATIONS = [
     docs_url: "https://gitlab.com",
     icon: "gitlab",
     connected: false,
+    oauth_configured: false,
   },
   {
     id: "google",
@@ -142,6 +145,7 @@ const BASE_INTEGRATIONS = [
     docs_url: "https://console.cloud.google.com",
     icon: "google",
     connected: false,
+    oauth_configured: false,
   },
   {
     id: "google-drive",
@@ -153,6 +157,7 @@ const BASE_INTEGRATIONS = [
     icon: "google-drive",
     parent: "google",
     connected: false,
+    oauth_configured: false,
   },
   {
     id: "openai",
@@ -173,6 +178,7 @@ const BASE_INTEGRATIONS = [
     docs_url: "https://api.slack.com",
     icon: "slack",
     connected: true,
+    oauth_configured: false,
   },
   {
     id: "linear",
@@ -271,7 +277,12 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("providers OAuth não conectados exibem botão de OAuth", async () => {
+  it("providers OAuth não conectados com OAuth App configurado exibem botão de OAuth", async () => {
+    mockFetch(
+      BASE_INTEGRATIONS.map((i) =>
+        i.kind === "oauth" ? { ...i, oauth_configured: true } : i,
+      ),
+    );
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
@@ -301,6 +312,35 @@ describe("IntegracoesTab", () => {
     await waitFor(() => {
       const disconnectBtns = screen.getAllByText(/desconectar/i);
       expect(disconnectBtns.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("GitLab sem OAuth App configurado não mostra 'Conectar via OAuth' e já expõe o campo de token", async () => {
+    // Par de erro/borda do fix real: sem GITLAB_OAUTH_CLIENT_ID/SECRET no
+    // backend, o botão sempre falharia com 503 — a UI não deve nem
+    // oferecê-lo, e o token manual (única opção que funciona) já vem
+    // aberto, sem exigir um clique a mais no chevron.
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getByText("GitLab")).toBeTruthy();
+    });
+    expect(screen.queryByText("Conectar via OAuth")).toBeNull();
+    expect(
+      screen.getAllByPlaceholderText("Cole sua chave aqui").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("provider OAuth com oauth_configured=true mostra 'Conectar via OAuth'", async () => {
+    mockFetch(
+      BASE_INTEGRATIONS.map((i) =>
+        i.id === "gitlab" ? { ...i, oauth_configured: true } : i,
+      ),
+    );
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getByText("Conectar via OAuth")).toBeInTheDocument();
     });
   });
 
@@ -502,15 +542,16 @@ describe("IntegracoesTab", () => {
       expect(screen.getByPlaceholderText(/OPENAI_API_KEY/i)).toBeTruthy();
     });
 
-    const valueInput = screen.getByPlaceholderText(
+    const dialog = within(screen.getByRole("dialog"));
+    const valueInput = dialog.getByPlaceholderText(
       /enter the value|valor/i,
     ) as HTMLInputElement;
     expect(valueInput.type).toBe("password");
 
-    fireEvent.click(screen.getByLabelText(/mostrar valor/i));
+    fireEvent.click(dialog.getByLabelText(/mostrar valor/i));
     expect(valueInput.type).toBe("text");
 
-    fireEvent.click(screen.getByLabelText(/ocultar valor/i));
+    fireEvent.click(dialog.getByLabelText(/ocultar valor/i));
     expect(valueInput.type).toBe("password");
   });
 
@@ -528,16 +569,18 @@ describe("IntegracoesTab", () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/OPENAI_API_KEY/i)).toBeTruthy();
     });
-    fireEvent.click(screen.getByLabelText(/mostrar valor/i));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByLabelText(/mostrar valor/i),
+    );
     fireEvent.click(
       screen.getByRole("button", { name: /^cancel$|^cancelar$/i }),
     );
 
     fireEvent.click(screen.getByText(/adicionar variável customizada/i));
     await waitFor(() => {
-      const valueInput = screen.getByPlaceholderText(
-        /enter the value|valor/i,
-      ) as HTMLInputElement;
+      const valueInput = within(
+        screen.getByRole("dialog"),
+      ).getByPlaceholderText(/enter the value|valor/i) as HTMLInputElement;
       expect(valueInput.type).toBe("password");
     });
   });

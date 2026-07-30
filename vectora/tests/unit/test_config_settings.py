@@ -44,6 +44,19 @@ def test_settings_get_cohere_api_key_returns_none_or_str():
     assert key is None or isinstance(key, str)
 
 
+def test_settings_vectora_app_secret_vem_do_defaults_env(monkeypatch):
+    """Fixo por produto (backend/defaults.env) — não é auto-gerado por
+    instalação, precisa bater com o mesmo valor configurado no Worker via
+    `wrangler secret put VECTORA_APP_SECRET`."""
+    monkeypatch.delenv("VECTORA_APP_SECRET", raising=False)
+    s = Settings()
+    assert len(s.vectora_app_secret) == 64
+
+    monkeypatch.setenv("VECTORA_APP_SECRET", "self-hosted-override")
+    s_override = Settings()
+    assert s_override.vectora_app_secret == "self-hosted-override"
+
+
 # ---------------------------------------------------------------------------
 # TLS do servidor web (SSL_CERTFILE / SSL_KEYFILE)
 # ---------------------------------------------------------------------------

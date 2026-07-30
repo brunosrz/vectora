@@ -171,31 +171,57 @@ para exibir ao usuário no dashboard do app.
 > **Quem cria:** Bruno (você), uma única vez, como desenvolvedor.
 > **Quem usa:** Todos os usuários do Vectora ao conectar suas contas no app.
 >
-> O callback sempre vai para `gateway.vectora.chat/auth/{provider}/callback`.
-> O gateway usa o parâmetro `state` para saber qual backend encaminhar.
-> Não há `{token}` na URL — um único app OAuth atende todos os usuários.
+> O callback registrado no provider é `gateway.vectora.chat/auth/{provider}/
+callback` (aponte pra esse domínio fixo no cadastro do app). Na prática,
+> cada instalação resolve seu próprio `redirect_uri` como
+> `https://{token}.vectora.chat/auth/{provider}/callback` — `{token}` é o
+> identificador que o `GatewayClient` recebeu ao se registrar
+> (`POST /register`, ver Seção 2) e persistiu em `~/.vectora/gateway_token`
+> (`backend/api/handlers/oauth.py::_gateway_callback_url`). O DNS wildcard
+> `*.vectora.chat` cobre qualquer `{token}`, então o cadastro no provider
+> continua sendo feito uma única vez — não é preciso recadastrar por
+> instalação.
 
 ---
 
-### 3.1 GitHub OAuth App — checklist de registro
+### 3.1 GitHub App — checklist de registro
 
 **Ação manual, uma única vez, feita por você (Bruno) como desenvolvedor.**
-Nenhum `client_id`/`client_secret` vai hardcoded no código — o app lê
+GitHub App, não OAuth App clássico — o GitHub recomenda GitHub Apps pra
+integrações novas (permissões refinadas, usuário escolhe quais repos
+liberar, tokens de curta duração por padrão). O fluxo de autorização de
+usuário de um GitHub App usa os MESMOS endpoints
+`github.com/login/oauth/authorize` e `login/oauth/access_token` de um
+OAuth App clássico, então o código de troca `code → token` em
+`backend/api/handlers/oauth.py::_github_cfg`/`github_oauth_callback` não
+muda — só o cadastro é diferente. Nenhum `client_id`/`client_secret` vai
+hardcoded no código — o app lê
 `GITHUB_OAUTH_CLIENT_ID`/`GITHUB_OAUTH_CLIENT_SECRET`/`GITHUB_OAUTH_REDIRECT_URI`
-do ambiente, com fallback pro domínio do gateway
-(`backend/api/handlers/oauth.py::_github_cfg`).
+do ambiente, com fallback pro domínio do gateway.
 
-1. **github.com/settings/developers → OAuth Apps → New OAuth App.**
+1. **github.com/settings/apps/new** (Developer settings → GitHub Apps →
+   New GitHub App — não "OAuth Apps").
 2. Preencher:
    ```
-   Application name: Vectora
+   GitHub App name: Vectora
    Homepage URL: https://vectora.company
-   Authorization callback URL: https://gateway.vectora.chat/auth/github/callback
+   Callback URL: https://gateway.vectora.chat/auth/github/callback
    ```
-   > Não usar GitHub App (mais complexo). OAuth App simples é suficiente.
-3. **Gerar o client secret** (botão "Generate a new client secret" na página
-   do app criado) — visível só uma vez, copiar imediatamente.
-4. **Guardar as credenciais** em `~/.vectora/.env` da instalação (ou nas
+   Marcar **"Request user authorization (OAuth) during installation"** —
+   sem isso o app não gera user access token, só installation tokens
+   (fluxo server-to-server, não o que o Vectora usa aqui).
+3. **Permissions** (Repository permissions): Contents (Read & write),
+   Pull requests (Read & write), Issues (Read & write), Metadata
+   (Read-only, obrigatório).
+4. **Optional features**: desmarcar/desativar a expiração de 8h do user
+   access token ("Expire user authorization tokens") — o backend hoje
+   guarda o token direto como `GITHUB_TOKEN` (env override) e não
+   implementa o fluxo de refresh_token; com a expiração ligada, a conexão
+   pararia de funcionar depois de 8h sem aviso.
+5. **Gerar o client secret** (seção "Client secrets" na página do app
+   criado, botão "Generate a new client secret") — visível só uma vez,
+   copiar imediatamente.
+6. **Guardar as credenciais** em `~/.vectora/.env` da instalação (ou nas
    envs do backend, se rodando em modo servidor):
    ```env
    GITHUB_OAUTH_CLIENT_ID=<Client ID>
@@ -204,18 +230,28 @@ do ambiente, com fallback pro domínio do gateway
    O `GITHUB_OAUTH_REDIRECT_URI` não precisa ser setado — sem ele, o
    backend resolve o callback sozinho: usa `https://{token}.vectora.chat/
 auth/github/callback` (token da instalação, se o gateway já registrou
-   um) ou `http://localhost:8080/auth/github/callback` como último
-   fallback (dev sem gateway conectado). Só defina a env var pra forçar
-   um callback custom (self-hosted atrás de domínio próprio, por exemplo).
-5. Repetir o mesmo padrão para GitLab/Google/Slack se o usuário quiser
-   habilitá-los já — a estrutura de `_gitlab_cfg`/`_google_cfg`/`_slack_cfg`
-   é análoga (ver §3.2-3.4 abaixo).
-6. **Teste de validação**: no app Vectora, ir em Configurações →
+   um — GitHub aceita subdomínios do host cadastrado como redirect_uri
+   válido, ver `docs.github.com/apps/oauth-apps/building-oauth-apps/
+authorizing-oauth-apps`) ou `http://localhost:8080/auth/github/
+callback` como último fallback (dev sem gateway conectado). Só defina
+   a env var pra forçar um callback custom (self-hosted atrás de domínio
+   próprio, por exemplo).
+7. **Instalar o app** na sua conta/org (botão "Install App" na página do
+   app) — sem instalação, o usuário autoriza mas o token não tem acesso a
+   nenhum repositório.
+8. Repetir o cadastro (OAuth App clássico, não GitHub App) para
+   GitLab/Google/Slack se o usuário quiser habilitá-los já — a estrutura
+   de `_gitlab_cfg`/`_google_cfg`/`_slack_cfg` é análoga (ver §3.2-3.4
+   abaixo).
+9. **Teste de validação**: no app Vectora, ir em Configurações →
    Integrações → GitHub → Conectar. Deve redirecionar para o GitHub,
    pedir autorização, e voltar ao app já conectado. Confirmar via
    `GET /auth/github/status` → `{"connected": true, ...}`.
 
-**Scopes solicitados no fluxo pelo backend:**
+**Scopes solicitados no fluxo pelo backend** (equivalentes às
+`oauth_scopes` do registry, mas em GitHub Apps o acesso real é definido
+pelas Permissions do passo 3, não pelo parâmetro `scope` da URL de
+autorização):
 
 - `repo` — leitura/escrita em repositórios
 - `user:email` — email do usuário
@@ -494,7 +530,7 @@ curl https://abc123.vectora.chat/
 [ ] 8. Backend: adicionar VECTORA_APP_SECRET ao defaults.env
 [ ] 9. Backend: implementar conexão ao gateway no startup
 [ ] 10. Testar: GET /gateway/status no backend → ver subdomínio
-[ ] 11. GitHub OAuth App: criar em github.com/settings/developers
+[ ] 11. GitHub App: criar em github.com/settings/apps/new (não OAuth App)
 [ ] 12. Google OAuth: criar no console.cloud.google.com
 [ ] 13. Slack App: criar em api.slack.com/apps
 [ ] 14. GitLab App: criar em gitlab.com/-/profile/applications

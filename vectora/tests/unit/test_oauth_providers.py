@@ -307,6 +307,55 @@ class TestIntegrationsRegistry:
 # ---------------------------------------------------------------------------
 
 
+class TestOauthConfiguredFlag:
+    """`oauth_configured` só é true quando o operador registrou o app
+    próprio no provider (GitHub App pro GitHub, OAuth App clássico pros
+    demais) com CLIENT_ID+SECRET — sem isso, "Conectar via OAuth" sempre
+    falharia com 503 e a UI usa esta flag pra nunca oferecer o botão."""
+
+    def test_sem_client_id_secret_oauth_configured_false(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        for var in ("GITLAB_OAUTH_CLIENT_ID", "GITLAB_OAUTH_CLIENT_SECRET"):
+            monkeypatch.delenv(var, raising=False)
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        gitlab = next(i for i in resp.json()["integrations"] if i["id"] == "gitlab")
+        assert gitlab["oauth_configured"] is False
+
+    def test_com_client_id_e_secret_oauth_configured_true(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_OAUTH_CLIENT_ID", "cid")
+        monkeypatch.setenv("GITLAB_OAUTH_CLIENT_SECRET", "csecret")
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        gitlab = next(i for i in resp.json()["integrations"] if i["id"] == "gitlab")
+        assert gitlab["oauth_configured"] is True
+
+    def test_provider_filho_herda_configuracao_do_pai(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        """google-drive/gmail não têm CLIENT_ID próprio — usam o do
+        provider pai ("google", via `parent`)."""
+        monkeypatch.setenv("GOOGLE_OAUTH_CLIENT_ID", "cid")
+        monkeypatch.setenv("GOOGLE_OAUTH_CLIENT_SECRET", "csecret")
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        drive = next(
+            i for i in resp.json()["integrations"] if i["id"] == "google-drive"
+        )
+        assert drive["oauth_configured"] is True
+
+    def test_provider_apikey_nunca_tem_oauth_configured(
+        self, client: TestClient
+    ) -> None:
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        gemini = next(i for i in resp.json()["integrations"] if i["id"] == "gemini")
+        assert gemini["oauth_configured"] is False
+
+
 class TestListIntegrationsAlias:
     def test_github_connected_via_alias_sem_env_var_principal(
         self, client: TestClient, monkeypatch

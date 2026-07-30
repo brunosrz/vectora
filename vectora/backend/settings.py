@@ -582,11 +582,14 @@ class Settings(BaseSettings):
     webhook configuradas. Desative com GATEWAY_ENABLED=false para desligar."""
 
     vectora_app_secret: str = ""
-    """Secret fixo por produto (embutido no binário Nuitka em builds de
-    release — igual pra toda instalação, não é por-usuário) usado por
-    `GatewayClient` pra autenticar `POST /register` no Worker. Vazio em dev
-    local desabilita o handshake de registro (degrada pro fallback sem
-    gateway, nunca impede o backend de iniciar)."""
+    """Secret fixo por produto — igual em toda instalação, vem de
+    `backend/defaults.env` (mesma hierarquia de env vars usada por todo o
+    resto de `settings.py`), comparado pelo Worker via `env.VECTORA_APP_SECRET`
+    (`services/src/gateway/index.ts::requireAppSecret`) pra autenticar
+    `POST /register`. Não é por-usuário nem por-máquina (mesmo padrão de
+    client_secret de app desktop nativo — ex. GitHub Desktop — embutido em
+    toda cópia distribuída). Vazio desabilita o handshake de registro
+    (degrada pro fallback sem gateway, nunca impede o backend de iniciar)."""
 
     # ============================================================================
     # PYDANTIC CONFIGURATION

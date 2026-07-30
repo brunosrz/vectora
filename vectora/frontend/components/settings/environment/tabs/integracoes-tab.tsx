@@ -6,8 +6,9 @@
  * variável "Customizada", ao lado dos providers do catálogo.
  *
  * O1 — API key: usuário insere chave manualmente.
- * O2–O5 — OAuth: GitHub, GitLab, Google, Slack (token manual também aceito
- * pra quem não quer registrar um OAuth App próprio).
+ * O2–O5 — OAuth: GitHub (via GitHub App), GitLab/Google/Slack (via OAuth
+ * App clássico) — token manual também aceito pra quem não quer registrar
+ * o app próprio no provider (ver backend/api/handlers/oauth.py).
  * Custom: chave+valor livre via /auth/envs, para credenciais sem entrada
  * dedicada no catálogo (MCP servers, providers não listados, etc).
  * Webhook URL: exibida para providers que têm webhook configurado.
@@ -61,6 +62,10 @@ interface Integration {
   connected: boolean;
   env_var_aliases?: string[];
   extra_vars?: string[];
+  /** true só quando o operador desta instância registrou um OAuth App
+   * próprio (CLIENT_ID + CLIENT_SECRET) pro provider — sem isso, o botão
+   * "Conectar via OAuth" sempre falharia (backend responde 503). */
+  oauth_configured: boolean;
 }
 
 type VerifyState = "idle" | "loading" | "ok" | "error";
@@ -184,7 +189,16 @@ function IntegrationCard({
   onUpdated: () => void;
   gatewayWebhookBase: string | null;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  // Sem OAuth App configurado nesta instância, o token manual é o único
+  // jeito de conectar — abre o campo direto em vez de escondê-lo atrás do
+  // chevron (que faz sentido quando "Conectar via OAuth" também é uma
+  // opção visível e funcional).
+  const [expanded, setExpanded] = useState(
+    () =>
+      (integ.kind === "oauth" || integ.kind === "hybrid") &&
+      !integ.oauth_configured &&
+      !integ.connected,
+  );
   const [keyValue, setKeyValue] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -197,7 +211,7 @@ function IntegrationCard({
   const isOAuthProvider = OAUTH_PROVIDERS.has(integ.id);
   const isChildOAuth = !!integ.parent; // google-drive, gmail dependem de google
   // Todo provider (apikey/hybrid/oauth) aceita token manual, incluindo
-  // OAuth-only, como alternativa a registrar um OAuth App próprio.
+  // OAuth-only, como alternativa a registrar o app próprio no provider.
   const allowToken =
     integ.kind === "apikey" ||
     integ.kind === "hybrid" ||
@@ -460,8 +474,11 @@ function IntegrationCard({
         </div>
       )}
 
-      {/* OAuth section */}
-      {isOAuthProvider && (
+      {/* OAuth section — botão "Conectar" só quando o operador registrou o
+          app próprio no provider (sem isso, sempre falharia com 503); o botão de
+          desconectar continua disponível mesmo que a config tenha sido
+          removida depois de já haver uma conexão ativa. */}
+      {isOAuthProvider && (integ.oauth_configured || integ.connected) && (
         <div className="px-3 pb-3 border-t pt-3 space-y-2">
           {integ.connected ? (
             <div className="flex items-center justify-between">
