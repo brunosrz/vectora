@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 from backend.sandbox.docker import run_docker_sandboxed
 from backend.sandbox.linux import SandboxResult, run_local_sandboxed
 from backend.sandbox.modal import run_modal_sandboxed
-from backend.sandbox.policy import parse_policy
+from backend.sandbox.policy import SandboxPolicy, parse_policy
 from backend.sandbox.ssh import run_ssh_sandboxed
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,18 @@ _BACKENDS = {
     "ssh": run_ssh_sandboxed,
     "modal": run_modal_sandboxed,
 }
+
+#: Backends que criam um ambiente novo (container/sandbox cloud) por
+#: execução. Cada um custa recurso real de máquina ou de conta cobrada, e
+#: nada no fluxo do agente impede N chamadas paralelas — `local` e `ssh`
+#: não entram porque reusam um worker/conexão existente.
+_BATCH_BACKENDS = frozenset({"docker", "modal"})
+
+MAX_CONCURRENT_BATCH_RUNS_PER_WORKSPACE = 3
+
+#: Contagem de execuções em voo por workspace. A quota é **por workspace**,
+#: não global: um workspace saturado nunca impede outro de executar.
+_active_batch_runs: dict[str, int] = {}
 
 
 async def _run_unsandboxed(
@@ -81,4 +94,46 @@ async def run_sandboxed(
             stderr=f"Error: backend de sandbox '{policy.backend}' não suportado.",
             exit_code=126,
         )
+    if policy.backend in _BATCH_BACKENDS:
+        return await _run_batch_limited(
+            backend_fn, command, workspace_dir, policy, timeout_s
+        )
     return await backend_fn(command, workspace_dir, policy, timeout_s=timeout_s)
+
+
+async def _run_batch_limited(
+    backend_fn: Callable[..., Awaitable[SandboxResult]],
+    command: list[str],
+    workspace_dir: str,
+    policy: SandboxPolicy,
+    timeout_s: float,
+) -> SandboxResult:
+    """Rejeita (não enfileira) execuções acima da quota do workspace: o
+    caller é uma tool do agente, e uma espera indefinida numa fila seria
+    indistinguível de travamento pra quem está no chat."""
+    active = _active_batch_runs.get(workspace_dir, 0)
+    if active >= MAX_CONCURRENT_BATCH_RUNS_PER_WORKSPACE:
+        logger.warning(
+            "sandbox: workspace %s já tem %d execuções '%s' em voo — rejeitando",
+            workspace_dir,
+            active,
+            policy.backend,
+        )
+        return SandboxResult(
+            stdout="",
+            stderr=(
+                f"Error: limite de {MAX_CONCURRENT_BATCH_RUNS_PER_WORKSPACE} "
+                f"execuções simultâneas no backend '{policy.backend}' atingido "
+                "para este workspace — aguarde uma terminar e tente de novo."
+            ),
+            exit_code=126,
+        )
+    _active_batch_runs[workspace_dir] = active + 1
+    try:
+        return await backend_fn(command, workspace_dir, policy, timeout_s=timeout_s)
+    finally:
+        remaining = _active_batch_runs.get(workspace_dir, 1) - 1
+        if remaining > 0:
+            _active_batch_runs[workspace_dir] = remaining
+        else:
+            _active_batch_runs.pop(workspace_dir, None)

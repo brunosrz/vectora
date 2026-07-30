@@ -1245,5 +1245,8 @@
   "ide_session_untitled": "Untitled",
   "ide_session_switcher_label": "Switch session",
   "ide_session_new": "New session",
-  "workbench_browser_open_server": "Open"
+  "workbench_browser_open_server": "Open",
+  "workbench_memory_journey_title": "What I've learned about you",
+  "workbench_memory_journey_empty": "I haven't learned anything about you yet — keep chatting.",
+  "workbench_memory_journey_skill_label": "Learned skill: {name}"
 }

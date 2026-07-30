@@ -178,3 +178,100 @@ class TestMemorySharedStoreWithAgent:
         out = asyncio.run(get_memory.ainvoke({"key": "from_api"}, config=config))
         assert '"status": "found"' in out
         assert "salvo pelo painel" in out
+
+
+class TestJourney:
+    """GET /memory/journey — o que o Remember aprendeu sobre o usuário."""
+
+    def test_usuario_sem_nada_aprendido_retorna_listas_vazias(
+        self, client, monkeypatch
+    ):
+        monkeypatch.setattr("backend.workspace.skills.list_skills", lambda _u: [])
+
+        resp = client.get("/memory/journey")
+
+        # Edge: nada aprendido ainda é estado normal, não erro — o painel
+        # precisa poder renderizar o estado vazio.
+        assert resp.status_code == 200
+        assert resp.json() == {"facts": [], "skills": []}
+
+    def test_lista_fatos_user_model_e_skills_do_learning_loop(
+        self, client, monkeypatch
+    ):
+        from backend.vtypes.skill import Skill
+
+        client.post(
+            "/memory",
+            json={
+                "key": "learned-fact-1",
+                "content": "prefere respostas curtas",
+                "metadata": {"tag": "user_model", "source": "learn_from_session"},
+            },
+        )
+        # Erro/borda: memória comum (sem a tag) NÃO pode vazar pro painel —
+        # senão "o que aprendi sobre você" viraria um dump de tudo.
+        client.post(
+            "/memory",
+            json={"key": "nota-avulsa", "content": "rodar testes antes do commit"},
+        )
+        monkeypatch.setattr(
+            "backend.workspace.skills.list_skills",
+            lambda _u: [
+                Skill(
+                    id="revisar-pr",
+                    name="Revisar PR",
+                    description="Como revisar",
+                    source="learning-loop",
+                    path="/tmp/revisar-pr",
+                    installed_at="2026-07-30T10:00:00+00:00",
+                    installed_by="local",
+                ),
+                # Skill instalada manualmente pelo usuário não é algo que o
+                # agente "aprendeu" — fica de fora.
+                Skill(
+                    id="manual",
+                    name="Manual",
+                    description="Instalada à mão",
+                    source="https://github.com/x/y",
+                    path="/tmp/manual",
+                    installed_at="2026-07-29T10:00:00+00:00",
+                    installed_by="local",
+                ),
+            ],
+        )
+
+        data = client.get("/memory/journey").json()
+
+        assert [f["key"] for f in data["facts"]] == ["learned-fact-1"]
+        assert data["facts"][0]["source"] == "learn_from_session"
+        assert [s["id"] for s in data["skills"]] == ["revisar-pr"]
+
+    def test_falha_ao_listar_skills_nao_derruba_o_painel(self, client, monkeypatch):
+        def _explode(_u):
+            raise OSError("índice de skills corrompido")
+
+        monkeypatch.setattr("backend.workspace.skills.list_skills", _explode)
+        client.post(
+            "/memory",
+            json={
+                "key": "learned-fact-2",
+                "content": "usa Windows",
+                "metadata": {"tag": "user_model"},
+            },
+        )
+
+        resp = client.get("/memory/journey")
+
+        # Degrada em vez de 500: os fatos ainda chegam, só as skills somem.
+        assert resp.status_code == 200
+        assert [f["key"] for f in resp.json()["facts"]] == ["learned-fact-2"]
+        assert resp.json()["skills"] == []
+
+    def test_journey_nao_e_capturado_pela_rota_de_chave(self, client, monkeypatch):
+        """Regressão de ordem de rota: se `/{key}` for declarada antes,
+        "journey" vira uma busca por chave e devolve 404."""
+        monkeypatch.setattr("backend.workspace.skills.list_skills", lambda _u: [])
+
+        assert client.get("/memory/journey").status_code == 200
+        # Erro/borda: uma chave que realmente não existe segue dando 404.
+        assert client.get("/memory/chave-inexistente").status_code == 404

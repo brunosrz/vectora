@@ -311,3 +311,114 @@ async def test_backend_none_via_toml_nulo_falha_fechado(tmp_path, monkeypatch):
 
     assert result.exit_code == 126
     create_mock.assert_not_awaited()
+
+
+def _docker_workspace(tmp_path):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = "docker"\n', encoding="utf-8"
+    )
+    return str(tmp_path)
+
+
+@pytest.fixture(autouse=True)
+def _quota_limpa():
+    # A contagem de execuções em voo é estado de módulo — um teste que
+    # deixe resíduo envenenaria os seguintes.
+    runner._active_batch_runs.clear()
+    yield
+    runner._active_batch_runs.clear()
+
+
+@pytest.mark.asyncio
+async def test_quota_de_execucoes_batch_rejeita_acima_do_limite(tmp_path, monkeypatch):
+    ws = _docker_workspace(tmp_path)
+    solta = asyncio.Event()
+    limite = runner.MAX_CONCURRENT_BATCH_RUNS_PER_WORKSPACE
+    todos_dentro = asyncio.Event()
+
+    async def _backend_lento(_cmd, _dir, _policy, *, timeout_s):
+        if runner._active_batch_runs.get(ws, 0) >= limite:
+            todos_dentro.set()
+        await solta.wait()
+        return runner.SandboxResult(stdout="ok", stderr="", exit_code=0)
+
+    monkeypatch.setitem(runner._BACKENDS, "docker", _backend_lento)
+
+    em_voo = [
+        asyncio.create_task(runner.run_sandboxed(["true"], ws)) for _ in range(limite)
+    ]
+    await asyncio.wait_for(todos_dentro.wait(), timeout=5.0)
+
+    # Erro/borda: a execução além da quota é REJEITADA, não enfileirada —
+    # esperar numa fila seria indistinguível de travamento pra quem está
+    # no chat.
+    excedente = await runner.run_sandboxed(["true"], ws)
+    assert excedente.exit_code == 126
+    assert "simultâneas" in excedente.stderr
+
+    solta.set()
+    await asyncio.gather(*em_voo)
+
+    # Happy: liberado o slot, volta a executar normalmente.
+    depois = await runner.run_sandboxed(["true"], ws)
+    assert depois.exit_code == 0
+    assert runner._active_batch_runs.get(ws) is None
+
+
+@pytest.mark.asyncio
+async def test_quota_e_por_workspace_e_nao_atinge_backends_nao_batch(
+    tmp_path, monkeypatch
+):
+    ws_a = _docker_workspace(tmp_path / "a")
+    ws_b = _docker_workspace(tmp_path / "b")
+    solta = asyncio.Event()
+    limite = runner.MAX_CONCURRENT_BATCH_RUNS_PER_WORKSPACE
+    a_saturado = asyncio.Event()
+    b_entrou = asyncio.Event()
+    contagem_vista_por_b: dict[str, int] = {}
+
+    async def _backend_lento(_cmd, workspace_dir, _policy, *, timeout_s):
+        if workspace_dir == ws_b:
+            contagem_vista_por_b.update(runner._active_batch_runs)
+            b_entrou.set()
+        elif runner._active_batch_runs.get(ws_a, 0) >= limite:
+            a_saturado.set()
+        await solta.wait()
+        return runner.SandboxResult(stdout="ok", stderr="", exit_code=0)
+
+    monkeypatch.setitem(runner._BACKENDS, "docker", _backend_lento)
+
+    em_voo = [
+        asyncio.create_task(runner.run_sandboxed(["true"], ws_a)) for _ in range(limite)
+    ]
+    await asyncio.wait_for(a_saturado.wait(), timeout=5.0)
+
+    # Workspace saturado nunca impede outro: a quota é por workspace, não
+    # global — b entra mesmo com a no limite.
+    outro = asyncio.create_task(runner.run_sandboxed(["true"], ws_b))
+    await asyncio.wait_for(b_entrou.wait(), timeout=5.0)
+    assert contagem_vista_por_b[ws_b] == 1
+    assert contagem_vista_por_b[ws_a] == limite
+
+    solta.set()
+    resultados = await asyncio.gather(*em_voo, outro)
+    assert all(r.exit_code == 0 for r in resultados)
+
+    # `local` reusa um worker existente em vez de criar ambiente novo —
+    # não é backend batch e não entra na contagem.
+    local_ws = tmp_path / "local"
+    local_ws.mkdir()
+    (local_ws / "vectora.toml").write_text(
+        '[sandbox]\nenabled = true\nbackend = "local"\n', encoding="utf-8"
+    )
+    chamou: dict[str, dict[str, int] | None] = {"contagem_durante": None}
+
+    async def _backend_local(_cmd, _dir, _policy, *, timeout_s):
+        chamou["contagem_durante"] = dict(runner._active_batch_runs)
+        return runner.SandboxResult(stdout="", stderr="", exit_code=0)
+
+    monkeypatch.setitem(runner._BACKENDS, "local", _backend_local)
+    await runner.run_sandboxed(["true"], str(local_ws))
+
+    assert chamou["contagem_durante"] == {}

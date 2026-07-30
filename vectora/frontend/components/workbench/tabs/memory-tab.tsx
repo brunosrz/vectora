@@ -19,6 +19,7 @@ import {
   Loader2,
   Plus,
   Search,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
@@ -206,6 +207,100 @@ function useWorkspaceRagSummary(workspaceId: string | undefined) {
   }, [workspaceId]);
 
   return collections;
+}
+
+interface JourneyFact {
+  key: string;
+  content: string;
+  source: string;
+  updated_at: string;
+}
+
+interface JourneySkill {
+  id: string;
+  name: string;
+  description: string;
+  installed_at: string;
+}
+
+/** O que o Remember já aprendeu sobre o usuário (fatos com tag `user_model` +
+ *  skills geradas pelo learning loop). Só leitura — editar memória tem seu
+ *  próprio fluxo pelas tools/painel de configurações. */
+function useJourney() {
+  const [facts, setFacts] = useState<JourneyFact[]>([]);
+  const [skills, setSkills] = useState<JourneySkill[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await fetch("/memory/journey");
+        if (!res.ok || !alive) return;
+        const data = (await res.json()) as {
+          facts?: JourneyFact[];
+          skills?: JourneySkill[];
+        };
+        if (!alive) return;
+        setFacts(Array.isArray(data.facts) ? data.facts : []);
+        setSkills(Array.isArray(data.skills) ? data.skills : []);
+      } catch {
+        if (alive) {
+          setFacts([]);
+          setSkills([]);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return { facts, skills };
+}
+
+/** "O que aprendi sobre você" — só leitura: editar/apagar memória já tem o
+ *  fluxo próprio no painel de configurações, duplicar aqui daria dois lugares
+ *  divergentes pra mesma ação. */
+function JourneyPanel() {
+  const { facts, skills } = useJourney();
+
+  return (
+    <section className="space-y-1.5">
+      <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <Sparkles className="h-3 w-3" />
+        {m.workbench_memory_journey_title()}
+      </h3>
+      {facts.length === 0 && skills.length === 0 ? (
+        <p className="px-2.5 py-2 text-xs text-muted-foreground">
+          {m.workbench_memory_journey_empty()}
+        </p>
+      ) : (
+        <>
+          {facts.map((fact) => (
+            <div
+              key={fact.key}
+              className="rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+            >
+              <p className="text-xs text-foreground">{fact.content}</p>
+            </div>
+          ))}
+          {skills.map((skill) => (
+            <div
+              key={skill.id}
+              className="rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+            >
+              <p className="truncate text-xs font-medium text-foreground">
+                {m.workbench_memory_journey_skill_label({ name: skill.name })}
+              </p>
+              <p className="truncate text-[10px] text-muted-foreground">
+                {skill.description}
+              </p>
+            </div>
+          ))}
+        </>
+      )}
+    </section>
+  );
 }
 
 interface RagSearchResult {
@@ -459,6 +554,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
         <RagSettingsSlidePanel {...ragSettings} />
         <div className="flex-1 space-y-4 overflow-auto px-3 py-3">
           <BucketsPanel />
+          <JourneyPanel />
           {searchSection}
           {!searchSection && (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
@@ -494,6 +590,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
       <RagSettingsSlidePanel {...ragSettings} />
       <div className="flex-1 space-y-4 overflow-auto px-3 pb-3 pt-3">
         <BucketsPanel />
+        <JourneyPanel />
         {searchSection}
         {hasActivity && (
           <section className="space-y-1.5">

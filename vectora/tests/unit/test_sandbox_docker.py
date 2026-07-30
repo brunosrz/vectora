@@ -160,3 +160,42 @@ def test_build_docker_command_workspace_with_spaces_and_unicode():
 
     v_idx = argv.index("-v")
     assert argv[v_idx + 1] == "/home/usuário/meu projeto:/home/usuário/meu projeto"
+
+
+def test_build_docker_command_sempre_aplica_flags_de_seguranca(monkeypatch):
+    """Cap-drop/no-new-privileges não dependem de cgroup — valem mesmo num
+    host onde os limites de recurso não podem ser aplicados."""
+    monkeypatch.setattr(
+        "backend.sandbox.docker._cgroup_limits_available", lambda: False
+    )
+
+    argv = build_docker_command(SandboxPolicy(enabled=True), "/ws", ["true"])
+
+    assert argv[argv.index("--cap-drop") + 1] == "ALL"
+    assert argv[argv.index("--security-opt") + 1] == "no-new-privileges"
+    assert "--tmpfs" in argv
+    # Erro/borda: sem cgroup, os limites NÃO entram — entrariam e o
+    # `docker run` falharia na largada (LXC não-privilegiado).
+    assert "--memory" not in argv
+    assert "--cpus" not in argv
+    assert "--pids-limit" not in argv
+
+
+def test_build_docker_command_limites_de_recurso_por_perfil(monkeypatch):
+    monkeypatch.setattr("backend.sandbox.docker._cgroup_limits_available", lambda: True)
+
+    normal = build_docker_command(SandboxPolicy(enabled=True), "/ws", ["true"])
+    assert normal[normal.index("--memory") + 1] == "1g"
+    assert normal[normal.index("--cpus") + 1] == "2"
+    assert normal[normal.index("--pids-limit") + 1] == "512"
+    assert "--read-only" not in normal
+
+    # Lockdown é pra código não-confiável: metade do orçamento e raiz
+    # read-only (só o /tmp em tmpfs aceita escrita).
+    locked = build_docker_command(
+        SandboxPolicy(enabled=True, lockdown=True), "/ws", ["true"]
+    )
+    assert locked[locked.index("--memory") + 1] == "512m"
+    assert locked[locked.index("--cpus") + 1] == "1"
+    assert locked[locked.index("--pids-limit") + 1] == "256"
+    assert "--read-only" in locked

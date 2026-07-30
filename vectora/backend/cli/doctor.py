@@ -76,8 +76,22 @@ def find_nats_server_pids() -> list[int]:
 
 
 async def _report_sandbox_status(console: Console) -> None:
-    """Só roda no Windows — em Linux/macOS o `bwrap`/`sandbox-exec` nativo
-    já é o caminho, sem necessidade de checagem indireta."""
+    """Diagnóstico do sandbox por plataforma.
+
+    Linux: `bwrap` é nativo, nada a checar aqui. macOS: o backend `local`
+    **não funciona** (bwrap é Linux-only) — avisa proativamente em vez de
+    deixar o usuário descobrir na primeira execução. Windows: depende de
+    WSL2, checado abaixo.
+    """
+    if sys.platform == "darwin":
+        console.print("\n[bold]Sandbox (AI Jail):[/bold]")
+        console.print(
+            "[yellow]✖ backend 'local' não é suportado no macOS — bwrap é "
+            "Linux-only e não há equivalente implementado aqui. Use "
+            "`backend = \"docker\"` (ou 'ssh'/'modal') no [sandbox] do "
+            "vectora.toml.[/yellow]"
+        )
+        return
     if sys.platform != "win32":
         return
 

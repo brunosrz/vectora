@@ -418,3 +418,79 @@ describe("MemoryTab", () => {
     });
   });
 });
+
+describe("MemoryTab — painel do Remember", () => {
+  function stubFetch(journey: unknown, ok = true) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        const u = String(url);
+        if (u.includes("/memory/journey")) {
+          return ok
+            ? new Response(JSON.stringify(journey))
+            : new Response("erro", { status: 500 });
+        }
+        if (u.includes("/rag/workspace-summary")) {
+          return new Response(JSON.stringify({ collections: [] }));
+        }
+        if (u.includes("/rag/buckets")) {
+          return new Response(JSON.stringify([]));
+        }
+        throw new Error(`unmocked fetch: ${u}`);
+      }),
+    );
+  }
+
+  it("lista fatos e skills aprendidas vindas do endpoint", async () => {
+    stubFetch({
+      facts: [
+        {
+          key: "f1",
+          content: "prefere respostas curtas",
+          source: "",
+          updated_at: "",
+        },
+      ],
+      skills: [
+        {
+          id: "revisar-pr",
+          name: "Revisar PR",
+          description: "Como revisar",
+          installed_at: "",
+        },
+      ],
+    });
+
+    render(<MemoryTab threadId="t1" />);
+
+    await waitFor(() =>
+      expect(screen.getByText("prefere respostas curtas")).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText(
+        'workbench_memory_journey_skill_label({"name":"Revisar PR"})',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("mostra estado vazio quando nada foi aprendido, e também quando o endpoint falha (edge)", async () => {
+    stubFetch({ facts: [], skills: [] });
+    render(<MemoryTab threadId="t1" />);
+    await waitFor(() =>
+      expect(
+        screen.getByText("workbench_memory_journey_empty"),
+      ).toBeInTheDocument(),
+    );
+
+    // Erro/borda: endpoint fora do ar não pode derrubar a aba inteira nem
+    // deixar o painel num limbo sem texto — degrada pro mesmo estado vazio.
+    cleanup();
+    stubFetch(null, false);
+    render(<MemoryTab threadId="t1" />);
+    await waitFor(() =>
+      expect(
+        screen.getByText("workbench_memory_journey_empty"),
+      ).toBeInTheDocument(),
+    );
+  });
+});

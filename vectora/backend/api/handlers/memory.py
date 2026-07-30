@@ -2,6 +2,7 @@
 
 Endpoints:
     GET    /memory                — lista memórias do usuário autenticado (paginado)
+    GET    /memory/journey        — o que o agente aprendeu sobre o usuário
     GET    /memory/{key}          — lê uma memória específica
     PUT    /memory/{key}          — edita conteúdo de uma memória
     DELETE /memory/{key}          — deleta uma memória específica
@@ -76,6 +77,25 @@ class DeleteMemoryResponse(BaseModel):
     status: str
     key: str | None = None
     deleted: int | None = None
+
+
+class JourneyFact(BaseModel):
+    key: str
+    content: str
+    source: str = ""
+    updated_at: str = ""
+
+
+class JourneySkill(BaseModel):
+    id: str
+    name: str
+    description: str
+    installed_at: str = ""
+
+
+class JourneyResponse(BaseModel):
+    facts: list[JourneyFact]
+    skills: list[JourneySkill]
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +197,59 @@ async def list_memories(
     except Exception as exc:
         logger.exception("list_memories failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/journey", response_model=JourneyResponse)
+async def get_journey(request: Request) -> JourneyResponse:
+    """O que o Remember aprendeu sobre este usuário: fatos gravados com a
+    tag ``user_model`` + skills geradas pelo learning loop.
+
+    Precisa ficar declarado **antes** de ``/{key}`` — a rota dinâmica
+    casaria com "journey" e devolveria 404 de memória inexistente.
+
+    Falha de leitura degrada pra lista vazia em vez de 500: um painel de
+    leitura vazio é aceitável, derrubar o Memory tab inteiro não.
+    """
+    facts: list[JourneyFact] = []
+    skills: list[JourneySkill] = []
+
+    try:
+        ns = _namespace(request)
+        store = await _store()
+        for item in await store.asearch(ns, limit=_LIST_ALL_LIMIT):
+            metadata = item.value.get("metadata") or {}
+            if metadata.get("tag") != "user_model":
+                continue
+            facts.append(
+                JourneyFact(
+                    key=item.key,
+                    content=item.value.get("content", ""),
+                    source=str(metadata.get("source", "")),
+                    updated_at=item.value.get("updated_at", ""),
+                )
+            )
+        facts.sort(key=lambda f: f.updated_at, reverse=True)
+    except Exception:
+        logger.exception("get_journey: falha ao ler fatos do store")
+
+    try:
+        from backend.workspace.skills import list_skills
+
+        skills = [
+            JourneySkill(
+                id=s.id,
+                name=s.name,
+                description=s.description,
+                installed_at=s.installed_at,
+            )
+            for s in list_skills(_user_id(request))
+            if s.source == "learning-loop"
+        ]
+        skills.sort(key=lambda s: s.installed_at, reverse=True)
+    except Exception:
+        logger.exception("get_journey: falha ao listar skills aprendidas")
+
+    return JourneyResponse(facts=facts, skills=skills)
 
 
 @router.get("/{key}", response_model=MemoryItem)

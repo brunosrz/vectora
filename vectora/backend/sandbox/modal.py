@@ -17,6 +17,14 @@ from backend.sandbox.policy import SandboxPolicy
 
 logger = logging.getLogger(__name__)
 
+#: Teto de recurso por perfil (mesma divisão normal/lockdown de
+#: `rlimits.py` e do backend docker). Aqui a execução é remota e cobrada —
+#: sem teto, um comando em loop roda no limite da conta e gera custo real.
+_RESOURCE_PROFILES: dict[str, dict[str, int]] = {
+    "normal": {"cpu": 2, "memory": 2048},
+    "lockdown": {"cpu": 1, "memory": 1024},
+}
+
 
 async def run_modal_sandboxed(
     command: list[str],
@@ -30,13 +38,14 @@ async def run_modal_sandboxed(
     outros backends — nunca trava o caller nem cai silenciosamente pro
     processo local (fail-closed: o usuário pediu 'modal' explicitamente).
 
-    `workspace_dir`/`policy` (exceto o comando em si) não são usados ainda:
-    diferente de `local`/`docker`/`ssh`, o Modal Sandbox roda num
-    filesystem cloud isolado, não um bind-mount do workspace local — subir
-    o conteúdo do workspace pra lá (via `modal.Volume`) fica pra quando
-    este backend tiver uso real, não faz sentido implementar às cegas.
+    `workspace_dir` não é usado: diferente de `local`/`docker`/`ssh`, o
+    Modal Sandbox roda num filesystem cloud isolado, não um bind-mount do
+    workspace local — subir o conteúdo do workspace pra lá (via
+    `modal.Volume`) fica pra quando este backend tiver uso real, não faz
+    sentido implementar às cegas. De `policy` só o perfil de recurso
+    importa aqui (ver `_RESOURCE_PROFILES`).
     """
-    del workspace_dir, policy
+    del workspace_dir
     try:
         import modal  # ty: ignore[unresolved-import]
     except ImportError:
@@ -52,7 +61,11 @@ async def run_modal_sandboxed(
 
     def _run_sync() -> tuple[str, str, int]:
         app = modal.App.lookup("vectora-sandbox", create_if_missing=True)
-        sb = modal.Sandbox.create(app=app)
+        # Teto de recurso explícito: sem isso um comando em loop roda no
+        # limite default da conta e o custo é cobrado de verdade — aqui a
+        # execução é remota e paga, diferente do backend local.
+        limits = _RESOURCE_PROFILES["lockdown" if policy.lockdown else "normal"]
+        sb = modal.Sandbox.create(app=app, cpu=limits["cpu"], memory=limits["memory"])
         try:
             process = sb.exec(*command, timeout=int(timeout_s))
             exit_code = process.wait()

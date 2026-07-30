@@ -1245,5 +1245,8 @@
   "ide_session_untitled": "Sin título",
   "ide_session_switcher_label": "Cambiar sesión",
   "ide_session_new": "Nueva sesión",
-  "workbench_browser_open_server": "Abrir"
+  "workbench_browser_open_server": "Abrir",
+  "workbench_memory_journey_title": "Lo que aprendí sobre ti",
+  "workbench_memory_journey_empty": "Todavía no aprendí nada sobre ti — sigue conversando.",
+  "workbench_memory_journey_skill_label": "Skill aprendida: {name}"
 }

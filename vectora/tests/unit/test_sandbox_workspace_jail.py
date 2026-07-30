@@ -3,6 +3,7 @@ workspace (não um bwrap novo a cada tool call)."""
 
 from __future__ import annotations
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, MagicMock
 
@@ -270,3 +271,61 @@ class TestWsl2Spawn:
                 "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
             )
         spawn_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_request_normal_responde_sem_ser_afetado_por_timeout():
+    """Caminho feliz: worker responde dentro do orçamento — nada é morto."""
+    proc = _fake_proc()
+    proc.stdout.readline = AsyncMock(return_value=b'{"ok": true}\n')
+    worker = wj.JailedWorker(workspace_id="w1", proc=proc)
+
+    result = await worker.request("ping", timeout_s=5.0)
+
+    assert result == {"ok": True}
+    proc.kill.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_worker_travado_e_morto_no_timeout_e_respawna_depois(
+    tmp_path, monkeypatch
+):
+    """Erro/borda: worker que trava sem morrer deixaria o workspace inteiro
+    inacessível (é singleton). O timeout precisa matar o processo — depois
+    do timeout o protocolo de linhas está dessincronizado, então reaproveitar
+    o mesmo worker faria a resposta atrasada virar resposta da requisição
+    seguinte."""
+
+    async def _nunca_responde():
+        await asyncio.sleep(3600)
+
+    travado = _fake_proc()
+    travado.stdout.readline = _nunca_responde
+
+    def _matar():
+        travado.returncode = -9
+
+    travado.kill = MagicMock(side_effect=_matar)
+
+    worker = wj.JailedWorker(workspace_id="w1", proc=travado)
+
+    with pytest.raises(RuntimeError, match="não respondeu"):
+        await worker.request("read_file", timeout_s=0.05)
+
+    travado.kill.assert_called_once()
+    assert worker.is_alive() is False
+
+    # O worker morto não é reaproveitado: `get_or_spawn` sobe um novo, sem
+    # mecanismo de restart próprio.
+    manager = wj.WorkspaceJailManager()
+    manager._workers["w1"] = worker
+    novo = _fake_proc()
+    monkeypatch.setattr(
+        wj.asyncio, "create_subprocess_exec", AsyncMock(return_value=novo)
+    )
+
+    resultado = await manager.get_or_spawn(
+        "w1", str(tmp_path), SandboxPolicy(enabled=True)
+    )
+
+    assert resultado is not worker

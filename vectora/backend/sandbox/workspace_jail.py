@@ -30,6 +30,13 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_IDLE_TIMEOUT_S = 600.0
 
+#: Teto de espera por resposta de uma requisição ao worker. Um worker pode
+#: travar sem morrer (loop infinito dentro do jail, syscall bloqueada); sem
+#: teto, `readline()` espera pra sempre e o workspace inteiro fica
+#: inacessível — não há outro caminho de recuperação porque o worker é
+#: singleton por workspace.
+DEFAULT_REQUEST_TIMEOUT_S = 120.0
+
 
 def _is_windows() -> bool:
     """Indireção sobre `sys.platform` — testável isoladamente sem
@@ -78,7 +85,13 @@ class JailedWorker:
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     _next_id: int = field(default=0, init=False)
 
-    async def request(self, op: str, **kwargs: Any) -> dict[str, Any]:
+    async def request(
+        self, op: str, timeout_s: float = DEFAULT_REQUEST_TIMEOUT_S, **kwargs: Any
+    ) -> dict[str, Any]:
+        """Estourar `timeout_s` mata o worker com SIGKILL antes de propagar:
+        depois de um timeout o protocolo de linhas está dessincronizado (a
+        resposta atrasada viraria a resposta da *próxima* requisição), então
+        o worker é descartado e `get_or_spawn` sobe um novo."""
         async with self._lock:
             self.last_used = time.monotonic()
             self._next_id += 1
@@ -88,10 +101,28 @@ class JailedWorker:
                 raise RuntimeError("worker jailado sem stdin/stdout conectados")
             self.proc.stdin.write((json.dumps(payload) + "\n").encode("utf-8"))
             await self.proc.stdin.drain()
-            line = await self.proc.stdout.readline()
+            try:
+                line = await asyncio.wait_for(
+                    self.proc.stdout.readline(), timeout=timeout_s
+                )
+            except TimeoutError:
+                await self._kill_now()
+                raise RuntimeError(
+                    f"worker jailado não respondeu em {timeout_s}s — processo "
+                    "finalizado, próxima chamada sobe um worker novo"
+                ) from None
             if not line:
                 raise RuntimeError("worker jailado encerrou inesperadamente")
             return json.loads(line)
+
+    async def _kill_now(self) -> None:
+        """SIGKILL direto (não `terminate`): o worker está travado, então um
+        sinal que ele precisaria tratar não seria atendido."""
+        if self.proc.returncode is None:
+            with contextlib.suppress(ProcessLookupError, OSError):
+                self.proc.kill()
+            with contextlib.suppress(Exception):
+                await self.proc.wait()
 
     def is_alive(self) -> bool:
         return self.proc.returncode is None

@@ -6,6 +6,7 @@ import http.server
 import os
 import socket
 import subprocess
+import tempfile
 import threading
 from pathlib import Path
 
@@ -158,15 +159,25 @@ def test_electron_dev_spawnado_em_modo_attached_conecta_ao_backend_real():
     server_thread.start()
 
     env = {**os.environ, "VECTORA_EXTERNAL_BACKEND": "1", "VECTORA_PORT": str(port)}
-    proc = subprocess.Popen([exe, *args], env=env)  # noqa: S603  # nosec B603
-    try:
-        connected = hit_event.wait(timeout=30)
-        assert connected, "Electron não bateu em /health em 30s"
-    finally:
-        proc.terminate()
+    # userData próprio: sem isto o `requestSingleInstanceLock()` de main.ts
+    # perde pro Vectora instalado se ele estiver aberto na máquina, e a
+    # instância do teste sai com código 0 sem nunca chegar ao health check —
+    # falha que parece regressão de código mas é só contaminação de ambiente.
+    with tempfile.TemporaryDirectory(prefix="vectora-electron-test-") as user_data:
+        proc = subprocess.Popen(  # noqa: S603  # nosec B603
+            [exe, *args, f"--user-data-dir={user_data}"], env=env
+        )
         try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-        server.shutdown()
-        server_thread.join(timeout=5)
+            connected = hit_event.wait(timeout=30)
+            assert connected, (
+                f"Electron não bateu em /health em 30s "
+                f"(exit code do processo: {proc.poll()})"
+            )
+        finally:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            server.shutdown()
+            server_thread.join(timeout=5)

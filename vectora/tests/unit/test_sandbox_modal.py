@@ -180,9 +180,10 @@ async def test_app_lookup_cria_app_se_nao_existir(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_workspace_dir_e_policy_sao_ignorados_pelo_backend_modal(monkeypatch):
+async def test_workspace_dir_nao_afeta_o_exec_do_backend_modal(monkeypatch):
     # Invariante documentada no docstring do módulo: modal roda em
-    # filesystem cloud isolado, workspace_dir/policy não afetam o exec.
+    # filesystem cloud isolado, `workspace_dir` não é montado nem afeta o
+    # exec. De `policy` só o perfil de recurso é lido (teste próprio).
     fake_modal, _fake_sandbox, _fake_process = _fake_modal_module()
     monkeypatch.setitem(sys.modules, "modal", fake_modal)
 
@@ -285,3 +286,29 @@ async def test_timeout_returns_clear_error_without_raising(monkeypatch):
 
     assert result.exit_code == 124
     assert result.timed_out is True
+
+
+@pytest.mark.asyncio
+async def test_sandbox_recebe_teto_de_cpu_e_memoria_por_perfil(monkeypatch):
+    """Sem teto explícito, um comando em loop roda no limite default da
+    conta — e aqui a execução é remota e cobrada de verdade."""
+    fake_modal, _sandbox, _process = _fake_modal_module()
+    monkeypatch.setitem(sys.modules, "modal", fake_modal)
+
+    from backend.sandbox.modal import run_modal_sandboxed
+
+    await run_modal_sandboxed(["true"], "/ws", SandboxPolicy(enabled=True))
+    normal = fake_modal.Sandbox.create.call_args.kwargs
+    assert normal["cpu"] == 2
+    assert normal["memory"] == 2048
+
+    # Erro/borda: lockdown é pra código não-confiável — orçamento menor,
+    # nunca o mesmo do perfil normal.
+    await run_modal_sandboxed(
+        ["true"], "/ws", SandboxPolicy(enabled=True, lockdown=True)
+    )
+    locked = fake_modal.Sandbox.create.call_args.kwargs
+    assert locked["cpu"] == 1
+    assert locked["memory"] == 1024
+    assert locked["cpu"] < normal["cpu"]
+    assert locked["memory"] < normal["memory"]
