@@ -4,7 +4,7 @@
  * recursos irmãos do mesmo Worker, não três serviços diferentes.
  *
  * `mcp` e `skills` são catálogos reais em D1 (`mcp_catalog`/`skills_catalog`,
- * `migrations/0001_schema.sql` + `0002_registry_discovery.sql`). Curadoria
+ * `migrations/0001_schema.sql`). Curadoria
  * manual (`catalog_source='curated'`) entra via PR editando o seed — mas o
  * catálogo também é populado automaticamente pelo cron `scheduled()`
  * (`discovery.ts`, `catalog_source='official'|'github'`), que nunca

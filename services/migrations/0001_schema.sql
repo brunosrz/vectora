@@ -209,6 +209,13 @@ CREATE TABLE IF NOT EXISTS rag_packages (
 -- (fonte de verdade passa a ser este catálogo; a lista Python vira só
 -- fallback offline). `extensions` fica de fora (roadmap §2, SDK ainda não
 -- existe) — não crie tabela pra ela até o SDK de extensões existir.
+--
+-- `catalog_source` distingue linhas curadas manualmente (seed abaixo,
+-- sempre 'curated') das descobertas automaticamente pelo discovery cron
+-- (`services/src/registry/discovery.ts`) — 'official' para o registry
+-- oficial de MCP, 'github' para skills achadas via GitHub code search. O
+-- upsert do discovery nunca sobrescreve uma linha 'curated', mesmo que o
+-- id colida.
 CREATE TABLE IF NOT EXISTS mcp_catalog (
   id               TEXT PRIMARY KEY,
   name             TEXT NOT NULL,
@@ -217,6 +224,8 @@ CREATE TABLE IF NOT EXISTS mcp_catalog (
   env_vars         TEXT NOT NULL DEFAULT '[]', -- JSON array serializado
   homepage         TEXT,
   category         TEXT NOT NULL,
+  icon_url         TEXT,
+  catalog_source   TEXT NOT NULL DEFAULT 'curated',
   vectora_verified INTEGER NOT NULL DEFAULT 0,
   downloads_count  INTEGER NOT NULL DEFAULT 0,
   updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
@@ -228,6 +237,7 @@ CREATE TABLE IF NOT EXISTS skills_catalog (
   description      TEXT NOT NULL,
   source           TEXT NOT NULL, -- git URL, mesmo formato aceito por POST /skills
   tags             TEXT NOT NULL DEFAULT '[]', -- JSON array serializado
+  catalog_source   TEXT NOT NULL DEFAULT 'curated',
   vectora_verified INTEGER NOT NULL DEFAULT 0,
   downloads_count  INTEGER NOT NULL DEFAULT 0,
   updated_at       TEXT NOT NULL DEFAULT (datetime('now'))

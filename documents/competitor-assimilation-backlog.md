@@ -28,6 +28,37 @@
 
 ## Hermes Agent (Nous Research) — self-hosted, self-improving
 
+### H-0. Os 6 pilares da home (hermes-agent.nousresearch.com) — o que é cópia de verdade
+
+A home do Hermes resume o produto em 6 blocos de marketing. Os nomes de
+sprint do Vectora (#211-#216) usaram os mesmos rótulos, o que sugeria cópia
+dos 6 — **não é o caso**. Auditoria real via agentes de exploração em
+2026-07-29 (código, não nome de task): só **Remember** e **Connect** são de
+fato inspirados no Hermes. Search, Schedule, Delegate e o sandbox (rotulado
+"Experiment") já existiam no Vectora com implementação própria, anterior a
+qualquer leitura do Hermes — Schedule/Delegate com nomes internos diferentes
+("Background Tasks"/tools `schedule_task`+`task()`), o sandbox é baseado no
+`ai-jail` do Akita (não no Hermes, que nem documenta a própria sandbox em
+detalhe equivalente).
+
+| # | Pilar (Hermes) | É cópia do Hermes? | Estado real no Vectora (auditado 2026-07-29) |
+|---|---|---|---|
+| 1 | **Connect** — Telegram/Discord/Slack/WhatsApp/Signal/Email/CLI | **Sim** | `backend/services/gateway/messaging.py` é só a abstração (`IncomingMessage`/`resolve_thread_id`) — **zero adapter real** de qualquer plataforma. Em correção agora. |
+| 2 | **Remember** — memória persistente, skills auto-geradas | **Sim** | Real, mas mais enxuto que o design (H-1 abaixo): `backend/tools/learning.py` + `backend/services/learning.py` + `backend/services/remember_trigger.py` — gatilho automático a cada 5 turnos (`REMEMBER_TRIGGER_EVERY_N_TURNS`, fire-and-forget em `api/adapters.py`), destila via LLM, propõe skill/fato como artifact na aba Plan, HITL real antes de persistir (`save_learned_fact`/`install_learned_skill`). **Não existem** `/learn`, `/journey`, job via NATS `vectora-jobs`, nem painel dedicado no Memory tab — tudo isso ficou só no design doc. |
+| 3 | **Schedule** — agendamento em linguagem natural | **Não** — Vectora já tinha antes | Implementado de ponta a ponta: `backend/scheduling/background_tasks.py` (loop asyncio, tick 60s, `croniter`) + `backend/scheduling/nl_schedule.py` (`parse_natural_schedule` — regex determinístico pt-BR, não LLM) + tool `schedule_task` (`backend/tools/background.py`) + endpoints `backend/api/handlers/background.py` + aba "Tarefas" no frontend (`tasks-tab.tsx`). Funcional, não stub. |
+| 4 | **Delegate** — subagentes isolados, worktree-per-task | **Não** — Vectora já tinha antes | `task()` vem do `SubAgentMiddleware` da lib `deepagents` (`agent_factory.py`); worktree-per-task é real (`backend/scheduling/delegate.py`) mas só cobre background tasks tipo `coder`, não a delegação síncrona comum. Terminal isolado por subagente não existe como feature própria. Nome interno real: "Background Tasks"/"tarefas em segundo plano", não "Delegate" como produto. |
+| 5 | **Search** — busca web, browser, visão, geração de imagem, TTS | **Não** — Vectora já tinha antes | Busca web (Tavily + fallback DuckDuckGo/Playwright) e browser automation (Playwright multi-aba) — completos e robustos. Visão — real, mas restrita a 3 providers (`VISION_CAPABLE_PROVIDERS = {google-genai, openai, anthropic}`), bloqueio explícito pros demais. **Geração de imagem e TTS não existem** no código atual (TTS só tem o caminho inverso: transcrição de áudio via Whisper/Gemini). |
+| 6 | Sandbox (rotulado "Experiment") — isolamento de execução | **Não** — baseado no `ai-jail` do Akita | `backend/sandbox/`: 4 backends reais (`local` via bwrap+Landlock+seccomp+rlimits, `docker`, `ssh`, `modal`) — **Singularity nunca foi implementado** (só citado num teste como nome arbitrário de backend desconhecido). `local` é o único com hardening completo; WSL2 é o mecanismo que faz `local` funcionar no Windows, não um backend separado. |
+
+Os itens H-1/H-2/H-3 abaixo vêm de uma leitura mais funda do changelog/docs
+do Hermes (não da home) — H-1 mapeia pro pilar Remember; H-2 (proxy
+OpenAI-compatível) e H-3 (worktree-per-task, que na prática o Vectora já
+tinha antes via git worktree próprio) não têm cópia 1:1 confirmada — H-2
+**nunca foi implementado** (nenhum endpoint `/v1/chat/completions` no
+backend).
+
+---
+
 ### H-1 🎯 Learning loop: skills auto-geradas + modelo do usuário
 
 **O que é.** O maior diferencial do Hermes é o "built-in learning loop": ele
