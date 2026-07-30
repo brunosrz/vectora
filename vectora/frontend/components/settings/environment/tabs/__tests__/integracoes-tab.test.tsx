@@ -191,6 +191,17 @@ const BASE_INTEGRATIONS = [
     connected: false,
   },
   {
+    id: "telegram",
+    name: "Telegram",
+    env_var: "TELEGRAM_BOT_TOKEN",
+    kind: "apikey",
+    description: "Converse pelo Telegram",
+    docs_url: "https://core.telegram.org/bots",
+    icon: "telegram",
+    connected: false,
+    setup_hint: "No Telegram, fale com @BotFather e mande /newbot.",
+  },
+  {
     id: "gemini",
     name: "Gemini",
     env_var: "GOOGLE_API_KEY",
@@ -683,5 +694,63 @@ describe("IntegracoesTab", () => {
     });
 
     consoleErrorSpy.mockRestore();
+  });
+});
+
+describe("IntegracoesTab — instrução inline de credencial", () => {
+  beforeEach(() => {
+    overwriteGetLocale(() => "pt");
+    mockFetch(BASE_INTEGRATIONS);
+  });
+
+  it("integração fora das categorias fixas ainda renderiza — o catálogo é do backend, a lista de categorias é do frontend", async () => {
+    // Erro/borda que motivou o fallback: telegram/discord/email-connect
+    // existiam no catálogo do backend e não apareciam em tela nenhuma,
+    // porque `CATEGORIES` só monta cards de ids que ela própria lista.
+    mockFetch([
+      ...BASE_INTEGRATIONS,
+      {
+        id: "plataforma-desconhecida",
+        name: "Plataforma Desconhecida",
+        env_var: "DESCONHECIDA_API_KEY",
+        kind: "apikey",
+        description: "Integração que o frontend não categoriza",
+        docs_url: "https://exemplo.test",
+        icon: "custom",
+        connected: false,
+      },
+    ]);
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(
+        screen.getAllByText("Plataforma Desconhecida").length,
+      ).toBeGreaterThan(0);
+    });
+  });
+
+  it("card com setup_hint mostra a instrução ao expandir; card sem hint não inventa texto", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("Telegram").length).toBeGreaterThan(0);
+    });
+
+    // Fechado, a instrução não ocupa espaço no card.
+    expect(screen.queryByText(/BotFather/i)).toBeNull();
+
+    const telegramCard = screen.getByText("Telegram").closest("div[class]")!
+      .parentElement!.parentElement!;
+    fireEvent.click(
+      within(telegramCard).getByTitle(/colar token manualmente/i),
+    );
+    expect(screen.getByText(/BotFather/i)).toBeInTheDocument();
+
+    // Erro/borda: Gemini não declara setup_hint — expandir não pode
+    // renderizar parágrafo nenhum (nem vazio, que viraria espaçamento morto).
+    const geminiCard = screen.getByText("Gemini").closest("div[class]")!
+      .parentElement!.parentElement!;
+    fireEvent.click(within(geminiCard).getByTitle(/colar token manualmente/i));
+    expect(within(geminiCard).queryByText(/BotFather/i)).toBeNull();
   });
 });

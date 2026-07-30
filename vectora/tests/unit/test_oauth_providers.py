@@ -400,3 +400,37 @@ class TestListIntegrationsAlias:
         assert resp.status_code == 200
         gemini = next(i for i in resp.json()["integrations"] if i["id"] == "gemini")
         assert gemini["connected"] is True
+
+
+class TestSetupHint:
+    """`setup_hint` é a linha inline de "como obter esta credencial" que a aba
+    Integrações mostra ao expandir o card — o catálogo do backend é a única
+    fonte, a UI não tem texto por plataforma."""
+
+    def test_plataformas_de_connect_tem_setup_hint(self) -> None:
+        from backend.api.handlers.oauth import INTEGRATIONS_REGISTRY
+
+        by_id = {i["id"]: i for i in INTEGRATIONS_REGISTRY}
+        for plat in ("telegram", "discord", "slack", "email-connect"):
+            hint = by_id[plat].get("setup_hint", "")
+            assert hint and len(hint) > 20, f"{plat} sem setup_hint utilizável"
+
+        # Erro/borda: nenhuma integração pode declarar `setup_hint` vazio ou
+        # só espaço — a UI renderiza o parágrafo por truthiness, e um valor
+        # branco viraria um bloco de espaçamento fantasma no card.
+        for integ in INTEGRATIONS_REGISTRY:
+            if "setup_hint" in integ:
+                assert integ["setup_hint"].strip(), (
+                    f"{integ['id']} declara setup_hint em branco"
+                )
+
+    def test_setup_hint_chega_na_resposta_de_integrations(
+        self, client: TestClient
+    ) -> None:
+        resp = client.get("/integrations")
+        assert resp.status_code == 200
+        items = {i["id"]: i for i in resp.json()["integrations"]}
+        assert items["telegram"]["setup_hint"].startswith("No Telegram")
+        # Erro/borda: quem não declara hint não ganha um campo inventado —
+        # a UI usa a ausência pra não renderizar o parágrafo.
+        assert "setup_hint" not in items["gemini"]

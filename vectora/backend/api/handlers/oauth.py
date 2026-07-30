@@ -185,6 +185,7 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "description": "Converse com o Vectora pelo Slack (Socket Mode)",
         "docs_url": "https://api.slack.com/apps",
         "icon": "slack",
+        "setup_hint": "Crie um Slack App, habilite Socket Mode e gere os dois tokens: o de bot (xoxb-, em OAuth & Permissions) e o de app (xapp-, em Basic Information -> App-Level Tokens).",
         "extra_vars": ["SLACK_APP_TOKEN"],
     },
     {
@@ -195,6 +196,7 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "description": "Converse com o Vectora pelo Telegram (bot próprio via @BotFather)",
         "docs_url": "https://core.telegram.org/bots/features#botfather",
         "icon": "telegram",
+        "setup_hint": "No Telegram, fale com @BotFather, mande /newbot e cole aqui o token que ele devolver.",
     },
     {
         "id": "discord",
@@ -204,6 +206,7 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "description": "Converse com o Vectora pelo Discord (Application própria)",
         "docs_url": "https://discord.com/developers/applications",
         "icon": "discord",
+        "setup_hint": "No Developer Portal: crie uma Application, aba Bot -> Reset Token pra copiar, e ligue o Message Content Intent (sem ele o bot recebe mensagens vazias). Depois convide o bot pro seu servidor.",
     },
     {
         # Caixa do próprio usuário (IMAP pra ler, SMTP pra responder) — sem
@@ -216,6 +219,7 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "description": "Converse com o Vectora por email (IMAP + SMTP da sua caixa)",
         "docs_url": "https://support.google.com/accounts/answer/185833",
         "icon": "mail",
+        "setup_hint": "Use uma senha de app do seu provedor (no Gmail exige 2FA ligada), nunca a senha da conta. Preencha host IMAP, usuário e senha; o host SMTP é opcional e assume o mesmo do IMAP.",
         "extra_vars": ["EMAIL_IMAP_HOST", "EMAIL_IMAP_USER", "EMAIL_SMTP_HOST"],
     },
     {

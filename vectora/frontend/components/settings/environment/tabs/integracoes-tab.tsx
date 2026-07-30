@@ -56,6 +56,9 @@ interface Integration {
   kind: "apikey" | "oauth" | "hybrid";
   description: string;
   docs_url: string;
+  /** Linha curta de "como obter esta credencial", vinda do catálogo do
+   * backend — só aparece quando a integração declara uma. */
+  setup_hint?: string;
   icon: string;
   oauth_scopes?: string[];
   parent?: string;
@@ -402,6 +405,11 @@ function IntegrationCard({
       {/* Expansão para API key / token manual */}
       {allowToken && expanded && (
         <div className="px-3 pb-3 space-y-2 border-t pt-3">
+          {integ.setup_hint && (
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {integ.setup_hint}
+            </p>
+          )}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
@@ -608,10 +616,23 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
     label: "Google",
     ids: ["google", "google-drive", "gmail"],
   },
-  { label: "Comunicação", ids: ["slack"] },
+  {
+    label: "Comunicação",
+    ids: ["slack", "telegram", "discord", "email-connect"],
+  },
   { label: "Produtividade", ids: ["linear", "jira", "notion"] },
   { label: "Email", ids: ["resend", "sendgrid", "mailgun"] },
 ];
+
+/** Ids do catálogo do backend que nenhuma categoria acima reivindica.
+ *
+ * Sem isto, uma integração nova no backend simplesmente não renderiza —
+ * a lista de categorias é fixa e descarta silenciosamente o que não
+ * conhece. */
+function uncategorizedIds(all: Integration[]): string[] {
+  const claimed = new Set(CATEGORIES.flatMap((c) => c.ids));
+  return all.filter((i) => !claimed.has(i.id) && !i.parent).map((i) => i.id);
+}
 
 // ---------------------------------------------------------------------------
 // Componente principal
@@ -785,7 +806,10 @@ export function IntegracoesTab() {
       </div>
 
       {/* Cards por categoria */}
-      {CATEGORIES.map((cat) => {
+      {[
+        ...CATEGORIES,
+        { label: "Outras", ids: uncategorizedIds(integrations) },
+      ].map((cat) => {
         const items = cat.ids.flatMap((id) => (byId[id] ? [byId[id]] : []));
         if (items.length === 0) return null;
         return (
