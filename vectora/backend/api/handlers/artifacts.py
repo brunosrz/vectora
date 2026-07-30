@@ -100,7 +100,47 @@ async def list_artifacts(
                 content_preview=_read_preview(path),
             )
         )
+
+    items.extend(_media_artifacts(base, session_id))
+    items.sort(key=lambda a: a.created_at, reverse=True)
     return ListArtifactsResponse(artifacts=items)
+
+
+def _media_artifacts(base: Path, session_id: str) -> list[ArtifactMetadata]:
+    """Imagem/áudio gerados por `tools/media.py`.
+
+    Ficam em `media/` como binário, então não entram no `glob("*.md")` da
+    listagem principal — sem isto, o arquivo existe em disco mas não aparece
+    em lugar nenhum da interface, que era o ponto de gerar mídia.
+    """
+    media_dir = base / "media"
+    if not media_dir.is_dir():
+        return []
+
+    found: list[ArtifactMetadata] = []
+    try:
+        files = [p for p in media_dir.iterdir() if p.is_file()]
+    except OSError:
+        return []
+
+    for path in files:
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        found.append(
+            ArtifactMetadata(
+                title=path.stem.replace("-", " ").strip() or path.stem,
+                path=str(path),
+                session_id=session_id,
+                created_at=_format_mtime(stat.st_mtime),
+                artifact_type="media",
+                # Binário não tem preview de texto — `None` em vez de tentar
+                # decodificar bytes, que encheria a lista de lixo.
+                content_preview=None,
+            )
+        )
+    return found
 
 
 @router.get("/{slug}", response_model=ArtifactContent)

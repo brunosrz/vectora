@@ -39,6 +39,10 @@ VALID_ARTIFACT_TYPES = frozenset(
         "skill_learned",
         "fact_learned",
         "remember_proposal",
+        # Imagem/áudio gerados por `backend/tools/media.py`. Não passam por
+        # `create_artifact` (que grava markdown) — são binários em
+        # `artifacts/{session}/media/` e a listagem os inclui à parte.
+        "media",
     }
 )
 

@@ -202,3 +202,70 @@ class TestGetArtifact:
         resp = await get_artifact("secreto", session_id="legit/../boom")
         # Sanitização junta tudo numa string sem traversal.
         assert "segredo" not in resp.content
+
+
+class TestMediaNaListagem:
+    """Imagem/áudio de `tools/media.py` ficam em `artifacts/{sessão}/media/`
+    como binário, fora do `glob("*.md")`. Sem entrarem na listagem, o arquivo
+    existe em disco mas não aparece em lugar nenhum da interface — que era o
+    ponto de gerar mídia."""
+
+    @pytest.mark.asyncio
+    async def test_media_aparece_junto_dos_documentos(self, monkeypatch, tmp_path):
+        from backend.api.handlers import artifacts as mod
+
+        base = tmp_path / "sessao-1"
+        (base / "media").mkdir(parents=True)
+        (base / "plano.md").write_text("# Plano", encoding="utf-8")
+        (base / "media" / "gato.png").write_bytes(b"\x89PNG-fake")
+        (base / "media" / "voz.mp3").write_bytes(b"ID3-fake")
+
+        monkeypatch.setattr(mod, "_artifacts_dir", lambda _s: base)
+
+        out = await mod.list_artifacts(session_id="sessao-1")
+        tipos = {a.title: a.artifact_type for a in out.artifacts}
+
+        assert tipos.get("gato") == "media"
+        assert tipos.get("voz") == "media"
+        # Regressão: o markdown continua listado com seu próprio tipo.
+        assert "plano" in tipos
+        assert tipos["plano"] != "media"
+
+        # Binário não tem preview de texto — `None` em vez de tentar decodificar
+        # bytes, que encheria a lista de lixo.
+        media = [a for a in out.artifacts if a.artifact_type == "media"]
+        assert all(a.content_preview is None for a in media)
+
+    @pytest.mark.asyncio
+    async def test_sessao_sem_media_nao_quebra(self, monkeypatch, tmp_path):
+        """Erro/borda: a esmagadora maioria das sessões nunca gera mídia — a
+        ausência da pasta é o caso comum, não um erro."""
+        from backend.api.handlers import artifacts as mod
+
+        base = tmp_path / "sessao-2"
+        base.mkdir(parents=True)
+        (base / "spec.md").write_text("# Spec", encoding="utf-8")
+        monkeypatch.setattr(mod, "_artifacts_dir", lambda _s: base)
+
+        out = await mod.list_artifacts(session_id="sessao-2")
+
+        assert [a.title for a in out.artifacts] == ["spec"]
+
+    @pytest.mark.asyncio
+    async def test_media_ilegivel_nao_derruba_a_listagem(self, monkeypatch, tmp_path):
+        """Erro/borda: `iterdir` estourando (permissão, disco) não pode fazer a
+        aba inteira sumir — os documentos continuam listados."""
+        from backend.api.handlers import artifacts as mod
+
+        base = tmp_path / "sessao-3"
+        (base / "media").mkdir(parents=True)
+        (base / "guia.md").write_text("# Guia", encoding="utf-8")
+        monkeypatch.setattr(mod, "_artifacts_dir", lambda _s: base)
+
+        def _explode(_self):
+            raise OSError("sem permissão")
+
+        monkeypatch.setattr(mod.Path, "iterdir", _explode)
+
+        out = await mod.list_artifacts(session_id="sessao-3")
+        assert [a.title for a in out.artifacts] == ["guia"]
