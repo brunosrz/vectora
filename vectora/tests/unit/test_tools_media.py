@@ -209,3 +209,68 @@ def test_nenhuma_tool_de_midia_troca_de_provider_sozinha(capability, monkeypatch
     # não sinal de que a tool gerou lá por conta própria.)
     assert "path" not in out
     assert out.get("provider") is None
+
+
+# ---------------------------------------------------------------------------
+# Modelo escolhido na UI vs. env var
+# ---------------------------------------------------------------------------
+
+
+def test_escolha_da_ui_vence_a_env_var(monkeypatch):
+    """Sem essa precedência, quem configurou por env nunca conseguiria trocar
+    de modelo pela interface: a env sempre ganharia e a UI pareceria não
+    salvar."""
+    from backend.settings import configured_gateway_model, settings
+    from backend.workspace.runtime_settings import runtime_settings
+
+    monkeypatch.setattr(settings, "ollama_image_model", "modelo-da-env", raising=False)
+
+    # Só env configurada: é ela que vale.
+    monkeypatch.setattr(
+        type(runtime_settings), "media_settings", property(lambda _s: {})
+    )
+    assert configured_gateway_model("ollama", "image") == "modelo-da-env"
+
+    # Happy: usuário escolheu na UI -> a escolha vence.
+    monkeypatch.setattr(
+        type(runtime_settings),
+        "media_settings",
+        property(lambda _s: {"ollama_image_model": "modelo-da-ui"}),
+    )
+    assert configured_gateway_model("ollama", "image") == "modelo-da-ui"
+
+    # Erro/borda: escolha vazia na UI **não** mascara a env — limpar o campo
+    # devolve o controle pra env var em vez de desligar a capacidade.
+    monkeypatch.setattr(
+        type(runtime_settings),
+        "media_settings",
+        property(lambda _s: {"ollama_image_model": "   "}),
+    )
+    assert configured_gateway_model("ollama", "image") == "modelo-da-env"
+
+    # Erro/borda: sem nenhum dos dois, a capacidade não existe.
+    monkeypatch.setattr(settings, "ollama_image_model", None, raising=False)
+    monkeypatch.setattr(
+        type(runtime_settings), "media_settings", property(lambda _s: {})
+    )
+    assert configured_gateway_model("ollama", "image") == ""
+    from backend.settings import provider_supports
+
+    assert provider_supports("ollama", "image") is False
+
+
+def test_runtime_settings_indisponivel_cai_na_env_sem_estourar(monkeypatch):
+    """Erro/borda: uma checagem de capacidade não pode explodir só porque o
+    runtime_settings ainda não subiu (boot muito cedo, teste isolado)."""
+    import backend.settings as settings_mod
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "openrouter_tts_model", "voz-da-env", raising=False)
+
+    class _Boom:
+        @property
+        def media_settings(self):
+            raise RuntimeError("runtime_settings não inicializado")
+
+    monkeypatch.setattr("backend.workspace.runtime_settings.runtime_settings", _Boom())
+    assert settings_mod.configured_gateway_model("openrouter", "tts") == "voz-da-env"

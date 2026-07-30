@@ -88,7 +88,7 @@ def _persist(session_id: str, data: bytes, suffix: str) -> Path:
 def _generate_image_bytes(provider: str, prompt: str) -> bytes:
     """Chama o SDK do provider ativo. Cada provider expõe geração de imagem
     de um jeito diferente — o mapeamento fica aqui, isolado da tool."""
-    from backend.settings import settings
+    from backend.settings import configured_gateway_model, settings
 
     if provider == "openai":
         from openai import OpenAI
@@ -115,8 +115,9 @@ def _generate_image_bytes(provider: str, prompt: str) -> bytes:
         raw = getattr(image, "image_bytes", None) if image else None
         return bytes(raw) if raw else b""
 
-    # Ollama/OpenRouter: modelo escolhido pelo usuário (ver settings).
-    model = getattr(settings, f"{provider}_image_model", None)
+    # Ollama/OpenRouter: modelo escolhido pelo usuário (UI vence env — ver
+    # `configured_gateway_model`).
+    model = configured_gateway_model(provider, "image")
     raise NotImplementedError(
         f"geração de imagem via {provider} (modelo {model}) ainda não tem "
         "cliente implementado"
@@ -124,7 +125,7 @@ def _generate_image_bytes(provider: str, prompt: str) -> bytes:
 
 
 def _synthesize_speech_bytes(provider: str, text: str, voice: str) -> bytes:
-    from backend.settings import settings
+    from backend.settings import configured_gateway_model, settings
 
     if provider == "openai":
         from openai import OpenAI
@@ -151,7 +152,7 @@ def _synthesize_speech_bytes(provider: str, text: str, voice: str) -> bytes:
         raw = inline.data if inline else None
         return bytes(raw) if raw else b""
 
-    model = getattr(settings, f"{provider}_tts_model", None)
+    model = configured_gateway_model(provider, "tts")
     raise NotImplementedError(
         f"síntese de voz via {provider} (modelo {model}) ainda não tem "
         "cliente implementado"

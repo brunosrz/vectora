@@ -589,6 +589,57 @@ async def patch_fallback_order(request: Request, body: FallbackOrderBody) -> dic
     return {"status": "updated", "fallback_order": runtime_settings.fallback_order}
 
 
+class MediaModelsBody(BaseModel):
+    """String vazia **limpa** a escolha (volta a valer a env var); `None`
+    significa "não mexe nesta chave"."""
+
+    ollama_image_model: str | None = None
+    ollama_tts_model: str | None = None
+    openrouter_image_model: str | None = None
+    openrouter_tts_model: str | None = None
+
+
+@router.get("/media-models")
+async def get_media_models(request: Request) -> dict:
+    """Modelos de imagem/TTS escolhidos para os providers de gateway.
+
+    Devolve o valor efetivo (UI vence env), para o seletor mostrar o que o
+    agente realmente vai usar — não o que está só no banco.
+    """
+    require_admin(_get_user(request))
+    from backend.settings import configured_gateway_model
+
+    return {
+        "models": {
+            f"{provider}_{capability}_model": configured_gateway_model(
+                provider, capability
+            )
+            for provider in ("ollama", "openrouter")
+            for capability in ("image", "tts")
+        }
+    }
+
+
+@router.patch("/media-models")
+async def patch_media_models(request: Request, body: MediaModelsBody) -> dict:
+    """Grava a escolha de modelo por provider+capacidade."""
+    require_admin(_get_user(request))
+    from backend.settings import configured_gateway_model
+    from backend.workspace.runtime_settings import runtime_settings
+
+    runtime_settings.set_media_settings(**body.model_dump())
+    return {
+        "status": "updated",
+        "models": {
+            f"{provider}_{capability}_model": configured_gateway_model(
+                provider, capability
+            )
+            for provider in ("ollama", "openrouter")
+            for capability in ("image", "tts")
+        },
+    }
+
+
 class TimezoneBody(BaseModel):
     timezone: str = ""
 

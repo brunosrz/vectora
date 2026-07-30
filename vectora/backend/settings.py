@@ -1096,11 +1096,34 @@ def provider_supports(provider: str, capability: str) -> bool:
     qual dos modelos instalados serviria.
     """
     if provider in _GATEWAY_PROVIDERS:
-        from backend.settings import settings as _settings
-
-        configured = getattr(_settings, f"{provider}_{capability}_model", None)
-        return bool(configured)
+        return bool(configured_gateway_model(provider, capability))
     return capability in PROVIDER_CAPABILITIES.get(provider, set())
+
+
+def configured_gateway_model(provider: str, capability: str) -> str:
+    """Modelo escolhido para `provider`+`capability`, ou string vazia.
+
+    Precedência: o que o usuário escolheu na UI (persistido em
+    `runtime_settings`) vence a env var. Sem essa ordem, quem configurou por
+    env nunca conseguiria trocar de modelo pela interface — a env sempre
+    ganharia e a UI pareceria não salvar.
+    """
+    key = f"{provider}_{capability}_model"
+    try:
+        from backend.workspace.runtime_settings import runtime_settings
+
+        chosen = str(runtime_settings.media_settings.get(key, "") or "").strip()
+        if chosen:
+            return chosen
+    except Exception:
+        # runtime_settings indisponível (boot muito cedo, testes isolados) —
+        # cair na env é melhor que estourar dentro de uma checagem de
+        # capacidade.
+        pass
+
+    from backend.settings import settings as _settings
+
+    return str(getattr(_settings, key, "") or "").strip()
 
 
 # Modelos que rejeitam REPLAY de tool_calls no histórico da conversa — não é

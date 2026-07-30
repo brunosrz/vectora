@@ -1252,5 +1252,12 @@
   "prefs_timezone_section": "Zona horaria",
   "prefs_timezone_hint": "Usada por los agendamientos: \"todos los lunes a las 9h\" significa 9h en esta zona.",
   "prefs_timezone_placeholder": "Zona del sistema",
-  "prefs_timezone_error": "No se pudo guardar la zona horaria."
+  "prefs_timezone_error": "No se pudo guardar la zona horaria.",
+  "prefs_media_models_section": "Modelos de imagen y voz",
+  "prefs_media_models_hint": "Solo para Ollama y OpenRouter — Gemini y OpenAI lo resuelven solos. Un campo vacío vuelve a usar la variable de entorno, si existe.",
+  "prefs_media_models_ollama_image": "Ollama — imagen",
+  "prefs_media_models_ollama_tts": "Ollama — voz",
+  "prefs_media_models_openrouter_image": "OpenRouter — imagen",
+  "prefs_media_models_openrouter_tts": "OpenRouter — voz",
+  "prefs_media_models_error": "No se pudo guardar el modelo."
 }

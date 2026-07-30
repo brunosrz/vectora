@@ -1252,5 +1252,12 @@
   "prefs_timezone_section": "Time zone",
   "prefs_timezone_hint": "Used by schedules: \"every Monday at 9am\" means 9am in this zone.",
   "prefs_timezone_placeholder": "System time zone",
-  "prefs_timezone_error": "Could not save the time zone."
+  "prefs_timezone_error": "Could not save the time zone.",
+  "prefs_media_models_section": "Image and voice models",
+  "prefs_media_models_hint": "Ollama and OpenRouter only — Gemini and OpenAI resolve on their own. An empty field falls back to the environment variable, if set.",
+  "prefs_media_models_ollama_image": "Ollama — image",
+  "prefs_media_models_ollama_tts": "Ollama — voice",
+  "prefs_media_models_openrouter_image": "OpenRouter — image",
+  "prefs_media_models_openrouter_tts": "OpenRouter — voice",
+  "prefs_media_models_error": "Could not save the model."
 }

@@ -389,6 +389,30 @@ class RuntimeSettings:
         return self.rag_settings
 
     @property
+    def media_settings(self) -> dict[str, object]:
+        """Modelo escolhido por provider+capacidade de mídia.
+
+        Chaves no formato `{provider}_{capability}_model` (ex.
+        `ollama_image_model`) — mesmo nome das env vars correspondentes em
+        `settings.py`, para `configured_gateway_model` conseguir procurar nos
+        dois lugares com a mesma chave.
+        """
+        val = self.get("media_settings", {})
+        if not isinstance(val, dict):
+            return {}
+        return {str(k): v for k, v in val.items()}
+
+    def set_media_settings(self, **changes: object) -> dict[str, object]:
+        """Mescla e persiste. String vazia **limpa** a escolha (volta a valer a
+        env var, se houver) — por isso o filtro é `is not None`, não truthy."""
+        merged = {
+            **self.media_settings,
+            **{k: v for k, v in changes.items() if v is not None},
+        }
+        self.set("media_settings", merged)
+        return self.media_settings
+
+    @property
     def last_session_by_dir(self) -> dict[str, str]:
         """Mapping of working directory path -> thread_id (6-digit string)."""
         val = self.get("last_session_by_dir", {})
