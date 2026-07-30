@@ -47,6 +47,15 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         "install_mcp_from_registry",
         "install_skill_from_catalog",
         "install_memory_bucket",
+        # Remover algo instalado é irreversível sem reinstalar; publicar manda
+        # conteúdo pra comunidade (fora do controle do usuário depois de
+        # feito); gravar env var grava credencial. As tools de consulta
+        # (`list_*_catalog`, `verify_skill`) são só leitura e ficam de fora —
+        # HITL em leitura é fricção sem ganho de segurança.
+        "uninstall_mcp",
+        "delete_skill",
+        "publish_memory_bucket_tool",
+        "save_mcp_env_var",
     }
 )
 

@@ -41,6 +41,7 @@ import socket
 import subprocess  # nosec B404 — só mata/consulta um PID já conhecido nosso, sem shell
 import sys
 from pathlib import Path
+from typing import Any
 
 from backend.services.subprocess_logging import pipe_to_logger
 from backend.services.subprocess_sidecar_utils import LazyLock, terminate_gracefully
@@ -153,25 +154,39 @@ async def ensure_nats_sidecar() -> str | None:
         store_dir = settings.vectora_home / "nats"
         store_dir.mkdir(parents=True, exist_ok=True)
 
-        # Órfãos de sessões anteriores que morreram sem passar pelo shutdown
-        # gracioso (kill forçado, crash, terminal fechado) — sem isso, cada
-        # novo processo Python spawna um nats-server novo sem saber dos
-        # anteriores, e eles se acumulam indefinidamente. Best-effort por
-        # PID: uma falha ao verificar/matar um PID (ex. `_pid_is_alive`
-        # lançando) nunca aborta a subida do sidecar novo nem impede tentar
-        # os demais PIDs da lista.
-        for stale_pid in _read_stale_pids(store_dir):
+        # Um PID **vivo** no pid file não é órfão: é um sidecar em uso. Matá-lo
+        # (como este código fazia) derruba o JetStream de quem está usando, e
+        # o cliente daquele processo cai em reconexão infinita. Só há dois
+        # desfechos legítimos aqui:
+        #   * vivo e aceitando conexão -> reusa, não sobe um segundo servidor
+        #     sobre o mesmo store (dois derrubam um ao outro);
+        #   * vivo mas mudo (zumbi) ou já morto -> descarta e sobe um novo.
+        registered = _read_stale_pids(store_dir)
+        registered_url = _read_registered_url(store_dir)
+        alive = [p for p in registered if _pid_is_alive_safe(p)]
+
+        if alive and registered_url and _responds(registered_url):
+            _url = registered_url
+            logger.info(
+                "nats_sidecar: reusando sidecar já ativo em %s (pid=%s)",
+                registered_url,
+                alive[0],
+            )
+            return _url
+
+        for zumbi in alive:
+            # Best-effort: falha ao matar um PID nunca aborta a subida do
+            # sidecar novo nem impede tentar os demais da lista.
             try:
-                if _pid_is_alive(stale_pid):
-                    logger.info(
-                        "nats_sidecar: matando sidecar órfão de sessão anterior (pid=%s)",
-                        stale_pid,
-                    )
-                    _kill_pid(stale_pid)
+                logger.info(
+                    "nats_sidecar: descartando sidecar que não responde (pid=%s)",
+                    zumbi,
+                )
+                _kill_pid(zumbi)
             except Exception:
                 logger.warning(
-                    "nats_sidecar: falha ao verificar/matar pid órfão %s — best-effort, seguindo",
-                    stale_pid,
+                    "nats_sidecar: falha ao matar pid %s — best-effort, seguindo",
+                    zumbi,
                     exc_info=True,
                 )
 
@@ -202,7 +217,7 @@ async def ensure_nats_sidecar() -> str | None:
             pipe_to_logger(proc.stdout, logger, prefix="nats")
         )
         _url = f"nats://127.0.0.1:{port}"
-        _write_pid_list(store_dir, [proc.pid])
+        _write_pid_list(store_dir, [proc.pid], url=_url)
         _assign_to_job_object_best_effort(proc.pid)
         logger.info("nats_sidecar: pronto em %s (store=%s)", _url, store_dir)
         return _url
@@ -252,15 +267,70 @@ async def _wait_ready(proc: asyncio.subprocess.Process) -> bool:
         return False
 
 
+def _pid_is_alive_safe(pid: int) -> bool:
+    """`_pid_is_alive` que nunca levanta — uma checagem de PID que estoura não
+    pode impedir o sidecar de subir."""
+    try:
+        return _pid_is_alive(pid)
+    except Exception:
+        logger.warning(
+            "nats_sidecar: falha ao verificar pid %s — tratando como morto",
+            pid,
+            exc_info=True,
+        )
+        return False
+
+
 def _pid_file_path(store_dir: Path) -> Path:
     return store_dir / _PID_FILE_NAME
 
 
-def _write_pid_list(store_dir: Path, pids: list[int]) -> None:
+def _write_pid_list(store_dir: Path, pids: list[int], url: str = "") -> None:
+    """Grava PIDs e a URL do sidecar ativo.
+
+    A URL é o que permite a um processo seguinte **reusar** o sidecar em vez
+    de subir outro sobre o mesmo store — dois `nats-server` no mesmo diretório
+    de JetStream derrubam um ao outro.
+    """
+    payload: dict[str, Any] = {"pids": pids[-_PID_LIST_CAP:]}
+    if url:
+        payload["url"] = url
     with contextlib.suppress(Exception):
-        _pid_file_path(store_dir).write_text(
-            json.dumps({"pids": pids[-_PID_LIST_CAP:]}), encoding="utf-8"
-        )
+        _pid_file_path(store_dir).write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _read_registered_url(store_dir: Path) -> str:
+    """URL do sidecar registrado, ou string vazia (pid file legado/ausente)."""
+    path = _pid_file_path(store_dir)
+    if not path.is_file():
+        return ""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return str(data.get("url", ""))
+    except Exception:
+        return ""
+
+
+def _responds(url: str, timeout_s: float = 1.0) -> bool:
+    """True se algo aceita conexão TCP na porta do `url`.
+
+    Distingue sidecar vivo e utilizável de processo zumbi: PID vivo sozinho
+    não basta, porque um `nats-server` travado continua no `tasklist` sem
+    aceitar conexão.
+    """
+    import socket
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    if not parsed.hostname or not parsed.port:
+        return False
+    try:
+        with socket.create_connection(
+            (parsed.hostname, parsed.port), timeout=timeout_s
+        ):
+            return True
+    except OSError:
+        return False
 
 
 def _read_stale_pids(store_dir: Path) -> list[int]:

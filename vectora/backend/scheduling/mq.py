@@ -97,6 +97,21 @@ class NatsMQ:
             False  # True após esgotar reconexões — força reset do singleton
         )
 
+    def _is_connection_dead(self) -> bool:
+        """True quando o cliente NATS fechou a conexão de vez.
+
+        `_failed` cobre o caso em que `_closed_cb` já rodou; esta checagem
+        cobre a janela entre o fechamento e o callback, em que `is_closed` já
+        é verdadeiro mas o estado ainda não foi propagado.
+        """
+        nc = self._nc
+        if nc is None:
+            return True
+        try:
+            return bool(nc.is_closed)
+        except Exception:
+            return True
+
     async def _connect(self) -> Any:
         if self._failed:
             raise RuntimeError("mq: NATS permanentemente desconectado — use fallback")
@@ -162,6 +177,18 @@ class NatsMQ:
             except TimeoutError:
                 continue
             except Exception as exc:
+                # Conexão encerrada em definitivo (retries do cliente NATS já
+                # esgotados, `_closed_cb` marcou `_failed`): a `sub` local está
+                # presa a uma conexão morta e nunca mais vai funcionar. Sem
+                # este corte o loop gira para sempre repetindo o mesmo warning
+                # a cada 2s, o que soterra o log e esconde o erro real.
+                if self._failed or self._is_connection_dead():
+                    logger.warning(
+                        "mq[%s]: conexão NATS encerrada em definitivo — consumo "
+                        "parado, fila segue pelo fallback em memória",
+                        stream,
+                    )
+                    return
                 logger.warning(
                     "mq[%s]: fetch NATS falhou (%s) — retry em 2s", stream, exc
                 )

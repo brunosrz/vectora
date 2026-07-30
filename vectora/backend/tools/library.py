@@ -334,3 +334,112 @@ async def save_mcp_env_var(
             "save_mcp_env_var failed", extra={"connector_id": connector_id, "key": key}
         )
         return json.dumps({"status": "error", "error": str(exc)})
+
+
+#: Teto de itens devolvidos por consulta ao catálogo. O registry oficial de MCP
+#: tem centenas de entradas; despejar tudo no contexto do LLM gasta a janela
+#: sem melhorar a sugestão.
+_CATALOG_PAGE_SIZE = 40
+
+
+def _match(entry_text: str, query: str) -> bool:
+    return not query or query.lower() in entry_text.lower()
+
+
+@tool(extras={"category": "library", "icon": "puzzle"})
+async def list_mcp_catalog(query: str = "") -> str:
+    """Lista conectores MCP disponíveis para instalar (curados + registry
+    oficial), com id, nome e descrição — use antes de sugerir uma instalação,
+    para citar conectores que existem de verdade.
+
+    Args:
+        query: filtro opcional por nome/descrição; vazio lista o começo do
+            catálogo.
+    """
+    try:
+        from backend.api.handlers.mcp_marketplace import list_registry
+
+        registry = await list_registry()
+        items = [
+            {
+                "id": c.id,
+                "name": c.name,
+                "description": c.description,
+                "env_vars": list(c.env_vars),
+            }
+            for c in registry
+            if _match(f"{c.id} {c.name} {c.description}", query)
+        ]
+        return json.dumps(
+            {"items": items[:_CATALOG_PAGE_SIZE], "total": len(items)},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        logger.exception("list_mcp_catalog failed", extra={"query": query})
+        return json.dumps({"items": [], "total": 0, "error": str(exc)})
+
+
+@tool(extras={"category": "library", "icon": "sparkles"})
+async def list_skills_catalog(query: str = "") -> str:
+    """Lista skills disponíveis no catálogo, com id, nome e descrição — use
+    antes de sugerir a instalação de uma skill.
+
+    Args:
+        query: filtro opcional por nome/descrição.
+    """
+    try:
+        from backend.services import registry_client
+
+        entries = await registry_client.fetch_catalog("skills")
+        items = [
+            {
+                "id": e.get("id", ""),
+                "name": e.get("name", ""),
+                "description": e.get("description", ""),
+            }
+            for e in entries
+            if _match(
+                f"{e.get('id', '')} {e.get('name', '')} {e.get('description', '')}",
+                query,
+            )
+        ]
+        return json.dumps(
+            {"items": items[:_CATALOG_PAGE_SIZE], "total": len(items)},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        logger.exception("list_skills_catalog failed", extra={"query": query})
+        return json.dumps({"items": [], "total": 0, "error": str(exc)})
+
+
+@tool(extras={"category": "library", "icon": "database"})
+async def list_memory_bucket_catalog(query: str = "") -> str:
+    """Lista buckets de memória publicados na Vectora Memory Library, com id,
+    nome e descrição — use antes de sugerir baixar uma base de conhecimento.
+
+    Args:
+        query: filtro opcional por nome/descrição.
+    """
+    try:
+        from backend.services import memory_library
+
+        entries = await memory_library.list_catalog()
+        items = [
+            {
+                "id": e.get("id", ""),
+                "name": e.get("name", ""),
+                "description": e.get("description", ""),
+            }
+            for e in entries
+            if _match(
+                f"{e.get('id', '')} {e.get('name', '')} {e.get('description', '')}",
+                query,
+            )
+        ]
+        return json.dumps(
+            {"items": items[:_CATALOG_PAGE_SIZE], "total": len(items)},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        logger.exception("list_memory_bucket_catalog failed", extra={"query": query})
+        return json.dumps({"items": [], "total": 0, "error": str(exc)})
