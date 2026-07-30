@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 /**
  * WindowLayer — overlay de janelas flutuantes.
- * Retorna null em ideMode ou quando não há janelas visíveis.
+ * Retorna null no modo IDE ou quando não há janelas visíveis.
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 
-const mockSettings = { ideMode: false };
+const mockSettings = { uiMode: "assistant" };
 const mockWindowsState = {
   windows: [] as Array<{ id: string; minimized: boolean }>,
 };
@@ -33,34 +33,34 @@ import { WindowLayer } from "../window-layer";
 
 afterEach(() => {
   cleanup();
-  mockSettings.ideMode = false;
+  mockSettings.uiMode = "assistant";
   mockWindowsState.windows = [];
 });
 
 describe("WindowLayer", () => {
-  it("retorna null quando ideMode=true", () => {
-    mockSettings.ideMode = true;
+  it("retorna null quando uiMode='ide'", () => {
+    mockSettings.uiMode = "ide";
     mockWindowsState.windows = [{ id: "ws1", minimized: false }];
     const { container } = render(<WindowLayer />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it("retorna null quando não há janelas", () => {
-    mockSettings.ideMode = false;
+    mockSettings.uiMode = "assistant";
     mockWindowsState.windows = [];
     const { container } = render(<WindowLayer />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it("retorna null quando todas as janelas estão minimizadas", () => {
-    mockSettings.ideMode = false;
+    mockSettings.uiMode = "assistant";
     mockWindowsState.windows = [{ id: "ws1", minimized: true }];
     const { container } = render(<WindowLayer />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it("renderiza FileWindow para cada janela visível (não minimizada)", () => {
-    mockSettings.ideMode = false;
+    mockSettings.uiMode = "assistant";
     mockWindowsState.windows = [
       { id: "ws1", minimized: false },
       { id: "ws2", minimized: false },
@@ -71,18 +71,28 @@ describe("WindowLayer", () => {
   });
 
   it("renderiza FileWindow com o id correto", () => {
-    mockSettings.ideMode = false;
+    mockSettings.uiMode = "assistant";
     mockWindowsState.windows = [{ id: "ws42", minimized: false }];
     const { getByTestId } = render(<WindowLayer />);
     expect(getByTestId("file-window")).toHaveAttribute("data-id", "ws42");
   });
 
-  it("ideMode=true retorna null mesmo com janelas visíveis (edge: ambas condições)", () => {
-    mockSettings.ideMode = true;
+  it("uiMode='ide' retorna null mesmo com janelas visíveis (edge: ambas condições)", () => {
+    mockSettings.uiMode = "ide";
     mockWindowsState.windows = [
       { id: "ws1", minimized: false },
       { id: "ws2", minimized: false },
     ];
+    const { container } = render(<WindowLayer />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("uiMode='kanban' retorna null mesmo com janelas visíveis", () => {
+    // Regra: a camada só monta no modo Assistente. Um terceiro modo não
+    // pode cair no ramo "renderiza" por omissão — senão o board Kanban
+    // ganharia janelas flutuantes sobrepostas sem ninguém ter pedido.
+    mockSettings.uiMode = "kanban";
+    mockWindowsState.windows = [{ id: "ws1", minimized: false }];
     const { container } = render(<WindowLayer />);
     expect(container).toBeEmptyDOMElement();
   });

@@ -9,8 +9,8 @@ interface IdeModeProps {
 }
 
 export function IdeModeSwitch({ show = false }: IdeModeProps) {
-  const ideMode = useSettingsStore((s) => s.ideMode);
-  const setIdeMode = useSettingsStore((s) => s.setIdeMode);
+  const uiMode = useSettingsStore((s) => s.uiMode);
+  const setUiMode = useSettingsStore((s) => s.setUiMode);
 
   if (!show) return null;
 
@@ -23,11 +23,11 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
       <button
         type="button"
         onClick={() => {
-          if (ideMode) setIdeMode(false);
+          if (uiMode !== "assistant") setUiMode("assistant");
         }}
-        aria-pressed={!ideMode}
+        aria-pressed={uiMode === "assistant"}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-          !ideMode
+          uiMode === "assistant"
             ? "bg-muted text-foreground font-medium"
             : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
         }`}
@@ -39,11 +39,11 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
       <button
         type="button"
         onClick={() => {
-          if (!ideMode) setIdeMode(true);
+          if (uiMode !== "ide") setUiMode("ide");
         }}
-        aria-pressed={ideMode}
+        aria-pressed={uiMode === "ide"}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-          ideMode
+          uiMode === "ide"
             ? "bg-muted text-foreground font-medium"
             : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
         }`}

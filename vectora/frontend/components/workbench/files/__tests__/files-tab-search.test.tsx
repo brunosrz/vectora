@@ -79,7 +79,7 @@ vi.mock("@/lib/stores/workspaces-store", () => ({
     }),
 }));
 
-const mockSettings = { ideMode: false };
+const mockSettings = { uiMode: "assistant" };
 
 vi.mock("@/lib/stores/settings-store", () => ({
   useSettingsStore: (sel: (s: typeof mockSettings) => unknown) =>

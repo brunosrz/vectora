@@ -2,8 +2,8 @@
 /**
  * PinnedSection — abertura de arquivo fixado em modo IDE vs Assistente.
  *
- * Em ideMode=true: clique chama openDocked.
- * Em ideMode=false: clique chama openWindow (open).
+ * Em uiMode='ide': clique chama openDocked.
+ * Em uiMode='assistant': clique chama openWindow (open).
  * Sem pins: não renderiza nada.
  */
 
@@ -13,7 +13,7 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 const mockOpenWindow = vi.fn();
 const mockOpenDocked = vi.fn();
 const mockTogglePinned = vi.fn();
-const mockSettings = { ideMode: false };
+const mockSettings = { uiMode: "assistant" };
 
 const mockPinnedFiles: Record<string, string[]> = {};
 
@@ -49,12 +49,12 @@ import { PinnedSection } from "../pinned-section";
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  mockSettings.ideMode = false;
+  mockSettings.uiMode = "assistant";
   delete mockPinnedFiles["t1"];
 });
 
 beforeEach(() => {
-  mockSettings.ideMode = false;
+  mockSettings.uiMode = "assistant";
   delete mockPinnedFiles["t1"];
 });
 
@@ -66,7 +66,7 @@ describe("PinnedSection — abertura em modo IDE vs Assistente", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("ideMode=false: clicar em pin chama openWindow", () => {
+  it("uiMode='assistant': clicar em pin chama openWindow", () => {
     mockPinnedFiles["t1"] = ["src/important.ts"];
     render(<PinnedSection threadId="t1" workspaceId="ws1" />);
     fireEvent.click(screen.getByText("important.ts"));
@@ -74,8 +74,8 @@ describe("PinnedSection — abertura em modo IDE vs Assistente", () => {
     expect(mockOpenDocked).not.toHaveBeenCalled();
   });
 
-  it("ideMode=true: clicar em pin chama openDocked", () => {
-    mockSettings.ideMode = true;
+  it("uiMode='ide': clicar em pin chama openDocked", () => {
+    mockSettings.uiMode = "ide";
     mockPinnedFiles["t1"] = ["src/important.ts"];
     render(<PinnedSection threadId="t1" workspaceId="ws1" />);
     fireEvent.click(screen.getByText("important.ts"));

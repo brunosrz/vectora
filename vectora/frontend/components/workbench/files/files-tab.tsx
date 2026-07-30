@@ -108,7 +108,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const viewerHeight = useWorkbenchStore((s) => s.viewerHeight);
   const setViewerHeight = useWorkbenchStore((s) => s.setViewerHeight);
   const openWindow = useWindowsStore((s) => s.open);
-  const ideMode = useSettingsStore((s) => s.ideMode);
+  const uiMode = useSettingsStore((s) => s.uiMode);
 
   // aria-busy: verdadeiro enquanto a raiz ainda não chegou do servidor.
   const rootEntriesLoaded = useWorkbenchStore(
@@ -823,7 +823,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                       <Pencil className="w-3 h-3" />
                     </button>
                   )}
-                {!ideMode && openPath && (
+                {uiMode === "assistant" && openPath && (
                   <button
                     onClick={() => openWindow(wsId, openPath)}
                     className="p-0.5 rounded text-muted-foreground hover:text-foreground"

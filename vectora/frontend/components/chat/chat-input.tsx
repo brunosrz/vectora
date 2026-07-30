@@ -173,7 +173,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   const chatMode = useSettingsStore((s) => s.chatMode);
-  const ideMode = useSettingsStore((s) => s.ideMode);
+  const uiMode = useSettingsStore((s) => s.uiMode);
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
@@ -428,7 +428,7 @@ export function ChatInput({
               <div className="hidden @sm/composer:block h-4 w-px bg-border/60" />
               {/* O workspace é escolhido só no modal de nova conversa e é imutável
                   depois disso — por isso não há seletor de workspace na appbar. */}
-              {!chatMode && !ideMode && wsId && (
+              {!chatMode && uiMode === "assistant" && wsId && (
                 <>
                   <VscodeMenu workspaceId={wsId} />
                   <div className="hidden @sm/composer:block h-4 w-px bg-border/60" />
@@ -444,7 +444,7 @@ export function ChatInput({
                   value={agentConfig.model}
                   onChange={handleModelChange}
                   compact
-                  codeMode={!chatMode && !ideMode && !!wsId}
+                  codeMode={!chatMode && uiMode === "assistant" && !!wsId}
                 />
               )}
               {modelId && (

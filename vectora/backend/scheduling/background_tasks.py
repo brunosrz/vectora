@@ -32,6 +32,12 @@ VALID_KINDS = {"routine", "heartbreak", "subagent"}
 #: ``cron_expr`` recorrente) — usado por ``schedule_subagent_task`` (WB-6).
 VALID_TRIGGERS = {"interval", "once", "webhook", "manual", "subagent"}
 
+#: Limite de tarefas agendadas (não-``manual``) por workspace — evita um
+#: workspace acumular centenas de tarefas `interval`/`webhook`/`once` sem
+#: controle. Tarefas `manual` (só disparam sob demanda, nunca autônomas)
+#: nunca contam pra essa quota.
+MAX_SCHEDULED_TASKS_PER_WORKSPACE = 50
+
 
 # ---------------------------------------------------------------------------
 # Modelo
@@ -143,6 +149,28 @@ def _validate(kind: str, trigger_type: str, trigger_config: dict[str, Any]) -> N
         )
 
 
+async def _check_quota(conn: Any, workspace_id: str | None, trigger_type: str) -> None:
+    """Levanta ValueError se o workspace já atingiu
+    ``MAX_SCHEDULED_TASKS_PER_WORKSPACE`` tarefas não-manuais. Sem
+    ``workspace_id`` (tarefas fora de um workspace) ou `trigger_type`
+    'manual', não há quota — só recorrência/webhook autônomos contam."""
+    if workspace_id is None or trigger_type == "manual":
+        return
+    cur = await conn.execute(
+        "SELECT COUNT(*) AS cnt FROM vectora_background_tasks "
+        "WHERE workspace_id = ? AND trigger_type != 'manual'",
+        (workspace_id,),
+    )
+    row = await cur.fetchone()
+    count = row["cnt"] if row else 0
+    if count >= MAX_SCHEDULED_TASKS_PER_WORKSPACE:
+        raise ValueError(
+            f"limite de {MAX_SCHEDULED_TASKS_PER_WORKSPACE} tarefas agendadas "
+            "por workspace atingido — pause ou remova tarefas existentes antes "
+            "de criar novas"
+        )
+
+
 def _next_run(cron_expr: str | None) -> str | None:
     if not cron_expr:
         return None
@@ -188,6 +216,7 @@ async def create_task(
 
     conn = await _get_db()
     try:
+        await _check_quota(conn, workspace_id, trigger_type)
         await conn.execute(
             """
             INSERT INTO vectora_background_tasks

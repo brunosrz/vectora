@@ -173,6 +173,75 @@ async def test_update_and_delete_roundtrip(db):
 
 
 # ---------------------------------------------------------------------------
+# Quota por workspace
+# ---------------------------------------------------------------------------
+
+
+async def test_quota_por_workspace_bloqueia_apos_o_limite_mas_nao_bloqueia_manual(
+    db, monkeypatch
+):
+    monkeypatch.setattr(bg, "MAX_SCHEDULED_TASKS_PER_WORKSPACE", 2)
+
+    await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="t1",
+        instruction="i",
+        trigger_type="interval",
+        trigger_config={"cron_expr": "0 9 * * *"},
+        workspace_id="ws-quota",
+    )
+    await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="t2",
+        instruction="i",
+        trigger_type="interval",
+        trigger_config={"cron_expr": "0 10 * * *"},
+        workspace_id="ws-quota",
+    )
+
+    with pytest.raises(ValueError, match="limite"):
+        await bg.create_task(
+            session_id="s",
+            user_id="u",
+            kind="routine",
+            name="t3",
+            instruction="i",
+            trigger_type="interval",
+            trigger_config={"cron_expr": "0 11 * * *"},
+            workspace_id="ws-quota",
+        )
+
+    # Erro/borda: 'manual' nunca conta pra quota, mesmo workspace já saturado.
+    manual = await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="t-manual",
+        instruction="i",
+        trigger_type="manual",
+        workspace_id="ws-quota",
+    )
+    assert manual.id
+
+    # Outro workspace não compete pela mesma quota.
+    other = await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="t-outro-ws",
+        instruction="i",
+        trigger_type="interval",
+        trigger_config={"cron_expr": "0 12 * * *"},
+        workspace_id="ws-outro",
+    )
+    assert other.id
+
+
+# ---------------------------------------------------------------------------
 # run_task — execução real do agente
 # ---------------------------------------------------------------------------
 

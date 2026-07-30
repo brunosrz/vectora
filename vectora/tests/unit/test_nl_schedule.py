@@ -210,3 +210,55 @@ def test_one_shot_numero_zero_ou_negativo_e_rejeitado():
 
 def test_one_shot_expressao_nao_relacionada_retorna_none():
     assert parse_one_shot_delay("quando der") is None
+
+
+# ---------------------------------------------------------------------------
+# i18n — inglês e espanhol (mesmos padrões, tentados em sequência com pt-BR)
+# ---------------------------------------------------------------------------
+
+
+def test_daily_em_ingles():
+    assert parse_natural_schedule("every day at 9am") == "0 9 * * *"
+    assert parse_natural_schedule("every day at 14:30") == "30 14 * * *"
+    assert parse_natural_schedule("every day at 2:30pm") == "30 14 * * *"
+
+
+def test_daily_em_espanhol():
+    assert parse_natural_schedule("todos los días a las 9h") == "0 9 * * *"
+    assert parse_natural_schedule("todos los dias a las 14:30") == "30 14 * * *"
+
+
+def test_weekly_em_ingles():
+    assert parse_natural_schedule("every monday at 2pm") == "0 14 * * 1"
+    assert parse_natural_schedule("every friday") == "0 9 * * 5"
+
+
+def test_weekly_em_espanhol():
+    assert parse_natural_schedule("todos los lunes a las 14h") == "0 14 * * 1"
+    assert parse_natural_schedule("todos los sábados") == "0 9 * * 6"
+    assert parse_natural_schedule("todos los sabados") == "0 9 * * 6"
+
+
+def test_interval_em_ingles():
+    assert parse_natural_schedule("every 15 minutes") == "*/15 * * * *"
+    assert parse_natural_schedule("every 2 hours") == "0 */2 * * *"
+
+
+def test_interval_em_espanhol():
+    assert parse_natural_schedule("cada 15 minutos") == "*/15 * * * *"
+    assert parse_natural_schedule("cada 2 horas") == "0 */2 * * *"
+
+
+def test_expressao_sem_match_em_nenhum_idioma_retorna_none():
+    assert parse_natural_schedule("please remind me later") is None
+    assert parse_natural_schedule("recuérdame más tarde") is None
+
+
+def test_one_shot_em_ingles():
+    result = parse_one_shot_delay("in 30 minutes")
+    assert result is not None
+
+
+def test_one_shot_em_espanhol():
+    result = parse_one_shot_delay("en 30 minutos")
+    assert result is not None

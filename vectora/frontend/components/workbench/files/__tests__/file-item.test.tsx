@@ -2,8 +2,8 @@
 /**
  * FileItem — comportamento de abertura de arquivo em modo IDE vs Assistente.
  *
- * Em ideMode=true: clique chama openDocked.
- * Em ideMode=false: clique chama openWindow (open).
+ * Em uiMode='ide': clique chama openDocked.
+ * Em uiMode='assistant': clique chama openWindow (open).
  */
 
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
@@ -12,7 +12,7 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 const mockOpenWindow = vi.fn();
 const mockOpenDocked = vi.fn();
 const mockTogglePinned = vi.fn();
-const mockSettings = { ideMode: false };
+const mockSettings = { uiMode: "assistant" };
 
 vi.mock("@/lib/stores/windows-store", () => ({
   useWindowsStore: (
@@ -69,8 +69,8 @@ const ENTRY = {
   size: 100,
 };
 
-function renderItem(ideMode = false) {
-  mockSettings.ideMode = ideMode;
+function renderItem(uiMode: "assistant" | "ide" | "kanban" = "assistant") {
+  mockSettings.uiMode = uiMode;
   render(
     <FileItem
       threadId="t1"
@@ -86,30 +86,30 @@ function renderItem(ideMode = false) {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  mockSettings.ideMode = false;
+  mockSettings.uiMode = "assistant";
 });
 
 beforeEach(() => {
-  mockSettings.ideMode = false;
+  mockSettings.uiMode = "assistant";
 });
 
 describe("FileItem — abertura em modo IDE vs Assistente", () => {
-  it("ideMode=false: clicar no arquivo chama openWindow", () => {
-    renderItem(false);
+  it("uiMode='assistant': clicar no arquivo chama openWindow", () => {
+    renderItem("assistant");
     fireEvent.click(screen.getByText("main.ts"));
     expect(mockOpenWindow).toHaveBeenCalledWith("ws1", "src/main.ts");
     expect(mockOpenDocked).not.toHaveBeenCalled();
   });
 
-  it("ideMode=true: clicar no arquivo chama openDocked", () => {
-    renderItem(true);
+  it("uiMode='ide': clicar no arquivo chama openDocked", () => {
+    renderItem("ide");
     fireEvent.click(screen.getByText("main.ts"));
     expect(mockOpenDocked).toHaveBeenCalledWith("ws1", "src/main.ts");
     expect(mockOpenWindow).not.toHaveBeenCalled();
   });
 
-  it("ideMode=false: openWindow recebe o workspaceId e path corretos", () => {
-    renderItem(false);
+  it("uiMode='assistant': openWindow recebe o workspaceId e path corretos", () => {
+    renderItem("assistant");
     fireEvent.click(screen.getByText("main.ts"));
     expect(mockOpenWindow).toHaveBeenCalledOnce();
     const [wsId, path] = mockOpenWindow.mock.calls[0];
@@ -117,8 +117,8 @@ describe("FileItem — abertura em modo IDE vs Assistente", () => {
     expect(path).toBe("src/main.ts");
   });
 
-  it("ideMode=true: openDocked recebe o workspaceId e path corretos", () => {
-    renderItem(true);
+  it("uiMode='ide': openDocked recebe o workspaceId e path corretos", () => {
+    renderItem("ide");
     fireEvent.click(screen.getByText("main.ts"));
     expect(mockOpenDocked).toHaveBeenCalledOnce();
     const [wsId, path] = mockOpenDocked.mock.calls[0];
@@ -127,12 +127,12 @@ describe("FileItem — abertura em modo IDE vs Assistente", () => {
   });
 
   it("renderiza o nome do arquivo no botão", () => {
-    renderItem(false);
+    renderItem("assistant");
     expect(screen.getByText("main.ts")).toBeInTheDocument();
   });
 
   it("renderiza com role=treeitem", () => {
-    renderItem(false);
+    renderItem("assistant");
     expect(document.querySelector("[role='treeitem']")).not.toBeNull();
   });
 });

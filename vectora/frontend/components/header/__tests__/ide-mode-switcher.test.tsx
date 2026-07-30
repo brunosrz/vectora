@@ -8,10 +8,10 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
-const mockSetIdeMode = vi.fn();
+const mockSetUiMode = vi.fn();
 const mockSettings = {
-  ideMode: false,
-  setIdeMode: mockSetIdeMode,
+  uiMode: "assistant",
+  setUiMode: mockSetUiMode,
 };
 
 vi.mock("@/lib/stores/settings-store", () => ({
@@ -28,11 +28,11 @@ import { IdeModeSwitch } from "../ide-mode-switcher";
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  mockSettings.ideMode = false;
+  mockSettings.uiMode = "assistant";
 });
 
 beforeEach(() => {
-  mockSettings.ideMode = false;
+  mockSettings.uiMode = "assistant";
 });
 
 describe("IdeModeSwitch — visibilidade", () => {
@@ -60,16 +60,16 @@ describe("IdeModeSwitch — visibilidade", () => {
 });
 
 describe("IdeModeSwitch — estado ativo", () => {
-  it("modo Assistente tem aria-pressed=true quando ideMode=false", () => {
-    mockSettings.ideMode = false;
+  it("modo Assistente tem aria-pressed=true quando uiMode='assistant'", () => {
+    mockSettings.uiMode = "assistant";
     render(<IdeModeSwitch show />);
     const [assistente, ide] = screen.getAllByRole("button");
     expect(assistente).toHaveAttribute("aria-pressed", "true");
     expect(ide).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("modo IDE tem aria-pressed=true quando ideMode=true", () => {
-    mockSettings.ideMode = true;
+  it("modo IDE tem aria-pressed=true quando uiMode='ide'", () => {
+    mockSettings.uiMode = "ide";
     render(<IdeModeSwitch show />);
     const [assistente, ide] = screen.getAllByRole("button");
     expect(assistente).toHaveAttribute("aria-pressed", "false");
@@ -78,33 +78,54 @@ describe("IdeModeSwitch — estado ativo", () => {
 });
 
 describe("IdeModeSwitch — interações", () => {
-  it("clicar IDE chama setIdeMode(true) quando ideMode=false", () => {
-    mockSettings.ideMode = false;
+  it("clicar IDE chama setUiMode('ide') quando uiMode='assistant'", () => {
+    mockSettings.uiMode = "assistant";
     render(<IdeModeSwitch show />);
     fireEvent.click(screen.getAllByRole("button")[1]);
-    expect(mockSetIdeMode).toHaveBeenCalledOnce();
-    expect(mockSetIdeMode).toHaveBeenCalledWith(true);
+    expect(mockSetUiMode).toHaveBeenCalledOnce();
+    expect(mockSetUiMode).toHaveBeenCalledWith("ide");
   });
 
-  it("clicar Assistente chama setIdeMode(false) quando ideMode=true", () => {
-    mockSettings.ideMode = true;
+  it("clicar Assistente chama setUiMode('assistant') quando uiMode='ide'", () => {
+    mockSettings.uiMode = "ide";
     render(<IdeModeSwitch show />);
     fireEvent.click(screen.getAllByRole("button")[0]);
-    expect(mockSetIdeMode).toHaveBeenCalledOnce();
-    expect(mockSetIdeMode).toHaveBeenCalledWith(false);
+    expect(mockSetUiMode).toHaveBeenCalledOnce();
+    expect(mockSetUiMode).toHaveBeenCalledWith("assistant");
   });
 
-  it("clicar no modo já ativo (IDE quando ideMode=true) não chama setIdeMode", () => {
-    mockSettings.ideMode = true;
+  it("clicar no modo já ativo (IDE quando uiMode='ide') não chama setUiMode", () => {
+    mockSettings.uiMode = "ide";
     render(<IdeModeSwitch show />);
     fireEvent.click(screen.getAllByRole("button")[1]);
-    expect(mockSetIdeMode).not.toHaveBeenCalled();
+    expect(mockSetUiMode).not.toHaveBeenCalled();
   });
 
-  it("clicar no modo já ativo (Assistente quando ideMode=false) não chama setIdeMode", () => {
-    mockSettings.ideMode = false;
+  it("clicar no modo já ativo (Assistente quando uiMode='assistant') não chama setUiMode", () => {
+    mockSettings.uiMode = "assistant";
     render(<IdeModeSwitch show />);
     fireEvent.click(screen.getAllByRole("button")[0]);
-    expect(mockSetIdeMode).not.toHaveBeenCalled();
+    expect(mockSetUiMode).not.toHaveBeenCalled();
+  });
+
+  it("uiMode='kanban': nenhum dos dois botões fica marcado como ativo", () => {
+    // O board Kanban é um terceiro modo — o seletor binário atual não o
+    // representa, então nem Assistente nem IDE devem aparecer pressionados
+    // (o seletor de 3 posições entra junto com o board).
+    mockSettings.uiMode = "kanban";
+    render(<IdeModeSwitch show />);
+    const [assistente, ide] = screen.getAllByRole("button");
+    expect(assistente).toHaveAttribute("aria-pressed", "false");
+    expect(ide).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("uiMode='kanban': clicar em IDE troca pra 'ide', nunca pra booleano", () => {
+    // Erro proposital coberto: um `setUiMode(true)` legado passaria no teste
+    // antigo de booleano — aqui o argumento errado falha explicitamente.
+    mockSettings.uiMode = "kanban";
+    render(<IdeModeSwitch show />);
+    fireEvent.click(screen.getAllByRole("button")[1]);
+    expect(mockSetUiMode).toHaveBeenCalledWith("ide");
+    expect(mockSetUiMode).not.toHaveBeenCalledWith(true);
   });
 });

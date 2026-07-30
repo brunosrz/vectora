@@ -20,8 +20,8 @@ import { m } from "@/lib/paraglide/messages";
 const mockSettings = {
   chatMode: false,
   setChatMode: vi.fn(),
-  ideMode: false,
-  setIdeMode: vi.fn(),
+  uiMode: "assistant",
+  setUiMode: vi.fn(),
   reasoningEffort: "medium" as const,
   showToolCalls: false,
   permissionMode: "ask" as const,
@@ -231,16 +231,16 @@ describe("ChatInput", () => {
     expect(sendButton().disabled).toBe(true);
   });
 
-  it("botão VS Code NÃO aparece em ideMode mesmo com workspace ativo", () => {
+  it("botão VS Code NÃO aparece no modo IDE mesmo com workspace ativo", () => {
     mockSettings.chatMode = false;
-    mockSettings.ideMode = true;
+    mockSettings.uiMode = "ide";
     mockWsState.getActive = () => ({ id: "ws1" }) as never;
     try {
       render(<ChatInput {...baseProps()} />);
       expect(screen.queryByLabelText(m.workbench_open_vscode())).toBeNull();
     } finally {
       mockWsState.getActive = () => null;
-      mockSettings.ideMode = false;
+      mockSettings.uiMode = "assistant";
     }
   });
 });

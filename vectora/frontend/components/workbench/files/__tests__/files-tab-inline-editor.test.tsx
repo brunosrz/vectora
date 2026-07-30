@@ -126,7 +126,7 @@ vi.mock("@/lib/stores/workspaces-store", () => ({
     }),
 }));
 
-const mockFilesTabSettings = { ideMode: false };
+const mockFilesTabSettings = { uiMode: "assistant" };
 
 vi.mock("@/lib/stores/settings-store", () => ({
   useSettingsStore: (sel: (s: typeof mockFilesTabSettings) => unknown) =>
@@ -194,12 +194,12 @@ async function renderFilesTab() {
 }
 
 afterEach(() => {
-  mockFilesTabSettings.ideMode = false;
+  mockFilesTabSettings.uiMode = "assistant";
 });
 
-describe("FilesTab — botão abrir como janela e ideMode", () => {
-  it("ideMode=false: botão 'abrir como janela' está no DOM quando há arquivo aberto", async () => {
-    mockFilesTabSettings.ideMode = false;
+describe("FilesTab — botão abrir como janela por modo de interface", () => {
+  it("uiMode='assistant': botão 'abrir como janela' está no DOM quando há arquivo aberto", async () => {
+    mockFilesTabSettings.uiMode = "assistant";
     await act(async () => {
       await renderFilesTab();
     });
@@ -207,8 +207,8 @@ describe("FilesTab — botão abrir como janela e ideMode", () => {
     expect(btn).not.toBeNull();
   });
 
-  it("ideMode=true: botão 'abrir como janela' não está no DOM", async () => {
-    mockFilesTabSettings.ideMode = true;
+  it("uiMode='ide': botão 'abrir como janela' não está no DOM", async () => {
+    mockFilesTabSettings.uiMode = "ide";
     await act(async () => {
       await renderFilesTab();
     });

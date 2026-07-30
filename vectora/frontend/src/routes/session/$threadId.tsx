@@ -122,7 +122,7 @@ function SessionPage() {
   const sidebarOnRight = sidebarPosition === "right";
   const chatMode = useSettingsStore((s) => s.chatMode);
   const setChatMode = useSettingsStore((s) => s.setChatMode);
-  const ideMode = useSettingsStore((s) => s.ideMode);
+  const uiMode = useSettingsStore((s) => s.uiMode);
   const chatSidebarWidth = useSettingsStore((s) => s.chatSidebarWidth);
   const setChatSidebarWidth = useSettingsStore((s) => s.setChatSidebarWidth);
   // Modelo do chat — lido do store persistido (sobrevive a restart/reload).
@@ -578,7 +578,7 @@ function SessionPage() {
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
       <AnimatePresence mode="wait" initial={false}>
-        {ideMode && !chatMode ? (
+        {uiMode === "ide" && !chatMode ? (
           // ── Layout IDE: sidebars ao topo, Header só acima do DockedEditor ──
           <motion.div
             key="ide"

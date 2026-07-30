@@ -40,7 +40,7 @@ export function FileItem({
   const openPath = useWorkbenchStore((s) => s.getFiles(workspaceId).openPath);
   const openWindow = useWindowsStore((s) => s.open);
   const openDocked = useWindowsStore((s) => s.openDocked);
-  const ideMode = useSettingsStore((s) => s.ideMode);
+  const uiMode = useSettingsStore((s) => s.uiMode);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(entry.name);
 
@@ -89,10 +89,13 @@ export function FileItem({
       ) : (
         <button
           onClick={() => {
-            if (ideMode) {
-              openDocked(workspaceId, entry.path);
-            } else {
+            // Janela flutuante só onde o `WindowLayer` monta (modo Assistente);
+            // nos demais modos o arquivo abre docked, senão abriria uma janela
+            // que nada renderiza.
+            if (uiMode === "assistant") {
               openWindow(workspaceId, entry.path);
+            } else {
+              openDocked(workspaceId, entry.path);
             }
             void fetch(
               `/workspaces/${encodeURIComponent(workspaceId)}/context/active`,

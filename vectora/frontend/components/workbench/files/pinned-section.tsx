@@ -23,7 +23,7 @@ export function PinnedSection({
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
   const openWindow = useWindowsStore((s) => s.open);
   const openDocked = useWindowsStore((s) => s.openDocked);
-  const ideMode = useSettingsStore((s) => s.ideMode);
+  const uiMode = useSettingsStore((s) => s.uiMode);
 
   if (pinned.length === 0) return null;
 
@@ -42,9 +42,9 @@ export function PinnedSection({
             <Pin className="w-3 h-3 shrink-0 text-primary" />
             <button
               onClick={() =>
-                ideMode
-                  ? openDocked(workspaceId, path)
-                  : openWindow(workspaceId, path)
+                uiMode === "assistant"
+                  ? openWindow(workspaceId, path)
+                  : openDocked(workspaceId, path)
               }
               className="flex-1 text-left truncate text-foreground/80 hover:text-foreground"
               title={path}

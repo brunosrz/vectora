@@ -28,6 +28,11 @@ export type PermissionMode =
   "ask" | "accept_edits" | "plan" | "auto" | "bypass";
 /** Nível de esforço de raciocínio do modelo (R4). */
 export type ReasoningEffort = "low" | "medium" | "high" | "max";
+/** Modo de interface dentro do Dev (chatMode=false): "assistant" é o layout
+ *  padrão de chat+workbench; "ide" é o layout VS Code com editor docked;
+ *  "kanban" é o board multi-agente (atrás da flag `enable_kanban_mode`,
+ *  só visível com VECTORA_DEV=1 — ver `use-feature-flags.ts`). */
+export type UiMode = "assistant" | "ide" | "kanban";
 
 /** Modos de permissão em ordem de exibição no seletor (R2). */
 export const PERMISSION_MODES: PermissionMode[] = [
@@ -91,8 +96,8 @@ export interface SettingsState {
   sidebarPosition: SidebarPosition;
   /** Modo chat puro: oculta workbench, WorkspaceSelector e tools de filesystem. */
   chatMode: boolean;
-  /** Sub-modo IDE dentro do Dev: layout VS Code com editor docked. */
-  ideMode: boolean;
+  /** Sub-modo de interface dentro do Dev (ver `UiMode`). */
+  uiMode: UiMode;
   /** Largura do painel de chat lateral no modo IDE (px). */
   chatSidebarWidth: number;
   /** Modelo ativo do chat ("provider:model") — persistido para sobreviver a
@@ -126,7 +131,7 @@ export interface SettingsState {
   setSidebarWidth: (v: number) => void;
   setSidebarPosition: (v: SidebarPosition) => void;
   setChatMode: (v: boolean) => void;
-  setIdeMode: (v: boolean) => void;
+  setUiMode: (v: UiMode) => void;
   setChatSidebarWidth: (v: number) => void;
   setSelectedModel: (v: string) => void;
   setAutoUpdateEnabled: (v: boolean) => void;
@@ -192,7 +197,7 @@ const DEFAULTS = {
   sidebarWidth: 224,
   sidebarPosition: "left" as SidebarPosition,
   chatMode: false,
-  ideMode: true,
+  uiMode: "ide" as UiMode,
   chatSidebarWidth: 256,
   selectedModel: getDefaultModel(),
   autoUpdateEnabled: true,
@@ -269,7 +274,7 @@ export const useSettingsStore = create<SettingsState>()(
         set({ chatMode: v });
         void pushPrefs({ chatMode: v });
       },
-      setIdeMode: (v) => set({ ideMode: v }),
+      setUiMode: (v) => set({ uiMode: v }),
       setChatSidebarWidth: (v) =>
         set({ chatSidebarWidth: Math.max(240, Math.min(800, Math.round(v))) }),
       setSelectedModel: (v) => {
@@ -328,7 +333,7 @@ export const useSettingsStore = create<SettingsState>()(
         reasoningEffort: state.reasoningEffort,
         sidebarWidth: state.sidebarWidth,
         chatMode: state.chatMode,
-        ideMode: state.ideMode,
+        uiMode: state.uiMode,
         chatSidebarWidth: state.chatSidebarWidth,
         selectedModel: state.selectedModel,
         autoUpdateEnabled: state.autoUpdateEnabled,
