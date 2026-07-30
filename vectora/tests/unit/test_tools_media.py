@@ -1,0 +1,211 @@
+"""Tools de mídia — geração de imagem e voz pelo provider ativo.
+
+Invariante central coberto aqui: a tool **nunca** troca de provider por
+conta própria. Se o modelo escolhido não gera imagem, o certo é avisar —
+gerar em outro lugar chamaria (e cobraria) uma API que o usuário não pediu.
+Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+"""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+from langchain_core.runnables import RunnableConfig
+
+from backend.settings import provider_supports
+from backend.tools import media
+
+
+def _cfg(model: str) -> RunnableConfig:
+    return {"configurable": {"model": model, "thread_id": "t-media"}}
+
+
+# ---------------------------------------------------------------------------
+# provider_supports — matriz de capacidades
+# ---------------------------------------------------------------------------
+
+
+def test_provider_supports_resolve_capacidade_por_provider_fixo():
+    # Happy: providers que fazem imagem/voz de verdade.
+    assert provider_supports("openai", "image") is True
+    assert provider_supports("google-genai", "tts") is True
+    assert provider_supports("cohere", "reranker") is True
+
+    # Erro/borda: provider que NÃO faz — precisa dar False, senão a tool
+    # tentaria chamar um SDK que não tem esse endpoint.
+    assert provider_supports("anthropic", "image") is False
+    assert provider_supports("cohere", "image") is False
+    assert provider_supports("provider-que-nao-existe", "image") is False
+
+
+def test_provider_supports_gateway_depende_do_modelo_configurado(monkeypatch):
+    from backend.settings import settings
+
+    # Erro/borda primeiro: sem modelo configurado a capacidade não existe.
+    monkeypatch.setattr(settings, "ollama_image_model", None, raising=False)
+    assert provider_supports("ollama", "image") is False
+
+    # Happy: com modelo escolhido pelo usuário, passa a existir.
+    monkeypatch.setattr(settings, "ollama_image_model", "algum-modelo", raising=False)
+    assert provider_supports("ollama", "image") is True
+
+    # Borda: string vazia conta como não configurado (não como "existe").
+    monkeypatch.setattr(settings, "openrouter_tts_model", "", raising=False)
+    assert provider_supports("openrouter", "tts") is False
+
+
+# ---------------------------------------------------------------------------
+# generate_image
+# ---------------------------------------------------------------------------
+
+
+def test_generate_image_provider_sem_suporte_avisa_e_nao_chama_sdk(monkeypatch):
+    chamou = {"sdk": False}
+
+    def _nunca(*_a, **_k):
+        chamou["sdk"] = True
+        raise AssertionError("SDK não deveria ser chamado")
+
+    monkeypatch.setattr(media, "_generate_image_bytes", _nunca)
+
+    out = json.loads(
+        media.generate_image.invoke({"prompt": "um gato"}, _cfg("cohere:command-r"))
+    )
+
+    assert "error" in out
+    assert "não suporta" in out["error"]
+    # O ponto do teste: falhou ANTES de tocar em qualquer SDK — nunca
+    # tentou gerar em outro provider pra "resolver" sozinho.
+    assert chamou["sdk"] is False
+
+
+def test_generate_image_happy_path_persiste_arquivo(monkeypatch, tmp_path):
+    monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
+    monkeypatch.setattr(media, "_generate_image_bytes", lambda *_a: b"\x89PNG-fake")
+
+    out = json.loads(
+        media.generate_image.invoke({"prompt": "um gato"}, _cfg("openai:gpt-5"))
+    )
+
+    assert "error" not in out
+    assert out["provider"] == "openai"
+    assert out["bytes"] == len(b"\x89PNG-fake")
+    from pathlib import Path
+
+    assert Path(out["path"]).read_bytes() == b"\x89PNG-fake"
+
+
+def test_generate_image_prompt_vazio_e_sdk_quebrado_viram_erro_tipado(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
+
+    # Erro/borda 1: prompt vazio nunca chega no SDK.
+    vazio = json.loads(
+        media.generate_image.invoke({"prompt": "   "}, _cfg("openai:gpt-5"))
+    )
+    assert "error" in vazio
+
+    # Erro/borda 2: SDK explodindo vira string de erro, não exceção
+    # propagada (CLAUDE.md regra 11 — falha de tool não derruba o grafo).
+    def _explode(*_a):
+        raise RuntimeError("cota estourada")
+
+    monkeypatch.setattr(media, "_generate_image_bytes", _explode)
+    quebrado = json.loads(
+        media.generate_image.invoke({"prompt": "um gato"}, _cfg("openai:gpt-5"))
+    )
+    assert "error" in quebrado
+    assert "cota estourada" in quebrado["error"]
+
+    # Erro/borda 3: provider devolvendo vazio não grava arquivo de 0 byte.
+    monkeypatch.setattr(media, "_generate_image_bytes", lambda *_a: b"")
+    vazio_sdk = json.loads(
+        media.generate_image.invoke({"prompt": "um gato"}, _cfg("openai:gpt-5"))
+    )
+    assert "error" in vazio_sdk
+
+
+# ---------------------------------------------------------------------------
+# text_to_speech
+# ---------------------------------------------------------------------------
+
+
+def test_text_to_speech_sem_suporte_avisa_com_suporte_persiste(monkeypatch, tmp_path):
+    monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
+
+    # Erro/borda: Anthropic não sintetiza voz.
+    negado = json.loads(
+        media.text_to_speech.invoke({"text": "olá"}, _cfg("anthropic:claude"))
+    )
+    assert "error" in negado
+
+    # Happy: OpenAI sintetiza.
+    monkeypatch.setattr(media, "_synthesize_speech_bytes", lambda *_a: b"ID3-fake")
+    ok = json.loads(media.text_to_speech.invoke({"text": "olá"}, _cfg("openai:gpt-5")))
+    assert "error" not in ok
+    assert ok["bytes"] == len(b"ID3-fake")
+
+
+def test_text_to_speech_texto_vazio_e_audio_vazio_sao_rejeitados(monkeypatch, tmp_path):
+    monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
+
+    vazio = json.loads(
+        media.text_to_speech.invoke({"text": "  "}, _cfg("openai:gpt-5"))
+    )
+    assert "error" in vazio
+
+    monkeypatch.setattr(media, "_synthesize_speech_bytes", lambda *_a: b"")
+    sem_audio = json.loads(
+        media.text_to_speech.invoke({"text": "olá"}, _cfg("openai:gpt-5"))
+    )
+    assert "error" in sem_audio
+
+
+# ---------------------------------------------------------------------------
+# Resolução de provider
+# ---------------------------------------------------------------------------
+
+
+def test_provider_vem_do_config_da_sessao_nao_do_global(monkeypatch):
+    """A sessão pode ter trocado de modelo em runtime — vale o que está no
+    config daquela conversa, não a preferência global."""
+
+    class _Global:
+        active_provider = "cohere"
+
+    monkeypatch.setattr(
+        "backend.workspace.runtime_settings.runtime_settings", _Global()
+    )
+
+    # Happy: config manda.
+    assert media._active_provider(_cfg("openai:gpt-5")) == "openai"
+
+    # Erro/borda: sem config (ou sem modelo no config) cai no global —
+    # nunca retorna vazio silenciosamente quando há um provider ativo.
+    assert media._active_provider(None) == "cohere"
+    assert media._active_provider({"configurable": {}}) == "cohere"
+
+
+@pytest.mark.parametrize("capability", ["image", "tts"])
+def test_nenhuma_tool_de_midia_troca_de_provider_sozinha(capability, monkeypatch):
+    """Regressão explícita do invariante do sprint: mesmo com outro provider
+    perfeitamente capaz configurado, a tool recusa em vez de desviar."""
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "ollama_image_model", "modelo-capaz", raising=False)
+    monkeypatch.setattr(settings, "ollama_tts_model", "modelo-capaz", raising=False)
+
+    tool = media.generate_image if capability == "image" else media.text_to_speech
+    payload = {"prompt": "x"} if capability == "image" else {"text": "x"}
+
+    out = json.loads(tool.invoke({**payload}, _cfg("anthropic:claude")))
+
+    assert "error" in out
+    # Recusou em vez de desviar: nenhum arquivo foi gerado e nenhum outro
+    # provider aparece como tendo atendido a chamada. (A mensagem *cita*
+    # Ollama como sugestão de configuração — isso é orientação pro usuário,
+    # não sinal de que a tool gerou lá por conta própria.)
+    assert "path" not in out
+    assert out.get("provider") is None

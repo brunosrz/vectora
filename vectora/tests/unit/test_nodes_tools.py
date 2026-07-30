@@ -68,7 +68,15 @@ def test_search_memory_registered():
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas — atualize ao
     # adicionar/remover tool em backend/nodes/tools.py.
-    assert len(ALL_TOOLS) == 135
+    assert len(ALL_TOOLS) == 137
+
+
+def test_media_tools_registered():
+    # Geração de imagem/voz pelo provider ativo — sem elas o agente não tem
+    # como atender "gere uma imagem" nem "leia isso em voz alta".
+    names = [t.name for t in ALL_TOOLS]
+    assert "generate_image" in names
+    assert "text_to_speech" in names
 
 
 def test_background_task_tools_registered():

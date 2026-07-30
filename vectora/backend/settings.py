@@ -350,6 +350,22 @@ class Settings(BaseSettings):
     """Modelo de embedding via OpenRouter (ex.: "qwen/qwen3-embedding-0.6b").
     None desabilita embeddings via OpenRouter, mesmo com key configurada."""
 
+    # Ollama/OpenRouter são gateways pra qualquer modelo: a capacidade não
+    # vem do provider, vem do modelo que o usuário escolheu pra ela. Mesma
+    # regra do embedding acima — None significa "essa capacidade não existe
+    # aqui", e a tool avisa em vez de adivinhar qual modelo instalado serve.
+    ollama_image_model: str | None = None
+    """Modelo de geração de imagem no host Ollama. None desabilita."""
+
+    ollama_tts_model: str | None = None
+    """Modelo de texto-pra-voz no host Ollama. None desabilita."""
+
+    openrouter_image_model: str | None = None
+    """Modelo de geração de imagem via OpenRouter. None desabilita."""
+
+    openrouter_tts_model: str | None = None
+    """Modelo de texto-pra-voz via OpenRouter. None desabilita."""
+
     embedding_queue_enabled: bool = True
     """Enable asynchronous embedding queue processing."""
 
@@ -1047,6 +1063,45 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
 # cedo, com um erro claro, em vez de deixar a API do provider estourar com
 # uma mensagem crua (ex.: Cohere "image content is not supported").
 VISION_CAPABLE_PROVIDERS: set[str] = {"google-genai", "openai", "anthropic"}
+
+# Capacidades multimodais por provider, além do chat (`llm`) e da visão já
+# coberta acima. Usado pelas tools de mídia (`backend/tools/media.py`) para
+# recusar cedo, com erro claro, o que o provider selecionado não faz — nunca
+# trocar de provider por conta própria: o usuário escolheu aquele modelo, se
+# ele não gera imagem o certo é avisar, não gerar em outro lugar e cobrar
+# uma API que ele não pediu.
+#
+# Ollama/OpenRouter ficam de fora do dicionário de propósito: são gateways
+# pra qualquer modelo, então a capacidade depende do que o usuário
+# configurou (`ollama_image_model` etc.), não do provider em si — ver
+# `provider_supports`.
+PROVIDER_CAPABILITIES: dict[str, set[str]] = {
+    "google-genai": {"llm", "vision", "image", "tts", "embedding"},
+    "openai": {"llm", "vision", "image", "tts", "embedding"},
+    "anthropic": {"llm", "vision"},
+    "cohere": {"llm", "embedding", "reranker"},
+}
+
+#: Providers-gateway: capacidade resolvida pelo modelo configurado, não por
+#: uma lista fixa (ver `provider_supports`).
+_GATEWAY_PROVIDERS: frozenset[str] = frozenset({"ollama", "openrouter"})
+
+
+def provider_supports(provider: str, capability: str) -> bool:
+    """True se `provider` atende `capability` ("image"/"tts"/"embedding"/...).
+
+    Pra Ollama/OpenRouter a resposta depende de o usuário ter escolhido um
+    modelo pra essa capacidade — sem modelo configurado a capacidade
+    simplesmente não existe ali, e a tool avisa em vez de tentar adivinhar
+    qual dos modelos instalados serviria.
+    """
+    if provider in _GATEWAY_PROVIDERS:
+        from backend.settings import settings as _settings
+
+        configured = getattr(_settings, f"{provider}_{capability}_model", None)
+        return bool(configured)
+    return capability in PROVIDER_CAPABILITIES.get(provider, set())
+
 
 # Modelos que rejeitam REPLAY de tool_calls no histórico da conversa — não é
 # sobre suportar bind_tools na primeira chamada, é sobre reprocessar um turno
