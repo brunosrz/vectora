@@ -1248,5 +1248,9 @@
   "workbench_browser_open_server": "Abrir",
   "workbench_memory_journey_title": "O que aprendi sobre você",
   "workbench_memory_journey_empty": "Ainda não aprendi nada sobre você — continue conversando.",
-  "workbench_memory_journey_skill_label": "Skill aprendida: {name}"
+  "workbench_memory_journey_skill_label": "Skill aprendida: {name}",
+  "prefs_timezone_section": "Fuso horário",
+  "prefs_timezone_hint": "Usado pelos agendamentos: \"toda segunda às 9h\" significa 9h neste fuso.",
+  "prefs_timezone_placeholder": "Fuso do sistema",
+  "prefs_timezone_error": "Não foi possível salvar o fuso horário."
 }

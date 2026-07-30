@@ -589,6 +589,55 @@ async def patch_fallback_order(request: Request, body: FallbackOrderBody) -> dic
     return {"status": "updated", "fallback_order": runtime_settings.fallback_order}
 
 
+class TimezoneBody(BaseModel):
+    timezone: str = ""
+
+
+@router.get("/timezone")
+async def get_timezone(request: Request) -> dict:
+    """Timezone IANA do usuário + a lista de zonas válidas para o seletor.
+
+    A lista sai de `zoneinfo.available_timezones()` (stdlib, ~600 entradas) em
+    vez de uma cópia estática no frontend — copiar a lista significaria ela
+    divergir da que o backend aceita, e o usuário só descobriria ao salvar.
+    """
+    require_admin(_get_user(request))
+    from zoneinfo import available_timezones
+
+    from backend.workspace.runtime_settings import runtime_settings
+
+    return {
+        "timezone": runtime_settings.user_timezone,
+        "available": sorted(available_timezones()),
+    }
+
+
+@router.patch("/timezone")
+async def patch_timezone(request: Request, body: TimezoneBody) -> dict:
+    """Define o timezone do usuário.
+
+    Timezone inválido é rejeitado com 422 em vez de aceito e degradado: aqui o
+    usuário escolheu explicitamente, então salvar outra coisa faria os
+    agendamentos dispararem num fuso que ele não pediu, sem aviso.
+    """
+    require_admin(_get_user(request))
+    from zoneinfo import ZoneInfo
+
+    from backend.workspace.runtime_settings import runtime_settings
+
+    clean = body.timezone.strip()
+    if clean:
+        try:
+            ZoneInfo(clean)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=422, detail=f"timezone inválido: {clean!r}"
+            ) from exc
+
+    runtime_settings.set_user_timezone(clean)
+    return {"status": "updated", "timezone": runtime_settings.user_timezone}
+
+
 # ---------------------------------------------------------------------------
 # F.3.3 — Pastas Seguras (SafeRoot)
 # ---------------------------------------------------------------------------

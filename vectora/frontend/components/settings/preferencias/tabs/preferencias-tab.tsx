@@ -271,6 +271,77 @@ function AutoUpdateSection({
   );
 }
 
+/** Fuso horário do usuário — o scheduler já usava `user_timezone` para
+ * converter "toda segunda às 9h" no UTC de armazenamento; sem este seletor a
+ * config só existia por API e "9h" virava 9h UTC pra todo mundo. */
+function TimezoneSection() {
+  const [timezone, setTimezone] = useState("");
+  const [available, setAvailable] = useState<string[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await fetch("/admin/timezone");
+        if (!res.ok || !alive) return;
+        const data = (await res.json()) as {
+          timezone?: string;
+          available?: string[];
+        };
+        if (!alive) return;
+        setTimezone(data.timezone ?? "");
+        setAvailable(Array.isArray(data.available) ? data.available : []);
+      } catch {
+        if (alive) setAvailable([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function handleChange(next: string) {
+    setError("");
+    const previous = timezone;
+    setTimezone(next);
+    try {
+      const res = await fetch("/admin/timezone", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timezone: next }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+    } catch {
+      // Reverte a seleção: deixar o valor novo na tela sugeriria que salvou.
+      setTimezone(previous);
+      setError(m.prefs_timezone_error());
+    }
+  }
+
+  if (available.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <Label htmlFor="timezone">{m.prefs_timezone_section()}</Label>
+      <p className="text-xs text-muted-foreground">{m.prefs_timezone_hint()}</p>
+      <Select value={timezone} onValueChange={(v) => void handleChange(v)}>
+        <SelectTrigger id="timezone" className="w-[280px]">
+          <SelectValue placeholder={m.prefs_timezone_placeholder()} />
+        </SelectTrigger>
+        <SelectContent className="max-h-[300px]">
+          {available.map((tz) => (
+            <SelectItem key={tz} value={tz}>
+              {tz}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 /** Aparência — 4 escalas de fonte independentes (UI, chat, markdown, Monaco).
  * Cada uma aplicada só na superfície correspondente (ver __root.tsx e
  * markdown-view.tsx/message-item.tsx/file-editor.tsx). */
@@ -685,6 +756,9 @@ export function PreferenciasTab() {
         autoUpdateEnabled={autoUpdateEnabled}
         setAutoUpdateEnabled={setAutoUpdateEnabled}
       />
+
+      {/* Fuso horário usado pelos agendamentos */}
+      <TimezoneSection />
 
       {/* Ordem de fallback de modelos LLM */}
       <FallbackOrderSection />

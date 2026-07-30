@@ -412,3 +412,79 @@ class TestToggleToolGlobal:
         with pytest.raises(HTTPException) as exc:
             await toggle_tool(request, ALL_TOOLS[0].name, ToolToggleBody(enabled=False))
         assert exc.value.status_code == 403
+
+
+class TestTimezoneEndpoint:
+    """Timezone do usuário — o backend já usava `user_timezone` no scheduler,
+    mas só dava pra configurar por API interna; sem estes endpoints a UI não
+    tem como expor o campo."""
+
+    def test_rotas_registradas(self):
+        from backend.api.handlers.admin import router
+
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+        assert any("timezone" in p for p in paths)
+
+    @pytest.mark.asyncio
+    async def test_salva_timezone_valido_e_rejeita_invalido(self, monkeypatch):
+        from fastapi import HTTPException
+
+        from backend.api.handlers import admin
+        from backend.workspace.runtime_settings import runtime_settings
+
+        gravados: list[str] = []
+        monkeypatch.setattr(admin, "require_admin", lambda _u: None)
+        monkeypatch.setattr(
+            runtime_settings, "set_user_timezone", lambda tz: gravados.append(tz)
+        )
+        monkeypatch.setattr(
+            type(runtime_settings),
+            "user_timezone",
+            property(lambda _s: gravados[-1] if gravados else ""),
+        )
+
+        class _Req:
+            state = type("S", (), {"user": object()})()
+
+        # Happy: zona IANA real é aceita e persistida.
+        out = await admin.patch_timezone(
+            _Req(),  # ty: ignore[invalid-argument-type]
+            admin.TimezoneBody(timezone="America/Sao_Paulo"),
+        )
+        assert out["timezone"] == "America/Sao_Paulo"
+        assert gravados == ["America/Sao_Paulo"]
+
+        # Erro/borda: zona inventada é REJEITADA com 422 em vez de aceita e
+        # degradada — salvar outra coisa faria os agendamentos dispararem num
+        # fuso que o usuário não pediu, sem aviso nenhum.
+        with pytest.raises(HTTPException) as exc:
+            await admin.patch_timezone(
+                _Req(),  # ty: ignore[invalid-argument-type]
+                admin.TimezoneBody(timezone="Marte/Olympus"),
+            )
+        assert exc.value.status_code == 422
+        assert gravados == ["America/Sao_Paulo"], "gravou apesar de inválido"
+
+        # Borda: string vazia é válida (volta ao fuso local do SO).
+        await admin.patch_timezone(
+            _Req(),  # ty: ignore[invalid-argument-type]
+            admin.TimezoneBody(timezone="  "),
+        )
+        assert gravados[-1] == ""
+
+    @pytest.mark.asyncio
+    async def test_get_devolve_lista_de_zonas_para_o_seletor(self, monkeypatch):
+        from backend.api.handlers import admin
+
+        monkeypatch.setattr(admin, "require_admin", lambda _u: None)
+
+        class _Req:
+            state = type("S", (), {"user": object()})()
+
+        out = await admin.get_timezone(_Req())  # ty: ignore[invalid-argument-type]
+
+        # A lista vem do zoneinfo do próprio backend — copiá-la no frontend
+        # faria a UI divergir do que o backend aceita.
+        assert "America/Sao_Paulo" in out["available"]
+        assert "UTC" in out["available"]
+        assert len(out["available"]) > 100

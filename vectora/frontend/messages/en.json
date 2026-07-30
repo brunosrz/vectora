@@ -1248,5 +1248,9 @@
   "workbench_browser_open_server": "Open",
   "workbench_memory_journey_title": "What I've learned about you",
   "workbench_memory_journey_empty": "I haven't learned anything about you yet — keep chatting.",
-  "workbench_memory_journey_skill_label": "Learned skill: {name}"
+  "workbench_memory_journey_skill_label": "Learned skill: {name}",
+  "prefs_timezone_section": "Time zone",
+  "prefs_timezone_hint": "Used by schedules: \"every Monday at 9am\" means 9am in this zone.",
+  "prefs_timezone_placeholder": "System time zone",
+  "prefs_timezone_error": "Could not save the time zone."
 }
