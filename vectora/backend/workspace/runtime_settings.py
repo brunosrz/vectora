@@ -312,6 +312,31 @@ class RuntimeSettings:
         self.set("language", language if language in _VALID_LANGUAGES else "en")
 
     @property
+    def user_timezone(self) -> str:
+        """Timezone IANA do usuário (ex.: "America/Sao_Paulo") pro
+        agendamento. Vazio = usar o fuso local do SO — sem isso "toda
+        segunda às 9h" viraria 9h UTC, um horário diferente do que o
+        usuário digitou em qualquer fuso que não o de Greenwich.
+        """
+        return str(self.get("user_timezone", ""))
+
+    def set_user_timezone(self, tz_name: str) -> None:
+        """Define o timezone IANA e persiste. String inválida é rejeitada
+        (mantém o valor anterior) — um fuso inexistente gravado silenciosamente
+        faria todo agendamento futuro cair no fallback sem o usuário saber.
+        """
+        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+        clean = tz_name.strip()
+        if clean:
+            try:
+                ZoneInfo(clean)
+            except (ZoneInfoNotFoundError, ValueError):
+                logger.warning("runtime_settings: timezone inválido %r ignorado", clean)
+                return
+        self.set("user_timezone", clean)
+
+    @property
     def fallback_order(self) -> list[str]:
         """Ordem de fallback de providers LLM (lista de 'provider:model')."""
         val = self.get("llm_fallback_order", [])

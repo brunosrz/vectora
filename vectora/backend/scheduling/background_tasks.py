@@ -19,9 +19,10 @@ import contextlib
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, tzinfo
 from typing import Any
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from croniter import croniter
 
@@ -37,6 +38,12 @@ VALID_TRIGGERS = {"interval", "once", "webhook", "manual", "subagent"}
 #: controle. Tarefas `manual` (só disparam sob demanda, nunca autônomas)
 #: nunca contam pra essa quota.
 MAX_SCHEDULED_TASKS_PER_WORKSPACE = 50
+
+#: Tolerância pra disparo atrasado de tarefa recorrente. Além disso, o
+#: disparo é pulado e a tarefa reagenda pro próximo horário — evita que
+#: voltar de um downtime longo dispare de uma vez tudo que "venceu"
+#: enquanto o processo estava parado.
+CATCH_UP_GRACE = timedelta(minutes=10)
 
 
 # ---------------------------------------------------------------------------
@@ -171,11 +178,42 @@ async def _check_quota(conn: Any, workspace_id: str | None, trigger_type: str) -
         )
 
 
+def _user_tzinfo() -> tzinfo:
+    """Fuso configurado pelo usuário, ou o local do SO como fallback.
+
+    Timezone inválido/indisponível degrada pro local com aviso (nunca
+    lança) — um agendamento no fuso errado é melhor que o backend não
+    subir, e o aviso deixa o problema visível no log.
+    """
+    try:
+        from backend.workspace.runtime_settings import runtime_settings
+
+        tz_name = runtime_settings.user_timezone
+    except Exception:
+        tz_name = ""
+    if tz_name:
+        try:
+            return ZoneInfo(tz_name)
+        except Exception:
+            logger.warning(
+                "background_tasks: timezone %r indisponível — usando local", tz_name
+            )
+    return datetime.now().astimezone().tzinfo or UTC
+
+
 def _next_run(cron_expr: str | None) -> str | None:
+    """Próximo disparo em UTC (formato de armazenamento) a partir do cron.
+
+    O cron é interpretado no fuso do usuário — "0 9 * * 1" significa 9h da
+    manhã pra quem escreveu, não 9h UTC. O retorno é sempre convertido pra
+    UTC porque é o que `_list_due_interval_tasks` compara.
+    """
     if not cron_expr:
         return None
     try:
-        return croniter(cron_expr, datetime.now(UTC)).get_next(datetime).isoformat()
+        now_local = datetime.now(_user_tzinfo())
+        nxt = croniter(cron_expr, now_local).get_next(datetime)
+        return nxt.astimezone(UTC).isoformat()
     except Exception:
         logger.exception("background_tasks: cron inválido %r", cron_expr)
         return None
@@ -596,9 +634,17 @@ def _emit_run_event(
 
 async def _worktree_workspace_id(workspace_id: str, task_id: str) -> str:
     """Cria (ou reusa) um worktree isolado para a task e devolve o id do
-    workspace efêmero apontando pra ele — mesma proteção contra
-    concorrência que a delegação síncrona de `coder` já tem via
-    `create_task_worktree` (WB-6)."""
+    workspace efêmero apontando pra ele.
+
+    Só tarefas em segundo plano passam por aqui. A delegação síncrona
+    (``task()`` no meio de um turno do orchestrator) roda no workspace
+    principal de propósito: ali o agente troca de persona pra um
+    especialista dentro do mesmo turno, não é trabalho paralelo — isolar
+    criaria um worktree por chamada e as edições ficariam invisíveis pro
+    usuário, que está vendo o workspace principal. Paralelismo real, com
+    duas runs mexendo em arquivo ao mesmo tempo, só acontece em segundo
+    plano — é aqui que o isolamento é necessário.
+    """
     from backend.scheduling.delegate import create_task_worktree
     from backend.workspace.workspace import workspace_registry
 
@@ -929,6 +975,23 @@ async def _list_due_interval_tasks() -> list[BackgroundTask]:
     return [_row_to_task(r) for r in rows]
 
 
+def _is_stale(next_run_at: str | None, now: datetime) -> bool:
+    """True se o disparo agendado ficou pra trás além da janela de tolerância.
+
+    Timestamp ausente/ilegível nunca é considerado atrasado — na dúvida
+    executa, é melhor um disparo a mais que engolir a tarefa em silêncio.
+    """
+    if not next_run_at:
+        return False
+    try:
+        scheduled = datetime.fromisoformat(next_run_at)
+    except ValueError:
+        return False
+    if scheduled.tzinfo is None:
+        scheduled = scheduled.replace(tzinfo=UTC)
+    return scheduled < now - CATCH_UP_GRACE
+
+
 async def _set_next_run(task_id: str, next_run: str | None) -> None:
     conn = await _get_db()
     try:
@@ -980,8 +1043,26 @@ class BackgroundScheduler:
 
         "interval" reagenda pelo cron; "once" (execução única, WB-6) só
         desabilita a task depois de rodar — nunca refira sozinha.
+
+        Recorrente atrasada além de ``CATCH_UP_GRACE`` (processo ficou horas
+        parado) pula pro próximo horário em vez de disparar retroativamente:
+        um "resumo diário das 9h" não deve rodar às 15h só porque a máquina
+        estava desligada. "once" nunca é pulada — é uma tarefa que o usuário
+        pediu uma vez, atrasar não a torna indesejada.
         """
+        now = datetime.now(UTC)
         for task in await _list_due_interval_tasks():
+            if task.trigger_type == "interval" and _is_stale(task.next_run_at, now):
+                logger.info(
+                    "background_tasks: pulando disparo atrasado de %s "
+                    "(agendado pra %s) — reagendando pro próximo horário",
+                    task.id,
+                    task.next_run_at,
+                )
+                await _set_next_run(
+                    task.id, _next_run(task.trigger_config.get("cron_expr"))
+                )
+                continue
             await run_task(task, task.trigger_type)
             if task.trigger_type == "once":
                 await update_task(task.id, enabled=False)

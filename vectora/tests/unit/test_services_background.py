@@ -242,6 +242,124 @@ async def test_quota_por_workspace_bloqueia_apos_o_limite_mas_nao_bloqueia_manua
 
 
 # ---------------------------------------------------------------------------
+# Timezone do usuário
+# ---------------------------------------------------------------------------
+
+
+def test_next_run_usa_timezone_do_usuario_nao_utc(monkeypatch):
+    """Cron é interpretado no fuso do usuário: "todo dia às 9h" pra alguém em
+    GMT-3 dispara às 12h UTC, não às 9h UTC (que seria 6h da manhã pra ele)."""
+    from datetime import datetime
+
+    class _FakeSettings:
+        user_timezone = "America/Sao_Paulo"
+
+    monkeypatch.setattr(
+        "backend.workspace.runtime_settings.runtime_settings", _FakeSettings()
+    )
+
+    result = bg._next_run("0 9 * * *")
+
+    assert result is not None
+    parsed = datetime.fromisoformat(result)
+    # Armazenado em UTC, mas representando 9h em São Paulo (UTC-3).
+    assert parsed.hour == 12
+
+    # Erro/borda: timezone inexistente não derruba o agendamento — cai no
+    # fuso local com aviso, em vez de propagar ZoneInfoNotFoundError.
+    class _BrokenSettings:
+        user_timezone = "Marte/Olympus_Mons"
+
+    monkeypatch.setattr(
+        "backend.workspace.runtime_settings.runtime_settings", _BrokenSettings()
+    )
+    fallback = bg._next_run("0 9 * * *")
+    assert fallback is not None
+
+
+def test_next_run_sem_timezone_configurado_usa_local_do_so(monkeypatch):
+    class _NoTz:
+        user_timezone = ""
+
+    monkeypatch.setattr("backend.workspace.runtime_settings.runtime_settings", _NoTz())
+    assert bg._next_run("0 9 * * *") is not None
+
+    # Erro/borda: cron inválido continua retornando None (regressão) — o
+    # timezone não pode ter transformado um erro de parse em exceção.
+    assert bg._next_run("isso não é cron") is None
+
+
+# ---------------------------------------------------------------------------
+# Catch-up throttle (disparo atrasado)
+# ---------------------------------------------------------------------------
+
+
+def test_is_stale_so_marca_atraso_alem_da_janela_de_tolerancia():
+    from datetime import UTC, datetime, timedelta
+
+    now = datetime(2026, 7, 30, 12, 0, tzinfo=UTC)
+
+    # Atrasado muito além da janela (processo ficou horas parado) — pula.
+    antigo = (now - timedelta(hours=5)).isoformat()
+    assert bg._is_stale(antigo, now) is True
+
+    # Happy path: atraso pequeno (dentro da tolerância) ainda dispara.
+    recente = (now - timedelta(minutes=2)).isoformat()
+    assert bg._is_stale(recente, now) is False
+
+    # Erro/borda: timestamp ausente ou ilegível nunca é tratado como
+    # atrasado — na dúvida executa, não engole a tarefa em silêncio.
+    assert bg._is_stale(None, now) is False
+    assert bg._is_stale("não é timestamp", now) is False
+
+
+async def test_tick_pula_interval_atrasada_mas_executa_once_atrasada(db, monkeypatch):
+    from datetime import UTC, datetime, timedelta
+
+    executed: list[str] = []
+
+    async def _fake_run_task(task, trigger, payload=None):
+        executed.append(task.id)
+
+    monkeypatch.setattr(bg, "run_task", _fake_run_task)
+
+    muito_atrasado = (datetime.now(UTC) - timedelta(hours=6)).isoformat()
+
+    recorrente = await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="diária atrasada",
+        instruction="i",
+        trigger_type="interval",
+        trigger_config={"cron_expr": "0 9 * * *"},
+        next_run_at=muito_atrasado,
+    )
+    unica = await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="única atrasada",
+        instruction="i",
+        trigger_type="once",
+        next_run_at=muito_atrasado,
+    )
+
+    await bg.BackgroundScheduler().tick()
+
+    # A recorrente atrasada é pulada e reagendada pro futuro...
+    assert recorrente.id not in executed
+    reagendada = await bg.get_task(recorrente.id)
+    assert reagendada is not None
+    assert reagendada.next_run_at is not None
+    assert datetime.fromisoformat(reagendada.next_run_at) > datetime.now(UTC)
+
+    # ...mas a execução única atrasada ainda roda (erro/borda: pular aqui
+    # perderia uma tarefa que o usuário pediu explicitamente uma vez).
+    assert unica.id in executed
+
+
+# ---------------------------------------------------------------------------
 # run_task — execução real do agente
 # ---------------------------------------------------------------------------
 
@@ -986,8 +1104,14 @@ async def test_scheduler_runs_due_and_skips_disabled(db, monkeypatch):
         trigger_type="interval",
         trigger_config={"cron_expr": "* * * * *"},
     )
-    # Força o vencimento (next_run_at no passado).
-    await bg._set_next_run(due.id, "2000-01-01T00:00:00+00:00")
+    # Força o vencimento (next_run_at no passado, mas dentro da janela de
+    # catch-up — passado remoto seria pulado como disparo obsoleto).
+    from datetime import UTC as _UTC
+    from datetime import datetime as _dt
+    from datetime import timedelta as _td
+
+    vencido = (_dt.now(_UTC) - _td(minutes=1)).isoformat()
+    await bg._set_next_run(due.id, vencido)
 
     disabled = await bg.create_task(
         session_id="s",
@@ -998,7 +1122,7 @@ async def test_scheduler_runs_due_and_skips_disabled(db, monkeypatch):
         trigger_type="interval",
         trigger_config={"cron_expr": "* * * * *"},
     )
-    await bg._set_next_run(disabled.id, "2000-01-01T00:00:00+00:00")
+    await bg._set_next_run(disabled.id, vencido)
     await bg.update_task(disabled.id, enabled=False)
 
     await bg.get_scheduler().tick()
@@ -1007,7 +1131,7 @@ async def test_scheduler_runs_due_and_skips_disabled(db, monkeypatch):
     # Reagendou para o futuro.
     rescheduled = await bg.get_task(due.id)
     assert rescheduled is not None
-    assert rescheduled.next_run_at != "2000-01-01T00:00:00+00:00"
+    assert rescheduled.next_run_at != vencido
 
 
 # ---------------------------------------------------------------------------
