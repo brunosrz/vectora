@@ -211,3 +211,14 @@ CREATE TABLE IF NOT EXISTS app_settings (
     value      TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+-- Vectora Connect — mapeamento (plataforma, usuário externo) -> thread do
+-- Vectora. Sem isto cada mensagem do Telegram/Discord/Slack/Email abriria uma
+-- conversa nova, perdendo todo o histórico do interlocutor.
+CREATE TABLE IF NOT EXISTS connect_thread_mappings (
+    platform         TEXT NOT NULL,
+    platform_user_id TEXT NOT NULL,
+    thread_id        TEXT NOT NULL,
+    created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (platform, platform_user_id)
+);

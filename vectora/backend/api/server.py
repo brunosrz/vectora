@@ -380,6 +380,16 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         logger.warning("api/server: falha ao iniciar gateway client: %s", exc)
 
     try:
+        # Vectora Connect: sobe só as plataformas com credencial configurada.
+        # Melhor esforço — `sync_adapters` já isola falha por plataforma, este
+        # try cobre o caso de o módulo inteiro não carregar.
+        from backend.services.connect.manager import sync_adapters
+
+        await sync_adapters()
+    except Exception as exc:
+        logger.warning("api/server: falha ao iniciar adapters de Connect: %s", exc)
+
+    try:
         yield
     finally:
         logger.info("api/server: shutdown — fechando recursos")
@@ -416,6 +426,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             await mq.close()
         except Exception:
             logger.debug("api/server: erro ao fechar message queue")
+
+        try:
+            from backend.services.connect.manager import stop_all
+
+            await stop_all()
+        except Exception:
+            logger.debug("api/server: erro ao parar adapters de Connect")
 
         try:
             from backend.scheduling.nats_sidecar import stop_nats_sidecar

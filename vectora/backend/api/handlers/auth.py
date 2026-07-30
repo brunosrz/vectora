@@ -583,7 +583,7 @@ async def get_envs(request: Request) -> dict:
 @router.post("/envs")
 async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
     from backend.rbac import auth as auth_svc
-    from backend.services.env_keys import KNOWN_LLM_ENV_KEYS
+    from backend.services.env_keys import CONNECT_ENV_KEYS, KNOWN_LLM_ENV_KEYS
 
     user = getattr(request.state, "user", None)
     if user is None:
@@ -596,20 +596,49 @@ async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
     # também pelo mesmo caminho de /admin/api-keys (single-tenant por
     # instância — seguro aplicar globalmente).
     key_upper = body.key.upper()
-    if key_upper in KNOWN_LLM_ENV_KEYS:
+    if key_upper in KNOWN_LLM_ENV_KEYS or key_upper in CONNECT_ENV_KEYS:
         from backend.services.env_keys import apply_llm_env_key, default_env_file
 
         apply_llm_env_key(default_env_file(), key_upper, body.value)
 
+    # Credencial de mensageria nova/alterada -> liga (ou religa) o adapter
+    # correspondente na hora. Sem isso o usuário salvaria o token e o bot só
+    # apareceria no próximo boot, sem nenhum sinal de que faltava reiniciar.
+    if key_upper in CONNECT_ENV_KEYS:
+        await _sync_connect_adapters()
+
     return {"ok": True}
+
+
+async def _sync_connect_adapters() -> None:
+    """Melhor esforço: falha em reconciliar adapters nunca faz o salvamento
+    da credencial em si parecer que deu errado."""
+    try:
+        from backend.services.connect.manager import sync_adapters
+
+        await sync_adapters()
+    except Exception:
+        logger.exception("auth: falha ao reconciliar adapters de Connect")
 
 
 @router.delete("/envs/{key}")
 async def delete_env(key: str, request: Request) -> dict:
     from backend.rbac import auth as auth_svc
+    from backend.services.env_keys import CONNECT_ENV_KEYS
 
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
     await auth_svc.delete_env_override(user.id, key)
+
+    # Credencial removida -> derruba o adapter correspondente. Sem isto o bot
+    # continuaria no ar respondendo mensagens com uma credencial que o usuário
+    # já revogou na UI.
+    key_upper = key.upper()
+    if key_upper in CONNECT_ENV_KEYS:
+        import os
+
+        os.environ.pop(key_upper, None)
+        await _sync_connect_adapters()
+
     return {"ok": True}

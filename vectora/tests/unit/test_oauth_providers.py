@@ -294,11 +294,21 @@ class TestIntegrationsRegistry:
     def test_oauth_providers_tem_scopes(self) -> None:
         from backend.api.handlers.oauth import INTEGRATIONS_REGISTRY
 
-        oauth_ids = {"github", "gitlab", "google", "slack"}
+        # Deriva do próprio `kind` em vez de uma lista fixa de ids: quando uma
+        # integração deixa de ser OAuth (Slack virou Socket Mode com token
+        # colado), a lista fixa passa a exigir scopes de quem não tem mais.
         for integ in INTEGRATIONS_REGISTRY:
-            if integ["id"] in oauth_ids:
+            if integ["kind"] in ("oauth", "hybrid"):
                 assert integ.get("oauth_scopes") or integ.get("parent"), (
                     f"{integ['id']} oauth sem oauth_scopes nem parent"
+                )
+
+        # Erro/borda: integração `apikey` não pode carregar `oauth_scopes` —
+        # seria configuração morta induzindo a UI a oferecer botão de OAuth.
+        for integ in INTEGRATIONS_REGISTRY:
+            if integ["kind"] == "apikey":
+                assert not integ.get("oauth_scopes"), (
+                    f"{integ['id']} é apikey mas declara oauth_scopes"
                 )
 
 

@@ -174,19 +174,49 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "parent": "google",
     },
     {
+        # Socket Mode, não OAuth: a conexão WebSocket sai do processo pro
+        # Slack, então não há endpoint público pra receber o callback nem
+        # evento. Precisa dos dois tokens — o `xoxb-` autentica as chamadas
+        # de API, o `xapp-` abre o socket.
         "id": "slack",
         "name": "Slack",
         "env_var": "SLACK_BOT_TOKEN",
-        "kind": "oauth",
-        "description": "Envio e leitura de mensagens no Slack",
+        "kind": "apikey",
+        "description": "Converse com o Vectora pelo Slack (Socket Mode)",
         "docs_url": "https://api.slack.com/apps",
         "icon": "slack",
-        "oauth_scopes": [
-            "chat:write",
-            "channels:read",
-            "users:read",
-            "channels:history",
-        ],
+        "extra_vars": ["SLACK_APP_TOKEN"],
+    },
+    {
+        "id": "telegram",
+        "name": "Telegram",
+        "env_var": "TELEGRAM_BOT_TOKEN",
+        "kind": "apikey",
+        "description": "Converse com o Vectora pelo Telegram (bot próprio via @BotFather)",
+        "docs_url": "https://core.telegram.org/bots/features#botfather",
+        "icon": "telegram",
+    },
+    {
+        "id": "discord",
+        "name": "Discord",
+        "env_var": "DISCORD_BOT_TOKEN",
+        "kind": "apikey",
+        "description": "Converse com o Vectora pelo Discord (Application própria)",
+        "docs_url": "https://discord.com/developers/applications",
+        "icon": "discord",
+    },
+    {
+        # Caixa do próprio usuário (IMAP pra ler, SMTP pra responder) — sem
+        # provider transacional no meio. `EMAIL_SMTP_HOST` é opcional: sem
+        # ele o envio usa o mesmo host do IMAP.
+        "id": "email-connect",
+        "name": "Email",
+        "env_var": "EMAIL_IMAP_PASSWORD",
+        "kind": "apikey",
+        "description": "Converse com o Vectora por email (IMAP + SMTP da sua caixa)",
+        "docs_url": "https://support.google.com/accounts/answer/185833",
+        "icon": "mail",
+        "extra_vars": ["EMAIL_IMAP_HOST", "EMAIL_IMAP_USER", "EMAIL_SMTP_HOST"],
     },
     {
         "id": "linear",

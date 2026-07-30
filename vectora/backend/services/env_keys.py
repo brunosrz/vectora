@@ -28,6 +28,23 @@ KNOWN_LLM_ENV_KEYS: frozenset[str] = frozenset(
     }
 )
 
+#: Credenciais das plataformas do Vectora Connect. Seguem o mesmo caminho das
+#: keys de LLM (arquivo + `os.environ`) porque os adapters rodam dentro do
+#: processo do backend e leem `os.environ` — sem isso, salvar o token na UI
+#: gravaria o override no banco e o bot continuaria offline até o próximo boot.
+CONNECT_ENV_KEYS: frozenset[str] = frozenset(
+    {
+        "TELEGRAM_BOT_TOKEN",
+        "DISCORD_BOT_TOKEN",
+        "SLACK_BOT_TOKEN",
+        "SLACK_APP_TOKEN",
+        "EMAIL_IMAP_HOST",
+        "EMAIL_IMAP_USER",
+        "EMAIL_IMAP_PASSWORD",
+        "EMAIL_SMTP_HOST",
+    }
+)
+
 
 def default_env_file() -> Path:
     """``settings.vectora_home / ".env"`` — mesmo arquivo que `PATCH /admin/api-keys` já usa."""
