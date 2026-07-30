@@ -43,6 +43,29 @@ _PROVIDER_SPEC: dict[str, tuple[str, str]] = {
 }
 
 
+def _gemini_safety_settings() -> dict:
+    """Threshold mais permissivo em toda categoria que o SDK do Google aceita.
+
+    O Vectora não filtra conteúdo — o que o modelo aceita gerar é decisão do
+    modelo. Sem este dict valem os defaults do Google, que bloqueiam algumas
+    categorias em nível médio. Parte das categorias o Google não deixa
+    desligar de fato: isso é limite da plataforma, não escolha nossa.
+
+    Só o Gemini expõe esta configuração. Mandar o kwarg pros outros providers
+    estoura na instanciação — ver o par de erro em
+    ``tests/unit/test_no_content_guardrails.py``.
+    """
+    from langchain_google_genai import HarmBlockThreshold, HarmCategory
+
+    return {
+        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY: HarmBlockThreshold.BLOCK_NONE,
+    }
+
+
 def _build_concrete_model(provider: str, model_name: str, temperature: float) -> Any:
     """Constrói o ``BaseChatModel`` concreto do provider (SDK oficial LangChain).
 
@@ -65,6 +88,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 temperature=temperature,
                 timeout=None,
                 max_retries=0,
+                safety_settings=_gemini_safety_settings(),
             )
         case "openai":
             from langchain_openai import ChatOpenAI

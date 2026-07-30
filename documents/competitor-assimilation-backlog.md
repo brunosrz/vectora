@@ -455,6 +455,35 @@ reduz custo/latência.
 
 ---
 
+## Filtro de conteúdo: o Vectora não tem, por decisão
+
+O Vectora não implementa nenhum filtro de conteúdo: não há lista de palavras,
+não há classificador de saída, e nenhum system prompt (`backend/agents/
+_identity.py`, `coder.py`, `search.py`, o prompt do orchestrator em
+`backend/services/agent_factory.py`) instrui o agente a recusar assunto
+nenhum. Os únicos bloqueios do código são de **execução** — comandos de
+terminal perigosos em `backend/tools/fs.py` — e não têm relação com o que o
+modelo escreve.
+
+A censura que um usuário eventualmente encontra vem do **modelo escolhido**,
+não do produto. Gemini, OpenAI, Anthropic e Cohere aplicam as próprias
+políticas do lado deles. Onde o provider deixa configurar isso, o Vectora
+manda o threshold mais permissivo — é o caso do Gemini, via
+`_gemini_safety_settings()` em `backend/services/utils.py`; parte das
+categorias o Google não permite desligar, e isso é limite da plataforma.
+Ollama e OpenRouter, os caminhos para modelos sem censura, não têm filtro
+nenhum no percurso.
+
+Isto está registrado aqui porque a **ausência** de guardrail se parece com
+lacuna numa auditoria rápida — e já foi tratada como tal antes. Há teste
+travando o invariante (`tests/unit/test_no_content_guardrails.py`), com um
+caso que planta uma instrução de recusa e exige que o detector a acuse, para
+que o teste de ausência não passe trivialmente.
+
+Para referência: o Hermes também não tem guardrail de conteúdo no core, e vai
+além — distribui em `optional-skills/security/godmode/` uma skill opt-in cujo
+propósito declarado é contornar os filtros de provedores terceiros.
+
 ## Priorização sugerida (impacto × proximidade do norte)
 
 1. **P-1** 🎯 Biblioteca de artefatos indexada — semente da rag-library.
