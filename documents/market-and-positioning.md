@@ -635,10 +635,12 @@ transparência + ARPU baixo).
 **Hermes Agent (Nous Research, self-hosted, v0.18.0 jul/2026):**
 referência de transparência e local-first radical, com learning loop
 auto-melhorável (skills a partir da experiência + modelo do usuário),
-Mixture-of-Agents, proxy OpenAI-compatível e worktree-per-task. Features
-acionáveis destiladas em
+Mixture-of-Agents, proxy OpenAI-compatível e worktree-per-task — este último
+não se confirmou na auditoria do código real (ver H-3). Features acionáveis
+destiladas em
 [`competitor-assimilation-backlog.md`](./competitor-assimilation-backlog.md)
-(H-1..H-3).
+(H-1..H-4, sendo H-4 o inventário completo de tools e onde cada produto está
+à frente).
 
 **Paperclip (paperclipai, MIT, 2026):** orquestração de _times_ de
 agentes — org chart, budgets/governança, ticketing com heartbeats e
