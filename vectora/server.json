@@ -6,12 +6,12 @@
     "url": "https://github.com/brunosrz/vectora",
     "source": "github"
   },
-  "version": "0.1.7",
+  "version": "0.1.8",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "vectora",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "transport": {
         "type": "sse",
         "url": "http://localhost:8080/mcp/sse"

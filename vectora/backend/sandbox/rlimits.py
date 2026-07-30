@@ -46,7 +46,7 @@ def apply_rlimits(lockdown: bool) -> None:
         if limit is None:
             continue
         try:
-            resource.setrlimit(limit, (value, value))  # ty: ignore[unresolved-attribute]
+            resource.setrlimit(limit, (value, value))
         except (ValueError, OSError):
             logger.warning(
                 "sandbox: falha ao aplicar %s=%s — worker segue sem esse limite",

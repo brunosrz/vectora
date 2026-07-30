@@ -95,7 +95,7 @@ def _add_path_rule(
     try:
         parent_fd = os.open(
             path,
-            os.O_PATH | os.O_CLOEXEC,  # ty: ignore[unresolved-attribute]
+            os.O_PATH | os.O_CLOEXEC,
         )
     except OSError:
         logger.debug("sandbox: path %r inexistente pro Landlock — ignorando", path)

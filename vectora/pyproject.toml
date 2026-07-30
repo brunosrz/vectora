@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vectora"
-version = "0.1.7"
+version = "0.1.8"
 description = "Vectora - Advanced AI Assistant"
 readme = "README.md"
 authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
@@ -209,6 +209,18 @@ line-ending = "lf"
 
 # ─── ty (Astral type checker) ──────────────────────────────────────────────────
 [tool.ty.src]
+
+[[tool.ty.overrides]]
+# landlock.py/rlimits.py: os.O_CLOEXEC/resource.setrlimit só existem nos stubs
+# POSIX — `ty` resolve por plataforma do host rodando a checagem, então um
+# `ty: ignore` inline fica "usado" no Windows (dev) e "não usado" no Linux
+# (CI, ubuntu-latest) ao mesmo tempo, sem comentário que sirva pros dois. O
+# módulo é Linux-only por natureza (bwrap/Landlock não existem fora disso —
+# ver docstring de linux.py), então a supressão é honesta aqui, não workaround.
+include = ["backend/sandbox/landlock.py", "backend/sandbox/rlimits.py"]
+
+[tool.ty.overrides.rules]
+unresolved-attribute = "ignore"
 
 [[tool.ty.overrides]]
 # extract.py: 8500+ linhas de parsers tree-sitter com imports opcionais (try/except).
