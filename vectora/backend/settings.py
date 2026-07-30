@@ -387,8 +387,16 @@ class Settings(BaseSettings):
     search_min_score: float = 0.5
     """Minimum similarity score threshold for search results."""
 
-    reranker_type: str = "cohere"
-    """Reranking model type (cohere, none)."""
+    reranker_type: Literal["cohere", "voyage", "none"] = "cohere"
+    """Provider de rerank primário; o outro vira secundário no fallback.
+
+    Ollama e OpenRouter **não** entram: nenhum dos dois expõe API de rerank
+    (o Ollama não tem esse endpoint e o OpenRouter é proxy de chat), então
+    listá-los aqui declararia um suporte que não existe e a escolha falharia
+    só na hora de recuperar contexto. `Literal` em vez de `str` para que um
+    valor fora da lista seja rejeitado na validação, não silenciosamente
+    ignorado em `_build_reranker`.
+    """
 
     reranker_model: str = "rerank-multilingual-v3.0"
     """Cohere reranker. v3.0 multilingual ideal para conteúdo PT-BR."""
