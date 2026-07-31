@@ -161,8 +161,8 @@ class OllamaClient:
                     except Exception:
                         erro = None
                     self._raise_for_status(resp.status_code, erro, path=path)
-                async for linha in resp.aiter_lines():
-                    linha = linha.strip()
+                async for bruta in resp.aiter_lines():
+                    linha = bruta.strip()
                     if not linha:
                         continue
                     try:

@@ -9,6 +9,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from fastapi import Request
 
 
 @pytest.fixture
@@ -253,7 +254,7 @@ class TestPatchStorageRequiresPro:
     """
 
     @staticmethod
-    def _write_license(tmp_path, monkeypatch, tier: str):
+    def _write_license(tmp_path, monkeypatch, tier: str) -> None:
         import json
         from datetime import UTC, datetime
 
@@ -275,7 +276,7 @@ class TestPatchStorageRequiresPro:
         monkeypatch.setattr(lic, "CACHE_PATH", cache_path)
 
     @staticmethod
-    def _request(body: dict):
+    def _request(body: dict) -> Request:
         from unittest.mock import AsyncMock, MagicMock
 
         request = MagicMock()

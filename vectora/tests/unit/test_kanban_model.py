@@ -266,7 +266,7 @@ class TestDependencias:
         await _cria(db, "b")
         await add_dependency("a", "b")
 
-        with pytest.raises(ValueError, match="circular|ciclo"):
+        with pytest.raises(ValueError, match=r"circular|ciclo"):
             await add_dependency("b", "a")
 
     @pytest.mark.asyncio
@@ -275,7 +275,7 @@ class TestDependencias:
 
         await _cria(db, "a")
 
-        with pytest.raises(ValueError, match="circular|ciclo|si mesma"):
+        with pytest.raises(ValueError, match=r"circular|ciclo|si mesma"):
             await add_dependency("a", "a")
 
 

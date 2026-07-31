@@ -197,7 +197,7 @@ class TestExtract:
             )
 
         async with _client(handler) as c:
-            with pytest.raises(TavilyResponseError, match="morta.test"):
+            with pytest.raises(TavilyResponseError, match=r"morta\.test"):
                 await c.extract(["https://morta.test"])
 
     @pytest.mark.asyncio

@@ -100,7 +100,7 @@ class TestCrawlEMapExigemAprovacao:
 
 class TestResearchAssincrono:
     @staticmethod
-    def _handler(estados: list[str], *, com_resultado: bool = True):
+    def _handler(estados: list[str], *, com_resultado: bool = True) -> object:
         it = iter(estados)
 
         def handler(req: httpx.Request) -> httpx.Response:

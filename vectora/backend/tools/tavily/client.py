@@ -10,7 +10,7 @@ estourada exigem ações diferentes do usuário, e hoje viram a mesma mensagem.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Self
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class TavilyClient:
             self._client = httpx.AsyncClient(timeout=self._timeout_s)
         return self._client
 
-    async def __aenter__(self) -> TavilyClient:
+    async def __aenter__(self) -> Self:
         await self._ensure_client()
         return self
 

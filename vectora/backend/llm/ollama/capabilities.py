@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 #: O resultado só muda quando o usuário baixa/remove modelo — TTL generoso.
 _CACHE_TTL_S = 600.0
 
-_cache: dict[str, tuple[float, "ModelCapabilities"]] = {}
+_cache: dict[str, tuple[float, ModelCapabilities]] = {}
 
 
 @dataclass(frozen=True)

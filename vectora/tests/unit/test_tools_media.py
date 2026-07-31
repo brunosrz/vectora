@@ -306,7 +306,7 @@ class TestOpenRouterLigadoNasTools:
     falhava depois, que é pior que não oferecer."""
 
     @staticmethod
-    def _sem_key(monkeypatch):
+    def _sem_key(monkeypatch) -> None:
         from backend.settings import settings as _s
 
         monkeypatch.setattr(_s, "openrouter_api_key", "", raising=False)

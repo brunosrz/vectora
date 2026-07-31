@@ -434,9 +434,7 @@ class TestTimezoneEndpoint:
 
         gravados: list[str] = []
         monkeypatch.setattr(admin, "require_admin", lambda _u: None)
-        monkeypatch.setattr(
-            runtime_settings, "set_user_timezone", lambda tz: gravados.append(tz)
-        )
+        monkeypatch.setattr(runtime_settings, "set_user_timezone", gravados.append)
         monkeypatch.setattr(
             type(runtime_settings),
             "user_timezone",

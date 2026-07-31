@@ -139,7 +139,12 @@ from backend.tools.linear import (
     linear_update_issue,
 )
 from backend.tools.mcp import call_mcp_tool
-from backend.tools.media import generate_image, text_to_speech
+from backend.tools.media import (
+    analyze_video,
+    generate_image,
+    generate_video,
+    text_to_speech,
+)
 from backend.tools.memory import delete_memory, get_memory, save_memory, search_memory
 from backend.tools.native import (
     base64_decode,
@@ -482,6 +487,8 @@ for _t in [
     # Mídia (imagem/voz pelo provider ativo)
     generate_image,
     text_to_speech,
+    generate_video,
+    analyze_video,
     # Utilitários nativos
     time_now,
     time_parse,

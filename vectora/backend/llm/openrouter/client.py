@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, Self
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class OpenRouterClient:
             self._client = httpx.AsyncClient(timeout=self._timeout_s)
         return self._client
 
-    async def __aenter__(self) -> OpenRouterClient:
+    async def __aenter__(self) -> Self:
         await self._ensure_client()
         return self
 
@@ -257,8 +257,8 @@ class OpenRouterClient:
                 except Exception:
                     erro = None
                 self._raise_for_status(resp.status_code, erro)
-            async for linha in resp.aiter_lines():
-                linha = linha.strip()
+            async for bruta in resp.aiter_lines():
+                linha = bruta.strip()
                 if not linha or not linha.startswith("data:"):
                     continue
                 dado = linha[len("data:") :].strip()

@@ -48,7 +48,7 @@ async def run_research(
     if model:
         payload["model"] = model
 
-    inicio = await client._request("POST", "/research", payload)  # noqa: SLF001
+    inicio = await client._request("POST", "/research", payload)
     request_id = str(inicio.get("request_id") or "")
     if not request_id:
         # Sem id não há como acompanhar: o job rodaria e cobraria sem
@@ -61,7 +61,7 @@ async def run_research(
     limite = time.monotonic() + timeout_s
 
     while True:
-        estado = await client._request("GET", f"/research/{request_id}")  # noqa: SLF001
+        estado = await client._request("GET", f"/research/{request_id}")
         status = str(estado.get("status") or "")
 
         if status == "completed":

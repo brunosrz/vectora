@@ -428,7 +428,7 @@ class TestCatalogoOpenRouterComFallback:
     """
 
     @staticmethod
-    def _reset_cache():
+    def _reset_cache() -> None:
         from backend.api.handlers import provider_routing as pr
 
         pr._catalog_cache["fetched_at"] = float("-inf")

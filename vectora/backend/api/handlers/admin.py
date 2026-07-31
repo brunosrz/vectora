@@ -597,6 +597,8 @@ class MediaModelsBody(BaseModel):
     ollama_tts_model: str | None = None
     openrouter_image_model: str | None = None
     openrouter_tts_model: str | None = None
+    ollama_video_model: str | None = None
+    openrouter_video_model: str | None = None
 
 
 @router.get("/media-models")
@@ -615,7 +617,7 @@ async def get_media_models(request: Request) -> dict:
                 provider, capability
             )
             for provider in ("ollama", "openrouter")
-            for capability in ("image", "tts")
+            for capability in ("image", "tts", "video")
         }
     }
 
@@ -635,7 +637,7 @@ async def patch_media_models(request: Request, body: MediaModelsBody) -> dict:
                 provider, capability
             )
             for provider in ("ollama", "openrouter")
-            for capability in ("image", "tts")
+            for capability in ("image", "tts", "video")
         },
     }
 

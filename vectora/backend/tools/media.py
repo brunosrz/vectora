@@ -57,6 +57,18 @@ def _active_provider(config: RunnableConfig | None) -> str:
         return ""
 
 
+def _active_model(config: RunnableConfig | None) -> str:
+    """Nome do modelo ativo, sem o prefixo de provider.
+
+    O SDK espera `gemini-2.5-flash`, não `google-genai:gemini-2.5-flash` —
+    mandar o spec inteiro vira 404 de modelo inexistente.
+    """
+    if not config:
+        return ""
+    model = str((config.get("configurable") or {}).get("model", ""))
+    return model.split(":", 1)[1] if ":" in model else model
+
+
 def _media_dir(session_id: str) -> Path:
     return (
         Path.home() / ".vectora" / "artifacts" / (session_id or "sem-sessao") / "media"
@@ -294,6 +306,263 @@ def text_to_speech(
         return json.dumps({"error": f"falha ao gerar áudio: {exc}"}, ensure_ascii=False)
 
 
-MEDIA_TOOLS: list[Any] = [generate_image, text_to_speech]
+class VideoGenerationTimeoutError(RuntimeError):
+    """O job não chegou a um estado terminal dentro do teto de tempo.
 
-__all__ = ["MEDIA_TOOLS", "generate_image", "text_to_speech"]
+    Separado de "falhou": o job pode seguir rodando (e sendo cobrado) no
+    provider. Quem trata precisa dizer isso, senão o usuário regera achando
+    que não saiu nada.
+    """
+
+
+#: Geração de vídeo leva minutos. Os dois números existem para o teste poder
+#: zerá-los; em produção o teto é generoso mas nunca infinito.
+_VIDEO_POLL_INTERVAL_S = 10.0
+_VIDEO_TIMEOUT_S = 900.0
+
+#: Veo é o caminho de geração do Gemini. Fixo aqui, não configurável: o
+#: `{provider}_video_model` das Settings é dos gateways (Ollama/OpenRouter),
+#: onde o modelo é escolha do usuário. O nome vem de `models.list()` da API —
+#: só as variantes `preview` expõem `predictLongRunning` hoje.
+_GEMINI_VIDEO_MODEL = "veo-3.1-generate-preview"
+
+
+async def _gemini_video_bytes(
+    client: Any,
+    *,
+    model: str,
+    prompt: str,
+    poll_interval_s: float = _VIDEO_POLL_INTERVAL_S,
+    timeout_s: float = _VIDEO_TIMEOUT_S,
+) -> bytes:
+    """Dispara o Veo e acompanha a operação até concluir, com teto de tempo.
+
+    O cliente entra por parâmetro para o polling ser testável sem SDK real —
+    é a parte que precisa de teste, não a construção do client.
+    """
+    import asyncio
+    import time
+
+    operacao = await client.aio.models.generate_videos(model=model, prompt=prompt)
+    limite = time.monotonic() + timeout_s
+
+    while not getattr(operacao, "done", False):
+        if time.monotonic() >= limite:
+            msg = (
+                f"geração de vídeo não concluiu em {timeout_s:.0f}s — o job "
+                "pode seguir rodando no provider"
+            )
+            raise VideoGenerationTimeoutError(msg)
+        if poll_interval_s:
+            await asyncio.sleep(poll_interval_s)
+        operacao = await client.aio.operations.get(operacao)
+
+    resposta = getattr(operacao, "response", None)
+    videos = getattr(resposta, "generated_videos", None) or []
+    if not videos:
+        return b""
+    video = videos[0].video
+    raw = getattr(video, "video_bytes", None)
+    if raw is None:
+        # Vídeo grande vem só como referência de arquivo — baixar é um passo
+        # separado no SDK, e sem ele o retorno seria vazio sem erro nenhum.
+        await client.aio.files.download(file=video)
+        raw = getattr(video, "video_bytes", None)
+    return bytes(raw) if raw else b""
+
+
+def _bytes_do_output_openrouter(output: Any) -> bytes:
+    """Extrai o binário do `output` do job de vídeo.
+
+    A referência não fixa um formato único: o item vem com `b64_json` ou com
+    uma `url`. Tratar só um dos dois deixaria metade das respostas virando
+    arquivo vazio.
+    """
+    import httpx
+
+    itens = output if isinstance(output, list) else [output]
+    for item in itens:
+        if not isinstance(item, dict):
+            continue
+        if item.get("b64_json"):
+            return base64.b64decode(str(item["b64_json"]))
+        url = item.get("url") or item.get("video_url")
+        if url:
+            resposta = httpx.get(str(url), timeout=120.0, follow_redirects=True)
+            resposta.raise_for_status()
+            return resposta.content
+    return b""
+
+
+async def _generate_video_bytes(provider: str, prompt: str) -> bytes:
+    from backend.settings import configured_gateway_model, settings
+
+    if provider == "google-genai":
+        from google import genai
+
+        client = genai.Client(api_key=settings.google_api_key)
+        return await _gemini_video_bytes(
+            client, model=_GEMINI_VIDEO_MODEL, prompt=prompt
+        )
+
+    model = configured_gateway_model(provider, "video")
+
+    if provider == "openrouter":
+        from backend.llm.openrouter.client import OpenRouterClient
+        from backend.llm.openrouter.video import VideoTimeoutError, generate_video
+
+        client = OpenRouterClient(api_key=settings.openrouter_api_key or "")
+        try:
+            estado = await generate_video(client, model=model, prompt=prompt)
+        except VideoTimeoutError as exc:
+            # Traduz para a exceção local: o caller trata teto de tempo de um
+            # jeito só, independente de qual provider gerou.
+            raise VideoGenerationTimeoutError(str(exc)) from exc
+        return _bytes_do_output_openrouter(estado.get("output"))
+
+    raise NotImplementedError(
+        f"geração de vídeo via {provider} (modelo {model}) ainda não tem "
+        "cliente implementado"
+    )
+
+
+async def _analyze_video_text(
+    provider: str, model: str, path: str, question: str
+) -> str:
+    """Pergunta sobre o conteúdo de um vídeo já em disco."""
+    from backend.settings import settings
+
+    if provider == "google-genai":
+        from google import genai
+
+        client = genai.Client(api_key=settings.google_api_key)
+        arquivo = await client.aio.files.upload(file=path)
+        resultado = await client.aio.models.generate_content(
+            model=model or "gemini-2.5-flash", contents=[arquivo, question]
+        )
+        return str(getattr(resultado, "text", "") or "")
+
+    raise NotImplementedError(f"análise de vídeo via {provider} não é suportada")
+
+
+@tool(
+    extras={
+        "render_hint": "artifact",
+        "category": "media",
+        "destructive": False,
+        "icon": "video",
+    }
+)
+async def generate_video(
+    prompt: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Gera um vídeo curto a partir de uma descrição, usando o modelo ativo.
+
+    Só o Gemini (Veo) gera vídeo nativamente; com Ollama/OpenRouter depende
+    de o usuário ter configurado um modelo de vídeo nas Settings. Se o
+    provider ativo não suporta, esta tool devolve um erro explicando —
+    relaie ao usuário e NÃO tente com outro provider.
+
+    A geração leva minutos e é acompanhada até terminar. Se estourar o teto
+    de tempo, o resultado diz que o job pode seguir rodando no provider.
+
+    Args:
+        prompt: Descrição da cena, em linguagem natural.
+
+    Returns:
+        JSON com o path do vídeo gerado, ou com `error`.
+    """
+    provider = _active_provider(config)
+    try:
+        from backend.settings import provider_supports
+
+        if not provider_supports(provider, "video"):
+            return _unsupported(
+                provider,
+                "geração de vídeo",
+                "Troque para um modelo Gemini (Veo), ou configure um modelo "
+                "de vídeo em Settings (Ollama/OpenRouter).",
+            )
+        if not prompt.strip():
+            return json.dumps({"error": "prompt vazio — descreva a cena"})
+
+        data = await _generate_video_bytes(provider, prompt)
+        if not data:
+            return json.dumps({"error": "provider devolveu vídeo vazio"})
+        path = _persist(_session_id(config), data, ".mp4")
+        logger.info("generate_video: %s bytes → %s", len(data), path)
+        return json.dumps(
+            {"path": str(path), "provider": provider, "bytes": len(data)},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        logger.exception("generate_video: falha", extra={"provider": provider})
+        return json.dumps({"error": f"falha ao gerar vídeo: {exc}"}, ensure_ascii=False)
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "media",
+        "destructive": False,
+        "icon": "video",
+    }
+)
+async def analyze_video(
+    path: str,
+    question: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Responde uma pergunta sobre o conteúdo de um vídeo em disco.
+
+    Aceitar vídeo é mais raro que aceitar imagem: hoje só o Gemini lê vídeo
+    como entrada. Se o provider ativo não lê, devolve erro explicando — não
+    troque de provider sozinho.
+
+    Args:
+        path: Caminho do arquivo de vídeo.
+        question: O que se quer saber sobre o vídeo.
+
+    Returns:
+        JSON com `answer`, ou com `error`.
+    """
+    provider = _active_provider(config)
+    try:
+        from backend.settings import VIDEO_INPUT_PROVIDERS
+
+        if provider not in VIDEO_INPUT_PROVIDERS:
+            return _unsupported(
+                provider,
+                "análise de vídeo",
+                "Troque para um modelo Gemini — os outros providers leem "
+                "imagem, mas não vídeo.",
+            )
+        if not Path(path).is_file():
+            return json.dumps(
+                {"error": f"arquivo não encontrado: {path}"}, ensure_ascii=False
+            )
+        if not question.strip():
+            return json.dumps({"error": "pergunta vazia — diga o que quer saber"})
+
+        model = _active_model(config)
+        resposta = await _analyze_video_text(provider, model, path, question)
+        if not resposta.strip():
+            return json.dumps({"error": "provider devolveu resposta vazia"})
+        return json.dumps({"answer": resposta}, ensure_ascii=False)
+    except Exception as exc:
+        logger.exception("analyze_video: falha", extra={"provider": provider})
+        return json.dumps(
+            {"error": f"falha ao analisar vídeo: {exc}"}, ensure_ascii=False
+        )
+
+
+MEDIA_TOOLS: list[Any] = [generate_image, text_to_speech, generate_video, analyze_video]
+
+__all__ = [
+    "MEDIA_TOOLS",
+    "analyze_video",
+    "generate_image",
+    "generate_video",
+    "text_to_speech",
+]

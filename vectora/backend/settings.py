@@ -371,6 +371,12 @@ class Settings(BaseSettings):
 
     openrouter_tts_model: str | None = None
 
+    ollama_video_model: str | None = None
+    """Modelo de geração de vídeo no host Ollama. None desabilita."""
+
+    openrouter_video_model: str | None = None
+    """Modelo de geração de vídeo via OpenRouter. None desabilita."""
+
     openrouter_stt_model: str | None = None
     """Modelo de transcrição via OpenRouter (ex.: ``openai/whisper-1``).
 
@@ -1090,6 +1096,13 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
 # uma mensagem crua (ex.: Cohere "image content is not supported").
 VISION_CAPABLE_PROVIDERS: set[str] = {"google-genai", "openai", "anthropic"}
 
+# Subconjunto de `VISION_CAPABLE_PROVIDERS`: ler vídeo é bem mais restrito
+# que ler imagem. OpenAI e Anthropic aceitam imagem na mensagem e recusam
+# vídeo, então herdar a lista acima faria `analyze_video` prometer uma
+# capacidade que a API rejeita na chamada — o erro apareceria como falha
+# crua do provider em vez de aviso claro antes de gastar upload.
+VIDEO_INPUT_PROVIDERS: set[str] = {"google-genai"}
+
 # Capacidades multimodais por provider, além do chat (`llm`) e da visão já
 # coberta acima. Usado pelas tools de mídia (`backend/tools/media.py`) para
 # recusar cedo, com erro claro, o que o provider selecionado não faz — nunca
@@ -1102,7 +1115,7 @@ VISION_CAPABLE_PROVIDERS: set[str] = {"google-genai", "openai", "anthropic"}
 # configurou (`ollama_image_model` etc.), não do provider em si — ver
 # `provider_supports`.
 PROVIDER_CAPABILITIES: dict[str, set[str]] = {
-    "google-genai": {"llm", "vision", "image", "tts", "embedding"},
+    "google-genai": {"llm", "vision", "image", "tts", "embedding", "video"},
     "openai": {"llm", "vision", "image", "tts", "embedding"},
     "anthropic": {"llm", "vision"},
     "cohere": {"llm", "embedding", "reranker"},

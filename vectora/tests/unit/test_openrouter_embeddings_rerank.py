@@ -150,7 +150,7 @@ class TestRerank:
         ]
 
     @pytest.mark.asyncio
-    async def test_score_vai_no_metadata_pra_UI_poder_mostrar(self):
+    async def test_score_vai_no_metadata_pra_ui_poder_mostrar(self):
         rr = OpenRouterRerank(model="m", client=_client(self._handler_ok()), top_n=3)
         saida = await rr.acompress_documents(self._DOCS, "q")
 

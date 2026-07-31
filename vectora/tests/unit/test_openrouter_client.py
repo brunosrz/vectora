@@ -75,7 +75,7 @@ class TestMapeamentoDeErro:
                 await c.post_json("/chat/completions", {"model": "x"})
 
     @pytest.mark.asyncio
-    async def test_corpo_nao_json_vira_erro_tipado_e_nao_JSONDecodeError(self):
+    async def test_corpo_nao_json_vira_erro_tipado_e_nao_json_decode_error(self):
         """Erro/borda: proxy/CDN no meio devolve HTML numa falha. Sem este
         tratamento o `.json()` estoura com JSONDecodeError cru, que não diz
         nada ao usuário sobre o que aconteceu."""

@@ -111,7 +111,7 @@ class TestWebSearch:
         def handler(_req):
             return httpx.Response(200, json={"results": []})
 
-        with pytest.raises(ValueError, match="nuvem|cloud"):
+        with pytest.raises(ValueError, match=r"nuvem|cloud"):
             await ollama_web_search("q", api_key="", http_client=_client(handler))
 
     @pytest.mark.asyncio
