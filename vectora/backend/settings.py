@@ -365,6 +365,12 @@ class Settings(BaseSettings):
 
     openrouter_tts_model: str | None = None
 
+    openrouter_stt_model: str | None = None
+    """Modelo de transcrição via OpenRouter (ex.: ``openai/whisper-1``).
+
+    ``None`` desliga a capacidade — `/audio/transcriptions` exige o `model`
+    no corpo, e adivinhar um escolheria pelo usuário."""
+
     openrouter_rerank_model: str | None = None
     """Modelo de rerank via OpenRouter (ex.: ``cohere/rerank-v3.5``).
 

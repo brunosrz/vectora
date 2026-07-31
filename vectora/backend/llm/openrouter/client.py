@@ -179,6 +179,36 @@ class OpenRouterClient:
             raise OpenRouterResponseError(msg)
         return conteudo
 
+    async def post_multipart(
+        self,
+        path: str,
+        *,
+        files: dict[str, Any],
+        data: dict[str, Any] | None = None,
+    ) -> dict:
+        """POST multipart com resposta JSON — STT (`/audio/transcriptions`).
+
+        Terceiro formato do conjunto: as demais capacidades mandam JSON no
+        corpo, esta manda o arquivo de áudio. Mandar JSON aqui rende 400.
+        """
+        client = await self._ensure_client()
+        resp = await client.post(
+            f"{self._base_url}{path}",
+            files=files,
+            data=data or {},
+            headers=self._headers(),
+        )
+        try:
+            corpo = resp.json()
+        except Exception:
+            corpo = None
+        self._raise_for_status(resp.status_code, corpo)
+        if not isinstance(corpo, dict):
+            trecho = (resp.text or "")[:200]
+            msg = f"OpenRouter devolveu corpo não-JSON em {path}: {trecho!r}"
+            raise OpenRouterResponseError(msg)
+        return corpo
+
     async def stream_sse(
         self, path: str, payload: dict, *, headers: dict[str, str] | None = None
     ) -> AsyncIterator[dict]:

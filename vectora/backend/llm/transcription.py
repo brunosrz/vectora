@@ -7,7 +7,9 @@ nenhuma ao backend.
 
 Tenta OpenAI Whisper primeiro (mais preciso pra transcrição pura); sem
 ``openai_api_key``, cai pro Gemini (audio understanding) usando a mesma
-``google_api_key`` já configurada pro chat.
+``google_api_key`` já configurada pro chat; sem nenhuma das duas, usa o
+OpenRouter — que exige key **e** modelo de STT escolhido, porque sem modelo
+não há o que chamar.
 """
 
 from __future__ import annotations
@@ -59,9 +61,43 @@ async def transcribe_audio(data: bytes, filename: str, mime_type: str) -> str:
         return await _transcribe_openai(data, filename, mime_type)
     if settings.google_api_key:
         return await _transcribe_gemini(data, mime_type)
+    if settings.openrouter_api_key and _openrouter_stt_model():
+        return await _transcribe_openrouter(data, filename, mime_type)
     raise TranscriptionError(
-        "nenhuma chave de transcrição configurada (openai_api_key ou google_api_key)"
+        "nenhuma chave de transcrição configurada (openai_api_key, "
+        "google_api_key, ou openrouter_api_key com modelo de STT escolhido)"
     )
+
+
+def _openrouter_stt_model() -> str:
+    """Modelo de STT escolhido pro OpenRouter — vazio desliga a capacidade.
+
+    Key configurada sem modelo não basta: `/audio/transcriptions` exige o
+    `model` no corpo, e adivinhar um aqui escolheria pelo usuário.
+    """
+    from backend.settings import configured_gateway_model
+
+    return configured_gateway_model("openrouter", "stt")
+
+
+async def _transcribe_openrouter(data: bytes, filename: str, mime_type: str) -> str:
+    from backend.llm.openrouter.client import OpenRouterClient, OpenRouterError
+    from backend.llm.openrouter.stt import transcribe_bytes
+
+    client = OpenRouterClient(api_key=settings.openrouter_api_key or "")
+    try:
+        return await transcribe_bytes(
+            client,
+            model=_openrouter_stt_model(),
+            data=data,
+            filename=filename,
+            mime_type=mime_type,
+        )
+    except OpenRouterError as exc:
+        logger.exception("transcribe_audio: falha na transcrição via OpenRouter")
+        raise TranscriptionError(str(exc)) from exc
+    finally:
+        await client.aclose()
 
 
 async def _transcribe_openai(data: bytes, filename: str, mime_type: str) -> str:
