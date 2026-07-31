@@ -1,0 +1,192 @@
+"""Tool `computer_use` — controle de mouse/teclado da tela do desktop.
+
+A tool de maior risco do produto: age fora do sandbox de arquivo/terminal,
+em cima da máquina de verdade do usuário. Dois invariantes travados aqui,
+os dois testados nos dois sentidos:
+
+- **Sempre pausa para aprovação**, mesmo em `permission_mode="bypass"` — é a
+  única tool com essa exceção (as demais respeitam o modo da sessão).
+- **Desligada por padrão**: só existe quando o workspace tem
+  `[computer_use] enabled = true` explícito no `vectora.toml`. Sem a seção,
+  a tool recusa antes de tocar no mouse/teclado — fail-closed.
+
+Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+"""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+from langchain_core.runnables import RunnableConfig
+
+from backend.tools import computer_use as cu
+
+
+def _cfg(workspace_id: str = "ws1") -> RunnableConfig:
+    return {"configurable": {"workspace_id": workspace_id, "thread_id": "t-cu"}}
+
+
+class TestOptIn:
+    def test_sem_secao_computer_use_recusa_sem_tocar_na_tela(self, monkeypatch):
+        """Erro/borda: workspace sem `[computer_use]` — fail-closed, a tool
+        nem chega perto do mouse/teclado."""
+        chamou = {"screenshot": False}
+        monkeypatch.setattr(cu, "_computer_use_enabled", lambda _workspace_id: False)
+        monkeypatch.setattr(
+            cu, "_take_screenshot", lambda: chamou.__setitem__("screenshot", True)
+        )
+
+        saida = json.loads(
+            cu.computer_use.invoke({"action": "screenshot", "config": _cfg()})
+        )
+
+        assert "error" in saida
+        assert "computer_use" in saida["error"]
+        assert chamou["screenshot"] is False
+
+    def test_com_secao_habilitada_a_tool_executa(self, monkeypatch):
+        monkeypatch.setattr(cu, "_computer_use_enabled", lambda _workspace_id: True)
+        monkeypatch.setattr(cu, "_take_screenshot", lambda: b"\x89PNG\r\n")
+
+        saida = json.loads(
+            cu.computer_use.invoke({"action": "screenshot", "config": _cfg()})
+        )
+
+        assert "error" not in saida
+        assert saida["action"] == "screenshot"
+
+    def test_le_o_toml_de_verdade_via_load_workspace_config(self, tmp_path):
+        """A checagem real (não mockada) lê `[computer_use]` do
+        `vectora.toml` do workspace — happy e ausência no mesmo teste."""
+        (tmp_path / "vectora.toml").write_text(
+            "[computer_use]\nenabled = true\n", encoding="utf-8"
+        )
+        assert cu._computer_use_enabled_for_cwd(str(tmp_path)) is True
+
+        # Erro/borda: seção ausente é `False`, não um "assume desligado"
+        # implícito que dependeria do caller lembrar de checar `None`.
+        outro = tmp_path / "sem-secao"
+        outro.mkdir()
+        (outro / "vectora.toml").write_text(
+            "[workspace]\nname = 'x'\n", encoding="utf-8"
+        )
+        assert cu._computer_use_enabled_for_cwd(str(outro)) is False
+
+        # Sem vectora.toml nenhum também é False, não exceção.
+        vazio = tmp_path / "sem-toml"
+        vazio.mkdir()
+        assert cu._computer_use_enabled_for_cwd(str(vazio)) is False
+
+
+class TestAcoes:
+    @pytest.fixture(autouse=True)
+    def _habilitado(self, monkeypatch):
+        monkeypatch.setattr(cu, "_computer_use_enabled", lambda _workspace_id: True)
+
+    def test_screenshot_devolve_path_do_arquivo_gerado(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(cu, "_take_screenshot", lambda: b"\x89PNG\r\nfake")
+        monkeypatch.setattr(cu, "_media_dir", lambda _s: tmp_path / "media")
+
+        saida = json.loads(
+            cu.computer_use.invoke({"action": "screenshot", "config": _cfg()})
+        )
+
+        assert saida["path"].endswith(".png")
+
+    def test_click_exige_coordenadas_e_falha_de_biblioteca_vira_erro_tipado(
+        self, monkeypatch
+    ):
+        chamadas = []
+        monkeypatch.setattr(cu, "_click", lambda x, y: chamadas.append((x, y)))
+
+        saida = json.loads(
+            cu.computer_use.invoke(
+                {"action": "click", "x": 100, "y": 200, "config": _cfg()}
+            )
+        )
+        assert saida["action"] == "click"
+        assert chamadas == [(100, 200)]
+
+        # Erro/borda: sem x/y não há onde clicar — recusa antes de chamar a
+        # biblioteca, que aceitaria None e clicaria na posição atual do
+        # mouse sem o usuário ter pedido isso.
+        chamadas.clear()
+        sem_coords = json.loads(
+            cu.computer_use.invoke({"action": "click", "config": _cfg()})
+        )
+        assert "error" in sem_coords
+        assert chamadas == []
+
+    def test_type_text_digita_e_texto_vazio_e_recusado(self, monkeypatch):
+        digitado = []
+        monkeypatch.setattr(cu, "_type_text", digitado.append)
+
+        saida = json.loads(
+            cu.computer_use.invoke(
+                {"action": "type_text", "text": "oi", "config": _cfg()}
+            )
+        )
+        assert saida["action"] == "type_text"
+        assert digitado == ["oi"]
+
+        digitado.clear()
+        vazio = json.loads(
+            cu.computer_use.invoke(
+                {"action": "type_text", "text": "", "config": _cfg()}
+            )
+        )
+        assert "error" in vazio
+        assert digitado == []
+
+    def test_falha_da_biblioteca_de_automacao_nunca_propaga(self, monkeypatch):
+        """Regra 11: tool defensiva — exceção vira observação pro LLM, o
+        grafo não cai."""
+
+        def _explode(_x, _y):
+            raise RuntimeError("X11 display não encontrado")
+
+        monkeypatch.setattr(cu, "_click", _explode)
+
+        saida = json.loads(
+            cu.computer_use.invoke(
+                {"action": "click", "x": 1, "y": 1, "config": _cfg()}
+            )
+        )
+        assert "X11 display" in saida["error"]
+
+    def test_acao_desconhecida_e_recusada(self):
+        saida = json.loads(
+            cu.computer_use.invoke({"action": "explodir_tudo", "config": _cfg()})
+        )
+        assert "error" in saida
+
+
+class TestAprovacaoSempreObrigatoria:
+    def test_computer_use_pausa_mesmo_em_bypass(self):
+        """Invariante de maior risco do plano: nenhuma tool além desta
+        ignora o `permission_mode` da sessão — `bypass`/`auto` normalmente
+        nunca pausam, mas `computer_use` sempre pausa."""
+        from langchain.agents.middleware.types import ToolCallRequest
+        from langchain_core.messages import HumanMessage
+
+        from backend.services.middleware import _mode_should_interrupt
+
+        req = ToolCallRequest(
+            tool_call={"name": "computer_use", "args": {}, "id": "x"},
+            tool=None,
+            state={"messages": [HumanMessage(content="tira um print")]},
+            runtime=None,  # ty: ignore[invalid-argument-type]
+        )
+        for modo in ("bypass", "auto", "ask", "accept_edits", "plan"):
+            assert _mode_should_interrupt(modo, "computer_use", req) is True
+
+    def test_esta_em_require_approval(self):
+        from backend.services.middleware import _REQUIRE_APPROVAL
+
+        assert "computer_use" in _REQUIRE_APPROVAL
+
+    def test_registrada_em_all_tools(self):
+        from backend.nodes.tools import ALL_TOOLS
+
+        assert "computer_use" in {t.name for t in ALL_TOOLS}

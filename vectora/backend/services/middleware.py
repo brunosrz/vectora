@@ -65,6 +65,9 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         # portão. Não há como desfazer isso depois, ao contrário de um
         # arquivo. As três tools de leitura do Home Assistant ficam de fora.
         "ha_call_service",
+        # Clique/tecla na tela real do usuário — a única tool que ignora o
+        # `permission_mode` (ver `_ALWAYS_INTERRUPT` abaixo).
+        "computer_use",
     }
 )
 
@@ -147,6 +150,12 @@ def _plan_mode_should_interrupt(req: ToolCallRequest) -> bool:
     return True  # primeira tool destrutiva do turno — pausa pra aprovação
 
 
+#: Única exceção aos 5 modos: `computer_use` age fisicamente na tela do
+#: usuário (clique/tecla), fora do sandbox de arquivo/terminal — não existe
+#: "desfazer" um clique. Pausa sempre, mesmo em `bypass`/`auto`.
+_ALWAYS_INTERRUPT: frozenset[str] = frozenset({"computer_use"})
+
+
 def _mode_should_interrupt(mode: str, tool_name: str, req: ToolCallRequest) -> bool:
     """Política canônica dos 5 modos — fonte única de verdade do HITL.
 
@@ -156,7 +165,8 @@ def _mode_should_interrupt(mode: str, tool_name: str, req: ToolCallRequest) -> b
     - ``plan`` (plano): interrompe só a 1ª tool destrutiva do turno
       (``_plan_mode_should_interrupt``) — aprovado uma vez, o resto do turno
       roda sem novas pausas.
-    - ``auto`` (automático) / ``bypass`` (ignorar permissões): nunca interrompe.
+    - ``auto`` (automático) / ``bypass`` (ignorar permissões): nunca interrompe,
+      **exceto** ``_ALWAYS_INTERRUPT`` (hoje só ``computer_use``).
 
     ``tool_name`` fora de ``_REQUIRE_APPROVAL`` nunca interrompe (o interrupt_on
     já restringe as tools cobertas, mas a checagem torna a função correta se
@@ -164,6 +174,8 @@ def _mode_should_interrupt(mode: str, tool_name: str, req: ToolCallRequest) -> b
     """
     if tool_name not in _REQUIRE_APPROVAL:
         return False
+    if tool_name in _ALWAYS_INTERRUPT:
+        return True
     if mode in _NON_INTERRUPTING_MODES:
         return False
     if mode == "accept_edits":

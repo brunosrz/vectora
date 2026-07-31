@@ -55,6 +55,7 @@ from backend.tools.browser_devtools import (
     browser_stop_trace,
     browser_take_heap_snapshot,
 )
+from backend.tools.computer_use import computer_use
 from backend.tools.context_graph import (
     build_knowledge_graph,
     graph_affected,
@@ -500,6 +501,8 @@ for _t in [
     ha_get_state,
     ha_list_services,
     ha_call_service,
+    # Controle de tela do desktop (opt-in, sempre HITL)
+    computer_use,
     # Utilitários nativos
     time_now,
     time_parse,

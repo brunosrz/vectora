@@ -70,6 +70,7 @@ dependencies = [
     "send2trash>=2.1.0",
     "pystray>=0.19.5",
     "pillow>=12.2.0",
+    "pyautogui-next>=0.9.55",
     "redis[hiredis]>=7.4.1",
     "asyncpg>=0.31.0",
     "langchain-qdrant>=1.1.0",

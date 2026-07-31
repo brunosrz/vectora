@@ -98,6 +98,17 @@ class HooksSection(BaseModel):
     post_file_write: list[str] = []
 
 
+class ComputerUseSection(BaseModel):
+    """Controle de mouse/teclado da tela do desktop — opt-in explícito.
+
+    A tool de maior risco do produto (ações físicas fora do sandbox de
+    arquivo/terminal); sem esta seção presente e ``enabled = true``, a tool
+    recusa antes de tocar no mouse/teclado, mesmo que o agente a chame.
+    """
+
+    enabled: bool = False
+
+
 class WorkspaceConfig(BaseModel):
     """Conteúdo de ``<cwd>/vectora.toml`` (todos os campos opcionais)."""
 
@@ -106,6 +117,7 @@ class WorkspaceConfig(BaseModel):
     rag: RagSection = RagSection()
     agent: AgentSection = AgentSection()
     hooks: HooksSection = HooksSection()
+    computer_use: ComputerUseSection = ComputerUseSection()
 
 
 def _resolve_env_placeholders(value: object) -> object:
