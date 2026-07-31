@@ -38,9 +38,12 @@ _PRECO_POR_MILHAO_CENTS: dict[str, tuple[float, float]] = {
 
 
 async def _get_db() -> Any:
-    from backend.api.handlers.threads import _get_db as _threads_db
+    """Mesmo banco de `vectora_background_tasks`/`vectora_background_runs` —
+    não `checkpoints.db` (ver docstring equivalente em `kanban.py::_get_db`
+    pro histórico do bug que essa correção fecha)."""
+    from backend.scheduling.background_tasks import _get_db as _tasks_db
 
-    return await _threads_db()
+    return await _tasks_db()
 
 
 def _preco(model_id: str) -> tuple[float, float] | None:

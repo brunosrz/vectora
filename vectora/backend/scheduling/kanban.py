@@ -51,9 +51,18 @@ _DEFAULT_CLAIM_TTL_S = 900
 
 
 async def _get_db() -> Any:
-    from backend.api.handlers.threads import _get_db as _threads_db
+    """Mesmo banco de `vectora_background_tasks` — não `checkpoints.db`.
 
-    return await _threads_db()
+    `vectora_background_tasks`/`vectora_task_links` vivem em
+    `settings.db_dsn` (aplicado por `schema.sql`), não no banco de
+    threads/checkpoints do LangGraph. Apontar pro `_get_db` de
+    `threads.py` (erro corrigido aqui) fazia todo claim/status do Kanban
+    cair num banco sem essas tabelas — silenciado pelo try/except do
+    `tick()`, então o sintoma era só "nada do Kanban nunca atualiza".
+    """
+    from backend.scheduling.background_tasks import _get_db as _tasks_db
+
+    return await _tasks_db()
 
 
 def _agora() -> datetime:
