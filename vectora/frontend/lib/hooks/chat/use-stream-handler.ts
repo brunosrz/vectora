@@ -871,6 +871,8 @@ async function handleEvent(
             diffPreview: event.diff_preview,
             affectedPaths: event.affected_paths,
             permissionMode: event.permission_mode,
+            preApproved: event.pre_approved,
+            workspaceId: useWorkspacesStore.getState().active_id ?? undefined,
           },
         })),
       );

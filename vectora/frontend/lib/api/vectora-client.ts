@@ -125,6 +125,8 @@ export type StreamEvent =
       affected_paths?: string[];
       /** Modo de permissão ativo (default/yolo/etc.) (opcional). */
       permission_mode?: string;
+      /** Anotação da aprovação inteligente — nunca decide sozinha. */
+      pre_approved?: boolean;
     }
   | {
       type: "rag_citations";

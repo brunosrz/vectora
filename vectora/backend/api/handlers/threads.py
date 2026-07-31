@@ -1157,3 +1157,53 @@ async def thread_activity(thread_id: str) -> ActivityResponse:
         tool_call_counts={},
         turn_count=turn_count,
     )
+
+
+# ---------------------------------------------------------------------------
+# Aprovação inteligente — allowlist persistente por workspace (Sprint 22)
+# ---------------------------------------------------------------------------
+
+
+class SmartApprovalAllowlistRequest(BaseModel):
+    workspace_id: str
+    tool_name: str
+    args: dict = {}
+
+
+class SmartApprovalAllowlistRemoveRequest(BaseModel):
+    workspace_id: str
+    signature: str
+
+
+class SmartApprovalAllowlistResponse(BaseModel):
+    allowlist: list[str]
+
+
+@router.post("/smart-approval/allowlist")
+async def add_smart_approval_allowlist(
+    body: SmartApprovalAllowlistRequest, request: Request
+) -> SmartApprovalAllowlistResponse:
+    """ "Sempre permitir isso" no HITLPanel — não muda o HITL em si, só faz a
+    próxima ocorrência do mesmo comando chegar já marcada como reconhecida
+    (ver `backend/services/smart_approval.py`)."""
+    _user_id(request)
+    from backend.services.smart_approval import add_to_allowlist
+
+    try:
+        allowlist = add_to_allowlist(body.workspace_id, body.tool_name, body.args)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return SmartApprovalAllowlistResponse(allowlist=allowlist)
+
+
+@router.delete("/smart-approval/allowlist")
+async def remove_smart_approval_allowlist(
+    body: SmartApprovalAllowlistRemoveRequest, request: Request
+) -> SmartApprovalAllowlistResponse:
+    """Revoga uma assinatura — a próxima ocorrência volta a exigir aprovação
+    normal, sem o atalho visual."""
+    _user_id(request)
+    from backend.services.smart_approval import remove_from_allowlist
+
+    allowlist = remove_from_allowlist(body.workspace_id, body.signature)
+    return SmartApprovalAllowlistResponse(allowlist=allowlist)

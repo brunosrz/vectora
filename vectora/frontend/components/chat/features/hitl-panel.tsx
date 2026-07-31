@@ -25,6 +25,30 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { m } from "@/lib/paraglide/messages";
+
+async function addToSmartApprovalAllowlist(
+  workspaceId: string,
+  toolName: string,
+  argsJson: string,
+): Promise<void> {
+  let args: Record<string, unknown> = {};
+  try {
+    args = JSON.parse(argsJson);
+  } catch {
+    // args inválido não impede marcar a tool inteira como sempre permitida.
+  }
+  await fetch("/smart-approval/allowlist", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      workspace_id: workspaceId,
+      tool_name: toolName,
+      args,
+    }),
+  });
+}
 
 // ===========================================================================
 // Types
@@ -42,6 +66,13 @@ export interface HITLPendingInfo {
   affectedPaths?: string[];
   /** Modo de permissão ativo (default/yolo/…). */
   permissionMode?: string;
+  /** Anotação do avaliador auxiliar/allowlist (Sprint 22) — nunca decide
+   * sozinho, só marca a sugestão como reconhecida. O painel ainda pausa
+   * esperando o clique de confirmação. */
+  preApproved?: boolean;
+  /** Workspace da sessão — necessário pra persistir "sempre permitir" na
+   * allowlist (por workspace, ver backend/services/smart_approval.py). */
+  workspaceId?: string;
 }
 
 interface HITLPanelProps {
@@ -139,8 +170,19 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
   const [editedArgs, setEditedArgs] = useState(prettyJson(pending.argsJson));
   const [editError, setEditError] = useState<string | null>(null);
   const [decided, setDecided] = useState(false);
+  const [allowlisted, setAllowlisted] = useState(false);
 
   if (decided) return null;
+
+  const handleAlwaysAllow = () => {
+    if (!pending.workspaceId) return;
+    setAllowlisted(true);
+    void addToSmartApprovalAllowlist(
+      pending.workspaceId,
+      pending.toolName,
+      pending.argsJson,
+    );
+  };
 
   const handleApprove = () => {
     setDecided(true);
@@ -187,6 +229,11 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
         <code className="ml-1 text-xs bg-orange-900/40 text-orange-200 px-1.5 py-0.5 rounded">
           {toolLabel}
         </code>
+        {pending.preApproved && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded border border-green-400/30 text-green-300/80">
+            {m.hitl_pre_approved_badge()}
+          </span>
+        )}
         {pending.permissionMode && (
           <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded border border-orange-400/30 text-orange-300/70 font-mono">
             modo: {pending.permissionMode}
@@ -291,6 +338,19 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
                 <X className="w-3 h-3 mr-1" />
                 Rejeitar
               </Button>
+              {pending.workspaceId && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={allowlisted}
+                  className="h-7 px-3 text-xs text-muted-foreground ml-auto"
+                  onClick={handleAlwaysAllow}
+                >
+                  {allowlisted
+                    ? m.hitl_always_allow_added()
+                    : m.hitl_always_allow()}
+                </Button>
+              )}
             </>
           ) : (
             <>

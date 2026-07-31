@@ -399,6 +399,19 @@ async def _mark_thread_has_content(thread_id: str) -> None:
         )
 
 
+async def _pre_approved(tool_name: str, args: dict, workspace_id: str) -> bool:
+    """Anotação da aprovação inteligente pro `HITLEvent` — nunca decide
+    sozinha, só marca a sugestão como reconhecida (Sprint 22). Falha aqui
+    nunca derruba o stream: é a mesma degradação de `evaluate_command`."""
+    try:
+        from backend.services.smart_approval import evaluate_command
+
+        return await evaluate_command(tool_name, args, workspace_id=workspace_id)
+    except Exception:
+        logger.debug("adapters: smart_approval indisponível", exc_info=True)
+        return False
+
+
 def adapt_stream(
     events: Any,
     thread_id: str,
@@ -648,11 +661,26 @@ def adapt_stream(
                             if not isinstance(intr_val, list) or not intr_val:
                                 continue
                             first = intr_val[0]
+                            tool_name = first.get("name", "unknown")
+                            tool_args = first.get("args", {}) or {}
+                            try:
+                                pre_approved = await _pre_approved(
+                                    tool_name, tool_args, workspace_id or ""
+                                )
+                            except Exception:
+                                # A pausa do HITL já aconteceu no grafo — uma
+                                # anotação cosmética não pode impedir o
+                                # evento de chegar ao cliente.
+                                logger.debug(
+                                    "adapters: pre_approved falhou", exc_info=True
+                                )
+                                pre_approved = False
                             yield encode_event(
                                 HITLEvent(
-                                    tool_name=first.get("name", "unknown"),
-                                    args_json=json.dumps(first.get("args", {})),
+                                    tool_name=tool_name,
+                                    args_json=json.dumps(tool_args),
                                     interrupt_id=first.get("id", ""),
+                                    pre_approved=pre_approved,
                                 )
                             )
                         # Stream encerra aqui — cliente exibirá o painel HITL

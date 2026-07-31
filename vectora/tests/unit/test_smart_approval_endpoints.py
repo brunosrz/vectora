@@ -1,0 +1,72 @@
+"""Endpoints REST da allowlist de aprovação inteligente (Sprint 22)."""
+
+from __future__ import annotations
+
+from typing import cast
+
+import pytest
+from fastapi import Request
+
+from backend.api.handlers.threads import (
+    SmartApprovalAllowlistRemoveRequest,
+    SmartApprovalAllowlistRequest,
+    add_smart_approval_allowlist,
+    remove_smart_approval_allowlist,
+)
+
+
+class _FakeRequestImpl:
+    class _State:
+        user = None
+
+    state = _State()
+
+
+def _fake_request() -> Request:
+    return cast("Request", _FakeRequestImpl())
+
+
+@pytest.fixture(autouse=True)
+def _runtime_settings_isolado(tmp_path, monkeypatch):
+    from backend.workspace.runtime_settings import RuntimeSettings
+
+    isolado = RuntimeSettings(tmp_path / "rt.db")
+    import backend.services.smart_approval as sa
+
+    monkeypatch.setattr(sa, "_runtime_settings", lambda: isolado)
+    return isolado
+
+
+@pytest.mark.asyncio
+async def test_add_e_remove_via_endpoint():
+    resposta = await add_smart_approval_allowlist(
+        SmartApprovalAllowlistRequest(
+            workspace_id="ws1", tool_name="terminal", args={"command": "git status"}
+        ),
+        _fake_request(),
+    )
+    assert len(resposta.allowlist) == 1
+
+    removida = await remove_smart_approval_allowlist(
+        SmartApprovalAllowlistRemoveRequest(
+            workspace_id="ws1", signature=resposta.allowlist[0]
+        ),
+        _fake_request(),
+    )
+    assert removida.allowlist == []
+
+
+@pytest.mark.asyncio
+async def test_workspace_vazio_vira_400_nao_500():
+    """Erro/borda: `ValueError` do módulo vira HTTP 400 com mensagem clara,
+    não um 500 cru que não diz o que corrigir."""
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as exc_info:
+        await add_smart_approval_allowlist(
+            SmartApprovalAllowlistRequest(
+                workspace_id="", tool_name="terminal", args={}
+            ),
+            _fake_request(),
+        )
+    assert exc_info.value.status_code == 400

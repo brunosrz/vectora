@@ -372,6 +372,10 @@ class HITLEvent(BaseModel):
     reasoning: str = ""
     affected_paths: list[str] = []
     diff_preview: str = ""
+    #: Anotação da aprovação inteligente (avaliador auxiliar/allowlist) —
+    #: nunca decide sozinha, só marca a sugestão como reconhecida. O HITL
+    #: pausa igual; o humano confirma com um clique a menos.
+    pre_approved: bool = False
 
 
 class RagCitation(BaseModel):

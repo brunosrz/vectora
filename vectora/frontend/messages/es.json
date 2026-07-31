@@ -1270,5 +1270,8 @@
   "kanban_empty": "Sin tareas en el tablero",
   "integrations_category_google": "Google",
   "integrations_category_smart_home": "Casa conectada",
-  "integrations_category_other": "Otras"
+  "integrations_category_other": "Otras",
+  "hitl_pre_approved_badge": "reconocido por el evaluador",
+  "hitl_always_allow": "Permitir siempre",
+  "hitl_always_allow_added": "Agregado a la allowlist de este workspace"
 }
