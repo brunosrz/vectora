@@ -1,7 +1,47 @@
 """Módulo de segurança para execução de ferramentas com whitelisting."""
 
 import re
+import unicodedata
 from pathlib import Path
+
+#: `$IFS`/`${IFS}` é separador de campo shell válido, usado pra escapar
+#: filtros ingênuos que procuram um espaço literal (`rm${IFS}-rf${IFS}/`
+#: roda igual a `rm -rf /`). Expandir pra espaço antes de comparar fecha
+#: essa ofuscação sem afetar o resto do comando (achado da comparação de
+#: guardrails com o Hermes Agent, que já normaliza isso).
+_IFS_PATTERN = re.compile(r"\$\{IFS\}|\$IFS(?![A-Za-z0-9_])")
+
+#: Backslash antes de uma letra ou hífen comuns não tem efeito real além
+#: de escapar o char seguinte (`r\m` roda como `rm`) — normaliza removendo.
+_BACKSLASH_ESCAPE_PATTERN = re.compile(r"\\([A-Za-z-])")
+
+#: `rm` com qualquer combinação de flags que contenha `r` e `f` (em
+#: qualquer ordem/posição: `-rf`, `-fr`, `-rfv`, `-vrf`, `-fvr`, ...) —
+#: a blacklist literal só cobria `rm -rf`/`rm -fr`.
+_RM_FLAG_PATTERN = re.compile(r"\brm\s+-[a-z]+")
+
+
+def _normalize_command(command: str) -> str:
+    """Normaliza um comando shell antes da comparação com a blacklist.
+
+    Colapsa espaços múltiplos/tabs, expande `$IFS`, remove
+    backslash-escape trivial e normaliza unicode (NFKC) — fecha variações
+    de ofuscação que uma comparação `in` ingênua deixaria passar.
+    """
+    normalized = unicodedata.normalize("NFKC", command)
+    normalized = _IFS_PATTERN.sub(" ", normalized)
+    normalized = _BACKSLASH_ESCAPE_PATTERN.sub(r"\1", normalized)
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip().lower()
+
+
+def _has_rm_recursive_force(cmd: str) -> bool:
+    """`True` se algum `rm -X` no comando tem flags contendo `r` e `f`."""
+    for match in _RM_FLAG_PATTERN.finditer(cmd):
+        flags = match.group(0).split("-", 1)[-1]
+        if "r" in flags and "f" in flags:
+            return True
+    return False
 
 
 def resolve_within_workspace(path: str, workspace_root: str | Path) -> Path | None:
@@ -127,7 +167,10 @@ def is_safe_shell_command(command: str) -> bool:
         True se o comando NÃO está na blacklist (pode ser executado)
         False se o comando está na blacklist (bloqueado)
     """
-    cmd = command.strip().lower()
+    cmd = _normalize_command(command)
+
+    if _has_rm_recursive_force(cmd):
+        return False
 
     # Blacklist: padrões destrutivos e irrecuperáveis
     blacklist: list[str] = [
