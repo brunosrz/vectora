@@ -102,6 +102,80 @@ class TestMigrationRunner:
         assert second is False
 
     @pytest.mark.asyncio
+    async def test_colunas_do_kanban_chegam_em_banco_ja_populado(
+        self, runner_conn, monkeypatch
+    ):
+        """Regressão: `status`/`block_kind`/`claim_lock`/`budget_cents` etc
+        entraram direto no CREATE TABLE de `vectora_background_tasks` — no-op
+        em banco que já tem a tabela sem essas colunas, porque `CREATE TABLE
+        IF NOT EXISTS` não altera uma tabela existente. Sem os `ALTER TABLE`
+        correspondentes, o tick do scheduler quebrava com
+        `sqlite3.OperationalError: no such column: status` em todo boot
+        contra um banco criado antes do Sprint 16."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        # Simula o shape "pré-kanban": só as colunas que existiam antes.
+        await runner_conn.executescript(
+            """
+            CREATE TABLE vectora_background_tasks (
+                id             TEXT PRIMARY KEY,
+                session_id     TEXT NOT NULL,
+                workspace_id   TEXT,
+                user_id        TEXT NOT NULL,
+                kind           TEXT NOT NULL,
+                name           TEXT NOT NULL,
+                instruction    TEXT NOT NULL,
+                trigger_type   TEXT NOT NULL,
+                trigger_config TEXT NOT NULL DEFAULT '{}',
+                enabled        INTEGER NOT NULL DEFAULT 1,
+                last_run_at    TEXT,
+                next_run_at    TEXT,
+                created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE vectora_background_runs (
+                id             TEXT PRIMARY KEY,
+                task_id        TEXT NOT NULL,
+                session_id     TEXT NOT NULL,
+                run_thread_id  TEXT,
+                trigger_source TEXT NOT NULL,
+                status         TEXT NOT NULL DEFAULT 'running',
+                summary        TEXT,
+                started_at     TEXT NOT NULL DEFAULT (datetime('now')),
+                finished_at    TEXT
+            );
+            """
+        )
+        await runner_conn.commit()
+
+        assert await MigrationRunner(runner_conn).upgrade() is True
+
+        cur = await runner_conn.execute("PRAGMA table_info(vectora_background_tasks)")
+        cols = {row[1] for row in await cur.fetchall()}
+        assert {
+            "status",
+            "block_kind",
+            "block_reason",
+            "claim_lock",
+            "claim_expires_at",
+            "budget_cents",
+        } <= cols
+
+        cur = await runner_conn.execute("PRAGMA table_info(vectora_background_runs)")
+        cols = {row[1] for row in await cur.fetchall()}
+        assert {"tokens_used", "estimated_cost_cents"} <= cols
+
+        # Erro/borda: o tick real do scheduler (release_stale_claims) que
+        # quebrava em produção agora roda sem lançar.
+        from backend.scheduling import kanban
+
+        async def _get_db():
+            return runner_conn
+
+        monkeypatch.setattr(kanban, "_get_db", _get_db)
+        assert await kanban.release_stale_claims() == 0
+
+    @pytest.mark.asyncio
     async def test_vectora_sessions_table_created(self, runner_conn):
         """O schema cria a tabela vectora_sessions."""
         from backend.storage.migrations.runner import MigrationRunner

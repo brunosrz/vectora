@@ -180,20 +180,23 @@ CREATE TABLE IF NOT EXISTS vectora_background_tasks (
     enabled        INTEGER NOT NULL DEFAULT 1,
     last_run_at    TEXT,
     next_run_at    TEXT,
-    -- Kanban: ciclo triage/todo/ready/running/blocked/done/archived.
-    -- `claim_lock` guarda o id da run que detém a task; `claim_expires_at`
-    -- é o TTL que devolve o card se o worker morrer sem liberar.
-    status           TEXT NOT NULL DEFAULT 'todo',
-    block_kind       TEXT,
-    block_reason     TEXT,
-    claim_lock       TEXT,
-    claim_expires_at TEXT,
-    -- Teto de custo por tarefa, em centavos. NULL = sem limite (o corte é
-    -- opt-in); 0 = não gaste nada, que é diferente de NULL.
-    budget_cents     INTEGER,
     created_at     TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Kanban: ciclo triage/todo/ready/running/blocked/done/archived.
+-- `claim_lock` guarda o id da run que detém a task; `claim_expires_at`
+-- é o TTL que devolve o card se o worker morrer sem liberar. Bancos já
+-- populados não ganham essas colunas de graça via CREATE TABLE IF NOT
+-- EXISTS (no-op na tabela existente) — daí os ALTER TABLE abaixo.
+ALTER TABLE vectora_background_tasks ADD COLUMN status TEXT NOT NULL DEFAULT 'todo';
+ALTER TABLE vectora_background_tasks ADD COLUMN block_kind TEXT;
+ALTER TABLE vectora_background_tasks ADD COLUMN block_reason TEXT;
+ALTER TABLE vectora_background_tasks ADD COLUMN claim_lock TEXT;
+ALTER TABLE vectora_background_tasks ADD COLUMN claim_expires_at TEXT;
+-- Teto de custo por tarefa, em centavos. NULL = sem limite (o corte é
+-- opt-in); 0 = não gaste nada, que é diferente de NULL.
+ALTER TABLE vectora_background_tasks ADD COLUMN budget_cents INTEGER;
 
 CREATE INDEX IF NOT EXISTS idx_background_tasks_session ON vectora_background_tasks(session_id);
 CREATE INDEX IF NOT EXISTS idx_background_tasks_due     ON vectora_background_tasks(enabled, trigger_type);
@@ -218,13 +221,15 @@ CREATE TABLE IF NOT EXISTS vectora_background_runs (
     trigger_source TEXT NOT NULL,
     status         TEXT NOT NULL DEFAULT 'running',
     summary        TEXT,
-    -- Consumo da run. NULL (não 0) quando o provider não expõe usage:
-    -- somar 0 faria o budget nunca estourar.
-    tokens_used          INTEGER,
-    estimated_cost_cents REAL,
     started_at     TEXT NOT NULL DEFAULT (datetime('now')),
     finished_at    TEXT
 );
+
+-- Consumo da run. NULL (não 0) quando o provider não expõe usage: somar 0
+-- faria o budget nunca estourar. Mesmo motivo do ALTER acima: banco já
+-- populado não ganha coluna nova via CREATE TABLE IF NOT EXISTS.
+ALTER TABLE vectora_background_runs ADD COLUMN tokens_used INTEGER;
+ALTER TABLE vectora_background_runs ADD COLUMN estimated_cost_cents REAL;
 
 CREATE INDEX IF NOT EXISTS idx_background_runs_task    ON vectora_background_runs(task_id);
 CREATE INDEX IF NOT EXISTS idx_background_runs_session ON vectora_background_runs(session_id);

@@ -740,12 +740,12 @@ function registerIpc(): void {
   // Seletor nativo de pasta (Pastas Seguras). Devolve `null` no cancelamento —
   // o renderer distingue "cancelou" de "escolheu" pra não limpar o campo.
   ipcMain.handle("vectora:pick-directory", async () => {
-    const opts = {
-      properties: ["openDirectory", "createDirectory"] as const,
+    const opts: Electron.OpenDialogOptions = {
+      properties: ["openDirectory", "createDirectory"],
     };
     const result = mainWindow
-      ? await dialog.showOpenDialog(mainWindow, { ...opts })
-      : await dialog.showOpenDialog({ ...opts });
+      ? await dialog.showOpenDialog(mainWindow, opts)
+      : await dialog.showOpenDialog(opts);
     if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
   });
