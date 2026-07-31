@@ -26,7 +26,7 @@ export function Header({
           sem isso, o ícone de dicas (à direita) não alinha com a borda das
           bolhas de mensagem em telas largas. */}
       <div className="flex items-center justify-between w-full max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Hamburger só em mobile — reabre o sidebar como overlay. */}
           {onOpenSidebar && (
             <button
@@ -56,7 +56,7 @@ export function Header({
 
         <IdeModeSwitch show={showModeSwitch} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <ContextualHelp onShowShortcuts={onShowShortcuts} />
           <SettingsMenu />
         </div>
