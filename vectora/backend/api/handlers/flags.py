@@ -37,8 +37,13 @@ async def get_flags() -> dict:
 
     # Features anteriormente em beta (IDE mode, Library, Context Graph) agora são
     # estáveis e habilitadas por padrão para todos os usuários.
+    #
+    # `enable_kanban_mode` usa o mesmo mecanismo que gateou o IDE mode antes
+    # de graduar: `VECTORA_DEV=1` **exato**. Aceitar "true"/"yes" faria a
+    # flag ligar sem querer num ambiente de usuário que copiou um .env.
     return {
         "enable_features_beta": True,
+        "enable_kanban_mode": os.environ.get("VECTORA_DEV") == "1",
         "auth_required": _auth_enabled(),
         "local_configured": bool(runtime_settings.local_user_name),
     }

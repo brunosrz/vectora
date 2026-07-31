@@ -68,3 +68,27 @@ class TestLocalConfigured:
         _isolated_runtime_settings.set_local_user("Bruno", "Vectora")
         resp = client.get("/settings/flags")
         assert resp.json()["local_configured"] is True
+
+
+class TestEnableKanbanMode:
+    """O 3º modo de interface é dev-only: `VECTORA_DEV=1` exato.
+
+    Mesmo mecanismo que gateou o IDE mode antes de graduar. Fora do dev, o
+    usuário não vê a opção existir.
+    """
+
+    def test_habilitado_com_vectora_dev_1(self, client, monkeypatch):
+        monkeypatch.setenv("VECTORA_DEV", "1")
+        assert client.get("/settings/flags").json()["enable_kanban_mode"] is True
+
+    def test_sem_a_env_fica_desligado(self, client, monkeypatch):
+        monkeypatch.delenv("VECTORA_DEV", raising=False)
+        assert client.get("/settings/flags").json()["enable_kanban_mode"] is False
+
+    @pytest.mark.parametrize("valor", ["0", "true", "yes", "", " 1", "01"])
+    def test_so_o_valor_1_exato_ativa(self, client, monkeypatch, valor):
+        """Erro/borda: `true`/`yes` parecem ligar mas não ligam — a convenção
+        do projeto é `1` exato, e aceitar variações faria a flag ligar sem
+        querer em ambiente de usuário."""
+        monkeypatch.setenv("VECTORA_DEV", valor)
+        assert client.get("/settings/flags").json()["enable_kanban_mode"] is False

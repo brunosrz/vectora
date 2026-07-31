@@ -1259,5 +1259,13 @@
   "prefs_media_models_error": "Could not save the model.",
   "admin_saferoots_browse": "Choose folder",
   "meter_provider_usage": "Provider usage",
-  "meter_provider_error": "unavailable"
+  "meter_provider_error": "unavailable",
+  "ide_mode_kanban": "Kanban",
+  "kanban_column_todo": "Todo",
+  "kanban_column_ready": "Ready",
+  "kanban_column_running": "Running",
+  "kanban_column_blocked": "Blocked",
+  "kanban_column_done": "Done",
+  "kanban_blocked_by": "blocked by",
+  "kanban_empty": "No tasks on the board"
 }

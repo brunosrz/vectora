@@ -1259,5 +1259,13 @@
   "prefs_media_models_error": "No se pudo guardar el modelo.",
   "admin_saferoots_browse": "Elegir carpeta",
   "meter_provider_usage": "Consumo por proveedor",
-  "meter_provider_error": "no disponible"
+  "meter_provider_error": "no disponible",
+  "ide_mode_kanban": "Kanban",
+  "kanban_column_todo": "Pendiente",
+  "kanban_column_ready": "Listo",
+  "kanban_column_running": "En curso",
+  "kanban_column_blocked": "Bloqueado",
+  "kanban_column_done": "Hecho",
+  "kanban_blocked_by": "bloqueado por",
+  "kanban_empty": "Sin tareas en el tablero"
 }

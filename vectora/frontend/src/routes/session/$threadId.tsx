@@ -5,6 +5,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Header } from "@/components/header/header";
 import { ChatInterface } from "@/components/chat/chat-interface";
+import { KanbanBoard } from "@/components/kanban/kanban-board";
 import {
   WorkbenchContent,
   WorkbenchNavBar,
@@ -578,7 +579,27 @@ function SessionPage() {
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
       <AnimatePresence mode="wait" initial={false}>
-        {uiMode === "ide" && !chatMode ? (
+        {uiMode === "kanban" && !chatMode ? (
+          // 3º bloco dentro do mesmo AnimatePresence: a transição entre
+          // modos continua com o mecanismo que já existia.
+          <motion.div
+            key="kanban"
+            initial={{ opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -18 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="flex flex-col flex-1 min-h-0 overflow-hidden"
+          >
+            <Header
+              showToolCalls={showToolCalls}
+              onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+              onShowShortcuts={() => setShowShortcutsDialog(true)}
+              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+              showModeSwitch={!chatMode}
+            />
+            <KanbanBoard threadId={threadId} />
+          </motion.div>
+        ) : uiMode === "ide" && !chatMode ? (
           // ── Layout IDE: sidebars ao topo, Header só acima do DockedEditor ──
           <motion.div
             key="ide"

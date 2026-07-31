@@ -1259,5 +1259,13 @@
   "prefs_media_models_error": "Não foi possível salvar o modelo.",
   "admin_saferoots_browse": "Escolher pasta",
   "meter_provider_usage": "Consumo por provider",
-  "meter_provider_error": "indisponível"
+  "meter_provider_error": "indisponível",
+  "ide_mode_kanban": "Kanban",
+  "kanban_column_todo": "A fazer",
+  "kanban_column_ready": "Pronto",
+  "kanban_column_running": "Em execução",
+  "kanban_column_blocked": "Bloqueado",
+  "kanban_column_done": "Concluído",
+  "kanban_blocked_by": "bloqueado por",
+  "kanban_empty": "Nenhuma tarefa no board"
 }

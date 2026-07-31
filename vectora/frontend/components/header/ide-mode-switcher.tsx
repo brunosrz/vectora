@@ -1,7 +1,8 @@
 "use client";
 
-import { Bot, Code2 } from "lucide-react";
+import { Bot, Code2, KanbanSquare } from "lucide-react";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { m } from "@/lib/paraglide/messages";
 
 interface IdeModeProps {
@@ -11,6 +12,7 @@ interface IdeModeProps {
 export function IdeModeSwitch({ show = false }: IdeModeProps) {
   const uiMode = useSettingsStore((s) => s.uiMode);
   const setUiMode = useSettingsStore((s) => s.setUiMode);
+  const { enableKanbanMode } = useFeatureFlags();
 
   if (!show) return null;
 
@@ -51,6 +53,28 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
         <Code2 className="w-3.5 h-3.5" />
         {m.ide_mode_ide()}
       </button>
+      {/* Fora do dev mode o seletor continua binário — o usuário comum não
+          vê a opção existir, em vez de vê-la desabilitada. */}
+      {enableKanbanMode && (
+        <>
+          <div className="w-px bg-border/40 self-stretch" />
+          <button
+            type="button"
+            onClick={() => {
+              if (uiMode !== "kanban") setUiMode("kanban");
+            }}
+            aria-pressed={uiMode === "kanban"}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
+              uiMode === "kanban"
+                ? "bg-muted text-foreground font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            <KanbanSquare className="w-3.5 h-3.5" />
+            {m.ide_mode_kanban()}
+          </button>
+        </>
+      )}
     </div>
   );
 }
