@@ -364,6 +364,12 @@ class Settings(BaseSettings):
     """Modelo de geração de imagem via OpenRouter. None desabilita."""
 
     openrouter_tts_model: str | None = None
+
+    openrouter_rerank_model: str | None = None
+    """Modelo de rerank via OpenRouter (ex.: ``cohere/rerank-v3.5``).
+
+    ``None`` desliga a capacidade — sem modelo escolhido não há o que chamar
+    em ``POST /rerank``."""
     """Modelo de texto-pra-voz via OpenRouter. None desabilita."""
 
     embedding_queue_enabled: bool = True
@@ -387,7 +393,7 @@ class Settings(BaseSettings):
     search_min_score: float = 0.5
     """Minimum similarity score threshold for search results."""
 
-    reranker_type: Literal["cohere", "voyage", "none"] = "cohere"
+    reranker_type: Literal["cohere", "voyage", "openrouter", "none"] = "cohere"
     """Provider de rerank primário; o outro vira secundário no fallback.
 
     Ollama e OpenRouter **não** entram: nenhum dos dois expõe API de rerank

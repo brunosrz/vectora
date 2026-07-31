@@ -277,19 +277,24 @@ def test_runtime_settings_indisponivel_cai_na_env_sem_estourar(monkeypatch):
 
 
 def test_reranker_type_recusa_provider_sem_api_de_rerank():
-    """Ollama e OpenRouter não expõem API de rerank (Ollama não tem o
-    endpoint; OpenRouter é proxy de chat). Aceitá-los aqui declararia suporte
-    inexistente e a escolha só falharia na hora de recuperar contexto."""
+    """Só entra provider com endpoint de rerank de verdade.
+
+    O OpenRouter tem: ``POST /api/v1/rerank`` (`model`, `query`, `documents`,
+    `top_n`). Este teste já excluiu o OpenRouter por uma afirmação errada de
+    que ele seria só proxy de chat. O Ollama segue fora — esse realmente não
+    tem o endpoint.
+    """
     import pydantic
 
     from backend.settings import Settings
 
-    # Happy: os dois providers que de fato têm API de rerank.
+    # Happy: os providers que de fato têm API de rerank.
     assert Settings(reranker_type="cohere").reranker_type == "cohere"
     assert Settings(reranker_type="voyage").reranker_type == "voyage"
+    assert Settings(reranker_type="openrouter").reranker_type == "openrouter"
 
-    # Erro/borda: gateway sem rerank é rejeitado na validação, não ignorado
+    # Erro/borda: provider sem rerank é rejeitado na validação, não ignorado
     # silenciosamente lá na frente em `_build_reranker`.
-    for invalido in ("ollama", "openrouter", "qualquer-coisa"):
+    for invalido in ("ollama", "qualquer-coisa"):
         with pytest.raises(pydantic.ValidationError):
             Settings(reranker_type=invalido)

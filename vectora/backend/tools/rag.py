@@ -94,6 +94,31 @@ def _build_voyage_reranker() -> Any:
     )
 
 
+def _build_openrouter_reranker() -> Any:
+    """``OpenRouterRerank`` se a key e o modelo estão configurados, senão None.
+
+    O modelo vem de ``configured_gateway_model`` (escolha da UI ganha do env),
+    mesmo caminho das demais capacidades de gateway.
+    """
+    try:
+        from backend.llm.openrouter.client import OpenRouterClient
+        from backend.llm.openrouter.rerank import OpenRouterRerank
+        from backend.settings import configured_gateway_model
+
+        key = settings.openrouter_api_key
+        model = configured_gateway_model("openrouter", "rerank")
+        if not key or not model:
+            return None
+        return OpenRouterRerank(
+            model=model,
+            client=OpenRouterClient(api_key=key),
+            top_n=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
+        )
+    except Exception:
+        logger.warning("rag: falha ao montar reranker OpenRouter", exc_info=True)
+        return None
+
+
 def _rag_runtime() -> dict[str, Any]:
     """Settings de RAG configurados em runtime (aba de memória)."""
     from backend.workspace.runtime_settings import runtime_settings
@@ -114,8 +139,19 @@ def _build_reranker() -> Any:
     if not rag.get("reranker_enabled", True):
         return None
     pref = str(rag.get("rerank_provider", "auto"))
-    rtype = pref if pref in ("cohere", "voyage") else settings.reranker_type
-    if rtype == "voyage":
+    rtype = (
+        pref if pref in ("cohere", "voyage", "openrouter") else settings.reranker_type
+    )
+    if rtype == "openrouter":
+        primary = _build_openrouter_reranker()
+        if primary is None:
+            return None
+        secondary = _build_cohere_reranker()
+        from backend.settings import configured_gateway_model
+
+        primary_id = f"openrouter:{configured_gateway_model('openrouter', 'rerank')}"
+        secondary_id = f"cohere:{settings.reranker_model}"
+    elif rtype == "voyage":
         primary = _build_voyage_reranker()
         if primary is None:
             return None

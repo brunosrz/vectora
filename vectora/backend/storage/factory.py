@@ -268,13 +268,13 @@ def _build_ollama_embeddings(model_override: str | None = None) -> Any:
 
 
 def _build_openrouter_embeddings(model_override: str | None = None) -> Any:
-    """``OpenAIEmbeddings`` apontando pro base_url da OpenRouter (API
-    compatível com OpenAI — mesmo cliente usado pro chat em
-    ``services/utils.py::_build_concrete_model``). ``model_override`` vem de
-    ``rag_settings.embed_model`` em runtime, quando setado."""
+    """``OpenRouterEmbeddings`` nativo — expõe `input_type` (modelos
+    assimétricos precisam saber se o texto é consulta ou documento) e
+    `usage.cost`, que o `OpenAIEmbeddings` com base_url trocado descartava.
+    ``model_override`` vem de ``rag_settings.embed_model`` em runtime."""
     try:
-        from langchain_openai import OpenAIEmbeddings
-
+        from backend.llm.openrouter.client import OpenRouterClient
+        from backend.llm.openrouter.embeddings import OpenRouterEmbeddings
         from backend.settings import settings as _s
 
         key = _s.openrouter_api_key
@@ -282,10 +282,9 @@ def _build_openrouter_embeddings(model_override: str | None = None) -> Any:
         if not key or not model:
             return None
 
-        return OpenAIEmbeddings(
-            api_key=key,
-            base_url="https://openrouter.ai/api/v1",
+        return OpenRouterEmbeddings(
             model=model,
+            client=OpenRouterClient(api_key=key),
         )
     except Exception:
         return None

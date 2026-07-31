@@ -331,8 +331,12 @@ class TestBuildOllamaOpenRouterEmbeddings:
             assert factory._build_openrouter_embeddings() is None
 
     def test_openrouter_with_key_and_model_builds_embeddings(self):
+        """Cliente nativo, não `OpenAIEmbeddings` com base_url trocado — aquele
+        descartava `input_type` (modelo assimétrico precisa saber se é consulta
+        ou documento) e `usage.cost`."""
         from langchain_openai import OpenAIEmbeddings
 
+        from backend.llm.openrouter.embeddings import OpenRouterEmbeddings
         from backend.settings import settings
         from backend.storage import factory
 
@@ -343,5 +347,8 @@ class TestBuildOllamaOpenRouterEmbeddings:
             ),
         ):
             emb = factory._build_openrouter_embeddings()
-        assert isinstance(emb, OpenAIEmbeddings)
+        assert isinstance(emb, OpenRouterEmbeddings)
+        # Erro/borda: voltar pro cliente da OpenAI é regressão silenciosa —
+        # continua "funcionando" e perde os dois campos de novo.
+        assert not isinstance(emb, OpenAIEmbeddings)
         assert emb.model == "qwen/qwen3-embedding-0.6b"
