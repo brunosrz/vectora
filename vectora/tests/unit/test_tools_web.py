@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from backend.tools.web import fetch_url, web_search
 
@@ -41,11 +41,14 @@ class TestWebSearchFallback:
         assert data["status"] == "error"
 
     def test_tavily_configurado_nao_usa_fallback(self):
-        mock_tool = MagicMock()
-        mock_tool.invoke.return_value = {"results": [{"title": "tavily result"}]}
+        """Com key válida a busca vai pelo cliente nativo, e o contrato de
+        saída (`json.dumps(results)`) continua o mesmo — é o contrato com o
+        LLM, não muda com a troca de backend."""
+        mock_client = MagicMock()
+        mock_client.search = AsyncMock(return_value=[{"title": "tavily result"}])
         with (
             patch("backend.tools.web.settings") as ms,
-            patch("backend.tools.web._get_search_tool", return_value=mock_tool),
+            patch("backend.tools.web._tavily_client", return_value=mock_client),
             patch("backend.browser.search_fallback.search_fallback") as mock_fallback,
         ):
             ms.tavily_api_key = "real-key"

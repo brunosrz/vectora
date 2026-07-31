@@ -1,15 +1,17 @@
 """Web tools: busca e extração de conteúdo da internet via Tavily.
 
-Migrado de `tavily-python` para `langchain-tavily` (TavilySearch / TavilyExtract).
+Cliente HTTP nativo (`backend/tools/tavily/`), não `langchain-tavily`: o
+pacote cobria só `/search` e `/extract` e prendia `search_depth`/`max_results`
+na instanciação.
 
 Os wrappers `@tool web_search` e `fetch_url` preservam nome e formato de saída
-— JSON list para `web_search`, texto puro para `fetch_url` — consumidos pelo
-deep-agent. A migração troca o backend e desbloqueia novos parâmetros (topic,
-time_range, filtros de domínio), sem mexer no contrato das tools.
+— JSON list para `web_search`, texto puro para `fetch_url`. Esse é o contrato
+com o LLM e não muda.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -19,49 +21,24 @@ from langchain.tools import tool
 
 from backend.settings import settings
 
-try:
-    from langchain_tavily import TavilyExtract, TavilySearch
-except ImportError:
-    TavilySearch = None  # type: ignore[assignment,misc]  # ty: ignore[invalid-assignment]
-    TavilyExtract = None  # type: ignore[assignment,misc]  # ty: ignore[invalid-assignment]
-
 logger = logging.getLogger(__name__)
 
-# Parâmetros que só podem ser definidos na instanciação (não por chamada).
+#: `max_results` e `search_depth` agora são por chamada — o cliente nativo
+#: não os prende na construção como o `langchain-tavily` fazia.
 _MAX_RESULTS = 5
 
-# Singletons — instanciados sob demanda na primeira chamada.
-_search_tool: Any = None
-_extract_tool: Any = None
+
+def _tavily_client() -> Any:
+    """Cliente Tavily novo por chamada — barato (só monta o httpx sob demanda)
+    e evita segurar conexão entre turnos do agente."""
+    from backend.tools.tavily.client import TavilyClient
+
+    return TavilyClient(api_key=settings.tavily_api_key or "")
 
 
-def _get_search_tool() -> Any:
-    """Obtém o TavilySearch singleton.
-
-    `max_results`, `search_depth` e `include_raw_content` são fixados aqui —
-    a API do langchain-tavily só aceita esses na instanciação. Os parâmetros
-    por-chamada (topic, time_range, filtros de domínio) vão no `.invoke()`.
-    """
-    global _search_tool
-    if _search_tool is None and TavilySearch is not None:
-        _search_tool = TavilySearch(
-            tavily_api_key=settings.tavily_api_key,
-            max_results=_MAX_RESULTS,
-            search_depth="advanced",
-            include_raw_content=True,
-        )
-    return _search_tool
-
-
-def _get_extract_tool() -> Any:
-    """Obtém o TavilyExtract singleton (extração de conteúdo de URLs)."""
-    global _extract_tool
-    if _extract_tool is None and TavilyExtract is not None:
-        _extract_tool = TavilyExtract(
-            tavily_api_key=settings.tavily_api_key,
-            extract_depth="advanced",
-        )
-    return _extract_tool
+def _run_sync(coro: Any) -> Any:
+    """Roda a corrotina do cliente async a partir da tool síncrona."""
+    return asyncio.run(coro)
 
 
 def _is_quota_error(err: str) -> bool:
@@ -152,12 +129,6 @@ def web_search(
         JSON com lista de resultados (url, title, content, raw_content) prontos
         para embedding, ou um objeto JSON com status de erro
     """
-    if TavilySearch is None:
-        logger.error("langchain-tavily não instalado")
-        return json.dumps(
-            {"status": "error", "error": "langchain-tavily não instalado."}
-        )
-
     if not settings.tavily_api_key:
         logger.warning("TAVILY_API_KEY not configured — usando fallback via Chromium")
         return _search_via_fallback(query)
@@ -170,21 +141,20 @@ def web_search(
     except Exception:
         _tracer = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
-    invoke_args: dict[str, Any] = {"query": query, "topic": topic}
-    if time_range:
-        invoke_args["time_range"] = time_range
-    if include_domains:
-        invoke_args["include_domains"] = include_domains
-    if exclude_domains:
-        invoke_args["exclude_domains"] = exclude_domains
-
     try:
-        response = _get_search_tool().invoke(invoke_args)
-        # langchain-tavily devolve {"error": exc} em vez de levantar.
-        if isinstance(response, dict) and response.get("error"):
-            raise RuntimeError(str(response["error"]))
-
-        results = response.get("results", []) if isinstance(response, dict) else []
+        client = _tavily_client()
+        results = _run_sync(
+            client.search(
+                query,
+                topic=topic,
+                time_range=time_range,
+                include_domains=include_domains,
+                exclude_domains=exclude_domains,
+                max_results=_MAX_RESULTS,
+                search_depth="advanced",
+                include_raw_content=True,
+            )
+        )
         n_results = len(results)
 
         logger.info(
@@ -249,10 +219,6 @@ def fetch_url(url: str) -> str:
         logger.warning("fetch_url called with invalid URL", extra={"url": url})
         return "Error: URL must start with http:// or https://"
 
-    if TavilyExtract is None:
-        logger.error("langchain-tavily não instalado")
-        return "Error: langchain-tavily não instalado. Cannot fetch URL."
-
     if not settings.tavily_api_key:
         logger.warning("TAVILY_API_KEY not configured — usando fallback via Chromium")
         return _fetch_via_fallback(url)
@@ -266,11 +232,8 @@ def fetch_url(url: str) -> str:
         _tracer = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     try:
-        response = _get_extract_tool().invoke({"urls": [url]})
-        if isinstance(response, dict) and response.get("error"):
-            raise RuntimeError(str(response["error"]))
-
-        results = response.get("results", []) if isinstance(response, dict) else []
+        client = _tavily_client()
+        results = _run_sync(client.extract([url], extract_depth="advanced"))
         if not results:
             logger.warning("fetch_url returned no content", extra={"url": url})
             if _tracer:
