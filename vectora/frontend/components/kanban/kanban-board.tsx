@@ -13,7 +13,7 @@
  * existem.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { m } from "@/lib/paraglide/messages";
 
@@ -108,6 +108,11 @@ function NewTaskForm({
     </div>
   );
 }
+
+//: Sem WebSocket como o Hermes — o board é local-first single-usuário,
+//: então polling leve é suficiente pra refletir tarefas que o scheduler
+//: move em segundo plano (fora de uma ação do próprio usuário no board).
+const POLL_INTERVAL_MS = 5000;
 
 export interface KanbanTask {
   id: string;
@@ -224,6 +229,20 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   };
 
   useEffect(carregar, [threadId]);
+
+  // Ref sempre com a versão mais recente de `carregar` — o interval abaixo
+  // só precisa ser recriado quando `threadId` muda, não a cada render.
+  const carregarRef = useRef(carregar);
+  carregarRef.current = carregar;
+
+  // Pausa o polling com a aba oculta — evita chamada de fundo desnecessária
+  // quando o usuário está em outra aba/app.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") carregarRef.current();
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [threadId]);
 
   // `triage`/`archived` não têm coluna: mostrá-los junto encheria o board de
   // cards que não são o fluxo ativo.

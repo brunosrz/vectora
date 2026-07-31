@@ -273,4 +273,98 @@ describe("KanbanBoard", () => {
 
     expect(screen.getByText(/nenhuma tarefa/i)).toBeInTheDocument();
   });
+
+  it("faz polling periódico enquanto a aba está visível", async () => {
+    vi.useFakeTimers();
+    let chamadas = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        chamadas += 1;
+        return new Response(JSON.stringify([]), { status: 200 });
+      }),
+    );
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+
+    render(<KanbanBoard threadId="s1" />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const antes = chamadas;
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(chamadas).toBeGreaterThanOrEqual(antes + 2);
+    vi.useRealTimers();
+  });
+
+  it("não faz polling com a aba oculta", async () => {
+    vi.useFakeTimers();
+    let chamadas = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        chamadas += 1;
+        return new Response(JSON.stringify([]), { status: 200 });
+      }),
+    );
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+
+    render(<KanbanBoard threadId="s1" />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const antes = chamadas;
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15000);
+    });
+
+    // Erro/borda: aba oculta não deve gerar chamada nova nenhuma —
+    // só o fetch inicial do mount conta.
+    expect(chamadas).toBe(antes);
+    vi.useRealTimers();
+  });
+
+  it("unmount limpa o interval sem chamadas órfãs", async () => {
+    vi.useFakeTimers();
+    let chamadas = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        chamadas += 1;
+        return new Response(JSON.stringify([]), { status: 200 });
+      }),
+    );
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+
+    const { unmount } = render(<KanbanBoard threadId="s1" />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    unmount();
+    const apos = chamadas;
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20000);
+    });
+
+    expect(chamadas).toBe(apos);
+    vi.useRealTimers();
+  });
 });
