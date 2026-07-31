@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { formatTokens, usageBarColor, usageLevel } from "@/lib/utils/usage";
 import {
@@ -13,6 +13,67 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { m } from "@/lib/paraglide/messages";
+
+interface ProviderUsage {
+  provider: string;
+  label: string;
+  used: number | null;
+  limit: number | null;
+  remaining: number | null;
+  plan: string | null;
+  unit: string;
+  error: string | null;
+}
+
+function formatAmount(value: number, unit: string): string {
+  return unit === "usd"
+    ? `$${value.toFixed(2)}`
+    : value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
+function ProviderRow({ item }: { item: ProviderUsage }) {
+  // Falha aparece como falha: mostrar 0 faria o usuário achar que não gastou
+  // nada quando a consulta é que não respondeu.
+  if (item.error) {
+    return (
+      <div className="space-y-0.5">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">{item.label}</span>
+          <span className="text-destructive text-[11px]">
+            {m.meter_provider_error()}
+          </span>
+        </div>
+        <p className="text-[10px] text-muted-foreground truncate">
+          {item.error}
+        </p>
+      </div>
+    );
+  }
+
+  const pct =
+    item.limit && item.limit > 0 && item.used !== null
+      ? (item.used / item.limit) * 100
+      : 0;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">
+          {item.label}
+          {item.plan ? ` · ${item.plan}` : ""}
+        </span>
+        <span className="font-mono text-foreground/90">
+          {item.used !== null ? formatAmount(item.used, item.unit) : "—"}
+          {item.limit !== null
+            ? ` / ${formatAmount(item.limit, item.unit)}`
+            : ""}
+        </span>
+      </div>
+      {item.limit !== null && <UsageBar pct={pct} />}
+    </div>
+  );
+}
 
 interface UsagePopoverProps {
   tokensUsed: number;
@@ -70,6 +131,25 @@ export function UsagePopover({ tokensUsed, modelId }: UsagePopoverProps) {
   const contextWindow = getContextWindow(modelId as ModelOption);
   const pct = contextWindow > 0 ? (tokensUsed / contextWindow) * 100 : 0;
   const [open, setOpen] = useState(false);
+  const [providers, setProviders] = useState<ProviderUsage[]>([]);
+
+  // Só busca ao abrir: o consumo dos providers é dado remoto, e o backend
+  // cacheia — não faz sentido consultar a cada render do composer.
+  useEffect(() => {
+    if (!open) return;
+    let cancelado = false;
+    void fetch("/usage/providers", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { providers: [] }))
+      .then((data) => {
+        if (!cancelado) setProviders(data.providers ?? []);
+      })
+      .catch(() => {
+        // Sem consumo remoto o popover ainda mostra a janela de contexto.
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [open]);
 
   const valueLabel = `${formatTokens(tokensUsed)} / ${formatTokens(
     contextWindow,
@@ -86,7 +166,7 @@ export function UsagePopover({ tokensUsed, modelId }: UsagePopoverProps) {
               className="flex items-center justify-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
               aria-haspopup="dialog"
               aria-expanded={open}
-              aria-label={`Janela de contexto: ${valueLabel}`}
+              aria-label={`${m.meter_context_window()}: ${valueLabel}`}
             >
               <UsageRing pct={pct} />
             </button>
@@ -109,7 +189,9 @@ export function UsagePopover({ tokensUsed, modelId }: UsagePopoverProps) {
             className="absolute right-0 bottom-full mb-2 z-50 w-72 rounded-lg border border-border/60 bg-background shadow-xl p-3 space-y-2"
           >
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Janela de contexto</span>
+              <span className="text-muted-foreground">
+                {m.meter_context_window()}
+              </span>
               <span className="font-mono text-foreground/90">
                 {formatTokens(tokensUsed)} / {formatTokens(contextWindow)} (
                 {pct.toFixed(0)}%)
@@ -117,6 +199,17 @@ export function UsagePopover({ tokensUsed, modelId }: UsagePopoverProps) {
             </div>
             <UsageBar pct={pct} />
             <p className="text-[11px] text-muted-foreground pt-1">{modelId}</p>
+
+            {providers.length > 0 && (
+              <div className="space-y-2 pt-2 mt-1 border-t border-border/60">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {m.meter_provider_usage()}
+                </p>
+                {providers.map((item) => (
+                  <ProviderRow key={item.provider} item={item} />
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}

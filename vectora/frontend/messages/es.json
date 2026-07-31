@@ -1257,5 +1257,7 @@
   "prefs_media_models_openrouter_image": "OpenRouter — imagen",
   "prefs_media_models_openrouter_tts": "OpenRouter — voz",
   "prefs_media_models_error": "No se pudo guardar el modelo.",
-  "admin_saferoots_browse": "Elegir carpeta"
+  "admin_saferoots_browse": "Elegir carpeta",
+  "meter_provider_usage": "Consumo por proveedor",
+  "meter_provider_error": "no disponible"
 }
