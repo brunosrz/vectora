@@ -132,7 +132,7 @@ function DiffPreview({ diff }: { diff: string }) {
         )}
         <span className="text-green-400">+{added}</span>
         <span className="text-red-400">-{removed}</span>
-        <span className="opacity-60">Ver diff completo</span>
+        <span className="opacity-60">{m.hitl_view_full_diff()}</span>
       </button>
       {expanded && (
         <div className="mt-1.5 rounded border border-border/40 overflow-hidden max-h-48 overflow-y-auto">
@@ -206,7 +206,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
         `edit:${editedArgs.replace(/\s+/g, " ")}`,
       );
     } catch {
-      setEditError("JSON inválido — verifique a sintaxe antes de enviar.");
+      setEditError(m.hitl_json_error());
     }
   };
 
@@ -224,7 +224,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
       <div className="flex items-center gap-2 px-4 py-3 border-b border-orange-400/20 flex-wrap">
         <ToolIcon name={pending.toolName} />
         <span className="text-sm font-medium text-orange-300">
-          Ação requer aprovação
+          {m.hitl_title()}
         </span>
         <code className="ml-1 text-xs bg-orange-900/40 text-orange-200 px-1.5 py-0.5 rounded">
           {toolLabel}
@@ -236,7 +236,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
         )}
         {pending.permissionMode && (
           <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded border border-orange-400/30 text-orange-300/70 font-mono">
-            modo: {pending.permissionMode}
+            {m.hitl_mode_label()} {pending.permissionMode}
           </span>
         )}
       </div>
@@ -275,7 +275,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
               ) : (
                 <ChevronRight className="w-3 h-3" />
               )}
-              {showArgs ? "Ocultar" : "Ver"} argumentos
+              {showArgs ? m.hitl_hide_args() : m.hitl_show_args()}
             </button>
 
             {showArgs && (
@@ -290,7 +290,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
         ) : (
           <div className="mb-3">
             <p className="text-xs text-muted-foreground mb-2">
-              Edite os argumentos em JSON antes de executar:
+              {m.hitl_edit_instruction()}
             </p>
             <Textarea
               value={editedArgs}
@@ -318,7 +318,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
                 onClick={handleApprove}
               >
                 <Check className="w-3 h-3 mr-1" />
-                Aprovar
+                {m.hitl_approve()}
               </Button>
               <Button
                 size="sm"
@@ -327,7 +327,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
                 onClick={() => setIsEditing(true)}
               >
                 <Edit3 className="w-3 h-3 mr-1" />
-                Editar
+                {m.hitl_edit()}
               </Button>
               <Button
                 size="sm"
@@ -336,7 +336,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
                 onClick={handleReject}
               >
                 <X className="w-3 h-3 mr-1" />
-                Rejeitar
+                {m.hitl_reject()}
               </Button>
               {pending.workspaceId && (
                 <Button
@@ -361,7 +361,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
                 onClick={handleEditSubmit}
               >
                 <Check className="w-3 h-3 mr-1" />
-                Executar editado
+                {m.hitl_submit_edited()}
               </Button>
               <Button
                 size="sm"
@@ -373,7 +373,7 @@ export function HITLPanel({ messageId, pending, onDecision }: HITLPanelProps) {
                   setEditError(null);
                 }}
               >
-                Cancelar edição
+                {m.hitl_cancel_edit()}
               </Button>
             </>
           )}
