@@ -223,6 +223,20 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "extra_vars": ["EMAIL_IMAP_HOST", "EMAIL_IMAP_USER", "EMAIL_SMTP_HOST"],
     },
     {
+        # Self-hosted falando com self-hosted: a instância e o token são do
+        # próprio usuário. Sem `HOME_ASSISTANT_URL` a integração nasceria
+        # inutilizável — não há host padrão que dê pra assumir.
+        "id": "home-assistant",
+        "name": "Home Assistant",
+        "env_var": "HOME_ASSISTANT_TOKEN",
+        "kind": "apikey",
+        "description": "Controle a casa (luzes, fechaduras, sensores) pelo chat",
+        "docs_url": "https://www.home-assistant.io/docs/authentication/#your-account-profile",
+        "icon": "home",
+        "setup_hint": "No Home Assistant, abra seu perfil -> Security -> Long-Lived Access Tokens e crie um. Preencha também a URL da instância (ex.: http://homeassistant.local:8123).",
+        "extra_vars": ["HOME_ASSISTANT_URL"],
+    },
+    {
         "id": "linear",
         "name": "Linear",
         "env_var": "LINEAR_API_KEY",

@@ -114,6 +114,12 @@ from backend.tools.git import (
     git_worktree,
 )
 from backend.tools.gmail import gmail_list, gmail_read
+from backend.tools.homeassistant import (
+    ha_call_service,
+    ha_get_state,
+    ha_list_entities,
+    ha_list_services,
+)
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.learning import (
     install_learned_skill,
@@ -489,6 +495,11 @@ for _t in [
     text_to_speech,
     generate_video,
     analyze_video,
+    # Casa conectada (Home Assistant)
+    ha_list_entities,
+    ha_get_state,
+    ha_list_services,
+    ha_call_service,
     # Utilitários nativos
     time_now,
     time_parse,

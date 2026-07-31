@@ -45,6 +45,19 @@ CONNECT_ENV_KEYS: frozenset[str] = frozenset(
     }
 )
 
+#: Credenciais lidas por tools que rodam dentro do processo do backend. Mesmo
+#: motivo do conjunto acima: sem chegar em `os.environ`/`settings`, a tool
+#: continuaria se declarando "não configurada" depois de o usuário salvar.
+TOOL_ENV_KEYS: frozenset[str] = frozenset(
+    {
+        "HOME_ASSISTANT_URL",
+        "HOME_ASSISTANT_TOKEN",
+    }
+)
+
+#: Tudo que precisa valer na próxima chamada, sem esperar o próximo boot.
+RUNTIME_ENV_KEYS: frozenset[str] = KNOWN_LLM_ENV_KEYS | CONNECT_ENV_KEYS | TOOL_ENV_KEYS
+
 
 def default_env_file() -> Path:
     """``settings.vectora_home / ".env"`` — mesmo arquivo que `PATCH /admin/api-keys` já usa."""

@@ -61,6 +61,10 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         # agente as usa o tempo todo — HITL ali seria fricção sem ganho.
         "web_crawl",
         "web_map",
+        # Age no mundo físico: destrancar porta, desligar alarme, abrir
+        # portão. Não há como desfazer isso depois, ao contrário de um
+        # arquivo. As três tools de leitura do Home Assistant ficam de fora.
+        "ha_call_service",
     }
 )
 

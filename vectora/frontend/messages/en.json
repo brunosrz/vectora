@@ -1267,5 +1267,8 @@
   "kanban_column_blocked": "Blocked",
   "kanban_column_done": "Done",
   "kanban_blocked_by": "blocked by",
-  "kanban_empty": "No tasks on the board"
+  "kanban_empty": "No tasks on the board",
+  "integrations_category_google": "Google",
+  "integrations_category_smart_home": "Smart home",
+  "integrations_category_other": "Other"
 }

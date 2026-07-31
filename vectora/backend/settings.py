@@ -371,6 +371,13 @@ class Settings(BaseSettings):
 
     openrouter_tts_model: str | None = None
 
+    home_assistant_url: str | None = None
+    """URL da instância de Home Assistant do usuário (ex.:
+    ``http://homeassistant.local:8123``). None desliga as tools de casa."""
+
+    home_assistant_token: str | None = None
+    """Long-Lived Access Token do Home Assistant."""
+
     ollama_video_model: str | None = None
     """Modelo de geração de vídeo no host Ollama. None desabilita."""
 

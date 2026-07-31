@@ -1267,5 +1267,8 @@
   "kanban_column_blocked": "Bloqueado",
   "kanban_column_done": "Hecho",
   "kanban_blocked_by": "bloqueado por",
-  "kanban_empty": "Sin tareas en el tablero"
+  "kanban_empty": "Sin tareas en el tablero",
+  "integrations_category_google": "Google",
+  "integrations_category_smart_home": "Casa conectada",
+  "integrations_category_other": "Otras"
 }

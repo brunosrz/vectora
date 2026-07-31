@@ -583,7 +583,7 @@ async def get_envs(request: Request) -> dict:
 @router.post("/envs")
 async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
     from backend.rbac import auth as auth_svc
-    from backend.services.env_keys import CONNECT_ENV_KEYS, KNOWN_LLM_ENV_KEYS
+    from backend.services.env_keys import CONNECT_ENV_KEYS, RUNTIME_ENV_KEYS
 
     user = getattr(request.state, "user", None)
     if user is None:
@@ -596,7 +596,7 @@ async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
     # também pelo mesmo caminho de /admin/api-keys (single-tenant por
     # instância — seguro aplicar globalmente).
     key_upper = body.key.upper()
-    if key_upper in KNOWN_LLM_ENV_KEYS or key_upper in CONNECT_ENV_KEYS:
+    if key_upper in RUNTIME_ENV_KEYS:
         from backend.services.env_keys import apply_llm_env_key, default_env_file
 
         apply_llm_env_key(default_env_file(), key_upper, body.value)
@@ -624,7 +624,7 @@ async def _sync_connect_adapters() -> None:
 @router.delete("/envs/{key}")
 async def delete_env(key: str, request: Request) -> dict:
     from backend.rbac import auth as auth_svc
-    from backend.services.env_keys import CONNECT_ENV_KEYS
+    from backend.services.env_keys import CONNECT_ENV_KEYS, RUNTIME_ENV_KEYS
 
     user = getattr(request.state, "user", None)
     if user is None:
@@ -634,11 +634,15 @@ async def delete_env(key: str, request: Request) -> dict:
     # Credencial removida -> derruba o adapter correspondente. Sem isto o bot
     # continuaria no ar respondendo mensagens com uma credencial que o usuário
     # já revogou na UI.
+    # Remover do banco sem limpar `os.environ` deixaria a credencial revogada
+    # ainda valendo até o próximo boot — vale pra qualquer key aplicada em
+    # runtime, não só as de mensageria.
     key_upper = key.upper()
-    if key_upper in CONNECT_ENV_KEYS:
-        import os
+    if key_upper in RUNTIME_ENV_KEYS:
+        from backend.services.env_keys import apply_llm_env_key, default_env_file
 
-        os.environ.pop(key_upper, None)
+        apply_llm_env_key(default_env_file(), key_upper, "")
+    if key_upper in CONNECT_ENV_KEYS:
         await _sync_connect_adapters()
 
     return {"ok": True}

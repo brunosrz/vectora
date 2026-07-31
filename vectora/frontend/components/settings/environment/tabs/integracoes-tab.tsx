@@ -606,22 +606,29 @@ function CustomVarCard({
 // Categorias
 // ---------------------------------------------------------------------------
 
-const CATEGORIES: { label: string; ids: string[] }[] = [
-  { label: "Git", ids: ["github", "gitlab"] },
+const CATEGORIES: { label: () => string; ids: string[] }[] = [
+  { label: m.integrations_category_git, ids: ["github", "gitlab"] },
   {
-    label: "IA",
+    label: m.integrations_category_ai,
     ids: ["gemini", "openai", "anthropic", "cohere", "tavily"],
   },
   {
-    label: "Google",
+    label: m.integrations_category_google,
     ids: ["google", "google-drive", "gmail"],
   },
   {
-    label: "Comunicação",
+    label: m.integrations_category_communication,
     ids: ["slack", "telegram", "discord", "email-connect"],
   },
-  { label: "Produtividade", ids: ["linear", "jira", "notion"] },
-  { label: "Email", ids: ["resend", "sendgrid", "mailgun"] },
+  {
+    label: m.integrations_category_productivity,
+    ids: ["linear", "jira", "notion"],
+  },
+  { label: m.integrations_category_smart_home, ids: ["home-assistant"] },
+  {
+    label: m.integrations_category_email,
+    ids: ["resend", "sendgrid", "mailgun"],
+  },
 ];
 
 /** Ids do catálogo do backend que nenhuma categoria acima reivindica.
@@ -808,14 +815,17 @@ export function IntegracoesTab() {
       {/* Cards por categoria */}
       {[
         ...CATEGORIES,
-        { label: "Outras", ids: uncategorizedIds(integrations) },
+        {
+          label: m.integrations_category_other,
+          ids: uncategorizedIds(integrations),
+        },
       ].map((cat) => {
         const items = cat.ids.flatMap((id) => (byId[id] ? [byId[id]] : []));
         if (items.length === 0) return null;
         return (
-          <div key={cat.label} className="space-y-2">
+          <div key={cat.label()} className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              {cat.label}
+              {cat.label()}
             </p>
             {items.map((integ) => (
               <IntegrationCard
