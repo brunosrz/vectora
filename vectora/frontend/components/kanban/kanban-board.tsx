@@ -17,6 +17,98 @@ import { useEffect, useState } from "react";
 
 import { m } from "@/lib/paraglide/messages";
 
+function NewTaskForm({
+  threadId,
+  onCreated,
+}: {
+  threadId: string;
+  onCreated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [instruction, setInstruction] = useState("");
+
+  const criar = () => {
+    if (!name.trim() || !instruction.trim()) return;
+    void fetch(`/sessions/${threadId}/background/tasks`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        kind: "routine",
+        name: name.trim(),
+        instruction: instruction.trim(),
+        trigger_type: "manual",
+      }),
+    }).then(() => {
+      setName("");
+      setInstruction("");
+      setOpen(false);
+      onCreated();
+    });
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-xs text-primary hover:underline mb-2"
+      >
+        {m.kanban_new_task()}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mb-3 max-w-sm rounded-md border bg-card p-3 space-y-2">
+      <div>
+        <label
+          htmlFor="kanban-new-name"
+          className="text-[10px] text-muted-foreground"
+        >
+          {m.kanban_task_name()}
+        </label>
+        <input
+          id="kanban-new-name"
+          aria-label={m.kanban_task_name()}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded border bg-background px-2 py-1 text-xs"
+        />
+      </div>
+      <div>
+        <label
+          htmlFor="kanban-new-instruction"
+          className="text-[10px] text-muted-foreground"
+        >
+          {m.kanban_task_instruction()}
+        </label>
+        <textarea
+          id="kanban-new-instruction"
+          aria-label={m.kanban_task_instruction()}
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          className="w-full rounded border bg-background px-2 py-1 text-xs min-h-[60px]"
+        />
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={criar}
+          className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground"
+        >
+          {m.kanban_create()}
+        </button>
+        <button
+          onClick={() => setOpen(false)}
+          className="text-xs px-2 py-1 rounded text-muted-foreground hover:underline"
+        >
+          {m.kanban_action_cancel()}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export interface KanbanTask {
   id: string;
   name: string;
@@ -51,6 +143,11 @@ function TaskCard({
       credentials: "include",
     }).then(onChanged);
   };
+  const rodarAgora = () => {
+    void fetch(`${base}/run`, { method: "POST", credentials: "include" }).then(
+      onChanged,
+    );
+  };
   const cancelar = () => {
     void fetch(base, { method: "DELETE", credentials: "include" }).then(
       onChanged,
@@ -73,6 +170,14 @@ function TaskCard({
         </p>
       ) : null}
       <div className="flex gap-2 pt-0.5">
+        {task.status === "ready" && (
+          <button
+            onClick={rodarAgora}
+            className="text-[10px] text-primary hover:underline"
+          >
+            {m.kanban_action_run_now()}
+          </button>
+        )}
         {task.status === "blocked" && (
           <button
             onClick={desbloquear}
@@ -128,6 +233,7 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
 
   return (
     <div className="flex-1 min-h-0 overflow-x-auto p-4">
+      <NewTaskForm threadId={threadId} onCreated={carregar} />
       {visiveis.length === 0 ? (
         <p className="text-xs text-muted-foreground">{m.kanban_empty()}</p>
       ) : (

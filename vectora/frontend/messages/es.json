@@ -1275,5 +1275,10 @@
   "hitl_always_allow": "Permitir siempre",
   "hitl_always_allow_added": "Agregado a la allowlist de este workspace",
   "kanban_action_unblock": "Desbloquear",
-  "kanban_action_cancel": "Cancelar"
+  "kanban_action_cancel": "Cancelar",
+  "kanban_new_task": "+ Nueva tarea",
+  "kanban_task_name": "Nombre",
+  "kanban_task_instruction": "Instrucción",
+  "kanban_create": "Crear",
+  "kanban_action_run_now": "Ejecutar ahora"
 }

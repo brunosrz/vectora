@@ -7,7 +7,14 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 import { KanbanBoard } from "../kanban-board";
@@ -145,6 +152,111 @@ describe("KanbanBoard", () => {
     ).toBeInTheDocument();
     expect(
       within(colunaDone).queryByRole("button", { name: /cancelar/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("Nova tarefa envia POST com nome/instrução e recarrega o board", async () => {
+    const chamadas: { url: string; method: string; body?: string }[] = [];
+    mockTasks([]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        chamadas.push({
+          url,
+          method: init?.method ?? "GET",
+          body: init?.body as string | undefined,
+        });
+        return new Response(JSON.stringify([]), { status: 200 });
+      }),
+    );
+
+    await montar();
+    await act(async () => {
+      screen.getByRole("button", { name: /nova tarefa/i }).click();
+    });
+    const nomeInput = screen.getByLabelText(/nome/i) as HTMLInputElement;
+    const instrucaoInput = screen.getByLabelText(
+      /instru[çc][ãa]o/i,
+    ) as HTMLTextAreaElement;
+    await act(async () => {
+      fireEvent.change(nomeInput, { target: { value: "verificar deploy" } });
+      fireEvent.change(instrucaoInput, {
+        target: { value: "confira o status do deploy" },
+      });
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /^criar$/i }).click();
+    });
+
+    const post = chamadas.find(
+      (c) => c.method === "POST" && c.url.includes("/background/tasks"),
+    );
+    expect(post).toBeTruthy();
+    const corpo = JSON.parse(post?.body ?? "{}");
+    expect(corpo).toMatchObject({
+      name: "verificar deploy",
+      instruction: "confira o status do deploy",
+      trigger_type: "manual",
+    });
+  });
+
+  it("Nova tarefa com nome vazio não envia POST", async () => {
+    const chamadas: string[] = [];
+    mockTasks([]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === "POST") chamadas.push(url);
+        return new Response(JSON.stringify([]), { status: 200 });
+      }),
+    );
+
+    await montar();
+    await act(async () => {
+      screen.getByRole("button", { name: /nova tarefa/i }).click();
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /^criar$/i }).click();
+    });
+
+    expect(chamadas).toEqual([]);
+  });
+
+  it('botão "Rodar agora" só aparece em cards ready e chama /run', async () => {
+    const chamadas: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        chamadas.push(`${init?.method ?? "GET"} ${url}`);
+        return new Response(
+          JSON.stringify(
+            init?.method === "POST"
+              ? { status: "queued" }
+              : [task({ id: "a", status: "ready" })],
+          ),
+          { status: 200 },
+        );
+      }),
+    );
+
+    await montar();
+    const botao = screen.getByRole("button", { name: /rodar agora/i });
+    await act(async () => {
+      botao.click();
+    });
+
+    expect(
+      chamadas.some((c) => c.startsWith("POST") && c.endsWith("/run")),
+    ).toBe(true);
+  });
+
+  it('"Rodar agora" não aparece fora do status ready', async () => {
+    mockTasks([task({ id: "a", status: "todo" })]);
+
+    await montar();
+
+    expect(
+      screen.queryByRole("button", { name: /rodar agora/i }),
     ).not.toBeInTheDocument();
   });
 
