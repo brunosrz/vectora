@@ -9,24 +9,33 @@ from backend.tools.web import fetch_url, web_search
 
 
 class TestWebSearchFallback:
-    def test_sem_tavily_api_key_usa_fallback_via_chromium(self):
-        with (
-            patch("backend.tools.web.settings") as ms,
-            patch(
-                "backend.browser.search_fallback.search_fallback",
-                return_value=[{"title": "t", "content": "c", "url": "u"}],
-            ) as mock_fallback,
-        ):
-            ms.tavily_api_key = None
+    def test_sem_tavily_api_key_usa_fallback_via_chromium(self, monkeypatch):
+        """Sem chave nenhuma o roteador elege o DuckDuckGo — o comportamento
+        histórico. O patch vai em `backend.settings.settings`, a fonte que o
+        roteador lê: mockar só o alias do módulo da tool deixaria o roteador
+        vendo a chave real do ambiente."""
+        from backend.settings import settings as _s
+
+        monkeypatch.setattr(_s, "tavily_api_key", "", raising=False)
+        monkeypatch.setattr(_s, "ollama_api_key", "", raising=False)
+
+        with patch(
+            "backend.browser.search_fallback.search_fallback",
+            return_value=[{"title": "t", "content": "c", "url": "u"}],
+        ) as mock_fallback:
             result = web_search.invoke({"query": "python"})
 
-        mock_fallback.assert_called_once_with("python")
+        mock_fallback.assert_called_once_with("python", max_results=5)
         data = json.loads(result)
         assert data == [{"title": "t", "content": "c", "url": "u"}]
 
-    def test_sem_tavily_e_fallback_tambem_falha_retorna_erro_textual(self):
+    def test_sem_tavily_e_fallback_tambem_falha_retorna_erro_textual(self, monkeypatch):
         # Par de erro: nem Tavily nem o fallback disponíveis — a tool nunca
         # propaga a exceção, sempre devolve JSON de erro pro agente.
+        from backend.settings import settings as _s
+
+        monkeypatch.setattr(_s, "tavily_api_key", "", raising=False)
+        monkeypatch.setattr(_s, "ollama_api_key", "", raising=False)
         with (
             patch("backend.tools.web.settings") as ms,
             patch(

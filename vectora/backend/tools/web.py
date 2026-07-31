@@ -129,9 +129,35 @@ def web_search(
         JSON com lista de resultados (url, title, content, raw_content) prontos
         para embedding, ou um objeto JSON com status de erro
     """
-    if not settings.tavily_api_key:
-        logger.warning("TAVILY_API_KEY not configured — usando fallback via Chromium")
-        return _search_via_fallback(query)
+    # O roteador resolve escolha explícita do usuário e ordem de preferência
+    # (`backend/tools/search_registry.py`); o caminho Tavily abaixo só roda
+    # quando ele elege o Tavily. Sem chave nenhuma o roteador devolve o
+    # DuckDuckGo, mantendo o comportamento histórico.
+    try:
+        from backend.tools.search_registry import (
+            SearchBackendUnavailableError,
+            resolve_backend,
+        )
+
+        backend = resolve_backend()
+    except SearchBackendUnavailableError as exc:
+        # Backend escolhido sem credencial: erro claro em vez de cair noutro
+        # em silêncio — o usuário pediu aquele especificamente.
+        return json.dumps({"status": "error", "error": str(exc)})
+
+    if backend.name != "tavily":
+        try:
+            resultados = _run_sync(backend.search(query))
+            logger.info(
+                "web_search via backend alternativo",
+                extra={"query": query, "backend": backend.name},
+            )
+            return json.dumps(resultados)
+        except Exception as exc:
+            logger.exception(
+                "web_search backend falhou", extra={"backend": backend.name}
+            )
+            return json.dumps({"status": "error", "error": str(exc)})
 
     logger.info("web_search tool called", extra={"query": query, "topic": topic})
 
