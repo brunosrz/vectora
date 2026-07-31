@@ -56,6 +56,11 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         "delete_skill",
         "publish_memory_bucket_tool",
         "save_mcp_env_var",
+        # Varrer um site inteiro gasta créditos por página e gera carga no
+        # alvo. `web_search`/`fetch_url` ficam de fora: são baratas e o
+        # agente as usa o tempo todo — HITL ali seria fricção sem ganho.
+        "web_crawl",
+        "web_map",
     }
 )
 

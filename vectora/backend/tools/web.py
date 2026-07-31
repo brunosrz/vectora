@@ -280,3 +280,91 @@ def fetch_url(url: str) -> str:
         if "no extracted results" in err.lower():
             return f"No content found at {url}"
         return "Error occurred fetching URL. Please check logs."
+
+
+@tool(
+    extras={
+        "render_hint": "search_results",
+        "category": "web",
+        "destructive": True,
+        "icon": "globe",
+    }
+)
+def web_crawl(
+    url: str,
+    max_depth: int = 1,
+    limit: int = 20,
+    instructions: str | None = None,
+) -> str:
+    """Varre um site a partir de uma URL, seguindo links internos.
+
+    Custa créditos por página e gera carga no site alvo — por isso exige
+    aprovação antes de rodar. Para uma página só, use `fetch_url`.
+
+    Args:
+        url: URL raiz da varredura.
+        max_depth: profundidade máxima (1 a 5).
+        limit: teto de páginas processadas.
+        instructions: orientação em linguagem natural do que procurar.
+
+    Returns:
+        JSON com as páginas varridas, ou objeto com `error`.
+    """
+    if not url.startswith(("http://", "https://")):
+        return json.dumps({"error": "URL deve começar com http:// ou https://"})
+    if not settings.tavily_api_key:
+        return json.dumps(
+            {"error": "web_crawl exige TAVILY_API_KEY — sem fallback para varredura"}
+        )
+
+    try:
+        client = _tavily_client()
+        saida = _run_sync(
+            client.crawl(
+                url,
+                max_depth=max_depth,
+                limit=limit,
+                instructions=instructions,
+            )
+        )
+        return json.dumps(saida.get("results", []))
+    except Exception as exc:
+        logger.exception("web_crawl failed", extra={"url": url})
+        return json.dumps({"error": str(exc)})
+
+
+@tool(
+    extras={
+        "render_hint": "search_results",
+        "category": "web",
+        "destructive": True,
+        "icon": "globe",
+    }
+)
+def web_map(url: str, limit: int = 50) -> str:
+    """Mapeia a estrutura de links de um site, sem extrair o conteúdo.
+
+    Mais barato que `web_crawl` (não lê as páginas), mas ainda percorre o
+    site — exige aprovação pelo mesmo motivo.
+
+    Args:
+        url: URL raiz do mapeamento.
+        limit: teto de links retornados.
+
+    Returns:
+        JSON com a lista de URLs encontradas, ou objeto com `error`.
+    """
+    if not url.startswith(("http://", "https://")):
+        return json.dumps({"error": "URL deve começar com http:// ou https://"})
+    if not settings.tavily_api_key:
+        return json.dumps(
+            {"error": "web_map exige TAVILY_API_KEY — sem fallback para mapeamento"}
+        )
+
+    try:
+        client = _tavily_client()
+        saida = _run_sync(client.map(url, limit=limit))
+        return json.dumps(saida.get("results", []))
+    except Exception as exc:
+        logger.exception("web_map failed", extra={"url": url})
+        return json.dumps({"error": str(exc)})

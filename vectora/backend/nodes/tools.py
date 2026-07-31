@@ -157,7 +157,7 @@ from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_s
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.terminal_sessions import close_terminal, list_terminals
 from backend.tools.thinking import sequential_thinking
-from backend.tools.web import fetch_url, web_search
+from backend.tools.web import fetch_url, web_crawl, web_map, web_search
 from backend.tools.workspace import (
     bucket_summary,
     get_workbench_context,
@@ -178,6 +178,8 @@ logger = logging.getLogger(__name__)
 SEARCH_TOOLS: list[BaseTool] = [
     web_search,
     fetch_url,
+    web_crawl,
+    web_map,
     vector_search,
     embedding,
     ingest_docs,
@@ -345,6 +347,8 @@ _all: dict[str, BaseTool] = {}
 for _t in [
     web_search,
     fetch_url,
+    web_crawl,
+    web_map,
     vector_search,
     embedding,
     ingest_docs,
@@ -502,6 +506,8 @@ ALL_TOOLS: list[BaseTool] = list(_all.values())
 CHAT_TOOLS: list[BaseTool] = [
     web_search,
     fetch_url,
+    web_crawl,
+    web_map,
     vector_search,
     save_memory,
     get_memory,

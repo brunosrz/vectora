@@ -68,7 +68,21 @@ def test_search_memory_registered():
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas — atualize ao
     # adicionar/remover tool em backend/nodes/tools.py.
-    assert len(ALL_TOOLS) == 137
+    #
+    # A mensagem lista os nomes: só o número não diz *qual* tool entrou ou
+    # sumiu, e a contagem já ficou defasada em silêncio uma vez por isso.
+    nomes = sorted(t.name for t in ALL_TOOLS)
+    assert len(ALL_TOOLS) == 142, f"tools registradas: {nomes}"
+
+
+def test_all_tools_sem_nome_duplicado():
+    # Erro/borda: nome repetido faz a segunda registrar por cima da primeira
+    # no bind_tools — a tool some sem a contagem mudar.
+    from collections import Counter
+
+    nomes = [t.name for t in ALL_TOOLS]
+    repetidos = [n for n, c in Counter(nomes).items() if c > 1]
+    assert not repetidos, f"tools com nome duplicado: {repetidos}"
 
 
 def test_media_tools_registered():

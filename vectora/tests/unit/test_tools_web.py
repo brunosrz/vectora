@@ -86,3 +86,42 @@ class TestFetchUrlFallback:
             result = fetch_url.invoke({"url": "https://example.com"})
 
         assert "Error" in result
+
+
+class TestCrawlEMapExigemKey:
+    """`web_crawl`/`web_map` não têm fallback: varredura de site não dá pra
+    fazer com a API JSON do DuckDuckGo nem com uma sessão de browser."""
+
+    def test_crawl_sem_key_devolve_erro_claro(self):
+        from backend.tools.web import web_crawl
+
+        with patch("backend.tools.web.settings") as ms:
+            ms.tavily_api_key = None
+            resultado = json.loads(web_crawl.invoke({"url": "https://x.test"}))
+
+        assert "TAVILY_API_KEY" in resultado["error"]
+
+    def test_crawl_com_url_invalida_nem_chega_a_checar_a_key(self):
+        """Erro/borda: validar a URL antes evita mensagem enganosa sobre
+        credencial quando o problema é o argumento."""
+        from backend.tools.web import web_crawl
+
+        with patch("backend.tools.web.settings") as ms:
+            ms.tavily_api_key = "real-key"
+            resultado = json.loads(web_crawl.invoke({"url": "ftp://x.test"}))
+
+        assert "http" in resultado["error"]
+
+    def test_map_com_key_chama_o_cliente(self):
+        from backend.tools.web import web_map
+
+        mock_client = MagicMock()
+        mock_client.map = AsyncMock(return_value={"results": ["/a", "/b"]})
+        with (
+            patch("backend.tools.web.settings") as ms,
+            patch("backend.tools.web._tavily_client", return_value=mock_client),
+        ):
+            ms.tavily_api_key = "real-key"
+            resultado = json.loads(web_map.invoke({"url": "https://x.test"}))
+
+        assert resultado == ["/a", "/b"]
