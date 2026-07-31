@@ -180,12 +180,32 @@ CREATE TABLE IF NOT EXISTS vectora_background_tasks (
     enabled        INTEGER NOT NULL DEFAULT 1,
     last_run_at    TEXT,
     next_run_at    TEXT,
+    -- Kanban: ciclo triage/todo/ready/running/blocked/done/archived.
+    -- `claim_lock` guarda o id da run que detém a task; `claim_expires_at`
+    -- é o TTL que devolve o card se o worker morrer sem liberar.
+    status           TEXT NOT NULL DEFAULT 'todo',
+    block_kind       TEXT,
+    block_reason     TEXT,
+    claim_lock       TEXT,
+    claim_expires_at TEXT,
     created_at     TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_background_tasks_session ON vectora_background_tasks(session_id);
 CREATE INDEX IF NOT EXISTS idx_background_tasks_due     ON vectora_background_tasks(enabled, trigger_type);
+CREATE INDEX IF NOT EXISTS idx_background_tasks_status  ON vectora_background_tasks(status);
+
+-- Dependências entre tasks: `child_id` só fica pronto quando `parent_id`
+-- conclui. PK composta impede o mesmo par duas vezes.
+CREATE TABLE IF NOT EXISTS vectora_task_links (
+    parent_id  TEXT NOT NULL,
+    child_id   TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (parent_id, child_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_links_child ON vectora_task_links(child_id);
 
 CREATE TABLE IF NOT EXISTS vectora_background_runs (
     id             TEXT PRIMARY KEY,

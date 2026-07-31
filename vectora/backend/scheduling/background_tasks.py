@@ -1050,6 +1050,21 @@ class BackgroundScheduler:
         estava desligada. "once" nunca é pulada — é uma tarefa que o usuário
         pediu uma vez, atrasar não a torna indesejada.
         """
+        # Claims expirados voltam pra `ready` antes de qualquer disparo:
+        # worker que morreu sem liberar deixaria o card preso em `running`.
+        try:
+            from backend.scheduling.kanban import (
+                recompute_ready,
+                release_stale_claims,
+            )
+
+            await release_stale_claims()
+            await recompute_ready()
+        except Exception:
+            # Kanban é camada acessória — falha aqui não pode impedir o
+            # disparo das tarefas agendadas, que é a função principal do tick.
+            logger.warning("background_tasks: tick do kanban falhou", exc_info=True)
+
         now = datetime.now(UTC)
         for task in await _list_due_interval_tasks():
             if task.trigger_type == "interval" and _is_stale(task.next_run_at, now):
