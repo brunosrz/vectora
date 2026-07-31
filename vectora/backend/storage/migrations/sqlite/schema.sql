@@ -188,6 +188,9 @@ CREATE TABLE IF NOT EXISTS vectora_background_tasks (
     block_reason     TEXT,
     claim_lock       TEXT,
     claim_expires_at TEXT,
+    -- Teto de custo por tarefa, em centavos. NULL = sem limite (o corte é
+    -- opt-in); 0 = não gaste nada, que é diferente de NULL.
+    budget_cents     INTEGER,
     created_at     TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -215,6 +218,10 @@ CREATE TABLE IF NOT EXISTS vectora_background_runs (
     trigger_source TEXT NOT NULL,
     status         TEXT NOT NULL DEFAULT 'running',
     summary        TEXT,
+    -- Consumo da run. NULL (não 0) quando o provider não expõe usage:
+    -- somar 0 faria o budget nunca estourar.
+    tokens_used          INTEGER,
+    estimated_cost_cents REAL,
     started_at     TEXT NOT NULL DEFAULT (datetime('now')),
     finished_at    TEXT
 );

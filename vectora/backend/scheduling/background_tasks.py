@@ -663,6 +663,22 @@ async def run_task(
     Defensiva: nunca propaga exceção — falha vira run com status 'error'. Retorna
     o `run_thread_id` em sucesso, ou None em erro.
     """
+    # Corte por budget acontece **antes** de criar a run: barrar depois já
+    # teria gasto. A run em andamento nunca é abortada no meio — ver
+    # `backend/scheduling/budget.py`.
+    try:
+        from backend.scheduling.budget import check_budget
+
+        if not await check_budget(task.id):
+            logger.info(
+                "background_tasks: run de %s barrada por budget estourado", task.id
+            )
+            return None
+    except Exception:
+        # Budget é camada acessória: falha aqui não pode impedir a tarefa de
+        # rodar, que é a função principal.
+        logger.warning("background_tasks: checagem de budget falhou", exc_info=True)
+
     run_id = str(uuid4())
     run_thread_id = f"bg-{task.id}-{int(datetime.now(UTC).timestamp())}"
     await _insert_run(run_id, task, run_thread_id, trigger_source)
