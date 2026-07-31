@@ -149,26 +149,22 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 temperature=temperature,
             )
         case "openrouter":
-            from langchain_openai import ChatOpenAI
+            from backend.llm.openrouter.chat import VectoraOpenRouterChat
+            from backend.llm.openrouter.client import OpenRouterClient
 
             api_key = get_env("OPENROUTER_API_KEY")
             if not api_key:
                 msg = "OPENROUTER_API_KEY não configurado. Adicione ao seu .env para usar o provider openrouter."
                 raise ValueError(msg)
-            # OpenRouter expõe uma API compatível com OpenAI — mesmo cliente,
-            # só troca o base_url. Ids de modelo usam "/" (ex.: "openai/gpt-4o"),
-            # nunca colidem com o split por ":" de model_id em load_llm().
-            return ChatOpenAI(
+            # Cliente nativo, não `ChatOpenAI` com base_url trocado: a API é
+            # OpenAI-compatível, mas o cliente da OpenAI descarta `usage.cost`,
+            # o bloco `provider` de roteamento e o `reasoning` do delta. Ids de
+            # modelo usam "/" (ex.: "openai/gpt-4o"), nunca colidem com o split
+            # por ":" de model_id em load_llm().
+            return VectoraOpenRouterChat(
                 model=model_name,
-                api_key=api_key,
-                base_url="https://openrouter.ai/api/v1",
+                client=OpenRouterClient(api_key=api_key),
                 temperature=temperature,
-                timeout=None,
-                max_retries=0,
-                # Mesmo motivo do caso "openai" acima: sem isso, modelos de
-                # raciocínio via OpenRouter derrubam o stream após 120s de
-                # silêncio "pensando".
-                stream_chunk_timeout=None,
             )
         case _:
             msg = (

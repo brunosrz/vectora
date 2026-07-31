@@ -340,14 +340,19 @@ class TestOpenRouterCatalog:
         ids = [m["id"] for m in resp.json()["models"]]
         assert ids == ["anthropic/claude-3.5-sonnet"]
 
-    def test_catalog_network_error_returns_empty_not_500(self, app, client):
+    def test_catalog_network_error_cai_no_fallback_e_nao_500(self, app, client):
+        """Erro de rede nunca vira 500 — e, desde o cliente nativo, também
+        não vira lista vazia: cai na lista embutida (ver
+        `OPENROUTER_FALLBACK_MODELS`), senão o seletor de modelo aparece sem
+        opção nenhuma e parece falta de suporte, não falta de internet."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.ConnectError("network down")
 
         with self._mocked_http_client(app, handler):
             resp = client.get("/provider-routing/openrouter/models")
         assert resp.status_code == 200
-        assert resp.json() == {"models": []}
+        assert resp.json()["models"], "catálogo vazio com a rede fora"
 
     def test_catalog_stale_sentinel_survives_low_monotonic_clock(
         self, app, client, monkeypatch
@@ -411,3 +416,106 @@ class TestOpenRouterRegisteredModels:
             "/provider-routing/openrouter/registered", json={"tag": "dup/model"}
         )
         assert resp.status_code == 409
+
+
+class TestCatalogoOpenRouterComFallback:
+    """Rede fora não pode devolver catálogo vazio.
+
+    Lista vazia faz o seletor de modelo aparecer sem nenhuma opção, o que o
+    usuário lê como "o Vectora não suporta OpenRouter" em vez de "estou sem
+    internet". O Hermes resolve com uma lista embutida
+    (`hermes_cli/models.py:1478`) — mesmo padrão aqui.
+    """
+
+    @staticmethod
+    def _reset_cache():
+        from backend.api.handlers import provider_routing as pr
+
+        pr._catalog_cache["fetched_at"] = float("-inf")
+        pr._catalog_cache["models"] = []
+
+    @pytest.mark.asyncio
+    async def test_rede_ok_devolve_o_catalogo_real(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        from backend.api.handlers.provider_routing import discover_openrouter_models
+
+        self._reset_cache()
+        resp = MagicMock()
+        resp.raise_for_status = MagicMock()
+        resp.json = MagicMock(
+            return_value={
+                "data": [
+                    {
+                        "id": "algum/modelo-novo",
+                        "name": "Novo",
+                        "context_length": 128000,
+                    }
+                ]
+            }
+        )
+        client = MagicMock()
+        client.get = AsyncMock(return_value=resp)
+
+        resultado = await discover_openrouter_models(client)
+
+        assert [m.id for m in resultado.models] == ["algum/modelo-novo"]
+
+    @pytest.mark.asyncio
+    async def test_rede_fora_com_cache_vazio_cai_na_lista_embutida(self):
+        """Erro/borda: é o caso que hoje devolve `models=[]`."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        from backend.api.handlers.provider_routing import (
+            OPENROUTER_FALLBACK_MODELS,
+            discover_openrouter_models,
+        )
+
+        self._reset_cache()
+        client = MagicMock()
+        client.get = AsyncMock(side_effect=OSError("sem rede"))
+
+        resultado = await discover_openrouter_models(client)
+
+        assert resultado.models, "catálogo vazio com a rede fora"
+        assert {m.id for m in resultado.models} == {
+            m["id"] for m in OPENROUTER_FALLBACK_MODELS
+        }
+
+    @pytest.mark.asyncio
+    async def test_busca_filtra_tambem_no_fallback(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        from backend.api.handlers.provider_routing import discover_openrouter_models
+
+        self._reset_cache()
+        client = MagicMock()
+        client.get = AsyncMock(side_effect=OSError("sem rede"))
+
+        resultado = await discover_openrouter_models(client, q="anthropic")
+
+        assert resultado.models
+        assert all("anthropic" in m.id.lower() for m in resultado.models)
+
+    @pytest.mark.asyncio
+    async def test_fallback_nao_sobrescreve_cache_valido(self):
+        """Erro/borda: uma falha momentânea não pode substituir o catálogo
+        real já em cache pela lista curta embutida."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        from backend.api.handlers import provider_routing as pr
+        from backend.api.handlers.provider_routing import (
+            OpenRouterModelInfo,
+            discover_openrouter_models,
+        )
+
+        self._reset_cache()
+        pr._catalog_cache["models"] = [
+            OpenRouterModelInfo(id="cacheado/modelo", name="Cacheado")
+        ]
+        client = MagicMock()
+        client.get = AsyncMock(side_effect=OSError("sem rede"))
+
+        resultado = await discover_openrouter_models(client)
+
+        assert [m.id for m in resultado.models] == ["cacheado/modelo"]

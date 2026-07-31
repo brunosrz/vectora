@@ -1,9 +1,12 @@
 """``backend/services/utils.py::_build_concrete_model`` — nenhum provider pode
 impor timeout de silêncio entre chunks. Modelos de raciocínio (reasoning)
 ficam minutos "pensando" sem emitir nenhum token — isso é comportamento
-normal, não falha de conexão. ``ChatOpenAI`` (usado por "openai" e
-"openrouter") tem um `stream_chunk_timeout` de 120s ligado por padrão
-(langchain_openai) — precisa ser desligado explicitamente aqui.
+normal, não falha de conexão. ``ChatOpenAI`` tem um `stream_chunk_timeout`
+de 120s ligado por padrão (langchain_openai) — precisa ser desligado
+explicitamente aqui.
+
+O "openrouter" saiu do ``ChatOpenAI`` e usa o cliente nativo, que não impõe
+timeout entre chunks; o teste dele passou a travar a classe usada.
 """
 
 from __future__ import annotations
@@ -38,13 +41,19 @@ def test_openai_desliga_stream_chunk_timeout(monkeypatch):
     assert _FakeChatOpenAI.last_kwargs["stream_chunk_timeout"] is None
 
 
-def test_openrouter_desliga_stream_chunk_timeout(monkeypatch):
+def test_openrouter_usa_cliente_nativo_e_nao_chat_openai(monkeypatch):
+    """O caminho antigo (`ChatOpenAI` com base_url trocado) descartava
+    `usage.cost`, o bloco `provider` e o `reasoning` do delta."""
+    from backend.llm.openrouter.chat import VectoraOpenRouterChat
+
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
 
-    _build_concrete_model("openrouter", "openrouter/auto", 0.7)
+    modelo = _build_concrete_model("openrouter", "openrouter/auto", 0.7)
 
-    assert _FakeChatOpenAI.last_kwargs is not None
-    assert _FakeChatOpenAI.last_kwargs["stream_chunk_timeout"] is None
+    assert isinstance(modelo, VectoraOpenRouterChat)
+    # Erro/borda: se voltar a cair no ChatOpenAI, o fake teria capturado
+    # kwargs — nenhuma chamada é a prova de que o caminho mudou.
+    assert _FakeChatOpenAI.last_kwargs is None
 
 
 def test_openrouter_sem_api_key_levanta_erro_claro(monkeypatch):

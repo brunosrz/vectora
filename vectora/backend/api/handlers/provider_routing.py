@@ -311,6 +311,31 @@ async def clear_openrouter_key() -> OpenRouterStatus:
 # sempre, não importa o uptime da máquina.
 _catalog_cache: dict[str, Any] = {"fetched_at": float("-inf"), "models": []}
 
+#: Catálogo mínimo usado quando a rede falha e o cache ainda está vazio.
+#: Sem ele o seletor de modelo aparece sem nenhuma opção, o que o usuário lê
+#: como falta de suporte a OpenRouter em vez de falta de internet. São ids
+#: estáveis de modelos populares — a lista real vem da API assim que dá.
+OPENROUTER_FALLBACK_MODELS: list[dict[str, Any]] = [
+    {"id": "anthropic/claude-sonnet-4.5", "name": "Claude Sonnet 4.5"},
+    {"id": "anthropic/claude-opus-4.1", "name": "Claude Opus 4.1"},
+    {"id": "openai/gpt-4o", "name": "GPT-4o"},
+    {"id": "openai/o3-mini", "name": "o3-mini"},
+    {"id": "google/gemini-2.5-pro", "name": "Gemini 2.5 Pro"},
+    {"id": "google/gemini-2.5-flash", "name": "Gemini 2.5 Flash"},
+    {"id": "meta-llama/llama-3.3-70b-instruct", "name": "Llama 3.3 70B Instruct"},
+    {"id": "deepseek/deepseek-r1", "name": "DeepSeek R1"},
+    {"id": "qwen/qwen-2.5-72b-instruct", "name": "Qwen 2.5 72B Instruct"},
+    {"id": "mistralai/mistral-large", "name": "Mistral Large"},
+]
+
+
+def _filtrar(models: list[OpenRouterModelInfo], q: str) -> list[OpenRouterModelInfo]:
+    """Filtro por id/nome — compartilhado entre catálogo real e fallback."""
+    needle = q.strip().lower()
+    if not needle:
+        return models
+    return [m for m in models if needle in m.id.lower() or needle in m.name.lower()]
+
 
 @router.get("/openrouter/models")
 async def discover_openrouter_models(
@@ -340,14 +365,19 @@ async def discover_openrouter_models(
                 "provider_routing: falha ao buscar catálogo OpenRouter", exc_info=True
             )
             if not _catalog_cache["models"]:
-                return OpenRouterCatalogResponse(models=[])
+                # Sem rede e sem cache: a lista embutida é o que impede o
+                # seletor de aparecer vazio, que o usuário lê como "o Vectora
+                # não suporta OpenRouter" em vez de "estou sem internet".
+                # Não é gravada no cache — a próxima tentativa tem que buscar
+                # o catálogo real, não se dar por satisfeita com a lista curta.
+                embutidos = [
+                    OpenRouterModelInfo(**m) for m in OPENROUTER_FALLBACK_MODELS
+                ]
+                return OpenRouterCatalogResponse(
+                    models=_filtrar(embutidos, q)[:100],
+                )
 
-    models: list[OpenRouterModelInfo] = _catalog_cache["models"]
-    if q.strip():
-        needle = q.strip().lower()
-        models = [
-            m for m in models if needle in m.id.lower() or needle in m.name.lower()
-        ]
+    models: list[OpenRouterModelInfo] = _filtrar(_catalog_cache["models"], q)
     return OpenRouterCatalogResponse(models=models[:100])
 
 
