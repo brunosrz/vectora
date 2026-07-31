@@ -295,8 +295,9 @@ class TestBuildOllamaOpenRouterEmbeddings:
             assert factory._build_ollama_embeddings() is None
 
     def test_ollama_with_model_builds_embeddings(self):
-        from langchain_ollama import OllamaEmbeddings
-
+        """Cliente nativo (`/api/embed`), não `langchain-ollama` — a
+        dependência saiu do projeto."""
+        from backend.llm.ollama.embeddings import OllamaEmbeddings
         from backend.settings import settings
         from backend.storage import factory
 

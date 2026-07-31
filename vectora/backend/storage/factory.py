@@ -245,14 +245,12 @@ def _build_voyage_embeddings() -> Any:
 
 
 def _build_ollama_embeddings(model_override: str | None = None) -> Any:
-    """``OllamaEmbeddings`` se ``ollama_embedding_model`` (ou ``model_override``,
-    vindo de ``rag_settings.embed_model`` em runtime) estiver configurado.
-
-    Sem key (Ollama roda local) — o modelo é o próprio gate: None por default,
-    nunca assume um modelo instalado no host do usuário."""
+    """``OllamaEmbeddings`` nativo (``POST /api/embed``) se
+    ``ollama_embedding_model`` (ou ``model_override``, vindo de
+    ``rag_settings.embed_model`` em runtime) estiver configurado."""
     try:
-        from langchain_ollama import OllamaEmbeddings
-
+        from backend.llm.ollama.client import OllamaClient
+        from backend.llm.ollama.embeddings import OllamaEmbeddings
         from backend.settings import settings as _s
 
         model = model_override or _s.ollama_embedding_model
@@ -261,7 +259,9 @@ def _build_ollama_embeddings(model_override: str | None = None) -> Any:
 
         return OllamaEmbeddings(
             model=model,
-            base_url=_s.ollama_base_url or "http://127.0.0.1:11434",
+            client=OllamaClient(
+                base_url=_s.ollama_base_url or "http://127.0.0.1:11434"
+            ),
         )
     except Exception:
         return None

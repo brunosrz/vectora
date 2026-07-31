@@ -163,9 +163,10 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
         )
 
     if provider_id == "ollama":
-        from langchain_ollama import ChatOllama
+        from backend.llm.ollama.chat import VectoraOllamaChat
+        from backend.llm.ollama.client import OllamaClient
 
-        return ChatOllama(model=model)
+        return VectoraOllamaChat(model=model, client=OllamaClient())
 
     msg = f"Provider desconhecido: {provider_id}"
     raise ValueError(msg)
