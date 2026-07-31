@@ -76,6 +76,12 @@ class Settings(BaseSettings):
 
     # Ollama (local)
     ollama_base_url: str | None = None
+
+    ollama_api_key: str | None = None
+    """Chave do Ollama Cloud (ollama.com), não do servidor local.
+
+    Só é necessária pros recursos de nuvem — `web_search`/`web_fetch` e os
+    modelos hospedados. O servidor local ignora o header de auth."""
     ollama_model: str = "llama2"
 
     # OpenRouter (proxy multi-provider via API compatível com OpenAI)
