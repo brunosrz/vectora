@@ -34,7 +34,29 @@ const COLUNAS: { status: string; label: () => string }[] = [
   { status: "done", label: () => m.kanban_column_done() },
 ];
 
-function TaskCard({ task }: { task: KanbanTask }) {
+function TaskCard({
+  task,
+  threadId,
+  onChanged,
+}: {
+  task: KanbanTask;
+  threadId: string;
+  onChanged: () => void;
+}) {
+  const base = `/sessions/${threadId}/background/tasks/${task.id}`;
+
+  const desbloquear = () => {
+    void fetch(`${base}/unblock`, {
+      method: "POST",
+      credentials: "include",
+    }).then(onChanged);
+  };
+  const cancelar = () => {
+    void fetch(base, { method: "DELETE", credentials: "include" }).then(
+      onChanged,
+    );
+  };
+
   return (
     <div className="rounded-md border bg-card px-2.5 py-2 space-y-1">
       <p className="text-xs font-medium leading-snug">{task.name}</p>
@@ -50,6 +72,24 @@ function TaskCard({ task }: { task: KanbanTask }) {
           {task.block_reason}
         </p>
       ) : null}
+      <div className="flex gap-2 pt-0.5">
+        {task.status === "blocked" && (
+          <button
+            onClick={desbloquear}
+            className="text-[10px] text-primary hover:underline"
+          >
+            {m.kanban_action_unblock()}
+          </button>
+        )}
+        {task.status !== "done" && (
+          <button
+            onClick={cancelar}
+            className="text-[10px] text-muted-foreground hover:underline"
+          >
+            {m.kanban_action_cancel()}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -57,14 +97,17 @@ function TaskCard({ task }: { task: KanbanTask }) {
 export function KanbanBoard({ threadId }: { threadId: string }) {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
 
-  useEffect(() => {
+  const carregar = () => {
     let cancelado = false;
     void fetch(`/sessions/${threadId}/background/tasks`, {
       credentials: "include",
     })
-      .then((r) => (r.ok ? r.json() : { tasks: [] }))
+      .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
-        if (!cancelado) setTasks(data.tasks ?? []);
+        // A resposta real é `list[TaskOut]` (array puro) — não um envelope
+        // `{tasks: [...]}`. Um formato inesperado degrada pro board vazio
+        // em vez de lançar.
+        if (!cancelado) setTasks(Array.isArray(data) ? data : []);
       })
       .catch(() => {
         // Board vazio é melhor que tela de erro — as tarefas seguem
@@ -73,7 +116,9 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     return () => {
       cancelado = true;
     };
-  }, [threadId]);
+  };
+
+  useEffect(carregar, [threadId]);
 
   // `triage`/`archived` não têm coluna: mostrá-los junto encheria o board de
   // cards que não são o fluxo ativo.
@@ -105,7 +150,12 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
                 </div>
                 <div className="space-y-2">
                   {daColuna.map((task) => (
-                    <TaskCard key={task.id} task={task} />
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      threadId={threadId}
+                      onChanged={carregar}
+                    />
                   ))}
                 </div>
               </div>

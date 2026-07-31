@@ -69,6 +69,12 @@ class BackgroundTask:
     next_run_at: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+    #: Estado do Kanban (Sprint 16) — lido/escrito via `backend.scheduling.kanban`,
+    #: nunca por SQL direto aqui. Default `"todo"` casa com o `DEFAULT` do
+    #: schema; `create_task` já promove pra `"ready"` antes de devolver.
+    status: str = "todo"
+    block_kind: str | None = None
+    block_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -86,6 +92,9 @@ class BackgroundTask:
             "next_run_at": self.next_run_at,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "status": self.status,
+            "block_kind": self.block_kind,
+            "block_reason": self.block_reason,
         }
 
 
@@ -110,6 +119,9 @@ def _row_to_task(row: dict[str, Any]) -> BackgroundTask:
         next_run_at=row.get("next_run_at"),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
+        status=row.get("status") or "todo",
+        block_kind=row.get("block_kind"),
+        block_reason=row.get("block_reason"),
     )
 
 
@@ -259,8 +271,8 @@ async def create_task(
             """
             INSERT INTO vectora_background_tasks
               (id, session_id, workspace_id, user_id, kind, name, instruction,
-               trigger_type, trigger_config, enabled, next_run_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+               trigger_type, trigger_config, enabled, next_run_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'ready')
             """,
             (
                 task_id,
@@ -292,6 +304,7 @@ async def create_task(
         workspace_id=workspace_id,
         enabled=True,
         next_run_at=next_run,
+        status="ready",
     )
 
 
@@ -369,7 +382,37 @@ async def update_task(task_id: str, **updates: Any) -> BackgroundTask | None:
     finally:
         with contextlib.suppress(Exception):
             await conn.close()
+
+    if "enabled" in updates and updates["enabled"] is not None:
+        await _sync_status_with_enabled(task_id, enabled=bool(updates["enabled"]))
+
     return await get_task(task_id)
+
+
+async def _sync_status_with_enabled(task_id: str, *, enabled: bool) -> None:
+    """Mantém `status` (Kanban) coerente com o toggle `enabled`.
+
+    Desabilitar tira a tarefa do fluxo ativo (`todo`). Reabilitar só devolve
+    pra `ready` se não houver um `block_kind` ativo — reabilitar por cima de
+    um bloqueio (ex.: budget estourado) fingiria que ele não existe mais.
+    """
+    try:
+        from backend.scheduling import kanban
+
+        if not enabled:
+            await kanban.set_status(task_id, "todo")
+            return
+
+        estado = await kanban.get_task_status(task_id)
+        if estado.get("block_kind"):
+            return
+        await kanban.set_status(task_id, "ready")
+    except Exception:
+        # Kanban é camada acessória — falha aqui não pode impedir o toggle,
+        # que já foi persistido acima.
+        logger.warning(
+            "background_tasks: falha ao sincronizar status do kanban", exc_info=True
+        )
 
 
 async def delete_task(task_id: str) -> bool:
@@ -680,6 +723,24 @@ async def run_task(
         logger.warning("background_tasks: checagem de budget falhou", exc_info=True)
 
     run_id = str(uuid4())
+
+    # Claim atômico via CAS (Sprint 16/23): pega a task só se ainda estiver
+    # `ready` e sem claim — evita duas execuções concorrentes da mesma task
+    # (tick do scheduler cruzando com um disparo manual, por exemplo). Como
+    # o Kanban é camada acessória, um erro aqui não pode impedir a run de
+    # rodar — só a corrida real (claim_task devolvendo `False`) barra.
+    try:
+        from backend.scheduling.kanban import claim_task
+
+        if not await claim_task(task.id, run_id):
+            logger.info(
+                "background_tasks: %s já está com claim tomado — pulando run",
+                task.id,
+            )
+            return None
+    except Exception:
+        logger.warning("background_tasks: claim_task falhou", exc_info=True)
+
     run_thread_id = f"bg-{task.id}-{int(datetime.now(UTC).timestamp())}"
     await _insert_run(run_id, task, run_thread_id, trigger_source)
     _emit_run_event("started", task, run_id, run_thread_id)
@@ -761,6 +822,7 @@ async def run_task(
         await _touch_last_run(task.id)
         _emit_run_event("done", task, run_id, run_thread_id, summary)
         await report_to_parent_session(task, run_thread_id, summary)
+        await _mark_kanban_after_success(task)
         return run_thread_id
     except Exception as exc:
         logger.exception(
@@ -770,7 +832,36 @@ async def run_task(
         with contextlib.suppress(Exception):
             await _finish_run(run_id, "error", str(exc))
         _emit_run_event("error", task, run_id, run_thread_id, str(exc))
+        with contextlib.suppress(Exception):
+            from backend.scheduling.kanban import block_task
+
+            # "transient" (não "capability"): é uma falha da própria run,
+            # não do orçamento — a taxonomia distingue os dois motivos pro
+            # card mostrar o certo.
+            await block_task(task.id, "transient", str(exc)[:500])
         return None
+
+
+async def _mark_kanban_after_success(task: BackgroundTask) -> None:
+    """Fecha o ciclo do Kanban após uma run bem-sucedida.
+
+    Recorrente (`interval`) nunca termina de verdade — volta pra `ready`
+    pro próximo disparo, nunca `done` (que seria um estado terminal errado
+    pra algo que roda de novo amanhã). Qualquer outro `trigger_type` (
+    `manual`/`webhook`/`once`) é execução única: `done` é terminal.
+    `recompute_ready()` promove tasks que dependiam desta, quando existirem.
+    """
+    try:
+        from backend.scheduling.kanban import recompute_ready, set_status
+
+        novo_status = "ready" if task.trigger_type == "interval" else "done"
+        await set_status(task.id, novo_status)
+        await recompute_ready()
+    except Exception:
+        logger.warning(
+            "background_tasks: falha ao atualizar status do kanban pós-run",
+            exc_info=True,
+        )
 
 
 async def _get_run(run_id: str) -> dict[str, Any] | None:

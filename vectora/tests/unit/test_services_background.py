@@ -1245,3 +1245,196 @@ async def test_record_subagent_delegation_tolerates_db_failure(db, monkeypatch):
         status="done",
         summary="y",
     )
+
+
+# ---------------------------------------------------------------------------
+# Sprint 23 — Kanban ligado à execução real (status/claim/block)
+# ---------------------------------------------------------------------------
+
+
+async def test_create_task_status_inicial_e_ready_nao_todo(db):
+    """Regressão do bug real: antes deste sprint toda tarefa nascia com o
+    DEFAULT 'todo' do schema e nunca saía de lá — o board ficava sempre
+    vazio. `enabled=True` (o default de `create_task`) precisa nascer
+    "ready" pra competir pelo claim desde a primeira run."""
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="interval",
+        trigger_config={"cron_expr": "0 9 * * *"},
+    )
+    assert task.status == "ready"
+
+    # Erro/borda: o dataclass devolvido por create_task precisa bater com o
+    # que foi de fato persistido — não só o valor em memória.
+    persistida = await bg.get_task(task.id)
+    assert persistida is not None
+    assert persistida.status == "ready"
+
+
+async def test_run_task_recorrente_volta_pra_ready_ao_concluir(db, monkeypatch):
+    """Tarefa recorrente nunca termina — `done` seria um estado terminal
+    errado pra algo que roda de novo amanhã."""
+    from backend.scheduling import kanban
+
+    agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
+    _patch_agent(monkeypatch, agent)
+
+    async def _noop_upsert(*_a, **_k) -> None:
+        return None
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _noop_upsert)
+
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Recorrente",
+        instruction="i",
+        trigger_type="interval",
+        trigger_config={"cron_expr": "0 9 * * *"},
+    )
+    assert (await kanban.get_task_status(task.id))["status"] == "ready"
+
+    await bg.run_task(task, "scheduler")
+
+    estado = await kanban.get_task_status(task.id)
+    assert estado["status"] == "ready"
+
+
+async def test_run_task_unica_vira_done_ao_concluir(db, monkeypatch):
+    from backend.scheduling import kanban
+
+    agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
+    _patch_agent(monkeypatch, agent)
+
+    async def _noop_upsert(*_a, **_k) -> None:
+        return None
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _noop_upsert)
+
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Única",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+
+    await bg.run_task(task, "manual")
+
+    estado = await kanban.get_task_status(task.id)
+    assert estado["status"] == "done"
+
+
+async def test_run_task_erro_vira_blocked_transient_em_vez_de_travar_em_running(
+    db, monkeypatch
+):
+    """Erro/borda crítica: sem isso, uma run que lança deixaria o card preso
+    em `running` para sempre — o motivo real do incidente que este sprint
+    corrige."""
+    from backend.scheduling import kanban
+
+    agent = _FakeAgent(exc=RuntimeError("LLM caiu"))
+    _patch_agent(monkeypatch, agent)
+
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Falha",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+
+    await bg.run_task(task, "manual")
+
+    estado = await kanban.get_task_status(task.id)
+    assert estado["status"] == "blocked"
+    assert estado["block_kind"] == "transient"
+    assert "LLM caiu" in (estado["block_reason"] or "")
+
+
+async def test_run_task_nao_duplica_quando_claim_ja_foi_tomado(db, monkeypatch):
+    """Erro/borda de corrida: duas chamadas de `run_task` pra mesma task
+    (tick do scheduler + disparo manual quase simultâneo) — a segunda não
+    cria uma 2ª run."""
+    from backend.scheduling import kanban
+
+    agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
+    _patch_agent(monkeypatch, agent)
+
+    async def _noop_upsert(*_a, **_k) -> None:
+        return None
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _noop_upsert)
+
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Corrida",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+
+    # Simula outro worker já tendo pego o claim antes desta chamada.
+    assert await kanban.claim_task(task.id, "run-de-outro-worker") is True
+
+    resultado = await bg.run_task(task, "manual")
+
+    assert resultado is None
+    assert len(agent.calls) == 0
+    runs = await bg.list_runs("s1")
+    assert runs == []
+
+
+async def test_update_task_toggle_sincroniza_status(db):
+    from backend.scheduling import kanban
+
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Toggle",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    assert (await kanban.get_task_status(task.id))["status"] == "ready"
+
+    await bg.update_task(task.id, enabled=False)
+    assert (await kanban.get_task_status(task.id))["status"] == "todo"
+
+    await bg.update_task(task.id, enabled=True)
+    assert (await kanban.get_task_status(task.id))["status"] == "ready"
+
+
+async def test_update_task_nao_reabilita_por_cima_de_bloqueio_ativo(db):
+    """Erro/borda: reabilitar uma tarefa bloqueada (ex.: budget estourado)
+    não pode fingir que o bloqueio não existe mais."""
+    from backend.scheduling import kanban
+
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Bloqueada",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    await kanban.block_task(task.id, "capability", "orçamento estourado")
+
+    await bg.update_task(task.id, enabled=True)
+
+    estado = await kanban.get_task_status(task.id)
+    assert estado["status"] == "blocked"
+    assert estado["block_kind"] == "capability"

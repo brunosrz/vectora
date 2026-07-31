@@ -45,6 +45,9 @@ class TaskOut(BaseModel):
     enabled: bool
     last_run_at: str | None
     next_run_at: str | None
+    status: str
+    block_kind: str | None = None
+    block_reason: str | None = None
 
 
 class CreateTaskRequest(BaseModel):
@@ -99,6 +102,9 @@ def _to_out(t: BackgroundTask) -> TaskOut:
         enabled=t.enabled,
         last_run_at=t.last_run_at,
         next_run_at=t.next_run_at,
+        status=t.status,
+        block_kind=t.block_kind,
+        block_reason=t.block_reason,
     )
 
 
@@ -181,6 +187,24 @@ async def delete_task_endpoint(request: Request, thread_id: str, task_id: str) -
     _user_id(request)
     await _require_task(thread_id, task_id)
     await delete_task(task_id)
+
+
+@router.post("/tasks/{task_id}/unblock", response_model=TaskOut)
+async def unblock_task_endpoint(
+    request: Request, thread_id: str, task_id: str
+) -> TaskOut:
+    """Botão "Desbloquear" do Kanban — limpa `block_kind`/`block_reason` e
+    devolve a tarefa pra `ready`, competindo pelo claim de novo."""
+    from backend.scheduling.background_tasks import get_task
+    from backend.scheduling.kanban import unblock_task
+
+    _user_id(request)
+    await _require_task(thread_id, task_id)
+    await unblock_task(task_id)
+    updated = await get_task(task_id)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+    return _to_out(updated)
 
 
 @router.post("/tasks/{task_id}/run", status_code=202)

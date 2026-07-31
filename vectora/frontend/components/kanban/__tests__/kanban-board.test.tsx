@@ -13,9 +13,11 @@ import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 import { KanbanBoard } from "../kanban-board";
 
 function mockTasks(tasks: unknown[]) {
+  // A resposta real de GET /sessions/{id}/background/tasks é `list[TaskOut]`
+  // — um array puro, não um envelope `{tasks: [...]}`.
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => new Response(JSON.stringify({ tasks }), { status: 200 })),
+    vi.fn(async () => new Response(JSON.stringify(tasks), { status: 200 })),
   );
 }
 
@@ -98,6 +100,52 @@ describe("KanbanBoard", () => {
     expect(screen.queryByText("em triagem")).not.toBeInTheDocument();
     expect(screen.queryByText("arquivada")).not.toBeInTheDocument();
     expect(screen.getByText(/nenhuma tarefa/i)).toBeInTheDocument();
+  });
+
+  it("botão Desbloquear só aparece em cards blocked e chama /unblock", async () => {
+    const chamadas: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        chamadas.push(`${init?.method ?? "GET"} ${url}`);
+        return new Response(
+          JSON.stringify(
+            init?.method === "POST"
+              ? []
+              : [task({ id: "a", status: "blocked", block_reason: "x" })],
+          ),
+          { status: 200 },
+        );
+      }),
+    );
+
+    await montar();
+    const botao = screen.getByRole("button", { name: /desbloquear/i });
+    await act(async () => {
+      botao.click();
+    });
+
+    expect(
+      chamadas.some((c) => c.startsWith("POST") && c.includes("/unblock")),
+    ).toBe(true);
+  });
+
+  it("botão Cancelar não aparece em cards done, mas aparece nos demais", async () => {
+    mockTasks([
+      task({ id: "a", status: "todo" }),
+      task({ id: "b", status: "done" }),
+    ]);
+
+    await montar();
+
+    const colunaTodo = screen.getByTestId("kanban-col-todo");
+    const colunaDone = screen.getByTestId("kanban-col-done");
+    expect(
+      within(colunaTodo).getByRole("button", { name: /cancelar/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(colunaDone).queryByRole("button", { name: /cancelar/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("falha ao carregar mostra board vazio, não tela de erro", async () => {
