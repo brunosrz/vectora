@@ -7,7 +7,8 @@ Cohere and Ollama via seus SDKs oficiais LangChain:
     anthropic     → langchain-anthropic     (ChatAnthropic, prompt caching)
     cohere        → langchain-cohere        (ChatCohere, CohereEmbeddings,
                                              CohereRerank)
-    ollama        → langchain-ollama        (ChatOllama, via init_chat_model)
+    ollama        → cliente nativo           (VectoraOllamaChat, /api/chat)
+    openrouter    → cliente nativo           (VectoraOpenRouterChat)
 
 Inclui async context managers e helpers de variáveis de ambiente.
 """
@@ -138,13 +139,20 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 max_retries=0,
             )
         case "ollama":
-            from langchain.chat_models import init_chat_model
+            from backend.llm.ollama.chat import VectoraOllamaChat
+            from backend.llm.ollama.client import OllamaClient
 
-            return init_chat_model(
+            # Cliente nativo, não `init_chat_model`: o `/api/chat` expõe
+            # `message.thinking` em campo próprio, `images` por mensagem
+            # (vision) e os contadores de token — a camada LangChain esconde
+            # os três.
+            return VectoraOllamaChat(
                 model=model_name,
-                model_provider="ollama",
-                base_url=_get_env_with_default(
-                    "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
+                client=OllamaClient(
+                    base_url=_get_env_with_default(
+                        "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
+                    ),
+                    api_key=os.getenv("OLLAMA_API_KEY", ""),
                 ),
                 temperature=temperature,
             )

@@ -61,3 +61,20 @@ def test_openrouter_sem_api_key_levanta_erro_claro(monkeypatch):
 
     with pytest.raises(GetEnvError, match="OPENROUTER_API_KEY"):
         _build_concrete_model("openrouter", "openrouter/auto", 0.7)
+
+
+def test_ollama_usa_cliente_nativo_e_nao_init_chat_model(monkeypatch):
+    """O caminho antigo (`init_chat_model(model_provider="ollama")`) escondia
+    `thinking`, `images` e os contadores de token."""
+    from backend.llm.ollama.chat import VectoraOllamaChat
+    from backend.services.utils import _build_concrete_model
+
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+
+    modelo = _build_concrete_model("ollama", "gpt-oss:20b", 0.7)
+
+    assert isinstance(modelo, VectoraOllamaChat)
+    assert modelo.client.base_url == "http://127.0.0.1:11434"
+    # Erro/borda: cair de volta no ChatOpenAI seria regressão silenciosa —
+    # continuaria "funcionando" e perderia os três campos de novo.
+    assert _FakeChatOpenAI.last_kwargs is None
