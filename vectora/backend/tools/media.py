@@ -118,6 +118,16 @@ def _generate_image_bytes(provider: str, prompt: str) -> bytes:
     # Ollama/OpenRouter: modelo escolhido pelo usuário (UI vence env — ver
     # `configured_gateway_model`).
     model = configured_gateway_model(provider, "image")
+
+    if provider == "openrouter":
+        import asyncio
+
+        from backend.llm.openrouter.client import OpenRouterClient
+        from backend.llm.openrouter.media import generate_image_bytes
+
+        client = OpenRouterClient(api_key=settings.openrouter_api_key or "")
+        return asyncio.run(generate_image_bytes(client, model=model, prompt=prompt))
+
     raise NotImplementedError(
         f"geração de imagem via {provider} (modelo {model}) ainda não tem "
         "cliente implementado"
@@ -153,6 +163,20 @@ def _synthesize_speech_bytes(provider: str, text: str, voice: str) -> bytes:
         return bytes(raw) if raw else b""
 
     model = configured_gateway_model(provider, "tts")
+
+    if provider == "openrouter":
+        import asyncio
+
+        from backend.llm.openrouter.client import OpenRouterClient
+        from backend.llm.openrouter.media import synthesize_speech_bytes
+
+        client = OpenRouterClient(api_key=settings.openrouter_api_key or "")
+        return asyncio.run(
+            synthesize_speech_bytes(
+                client, model=model, text=text, voice=voice or "alloy"
+            )
+        )
+
     raise NotImplementedError(
         f"síntese de voz via {provider} (modelo {model}) ainda não tem "
         "cliente implementado"

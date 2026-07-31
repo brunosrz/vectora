@@ -298,3 +298,68 @@ def test_reranker_type_recusa_provider_sem_api_de_rerank():
     for invalido in ("ollama", "qualquer-coisa"):
         with pytest.raises(pydantic.ValidationError):
             Settings(reranker_type=invalido)
+
+
+class TestOpenRouterLigadoNasTools:
+    """`generate_image`/`text_to_speech` com OpenRouter ativo deixavam de
+    levantar `NotImplementedError` — a UI oferecia o modelo e a geração
+    falhava depois, que é pior que não oferecer."""
+
+    @staticmethod
+    def _sem_key(monkeypatch):
+        from backend.settings import settings as _s
+
+        monkeypatch.setattr(_s, "openrouter_api_key", "", raising=False)
+
+    def test_imagem_via_openrouter_chama_o_cliente_nativo(self, monkeypatch):
+        from backend.settings import settings as _s
+        from backend.tools import media
+
+        monkeypatch.setattr(_s, "openrouter_api_key", "sk-or-test", raising=False)
+        monkeypatch.setattr(
+            "backend.settings.configured_gateway_model",
+            lambda _p, _c: "openai/gpt-image-1",
+        )
+
+        async def _fake(_client, *, model, prompt, **_kw):
+            assert model == "openai/gpt-image-1"
+            assert prompt == "um gato"
+            return b"\x89PNG-fake"
+
+        monkeypatch.setattr("backend.llm.openrouter.media.generate_image_bytes", _fake)
+
+        assert media._generate_image_bytes("openrouter", "um gato") == b"\x89PNG-fake"
+
+    def test_tts_via_openrouter_chama_o_cliente_nativo(self, monkeypatch):
+        from backend.settings import settings as _s
+        from backend.tools import media
+
+        monkeypatch.setattr(_s, "openrouter_api_key", "sk-or-test", raising=False)
+        monkeypatch.setattr(
+            "backend.settings.configured_gateway_model",
+            lambda _p, _c: "openai/gpt-4o-mini-tts",
+        )
+
+        async def _fake(_client, *, model, text, voice, **_kw):
+            assert voice == "alloy"
+            return b"audio-cru"
+
+        monkeypatch.setattr(
+            "backend.llm.openrouter.media.synthesize_speech_bytes", _fake
+        )
+
+        assert (
+            media._synthesize_speech_bytes("openrouter", "oi", "alloy") == b"audio-cru"
+        )
+
+    def test_provider_ainda_sem_cliente_segue_levantando(self, monkeypatch):
+        """Erro/borda: o Ollama continua sem cliente de imagem. Ligar o
+        OpenRouter não pode ter transformado o erro claro num silêncio."""
+        from backend.tools import media
+
+        monkeypatch.setattr(
+            "backend.settings.configured_gateway_model", lambda _p, _c: "algum-modelo"
+        )
+
+        with pytest.raises(NotImplementedError, match="ollama"):
+            media._generate_image_bytes("ollama", "x")
