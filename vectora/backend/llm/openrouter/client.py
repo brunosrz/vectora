@@ -179,6 +179,31 @@ class OpenRouterClient:
             raise OpenRouterResponseError(msg)
         return conteudo
 
+    async def get_json(self, path_or_url: str) -> dict:
+        """GET com resposta JSON — consulta de status do vídeo.
+
+        Aceita path relativo **ou** URL absoluta: a resposta do `/videos`
+        devolve `polling_url` já completa, e reconstruí-la a partir do id
+        quebraria se a API mudar o formato.
+        """
+        client = await self._ensure_client()
+        url = (
+            path_or_url
+            if path_or_url.startswith("http")
+            else f"{self._base_url}{path_or_url}"
+        )
+        resp = await client.get(url, headers=self._headers())
+        try:
+            corpo = resp.json()
+        except Exception:
+            corpo = None
+        self._raise_for_status(resp.status_code, corpo)
+        if not isinstance(corpo, dict):
+            trecho = (resp.text or "")[:200]
+            msg = f"OpenRouter devolveu corpo não-JSON em {path_or_url}: {trecho!r}"
+            raise OpenRouterResponseError(msg)
+        return corpo
+
     async def post_multipart(
         self,
         path: str,
