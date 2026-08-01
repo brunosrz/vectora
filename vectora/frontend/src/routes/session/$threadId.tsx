@@ -26,6 +26,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { PANEL_TRANSITION } from "@/lib/motion/transitions";
 import { useWebhookWorkbench } from "@/lib/hooks/use-webhook-workbench";
+import { useClampPanelWidths } from "@/lib/hooks/use-clamp-panel-widths";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { usePreferenciasDialogStore } from "@/lib/stores/preferencias-dialog-store";
@@ -115,6 +116,10 @@ function SessionPage() {
 
   // CI em tempo real: webhook do GitHub → toast + badge no git-tab (sem F5).
   useWebhookWorkbench();
+
+  // Painéis resizáveis persistem largura em px — sem clamp, uma largura
+  // salva numa tela larga causa overflow horizontal ao abrir numa estreita.
+  useClampPanelWidths();
 
   // Largura da sidebar (desktop) arrastável pela borda direita.
   const sidebarWidth = useSettingsStore((s) => s.sidebarWidth);
