@@ -3,7 +3,7 @@
 Sobe uma instância isolada, registra no gateway real (`gateway.vectora.chat`)
 com `VECTORA_APP_SECRET` (produto, não por-usuário — ver `settings.py`),
 conecta o `GatewayClient`, dispara um evento via `POST
-https://{token}.vectora.chat/webhooks/{provider}` de fora, e confirma que
+https://{token}.vectora.chat/webhook/{provider}` de fora, e confirma que
 `dispatch_webhook_event` roda a `background_task` correspondente.
 
 Guardado atrás de skip se `VECTORA_APP_SECRET`/rede não disponíveis — mesma
@@ -158,9 +158,9 @@ async def test_webhook_via_gateway_producao_dispara_background_task(
         subdomain_url = settings.gateway_url.replace("wss://", "https://").replace(
             "ws://", "http://"
         )
-        webhook_url = (
-            f"{subdomain_url.replace('gateway.', f'{token}.')}/webhooks/github"
-        )
+        # Rota real é `/webhook/{provider}` (singular) — ver
+        # `backend/api/handlers/webhooks.py:395` (`@router.post`).
+        webhook_url = f"{subdomain_url.replace('gateway.', f'{token}.')}/webhook/github"
 
         async with httpx.AsyncClient(timeout=15.0) as external:
             resp = await external.post(
