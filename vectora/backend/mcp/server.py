@@ -37,7 +37,7 @@ logging.basicConfig(
 logger = logging.getLogger("backend.mcp.server")
 
 try:
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server import MCPServer
 
     from backend.persistence.checkpoint import Checkpointer
     from backend.settings import settings
@@ -97,7 +97,7 @@ async def _mcp_lifespan(server: object) -> AsyncGenerator[None]:
 # MCP SERVER INSTANCE
 # ============================================================================
 
-mcp = FastMCP(
+mcp = MCPServer(
     "Vectora",
     lifespan=_mcp_lifespan,
     instructions=(

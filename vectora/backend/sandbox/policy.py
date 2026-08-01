@@ -112,7 +112,7 @@ class _Unset:
 
 
 _UNSET = _Unset()
-_wsl2_distro_cache: str | None | _Unset = _UNSET
+_wsl2_distro_cache: str | _Unset | None = _UNSET
 
 
 def _wsl2_eligible_sync() -> bool:

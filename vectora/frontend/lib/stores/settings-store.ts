@@ -197,7 +197,7 @@ const DEFAULTS = {
   sidebarWidth: 224,
   sidebarPosition: "left" as SidebarPosition,
   chatMode: false,
-  uiMode: "ide" as UiMode,
+  uiMode: "assistant" as UiMode,
   chatSidebarWidth: 256,
   selectedModel: getDefaultModel(),
   autoUpdateEnabled: true,
@@ -299,7 +299,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
-      version: 1, // v1: fontScale* migrou de % (80-150) pra px (13-24)
+      version: 2, // v2: fontScale* migrou de % (80-150) pra px (13-24) e uiMode default voltou pra assistant
       migrate: (persistedState) => {
         const s = persistedState as Record<string, unknown>;
         if (s && typeof s === "object") {
@@ -309,6 +309,9 @@ export const useSettingsStore = create<SettingsState>()(
             s.fontScaleChat = migrateFontScaleValue(s.fontScaleChat);
           if ("fontScaleMarkdown" in s)
             s.fontScaleMarkdown = migrateFontScaleValue(s.fontScaleMarkdown);
+          if (s.uiMode === "ide" || s.uiMode === undefined) {
+            s.uiMode = "assistant";
+          }
         }
         return s;
       },

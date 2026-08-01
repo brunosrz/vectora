@@ -1,6 +1,6 @@
 # electron-builder config
 #
-# Gera instaladores nativos assinados (Win .msi/.exe, macOS .dmg notarized,
+# Gera instaladores nativos assinados (Win .exe via NSIS, macOS .dmg notarized,
 # Linux .AppImage/.deb/.rpm). Cada instalador empacota a shell Electron
 # + o binário Nuitka como extraResource.
 #
@@ -87,8 +87,6 @@ win:
   target:
     - target: nsis
       arch: [x64, arm64]
-    - target: msi
-      arch: [x64]
   icon: public/vectora.ico
   # Sem opções de assinatura fixas: o electron-builder assina automaticamente
   # quando CSC_LINK + CSC_KEY_PASSWORD estão no env (CI, cert EV em base64) e
@@ -164,12 +162,6 @@ deb:
 # ainda) — electron-builder falha o build do AppImage se `license:` apontar
 # pra um arquivo inexistente. Reintroduzir aqui quando houver um EULA real.
 appImage: {}
-
-msi:
-  # LGHT1105: ICE validation exige privilégio de admin ou política do SO específica.
-  # -sw1105 suprime o aviso para que light.exe não falhe em builds locais/CI sem admin.
-  additionalWixArgs:
-    - "-sw1105"
 
 nsis:
   # ManifestDPIAware true vem de build-resources/installer.nsh (hook customHeader,

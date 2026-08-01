@@ -205,6 +205,25 @@ describe("GET /download/:channel/:target", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it("faz fallback para outra arquitetura quando o asset existe em outro diretório", async () => {
+    const env = fakeEnv({
+      config: {
+        channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+        quarantined: [],
+      },
+      fileBody: "binario-arm64",
+    });
+
+    const res = await app.request(
+      "/download/latest/win-x64.exe",
+      {},
+      env as never,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("binario-arm64");
+  });
 });
 
 describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
@@ -267,6 +286,38 @@ describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
     );
     expect(res.status).toBe(404);
     expect(await res.text()).toBe("manifest missing");
+  });
+
+  it("faz fallback entre arquiteturas se o manifesto só existir em outra pasta", async () => {
+    const env = {
+      KV: {
+        get: async () =>
+          JSON.stringify({
+            channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+            quarantined: [],
+          }),
+        put: async () => {},
+      },
+      R2: {
+        get: async (key: string) =>
+          key.includes("/arm64/")
+            ? {
+                body: "manifest-arm64",
+                httpMetadata: { contentType: "application/x-yaml" },
+                httpEtag: '"etag-arm64"',
+              }
+            : null,
+      },
+    };
+
+    const res = await app.request(
+      "/updates/latest/win/x64/latest.yml",
+      {},
+      env as never,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("manifest-arm64");
   });
 });
 

@@ -382,7 +382,9 @@ def _build_session_system_prompt(
 # modelo tem seu grafo, todos compartilhando o MESMO checkpointer + store
 # (uma única conexão SQLite, sem disputa de lock).
 _graphs: dict[str, Any] = {}
-_graphs_by_user: dict[tuple[str, str], Any] = {}  # (user_id, model) → graph (DE-5)
+_graphs_by_user: dict[
+    tuple[str, str, str], Any
+] = {}  # (user_id, model, workspace) → graph
 _checkpointer_ctx: Any = None
 _checkpointer: Any = None
 _store: Any = None
@@ -532,6 +534,7 @@ async def _build_graph_async(
     model_id: str = "",
     chat_mode: bool = False,
     user_id: str | None = None,
+    workspace_id: str | None = None,
 ) -> Any:
     """Compila um grafo deepagents para ``model_id`` (checkpointer/store compartilhados).
 
@@ -552,8 +555,10 @@ async def _build_graph_async(
     from deepagents import create_deep_agent
     from langchain_core.language_models.chat_models import BaseChatModel
 
+    from backend.llm.backends import build_backend
     from backend.llm.fallback_chat_model import FallbackChatModel
     from backend.nodes.tools import ALL_TOOLS, CHAT_TOOLS
+    from backend.workspace.workspace import workspace_registry
 
     # FallbackChatModel envolve o LLM do modelo escolhido: em 429/quota antes do
     # primeiro token, troca para o próximo provider de `fallback_order` (lido em
@@ -590,7 +595,6 @@ async def _build_graph_async(
 
     middleware = build_middleware_stack()
 
-    from backend.llm.backends import build_backend_lazy
     from backend.vtypes.context import VectoraContext
     from backend.workspace.skills import list_skill_paths
 
@@ -601,13 +605,28 @@ async def _build_graph_async(
     # AGENTS.md paths para o MemoryMiddleware — injetado no system prompt.
     memory_paths = _agents_md_paths()
 
+    effective_workspace_id = workspace_id
+    if effective_workspace_id is None and user_id:
+        try:
+            active_ws = workspace_registry.get_active(user_id)
+            effective_workspace_id = active_ws.id if active_ws else None
+        except Exception:
+            logger.debug(
+                "agent_factory: falha ao resolver workspace ativo do usuário %s",
+                user_id,
+                exc_info=True,
+            )
+
     compiled = create_deep_agent(
         llm,
         tools=tools,
         system_prompt=system_prompt,
         subagents=subagents,
         middleware=middleware,
-        backend=build_backend_lazy(),
+        backend=build_backend(
+            workspace_id=effective_workspace_id,
+            user_id=user_id,
+        ),
         checkpointer=_checkpointer,
         context_schema=VectoraContext,
         skills=skill_paths,
@@ -659,6 +678,7 @@ async def get_user_agent(
     user_id: str | None = None,
     model: str = "",
     chat_mode: bool = False,
+    workspace_id: str | None = None,
 ) -> Any:
     """Retorna o grafo compilado para (user_id, model, chat_mode).
 
@@ -679,28 +699,52 @@ async def get_user_agent(
     """
     _check_global_tools_version()
 
+    effective_workspace_id = workspace_id
+    if effective_workspace_id is None and user_id:
+        try:
+            from backend.workspace.workspace import workspace_registry
+
+            active_ws = workspace_registry.get_active(user_id)
+            effective_workspace_id = active_ws.id if active_ws else None
+        except Exception:
+            logger.debug(
+                "agent_factory: falha ao resolver workspace ativo do usuário %s",
+                user_id,
+                exc_info=True,
+            )
+
     base = model or "__default__"
     model_key = f"{base}#chat" if chat_mode else base
+    workspace_key = effective_workspace_id or ""
 
-    # DE-5: Cache por sessão (user_id, model_key)
+    # DE-5: Cache por sessão (user_id, model_key, workspace_id)
     if user_id:
-        session_key = (user_id, model_key)
+        session_key = (user_id, model_key, workspace_key)
         if session_key not in _graphs_by_user:
             async with _lock:
                 if session_key not in _graphs_by_user:
                     _graphs_by_user[session_key] = await _build_graph_async(
-                        model, chat_mode, user_id
+                        model,
+                        chat_mode,
+                        user_id,
+                        effective_workspace_id,
                     )
         _track_versions(user_id)
         return _graphs_by_user[session_key]
 
-    # Fallback: cache global por model_key
-    if model_key not in _graphs:
+    # Fallback: cache global por model_key + workspace_id
+    global_key = f"{model_key}::ws={workspace_key}"
+    if global_key not in _graphs:
         async with _lock:
-            if model_key not in _graphs:
-                _graphs[model_key] = await _build_graph_async(model, chat_mode, user_id)
+            if global_key not in _graphs:
+                _graphs[global_key] = await _build_graph_async(
+                    model,
+                    chat_mode,
+                    user_id,
+                    effective_workspace_id,
+                )
 
-    return _graphs[model_key]
+    return _graphs[global_key]
 
 
 def _message_text(content: Any) -> str:
@@ -730,6 +774,7 @@ def _message_text(content: Any) -> str:
 
 async def aget_thread_messages(
     thread_id: str,
+    workspace_id: str | None = None,
 ) -> list[tuple[str, str, str, list[dict[str, Any]]]]:
     """Mensagens persistidas de uma thread como ``(role, text, checkpoint_id, attachments_meta)``.
 
@@ -755,7 +800,7 @@ async def aget_thread_messages(
 
     from langchain_core.runnables import RunnableConfig
 
-    graph = await get_user_agent()
+    graph = await get_user_agent(workspace_id=workspace_id)
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     try:
         # aget_state_history vem do mais recente pro mais antigo (LangGraph);
@@ -800,7 +845,10 @@ async def aget_thread_messages(
     return out
 
 
-async def aget_thread_todos(thread_id: str) -> list[dict[str, str]]:
+async def aget_thread_todos(
+    thread_id: str,
+    workspace_id: str | None = None,
+) -> list[dict[str, str]]:
     """Snapshot mais recente de ``state["todos"]`` (write_todos/
     TodoListMiddleware, injetado incondicionalmente pelo deepagents).
 
@@ -817,7 +865,7 @@ async def aget_thread_todos(thread_id: str) -> list[dict[str, str]]:
 
     from langchain_core.runnables import RunnableConfig
 
-    graph = await get_user_agent()
+    graph = await get_user_agent(workspace_id=workspace_id)
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     try:
         snapshot = await graph.aget_state(config)

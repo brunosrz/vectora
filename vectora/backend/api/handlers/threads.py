@@ -757,12 +757,19 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
     try:
         from backend.services import agent_factory
 
-        pairs = await agent_factory.aget_thread_messages(request.thread_id)
+        thread = await get_thread(GetThreadRequest(thread_id=request.thread_id))
+        pairs = await agent_factory.aget_thread_messages(
+            request.thread_id,
+            workspace_id=thread.workspace_id or None,
+        )
         history = [
             HistoryMessage(role=role, content=text, checkpoint_id=checkpoint_id)
             for role, text, checkpoint_id, _att in pairs
         ]
-        todos = await agent_factory.aget_thread_todos(request.thread_id)
+        todos = await agent_factory.aget_thread_todos(
+            request.thread_id,
+            workspace_id=thread.workspace_id or None,
+        )
         return GetHistoryResponse(messages=history, todos=todos)
 
     except Exception as exc:
@@ -838,7 +845,11 @@ async def generate_title(request: GenerateTitleRequest) -> GenerateTitleResponse
 
         from backend.services import agent_factory
 
-        pairs = await agent_factory.aget_thread_messages(request.thread_id)
+        thread = await get_thread(GetThreadRequest(thread_id=request.thread_id))
+        pairs = await agent_factory.aget_thread_messages(
+            request.thread_id,
+            workspace_id=thread.workspace_id or None,
+        )
         user_text = next((t for r, t, _cp, _att in pairs if r == "human"), "")
         assistant_text = next((t for r, t, _cp, _att in pairs if r == "assistant"), "")
         if not user_text:
@@ -1067,7 +1078,11 @@ async def get_thread_history_paginated(
     try:
         from backend.services import agent_factory
 
-        pairs = await agent_factory.aget_thread_messages(thread_id)
+        thread = await get_thread(GetThreadRequest(thread_id=thread_id))
+        pairs = await agent_factory.aget_thread_messages(
+            thread_id,
+            workspace_id=thread.workspace_id or None,
+        )
     except Exception:
         logger.exception("api/threads: erro ao carregar histórico paginado")
         return PagedHistoryResponse(messages=[], has_more=False, total_count=0)

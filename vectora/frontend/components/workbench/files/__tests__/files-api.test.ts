@@ -10,6 +10,7 @@ import {
   fetchTree,
   fetchDiffSummary,
   apiFsCreate,
+  apiFsCreateFile,
   apiFsDelete,
   apiFsMove,
   apiFsSearch,
@@ -83,6 +84,19 @@ describe("apiFsCreate", () => {
   it("status não-ok (ex: duplicado) retorna false", async () => {
     fetchMock.mockResolvedValue(jsonResponse({}, 409));
     expect(await apiFsCreate("ws1", "dir", "a")).toBe(false);
+  });
+});
+
+describe("apiFsCreateFile", () => {
+  it("faz POST em /fs/file com path e content", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ status: "ok" }, 200));
+    const result = await apiFsCreateFile("ws1", "vectora.toml", "[sandbox]\n");
+    expect(fetchMock).toHaveBeenCalledWith("/workspaces/ws1/fs/file", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "vectora.toml", content: "[sandbox]\n" }),
+    });
+    expect(result.ok).toBe(true);
   });
 });
 

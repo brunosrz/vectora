@@ -216,16 +216,12 @@ def _build_index(embedding_model: str | None) -> Any:
 
 
 def build_backend_lazy() -> Any:
-    """Retorna uma factory de backend (callable) para injeção lazy no grafo.
+    """Compat shiv legado de backend lazy.
 
-    Quando passada como ``backend=build_backend_lazy()`` ao ``create_deep_agent``,
-    a factory é chamada com o ``ToolRuntime`` no início de cada turno, permitindo
-    que o workspace_id e user_id sejam lidos do contexto em tempo real via
-    ``runtime.context`` (disponível após E.B-5).
-
-    Por ora usa ``workspace_id=None`` (filesystem root padrão) e ``user_id`` do
-    context se disponível; migração completa em E.B-11 quando VectoraContext
-    estiver integrado em todas as tools.
+    ``deepagents`` 0.7+ não aceita mais backend factory em
+    ``create_deep_agent(backend=...)``; o chamador precisa construir o backend
+    já inicializado com ``build_backend(...)``. Este helper permanece só por
+    compatibilidade com código antigo fora do caminho principal.
     """
 
     def _factory(runtime: Any) -> Any:

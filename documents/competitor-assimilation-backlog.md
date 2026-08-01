@@ -134,9 +134,13 @@ middleware (existe), SSE adapter (existe base).
 
 ### H-3. Worktree-per-task + override de modelo por task
 
-**O que é.** No Kanban multi-agente do Hermes, cada task roda num **git
-worktree próprio** e pode ter **override de modelo por task** (tasks
-diferentes, modelos diferentes, em paralelo, sem pisar no working tree).
+**O que é.** No Kanban multi-agente do Hermes, a home/documentação falam em
+task com **git worktree próprio** e **override de modelo por task**, mas a
+auditoria do código real não confirmou o worktree por task: `delegate_task`
+roda em `ThreadPoolExecutor`, no mesmo processo, sem isolamento de PTY. No
+Vectora, o worktree por task em segundo plano já existe de verdade, então a
+comparação útil aqui é só o override de modelo por task (quando houver
+perfil/agente), não o worktree de marketing.
 
 > **Correção (auditoria do código real, 2026-07-30).** A parte de "worktree por
 > task delegada" **não se confirma no código do Hermes**: `delegate_task` é uma
@@ -172,10 +176,10 @@ editam arquivos em paralelo (hoje compartilham o working tree). Habilita o
 
 ### H-4. Inventário de tools do Hermes — o que existe lá e não aqui
 
-**Levantado na auditoria de código de 2026-07-29/30** (~70 tools no Hermes).
-Serve como mapa de candidatos, não como lista de coisas a copiar: a maioria
-das categorias abaixo já foi decidida (entrou no plano de sprints ou foi
-descartada com motivo).
+**Levantado na auditoria de código de 2026-07-29/30** (~70 tools no Hermes,
+confirmadas contra `hermes-agent-main/`). Serve como mapa de candidatos, não
+como lista de coisas a copiar: a maioria das categorias abaixo já foi
+decidida (entrou no plano de sprints ou foi descartada com motivo).
 
 **Categorias que o Hermes tem e o Vectora não tinha:**
 

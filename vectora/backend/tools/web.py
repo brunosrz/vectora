@@ -41,6 +41,40 @@ def _run_sync(coro: Any) -> Any:
     return asyncio.run(coro)
 
 
+def _get_search_tool() -> Any:
+    """Retorna o backend resolvido para busca.
+
+    Mantido como ponto de extensão para testes e mocks.
+    """
+    from backend.tools.search_registry import resolve_backend
+
+    return resolve_backend()
+
+
+def _get_extract_tool() -> Any:
+    """Retorna o backend resolvido para extração de URL."""
+    from backend.tools.search_registry import resolve_backend
+
+    return resolve_backend()
+
+
+def _invoke_backend(tool: Any, payload: dict[str, Any]) -> Any:
+    """Executa um backend de teste ou produção com a interface disponível.
+
+    Alguns backends expõem `.search()`/`.extract()`, enquanto os mocks de
+    teste usam `.invoke()`. Este helper aceita ambos sem quebrar o contrato
+    externo das tools.
+    """
+
+    if hasattr(tool, "invoke"):
+        return tool.invoke(payload)
+    if "url" in payload and hasattr(tool, "extract"):
+        return tool.extract([payload["url"]], extract_depth="advanced")
+    if "query" in payload and hasattr(tool, "search"):
+        return tool.search(payload["query"])
+    raise AttributeError("backend tool does not expose invoke/search/extract")
+
+
 def _is_quota_error(err: str) -> bool:
     """Retorna True se a mensagem de erro indica quota/rate-limit do Tavily."""
     el = err.lower()
@@ -134,28 +168,26 @@ def web_search(
     # quando ele elege o Tavily. Sem chave nenhuma o roteador devolve o
     # DuckDuckGo, mantendo o comportamento histórico.
     try:
-        from backend.tools.search_registry import (
-            SearchBackendUnavailableError,
-            resolve_backend,
-        )
+        from backend.tools.search_registry import SearchBackendUnavailableError
 
-        backend = resolve_backend()
+        backend = _get_search_tool()
     except SearchBackendUnavailableError as exc:
         # Backend escolhido sem credencial: erro claro em vez de cair noutro
         # em silêncio — o usuário pediu aquele especificamente.
         return json.dumps({"status": "error", "error": str(exc)})
 
-    if backend.name != "tavily":
+    backend_name = getattr(backend, "name", "tavily")
+    if backend_name != "tavily":
         try:
-            resultados = _run_sync(backend.search(query))
+            resultados = _run_sync(_invoke_backend(backend, {"query": query}))
             logger.info(
                 "web_search via backend alternativo",
-                extra={"query": query, "backend": backend.name},
+                extra={"query": query, "backend": backend_name},
             )
             return json.dumps(resultados)
         except Exception as exc:
             logger.exception(
-                "web_search backend falhou", extra={"backend": backend.name}
+                "web_search backend falhou", extra={"backend": backend_name}
             )
             return json.dumps({"status": "error", "error": str(exc)})
 
@@ -258,8 +290,8 @@ def fetch_url(url: str) -> str:
         _tracer = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     try:
-        client = _tavily_client()
-        results = _run_sync(client.extract([url], extract_depth="advanced"))
+        client = _get_extract_tool()
+        results = _run_sync(_invoke_backend(client, {"url": url}))
         if not results:
             logger.warning("fetch_url returned no content", extra={"url": url})
             if _tracer:

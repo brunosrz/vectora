@@ -74,6 +74,26 @@ export async function apiFsCreate(
   return res.ok;
 }
 
+export async function apiFsCreateFile(
+  workspaceId: string,
+  path: string,
+  content: string,
+): Promise<{ ok: boolean; message?: string }> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/fs/file`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path, content }),
+    },
+  );
+  const data = await res.json().catch(() => ({}));
+  return {
+    ok: res.ok,
+    message: typeof data.message === "string" ? data.message : undefined,
+  };
+}
+
 export async function apiFsDelete(
   workspaceId: string,
   path: string,

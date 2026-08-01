@@ -781,7 +781,10 @@ async def run_task(
 
             agent = await build_subagent_graph(subagent_type)
         else:
-            agent = await agent_factory.get_user_agent(user_id=task.user_id)
+            agent = await agent_factory.get_user_agent(
+                user_id=task.user_id,
+                workspace_id=task.workspace_id,
+            )
 
         config = {"configurable": configurable, "recursion_limit": 50}
         result = await agent.ainvoke(
@@ -927,7 +930,10 @@ async def resume_background_run(run_id: str, decision: str = "approve") -> str |
             configurable["workspace_id"] = task.workspace_id
         config = {"configurable": configurable, "recursion_limit": 50}
 
-        agent = await agent_factory.get_user_agent(user_id=task.user_id)
+        agent = await agent_factory.get_user_agent(
+            user_id=task.user_id,
+            workspace_id=task.workspace_id,
+        )
         result = await agent.ainvoke(
             Command(resume=resume_value),
             config=config,
@@ -988,7 +994,10 @@ async def report_to_parent_session(
 
         from backend.services import agent_factory
 
-        graph = await agent_factory.get_user_agent(user_id=task.user_id)
+        graph = await agent_factory.get_user_agent(
+            user_id=task.user_id,
+            workspace_id=task.workspace_id,
+        )
         text = (
             f"🔔 Tarefa em segundo plano concluída — **{task.name}**\n\n"
             f"{summary or '(sem resumo)'}\n\n"

@@ -594,6 +594,7 @@ async def stream_chat(
             user_id,
             model=configurable.get("model", ""),
             chat_mode=chat_mode,
+            workspace_id=workspace_id or None,
         )
     except Exception as exc:
         logger.exception("api/chat: erro ao inicializar grafo")

@@ -132,6 +132,13 @@ const READINESS_TIMEOUT_MS = 90_000;
 const HEALTH_BASE_DELAY_MS = 200;
 const HEALTH_MAX_DELAY_MS = 2_000;
 
+// Evita warning barulhento quando o servidor de update responde 404/erro.
+// O app já trata update failure como estado de UI; o processo não deve
+// abandonar a inicialização por uma falha transitória ou release ausente.
+process.on("unhandledRejection", (reason) => {
+  console.warn("[updater] rejeição não tratada capturada", reason);
+});
+
 // Últimas linhas de stdout/stderr do backend — exibidas no dialog de erro.
 const _backendLog: string[] = [];
 const _MAX_LOG_LINES = 60;
@@ -713,6 +720,14 @@ function setupAutoUpdater(): void {
   );
 }
 
+async function safeCheckForUpdates(): Promise<void> {
+  try {
+    await autoUpdater.checkForUpdates();
+  } catch (err) {
+    console.warn("[updater] checkForUpdates falhou", err);
+  }
+}
+
 /**
  * Agenda as checagens automáticas periódicas: 30s após boot (deixa o backend
  * subir primeiro) e depois a cada 6h. Só chamada quando `autoUpdateEnabled`
@@ -721,12 +736,9 @@ function setupAutoUpdater(): void {
  */
 function scheduleAutoUpdateChecks(): void {
   setTimeout(() => {
-    autoUpdater.checkForUpdates().catch(() => undefined);
+    void safeCheckForUpdates();
   }, 30_000);
-  setInterval(
-    () => autoUpdater.checkForUpdates().catch(() => undefined),
-    6 * 60 * 60 * 1000,
-  );
+  setInterval(() => void safeCheckForUpdates(), 6 * 60 * 60 * 1000);
 }
 
 // ---------------------------------------------------------------------------
@@ -759,7 +771,7 @@ function registerIpc(): void {
   // independente do toggle de auto-update, que só gate os timers
   // periódicos em scheduleAutoUpdateChecks().
   ipcMain.on("vectora:check-for-update", () => {
-    autoUpdater.checkForUpdates().catch(() => undefined);
+    void safeCheckForUpdates();
   });
 
   // Controles da titlebar customizada (frame: false — ver createWindow()).

@@ -52,7 +52,7 @@ async def run_agent_for_thread(thread_id: str, text: str) -> str:
     from backend.services import agent_factory
     from backend.vtypes.context import ctx_from_config
 
-    agent = await agent_factory.get_user_agent(user_id="local")
+    agent = await agent_factory.get_user_agent(user_id="local", workspace_id=None)
     config = {
         "configurable": {"thread_id": thread_id, "user_id": "local"},
         "recursion_limit": 50,

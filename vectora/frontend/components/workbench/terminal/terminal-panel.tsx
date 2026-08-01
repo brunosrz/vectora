@@ -6,7 +6,15 @@
  * backend (identificado por terminal_id).
  */
 
-import { Plug, Plus, ShieldCheck, TerminalSquare, X } from "lucide-react";
+import {
+  Loader2,
+  Plug,
+  Plus,
+  RefreshCcw,
+  ShieldCheck,
+  TerminalSquare,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -23,11 +31,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { apiFsCreateFile } from "@/components/workbench/files/files-api";
+import { apiUpdateFile, fetchFile } from "@/lib/api/fs-files";
 
 interface SandboxStatus {
   enabled: boolean;
   diagnostic: string | null;
 }
+
+const DEFAULT_SANDBOX_TOML = `[sandbox]
+enabled = true
+backend = "local"
+`;
 
 const SANDBOX_DIAGNOSTIC_MESSAGE: Record<string, () => string> = {
   no_workspace: m.terminal_sandbox_diagnostic_no_workspace,
@@ -91,11 +106,52 @@ function SandboxConfigDialog({
   onInitDone: () => void;
 }) {
   const [initializing, setInitializing] = useState(false);
+  const [loadingFile, setLoadingFile] = useState(false);
+  const [savingFile, setSavingFile] = useState(false);
+  const [fileExists, setFileExists] = useState(false);
+  const [content, setContent] = useState(DEFAULT_SANDBOX_TOML);
+  const [fileSha256, setFileSha256] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveHint, setSaveHint] = useState<string | null>(null);
 
   const message = diagnostic
     ? (SANDBOX_DIAGNOSTIC_MESSAGE[diagnostic]?.() ?? diagnostic)
     : "";
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoadingFile(true);
+    setSaveError(null);
+    setSaveHint(null);
+    fetchFile(workspaceId, "vectora.toml")
+      .then((file) => {
+        if (cancelled) return;
+        if (typeof file?.content === "string") {
+          setFileExists(true);
+          setContent(file.content);
+          setFileSha256(file.sha256 ?? null);
+        } else {
+          setFileExists(false);
+          setContent(DEFAULT_SANDBOX_TOML);
+          setFileSha256(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFileExists(false);
+          setContent(DEFAULT_SANDBOX_TOML);
+          setFileSha256(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingFile(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, workspaceId]);
 
   async function handleInit() {
     setInitializing(true);
@@ -118,23 +174,140 @@ function SandboxConfigDialog({
     }
   }
 
+  async function handleSave() {
+    setSavingFile(true);
+    setSaveError(null);
+    setSaveHint(null);
+    try {
+      if (fileExists) {
+        const result = await apiUpdateFile(
+          workspaceId,
+          "vectora.toml",
+          content,
+          fileSha256,
+        );
+        if (!result.ok) {
+          setSaveError(
+            result.conflict
+              ? m.terminal_sandbox_editor_conflict()
+              : (result.message ?? m.terminal_sandbox_init_error()),
+          );
+          return;
+        }
+        setFileSha256(result.sha256);
+      } else {
+        const created = await apiFsCreateFile(
+          workspaceId,
+          "vectora.toml",
+          content,
+        );
+        if (!created.ok) {
+          setSaveError(created.message ?? m.terminal_sandbox_init_error());
+          return;
+        }
+        const refreshed = await fetchFile(workspaceId, "vectora.toml");
+        setFileExists(true);
+        setFileSha256(refreshed?.sha256 ?? null);
+      }
+      setSaveHint(m.terminal_sandbox_editor_saved());
+      onInitDone();
+    } catch {
+      setSaveError(m.terminal_sandbox_init_error());
+    } finally {
+      setSavingFile(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>{m.terminal_sandbox_dialog_title()}</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">{message}</p>
         {initError && <p className="text-xs text-destructive">{initError}</p>}
-        {diagnostic === "no_vectora_toml" && (
-          <Button
-            size="sm"
-            onClick={() => void handleInit()}
-            disabled={initializing}
-          >
-            {m.terminal_sandbox_init_button()}
-          </Button>
-        )}
+        <div className="flex items-start justify-between gap-3 rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs">
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">
+              {m.terminal_sandbox_editor_title()}
+            </p>
+            <p className="text-muted-foreground">
+              {fileExists
+                ? m.terminal_sandbox_editor_existing_hint()
+                : m.terminal_sandbox_editor_new_hint()}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            {diagnostic === "no_vectora_toml" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void handleInit()}
+                disabled={initializing || loadingFile}
+              >
+                {initializing ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  m.terminal_sandbox_init_button()
+                )}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setContent(DEFAULT_SANDBOX_TOML);
+                setSaveError(null);
+                setSaveHint(null);
+              }}
+              disabled={loadingFile}
+            >
+              <RefreshCcw className="h-3.5 w-3.5" />
+              {m.terminal_sandbox_editor_reset()}
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {loadingFile ? (
+            <div className="flex min-h-[18rem] items-center justify-center rounded-md border border-border/60 bg-muted/20">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <textarea
+              className="min-h-[18rem] w-full resize-y rounded-md border border-border/60 bg-background p-3 font-mono text-xs outline-none focus:border-primary"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              spellCheck={false}
+            />
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="min-h-4 text-xs">
+              {saveError ? (
+                <p className="text-destructive">{saveError}</p>
+              ) : saveHint ? (
+                <p className="text-emerald-600 dark:text-emerald-400">
+                  {saveHint}
+                </p>
+              ) : (
+                <p className="text-muted-foreground">
+                  {m.terminal_sandbox_editor_autosync_hint()}
+                </p>
+              )}
+            </div>
+            <Button
+              size="sm"
+              onClick={() => void handleSave()}
+              disabled={loadingFile || savingFile}
+            >
+              {savingFile ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              {fileExists
+                ? m.terminal_sandbox_editor_save()
+                : m.terminal_sandbox_editor_create()}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
