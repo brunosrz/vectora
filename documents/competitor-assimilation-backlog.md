@@ -520,3 +520,163 @@ propósito declarado é contornar os filtros de provedores terceiros.
 - Consultado em jul/2026. Confirmar detalhes de API antes de implementar (as
   release notes evoluem). Nota: features da Anthropic são assimiladas como
   **padrões** (multi-LLM), com fallback para providers que não suportem.
+
+---
+
+## Auditoria comparativa de tooling — Hermes Agent vs Vectora (02/08/2026)
+
+Esta seção registra uma comparação direta do código-fonte local do Hermes Agent
+(`C:\\Users\\Machi\\AppData\\Local\\hermes\\hermes-agent`) com o Vectora,
+sem tratar nomes de módulos internos como ferramentas de produto. O MCP server
+do Vectora **não foi removido**: a alteração recente apenas excluiu dois
+módulos da análise do `ty`, porque os stubs/paths do pacote MCP variam entre o
+ambiente do Hermes e o `.venv` do Vectora. O servidor continua importado,
+montado no FastAPI e inicializa as ferramentas em runtime.
+
+### Dependências do Hermes que merecem avaliação no Vectora
+
+O Hermes separa dependências core de extras opcionais; o Vectora não deve copiar
+esse conjunto inteiro para as dependências obrigatórias. Os itens com valor
+claro para o produto são:
+
+- `youtube-transcript-api`: transcrição de vídeos do YouTube, hoje oferecida
+  pelo Hermes como skill `youtube-content`, não como tool core. No Vectora,
+  deve entrar como capability explícita de mídia/conteúdo, com URL/ID validado,
+  retorno estruturado e tratamento de transcript indisponível.
+- `faster-whisper`: STT local; complementa o STT remoto já existente e evita
+  enviar áudio para um provider quando o usuário escolhe processamento local.
+  Deve ser opcional, pois adiciona wheels grandes e runtime/modelos locais.
+- `audioop-lts`: compatibilidade de processamento de áudio em Python moderno;
+  avaliar somente se o caminho local de STT realmente precisar dele.
+- `google-api-python-client`: só vale para integrações Google adicionais que
+  não sejam cobertas pelo cliente atual de Drive/Gmail; não adicionar apenas
+  por paridade de manifesto.
+- `slack-sdk` e extras de voz/webhook dos adapters: revisar se algum fluxo do
+  Connect do Vectora usa APIs ausentes no `slack-bolt` atual; não duplicar
+  Socket Mode sem necessidade.
+- `Pillow`: já existe no Vectora e cobre a parte de normalização de imagens.
+  `pyautogui-next`, Playwright e MCP também já existem; o gap de `computer_use`
+  é de superfície e segurança, não de dependência básica.
+
+### Capacidades funcionais presentes no Hermes e ausentes ou incompletas no Vectora
+
+A lista abaixo exclui helpers internos, APIs do próprio Hermes e ferramentas
+que o Vectora já possui com nome diferente. Ela é o backlog funcional real,
+não uma instrução para implementar tudo imediatamente.
+
+#### Comunicação e ciclo de vida
+
+- `send_message`: enviar mensagem proativamente para um canal/contato já
+  configurado, incluindo listagem de destinos, thread/reação e mídia. O Vectora
+  possui adapters Connect e tools de Slack, mas não possui uma tool genérica
+  equivalente para entrega proativa multi-plataforma.
+- `channels_list`, `conversations_list`, `conversation_get`, `messages_read` e
+  `messages_send`: inspeção e operação genérica sobre conversas do gateway.
+  O Vectora possui Connect por plataforma, porém não uma camada unificada de
+  consulta/envio equivalente.
+- `react_to_message`: reação em mensagens recebidas. Não há equivalente
+  genérico no conjunto atual de tools do Vectora.
+- `events_poll`/`events_wait`: espera por eventos de gateway para workflows
+  longos. O Vectora tem eventos/SSE internos, mas não expõe essa espera como
+  capability geral do agente.
+
+#### Terminal e processos
+
+- `read_terminal`: leitura do conteúdo corrente de uma sessão PTY.
+- `terminal` com ciclo de vida completo de background: criação com ID,
+  `poll`/`log`, envio de stdin, `submit`, `close` e `kill` como operações
+  distintas. O Vectora possui sessões de terminal, mas a superfície não é
+  equivalente em completude e precisa de uma auditoria específica antes de
+  ser considerada paridade.
+- seleção de backend de terminal e consulta de backends disponíveis
+  (`select_terminal_backend`, `get_terminal_backends`), incluindo políticas de
+  ambiente remoto/VM/container expostas ao agente.
+
+#### Áudio, vídeo e conteúdo externo
+
+- STT unificado (`transcribe_audio`) com backends local `faster-whisper`,
+  OpenAI/Groq/Mistral/xAI/ElevenLabs/DeepInfra e providers por plugin. O
+  Vectora tem caminhos de transcrição por provider, mas não o registry local +
+  command-provider do Hermes.
+- transcript de YouTube via skill dedicada (`youtube-content`), com extração
+  de transcript e workflows de resumo/thread/blog.
+- configuração de voz contínua/wake-word (`voice_mode`, `wake_word`) e TTS
+  streaming. O Vectora tem TTS, mas não o loop de voz/wake-word completo.
+- fontes de imagem e recuperação/redimensionamento de imagem (`image_source`)
+  como camada explícita de ingestão multimodal.
+
+#### Infraestrutura de ferramentas e governança
+
+- `tool_search`/registro dinâmico: descoberta de tools por capability/toolset,
+  além do registry estático do Vectora.
+- `get_toolsets`, `get_toolset_config`, `toggle_toolset`, seleção de provider e
+  modelo por toolset (`select_toolset_provider`, `select_toolset_model`). O
+  Vectora tem políticas e capability matrix, mas não uma UX/registry geral de
+  toolsets equivalente.
+- `permissions_list_open`/`permissions_respond` e aprovação operacional
+  associada a comandos, além do HITL do grafo. O Vectora possui HITL, mas ainda
+  não expõe a mesma superfície de gerenciamento de permissões pendentes.
+- `project`/workspaces nomeados do Hermes: múltiplos projetos selecionáveis
+  como contexto operacional. O Vectora tem workspaces, mas deve comparar
+  seleção, isolamento e persistência antes de declarar equivalência.
+
+### `computer_use`: gap confirmado e escopo ampliado
+
+O Vectora atualmente implementa somente `screenshot`, `click` e `type_text` em
+`backend/tools/computer_use.py`, com opt-in por workspace e HITL obrigatório.
+Isso é uma boa fundação de segurança, mas não é paridade funcional com o
+computer-use do Hermes.
+
+O plano passa a exigir uma expansão por camadas, sempre mantendo opt-in
+explícito, aprovação humana por ação e registro auditável:
+
+1. **Observação**: screenshot por monitor/janela, captura de região, escala,
+   cursor/set-of-marks e metadados de resolução.
+2. **Ponteiro**: move, click simples/duplo/direito/middle, drag, hover e
+   scroll vertical/horizontal.
+3. **Teclado**: pressionar tecla, hotkey, texto Unicode seguro, copiar/colar
+   com confirmação e tratamento de layouts.
+4. **Janelas e sincronização**: wait, foco de janela, listagem de janelas,
+   abrir/fechar quando permitido e detecção de mudança de tela.
+5. **Segurança**: limites de coordenada, bloqueio de áreas sensíveis,
+   confirmação renovada para ações irreversíveis, trilha de screenshots e
+   teste de fail-closed em workspace sem `[computer_use]`.
+
+A expansão é feature de roadmap, não deve ser implementada junto de uma
+correção incidental. O primeiro sprint deve comparar a API do Hermes com a
+biblioteca multiplataforma escolhida no Vectora e escrever contrato/testes
+antes de adicionar ações físicas.
+
+### Sprints adicionados ao plano
+
+- **Sprint 47 — Tool registry/capability audit**: catalogar tools por contrato,
+  toolset, provider e superfície de execução; expor a diferença entre tool
+  registrada, disponível e habilitada. Sem adicionar feature de usuário ainda.
+- **Sprint 48 — STT local e YouTube transcript**: avaliar `faster-whisper` e
+  `youtube-transcript-api` como extras opcionais; definir modelos, cache,
+  limites de arquivo/URL, idioma, artifacts e fallback explícito.
+- **Sprint 49 — Mensageria proativa unificada**: desenhar `send_message`,
+  listagem de destinos e reações sobre o Connect existente, com HITL para
+  envio externo e idempotência. Implementação aguarda solicitação explícita.
+- **Sprint 50 — Terminal/process lifecycle parity**: auditar e completar
+  leitura, polling, logs, stdin, close/kill e seleção de backend das sessões
+  PTY do Vectora, sem confundir isso com o terminal sandboxado.
+- **Sprint 51 — Computer use completo**: implementar as camadas de observação,
+  ponteiro, teclado, janelas e sincronização descritas acima, com testes TDD,
+  HITL por ação, opt-in e verificação ao vivo controlada.
+- **Sprint 52 — Tool governance**: aproximar a gestão de toolsets, permissões
+  pendentes e seleção de provider/modelo do modelo do Hermes, preservando a
+  arquitetura deep-agent e as políticas próprias do Vectora.
+
+Esses sprints ficam registrados como **features futuras**. Bugs da versão
+atual continuam podendo ser corrigidos imediatamente; nenhum desses itens deve ser implementado sem pedido explícito do usuário.
+
+### Fontes auditadas
+
+- Hermes: `pyproject.toml`, `uv.lock`, `tools/`, `hermes_cli/` e skills locais.
+- Vectora: `pyproject.toml`, `uv.lock`, `backend/tools/`,
+  `backend/nodes/tools.py` e `backend/mcp/server.py`.
+- A contagem de módulos não é tratada como contagem de tools: módulos Hermes
+  como `approval.py`, `path_security.py` e `tool_backend_helpers.py` são
+  infraestrutura, enquanto o inventário do Vectora foi conferido contra o
+  registro de `ALL_TOOLS`.
