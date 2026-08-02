@@ -104,6 +104,13 @@ def test_model_provider_without_hyphen_passthrough():
     assert cfg["model"] == "cohere:command-a-03-2025"
 
 
+def test_openrouter_model_preserves_slash_and_provider():
+    cfg = _build_configurable(
+        ChatConfig(model="openrouter:deepseek/deepseek-v4-flash-0731"), "t", "u"
+    )
+    assert cfg["model"] == "openrouter:deepseek/deepseek-v4-flash-0731"
+
+
 def test_model_without_colon_passthrough():
     # Sem prefixo de provider: repassado como veio (não vira provider espúrio).
     cfg = _build_configurable(ChatConfig(model="gemini-2.5-flash"), "t", "u")

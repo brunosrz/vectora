@@ -459,6 +459,23 @@ def _build_configurable(
     return configurable
 
 
+def _apply_persisted_model_preference(config: ChatConfig, user_id: str) -> None:
+    """Use the backend-persisted model when the request omits one.
+
+    The browser cache is only an optimization; a reload can briefly construct
+    a request before Zustand finishes hydration. The persisted preference is
+    the authoritative value for that case and keeps provider selection aligned
+    with the model shown by the backend.
+    """
+    if config.model:
+        return
+    from backend.workspace.runtime_settings import runtime_settings
+
+    preference = runtime_settings.get_frontend_prefs(user_id).get("selectedModel")
+    if isinstance(preference, str) and ":" in preference:
+        config.model = preference
+
+
 @router.post("/vectora.chat.v1.ChatService/StreamChat")
 async def stream_chat(
     request: StreamChatRequest, http_request: Request
@@ -475,6 +492,7 @@ async def stream_chat(
     # namespace lido por GET /memory (handlers/memory.py). Sem isso, save_memory
     # caía em session_<thread_id> e a aba Memória ficava vazia.
     user_id = _user_id_from_request(http_request)
+    _apply_persisted_model_preference(request.config, user_id)
 
     chat_mode = request.config.chat_mode
 

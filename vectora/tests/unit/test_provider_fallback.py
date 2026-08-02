@@ -249,16 +249,13 @@ class TestGetFallbackChain:
 
 
 # ---------------------------------------------------------------------------
-# get_fallback_chain — cadeia automática quando nunca configurada (§ opt-in
-# padrão empty devia significar "sem fallback", vira default sensato)
+# get_fallback_chain — fallback somente por configuração explícita
 # ---------------------------------------------------------------------------
 
 
 class TestGetFallbackChainAutoDefault:
-    def test_bug_real_cohere_entra_no_fallback_do_gemini_sem_configuracao(self):
-        """Reproduz o bug ao vivo: llm_fallback_order nunca configurada
-        (vazia), Gemini é o primário e esgota a quota, Cohere está com key
-        configurada — o fallback deve tentá-lo automaticamente."""
+    def test_fallback_nao_configurado_devolve_cadeia_vazia(self):
+        """Fallback não configurado não troca de provider automaticamente."""
         from backend.settings import settings
 
         rt = patch.object(pf, "_fallback_order", return_value=[])
@@ -271,10 +268,9 @@ class TestGetFallbackChainAutoDefault:
             patch.object(settings, "openrouter_api_key", None),
         ):
             chain = pf.get_fallback_chain("google_genai:gemini-2.5-pro")
-        # ollama é sempre "local" (sem key exigida) — entra por padrão também.
-        assert chain == ["cohere:command-a-03-2025", "ollama:gpt-oss:20b"]
+        assert chain == []
 
-    def test_exclui_o_primario_e_ollama_sempre_entra(self):
+    def test_fallback_nao_configurado_ignora_ollama(self):
         from backend.settings import settings
 
         rt = patch.object(pf, "_fallback_order", return_value=[])
@@ -287,11 +283,11 @@ class TestGetFallbackChainAutoDefault:
             patch.object(settings, "openrouter_api_key", None),
         ):
             chain = pf.get_fallback_chain("openai:gpt-4o")
-        assert chain == ["ollama:gpt-oss:20b"]
+        assert chain == []
         # o primário nunca aparece na própria cadeia auto-gerada.
         assert all(not c.startswith("openai:") for c in chain)
 
-    def test_nenhum_provider_com_key_devolve_cadeia_so_com_ollama(self):
+    def test_fallback_explicitamente_vazio_devolve_cadeia_vazia(self):
         from backend.settings import settings
 
         rt = patch.object(pf, "_fallback_order", return_value=[])
@@ -304,7 +300,15 @@ class TestGetFallbackChainAutoDefault:
             patch.object(settings, "openrouter_api_key", None),
         ):
             chain = pf.get_fallback_chain("ollama:gpt-oss:20b")
-        assert chain == []  # ollama é o próprio primário aqui — exclui-se
+        assert chain == []
+
+    def test_modelo_openrouter_nao_cria_fallback_google(self):
+        rt = patch.object(pf, "_fallback_order", return_value=[])
+        with rt:
+            assert (
+                pf.get_fallback_chain("openrouter:deepseek/deepseek-v4-flash-0731")
+                == []
+            )
 
     def test_configuracao_explicita_com_uma_entrada_nao_e_substituida(self):
         """Erro/borda: configuração manual do usuário, mesmo incompleta (1

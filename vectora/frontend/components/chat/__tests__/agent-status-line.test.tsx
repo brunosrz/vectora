@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * TDD — AgentStatusLine (FASE 3.1)
+ * TDD — AgentStatusLine
  *
  * Componente que mostra a tool em execução durante o streaming do agente.
  */

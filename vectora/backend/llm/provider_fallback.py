@@ -13,9 +13,11 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
-from typing import Any
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 _QUOTA_MARKERS = ("429", "resource_exhausted", "quota", "rate limit", "rate_limit")
 _TRANSIENT_MARKERS = (
@@ -121,40 +123,30 @@ def _fallback_order() -> list[str]:
 
 
 def _default_fallback_chain(current_provider: str) -> list[str]:
-    """Cadeia automática quando o usuário nunca configurou uma (§ opt-in
-    vira default sensato): todo provider de chat com key detectada, exceto
-    o primário, na ordem canônica de ``_PROVIDER_SPEC``. Resolve o caso real
-    de "Cohere configurado mas nunca tentado" sem exigir configuração manual
-    em Preferências."""
-    from backend.services.utils import _PROVIDER_SPEC
+    """Retorna a cadeia vazia quando fallback não foi configurado.
 
-    chain: list[str] = []
-    for provider, (_env_var, default_model) in _PROVIDER_SPEC.items():
-        if provider == current_provider:
-            continue
-        if not _provider_has_key(provider):
-            continue
-        chain.append(f"{provider}:{default_model}")
-    return chain
+    Fallback é uma decisão explícita do usuário: uma lista vazia não autoriza
+    o agente a trocar de provider por conta própria, mesmo que outras chaves
+    estejam presentes no ambiente.
+    """
+    _ = current_provider
+    return []
 
 
 def get_fallback_chain(current_model_id: str) -> list[str]:
     """Cadeia ordenada de modelos a tentar após o atual esgotar.
 
     Remove o provider atual (mesma quota) e os providers sem API key. Sem
-    configuração explícita (``llm_fallback_order`` vazia), monta uma cadeia
-    automática (ver ``_default_fallback_chain``) — configuração manual do
-    usuário, mesmo com uma única entrada, sempre tem precedência.
+    configuração explícita, retorna uma cadeia vazia.
     """
-    current_provider = _provider_of(current_model_id)
     configured = _fallback_order()
     if not configured:
-        return _default_fallback_chain(current_provider)
+        return []
 
     chain: list[str] = []
     for mid in configured:
         prov = _provider_of(mid)
-        if prov == current_provider:
+        if prov == _provider_of(current_model_id):
             continue
         if not _provider_has_key(prov):
             continue
@@ -186,7 +178,7 @@ def drain_switches() -> list[dict[str, str]]:
     return list(lst) if lst else []
 
 
-async def try_with_fallback[T](
+async def try_with_fallback(  # noqa: UP047
     fn: Callable[[str], Awaitable[T]],
     model_id: str,
     *,

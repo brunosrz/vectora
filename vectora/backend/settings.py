@@ -743,6 +743,7 @@ class Settings(BaseSettings):
                     "anthropic": "ANTHROPIC_MODEL",
                     "ollama": "OLLAMA_MODEL",
                     "cohere": "COHERE_CHAT_MODEL",
+                    "openrouter": "OPENROUTER_MODEL",
                 }
                 if _env_var := _model_env_map.get(_provider):
                     os.environ.setdefault(_env_var, _model)
