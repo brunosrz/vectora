@@ -82,7 +82,7 @@ class TestAttachmentSchema:
     def test_invalid_kind_raises(self) -> None:
         with pytest.raises(ValidationError):
             Attachment(
-                kind="video",  # type: ignore[arg-type]  # tipo inválido
+                kind="video",  # ty: ignore[invalid-argument-type]  # tipo inválido
                 name="clip.mp4",
                 mime_type="video/mp4",
                 base64_data="abc",

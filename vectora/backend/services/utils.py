@@ -93,10 +93,11 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             )
         case "openai":
             from langchain_openai import ChatOpenAI
+            from pydantic import SecretStr
 
             return ChatOpenAI(
                 model=model_name,
-                api_key=get_env("OPENAI_API_KEY"),
+                api_key=SecretStr(get_env("OPENAI_API_KEY")),
                 temperature=temperature,
                 timeout=None,
                 max_retries=0,
@@ -107,6 +108,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             )
         case "anthropic":
             from langchain_anthropic import ChatAnthropic
+            from pydantic import SecretStr
 
             prompt_cache = os.getenv("ANTHROPIC_PROMPT_CACHE", "true").lower() not in {
                 "false",
@@ -115,8 +117,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             }
             betas = ["prompt-caching-2024-07-31"] if prompt_cache else []
             return ChatAnthropic(
-                model=model_name,
-                api_key=get_env("ANTHROPIC_API_KEY"),
+                model_name=model_name,
+                api_key=SecretStr(get_env("ANTHROPIC_API_KEY")),
                 temperature=temperature,
                 betas=betas,
                 timeout=None,
@@ -124,6 +126,7 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             )
         case "cohere":
             from langchain_cohere import ChatCohere
+            from pydantic import SecretStr
 
             api_key = get_env("COHERE_API_KEY")
             if not api_key:
@@ -132,11 +135,8 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
             # NÃO usar SecretStr: o get_from_dict_or_env do langchain-core faz
             # str(SecretStr) → "**********", causando 401 na API do Cohere.
             return ChatCohere(
-                cohere_api_key=api_key,
+                cohere_api_key=SecretStr(api_key),
                 model=model_name,
-                temperature=temperature,
-                timeout=None,
-                max_retries=0,
             )
         case "ollama":
             from backend.llm.ollama.chat import VectoraOllamaChat

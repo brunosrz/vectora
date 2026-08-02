@@ -127,8 +127,10 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
         ),
         (
             "RECURSION_LIMIT",
-            "O agente entrou em um loop e foi interrompido automaticamente. "
-            "Tente novamente ou simplifique o pedido.",
+            (
+                "O agente entrou em um loop e foi interrompido automaticamente. "
+                "Tente novamente ou simplifique o pedido."
+            ),
             ("graphrecursionerror", "recursion limit"),
         ),
     )

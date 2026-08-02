@@ -7,7 +7,7 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
-    scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint+eslint
+    scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint
     scons update        → atualiza deps: uv (backend) + pnpm (frontend/company/
                           services) + hugo mod (docs), respeitando ranges/lockfiles
     scons update --latest → mesma coisa, mas ignora ranges/lockfiles (pnpm
@@ -24,7 +24,7 @@ Subprojetos cobertos por lint e tests:
                     — inclui vectora/frontend/electron/ (Electron: cookie-utils
                     e lifecycle puro), fundido no package.json do frontend, sem
                     pacote npm próprio (só tsconfig de compilação separado)
-    company/        TypeScript (eslint, tsc, vitest)
+    company/        TypeScript (oxlint, tsc, vitest)
     docs/           Hugo + Hextra (build check via `hugo --gc --minify`) — sem
                     testes; era Docusaurus, migrado pra Hugo
     services/       TypeScript (tsc, vitest) — gateway + updates unificados
@@ -428,7 +428,7 @@ def _action_lint(target, source, env):
         _run([PNPM, "--dir", "vectora/frontend", "exec", "oxlint"], log=log)
         # ── company ───────────────────────────────────────────────────────────
         _pnpm_install_if_needed("company", log)
-        _run([PNPM, "--dir", "company", "run", "lint"], log=log)
+        _run([PNPM, "--dir", "company", "exec", "oxlint"], log=log)
         _run([PNPM, "--dir", "company", "run", "typecheck"], log=log)
         # ── electron (main process, TS puro — sem oxlint/eslint configurado).
         # Fundido no package.json do frontend (mesmo node_modules); só o

@@ -74,13 +74,13 @@ repos:
         pass_filenames: false
 
   # ==========================================
-  # ESLint
+  # Oxlint — TypeScript 7-compatible lint
   # ==========================================
   - repo: local
     hooks:
-      - id: eslint
-        name: ESLint
-        entry: node node_modules/eslint/bin/eslint.js
+      - id: oxlint
+        name: Oxlint
+        entry: pnpm exec oxlint
         language: system
         files: \.(ts|tsx|js|jsx|mjs|cjs)$
         pass_filenames: false

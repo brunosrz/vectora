@@ -14,7 +14,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from langchain.agents.middleware.types import ToolCallRequest
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
 from backend.services.middleware import (
     _dynamic_hitl_when,
@@ -282,7 +282,10 @@ def _build_hitl_agent():
         async def _astream(
             self, messages, stop=None, run_manager=None, **kwargs
         ) -> AsyncIterator[ChatGenerationChunk]:
-            yield ChatGenerationChunk(message=self._next(messages))  # type: ignore[arg-type]
+            next_message = self._next(messages)
+            yield ChatGenerationChunk(
+                message=AIMessageChunk(**next_message.model_dump())
+            )
 
     from deepagents import create_deep_agent
 

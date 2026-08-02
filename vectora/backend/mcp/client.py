@@ -12,7 +12,7 @@ from typing import Any, Self
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from pydantic import BaseModel, Field
+from pydantic import AnyUrl, BaseModel, Field
 
 logger = logging.getLogger("backend.mcp.client")
 
@@ -142,7 +142,12 @@ class MCPClient:
             # We convert them to dicts for easier consumption
             content_list = [item.model_dump() for item in result.content]
 
-            return MCPToolCallResult(content=content_list, is_error=result.isError)
+            return MCPToolCallResult(
+                content=content_list,
+                is_error=bool(
+                    getattr(result, "isError", getattr(result, "is_error", False))
+                ),
+            )
 
         except Exception as e:
             logger.exception("Error calling MCP tool: %s", name)
@@ -179,7 +184,7 @@ class MCPClient:
             raise RuntimeError("MCP client is not connected. Call connect() first.")
 
         try:
-            result = await self.session.read_resource(uri)  # ty: ignore[invalid-argument-type]
+            result = await self.session.read_resource(AnyUrl(uri))
             # Typically returns a list of contents, we join them if they are text
             return "\n".join(  # ty: ignore[no-matching-overload]
                 [item.text for item in result.contents if hasattr(item, "text")]

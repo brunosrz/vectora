@@ -13,6 +13,7 @@ from langchain.tools import tool
 from langchain_core.documents import Document as LCDoc
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
+from pydantic import SecretStr
 
 from backend.embedding.queue import get_embedding_queue
 from backend.services.text import text_service
@@ -22,7 +23,6 @@ try:
     import lancedb
     import pandas as pd
     from langchain_cohere import CohereEmbeddings, CohereRerank
-    from pydantic import SecretStr
 except ImportError:
     lancedb = None  # type: ignore
     pd = None  # type: ignore
@@ -88,7 +88,7 @@ def _build_voyage_reranker() -> Any:
     if not key:
         return None
     return VoyageAIRerank(
-        voyage_api_key=key,
+        api_key=SecretStr(key),
         model=settings.voyage_rerank_model,
         top_k=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
     )
@@ -388,7 +388,7 @@ async def vector_search(
         # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
         # not the actual value, causing a 401 from Cohere.
         embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,
+            cohere_api_key=SecretStr(api_key),
             model=settings.embedding_model,
         )
 

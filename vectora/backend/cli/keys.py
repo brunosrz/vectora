@@ -147,18 +147,20 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
 
     if provider_id == "anthropic":
         from langchain_anthropic import ChatAnthropic
+        from pydantic import SecretStr
 
         return ChatAnthropic(
-            api_key=api_key,
-            model=model,
+            api_key=SecretStr(api_key or ""),
+            model_name=model,
         )
 
     if provider_id == "cohere":
         from langchain_cohere import ChatCohere
+        from pydantic import SecretStr
 
         # NÃO usar SecretStr — causa 401 (langchain-core str(SecretStr) → "**********").
         return ChatCohere(
-            cohere_api_key=api_key,
+            cohere_api_key=SecretStr(api_key or ""),
             model=model,
         )
 

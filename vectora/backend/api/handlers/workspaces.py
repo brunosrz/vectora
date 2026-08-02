@@ -3238,8 +3238,10 @@ async def browser_start(workspace_id: str, body: BrowserStartRequest) -> StatusR
         if exit_code is not None:
             status, message = (
                 "error",
-                f"processo encerrou com código {exit_code} antes de abrir "
-                f"a porta {cfg.port} — ver saída no terminal do Vectora",
+                (
+                    f"processo encerrou com código {exit_code} antes de abrir "
+                    f"a porta {cfg.port} — ver saída no terminal do Vectora"
+                ),
             )
         elif not port_ready:
             status, message = (

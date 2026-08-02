@@ -25,6 +25,17 @@ exclude: |
     # uma versão/config diferente de prettier — regex corrigida pra bater
     # em qualquer .mjs, casado com a intenção original (excluir tudo).
     .*\.mjs$|
+    ^chrome-devtools-mcp-main/.*|
+    ^hermes-agent-main/.*|
+    ^paperclip-master/.*|
+    ^\.claude/worktrees/.*|
+    (^|/)node_modules/.*|
+    (^|/)\.venv/.*|
+    (^|/)dist/.*|
+    (^|/)build/.*|
+    (^|/)coverage/.*|
+    (^|/)\.pytest_cache/.*|
+    (^|/)__pycache__/.*|
     # Gerado por `wrangler types` — reformatar aqui é churn inútil, o
     # arquivo é sobrescrito no próximo `wrangler types`.
     services/worker-configuration\.d\.ts

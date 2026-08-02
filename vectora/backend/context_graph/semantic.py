@@ -658,7 +658,7 @@ async def extract_semantic(
                 # Quota total — propaga para o pipeline pausar (não degrada).
                 raise r
             if isinstance(r, BaseException):
-                logger.exception(
+                logger.error(
                     "semantic: chunk com erro irrecuperável", extra={"error": str(r)}
                 )
                 continue

@@ -286,8 +286,10 @@ async def _resolve_dev_server_name(
     if not launch.configurations:
         return (
             None,
-            "Error: nenhuma configuração de dev server encontrada "
-            "(.vectora/launch.json vazio ou ausente).",
+            (
+                "Error: nenhuma configuração de dev server encontrada "
+                "(.vectora/launch.json vazio ou ausente)."
+            ),
         )
     if name:
         if not any(c.name == name for c in launch.configurations):
@@ -302,8 +304,10 @@ async def _resolve_dev_server_name(
     available = ", ".join(c.name for c in launch.configurations)
     return (
         None,
-        f"Error: múltiplas configurações de dev server existem ({available}) "
-        "— especifique `name`.",
+        (
+            f"Error: múltiplas configurações de dev server existem ({available}) "
+            "— especifique `name`."
+        ),
     )
 
 

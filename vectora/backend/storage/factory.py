@@ -216,8 +216,10 @@ def _build_cohere_embeddings() -> Any:
         if not key or not model:
             return None
 
+        from pydantic import SecretStr
+
         return CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=key,
+            cohere_api_key=SecretStr(key),
             model=model,
         )
     except Exception:
@@ -236,8 +238,10 @@ def _build_voyage_embeddings() -> Any:
         if not key or not model:
             return None
 
+        from pydantic import SecretStr
+
         return VoyageAIEmbeddings(
-            voyage_api_key=key,
+            api_key=SecretStr(key),
             model=model,
         )
     except Exception:

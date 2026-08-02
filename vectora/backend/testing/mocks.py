@@ -3,7 +3,7 @@ from typing import Any, Self
 
 from langchain_core.language_models import BaseLLM
 from langchain_core.messages import AIMessage, BaseMessage
-from langchain_core.outputs import LLMResult
+from langchain_core.outputs import ChatGeneration, LLMResult
 
 from backend.testing.message_factory import (
     ai_message_text,
@@ -39,7 +39,7 @@ class MockLLM(BaseLLM):
         else:
             response = ai_message_text("I don't understand that input.")
 
-        return LLMResult(generations=[[response]])
+        return LLMResult(generations=[[ChatGeneration(message=response)]])
 
     def _match_pattern(self: Self, text: str, messages: list[BaseMessage]) -> AIMessage:
         """Match input text against patterns and return appropriate response."""

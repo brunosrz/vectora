@@ -43,6 +43,7 @@ from backend.api.schemas import (
     SetThreadPinsRequest,
     Thread,
     ThreadPinsResponse,
+    TodoItem,
     UpdateThreadRequest,
 )
 
@@ -770,7 +771,10 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
             request.thread_id,
             workspace_id=thread.workspace_id or None,
         )
-        return GetHistoryResponse(messages=history, todos=todos)
+        return GetHistoryResponse(
+            messages=history,
+            todos=[TodoItem.model_validate(todo) for todo in todos],
+        )
 
     except Exception as exc:
         logger.exception("api/threads: erro ao carregar histórico")

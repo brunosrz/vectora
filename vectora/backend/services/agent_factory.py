@@ -275,8 +275,10 @@ def _load_workspaces_overview(active_id: str | None = None) -> str | None:
     lines: list[str] = [
         "## Seus Workspaces",
         "",
-        "Você gerencia estes projetos isolados (cada um com diretório, base RAG e "
-        "MANIFEST.md próprios). O marcado com ◀ é o ativo desta sessão:",
+        (
+            "Você gerencia estes projetos isolados (cada um com diretório, base RAG e "
+            "MANIFEST.md próprios). O marcado com ◀ é o ativo desta sessão:"
+        ),
         "",
     ]
     # Limita a 30 entradas para não inflar o contexto; o restante via `workspace_list`.

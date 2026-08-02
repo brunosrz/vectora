@@ -63,8 +63,10 @@ _TIME_RE = r"(\d{1,2})(?:[:h](\d{2}))?\s*(am|pm)?h?"
 # sequência, não amarrado ao idioma corrente da UI.
 _WEEKLY_PATTERNS = (
     (
-        r"toda(?:s)?\s+(domingo|segunda-feira|segunda|terça-feira|terça|terca-feira|"
-        r"terca|quarta-feira|quarta|quinta-feira|quinta|sexta-feira|sexta|sábado|sabado)",
+        (
+            r"toda(?:s)?\s+(domingo|segunda-feira|segunda|terça-feira|terça|terca-feira|"
+            r"terca|quarta-feira|quarta|quinta-feira|quinta|sexta-feira|sexta|sábado|sabado)"
+        ),
         _WEEKDAYS_PT,
     ),
     (

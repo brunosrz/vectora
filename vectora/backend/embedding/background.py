@@ -535,8 +535,10 @@ class BackgroundEmbeddingWorker:
         # internamente com backoff longo — prendendo a thread do to_thread por
         # minutos e saturando o pool (travava o backend inteiro). Com 0, o 429
         # propaga na hora e o circuit breaker do worker assume.
+        from pydantic import SecretStr
+
         embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,
+            cohere_api_key=SecretStr(api_key),
             model=self.config.embedding_model,
             max_retries=0,
         )
