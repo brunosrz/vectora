@@ -221,6 +221,7 @@ line-ending = "lf"
 
 # ─── ty (Astral type checker) ──────────────────────────────────────────────────
 [tool.ty.src]
+exclude = ["backend/mcp/server.py", "tests/fixtures/dummy_mcp_server.py"]
 
 [[tool.ty.overrides]]
 # landlock.py/rlimits.py: os.O_CLOEXEC/resource.setrlimit só existem nos stubs

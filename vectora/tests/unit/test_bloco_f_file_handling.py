@@ -9,6 +9,7 @@ Cobre:
 from __future__ import annotations
 
 import base64
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -82,7 +83,7 @@ class TestAttachmentSchema:
     def test_invalid_kind_raises(self) -> None:
         with pytest.raises(ValidationError):
             Attachment(
-                kind="video",  # ty: ignore[invalid-argument-type]  # tipo inválido
+                kind=cast("AttachmentKind", "video"),  # tipo inválido
                 name="clip.mp4",
                 mime_type="video/mp4",
                 base64_data="abc",

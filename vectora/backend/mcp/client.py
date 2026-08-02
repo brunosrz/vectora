@@ -8,11 +8,11 @@ import asyncio
 import contextlib
 import logging
 from types import TracebackType
-from typing import Any, Self
+from typing import Any, Self, cast
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from pydantic import AnyUrl, BaseModel, Field
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger("backend.mcp.client")
 
@@ -184,11 +184,14 @@ class MCPClient:
             raise RuntimeError("MCP client is not connected. Call connect() first.")
 
         try:
-            result = await self.session.read_resource(AnyUrl(uri))
+            result = await self.session.read_resource(cast("Any", uri))
             # Typically returns a list of contents, we join them if they are text
-            return "\n".join(  # ty: ignore[no-matching-overload]
-                [item.text for item in result.contents if hasattr(item, "text")]
-            )
+            text_contents: list[str] = []
+            for item in result.contents:
+                text = getattr(item, "text", None)
+                if isinstance(text, str):
+                    text_contents.append(text)
+            return "\n".join(text_contents)
         except Exception as e:
             logger.exception("Error reading MCP resource: %s", uri)
             raise RuntimeError(f"Failed to read resource {uri}: {e}") from e

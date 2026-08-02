@@ -37,7 +37,7 @@ logging.basicConfig(
 logger = logging.getLogger("backend.mcp.server")
 
 try:
-    from mcp.server.mcpserver.server import MCPServer  # ty: ignore[unresolved-import]
+    from mcp.server.mcpserver.server import MCPServer  # type: ignore[import-not-found]
 
     from backend.persistence.checkpoint import Checkpointer
     from backend.settings import settings
