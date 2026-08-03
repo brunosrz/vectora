@@ -33,7 +33,9 @@ In production, use your server's public HTTPS URL:
 
 ## What gets exposed
 
-The same native agent tools (files, git, terminal, RAG, web) become available to the external client, subject to the same ABAC policies and HITL mechanism that apply in chat.
+25 native tools become available to the external client: files, read-only git, Context Graph, RAG, search, terminal, and delegation — see the full list in [MCP Server](../../reference/mcp-server).
+
+**Writes and terminal require per-workspace approval.** Unlike chat (which goes through `HumanInTheLoopMiddleware`), an MCP client calls tools directly — without that approval, `file_write`/`file_edit`/`terminal` refuse to execute. Approve once under **Settings → Workspace** (or `POST /workspaces/approve-mcp-write`) before asking the client to write files or run commands. Read-only tools work with no approval needed.
 
 ## Adding third-party MCP servers to Vectora
 

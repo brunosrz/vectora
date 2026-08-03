@@ -77,15 +77,45 @@ busca web (Tavily) como fallback.
 
 #### 4. MCP (Model Context Protocol)
 
-| Ingrediente                      | Onde                                              | Função                                                                                                                                                                            |
-| -------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **mcp** (SDK oficial)            | (transporte e tipos)                              | tipos, transports stdio/SSE, runtime do servidor MCP                                                                                                                              |
-| **`mcp.server.fastmcp.FastMCP`** | `backend/mcp/server.py:37` (`mcp = FastMCP(...)`) | wrapper de alto nível (decorators `@mcp.tool()`); converte funções Python em tool definitions MCP automaticamente. Faz parte do pacote `mcp>=1.27.1` — **não** é uma dep separada |
-| **langchain-mcp-adapters**       | `backend/services/plugins.py`                     | Vectora **como cliente** MCP (consome outros servidores MCP como tools)                                                                                                           |
+| Ingrediente                          | Onde                                             | Função                                                                                                                                                                    |
+| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **mcp** (SDK oficial)                | (transporte e tipos)                             | tipos, transports stdio/SSE, runtime do servidor MCP (`mcp>=2.0`)                                                                                                         |
+| **`mcp.server.mcpserver.MCPServer`** | `backend/mcp/server.py` (`mcp = MCPServer(...)`) | wrapper de alto nível (decorators `@mcp.tool()`); converte funções Python em tool definitions MCP automaticamente. Faz parte do pacote `mcp` — **não** é uma dep separada |
+| **langchain-mcp-adapters**           | `backend/services/plugins.py`                    | Vectora **como cliente** MCP (consome outros servidores MCP como tools)                                                                                                   |
 
 O Vectora pode ser **invocado pelo Claude Desktop** (Vectora como tool MCP
-via FastMCP em stdio/SSE) ou pode **chamar outros servidores MCP**
-(plugins MCP por usuário virando `BaseTool` do agente).
+via MCPServer em stdio/SSE, montado em `/mcp` no mesmo processo FastAPI —
+sobe com todo boot do backend, regra 16 do CLAUDE.md) ou pode **chamar
+outros servidores MCP** (plugins MCP por usuário virando `BaseTool` do
+agente).
+
+**Superfície exposta (25 tools, `backend/mcp/server.py`)**: as mesmas
+categorias de leitura que o chat usa — arquivo (`file_read`/`file_edit`/
+`file_write`), busca (`grep`, `list_dir`, `vector_search`, `web_search`,
+`fetch_url`), RAG (`embedding`, `ingest_docs`, `manage_retriever`),
+workspace (`workspace_describe`/`workspace_list`/`bucket_summary`), git
+só-leitura (`git_status`/`git_diff`/`git_log`), Context Graph
+(`graph_query`/`graph_explain`/`graph_path`/`graph_affected`), terminal,
+delegação (`delegate_task_to_vectora`) e métricas (`vectora_metrics`).
+Kanban e Schedule ainda não têm tool própria no MCP — dependem de peças
+que a versão de chat tem e o MCP standalone ainda não (tools de Kanban em
+si; `thread_id` de sessão de chat pro Schedule).
+
+**Gate de aprovação pra escrita/terminal.** Diferente do resto do grafo
+LangGraph, as 3 tools MCP que mutam estado do host
+(`file_write_tool`/`file_edit_tool`/`terminal_tool`) chamam a tool interna
+via `.ainvoke()` **direto**, fora do `HumanInTheLoopMiddleware`/
+`permission_mode` do chat — um client MCP autenticado não passa pelo
+grafo, então nenhuma dessas proteções se aplica por padrão. Em vez de um
+`interrupt()` síncrono por chamada (que quebraria a promessa de operação
+sem fricção do MCP), a mitigação é uma **aprovação persistida por
+workspace**: `Workspace.mcp_write_approved` (mesmo padrão de
+`hooks_approved`), setada uma vez via `POST /workspaces/approve-mcp-write`
+(ou a UI em Configurações > Workspace) e checada antes de cada chamada às
+3 tools — sem aprovação, a tool recusa com mensagem clara em vez de
+executar. Tools só-leitura (arquivo, git, grafo, busca) nunca passam por
+esse gate. Toda chamada gated (aprovada ou recusada) emite log estruturado
+`mcp_write_call` para auditoria.
 
 #### 5. Terminal (PTY persistente)
 
