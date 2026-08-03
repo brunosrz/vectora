@@ -116,10 +116,10 @@ class TestMcpStatusResource:
 
     @pytest.mark.asyncio
     async def test_status_tools_count_matches(self, mcp_server):
-        """tools_count deve ser 18 (ferramentas registradas no servidor)."""
+        """tools_count deve ser 25 (ferramentas registradas no servidor)."""
         result = await mcp_server.get_server_status()
         data = json.loads(result)
-        assert data["tools_count"] == 18
+        assert data["tools_count"] == 25
 
     @pytest.mark.asyncio
     async def test_status_capabilities_are_booleans(self, mcp_server):

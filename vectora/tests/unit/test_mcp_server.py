@@ -132,7 +132,7 @@ class TestGetServerStatus:
         assert data["server"] == "Vectora"
         assert data["status"] == "ready"
         assert "capabilities" in data
-        assert data["tools_count"] == 18
+        assert data["tools_count"] == 25
         assert data["resources_count"] == 4
 
     @pytest.mark.asyncio
@@ -445,6 +445,81 @@ class TestMcpToolWrappers:
         with patch.object(srv, "_with_timeout", mock_wt):
             result = await srv.ingest_docs_tool("src/**/*.py")
         mock_wt.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_git_status_tool(self):
+        mock_wt = _make_timeout_mock('{"branch": "master"}')
+        with patch.object(srv, "_with_timeout", mock_wt):
+            result = await srv.git_status_tool()
+        mock_wt.assert_called_once()
+        assert result == '{"branch": "master"}'
+
+    @pytest.mark.asyncio
+    async def test_git_diff_tool(self):
+        mock_wt = _make_timeout_mock('{"diff": ""}')
+        with patch.object(srv, "_with_timeout", mock_wt):
+            result = await srv.git_diff_tool()
+        mock_wt.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_git_log_tool(self):
+        mock_wt = _make_timeout_mock('{"commits": []}')
+        with patch.object(srv, "_with_timeout", mock_wt):
+            result = await srv.git_log_tool(5)
+        mock_wt.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_graph_query_tool(self):
+        mock_wt = _make_timeout_mock("nenhum nó encontrado")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(srv, "_graph_config", return_value={"configurable": {}}),
+        ):
+            result = await srv.graph_query_tool("quem chama authenticate?")
+        mock_wt.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_graph_explain_tool(self):
+        mock_wt = _make_timeout_mock("nó não encontrado")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(srv, "_graph_config", return_value={"configurable": {}}),
+        ):
+            result = await srv.graph_explain_tool("AuthService")
+        mock_wt.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_graph_path_tool(self):
+        mock_wt = _make_timeout_mock("sem caminho")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(srv, "_graph_config", return_value={"configurable": {}}),
+        ):
+            result = await srv.graph_path_tool("A", "B")
+        mock_wt.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_graph_affected_tool(self):
+        mock_wt = _make_timeout_mock("nenhum componente afetado")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(srv, "_graph_config", return_value={"configurable": {}}),
+        ):
+            result = await srv.graph_affected_tool("AuthService")
+        mock_wt.assert_called_once()
+
+
+class TestGraphConfig:
+    def test_uses_explicit_workspace_id(self):
+        cfg = srv._graph_config("ws-123")
+        assert cfg == {"configurable": {"workspace_id": "ws-123"}}
+
+    def test_falls_back_to_active_workspace(self):
+        ws = MagicMock(id="ws-default")
+        with patch("backend.workspace.workspace.workspace_registry") as reg:
+            reg.get_or_create.return_value = ws
+            cfg = srv._graph_config(None)
+        assert cfg == {"configurable": {"workspace_id": "ws-default"}}
 
 
 # ---------------------------------------------------------------------------

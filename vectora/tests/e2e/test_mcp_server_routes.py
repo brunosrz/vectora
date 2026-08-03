@@ -16,7 +16,7 @@ import pytest
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(30)]
 
-# Nomes canônicos das 18 ferramentas expostas pelo servidor MCP
+# Nomes canônicos das 25 ferramentas expostas pelo servidor MCP
 EXPECTED_TOOL_NAMES = {
     "web_search_tool",
     "fetch_url_tool",
@@ -33,6 +33,13 @@ EXPECTED_TOOL_NAMES = {
     "grep_tool",
     "list_dir_tool",
     "terminal_tool",
+    "git_status_tool",
+    "git_diff_tool",
+    "git_log_tool",
+    "graph_query_tool",
+    "graph_explain_tool",
+    "graph_path_tool",
+    "graph_affected_tool",
     "call_mcp_tool_tool",
     "delegate_task_to_vectora",
     "vectora_metrics",
@@ -66,11 +73,11 @@ def mcp(server):
 class TestToolRegistration:
     """Verifica que todas as 13 ferramentas estão registradas no servidor."""
 
-    def test_exactly_18_tools_registered(self, mcp):
-        """O servidor MCP deve expor exatamente 18 ferramentas."""
+    def test_exactly_25_tools_registered(self, mcp):
+        """O servidor MCP deve expor exatamente 25 ferramentas."""
         tools = mcp._tool_manager.list_tools()
-        assert len(tools) == 18, (
-            f"Esperado 18 ferramentas, encontrado {len(tools)}: "
+        assert len(tools) == 25, (
+            f"Esperado 25 ferramentas, encontrado {len(tools)}: "
             f"{[t.name for t in tools]}"
         )
 

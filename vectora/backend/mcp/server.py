@@ -18,6 +18,8 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any
 
+from langchain_core.runnables import RunnableConfig
+
 from backend.settings import settings
 
 # Logging to file only — never pollute stdout (JSON-RPC channel)
@@ -56,6 +58,13 @@ try:
         vector_search,
         web_search,
     )
+    from backend.tools.context_graph import (
+        graph_affected,
+        graph_explain,
+        graph_path,
+        graph_query,
+    )
+    from backend.tools.git import git_diff, git_log, git_status
     from backend.tools.workspace import (
         bucket_summary,
         workspace_describe,
@@ -164,7 +173,28 @@ TOOL_TIMEOUTS = {
     "list_dir": 10.0,  # 10 segundos para listar diretório
     "terminal": 60.0,  # 60 segundos para comando terminal
     "call_mcp_tool": 45.0,  # 45 segundos para chamar outro MCP
+    "git_status": 10.0,  # 10 segundos — leitura local
+    "git_diff": 10.0,  # 10 segundos — leitura local
+    "git_log": 10.0,  # 10 segundos — leitura local
+    "graph_query": 15.0,  # 15 segundos — consulta ao Context Graph
+    "graph_explain": 15.0,
+    "graph_path": 15.0,
+    "graph_affected": 15.0,
 }
+
+
+def _graph_config(workspace_id: str | None) -> RunnableConfig:
+    """Monta o RunnableConfig mínimo que as tools do Context Graph exigem.
+
+    graph_query/graph_explain/graph_path/graph_affected resolvem o workspace
+    só via config["configurable"]["workspace_id"] (sem parâmetro próprio,
+    diferente das tools de git/arquivo) — sem isso sempre devolveriam "nenhum
+    workspace ativo", mesmo com um workspace default existindo.
+    """
+    from backend.workspace.workspace import workspace_registry
+
+    wid = workspace_id or workspace_registry.get_or_create().id
+    return {"configurable": {"workspace_id": wid}}
 
 
 def _mcp_write_approval_error() -> str | None:
@@ -587,6 +617,145 @@ async def terminal_tool(command: str) -> str:
 
 
 @mcp.tool()
+async def git_status_tool(workspace_id: str | None = None) -> str:
+    """Mostra o estado do repositório git: modificados, staged, untracked.
+
+    Args:
+        workspace_id: ID do workspace (usa o workspace ativo se omitido).
+
+    Returns:
+        JSON com branch ativa, contagem ahead/behind e arquivos por categoria.
+    """
+    return await _with_timeout(
+        git_status.ainvoke({"workspace_id": workspace_id}),
+        "git_status",
+    )
+
+
+@mcp.tool()
+async def git_diff_tool(ref: str | None = None, workspace_id: str | None = None) -> str:
+    """Mostra o diff do working tree ou em relação a um commit/branch.
+
+    Args:
+        ref: Commit hash, tag ou branch para comparar (compara working tree se omitido).
+        workspace_id: ID do workspace.
+
+    Returns:
+        JSON com o diff.
+    """
+    return await _with_timeout(
+        git_diff.ainvoke({"ref": ref, "workspace_id": workspace_id}),
+        "git_diff",
+    )
+
+
+@mcp.tool()
+async def git_log_tool(
+    n: int = 10, branch: str | None = None, workspace_id: str | None = None
+) -> str:
+    """Exibe o histórico de commits do repositório.
+
+    Args:
+        n: Número de commits a retornar (default: 10).
+        branch: Branch específica (usa branch ativa se omitida).
+        workspace_id: ID do workspace.
+
+    Returns:
+        JSON com a lista de commits.
+    """
+    return await _with_timeout(
+        git_log.ainvoke({"n": n, "branch": branch, "workspace_id": workspace_id}),
+        "git_log",
+    )
+
+
+@mcp.tool()
+async def graph_query_tool(
+    question: str, top_k: int = 10, workspace_id: str | None = None
+) -> str:
+    """Consulta o Context Graph do workspace por pergunta livre.
+
+    Args:
+        question: Pergunta ou termo de busca (ex.: "quem chama authenticate?").
+        top_k: Número máximo de nós retornados (default 10).
+        workspace_id: ID do workspace (usa o workspace ativo se omitido).
+
+    Returns:
+        Nós encontrados com tipos, labels e arestas de conexão.
+    """
+    return await _with_timeout(
+        graph_query.ainvoke(
+            {"question": question, "top_k": top_k},
+            config=_graph_config(workspace_id),
+        ),
+        "graph_query",
+    )
+
+
+@mcp.tool()
+async def graph_explain_tool(node_id: str, workspace_id: str | None = None) -> str:
+    """Explica um nó do Context Graph mostrando sua vizinhança e conexões.
+
+    Args:
+        node_id: ID ou label do nó a explicar (ex.: "AuthService").
+        workspace_id: ID do workspace (usa o workspace ativo se omitido).
+
+    Returns:
+        Tipo, vizinhos e relações do nó.
+    """
+    return await _with_timeout(
+        graph_explain.ainvoke({"node_id": node_id}, config=_graph_config(workspace_id)),
+        "graph_explain",
+    )
+
+
+@mcp.tool()
+async def graph_path_tool(
+    source: str, target: str, workspace_id: str | None = None
+) -> str:
+    """Encontra o caminho mais curto entre dois nós no Context Graph.
+
+    Args:
+        source: ID ou label do nó de origem.
+        target: ID ou label do nó de destino.
+        workspace_id: ID do workspace (usa o workspace ativo se omitido).
+
+    Returns:
+        Sequência de nós que conectam source a target.
+    """
+    return await _with_timeout(
+        graph_path.ainvoke(
+            {"source": source, "target": target},
+            config=_graph_config(workspace_id),
+        ),
+        "graph_path",
+    )
+
+
+@mcp.tool()
+async def graph_affected_tool(
+    node_query: str, depth: int = 2, workspace_id: str | None = None
+) -> str:
+    """Encontra todos os componentes afetados se o nó consultado mudar.
+
+    Args:
+        node_query: ID, label ou nome parcial do nó a analisar.
+        depth: Profundidade de propagação (default 2).
+        workspace_id: ID do workspace (usa o workspace ativo se omitido).
+
+    Returns:
+        Lista de componentes afetados com relação e localização no código.
+    """
+    return await _with_timeout(
+        graph_affected.ainvoke(
+            {"node_query": node_query, "depth": depth},
+            config=_graph_config(workspace_id),
+        ),
+        "graph_affected",
+    )
+
+
+@mcp.tool()
 async def call_mcp_tool_tool(tool_name: str, arguments: str) -> str:
     """Invoca uma ferramenta de outro servidor MCP via protocolo MCP.
 
@@ -720,7 +889,7 @@ async def vectora_metrics(
     return json.dumps(result, ensure_ascii=False)
 
 
-logger.info("18 tools registered in MCP server")
+logger.info("25 tools registered in MCP server")
 
 
 # ============================================================================
