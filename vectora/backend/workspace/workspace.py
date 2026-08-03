@@ -241,6 +241,24 @@ class WorkspaceRegistry:
         ws = self._workspaces.get(workspace_id)
         return ws is not None and ws.trusted
 
+    def approve_hooks(self, workspace_id: str, user_id: str | None = None) -> bool:
+        """Aprova a execução de ``[hooks].post_file_write`` deste workspace.
+
+        Confiar na pasta (``trust``) não implica isso — hooks executam comando
+        de shell arbitrário definido em ``vectora.toml``, que pode vir de um
+        repositório clonado, não só de decisão local do usuário.
+        """
+        self._load()
+        ws = self._workspaces.get(workspace_id)
+        if ws is None:
+            return False
+        ws.hooks_approved = True
+        ws.hooks_approved_at = datetime.now(UTC).isoformat()
+        ws.hooks_approved_by = user_id
+        self._save()
+        logger.info("Hooks aprovados: %s (%s) by=%s", ws.name, workspace_id, user_id)
+        return True
+
     def create(
         self,
         path: str,

@@ -5,6 +5,7 @@ import json
 import logging
 import platform
 import re
+import shlex
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -169,21 +170,58 @@ def file_read(
         return "Error reading file. Check logs."
 
 
-async def _run_hooks_and_autocommit_async(path: Path, root: Path, cfg: Any) -> None:
-    """Roda hooks ``post_file_write`` + auto-commit opcional (``vectora.toml``)."""
-    for cmd_template in cfg.hooks.post_file_write:
-        cmd = cmd_template.replace("{file}", str(path))
-        proc = await asyncio.create_subprocess_shell(
-            cmd,
-            cwd=str(root),
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        await proc.wait()
-        logger.info(
-            "post_file_write_hook_executed",
-            extra={"command": cmd_template, "exit_code": proc.returncode},
-        )
+def _build_hook_argv(cmd_template: str, path: Path) -> list[str]:
+    """Tokeniza o template (``shlex``, sintaxe de shell só pra separar
+    argumentos) e substitui ``{file}`` dentro de cada token já resolvido —
+    nunca concatena string pra reinterpretar como shell. Um nome de arquivo
+    contendo `; rm -rf /` vira um argumento literal, não um comando novo."""
+    tokens = shlex.split(cmd_template)
+    return [tok.replace("{file}", str(path)) for tok in tokens]
+
+
+async def _run_hooks_and_autocommit_async(
+    path: Path, root: Path, cfg: Any, ws: Any
+) -> str:
+    """Roda hooks ``post_file_write`` + auto-commit opcional (``vectora.toml``).
+
+    Retorna uma nota pro LLM/usuário quando hooks estão configurados mas
+    ainda não aprovados (nunca executados sem aprovação explícita —
+    diferente de `trusted`, que só cobre leitura/escrita de arquivo, não
+    comando de shell arbitrário vindo do repositório).
+    """
+    note = ""
+    if cfg.hooks.post_file_write:
+        if not getattr(ws, "hooks_approved", False):
+            note = (
+                "Nota: este workspace tem hooks [hooks].post_file_write "
+                "configurados em vectora.toml, mas eles ainda não foram "
+                "aprovados — não foram executados. Aprove em Configurações > "
+                "Workspace para habilitar lint/format automático pós-escrita."
+            )
+        else:
+            workspace_id = str(getattr(ws, "id", root))
+            policy = parse_policy(root / "vectora.toml")
+            for cmd_template in cfg.hooks.post_file_write:
+                argv = _build_hook_argv(cmd_template, path)
+                if policy.enabled:
+                    worker = await jail_manager.get_or_spawn(
+                        workspace_id, str(root), policy
+                    )
+                    resp = await worker.request("exec", command=argv)
+                    exit_code = resp.get("exit_code")
+                else:
+                    proc = await asyncio.create_subprocess_exec(
+                        *argv,
+                        cwd=str(root),
+                        stdout=asyncio.subprocess.DEVNULL,
+                        stderr=asyncio.subprocess.DEVNULL,
+                    )
+                    await proc.wait()
+                    exit_code = proc.returncode
+                logger.info(
+                    "post_file_write_hook_executed",
+                    extra={"command": cmd_template, "exit_code": exit_code},
+                )
 
     if cfg.agent.auto_commit:
         rel = path.relative_to(root) if path.is_relative_to(root) else path
@@ -208,27 +246,31 @@ async def _run_hooks_and_autocommit_async(path: Path, root: Path, cfg: Any) -> N
         await commit.wait()
         logger.info("auto_commit_executed", extra={"path": str(rel)})
 
+    return note
 
-def _run_hooks_and_autocommit(path: Path, config: RunnableConfig | None) -> None:
+
+def _run_hooks_and_autocommit(path: Path, config: RunnableConfig | None) -> str:
     """Dispara hooks/auto-commit pós-escrita — nunca propaga falha pra tool.
 
     ``file_write``/``file_edit`` são tools síncronas (rodam via
     ``asyncio.to_thread`` no worker do LangGraph, sem event loop próprio
     nessa thread) — ``asyncio.run`` aqui abre um loop novo só pra essa
-    chamada, isolado do loop principal do servidor.
+    chamada, isolado do loop principal do servidor. Retorna uma nota
+    (string vazia se nada a reportar) pra tool anexar à própria resposta.
     """
     try:
         from backend.workspace.workspace_config import load_workspace_config
 
-        root, _ws = _workspace_root(config)
+        root, ws = _workspace_root(config)
         cfg = load_workspace_config(root)
         if cfg is None or (not cfg.hooks.post_file_write and not cfg.agent.auto_commit):
-            return
-        asyncio.run(_run_hooks_and_autocommit_async(path, root, cfg))
+            return ""
+        return asyncio.run(_run_hooks_and_autocommit_async(path, root, cfg, ws)) or ""
     except Exception:
         logger.warning(
             "post_write_hooks_failed", extra={"path": str(path)}, exc_info=True
         )
+        return ""
 
 
 @tool(
@@ -294,8 +336,8 @@ def file_edit(
                 if "error" in write_resp:
                     return f"Error: {write_resp['error']}"
                 logger.info("file_edit created new file", extra={"path": file_path})
-                _run_hooks_and_autocommit(path, config)
-                return f"[OK] File created: {file_path}"
+                note = _run_hooks_and_autocommit(path, config)
+                return f"[OK] File created: {file_path}" + (f"\n{note}" if note else "")
             content = read_resp["content"]
         else:
             # Cria arquivo novo quando old_text="" e arquivo não existe
@@ -303,8 +345,8 @@ def file_edit(
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(new_text, encoding="utf-8")
                 logger.info("file_edit created new file", extra={"path": file_path})
-                _run_hooks_and_autocommit(path, config)
-                return f"[OK] File created: {file_path}"
+                note = _run_hooks_and_autocommit(path, config)
+                return f"[OK] File created: {file_path}" + (f"\n{note}" if note else "")
             content = path.read_text(encoding="utf-8")
 
         if old_text and old_text not in content:
@@ -335,8 +377,11 @@ def file_edit(
             "file_edit completed",
             extra={"path": file_path, "occurrences": count, "replace_all": replace_all},
         )
-        _run_hooks_and_autocommit(path, config)
-        return f"[OK] File edited successfully ({count} occurrence{'s' if count != 1 else ''} replaced)"
+        note = _run_hooks_and_autocommit(path, config)
+        return (
+            f"[OK] File edited successfully ({count} occurrence{'s' if count != 1 else ''} replaced)"
+            + (f"\n{note}" if note else "")
+        )
     except WorkerSpawnError as exc:
         logger.warning("file_edit sandbox spawn failed", extra={"path": file_path})
         return f"Error: {exc}"
@@ -407,8 +452,10 @@ def file_write(
         logger.info(
             "file_write completed", extra={"path": file_path, "size_bytes": size}
         )
-        _run_hooks_and_autocommit(path, config)
-        return f"[OK] File written: {file_path} ({size} bytes)"
+        note = _run_hooks_and_autocommit(path, config)
+        return f"[OK] File written: {file_path} ({size} bytes)" + (
+            f"\n{note}" if note else ""
+        )
     except WorkerSpawnError as exc:
         logger.warning("file_write sandbox spawn failed", extra={"path": file_path})
         return f"Error: {exc}"

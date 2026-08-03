@@ -33,6 +33,10 @@ def trusted_ws(tmp_path, monkeypatch):
         cwd=str(tmp_path),
         created_at="2024-01-01T00:00:00+00:00",
         trusted=True,
+        # Hooks pedem aprovação própria (distinta de trust) — testes que não
+        # exercem esse gate especificamente já rodam "aprovados", como no
+        # comportamento anterior à introdução do gate.
+        hooks_approved=True,
     )
     monkeypatch.setattr(
         ws_mod.workspace_registry,
@@ -663,6 +667,89 @@ class TestPostWriteHooksAndAutoCommit:
             {"file_path": str(dest), "content": "ola"}, config=trusted_ws
         )
         assert "ok" in result.lower() or "written" in result.lower()
+
+    def test_hook_not_approved_does_not_run_and_warns(self, tmp_path, monkeypatch):
+        """Workspace confiável mas sem aprovação de hooks — hook NÃO roda, e a
+        resposta da tool avisa o motivo (regra 12: efeito de shell arbitrário
+        vindo de vectora.toml não herda a confiança de leitura/escrita)."""
+        from backend.tools.fs import file_write
+        from backend.workspace import workspace as ws_mod
+
+        ws = Workspace(
+            id="testws-noapprove",
+            name="testws-noapprove",
+            cwd=str(tmp_path),
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+            hooks_approved=False,
+        )
+        monkeypatch.setattr(
+            ws_mod.workspace_registry,
+            "get",
+            lambda wid: ws if wid == "testws-noapprove" else None,
+        )
+        config = cast(
+            "RunnableConfig", {"configurable": {"workspace_id": "testws-noapprove"}}
+        )
+
+        (tmp_path / "vectora.toml").write_text(
+            "[hooks]\npost_file_write = [\"python -c \\\"open(r'{file}' + '.marker', 'w').close()\\\"\"]\n",
+            encoding="utf-8",
+        )
+
+        dest = tmp_path / "novo.txt"
+        result = file_write.invoke(
+            {"file_path": str(dest), "content": "ola"}, config=config
+        )
+
+        marker_file = Path(str(dest) + ".marker")
+        assert not marker_file.exists()
+        assert "aprovad" in result.lower()
+
+    def test_hook_approved_after_approve_hooks_runs(self, tmp_path, monkeypatch):
+        """Depois de WorkspaceRegistry.approve_hooks(...), o hook passa a rodar."""
+        from backend.tools.fs import file_write
+        from backend.workspace.workspace import WorkspaceRegistry
+
+        registry = WorkspaceRegistry()
+        registry._loaded = True
+        monkeypatch.setattr(registry, "_save", lambda: None)
+        monkeypatch.setattr("backend.workspace.workspace.workspace_registry", registry)
+
+        proj = tmp_path / "proj"
+        proj.mkdir()
+        ws = registry.create(str(proj), trust=True)
+        registry.approve_hooks(ws.id)
+
+        (proj / "vectora.toml").write_text(
+            "[hooks]\npost_file_write = [\"python -c \\\"open(r'{file}' + '.marker', 'w').close()\\\"\"]\n",
+            encoding="utf-8",
+        )
+
+        dest = proj / "novo.txt"
+        file_write.invoke(
+            {"file_path": str(dest), "content": "ola"},
+            config={"configurable": {"workspace_id": ws.id}},
+        )
+
+        marker_file = Path(str(dest) + ".marker")
+        assert marker_file.exists()
+
+    def test_build_hook_argv_never_reinterprets_file_as_shell(self, tmp_path):
+        """Nome de arquivo com metacaracteres de shell vira argumento literal,
+        não comando novo — a classe de injeção que motivou a troca de
+        create_subprocess_shell por create_subprocess_exec."""
+        from backend.tools.fs import _build_hook_argv
+
+        malicious = tmp_path / "arquivo; rm -rf /tmp/x.txt"
+        argv = _build_hook_argv("python -c \"print(r'{file}')\"", malicious)
+
+        assert argv[0] == "python"
+        assert argv[1] == "-c"
+        assert str(malicious) in argv[2]
+        # Nenhum token isolado é "rm" — o ";" nunca separa comandos porque
+        # não há shell no meio, é só substring dentro de um argv item.
+        assert "rm" not in argv
 
     def test_file_edit_auto_commit_creates_git_commit(self, tmp_path, trusted_ws):
         """agent.auto_commit=true faz file_edit gerar um commit git automático."""

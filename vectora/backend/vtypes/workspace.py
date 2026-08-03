@@ -44,6 +44,20 @@ class Workspace(BaseModel):
         default=None, description="ID do usuário que confiou na pasta."
     )
 
+    hooks_approved: bool = Field(
+        default=False,
+        description="True quando o usuário aprovou explicitamente a execução de "
+        "hooks [hooks].post_file_write deste workspace (vectora.toml). Confiar "
+        "no workspace não implica aprovar hooks — são efeitos colaterais "
+        "distintos (write vs. shell arbitrário via config do repositório).",
+    )
+    hooks_approved_at: str | None = Field(
+        default=None, description="Timestamp ISO 8601 da aprovação de hooks."
+    )
+    hooks_approved_by: str | None = Field(
+        default=None, description="ID do usuário que aprovou os hooks."
+    )
+
     # G.2.1 — Transporte do workspace. Workspaces remotos compartilham o
     # mesmo modelo; ``cwd`` é o caminho remoto (ou ponto de montagem
     # local quando o transport encapsula um túnel, ex.: Codespaces).
