@@ -391,14 +391,20 @@ class TestMcpToolWrappers:
     @pytest.mark.asyncio
     async def test_file_edit_tool(self):
         mock_wt = _make_timeout_mock("editado")
-        with patch.object(srv, "_with_timeout", mock_wt):
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(srv, "_mcp_write_approval_error", return_value=None),
+        ):
             result = await srv.file_edit_tool("/tmp/x.py", "old", "new")
         mock_wt.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_file_write_tool(self):
         mock_wt = _make_timeout_mock("escrito")
-        with patch.object(srv, "_with_timeout", mock_wt):
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(srv, "_mcp_write_approval_error", return_value=None),
+        ):
             result = await srv.file_write_tool("/tmp/x.py", "content")
         mock_wt.assert_called_once()
 
@@ -419,7 +425,10 @@ class TestMcpToolWrappers:
     @pytest.mark.asyncio
     async def test_terminal_tool(self):
         mock_wt = _make_timeout_mock("saida")
-        with patch.object(srv, "_with_timeout", mock_wt):
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(srv, "_mcp_write_approval_error", return_value=None),
+        ):
             result = await srv.terminal_tool("echo hello")
         mock_wt.assert_called_once()
 
@@ -436,6 +445,83 @@ class TestMcpToolWrappers:
         with patch.object(srv, "_with_timeout", mock_wt):
             result = await srv.ingest_docs_tool("src/**/*.py")
         mock_wt.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Gate de aprovação MCP (write/terminal) — achado da auditoria: file_write_tool/
+# file_edit_tool/terminal_tool chamavam .ainvoke() direto, fora do grafo, sem
+# HITL/permission_mode nenhum. Sprint 48 fecha isso com aprovação persistida
+# por workspace (Workspace.mcp_write_approved), checada antes do .ainvoke().
+# ---------------------------------------------------------------------------
+
+
+class TestMcpWriteApprovalGate:
+    def test_mcp_write_approval_error_none_when_approved(self):
+        ws = MagicMock(mcp_write_approved=True)
+        with patch("backend.workspace.workspace.workspace_registry") as reg:
+            reg.get_or_create.return_value = ws
+            assert srv._mcp_write_approval_error() is None
+
+    def test_mcp_write_approval_error_message_when_not_approved(self):
+        ws = MagicMock(mcp_write_approved=False)
+        with patch("backend.workspace.workspace.workspace_registry") as reg:
+            reg.get_or_create.return_value = ws
+            err = srv._mcp_write_approval_error()
+        assert err is not None
+        assert "aprovad" in err.lower()
+
+    @pytest.mark.asyncio
+    async def test_file_write_tool_blocked_without_approval(self):
+        mock_wt = _make_timeout_mock("escrito")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(
+                srv, "_mcp_write_approval_error", return_value="Erro: recusado"
+            ),
+        ):
+            result = await srv.file_write_tool("/tmp/x.py", "content")
+        mock_wt.assert_not_called()
+        assert result == "Erro: recusado"
+
+    @pytest.mark.asyncio
+    async def test_file_edit_tool_blocked_without_approval(self):
+        mock_wt = _make_timeout_mock("editado")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(
+                srv, "_mcp_write_approval_error", return_value="Erro: recusado"
+            ),
+        ):
+            result = await srv.file_edit_tool("/tmp/x.py", "old", "new")
+        mock_wt.assert_not_called()
+        assert result == "Erro: recusado"
+
+    @pytest.mark.asyncio
+    async def test_terminal_tool_blocked_without_approval(self):
+        mock_wt = _make_timeout_mock("saida")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(
+                srv, "_mcp_write_approval_error", return_value="Erro: recusado"
+            ),
+        ):
+            result = await srv.terminal_tool("echo hello")
+        mock_wt.assert_not_called()
+        assert result == "Erro: recusado"
+
+    @pytest.mark.asyncio
+    async def test_file_read_tool_not_gated(self):
+        """Leitura nunca é gated — só write/edit/terminal exigem aprovação."""
+        mock_wt = _make_timeout_mock("conteudo")
+        with (
+            patch.object(srv, "_with_timeout", mock_wt),
+            patch.object(
+                srv, "_mcp_write_approval_error", return_value="Erro: recusado"
+            ) as gate,
+        ):
+            result = await srv.file_read_tool("/tmp/x.py")
+        mock_wt.assert_called_once()
+        gate.assert_not_called()
 
 
 # O MCP é sempre-ativo, montado em /mcp pelo FastAPI (backend.api.server) — não

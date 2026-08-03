@@ -149,9 +149,14 @@ class TestMcpFileTools:
         result = await file_read_tool(str(test_file))
         assert "Conteudo de teste MCP" in result
 
-    async def test_file_write_and_read_roundtrip(self, project_tmp_dir):
+    async def test_file_write_and_read_roundtrip(self, project_tmp_dir, monkeypatch):
         """file_write_tool escreve e file_read_tool lê de volta (dentro do projeto)."""
+        import backend.mcp.server as srv
         from backend.mcp.server import file_read_tool, file_write_tool
+
+        # Gate de aprovação MCP (Sprint 48) não é o que este teste cobre —
+        # aprova explicitamente pra exercer só o roundtrip write/read.
+        monkeypatch.setattr(srv, "_mcp_write_approval_error", lambda: None)
 
         test_file = project_tmp_dir / "roundtrip.txt"
         content = "Teste de roundtrip write-read"

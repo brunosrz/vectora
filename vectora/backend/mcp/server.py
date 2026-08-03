@@ -167,6 +167,35 @@ TOOL_TIMEOUTS = {
 }
 
 
+def _mcp_write_approval_error() -> str | None:
+    """``None`` se o workspace ativo aprovou escrita/terminal via MCP,
+    senão a mensagem de recusa a devolver como resultado da tool.
+
+    file_write_tool/file_edit_tool/terminal_tool não recebem workspace_id
+    (mesma resolução que a tool interna já faria com config=None: workspace
+    ativo/`get_or_create()`) — resolve aqui pelo mesmo caminho pra checar o
+    gate antes de chamar `.ainvoke()`.
+    """
+    from backend.workspace.workspace import workspace_registry
+
+    ws = workspace_registry.get_or_create()
+    if getattr(ws, "mcp_write_approved", False):
+        return None
+    return (
+        "Erro: este workspace não foi aprovado para escrita de arquivo ou "
+        "execução de comando via MCP. Aprove em Configurações > Workspace "
+        "no Vectora (ou POST /workspaces/approve-mcp-write) antes de usar "
+        "esta ferramenta."
+    )
+
+
+def _log_mcp_write_call(tool_name: str, approved: bool) -> None:
+    logger.info(
+        "mcp_write_call",
+        extra={"tool": tool_name, "approved": approved},
+    )
+
+
 async def _with_timeout(
     coro: object,
     tool_name: str,
@@ -463,6 +492,10 @@ async def file_edit_tool(file_path: str, old_text: str, new_text: str) -> str:
     Returns:
         Confirmação da edição realizada
     """
+    if err := _mcp_write_approval_error():
+        _log_mcp_write_call("file_edit", approved=False)
+        return err
+    _log_mcp_write_call("file_edit", approved=True)
     return await _with_timeout(
         file_edit.ainvoke(
             {"file_path": file_path, "old_text": old_text, "new_text": new_text}
@@ -485,6 +518,10 @@ async def file_write_tool(file_path: str, content: str) -> str:
     Returns:
         Confirmação com caminho e tamanho em bytes
     """
+    if err := _mcp_write_approval_error():
+        _log_mcp_write_call("file_write", approved=False)
+        return err
+    _log_mcp_write_call("file_write", approved=True)
     return await _with_timeout(
         file_write.ainvoke({"file_path": file_path, "content": content}),
         "file_write",
@@ -539,6 +576,10 @@ async def terminal_tool(command: str) -> str:
     Returns:
         Saída do comando (stdout + stderr)
     """
+    if err := _mcp_write_approval_error():
+        _log_mcp_write_call("terminal", approved=False)
+        return err
+    _log_mcp_write_call("terminal", approved=True)
     return await _with_timeout(
         terminal.ainvoke({"command": command}),
         "terminal",

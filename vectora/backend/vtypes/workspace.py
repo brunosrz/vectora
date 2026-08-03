@@ -58,6 +58,23 @@ class Workspace(BaseModel):
         default=None, description="ID do usuário que aprovou os hooks."
     )
 
+    mcp_write_approved: bool = Field(
+        default=False,
+        description="True quando o usuário aprovou explicitamente que clients "
+        "MCP externos (Claude Desktop, outro agente conectado em /mcp) "
+        "escrevam/editem arquivo ou executem comando de terminal neste "
+        "workspace. Diferente de `trusted`: o servidor MCP chama as tools "
+        "direto via .ainvoke(), fora do grafo do deep-agent, sem o "
+        "HumanInTheLoopMiddleware/permission_mode do chat — sem esta "
+        "aprovação, file_write_tool/file_edit_tool/terminal_tool recusam.",
+    )
+    mcp_write_approved_at: str | None = Field(
+        default=None, description="Timestamp ISO 8601 da aprovação de escrita via MCP."
+    )
+    mcp_write_approved_by: str | None = Field(
+        default=None, description="ID do usuário que aprovou a escrita via MCP."
+    )
+
     # G.2.1 — Transporte do workspace. Workspaces remotos compartilham o
     # mesmo modelo; ``cwd`` é o caminho remoto (ou ponto de montagem
     # local quando o transport encapsula um túnel, ex.: Codespaces).

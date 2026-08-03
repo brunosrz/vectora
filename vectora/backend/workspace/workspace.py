@@ -259,6 +259,27 @@ class WorkspaceRegistry:
         logger.info("Hooks aprovados: %s (%s) by=%s", ws.name, workspace_id, user_id)
         return True
 
+    def approve_mcp_write(self, workspace_id: str, user_id: str | None = None) -> bool:
+        """Aprova escrita/terminal via clients MCP externos neste workspace.
+
+        O servidor MCP (`/mcp`) chama ``file_write``/``file_edit``/``terminal``
+        direto via ``.ainvoke()``, fora do grafo do deep-agent — sem essa
+        aprovação, essas tools recusam com mensagem clara em vez de rodar
+        sem nenhum consentimento do dono do workspace.
+        """
+        self._load()
+        ws = self._workspaces.get(workspace_id)
+        if ws is None:
+            return False
+        ws.mcp_write_approved = True
+        ws.mcp_write_approved_at = datetime.now(UTC).isoformat()
+        ws.mcp_write_approved_by = user_id
+        self._save()
+        logger.info(
+            "Escrita via MCP aprovada: %s (%s) by=%s", ws.name, workspace_id, user_id
+        )
+        return True
+
     def create(
         self,
         path: str,
