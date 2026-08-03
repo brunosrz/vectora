@@ -86,6 +86,18 @@ def clean_openrouter_key():
     object.__setattr__(settings, "openrouter_api_key", None)
 
 
+@pytest.fixture
+def clean_nine_router_config():
+    """Idem, para NINE_ROUTER_BASE_URL/NINE_ROUTER_API_KEY."""
+    yield
+    os.environ.pop("NINE_ROUTER_BASE_URL", None)
+    os.environ.pop("NINE_ROUTER_API_KEY", None)
+    from backend.settings import settings
+
+    object.__setattr__(settings, "nine_router_base_url", None)
+    object.__setattr__(settings, "nine_router_api_key", None)
+
+
 class TestOllamaDiscovery:
     def test_host_unreachable_returns_reachable_false_not_500(self, client):
         # Mocka a falha de conexão explicitamente — não depende da ausência
@@ -519,3 +531,187 @@ class TestCatalogoOpenRouterComFallback:
         resultado = await discover_openrouter_models(client)
 
         assert [m.id for m in resultado.models] == ["cacheado/modelo"]
+
+
+class TestNineRouterConfig:
+    def test_status_not_configured_by_default(self, client, clean_nine_router_config):
+        resp = client.get("/provider-routing/nine-router/status")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["configured"] is False
+        assert body["masked"] == ""
+
+    def test_set_config_persists_both_fields(
+        self, client, clean_nine_router_config, tmp_path
+    ):
+        with patch(
+            "backend.api.handlers.provider_routing._env_file",
+            return_value=tmp_path / ".env",
+        ):
+            resp = client.post(
+                "/provider-routing/nine-router/config",
+                json={
+                    "base_url": "http://localhost:20128/v1",
+                    "api_key": "9r-abcdef123456",
+                },
+            )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["configured"] is True
+        assert body["base_url"] == "http://localhost:20128/v1"
+        assert body["masked"].startswith("9r-abc")
+        assert "abcdef123456" not in body["masked"]
+        assert os.environ["NINE_ROUTER_BASE_URL"] == "http://localhost:20128/v1"
+        assert os.environ["NINE_ROUTER_API_KEY"] == "9r-abcdef123456"
+
+    def test_set_config_empty_base_url_returns_400(
+        self, client, clean_nine_router_config, tmp_path
+    ):
+        with patch(
+            "backend.api.handlers.provider_routing._env_file",
+            return_value=tmp_path / ".env",
+        ):
+            resp = client.post(
+                "/provider-routing/nine-router/config",
+                json={"base_url": "   ", "api_key": "key"},
+            )
+        assert resp.status_code == 400
+        assert "NINE_ROUTER_BASE_URL" not in os.environ
+
+    def test_set_config_empty_api_key_returns_400(
+        self, client, clean_nine_router_config, tmp_path
+    ):
+        with patch(
+            "backend.api.handlers.provider_routing._env_file",
+            return_value=tmp_path / ".env",
+        ):
+            resp = client.post(
+                "/provider-routing/nine-router/config",
+                json={"base_url": "http://localhost:20128/v1", "api_key": "   "},
+            )
+        assert resp.status_code == 400
+        assert "NINE_ROUTER_API_KEY" not in os.environ
+
+    def test_clear_config_removes_both(
+        self, client, clean_nine_router_config, tmp_path
+    ):
+        with patch(
+            "backend.api.handlers.provider_routing._env_file",
+            return_value=tmp_path / ".env",
+        ):
+            client.post(
+                "/provider-routing/nine-router/config",
+                json={"base_url": "http://localhost:20128/v1", "api_key": "9r-key"},
+            )
+            resp = client.delete("/provider-routing/nine-router/config")
+        assert resp.status_code == 200
+        assert resp.json() == {"configured": False, "base_url": None, "masked": ""}
+        assert "NINE_ROUTER_BASE_URL" not in os.environ
+        assert "NINE_ROUTER_API_KEY" not in os.environ
+
+
+class TestNineRouterDiscovery:
+    def test_not_configured_returns_reachable_false_not_500(
+        self, client, clean_nine_router_config
+    ):
+        resp = client.get("/provider-routing/nine-router/models")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["reachable"] is False
+        assert body["models"] == []
+
+    def test_host_unreachable_returns_reachable_false_not_500(
+        self, client, clean_nine_router_config, tmp_path
+    ):
+        with patch(
+            "backend.api.handlers.provider_routing._env_file",
+            return_value=tmp_path / ".env",
+        ):
+            client.post(
+                "/provider-routing/nine-router/config",
+                json={"base_url": "http://localhost:20128/v1", "api_key": "9r-key"},
+            )
+        with patch("httpx.AsyncClient") as mock_httpx:
+            mock_ctx = AsyncMock()
+            mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
+            mock_ctx.__aexit__ = AsyncMock(return_value=False)
+            mock_ctx.get = AsyncMock(side_effect=httpx.ConnectError("refused"))
+            mock_httpx.return_value = mock_ctx
+
+            resp = client.get("/provider-routing/nine-router/models")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["reachable"] is False
+        assert body["models"] == []
+
+    def test_host_reachable_returns_models(
+        self, client, clean_nine_router_config, tmp_path
+    ):
+        with patch(
+            "backend.api.handlers.provider_routing._env_file",
+            return_value=tmp_path / ".env",
+        ):
+            client.post(
+                "/provider-routing/nine-router/config",
+                json={"base_url": "http://localhost:20128/v1", "api_key": "9r-key"},
+            )
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.json.return_value = {
+            "data": [
+                {"id": "cc/claude-opus-4-7", "name": "Claude Opus 4.7"},
+                {"id": "openai/gpt-4o"},
+            ]
+        }
+        with patch("httpx.AsyncClient") as mock_httpx:
+            mock_ctx = AsyncMock()
+            mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
+            mock_ctx.__aexit__ = AsyncMock(return_value=False)
+            mock_ctx.get = AsyncMock(return_value=mock_response)
+            mock_httpx.return_value = mock_ctx
+
+            resp = client.get("/provider-routing/nine-router/models")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["reachable"] is True
+        assert [m["id"] for m in body["models"]] == [
+            "cc/claude-opus-4-7",
+            "openai/gpt-4o",
+        ]
+
+
+class TestNineRouterRegisteredModels:
+    def test_register_list_and_delete(self, client):
+        create = client.post(
+            "/provider-routing/nine-router/registered",
+            json={"tag": "cc/claude-opus-4-7"},
+        )
+        assert create.status_code == 200
+        model_id = create.json()["id"]
+        assert create.json()["tag"] == "cc/claude-opus-4-7"
+
+        listing = client.get("/provider-routing/nine-router/registered")
+        assert listing.status_code == 200
+        assert any(m["id"] == model_id for m in listing.json())
+
+        deleted = client.delete(f"/provider-routing/nine-router/registered/{model_id}")
+        assert deleted.status_code == 200
+        listing_after = client.get("/provider-routing/nine-router/registered")
+        assert all(m["id"] != model_id for m in listing_after.json())
+
+    def test_register_empty_tag_returns_400(self, client):
+        resp = client.post(
+            "/provider-routing/nine-router/registered", json={"tag": "   "}
+        )
+        assert resp.status_code == 400
+
+    def test_register_duplicate_tag_returns_409(self, client):
+        client.post(
+            "/provider-routing/nine-router/registered", json={"tag": "dup/nine-model"}
+        )
+        resp = client.post(
+            "/provider-routing/nine-router/registered", json={"tag": "dup/nine-model"}
+        )
+        assert resp.status_code == 409

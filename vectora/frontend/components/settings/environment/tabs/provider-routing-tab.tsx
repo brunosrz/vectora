@@ -47,6 +47,17 @@ interface OpenRouterModelInfo {
   context_length: number | null;
 }
 
+interface NineRouterStatus {
+  configured: boolean;
+  base_url: string | null;
+  masked: string;
+}
+
+interface NineRouterModelInfo {
+  id: string;
+  name: string;
+}
+
 async function discoverModels(): Promise<{
   reachable: boolean;
   models: OllamaModelInfo[];
@@ -56,18 +67,15 @@ async function discoverModels(): Promise<{
   return res.json();
 }
 
-async function fetchRegistered(
-  gateway: "ollama" | "openrouter",
-): Promise<RegisteredModel[]> {
+type Gateway = "ollama" | "openrouter" | "nine-router";
+
+async function fetchRegistered(gateway: Gateway): Promise<RegisteredModel[]> {
   const res = await fetch(`/provider-routing/${gateway}/registered`);
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
 
-async function registerModel(
-  gateway: "ollama" | "openrouter",
-  tag: string,
-): Promise<void> {
+async function registerModel(gateway: Gateway, tag: string): Promise<void> {
   const res = await fetch(`/provider-routing/${gateway}/registered`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -76,10 +84,7 @@ async function registerModel(
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
-async function unregisterModel(
-  gateway: "ollama" | "openrouter",
-  id: string,
-): Promise<void> {
+async function unregisterModel(gateway: Gateway, id: string): Promise<void> {
   const res = await fetch(`/provider-routing/${gateway}/registered/${id}`, {
     method: "DELETE",
   });
@@ -121,6 +126,44 @@ async function searchOpenRouterCatalog(
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   const data = await res.json();
   return data.models;
+}
+
+async function fetchNineRouterStatus(): Promise<NineRouterStatus> {
+  const res = await fetch("/provider-routing/nine-router/status");
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  return res.json();
+}
+
+async function saveNineRouterConfig(
+  baseUrl: string,
+  apiKey: string,
+): Promise<NineRouterStatus> {
+  const res = await fetch("/provider-routing/nine-router/config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ base_url: baseUrl, api_key: apiKey }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: "" }));
+    throw new Error(body.detail || `Erro ${res.status}`);
+  }
+  return res.json();
+}
+
+async function removeNineRouterConfig(): Promise<void> {
+  const res = await fetch("/provider-routing/nine-router/config", {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+}
+
+async function discoverNineRouterModels(): Promise<{
+  reachable: boolean;
+  models: NineRouterModelInfo[];
+}> {
+  const res = await fetch("/provider-routing/nine-router/models");
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  return res.json();
 }
 
 function RegisteredModelsList({
@@ -581,11 +624,289 @@ function OpenRouterSection() {
   );
 }
 
+function NineRouterSection() {
+  const [status, setStatus] = useState<NineRouterStatus | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+  const [baseUrlInput, setBaseUrlInput] = useState("");
+  const [keyInput, setKeyInput] = useState("");
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [removingConfig, setRemovingConfig] = useState(false);
+  const [discovered, setDiscovered] = useState<NineRouterModelInfo[] | null>(
+    null,
+  );
+  const [reachable, setReachable] = useState<boolean | null>(null);
+  const [discovering, setDiscovering] = useState(false);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [registered, setRegistered] = useState<RegisteredModel[]>([]);
+  const [loadingRegistered, setLoadingRegistered] = useState(true);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    setLoadingStatus(true);
+    try {
+      setStatus(await fetchNineRouterStatus());
+    } catch {
+      setError(m.provider_routing_nine_router_error_status());
+    } finally {
+      setLoadingStatus(false);
+    }
+  }, []);
+
+  const loadRegistered = useCallback(async () => {
+    setLoadingRegistered(true);
+    try {
+      setRegistered(await fetchRegistered("nine-router"));
+    } catch {
+      setError(m.provider_routing_error_load());
+    } finally {
+      setLoadingRegistered(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStatus();
+    void loadRegistered();
+  }, [loadStatus, loadRegistered]);
+
+  const handleSaveConfig = async () => {
+    if (!baseUrlInput.trim() || !keyInput.trim()) return;
+    setSavingConfig(true);
+    setError(null);
+    try {
+      setStatus(
+        await saveNineRouterConfig(baseUrlInput.trim(), keyInput.trim()),
+      );
+      setBaseUrlInput("");
+      setKeyInput("");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : m.provider_routing_nine_router_error_config_save(),
+      );
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const handleRemoveConfig = async () => {
+    setRemovingConfig(true);
+    setError(null);
+    try {
+      await removeNineRouterConfig();
+      setStatus({ configured: false, base_url: null, masked: "" });
+      setDiscovered(null);
+      setReachable(null);
+    } catch {
+      setError(m.provider_routing_nine_router_error_config_remove());
+    } finally {
+      setRemovingConfig(false);
+    }
+  };
+
+  const handleDiscover = async () => {
+    setDiscovering(true);
+    setError(null);
+    try {
+      const data = await discoverNineRouterModels();
+      setReachable(data.reachable);
+      setDiscovered(data.models);
+    } catch {
+      setReachable(false);
+      setDiscovered([]);
+      setError(m.provider_routing_error_discover());
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  const handleRegister = async (id: string) => {
+    setRegisteringId(id);
+    setError(null);
+    try {
+      await registerModel("nine-router", id);
+      await loadRegistered();
+    } catch {
+      setError(m.provider_routing_error_register());
+    } finally {
+      setRegisteringId(null);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    setRemovingId(id);
+    setError(null);
+    try {
+      await unregisterModel("nine-router", id);
+      setRegistered((prev) => prev.filter((model) => model.id !== id));
+    } catch {
+      setError(m.provider_routing_error_remove());
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const registeredTags = new Set(registered.map((model) => model.tag));
+
+  return (
+    <div className="space-y-4 pt-4 border-t">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium flex items-center gap-1.5">
+          <Server className="w-3.5 h-3.5 text-muted-foreground" />
+          {m.provider_routing_nine_router_title()}
+        </p>
+        <p className="text-xs text-muted-foreground max-w-[360px]">
+          {m.provider_routing_nine_router_subtitle()}
+        </p>
+      </div>
+
+      {error && (
+        <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+          {error}
+        </p>
+      )}
+
+      {/* Endpoint + key */}
+      {loadingStatus ? (
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      ) : status?.configured ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs min-w-0">
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+              {m.provider_routing_nine_router_configured()}
+            </span>
+            <span className="font-mono text-muted-foreground truncate">
+              {status.base_url} · {status.masked}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
+            onClick={() => void handleRemoveConfig()}
+            disabled={removingConfig}
+          >
+            {removingConfig ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              m.provider_routing_nine_router_config_remove()
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <Input
+            value={baseUrlInput}
+            onChange={(e) => setBaseUrlInput(e.target.value)}
+            placeholder={m.provider_routing_nine_router_base_url_placeholder()}
+            className="h-8 text-xs font-mono"
+            autoComplete="off"
+          />
+          <div className="flex gap-1.5">
+            <Input
+              type="password"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder={m.provider_routing_nine_router_key_placeholder()}
+              className="h-8 text-xs font-mono flex-1"
+              autoComplete="off"
+            />
+            <Button
+              size="sm"
+              className="h-8"
+              onClick={() => void handleSaveConfig()}
+              disabled={
+                savingConfig || !baseUrlInput.trim() || !keyInput.trim()
+              }
+            >
+              {savingConfig ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                m.provider_routing_nine_router_config_save()
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Descoberta */}
+      {status?.configured && (
+        <div className="space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void handleDiscover()}
+            disabled={discovering}
+          >
+            {discovering ? (
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            )}
+            {m.provider_routing_detect_models()}
+          </Button>
+
+          {reachable === false && (
+            <p className="text-xs text-muted-foreground">
+              {m.provider_routing_nine_router_unreachable()}
+            </p>
+          )}
+
+          {discovered && discovered.length > 0 && (
+            <div className="space-y-1.5">
+              {discovered.map((model) => {
+                const already = registeredTags.has(model.id);
+                return (
+                  <div
+                    key={model.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2"
+                  >
+                    <span className="text-sm font-mono truncate">
+                      {model.id}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs shrink-0"
+                      onClick={() => void handleRegister(model.id)}
+                      disabled={already || registeringId === model.id}
+                    >
+                      {registeringId === model.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : already ? (
+                        m.provider_routing_already_registered()
+                      ) : (
+                        <>
+                          <Plus className="w-3.5 h-3.5 mr-1" />
+                          {m.provider_routing_register()}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <RegisteredModelsList
+        registered={registered}
+        loading={loadingRegistered}
+        removingId={removingId}
+        onRemove={(id) => void handleRemove(id)}
+      />
+    </div>
+  );
+}
+
 export function ProviderRoutingTab() {
   return (
     <div className="space-y-4">
       <OllamaSection />
       <OpenRouterSection />
+      <NineRouterSection />
     </div>
   );
 }

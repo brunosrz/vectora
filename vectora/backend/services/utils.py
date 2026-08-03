@@ -41,6 +41,7 @@ _PROVIDER_SPEC: dict[str, tuple[str, str]] = {
     "cohere": ("COHERE_CHAT_MODEL", "command-a-03-2025"),
     "ollama": ("OLLAMA_MODEL", "gpt-oss:20b"),
     "openrouter": ("OPENROUTER_MODEL", "openrouter/auto"),
+    "nine_router": ("NINE_ROUTER_MODEL", ""),
 }
 
 
@@ -67,7 +68,9 @@ def _gemini_safety_settings() -> dict:
     }
 
 
-def _build_concrete_model(provider: str, model_name: str, temperature: float) -> Any:
+def _build_concrete_model(  # noqa: PLR0911
+    provider: str, model_name: str, temperature: float
+) -> Any:
     """Constrói o ``BaseChatModel`` concreto do provider (SDK oficial LangChain).
 
     Concreto de propósito — **não** um modelo configurável: o deepagents
@@ -174,10 +177,37 @@ def _build_concrete_model(provider: str, model_name: str, temperature: float) ->
                 client=OpenRouterClient(api_key=api_key),
                 temperature=temperature,
             )
+        case "nine_router":
+            from langchain_openai import ChatOpenAI
+            from pydantic import SecretStr
+
+            from backend.settings import settings
+
+            base_url = settings.nine_router_base_url
+            api_key = settings.nine_router_api_key
+            if not base_url or not api_key:
+                msg = (
+                    "9Router não configurado. Defina nine_router_base_url e "
+                    "nine_router_api_key nas Settings (Environment Router) "
+                    "para usar o provider nine_router."
+                )
+                raise ValueError(msg)
+            # ChatOpenAI comum, não um client nativo: o 9Router já fala o
+            # protocolo OpenAI completo (chat/completions, streaming, tool
+            # calling) e não expõe nada além disso (sem usage.cost/provider
+            # routing/endpoints próprios como o OpenRouter) — integração
+            # leve por design, não uma dependência nativa absorvida.
+            return ChatOpenAI(
+                model=model_name,
+                base_url=base_url,
+                api_key=SecretStr(api_key),
+                temperature=temperature,
+            )
         case _:
             msg = (
                 f"Provider de LLM desconhecido: {provider!r}. Suportados: "
-                "google_genai, openai, anthropic, cohere, ollama, openrouter"
+                "google_genai, openai, anthropic, cohere, ollama, openrouter, "
+                "nine_router"
             )
             raise ValueError(msg)
 
@@ -255,6 +285,11 @@ def load_llm(model_id: str = "") -> BaseLanguageModel:
             else ""
         )
         model_name = os.getenv(env_var) or active or default_model
+
+    if not model_name and provider == "nine_router":
+        from backend.settings import settings
+
+        model_name = settings.nine_router_default_model or ""
 
     if not model_name:
         msg = f"Modelo de LLM não resolvido para provider {provider!r}."

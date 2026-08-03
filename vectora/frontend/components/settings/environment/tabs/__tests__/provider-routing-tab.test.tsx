@@ -17,6 +17,7 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { ProviderRoutingTab } from "../provider-routing-tab";
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
@@ -36,6 +37,16 @@ function mockFetch(
     openrouterKeySaveOk: boolean;
     openrouterKeySaveDetail: string;
     openrouterRegisterOk: boolean;
+    nineRouterStatus: {
+      configured: boolean;
+      base_url: string | null;
+      masked: string;
+    };
+    nineRouterRegistered: object[];
+    nineRouterDiscover: { reachable: boolean; models: object[] };
+    nineRouterConfigSaveOk: boolean;
+    nineRouterConfigSaveDetail: string;
+    nineRouterRegisterOk: boolean;
   }>,
 ) {
   global.fetch = vi
@@ -140,6 +151,89 @@ function mockFetch(
           json: async () => ({ ok: true }),
         } as Response);
       }
+      if (url === "/provider-routing/nine-router/status") {
+        // Default: não configurado — a seção fica visível mas sem o botão
+        // "Detectar modelos" (só aparece quando `status.configured`),
+        // evitando ambiguidade com o mesmo botão da seção Ollama nos
+        // testes que não são sobre 9Router.
+        return Promise.resolve({
+          ok: true,
+          json: async () =>
+            handlers.nineRouterStatus ?? {
+              configured: false,
+              base_url: null,
+              masked: "",
+            },
+        } as Response);
+      }
+      if (url === "/provider-routing/nine-router/config" && method === "POST") {
+        const ok = handlers.nineRouterConfigSaveOk ?? true;
+        return Promise.resolve({
+          ok,
+          status: ok ? 200 : 400,
+          json: async () =>
+            ok
+              ? {
+                  configured: true,
+                  base_url: "http://localhost:20128/v1",
+                  masked: "9r-•••cdef",
+                }
+              : {
+                  detail:
+                    handlers.nineRouterConfigSaveDetail ?? "Config rejeitada",
+                },
+        } as Response);
+      }
+      if (
+        url === "/provider-routing/nine-router/config" &&
+        method === "DELETE"
+      ) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            configured: false,
+            base_url: null,
+            masked: "",
+          }),
+        } as Response);
+      }
+      if (url === "/provider-routing/nine-router/models") {
+        return Promise.resolve({
+          ok: true,
+          json: async () =>
+            handlers.nineRouterDiscover ?? { reachable: false, models: [] },
+        } as Response);
+      }
+      if (url === "/provider-routing/nine-router/registered" && !method) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => handlers.nineRouterRegistered ?? [],
+        } as Response);
+      }
+      if (
+        url === "/provider-routing/nine-router/registered" &&
+        method === "POST"
+      ) {
+        const ok = handlers.nineRouterRegisterOk ?? true;
+        return Promise.resolve({
+          ok,
+          status: ok ? 200 : 500,
+          json: async () => ({
+            id: "nr-new-id",
+            tag: "cc/claude-opus-4-7",
+            created_at: "now",
+          }),
+        } as Response);
+      }
+      if (
+        typeof url === "string" &&
+        url.startsWith("/provider-routing/nine-router/registered/")
+      ) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ ok: true }),
+        } as Response);
+      }
       return Promise.resolve({
         ok: false,
         status: 404,
@@ -157,7 +251,8 @@ describe("ProviderRoutingTab — Ollama", () => {
   it("mostra estado vazio quando nenhum modelo está registrado", async () => {
     render(<ProviderRoutingTab />);
     await waitFor(() => {
-      expect(screen.getAllByText(/nenhum modelo registrado/i).length).toBe(2);
+      // 3 seções: Ollama, OpenRouter, 9Router
+      expect(screen.getAllByText(/nenhum modelo registrado/i).length).toBe(3);
     });
   });
 
@@ -344,6 +439,138 @@ describe("ProviderRoutingTab — OpenRouter", () => {
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/sk-or-v1/i)).toBeTruthy();
+    });
+  });
+});
+
+describe("ProviderRoutingTab — 9Router", () => {
+  beforeEach(() => {
+    overwriteGetLocale(() => "pt");
+  });
+
+  it("mostra inputs de endpoint e key quando não configurado", async () => {
+    mockFetch({
+      nineRouterStatus: { configured: false, base_url: null, masked: "" },
+    });
+    render(<ProviderRoutingTab />);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/localhost:20128/i)).toBeTruthy();
+    });
+  });
+
+  it("conecta com endpoint+key válidos e mostra badge configurado", async () => {
+    mockFetch({
+      nineRouterStatus: { configured: false, base_url: null, masked: "" },
+      nineRouterConfigSaveOk: true,
+    });
+    render(<ProviderRoutingTab />);
+    const urlInput = await screen.findByPlaceholderText(/localhost:20128/i);
+    fireEvent.change(urlInput, {
+      target: { value: "http://localhost:20128/v1" },
+    });
+    const keyInput = screen.getByPlaceholderText(/9router/i);
+    fireEvent.change(keyInput, { target: { value: "9r-abcdef" } });
+    fireEvent.click(screen.getByRole("button", { name: /conectar/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/^configurado$/i)).toBeTruthy();
+      expect(screen.getByText(/9r-•••cdef/)).toBeTruthy();
+    });
+  });
+
+  it("configuração rejeitada exibe mensagem, não conecta", async () => {
+    mockFetch({
+      nineRouterStatus: { configured: false, base_url: null, masked: "" },
+      nineRouterConfigSaveOk: false,
+      nineRouterConfigSaveDetail: "base_url vazia",
+    });
+    render(<ProviderRoutingTab />);
+    const urlInput = await screen.findByPlaceholderText(/localhost:20128/i);
+    fireEvent.change(urlInput, {
+      target: { value: "http://localhost:20128/v1" },
+    });
+    const keyInput = screen.getByPlaceholderText(/9router/i);
+    fireEvent.change(keyInput, { target: { value: "9r-abcdef" } });
+    fireEvent.click(screen.getByRole("button", { name: /conectar/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/base_url vazia/i)).toBeTruthy();
+    });
+    expect(screen.getByPlaceholderText(/localhost:20128/i)).toBeTruthy();
+  });
+
+  it("com config configurada, detecta modelos e registra", async () => {
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+      nineRouterDiscover: {
+        reachable: true,
+        models: [{ id: "cc/claude-opus-4-7", name: "Claude Opus 4.7" }],
+      },
+      nineRouterRegisterOk: true,
+    });
+    render(<ProviderRoutingTab />);
+    // Ollama também tem um botão "Detectar modelos" — escopa pela seção
+    // 9Router (via o título) pra não clicar no botão errado.
+    const nineRouterHeading = await screen.findByText(/^9router/i);
+    const nineRouterSection = nineRouterHeading.closest("div.space-y-4")!;
+    fireEvent.click(
+      within(nineRouterSection as HTMLElement).getByRole("button", {
+        name: /detectar/i,
+      }),
+    );
+    await waitFor(() => screen.getByText("cc/claude-opus-4-7"));
+
+    fireEvent.click(screen.getByRole("button", { name: /registrar/i }));
+    await waitFor(() => {
+      expect(screen.getAllByText("cc/claude-opus-4-7").length).toBeGreaterThan(
+        0,
+      );
+    });
+  });
+
+  it("proxy inacessível na descoberta exibe aviso, sem crashar", async () => {
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+      nineRouterDiscover: { reachable: false, models: [] },
+    });
+    render(<ProviderRoutingTab />);
+    const nineRouterHeading = await screen.findByText(/^9router/i);
+    const nineRouterSection = nineRouterHeading.closest("div.space-y-4")!;
+    fireEvent.click(
+      within(nineRouterSection as HTMLElement).getByRole("button", {
+        name: /detectar/i,
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(/n[ãa]o consegui alcan[çc]ar o 9router/i),
+      ).toBeTruthy();
+    });
+  });
+
+  it("desconecta a configuração", async () => {
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+    });
+    render(<ProviderRoutingTab />);
+    await waitFor(() => screen.getByText(/9r-•••cdef/));
+
+    fireEvent.click(screen.getByRole("button", { name: /desconectar/i }));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/localhost:20128/i)).toBeTruthy();
     });
   });
 });

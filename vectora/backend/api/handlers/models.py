@@ -21,18 +21,26 @@ router = APIRouter(prefix="/models", tags=["models"])
 async def get_configured_providers() -> dict:
     """Providers de LLM com credencial configurada + modelos dinâmicos."""
     from backend.api.handlers.provider_routing import (
+        list_registered_nine_router_models,
         list_registered_ollama_models,
         list_registered_openrouter_models,
     )
     from backend.settings import TOOL_CALLING_INCOMPATIBLE_MODELS, settings
 
-    dynamic_models = [
-        {"id": f"ollama:{m.tag}", "label": m.tag}
-        for m in await list_registered_ollama_models()
-    ] + [
-        {"id": f"openrouter:{m.tag}", "label": m.tag}
-        for m in await list_registered_openrouter_models()
-    ]
+    dynamic_models = (
+        [
+            {"id": f"ollama:{m.tag}", "label": m.tag}
+            for m in await list_registered_ollama_models()
+        ]
+        + [
+            {"id": f"openrouter:{m.tag}", "label": m.tag}
+            for m in await list_registered_openrouter_models()
+        ]
+        + [
+            {"id": f"nine_router:{m.tag}", "label": m.tag}
+            for m in await list_registered_nine_router_models()
+        ]
+    )
     return {
         "providers": settings.configured_llm_providers(),
         "dynamic_models": dynamic_models,

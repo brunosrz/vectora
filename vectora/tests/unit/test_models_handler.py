@@ -96,3 +96,24 @@ class TestModelsProviders:
 
         client.delete(f"/provider-routing/ollama/registered/{ollama_id}")
         client.delete(f"/provider-routing/openrouter/registered/{openrouter_id}")
+
+    def test_registered_nine_router_model_appears_in_dynamic_models(self, client):
+        tag = "cc/providers-test-model"
+        for existing in client.get("/provider-routing/nine-router/registered").json():
+            if existing["tag"] == tag:
+                client.delete(
+                    f"/provider-routing/nine-router/registered/{existing['id']}"
+                )
+
+        create = client.post(
+            "/provider-routing/nine-router/registered", json={"tag": tag}
+        )
+        assert create.status_code == 200
+        model_id = create.json()["id"]
+
+        resp = client.get("/models/providers")
+        assert resp.status_code == 200
+        ids = [m["id"] for m in resp.json()["dynamic_models"]]
+        assert f"nine_router:{tag}" in ids
+
+        client.delete(f"/provider-routing/nine-router/registered/{model_id}")

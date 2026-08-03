@@ -14,13 +14,26 @@ Endpoints (exigem auth via middleware):
     POST   /provider-routing/openrouter/registered              — registra um modelo (id)
     DELETE /provider-routing/openrouter/registered/{model_id}   — remove
 
+    GET    /provider-routing/nine-router/status                — endpoint+key configurados? (key mascarada)
+    POST   /provider-routing/nine-router/config                 — salva endpoint + key juntos
+    DELETE /provider-routing/nine-router/config                 — remove os dois
+    GET    /provider-routing/nine-router/models                 — descoberta via {base_url}/models
+    GET    /provider-routing/nine-router/registered              — modelos 9Router registrados
+    POST   /provider-routing/nine-router/registered               — registra um modelo (id "provider/model")
+    DELETE /provider-routing/nine-router/registered/{model_id}    — remove
+
 Ollama não exige API key — a UI popula o dropdown consultando /api/tags do
 host configurado em vez de digitação livre (evita erro de digitação virar
 falha silenciosa no chat). OpenRouter exige key (proxy pago multi-provider) —
-validada contra /api/v1/auth/key antes de persistir. Em ambos os casos,
-`load_llm("ollama:<tag>" | "openrouter:<id>")` (backend/services/utils.py) já
-resolve o id dinâmico — este módulo só cuida de descoberta/validação e da
-lista de modelos escolhida pelo usuário.
+validada contra /api/v1/auth/key antes de persistir. 9Router
+(https://github.com/decolua/9router) é uma instância local do próprio
+usuário — exige endpoint + key juntos (não há serviço/key fixo como o
+OpenRouter), descobertos via {base_url}/models (endpoint OpenAI-compatible
+padrão, sem validação prévia como a do OpenRouter — o proxy não expõe um
+endpoint dedicado de "auth/key"). Em todos os casos,
+`load_llm("ollama:<tag>" | "openrouter:<id>" | "nine_router:<id>")`
+(backend/services/utils.py) já resolve o id dinâmico — este módulo só cuida
+de descoberta/validação e da lista de modelos escolhida pelo usuário.
 """
 
 from __future__ import annotations
@@ -394,4 +407,134 @@ async def register_openrouter_model(body: RegisterModelRequest) -> RegisteredMod
 @router.delete("/openrouter/registered/{model_id}")
 async def unregister_openrouter_model(model_id: str) -> dict:
     await _unregister("openrouter_registered_models", model_id)
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# 9Router (https://github.com/decolua/9router) — proxy local do usuário,
+# integração leve (não absorvida como dependência nativa): endpoint + key +
+# modelo, mesmo trio que o client espera. Diferente do OpenRouter, não há
+# key/serviço fixo — os 2 campos (base_url + api_key) são interdependentes e
+# salvos juntos num único request.
+# ---------------------------------------------------------------------------
+
+
+class NineRouterStatus(BaseModel):
+    configured: bool
+    base_url: str | None = None
+    masked: str
+
+
+class NineRouterConfigRequest(BaseModel):
+    base_url: str
+    api_key: str
+
+
+class NineRouterModelInfo(BaseModel):
+    id: str
+    name: str
+
+
+class NineRouterCatalogResponse(BaseModel):
+    reachable: bool
+    models: list[NineRouterModelInfo]
+
+
+@router.get("/nine-router/status")
+async def get_nine_router_status() -> NineRouterStatus:
+    base_url = settings.nine_router_base_url
+    api_key = settings.nine_router_api_key or ""
+    return NineRouterStatus(
+        configured=bool(base_url and api_key),
+        base_url=base_url,
+        masked=_mask_key(api_key),
+    )
+
+
+@router.post("/nine-router/config")
+async def set_nine_router_config(body: NineRouterConfigRequest) -> NineRouterStatus:
+    """Salva endpoint + key juntos — os dois são obrigatórios e
+    interdependentes (diferente da key isolada do OpenRouter)."""
+    import os
+
+    from backend.cli.keys import upsert_env_key
+
+    base_url = body.base_url.strip().rstrip("/")
+    api_key = body.api_key.strip()
+    if not base_url:
+        raise HTTPException(status_code=400, detail="base_url vazia")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="api_key vazia")
+
+    upsert_env_key(_env_file(), "NINE_ROUTER_BASE_URL", base_url)
+    upsert_env_key(_env_file(), "NINE_ROUTER_API_KEY", api_key)
+    os.environ["NINE_ROUTER_BASE_URL"] = base_url
+    os.environ["NINE_ROUTER_API_KEY"] = api_key
+    object.__setattr__(settings, "nine_router_base_url", base_url)
+    object.__setattr__(settings, "nine_router_api_key", api_key)
+
+    return NineRouterStatus(
+        configured=True, base_url=base_url, masked=_mask_key(api_key)
+    )
+
+
+@router.delete("/nine-router/config")
+async def clear_nine_router_config() -> NineRouterStatus:
+    import os
+
+    _remove_env_key(_env_file(), "NINE_ROUTER_BASE_URL")
+    _remove_env_key(_env_file(), "NINE_ROUTER_API_KEY")
+    os.environ.pop("NINE_ROUTER_BASE_URL", None)
+    os.environ.pop("NINE_ROUTER_API_KEY", None)
+    object.__setattr__(settings, "nine_router_base_url", None)
+    object.__setattr__(settings, "nine_router_api_key", None)
+    return NineRouterStatus(configured=False, base_url=None, masked="")
+
+
+@router.get("/nine-router/models")
+async def discover_nine_router_models(
+    client: Annotated[Any, Depends(_get_http_client)],
+) -> NineRouterCatalogResponse:
+    """Descoberta via GET {base_url}/models (endpoint OpenAI-compatible
+    padrão) — mesmo princípio anti-digitação-livre já usado pro Ollama.
+    Proxy fora do ar ou não configurado → reachable=False, nunca 500."""
+    base_url = settings.nine_router_base_url
+    api_key = settings.nine_router_api_key
+    if not base_url or not api_key:
+        return NineRouterCatalogResponse(reachable=False, models=[])
+
+    try:
+        resp = await client.get(
+            f"{base_url.rstrip('/')}/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception:
+        logger.info(
+            "provider_routing: 9Router em %s inacessível", base_url, exc_info=True
+        )
+        return NineRouterCatalogResponse(reachable=False, models=[])
+
+    models = [
+        NineRouterModelInfo(id=m["id"], name=m.get("name", m["id"]))
+        for m in data.get("data", [])
+        if m.get("id")
+    ]
+    return NineRouterCatalogResponse(reachable=True, models=models)
+
+
+@router.get("/nine-router/registered")
+async def list_registered_nine_router_models() -> list[RegisteredModel]:
+    return await _list_registered("nine_router_registered_models")
+
+
+@router.post("/nine-router/registered")
+async def register_nine_router_model(body: RegisterModelRequest) -> RegisteredModel:
+    return await _register("nine_router_registered_models", body.tag)
+
+
+@router.delete("/nine-router/registered/{model_id}")
+async def unregister_nine_router_model(model_id: str) -> dict:
+    await _unregister("nine_router_registered_models", model_id)
     return {"ok": True}

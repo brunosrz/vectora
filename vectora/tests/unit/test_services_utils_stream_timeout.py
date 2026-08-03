@@ -63,6 +63,33 @@ def test_openrouter_sem_api_key_levanta_erro_claro(monkeypatch):
         _build_concrete_model("openrouter", "openrouter/auto", 0.7)
 
 
+def test_nine_router_usa_chat_openai_comum(monkeypatch):
+    """9Router é integração leve, não client nativo: já fala o protocolo
+    OpenAI completo, sem capacidade extra a justificar código próprio
+    (diferente do OpenRouter, que ganhou usage.cost/provider/reasoning)."""
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "nine_router_base_url", "http://localhost:20128/v1")
+    monkeypatch.setattr(settings, "nine_router_api_key", "9r-test-key")
+
+    modelo = _build_concrete_model("nine_router", "cc/claude-opus-4-7", 0.7)
+
+    assert isinstance(modelo, _FakeChatOpenAI)
+    assert _FakeChatOpenAI.last_kwargs is not None
+    assert _FakeChatOpenAI.last_kwargs["base_url"] == "http://localhost:20128/v1"
+    assert _FakeChatOpenAI.last_kwargs["model"] == "cc/claude-opus-4-7"
+
+
+def test_nine_router_sem_config_levanta_erro_claro(monkeypatch):
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "nine_router_base_url", None)
+    monkeypatch.setattr(settings, "nine_router_api_key", None)
+
+    with pytest.raises(ValueError, match="9Router"):
+        _build_concrete_model("nine_router", "cc/claude-opus-4-7", 0.7)
+
+
 def test_ollama_usa_cliente_nativo_e_nao_init_chat_model(monkeypatch):
     """O caminho antigo (`init_chat_model(model_provider="ollama")`) escondia
     `thinking`, `images` e os contadores de token."""
