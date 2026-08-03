@@ -32,7 +32,9 @@ async def test_get_user_agent_creates_graph_per_user():
 
         graph = await af.get_user_agent(user_id="user-1", model="")
         assert graph is fake_graph
-        assert ("user-1", "__default__") in af._graphs_by_user
+        # Chave de cache inclui workspace_id (string vazia quando não há
+        # workspace ativo pro usuário) — ver DE-5 na docstring de get_user_agent.
+        assert ("user-1", "__default__", "") in af._graphs_by_user
 
 
 @pytest.mark.asyncio
@@ -100,7 +102,9 @@ async def test_get_user_agent_no_user_id_uses_global_cache():
 
         graph = await af.get_user_agent(user_id=None, model="")
         assert graph is fake_graph
-        assert "__default__" in af._graphs
+        # Chave global também carrega o workspace ("" quando não há um
+        # workspace_id explícito e não há user_id pra resolver o ativo).
+        assert "__default__::ws=" in af._graphs
         assert not af._graphs_by_user
 
 
@@ -135,9 +139,9 @@ async def test_get_user_agent_one_graph_serves_all_permission_modes():
 
         assert g1 is g2
         assert build_mock.call_count == 1
-        # _build_graph_async recebe só (model, chat_mode, user_id) — sem
-        # permission_mode (assinatura reduzida no HITL dinâmico).
-        assert len(build_mock.call_args_list[0].args) == 3
+        # _build_graph_async recebe (model, chat_mode, user_id, workspace_id)
+        # — sem permission_mode (assinatura reduzida no HITL dinâmico).
+        assert len(build_mock.call_args_list[0].args) == 4
 
 
 @pytest.mark.asyncio

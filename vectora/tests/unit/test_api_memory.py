@@ -36,6 +36,7 @@ def client(monkeypatch):
 
     app = create_app(serve_static=False)
     tc = TestClient(app)
+    tc.store = store  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
     yield tc
 
     os.environ.pop("VECTORA_AUTH_REQUIRED", None)

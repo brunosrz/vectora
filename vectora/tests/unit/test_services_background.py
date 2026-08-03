@@ -87,7 +87,12 @@ class _SeqAgent:
 
 
 def _patch_agent(monkeypatch, agent: Any) -> None:
-    async def _fake_get_agent(user_id: str | None = None, model: str = "") -> Any:
+    async def _fake_get_agent(
+        user_id: str | None = None,
+        model: str = "",
+        chat_mode: bool = False,
+        workspace_id: str | None = None,
+    ) -> Any:
         return agent
 
     monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_agent)

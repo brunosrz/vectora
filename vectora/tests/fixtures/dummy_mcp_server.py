@@ -12,9 +12,9 @@ Uso nos testes:
 
 from __future__ import annotations
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
-mcp = FastMCP("dummy-test-server")
+mcp = MCPServer("dummy-test-server")
 
 
 @mcp.tool()

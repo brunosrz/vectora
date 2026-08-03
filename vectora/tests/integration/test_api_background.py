@@ -137,7 +137,12 @@ async def test_manual_run_creates_run_and_registers_thread(db, monkeypatch):
 
     agent.ainvoke = _ainvoke
 
-    async def _get_agent(user_id: str | None = None, model: str = "") -> Any:
+    async def _get_agent(
+        user_id: str | None = None,
+        model: str = "",
+        chat_mode: bool = False,
+        workspace_id: str | None = None,
+    ) -> Any:
         return agent
 
     monkeypatch.setattr(agent_factory, "get_user_agent", _get_agent)
@@ -245,7 +250,12 @@ async def test_resume_run_endpoint_cancel_and_approve(db, monkeypatch):
 
     agent.ainvoke = _ainvoke
 
-    async def _get_agent(user_id: str | None = None, model: str = "") -> Any:
+    async def _get_agent(
+        user_id: str | None = None,
+        model: str = "",
+        chat_mode: bool = False,
+        workspace_id: str | None = None,
+    ) -> Any:
         return agent
 
     monkeypatch.setattr(agent_factory, "get_user_agent", _get_agent)

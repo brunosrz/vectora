@@ -21,6 +21,20 @@ def _make_app() -> Any:
     return create_app()
 
 
+def _fake_thread():
+    from backend.api.schemas import Thread
+
+    return Thread(id="t1", created_at="", updated_at="", workspace_id="")
+
+
+def _patch_get_thread():
+    return patch(
+        "backend.api.handlers.threads.get_thread",
+        new_callable=AsyncMock,
+        return_value=_fake_thread(),
+    )
+
+
 def _pairs(n: int, start: int = 0) -> list[tuple[str, str, str, list]]:
     """Gera n quadras (role, text, checkpoint_id, attachments_meta) alternando human/assistant."""
     out = []
@@ -39,10 +53,13 @@ def _pairs(n: int, start: int = 0) -> list[tuple[str, str, str, list]]:
 async def test_history_retorna_todas_quando_menos_de_200() -> None:
     """Menos de 200 mensagens → has_more=False, retorna todas."""
     pairs = _pairs(10)
-    with patch(
-        "backend.services.agent_factory.aget_thread_messages",
-        new_callable=AsyncMock,
-        return_value=pairs,
+    with (
+        _patch_get_thread(),
+        patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new_callable=AsyncMock,
+            return_value=pairs,
+        ),
     ):
         app = _make_app()
         client = TestClient(app)
@@ -59,10 +76,13 @@ async def test_history_retorna_todas_quando_menos_de_200() -> None:
 async def test_history_limita_a_limit_quando_especificado() -> None:
     """limit=5 retorna só 5 mensagens (mais recentes)."""
     pairs = _pairs(20)
-    with patch(
-        "backend.services.agent_factory.aget_thread_messages",
-        new_callable=AsyncMock,
-        return_value=pairs,
+    with (
+        _patch_get_thread(),
+        patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new_callable=AsyncMock,
+            return_value=pairs,
+        ),
     ):
         app = _make_app()
         client = TestClient(app)
@@ -79,10 +99,13 @@ async def test_history_limita_a_limit_quando_especificado() -> None:
 async def test_history_offset_pula_mensagens_recentes() -> None:
     """offset=5 com limit=5 retorna mensagens mais antigas."""
     pairs = _pairs(20)
-    with patch(
-        "backend.services.agent_factory.aget_thread_messages",
-        new_callable=AsyncMock,
-        return_value=pairs,
+    with (
+        _patch_get_thread(),
+        patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new_callable=AsyncMock,
+            return_value=pairs,
+        ),
     ):
         app = _make_app()
         client = TestClient(app)
@@ -100,10 +123,13 @@ async def test_history_offset_pula_mensagens_recentes() -> None:
 async def test_history_cap_200_quando_sem_limit() -> None:
     """Sem limit especificado, cap é 200 mensagens mais recentes."""
     pairs = _pairs(250)
-    with patch(
-        "backend.services.agent_factory.aget_thread_messages",
-        new_callable=AsyncMock,
-        return_value=pairs,
+    with (
+        _patch_get_thread(),
+        patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new_callable=AsyncMock,
+            return_value=pairs,
+        ),
     ):
         app = _make_app()
         client = TestClient(app)
@@ -143,10 +169,13 @@ async def test_history_mensagens_na_ordem_cronologica() -> None:
         ("assistant", "second", "cp1", []),
         ("human", "third", "cp2", []),
     ]
-    with patch(
-        "backend.services.agent_factory.aget_thread_messages",
-        new_callable=AsyncMock,
-        return_value=pairs,
+    with (
+        _patch_get_thread(),
+        patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new_callable=AsyncMock,
+            return_value=pairs,
+        ),
     ):
         app = _make_app()
         client = TestClient(app)
