@@ -62,6 +62,16 @@ def test_accept_edits_auto_aprova_edicao_mas_pausa_terminal():
     assert _dynamic_hitl_when(_req("terminal", "accept_edits")) is True
 
 
+def test_file_edit_pausa_como_file_write_em_todos_os_modos():
+    """Achado da auditoria: file_edit ficava fora de _REQUIRE_APPROVAL — uma
+    tool tão destrutiva quanto file_write (sobrescreve trecho existente)
+    passava livre em qualquer modo que exigisse aprovação pra escrever."""
+    assert _dynamic_hitl_when(_req("file_edit", "ask")) is True
+    assert _dynamic_hitl_when(_req("file_edit", "accept_edits")) is False
+    for mode in ("auto", "bypass"):
+        assert _dynamic_hitl_when(_req("file_edit", mode)) is False
+
+
 def test_auto_e_bypass_nunca_interrompem():
     # automático e ignorar permissões: nenhuma tool destrutiva pausa.
     for mode in ("auto", "bypass"):
@@ -118,6 +128,14 @@ def test_workspace_jailada_bypassa_hitl_pra_terminal_e_file_write(monkeypatch):
     assert (
         _dynamic_hitl_when(_req("file_write", "ask", workspace_id="ws-jail")) is False
     )
+
+
+def test_workspace_jailada_bypassa_hitl_pra_file_edit(monkeypatch):
+    import backend.services.middleware as mw
+
+    monkeypatch.setattr(mw, "_workspace_is_jailed", lambda wid: wid == "ws-jail")
+
+    assert _dynamic_hitl_when(_req("file_edit", "ask", workspace_id="ws-jail")) is False
 
 
 def test_workspace_nao_jailada_mantem_hitl_normal(monkeypatch):

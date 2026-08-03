@@ -42,6 +42,11 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         "terminal_tool",
         "file_write",
         "file_write_tool",
+        # file_edit é tão destrutivo quanto file_write (sobrescreve conteúdo
+        # existente) — ficar fora daqui era um gap real, não decisão de
+        # design: qualquer modo que exigisse aprovação pra criar/sobrescrever
+        # um arquivo deixava editar esse mesmo arquivo passar livre.
+        "file_edit",
         "install_learned_skill",
         "save_learned_fact",
         "install_mcp_from_registry",
@@ -73,7 +78,9 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
 
 #: Tools auto-aprovadas no modo "accept_edits" (edições de arquivo passam sem
 #: pausa; só o terminal interrompe).
-_ACCEPT_EDITS_AUTO: frozenset[str] = frozenset({"file_write", "file_write_tool"})
+_ACCEPT_EDITS_AUTO: frozenset[str] = frozenset(
+    {"file_write", "file_write_tool", "file_edit"}
+)
 
 #: Modos que NUNCA interrompem (rodam autônomos). ``auto`` e ``bypass`` têm o
 #: mesmo comportamento no grafo (sem pausa); a diferença é de UX/observabilidade
@@ -86,7 +93,7 @@ _NON_INTERRUPTING_MODES: frozenset[str] = frozenset({"auto", "bypass"})
 #: adicional (o jail é o backstop real). git/install de MCP/skill continuam
 #: pedindo aprovação normalmente, fora do escopo do jail.
 _JAILED_BYPASS_TOOLS: frozenset[str] = frozenset(
-    {"terminal", "terminal_tool", "file_write", "file_write_tool"}
+    {"terminal", "terminal_tool", "file_write", "file_write_tool", "file_edit"}
 )
 
 
