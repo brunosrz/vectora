@@ -122,6 +122,7 @@ from backend.tools.homeassistant import (
     ha_list_services,
 )
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
+from backend.tools.kanban import kanban_create, kanban_list, kanban_update_status
 from backend.tools.learning import (
     install_learned_skill,
     learn_from_session,
@@ -284,6 +285,9 @@ WORKSPACE_TOOLS: list[BaseTool] = [
     toggle_background_task,
     delete_background_task,
     run_background_task_now,
+    kanban_list,
+    kanban_create,
+    kanban_update_status,
 ]
 
 #: Ferramentas do Context Graph (grafo de conhecimento do workspace)
@@ -432,6 +436,9 @@ for _t in [
     toggle_background_task,
     delete_background_task,
     run_background_task_now,
+    kanban_list,
+    kanban_create,
+    kanban_update_status,
     # G3 — Git + GitHub CLI
     git_status,
     git_log,

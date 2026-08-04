@@ -39,7 +39,53 @@ function task(over: Record<string, unknown> = {}) {
   };
 }
 
-beforeEach(() => overwriteGetLocale(() => "pt"));
+// jsdom não implementa EventSource — o mock abaixo substitui o global em
+// toda a suíte, não só nos testes de SSE, senão o `new EventSource(...)`
+// do mount quebraria os testes que só olham pro polling/REST.
+class MockEventSource {
+  static instances: MockEventSource[] = [];
+  closed = false;
+  readonly url: string;
+  private messageListeners: ((ev: MessageEvent<string>) => void)[] = [];
+  private errorListeners: (() => void)[] = [];
+
+  constructor(url: string) {
+    this.url = url;
+    MockEventSource.instances.push(this);
+  }
+
+  addEventListener(
+    type: "message" | "error",
+    listener: (ev?: unknown) => void,
+  ) {
+    if (type === "message") {
+      this.messageListeners.push(
+        listener as (ev: MessageEvent<string>) => void,
+      );
+    } else {
+      this.errorListeners.push(listener as () => void);
+    }
+  }
+
+  close() {
+    this.closed = true;
+  }
+
+  emit(data: unknown) {
+    const ev = { data: JSON.stringify(data) } as MessageEvent<string>;
+    for (const listener of this.messageListeners) listener(ev);
+  }
+
+  fail() {
+    for (const listener of this.errorListeners) listener();
+  }
+}
+
+beforeEach(() => {
+  overwriteGetLocale(() => "pt");
+  MockEventSource.instances = [];
+  vi.stubGlobal("EventSource", MockEventSource);
+});
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -274,7 +320,7 @@ describe("KanbanBoard", () => {
     expect(screen.getByText(/nenhuma tarefa/i)).toBeInTheDocument();
   });
 
-  it("faz polling periódico enquanto a aba está visível", async () => {
+  it("faz polling de reconciliação (baixa frequência) enquanto a aba está visível", async () => {
     vi.useFakeTimers();
     let chamadas = 0;
     vi.stubGlobal(
@@ -296,10 +342,10 @@ describe("KanbanBoard", () => {
     const antes = chamadas;
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(30000);
     });
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(30000);
     });
 
     expect(chamadas).toBeGreaterThanOrEqual(antes + 2);
@@ -328,7 +374,7 @@ describe("KanbanBoard", () => {
     const antes = chamadas;
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(15000);
+      await vi.advanceTimersByTimeAsync(60000);
     });
 
     // Erro/borda: aba oculta não deve gerar chamada nova nenhuma —
@@ -366,5 +412,140 @@ describe("KanbanBoard", () => {
 
     expect(chamadas).toBe(apos);
     vi.useRealTimers();
+  });
+
+  it("evento SSE de status atualiza só o card afetado, sem refazer o fetch do board", async () => {
+    let chamadasFetch = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        chamadasFetch += 1;
+        return new Response(
+          JSON.stringify([task({ id: "a", status: "todo" })]),
+          { status: 200 },
+        );
+      }),
+    );
+
+    await montar();
+    expect(
+      within(screen.getByTestId("kanban-col-todo")).getByText("tarefa"),
+    ).toBeInTheDocument();
+    const chamadasAntesDoEvento = chamadasFetch;
+
+    const es = MockEventSource.instances[0];
+    await act(async () => {
+      es.emit({
+        type: "webhook_event",
+        provider: "kanban",
+        event_type: "kanban_task.status_changed",
+        data: {
+          task_id: "a",
+          status: "running",
+          block_kind: null,
+          block_reason: null,
+        },
+      });
+    });
+
+    expect(
+      within(screen.getByTestId("kanban-col-running")).getByText("tarefa"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("kanban-col-todo")).queryByText("tarefa"),
+    ).not.toBeInTheDocument();
+    // Erro/borda: mover um card não é rebuscar o board inteiro — nenhum
+    // fetch novo acontece só por causa do evento SSE.
+    expect(chamadasFetch).toBe(chamadasAntesDoEvento);
+  });
+
+  it("evento SSE de provider diferente de kanban é ignorado", async () => {
+    mockTasks([task({ id: "a", status: "todo" })]);
+
+    await montar();
+    const es = MockEventSource.instances[0];
+    await act(async () => {
+      es.emit({
+        type: "webhook_event",
+        provider: "github",
+        event_type: "push",
+        data: {
+          task_id: "a",
+          status: "running",
+          block_kind: null,
+          block_reason: null,
+        },
+      });
+    });
+
+    expect(
+      within(screen.getByTestId("kanban-col-todo")).getByText("tarefa"),
+    ).toBeInTheDocument();
+  });
+
+  it("reconexão do SSE depois de queda simulada volta a funcionar", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify([task({ id: "a", status: "todo" })]), {
+            status: 200,
+          }),
+      ),
+    );
+
+    render(<KanbanBoard threadId="s1" />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(MockEventSource.instances).toHaveLength(1);
+    const primeira = MockEventSource.instances[0];
+
+    await act(async () => {
+      primeira.fail();
+    });
+    expect(primeira.closed).toBe(true);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+
+    expect(MockEventSource.instances).toHaveLength(2);
+    const segunda = MockEventSource.instances[1];
+
+    await act(async () => {
+      segunda.emit({
+        type: "webhook_event",
+        provider: "kanban",
+        event_type: "kanban_task.status_changed",
+        data: {
+          task_id: "a",
+          status: "done",
+          block_kind: null,
+          block_reason: null,
+        },
+      });
+    });
+
+    expect(
+      within(screen.getByTestId("kanban-col-done")).getByText("tarefa"),
+    ).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("unmount fecha a conexão SSE ativa", async () => {
+    mockTasks([task({ id: "a", status: "todo" })]);
+
+    const { unmount } = render(<KanbanBoard threadId="s1" />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const es = MockEventSource.instances[0];
+
+    unmount();
+
+    expect(es.closed).toBe(true);
   });
 });

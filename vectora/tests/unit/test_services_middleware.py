@@ -17,6 +17,7 @@ from langchain.agents.middleware.types import ToolCallRequest
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
 from backend.services.middleware import (
+    _REQUIRE_APPROVAL,
     _dynamic_hitl_when,
     _mode_should_interrupt,
     _plan_mode_should_interrupt,
@@ -29,6 +30,8 @@ def _req(
     mode: str | None = "ask",
     messages: list | None = None,
     workspace_id: str = "ws-1",
+    args: dict | None = None,
+    background_task_id: str = "",
 ) -> ToolCallRequest:
     """Request com ``runtime.context.permission_mode`` — como o grafo entrega.
 
@@ -37,10 +40,14 @@ def _req(
     runtime = None
     if mode is not None:
         runtime = SimpleNamespace(
-            context=SimpleNamespace(permission_mode=mode, workspace_id=workspace_id)
+            context=SimpleNamespace(
+                permission_mode=mode,
+                workspace_id=workspace_id,
+                background_task_id=background_task_id,
+            )
         )
     return ToolCallRequest(
-        tool_call={"name": tool_name, "args": {}, "id": "x"},
+        tool_call={"name": tool_name, "args": args or {}, "id": "x"},
         tool=None,
         state={"messages": messages or [HumanMessage(content="apague x")]},
         runtime=runtime,  # ty: ignore[invalid-argument-type]
@@ -114,6 +121,68 @@ def test_install_learned_skill_pausa_como_terminal_file_write():
     # terminal/file_write — nunca persiste silenciosamente.
     assert _dynamic_hitl_when(_req("install_learned_skill", "ask")) is True
     assert _dynamic_hitl_when(_req("install_learned_skill", "auto")) is False
+
+
+# ── Kanban: kanban_create/kanban_update_status exigem aprovação; kanban_list não ──
+
+
+def test_kanban_create_e_update_status_estao_em_require_approval():
+    assert "kanban_create" in _REQUIRE_APPROVAL
+    assert "kanban_update_status" in _REQUIRE_APPROVAL
+    assert "kanban_list" not in _REQUIRE_APPROVAL
+
+
+def test_kanban_create_pausa_em_ask_como_qualquer_mutacao():
+    assert _dynamic_hitl_when(_req("kanban_create", "ask")) is True
+    assert _dynamic_hitl_when(_req("kanban_create", "auto")) is False
+
+
+def test_kanban_update_status_pausa_normalmente_para_outra_task():
+    # Uma task em segundo plano (background_task_id="t1") mudando o status
+    # de OUTRA task ("t2") continua exigindo aprovação normalmente.
+    assert (
+        _dynamic_hitl_when(
+            _req(
+                "kanban_update_status",
+                "ask",
+                args={"task_id": "t2", "status": "blocked"},
+                background_task_id="t1",
+            )
+        )
+        is True
+    )
+
+
+def test_kanban_update_status_bypassa_hitl_quando_task_se_auto_atualiza():
+    # A mesma task (background_task_id == task_id do argumento) se marcando
+    # bloqueada não espera aprovação de si mesma — senão vira loop.
+    assert (
+        _dynamic_hitl_when(
+            _req(
+                "kanban_update_status",
+                "ask",
+                args={"task_id": "t1", "status": "blocked"},
+                background_task_id="t1",
+            )
+        )
+        is False
+    )
+
+
+def test_kanban_update_status_fora_de_background_task_exige_aprovacao():
+    # Erro/borda: chat síncrono (sem background_task_id) sempre pede
+    # aprovação — o bypass só vale dentro de uma run em segundo plano.
+    assert (
+        _dynamic_hitl_when(
+            _req(
+                "kanban_update_status",
+                "ask",
+                args={"task_id": "t1", "status": "blocked"},
+                background_task_id="",
+            )
+        )
+        is True
+    )
 
 
 # ── Workspace jailada (0.8): terminal/file_write bypassam HITL redundante ────

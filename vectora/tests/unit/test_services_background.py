@@ -1175,6 +1175,162 @@ async def test_dispatch_webhook_matches_provider_and_event(db, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# GitHub Issues → Kanban (sync determinístico, sem LLM)
+# ---------------------------------------------------------------------------
+
+
+async def _make_issue_sync_anchor(**overrides: Any) -> Any:
+    cfg = {"provider": "github", "events": ["issues"]}
+    cfg.update(overrides.pop("trigger_config", {}))
+    return await bg.create_task(
+        session_id=overrides.pop("session_id", "s-issues"),
+        user_id=overrides.pop("user_id", "u1"),
+        kind="heartbreak",
+        name="sync issues",
+        instruction="",
+        trigger_type="webhook",
+        trigger_config=cfg,
+        workspace_id=overrides.pop("workspace_id", "ws1"),
+    )
+
+
+async def test_issue_opened_creates_kanban_card_without_llm(db):
+    await _make_issue_sync_anchor()
+
+    card = await bg.sync_github_issue_to_kanban(
+        "opened",
+        "acme/repo",
+        {"number": 42, "title": "Bug no login", "body": "Detalhes", "html_url": "u"},
+    )
+
+    assert card is not None
+    assert card.name == "Bug no login"
+    assert card.instruction == "Detalhes"
+    assert card.trigger_type == "manual"
+    assert card.trigger_config["source"] == "github_issue"
+    assert card.trigger_config["repo"] == "acme/repo"
+    assert card.trigger_config["issue_number"] == 42
+
+    found = await bg.find_task_by_github_issue("s-issues", "acme/repo", 42)
+    assert found is not None
+    assert found.id == card.id
+
+    # Borda: nenhuma task 'webhook' habilitada casando 'issues' — sync
+    # desligado, não cria nada nem levanta.
+    from backend.scheduling import background_tasks as bg_mod
+
+    conn = await bg_mod._get_db()
+    await conn.execute("UPDATE vectora_background_tasks SET enabled = 0")
+    await conn.commit()
+    await conn.close()
+    assert (
+        await bg.sync_github_issue_to_kanban(
+            "opened", "acme/repo", {"number": 43, "title": "y"}
+        )
+        is None
+    )
+
+
+async def test_issue_opened_reentrega_atualiza_em_vez_de_duplicar(db):
+    """Reentrega do mesmo webhook (mesmo issue_number/repo) não duplica o card."""
+    await _make_issue_sync_anchor()
+
+    primeiro = await bg.sync_github_issue_to_kanban(
+        "opened", "acme/repo", {"number": 7, "title": "Título original", "body": "v1"}
+    )
+    segundo = await bg.sync_github_issue_to_kanban(
+        "opened",
+        "acme/repo",
+        {"number": 7, "title": "Título atualizado", "body": "v2"},
+    )
+
+    assert primeiro is not None
+    assert segundo is not None
+    assert segundo.id == primeiro.id  # mesmo card, não duplicou
+    assert segundo.name == "Título atualizado"
+    assert segundo.instruction == "v2"
+
+    tasks = await bg.list_tasks("s-issues")
+    cards_da_issue = [t for t in tasks if t.trigger_config.get("issue_number") == 7]
+    assert len(cards_da_issue) == 1
+
+    # Borda: payload sem "number" não cria nada e não levanta.
+    assert await bg.sync_github_issue_to_kanban("opened", "acme/repo", {}) is None
+
+
+async def test_issue_closed_moves_card_to_done_without_llm(db, monkeypatch):
+    calls: list[Any] = []
+    monkeypatch.setattr(
+        agent_factory, "get_user_agent", lambda *a, **k: calls.append((a, k))
+    )
+
+    await _make_issue_sync_anchor()
+    card = await bg.sync_github_issue_to_kanban(
+        "opened", "acme/repo", {"number": 9, "title": "Fechar isso"}
+    )
+    assert card is not None
+    assert card.status == "ready"
+
+    updated = await bg.sync_github_issue_to_kanban(
+        "closed", "acme/repo", {"number": 9, "title": "Fechar isso"}
+    )
+
+    assert updated is not None
+    assert updated.status == "done"
+    assert calls == []  # nunca chamou o agente — caminho 100% determinístico
+
+    # Borda: issue sem card correspondente (nunca chegou "opened") não faz nada.
+    sem_card = await bg.sync_github_issue_to_kanban(
+        "closed", "acme/repo", {"number": 999, "title": "x"}
+    )
+    assert sem_card is None
+
+
+async def test_issue_reopened_moves_card_back_to_ready(db):
+    await _make_issue_sync_anchor()
+    card = await bg.sync_github_issue_to_kanban(
+        "opened", "acme/repo", {"number": 11, "title": "Reabrir"}
+    )
+    assert card is not None
+    await bg.sync_github_issue_to_kanban(
+        "closed", "acme/repo", {"number": 11, "title": "Reabrir"}
+    )
+
+    reaberto = await bg.sync_github_issue_to_kanban(
+        "reopened", "acme/repo", {"number": 11, "title": "Reabrir"}
+    )
+
+    assert reaberto is not None
+    assert reaberto.status == "ready"
+
+    # Borda: action desconhecida (ex.: "labeled") não tem efeito nem levanta.
+    ignorado = await bg.sync_github_issue_to_kanban(
+        "labeled", "acme/repo", {"number": 11, "title": "Reabrir"}
+    )
+    assert ignorado is None
+
+
+async def test_issue_edited_updates_title_and_instruction_without_status_change(db):
+    await _make_issue_sync_anchor()
+    card = await bg.sync_github_issue_to_kanban(
+        "opened", "acme/repo", {"number": 21, "title": "Antigo", "body": "antigo"}
+    )
+    assert card is not None
+    status_antes = card.status
+
+    editado = await bg.sync_github_issue_to_kanban(
+        "edited",
+        "acme/repo",
+        {"number": 21, "title": "Novo título", "body": "novo corpo"},
+    )
+
+    assert editado is not None
+    assert editado.name == "Novo título"
+    assert editado.instruction == "novo corpo"
+    assert editado.status == status_antes  # não mexeu no status
+
+
+# ---------------------------------------------------------------------------
 # Delegação de subagente (tool `task`) → histórico na aba Tarefas
 # ---------------------------------------------------------------------------
 

@@ -211,9 +211,10 @@ async def _handle_github(
             },
         )
 
-    # issues — atualiza Issues tab
+    # issues — atualiza Issues tab + sync determinístico no Kanban (sem LLM)
     elif event_type == "issues":
         issue = payload.get("issue", {})
+        repo = payload.get("repository", {}).get("full_name")
         _emit_sse_event(
             provider="github",
             event_type=normalized_type,
@@ -222,9 +223,15 @@ async def _handle_github(
                 "title": issue.get("title"),
                 "state": issue.get("state"),
                 "html_url": issue.get("html_url"),
-                "repo": payload.get("repository", {}).get("full_name"),
+                "repo": repo,
             },
         )
+        try:
+            from backend.scheduling.background_tasks import sync_github_issue_to_kanban
+
+            await sync_github_issue_to_kanban(action, repo or "", issue)
+        except Exception:
+            logger.exception("webhook: falha ao sincronizar issue com o kanban")
 
 
 async def _handle_slack(

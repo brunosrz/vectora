@@ -814,6 +814,10 @@ async def run_task(
             # modo que interrompe (trigger_config.permission_mode) — aí a run
             # fica "awaiting_approval" e é retomável via resume_background_run.
             "permission_mode": task.trigger_config.get("permission_mode", "auto"),
+            # Identifica a task pro HITL de `kanban_update_status`: uma run
+            # que se marca bloqueada (`task_id == background_task_id`) não
+            # espera aprovação de si mesma — ver `backend/services/middleware.py`.
+            "background_task_id": task.id,
         }
         if task.workspace_id:
             configurable["workspace_id"] = task.workspace_id
@@ -976,6 +980,7 @@ async def resume_background_run(run_id: str, decision: str = "approve") -> str |
             "thread_id": run_thread_id,
             "user_id": task.user_id,
             "permission_mode": mode,
+            "background_task_id": task.id,
         }
         if task.workspace_id:
             configurable["workspace_id"] = task.workspace_id
@@ -1118,6 +1123,142 @@ async def dispatch_webhook_event(
         await run_task(task, "webhook", payload=payload)
         fired += 1
     return fired
+
+
+# ---------------------------------------------------------------------------
+# GitHub Issues → Kanban (caminho determinístico, sem LLM)
+# ---------------------------------------------------------------------------
+
+#: Corpo da issue truncado ao virar instrução do card — evita instrução
+#: gigante numa issue com descrição extensa.
+_ISSUE_BODY_MAX_CHARS = 2000
+
+#: Ações do evento `issues` que o sync entende. Qualquer outra (labeled,
+#: milestoned, etc.) é ignorada — não vira efeito no board.
+_ISSUE_SYNC_ACTIONS = frozenset({"opened", "closed", "reopened", "edited", "assigned"})
+
+
+async def _find_github_issue_sync_anchor() -> BackgroundTask | None:
+    """Task 'webhook' que liga eventos `issues` do GitHub ao Kanban.
+
+    O usuário liga o sync criando (UI/API) uma task com trigger_type='webhook'
+    e trigger_config={"provider": "github", "events": [... "issues" ...]} — os
+    cards de issue nascem na mesma session/workspace dessa task-âncora. Sem
+    task assim (habilitada), o sync está desligado: nenhum card é criado ou
+    atualizado a partir de eventos `issues`.
+    """
+    conn = await _get_db()
+    try:
+        cur = await conn.execute(
+            "SELECT * FROM vectora_background_tasks "
+            "WHERE enabled = 1 AND trigger_type = 'webhook'",
+        )
+        rows = await cur.fetchall()
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
+    for row in rows:
+        task = _row_to_task(row)
+        cfg = task.trigger_config
+        if cfg.get("provider") != "github":
+            continue
+        if _event_matches("issues", list(cfg.get("events") or [])):
+            return task
+    return None
+
+
+async def find_task_by_github_issue(
+    session_id: str, repo: str, issue_number: int
+) -> BackgroundTask | None:
+    """Card já ligado a essa issue (mesmo `repo`+`issue_number`), se existir.
+
+    Chave de idempotência do sync — reentrega do mesmo webhook (o GitHub
+    reenvia quando não recebe 200 a tempo) atualiza o card em vez de duplicar.
+    """
+    for t in await list_tasks(session_id):
+        cfg = t.trigger_config
+        if (
+            cfg.get("source") == "github_issue"
+            and cfg.get("repo") == repo
+            and cfg.get("issue_number") == issue_number
+        ):
+            return t
+    return None
+
+
+async def _upsert_github_issue_card(
+    anchor: BackgroundTask,
+    existing: BackgroundTask | None,
+    title: str,
+    body: str,
+    cfg: dict[str, Any],
+) -> BackgroundTask | None:
+    """Cria o card na primeira vez que a issue chega; atualiza numa reentrega."""
+    if existing is not None:
+        await update_task(existing.id, name=title, instruction=body, trigger_config=cfg)
+        return await get_task(existing.id)
+    return await create_task(
+        session_id=anchor.session_id,
+        user_id=anchor.user_id,
+        kind="routine",
+        name=title,
+        instruction=body,
+        trigger_type="manual",
+        trigger_config=cfg,
+        workspace_id=anchor.workspace_id,
+    )
+
+
+async def sync_github_issue_to_kanban(
+    action: str, repo: str, issue: dict[str, Any]
+) -> BackgroundTask | None:
+    """Espelha um evento `issues` do GitHub num card do Kanban — sem LLM no meio.
+
+    `opened` cria (ou atualiza, se a issue já tem card — reentrega de
+    webhook) um card `trigger_type='manual'`: fica no board, acionável sob
+    demanda, mas nunca dispara sozinho como uma task `webhook`/`interval`
+    faria — a ponte webhook→IA (`dispatch_webhook_event`) não vê essas
+    tasks. `closed`/`reopened` só movem o card via `kanban.set_status`.
+    `edited`/`assigned` atualizam título/instrução sem mudar status.
+
+    Retorna `None` sem efeito quando: não há task-âncora configurada (sync
+    desligado), a `action` não é reconhecida, ou o payload não traz
+    `issue.number`. Defensiva por fora (`_handle_github` já roda dentro do
+    try/except do dispatcher de webhook), mas nunca levanta por si só.
+    """
+    if action not in _ISSUE_SYNC_ACTIONS:
+        return None
+    issue_number = issue.get("number")
+    if issue_number is None or not repo:
+        return None
+
+    anchor = await _find_github_issue_sync_anchor()
+    if anchor is None:
+        return None
+
+    existing = await find_task_by_github_issue(anchor.session_id, repo, issue_number)
+    title = str(issue.get("title") or f"Issue #{issue_number}")
+    body = str(issue.get("body") or "")[:_ISSUE_BODY_MAX_CHARS]
+    cfg = {
+        "source": "github_issue",
+        "repo": repo,
+        "issue_number": issue_number,
+        "html_url": issue.get("html_url") or "",
+    }
+
+    if action == "opened":
+        return await _upsert_github_issue_card(anchor, existing, title, body, cfg)
+
+    if existing is None:
+        return None
+
+    if action in ("closed", "reopened"):
+        from backend.scheduling import kanban
+
+        await kanban.set_status(existing.id, "done" if action == "closed" else "ready")
+    else:  # edited, assigned
+        await update_task(existing.id, name=title, instruction=body)
+    return await get_task(existing.id)
 
 
 # ---------------------------------------------------------------------------

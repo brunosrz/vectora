@@ -77,6 +77,38 @@ def _agora() -> datetime:
     return datetime.now(UTC)
 
 
+def _emit_kanban_event(
+    task_id: str,
+    status: str,
+    *,
+    block_kind: str | None = None,
+    block_reason: str | None = None,
+) -> None:
+    """Notifica o board (SSE) sobre a mudança de status do card.
+
+    Reaproveita o canal genérico de webhooks (`_emit_sse_event`) em vez de
+    um endpoint dedicado — o frontend já assina `/webhook/events`. Falha
+    aqui é só a camada de notificação em tempo real: a transação de status
+    já foi commitada por quem chamou, então um erro de emissão não pode
+    propagar e desfazer o que já aconteceu no banco.
+    """
+    try:
+        from backend.api.handlers.webhooks import _emit_sse_event
+
+        _emit_sse_event(
+            provider="kanban",
+            event_type="kanban_task.status_changed",
+            data={
+                "task_id": task_id,
+                "status": status,
+                "block_kind": block_kind,
+                "block_reason": block_reason,
+            },
+        )
+    except Exception:
+        logger.debug("kanban: falha ao emitir evento SSE de status", exc_info=True)
+
+
 async def get_task_status(task_id: str) -> dict[str, Any]:
     db = await _get_db()
     async with db.execute(
@@ -116,6 +148,7 @@ async def set_status(task_id: str, status: str) -> None:
             (status, task_id),
         )
     await db.commit()
+    _emit_kanban_event(task_id, status)
 
 
 async def claim_task(
@@ -219,6 +252,7 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
             (kind, reason, task_id),
         )
         await db.commit()
+        _emit_kanban_event(task_id, "todo", block_kind=kind, block_reason=reason)
         return
 
     async with db.execute(
@@ -242,6 +276,7 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
         (status, kind, reason, novo_count, task_id),
     )
     await db.commit()
+    _emit_kanban_event(task_id, status, block_kind=kind, block_reason=reason)
 
 
 async def unblock_task(task_id: str) -> None:
@@ -253,6 +288,7 @@ async def unblock_task(task_id: str) -> None:
         (task_id,),
     )
     await db.commit()
+    _emit_kanban_event(task_id, "ready", block_kind=None, block_reason=None)
 
 
 async def _depende_de(task_id: str) -> set[str]:

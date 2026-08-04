@@ -52,6 +52,15 @@ class VectoraContext:
     thread_id: str = ""
     """ID da thread/conversa corrente."""
 
+    background_task_id: str = ""
+    """ID do card do Kanban cuja run está executando este turno.
+
+    Vazio em turnos de chat síncrono. Populado por
+    ``backend.scheduling.background_tasks.run_task``/``resume_background_run``
+    — permite ao HITL dinâmico (`backend/services/middleware.py`) distinguir
+    uma task se auto-atualizando (`kanban_update_status` no próprio id, sem
+    aprovação) de uma task tentando mudar o status de OUTRA."""
+
     # Campos extras reservados para futuras extensões
     _extra: dict = field(default_factory=dict, repr=False, compare=False)
 
@@ -78,4 +87,5 @@ def ctx_from_config(config: dict | None) -> VectoraContext:
         locale=str(c.get("language") or c.get("locale") or ""),
         model=str(c.get("model") or ""),
         thread_id=str(c.get("thread_id") or ""),
+        background_task_id=str(c.get("background_task_id") or ""),
     )

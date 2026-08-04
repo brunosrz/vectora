@@ -465,7 +465,57 @@ class TestGitHubHandlers:
         def fake_emit(provider: str, event_type: str, data: dict) -> None:
             emitted.append({"event_type": event_type, "data": data})
 
-        with p("backend.api.handlers.webhooks._emit_sse_event", fake_emit):
+        with (
+            p("backend.api.handlers.webhooks._emit_sse_event", fake_emit),
+            p(
+                "backend.scheduling.background_tasks.sync_github_issue_to_kanban",
+                AsyncMock(return_value=None),
+            ) as sync_mock,
+        ):
             await _handle_github("issues", payload, MagicMock())
 
         assert emitted[0]["data"]["issue_number"] == 10
+        # Repassa action/repo/issue pro sync determinístico do Kanban.
+        sync_mock.assert_awaited_once_with("opened", "user/repo", payload["issue"])
+
+    @pytest.mark.asyncio
+    async def test_handle_github_issues_malformed_payload_never_raises(self) -> None:
+        """Payload sem `action`/`issue`/`repository` não derruba o handler."""
+        from unittest.mock import patch as p
+
+        from backend.api.handlers.webhooks import _handle_github
+
+        with (
+            p("backend.api.handlers.webhooks._emit_sse_event", lambda *a, **kw: None),
+            p(
+                "backend.scheduling.background_tasks.sync_github_issue_to_kanban",
+                AsyncMock(return_value=None),
+            ) as sync_mock,
+        ):
+            # Nenhuma exceção propagada mesmo com payload vazio.
+            await _handle_github("issues", {}, MagicMock())
+
+        # action="" e repo="" — sync recebe strings vazias, decide sozinho não fazer nada.
+        sync_mock.assert_awaited_once_with("", "", {})
+
+    @pytest.mark.asyncio
+    async def test_handle_github_issues_sync_failure_is_swallowed(self) -> None:
+        """Erro dentro do sync do Kanban é logado, não propaga pro dispatcher."""
+        from unittest.mock import patch as p
+
+        from backend.api.handlers.webhooks import _handle_github
+
+        payload = {
+            "action": "opened",
+            "issue": {"number": 1, "title": "x"},
+            "repository": {"full_name": "user/repo"},
+        }
+
+        with (
+            p("backend.api.handlers.webhooks._emit_sse_event", lambda *a, **kw: None),
+            p(
+                "backend.scheduling.background_tasks.sync_github_issue_to_kanban",
+                AsyncMock(side_effect=RuntimeError("db indisponível")),
+            ),
+        ):
+            await _handle_github("issues", payload, MagicMock())  # não levanta

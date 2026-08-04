@@ -387,6 +387,101 @@ class TestEscalonamentoDeBloqueio:
         assert row["block_count"] == 0
 
 
+class TestEventoSSE:
+    """Toda transição de status emite o evento que o board consome via SSE
+    (`backend/api/handlers/webhooks.py::_emit_sse_event`) — o board troca o
+    polling agressivo por push nesse canal."""
+
+    @pytest.mark.asyncio
+    async def test_set_status_emite_evento_com_task_id_e_status(self, db, monkeypatch):
+        from backend.api.handlers import webhooks
+        from backend.scheduling.kanban import set_status
+
+        await _cria(db, "t1", status="ready")
+        chamadas: list[dict] = []
+        monkeypatch.setattr(
+            webhooks,
+            "_emit_sse_event",
+            lambda **kw: chamadas.append(kw),
+        )
+
+        await set_status("t1", "running")
+
+        assert len(chamadas) == 1
+        assert chamadas[0]["provider"] == "kanban"
+        assert chamadas[0]["data"]["task_id"] == "t1"
+        assert chamadas[0]["data"]["status"] == "running"
+
+    @pytest.mark.asyncio
+    async def test_block_task_emite_status_e_block_kind_reason(self, db, monkeypatch):
+        from backend.api.handlers import webhooks
+        from backend.scheduling.kanban import block_task
+
+        await _cria(db, "t1", status="ready")
+        chamadas: list[dict] = []
+        monkeypatch.setattr(
+            webhooks,
+            "_emit_sse_event",
+            lambda **kw: chamadas.append(kw),
+        )
+
+        await block_task("t1", "needs_input", "falta a chave da API")
+
+        assert len(chamadas) == 1
+        assert chamadas[0]["data"] == {
+            "task_id": "t1",
+            "status": "blocked",
+            "block_kind": "needs_input",
+            "block_reason": "falta a chave da API",
+        }
+
+    @pytest.mark.asyncio
+    async def test_unblock_task_emite_status_ready_sem_block_kind(
+        self, db, monkeypatch
+    ):
+        from backend.api.handlers import webhooks
+        from backend.scheduling.kanban import block_task, unblock_task
+
+        await _cria(db, "t1", status="ready")
+        await block_task("t1", "needs_input", "falta chave")
+        chamadas: list[dict] = []
+        monkeypatch.setattr(
+            webhooks,
+            "_emit_sse_event",
+            lambda **kw: chamadas.append(kw),
+        )
+
+        await unblock_task("t1")
+
+        assert len(chamadas) == 1
+        assert chamadas[0]["data"]["status"] == "ready"
+        assert chamadas[0]["data"]["block_kind"] is None
+        assert chamadas[0]["data"]["block_reason"] is None
+
+    @pytest.mark.asyncio
+    async def test_falha_ao_emitir_evento_nao_impede_a_transicao_de_status(
+        self, db, monkeypatch
+    ):
+        """Erro/borda: a camada de notificação é acessória (CLAUDE.md
+        regra 11 — tools/funções defensivas). Se `_emit_sse_event` explodir
+        (fila cheia, KV fora do ar), o status já commitado no banco precisa
+        permanecer — só a notificação em tempo real que se perde, coberta
+        pelo polling de reconciliação."""
+        from backend.api.handlers import webhooks
+        from backend.scheduling.kanban import get_task_status, set_status
+
+        await _cria(db, "t1", status="ready")
+
+        def _explode(**kw):
+            raise RuntimeError("fila SSE indisponível")
+
+        monkeypatch.setattr(webhooks, "_emit_sse_event", _explode)
+
+        await set_status("t1", "running")
+
+        assert (await get_task_status("t1"))["status"] == "running"
+
+
 class TestDelegacaoSincronaForaDoBoard:
     """Invariante de produto, o mesmo desacoplamento do Hermes.
 

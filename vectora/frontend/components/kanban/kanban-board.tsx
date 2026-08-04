@@ -109,10 +109,16 @@ function NewTaskForm({
   );
 }
 
-//: Sem WebSocket como o Hermes — o board é local-first single-usuário,
-//: então polling leve é suficiente pra refletir tarefas que o scheduler
-//: move em segundo plano (fora de uma ação do próprio usuário no board).
-const POLL_INTERVAL_MS = 5000;
+//: Atualização em tempo real vem por push (SSE, ver `useKanbanSse` abaixo).
+//: Este polling é só reconciliação de baixa frequência — cobre o evento
+//: perdido numa reconexão de rede — não a via principal de atualização.
+const POLL_INTERVAL_MS = 30000;
+
+//: Canal SSE genérico de webhooks (`backend/api/handlers/webhooks.py`),
+//: reaproveitado em vez de um endpoint dedicado ao Kanban — o provider
+//: `"kanban"` no payload é o que distingue estes eventos dos demais.
+const SSE_URL = "/webhook/events";
+const SSE_RECONNECT_DELAY_MS = 3000;
 
 export interface KanbanTask {
   id: string;
@@ -121,6 +127,20 @@ export interface KanbanTask {
   block_kind: string | null;
   block_reason: string | null;
   blocked_by?: string[];
+}
+
+interface KanbanSseEventData {
+  task_id: string;
+  status: string;
+  block_kind: string | null;
+  block_reason: string | null;
+}
+
+interface WebhookSseEvent {
+  type: string;
+  provider: string;
+  event_type: string;
+  data: KanbanSseEventData;
 }
 
 const COLUNAS: { status: string; label: () => string }[] = [
@@ -236,12 +256,77 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   carregarRef.current = carregar;
 
   // Pausa o polling com a aba oculta — evita chamada de fundo desnecessária
-  // quando o usuário está em outra aba/app.
+  // quando o usuário está em outra aba/app. Agora é só reconciliação de
+  // baixa frequência: a atualização principal chega via SSE abaixo.
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") carregarRef.current();
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
+  }, [threadId]);
+
+  // Aplica um evento de mudança de status a um card específico, sem
+  // refazer o fetch do board inteiro. Task ainda desconhecida localmente
+  // (ex.: criada por outra sessão/processo) cai no fallback de `carregar`.
+  const aplicarEventoSse = (data: KanbanSseEventData) => {
+    // Checa contra o `tasks` do último render (via ref abaixo), não dentro
+    // do updater funcional: `setTasks` não roda o updater de forma
+    // síncrona, então ler o resultado logo depois de chamá-lo é uma corrida
+    // — o card entra em `carregarRef.current()` mesmo quando já existe.
+    if (!tasks.some((t) => t.id === data.task_id)) {
+      carregarRef.current();
+      return;
+    }
+    setTasks((atual) =>
+      atual.map((t) =>
+        t.id === data.task_id
+          ? {
+              ...t,
+              status: data.status,
+              block_kind: data.block_kind,
+              block_reason: data.block_reason,
+            }
+          : t,
+      ),
+    );
+  };
+  const aplicarEventoSseRef = useRef(aplicarEventoSse);
+  aplicarEventoSseRef.current = aplicarEventoSse;
+
+  // Push via SSE reaproveitando o canal genérico de webhooks. Reconecta
+  // manualmente em vez de confiar só no auto-retry do EventSource — dá
+  // controle do delay e faz a reconexão ser determinística em teste.
+  useEffect(() => {
+    let cancelado = false;
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const conectar = () => {
+      if (cancelado) return;
+      es = new EventSource(SSE_URL);
+      es.addEventListener("message", (ev: MessageEvent<string>) => {
+        try {
+          const parsed = JSON.parse(ev.data) as Partial<WebhookSseEvent>;
+          if (parsed.provider !== "kanban" || !parsed.data?.task_id) return;
+          aplicarEventoSseRef.current(parsed.data);
+        } catch {
+          // Evento malformado não pode derrubar a conexão — o polling de
+          // reconciliação cobre o que se perder aqui.
+        }
+      });
+      es.addEventListener("error", () => {
+        es?.close();
+        if (!cancelado)
+          reconnectTimer = setTimeout(conectar, SSE_RECONNECT_DELAY_MS);
+      });
+    };
+    conectar();
+
+    return () => {
+      cancelado = true;
+      es?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
   }, [threadId]);
 
   // `triage`/`archived` não têm coluna: mostrá-los junto encheria o board de

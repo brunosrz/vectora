@@ -73,6 +73,13 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         # Clique/tecla na tela real do usuário — a única tool que ignora o
         # `permission_mode` (ver `_ALWAYS_INTERRUPT` abaixo).
         "computer_use",
+        # Cria/move card no board Kanban — mutação persistente como as
+        # demais desta lista. `kanban_update_status` tem uma exceção: task
+        # em segundo plano mudando o PRÓPRIO status não pausa (ver
+        # `_is_self_kanban_update`) — senão vira loop esperando aprovação de
+        # si mesma. `kanban_list` é só leitura e fica fora.
+        "kanban_create",
+        "kanban_update_status",
     }
 )
 
@@ -204,6 +211,27 @@ def _mode_from_runtime(req: ToolCallRequest) -> str:
     return mode or "ask"
 
 
+def _is_self_kanban_update(req: ToolCallRequest, tool_call: dict[str, Any]) -> bool:
+    """True se ``kanban_update_status`` está mudando o status da PRÓPRIA task.
+
+    Uma run em segundo plano (``run_task``/``resume_background_run``) roda com
+    ``background_task_id`` igual ao ``task_id`` da task que a disparou (ver
+    ``backend/scheduling/background_tasks.py``). Se o argumento ``task_id`` da
+    chamada casa com esse id, é a task se auto-marcando (ex.: bloqueada por
+    falta de input) — pedir aprovação criaria um loop esperando a própria run
+    pausada aprovar a si mesma. Mudar o status de OUTRA task (``task_id``
+    diferente) continua exigindo aprovação normalmente.
+    """
+    runtime = getattr(req, "runtime", None)
+    context = getattr(runtime, "context", None)
+    bg_task_id = getattr(context, "background_task_id", "") if context else ""
+    if not bg_task_id:
+        return False
+    args = tool_call.get("args") if isinstance(tool_call, dict) else None
+    call_task_id = args.get("task_id", "") if isinstance(args, dict) else ""
+    return bool(call_task_id) and call_task_id == bg_task_id
+
+
 def _dynamic_hitl_when(req: ToolCallRequest) -> bool:
     """Predicate único do HITL dinâmico: lê o modo do runtime e aplica a política.
 
@@ -213,6 +241,8 @@ def _dynamic_hitl_when(req: ToolCallRequest) -> bool:
     """
     tool_call = getattr(req, "tool_call", {}) or {}
     tool_name = tool_call.get("name", "") if isinstance(tool_call, dict) else ""
+    if tool_name == "kanban_update_status" and _is_self_kanban_update(req, tool_call):
+        return False
     if tool_name in _JAILED_BYPASS_TOOLS:
         runtime = getattr(req, "runtime", None)
         context = getattr(runtime, "context", None)
