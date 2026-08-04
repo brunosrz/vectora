@@ -51,6 +51,7 @@ async def db(tmp_path, monkeypatch):
             block_reason   TEXT,
             claim_lock     TEXT,
             claim_expires_at TEXT,
+            block_count    INTEGER NOT NULL DEFAULT 0,
             created_at     TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
         );
@@ -290,12 +291,100 @@ class TestStatusValidos:
             await set_status("t1", "em-analise")
 
     @pytest.mark.asyncio
-    async def test_todos_os_sete_status_sao_aceitos(self, db):
+    async def test_todos_os_status_da_taxonomia_sao_aceitos(self, db):
         from backend.scheduling.kanban import KANBAN_STATUSES, set_status
 
         await _cria(db, "t1")
         for status in KANBAN_STATUSES:
             await set_status("t1", status)
+
+
+class TestEscalonamentoDeBloqueio:
+    """Bloqueio recorrente escala pra `triage` em vez de apodrecer em
+    `blocked` pra sempre — mesmo princípio do `BLOCK_RECURRENCE_LIMIT`
+    do Hermes."""
+
+    @pytest.mark.asyncio
+    async def test_bloqueios_abaixo_do_limite_ficam_em_blocked(self, db):
+        from backend.scheduling.kanban import (
+            BLOCK_RECURRENCE_LIMIT,
+            block_task,
+            get_task_status,
+        )
+
+        await _cria(db, "t1", status="ready")
+        for _ in range(BLOCK_RECURRENCE_LIMIT - 1):
+            await block_task("t1", "needs_input", "falta algo")
+
+        estado = await get_task_status("t1")
+        assert estado["status"] == "blocked"
+
+    @pytest.mark.asyncio
+    async def test_bloqueio_atinge_o_limite_escala_pra_triage(self, db):
+        from backend.scheduling.kanban import (
+            BLOCK_RECURRENCE_LIMIT,
+            block_task,
+            get_task_status,
+        )
+
+        await _cria(db, "t1", status="ready")
+        for _ in range(BLOCK_RECURRENCE_LIMIT):
+            await block_task("t1", "transient", "falhou de novo")
+
+        estado = await get_task_status("t1")
+        assert estado["status"] == "triage"
+        assert "revisão manual" in estado["block_reason"]
+
+    @pytest.mark.asyncio
+    async def test_dependency_nunca_conta_pro_escalonamento(self, db):
+        """Erro/borda: dependência é resolvida pela máquina, não é uma
+        falha real da task — não pode empurrar o card pra triage."""
+        from backend.scheduling.kanban import (
+            BLOCK_RECURRENCE_LIMIT,
+            block_task,
+            get_task_status,
+        )
+
+        await _cria(db, "t1", status="ready")
+        for _ in range(BLOCK_RECURRENCE_LIMIT + 2):
+            await block_task("t1", "dependency", "espera outra task")
+
+        estado = await get_task_status("t1")
+        assert estado["status"] == "todo"
+
+    @pytest.mark.asyncio
+    async def test_sucesso_zera_o_contador_de_bloqueio(self, db):
+        """O contador não acumula pra sempre — sair de `blocked` com
+        sucesso (via `set_status` pra `ready`/`done`) reseta a régua."""
+        from backend.scheduling.kanban import (
+            block_task,
+            get_task_status,
+            set_status,
+        )
+
+        await _cria(db, "t1", status="ready")
+        await block_task("t1", "transient", "falhou 1x")
+        await block_task("t1", "transient", "falhou 2x")
+        await set_status("t1", "ready")
+
+        # Depois do reset, precisa de novo o limite inteiro pra escalar.
+        await block_task("t1", "transient", "falhou de novo")
+        estado = await get_task_status("t1")
+        assert estado["status"] == "blocked"
+
+    @pytest.mark.asyncio
+    async def test_unblock_tambem_zera_o_contador(self, db):
+        from backend.scheduling.kanban import block_task, unblock_task
+
+        await _cria(db, "t1", status="ready")
+        await block_task("t1", "needs_input", "falta chave")
+        await unblock_task("t1")
+
+        async with db.execute(
+            "SELECT block_count FROM vectora_background_tasks WHERE id = 't1'"
+        ) as cur:
+            row = await cur.fetchone()
+        assert row["block_count"] == 0
 
 
 class TestDelegacaoSincronaForaDoBoard:

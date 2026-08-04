@@ -32,9 +32,11 @@ logger = logging.getLogger(__name__)
 KANBAN_STATUSES: tuple[str, ...] = (
     "triage",
     "todo",
+    "scheduled",
     "ready",
     "running",
     "blocked",
+    "review",
     "done",
     "archived",
 )
@@ -48,6 +50,12 @@ BLOCK_KINDS: tuple[str, ...] = (
 )
 
 _DEFAULT_CLAIM_TTL_S = 900
+
+#: Bloqueios consecutivos (não-`dependency`) antes de escalar pra `triage`
+#: em vez de deixar o card preso em `blocked` pra sempre esperando alguém
+#: notar. Zera quando a task sai de `blocked` com sucesso (`set_status`
+#: pra `ready`/`done`, ou `unblock_task` explícito).
+BLOCK_RECURRENCE_LIMIT = 3
 
 
 async def _get_db() -> Any:
@@ -91,11 +99,22 @@ async def set_status(task_id: str, status: str) -> None:
         )
         raise ValueError(msg)
     db = await _get_db()
-    await db.execute(
-        "UPDATE vectora_background_tasks SET status = ?, "
-        "updated_at = datetime('now') WHERE id = ?",
-        (status, task_id),
-    )
+    if status in ("ready", "done"):
+        # Saída bem-sucedida do ciclo de bloqueio — zera o contador de
+        # escalonamento (ver BLOCK_RECURRENCE_LIMIT), senão uma task que
+        # falhou 2x e depois teve sucesso carregaria o histórico pra
+        # sempre em vez de resetar a régua.
+        await db.execute(
+            "UPDATE vectora_background_tasks SET status = ?, block_count = 0, "
+            "updated_at = datetime('now') WHERE id = ?",
+            (status, task_id),
+        )
+    else:
+        await db.execute(
+            "UPDATE vectora_background_tasks SET status = ?, "
+            "updated_at = datetime('now') WHERE id = ?",
+            (status, task_id),
+        )
     await db.commit()
 
 
@@ -104,9 +123,13 @@ async def claim_task(
 ) -> bool:
     """Reivindica a task para `run_id`. `False` quando outro já pegou.
 
-    O CAS está no `WHERE`: só troca de dono se ainda estiver `ready` e sem
-    claim. Checar antes e gravar depois abriria a janela em que dois workers
-    leem "livre" e ambos gravam.
+    O CAS está no `WHERE`: só troca de dono se ainda estiver `ready`/
+    `scheduled` e sem claim. `scheduled` entra aqui porque toda task
+    recorrente/agendada nasce nesse status (Sprint 41) e só o tick do
+    scheduler decide *quando* ela é due — não é o status quem barra isso,
+    é o filtro por `next_run_at` em `_list_due_interval_tasks`. Checar
+    antes e gravar depois abriria a janela em que dois workers leem
+    "livre" e ambos gravam.
     """
     expira = (_agora() + timedelta(seconds=ttl_s)).isoformat()
     db = await _get_db()
@@ -118,7 +141,7 @@ async def claim_task(
                claim_expires_at = ?,
                updated_at = datetime('now')
          WHERE id = ?
-           AND status = 'ready'
+           AND status IN ('ready', 'scheduled')
            AND claim_lock IS NULL
         """,
         (run_id, expira, task_id),
@@ -170,7 +193,13 @@ async def release_stale_claims() -> int:
 
 
 async def block_task(task_id: str, kind: str, reason: str) -> None:
-    """Bloqueia a task. `dependency` fica em `todo`; o resto vai pra `blocked`."""
+    """Bloqueia a task. `dependency` fica em `todo`; o resto vai pra `blocked`.
+
+    Bloqueios não-`dependency` incrementam `block_count`; ao atingir
+    `BLOCK_RECURRENCE_LIMIT`, escala pra `triage` em vez de `blocked` — um
+    card que falha sempre do mesmo jeito precisa de decisão humana, não de
+    ficar invisível na coluna esperando alguém notar.
+    """
     if kind not in BLOCK_KINDS:
         msg = (
             f"tipo de bloqueio {kind!r} fora da taxonomia — válidos: "
@@ -178,16 +207,39 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
         )
         raise ValueError(msg)
 
-    # Bloqueio por dependência não é acionável por ninguém: colocá-lo em
-    # `blocked` encheria a coluna de cards que a pessoa não pode destravar.
-    status = "todo" if kind == "dependency" else "blocked"
-
     db = await _get_db()
+
+    if kind == "dependency":
+        # Bloqueio por dependência não é acionável por ninguém: colocá-lo em
+        # `blocked` encheria a coluna de cards que a pessoa não pode destravar.
+        await db.execute(
+            "UPDATE vectora_background_tasks SET status = 'todo', block_kind = ?, "
+            "block_reason = ?, claim_lock = NULL, claim_expires_at = NULL, "
+            "updated_at = datetime('now') WHERE id = ?",
+            (kind, reason, task_id),
+        )
+        await db.commit()
+        return
+
+    async with db.execute(
+        "SELECT block_count FROM vectora_background_tasks WHERE id = ?", (task_id,)
+    ) as cur:
+        row = await cur.fetchone()
+    novo_count = ((row["block_count"] if row else 0) or 0) + 1
+
+    if novo_count >= BLOCK_RECURRENCE_LIMIT:
+        status = "triage"
+        reason = (
+            f"{reason} — bloqueada {novo_count}x seguidas, revisão manual necessária"
+        )
+    else:
+        status = "blocked"
+
     await db.execute(
         "UPDATE vectora_background_tasks SET status = ?, block_kind = ?, "
-        "block_reason = ?, claim_lock = NULL, claim_expires_at = NULL, "
-        "updated_at = datetime('now') WHERE id = ?",
-        (status, kind, reason, task_id),
+        "block_reason = ?, block_count = ?, claim_lock = NULL, "
+        "claim_expires_at = NULL, updated_at = datetime('now') WHERE id = ?",
+        (status, kind, reason, novo_count, task_id),
     )
     await db.commit()
 
@@ -196,7 +248,8 @@ async def unblock_task(task_id: str) -> None:
     db = await _get_db()
     await db.execute(
         "UPDATE vectora_background_tasks SET status = 'ready', block_kind = NULL, "
-        "block_reason = NULL, updated_at = datetime('now') WHERE id = ?",
+        "block_reason = NULL, block_count = 0, updated_at = datetime('now') "
+        "WHERE id = ?",
         (task_id,),
     )
     await db.commit()

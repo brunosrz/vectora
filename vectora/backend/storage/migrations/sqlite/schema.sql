@@ -197,6 +197,10 @@ ALTER TABLE vectora_background_tasks ADD COLUMN claim_expires_at TEXT;
 -- Teto de custo por tarefa, em centavos. NULL = sem limite (o corte é
 -- opt-in); 0 = não gaste nada, que é diferente de NULL.
 ALTER TABLE vectora_background_tasks ADD COLUMN budget_cents INTEGER;
+-- Bloqueios consecutivos (não-"dependency"); zera ao sair de "blocked"
+-- com sucesso. Ao atingir BLOCK_RECURRENCE_LIMIT, block_task() escala pra
+-- "triage" em vez de deixar o card preso em "blocked" pra sempre.
+ALTER TABLE vectora_background_tasks ADD COLUMN block_count INTEGER NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_background_tasks_session ON vectora_background_tasks(session_id);
 CREATE INDEX IF NOT EXISTS idx_background_tasks_due     ON vectora_background_tasks(enabled, trigger_type);

@@ -1258,10 +1258,10 @@ async def test_record_subagent_delegation_tolerates_db_failure(db, monkeypatch):
 
 
 async def test_create_task_status_inicial_e_ready_nao_todo(db):
-    """Regressão do bug real: antes deste sprint toda tarefa nascia com o
-    DEFAULT 'todo' do schema e nunca saía de lá — o board ficava sempre
-    vazio. `enabled=True` (o default de `create_task`) precisa nascer
-    "ready" pra competir pelo claim desde a primeira run."""
+    """Regressão do bug real: antes toda tarefa nascia com o DEFAULT
+    'todo' do schema e nunca saía de lá — o board ficava sempre vazio.
+    Task recorrente (`next_run_at` futuro definido) nasce "scheduled"
+    (Sprint 41), que `claim_task` também aceita — nunca "todo"."""
     task = await bg.create_task(
         session_id="s1",
         user_id="u1",
@@ -1271,13 +1271,28 @@ async def test_create_task_status_inicial_e_ready_nao_todo(db):
         trigger_type="interval",
         trigger_config={"cron_expr": "0 9 * * *"},
     )
-    assert task.status == "ready"
+    assert task.status == "scheduled"
 
     # Erro/borda: o dataclass devolvido por create_task precisa bater com o
     # que foi de fato persistido — não só o valor em memória.
     persistida = await bg.get_task(task.id)
     assert persistida is not None
-    assert persistida.status == "ready"
+    assert persistida.status == "scheduled"
+
+
+async def test_create_task_manual_sem_next_run_nasce_ready(db):
+    """Task manual (sem `next_run_at`) já é acionável agora — nasce
+    "ready", não "scheduled" (reservado pra quando há data futura)."""
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    assert task.status == "ready"
 
 
 async def test_run_task_recorrente_volta_pra_ready_ao_concluir(db, monkeypatch):
@@ -1302,7 +1317,7 @@ async def test_run_task_recorrente_volta_pra_ready_ao_concluir(db, monkeypatch):
         trigger_type="interval",
         trigger_config={"cron_expr": "0 9 * * *"},
     )
-    assert (await kanban.get_task_status(task.id))["status"] == "ready"
+    assert (await kanban.get_task_status(task.id))["status"] == "scheduled"
 
     await bg.run_task(task, "scheduler")
 

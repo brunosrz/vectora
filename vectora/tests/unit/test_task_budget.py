@@ -44,6 +44,7 @@ async def db(tmp_path, monkeypatch):
             claim_expires_at TEXT,
             budget_cents INTEGER,
             agent_profile_id TEXT,
+            block_count  INTEGER NOT NULL DEFAULT 0,
             updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
         );
         CREATE TABLE vectora_background_runs (

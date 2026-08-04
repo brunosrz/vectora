@@ -73,7 +73,10 @@ async def test_get_tasks_devolve_status_do_kanban(db):
 
     assert len(saida) == 1
     assert saida[0].id == task.id
-    assert saida[0].status == "ready"
+    # Task recorrente nasce com next_run_at futuro definido — status
+    # "scheduled" (Sprint 41), não "ready" (reservado pra tasks já
+    # acionáveis agora, como manual criada direto no board).
+    assert saida[0].status == "scheduled"
     assert saida[0].block_kind is None
 
 

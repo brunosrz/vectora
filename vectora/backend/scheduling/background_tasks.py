@@ -269,6 +269,11 @@ async def create_task(
             _next_run(cfg.get("cron_expr")) if trigger_type == "interval" else None
         )
 
+    # Task com data de disparo futura nasce em "scheduled" (Sprint 41) —
+    # distingue de "todo" (sem data, esperando promoção por dependência) e
+    # de "ready" (acionável agora, ex.: manual criada direto no board).
+    status = "scheduled" if next_run is not None else "ready"
+
     conn = await _get_db()
     try:
         await _check_quota(conn, workspace_id, trigger_type)
@@ -278,7 +283,7 @@ async def create_task(
               (id, session_id, workspace_id, user_id, kind, name, instruction,
                trigger_type, trigger_config, enabled, next_run_at, status,
                agent_profile_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'ready', ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
             """,
             (
                 task_id,
@@ -291,6 +296,7 @@ async def create_task(
                 trigger_type,
                 json.dumps(cfg),
                 next_run,
+                status,
                 agent_profile_id,
             ),
         )
@@ -311,7 +317,7 @@ async def create_task(
         workspace_id=workspace_id,
         enabled=True,
         next_run_at=next_run,
-        status="ready",
+        status=status,
         agent_profile_id=agent_profile_id,
     )
 
