@@ -26,6 +26,7 @@ from langchain_core.messages import (
     AIMessageChunk,
     BaseMessage,
     ToolCall,
+    ToolCallChunk,
 )
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.utils.function_calling import convert_to_openai_tool
@@ -111,6 +112,26 @@ def _parse_tool_calls(bruto: list) -> tuple[list[ToolCall], list[dict]]:
             ToolCall(name=nome, args=args, id=item.get("id"), type="tool_call")
         )
     return validas, invalidas
+
+
+def _parse_tool_call_chunks(bruto: list) -> list[ToolCallChunk]:
+    """Converte deltas incrementais de `tool_calls` do streaming em
+    `ToolCallChunk` — o `AIMessageChunk.__add__` do LangChain acumula esses
+    fragmentos por `index` e resolve `arguments` (string parcial) pra JSON
+    completo quando todos os pedaços chegaram.
+    """
+    pedacos: list[ToolCallChunk] = []
+    for item in bruto or []:
+        funcao = item.get("function") or {}
+        pedacos.append(
+            ToolCallChunk(
+                name=funcao.get("name"),
+                args=funcao.get("arguments"),
+                id=item.get("id"),
+                index=item.get("index"),
+            )
+        )
+    return pedacos
 
 
 def _usage_metadata(usage: dict | None) -> dict | None:
@@ -226,6 +247,24 @@ class VectoraOpenRouterChat(BaseChatModel):
             corpo["stop"] = stop
 
         async for evento in self.client.stream_sse("/chat/completions", corpo):
+            # O OpenRouter manda `usage` no último evento SSE do stream —
+            # às vezes junto de `choices` vazio, às vezes acompanhando o
+            # chunk final com finish_reason. Captura nos dois casos.
+            usage = evento.get("usage")
+            if usage:
+                metadata: dict[str, Any] = {}
+                if "cost" in usage:
+                    metadata["cost"] = usage["cost"]
+                chunk = AIMessageChunk(
+                    content="",
+                    usage_metadata=_usage_metadata(usage),  # type: ignore[arg-type]
+                    response_metadata=metadata,
+                )
+                pedaco = ChatGenerationChunk(message=chunk)
+                if run_manager:
+                    await run_manager.on_llm_new_token("", chunk=pedaco)
+                yield pedaco
+
             escolhas = evento.get("choices") or []
             if not escolhas:
                 continue
@@ -237,6 +276,22 @@ class VectoraOpenRouterChat(BaseChatModel):
                 # com resposta na tela.
                 chunk = AIMessageChunk(
                     content="", additional_kwargs={"reasoning": raciocinio}
+                )
+                pedaco = ChatGenerationChunk(message=chunk)
+                if run_manager:
+                    await run_manager.on_llm_new_token("", chunk=pedaco)
+                yield pedaco
+
+            tool_calls_bruto = delta.get("tool_calls")
+            if tool_calls_bruto:
+                # Fragmentado em múltiplos chunks por `index` — o LangGraph
+                # acumula via `AIMessageChunk.__add__` e resolve pra tool
+                # call completa quando o stream termina. Sem isso, o modelo
+                # nunca conseguia de fato chamar uma tool no caminho
+                # streaming (só no não-streaming).
+                chunk = AIMessageChunk(
+                    content="",
+                    tool_call_chunks=_parse_tool_call_chunks(tool_calls_bruto),
                 )
                 pedaco = ChatGenerationChunk(message=chunk)
                 if run_manager:

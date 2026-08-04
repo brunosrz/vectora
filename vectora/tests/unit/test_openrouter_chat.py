@@ -10,9 +10,17 @@ esse é o caminho crítico do agente.
 
 from __future__ import annotations
 
+from typing import cast
+
 import httpx
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import (
+    AIMessage,
+    AIMessageChunk,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
 
 from backend.llm.openrouter.chat import VectoraOpenRouterChat
 from backend.llm.openrouter.client import OpenRouterClient, OpenRouterResponseError
@@ -271,6 +279,68 @@ class TestStreaming:
 
         chunks = [c async for c in _modelo(handler)._astream([HumanMessage("oi")])]
         assert chunks == []
+
+
+class TestStreamingToolCallsEUsage:
+    """`_astream` descartava `delta.tool_calls` e `usage` — o modelo nunca
+    conseguia de fato chamar uma tool no caminho streaming (só no
+    não-streaming), e `usage.cost` não chegava na sessão via chat normal."""
+
+    @pytest.mark.asyncio
+    async def test_tool_call_fragmentada_em_varios_chunks_sai_completa(self):
+        corpo = (
+            b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1",'
+            b'"function":{"name":"file_read","arguments":""}}]}}]}\n\n'
+            b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,'
+            b'"function":{"arguments":"{\\"path\\":"}}]}}]}\n\n'
+            b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,'
+            b'"function":{"arguments":"\\"a.py\\"}"}}]}}]}\n\n'
+            b"data: [DONE]\n\n"
+        )
+
+        def handler(_req):
+            return httpx.Response(
+                200, content=corpo, headers={"content-type": "text/event-stream"}
+            )
+
+        chunks = [c async for c in _modelo(handler)._astream([HumanMessage("oi")])]
+        acumulado = cast("AIMessageChunk", chunks[0].message)
+        for c in chunks[1:]:
+            acumulado = cast("AIMessageChunk", acumulado + c.message)
+
+        assert acumulado.tool_calls == [
+            {
+                "name": "file_read",
+                "args": {"path": "a.py"},
+                "id": "call_1",
+                "type": "tool_call",
+            }
+        ]
+
+    @pytest.mark.asyncio
+    async def test_usage_do_ultimo_evento_sse_vira_usage_metadata_e_cost(self):
+        corpo = (
+            b'data: {"choices":[{"delta":{"content":"oi"}}]}\n\n'
+            b'data: {"choices":[],"usage":{"prompt_tokens":10,'
+            b'"completion_tokens":3,"cost":0.0004}}\n\n'
+            b"data: [DONE]\n\n"
+        )
+
+        def handler(_req):
+            return httpx.Response(
+                200, content=corpo, headers={"content-type": "text/event-stream"}
+            )
+
+        chunks = [c async for c in _modelo(handler)._astream([HumanMessage("oi")])]
+        mensagens = [cast("AIMessageChunk", c.message) for c in chunks]
+        com_usage = [m for m in mensagens if m.usage_metadata]
+
+        assert len(com_usage) == 1
+        usage_metadata = com_usage[0].usage_metadata
+        assert usage_metadata is not None
+        assert usage_metadata["input_tokens"] == 10
+        assert usage_metadata["output_tokens"] == 3
+        assert com_usage[0].response_metadata["cost"] == 0.0004
 
 
 class TestProviderRouting:
