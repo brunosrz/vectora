@@ -4,21 +4,21 @@ import { m } from "#/paraglide/messages";
 import { listIssuesAdmin } from "#/server/fns/admin";
 
 const TABS = [
-  { to: "/admin" as const, exact: true, labelKey: "admin_tab_users" as const },
+  { to: "/admin" as const, exact: true, label: m.admin_tab_users },
   {
     to: "/admin/coupons" as const,
     exact: false,
-    labelKey: "admin_tab_coupons" as const,
+    label: m.admin_tab_coupons,
   },
   {
     to: "/admin/gifts" as const,
     exact: false,
-    labelKey: "admin_tab_gifts" as const,
+    label: m.admin_tab_gifts,
   },
   {
     to: "/admin/issues" as const,
     exact: false,
-    labelKey: "admin_tab_issues" as const,
+    label: m.admin_tab_issues,
   },
 ] as const;
 
@@ -50,7 +50,7 @@ export default function AdminTabs() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {m[tab.labelKey]()}
+            {tab.label()}
             {tab.to === "/admin/issues" && openCount > 0 && (
               <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
                 {openCount}

@@ -3,30 +3,34 @@ import { Lock, Coins, Settings, Server } from "lucide-react";
 
 const CARDS = [
   {
+    id: "privacy",
     Icon: Lock,
-    titleKey: "why_privacy_title" as const,
-    descKey: "why_privacy_desc" as const,
+    title: m.why_privacy_title,
+    desc: m.why_privacy_desc,
     iconBg: "rgba(121,184,255,0.1)",
     iconColor: "var(--primary)",
   },
   {
+    id: "cost",
     Icon: Coins,
-    titleKey: "why_cost_title" as const,
-    descKey: "why_cost_desc" as const,
+    title: m.why_cost_title,
+    desc: m.why_cost_desc,
     iconBg: "rgba(78,201,160,0.1)",
     iconColor: "var(--accent-green)",
   },
   {
+    id: "custom",
     Icon: Settings,
-    titleKey: "why_custom_title" as const,
-    descKey: "why_custom_desc" as const,
+    title: m.why_custom_title,
+    desc: m.why_custom_desc,
     iconBg: "rgba(173,70,255,0.1)",
     iconColor: "var(--accent-purple)",
   },
   {
+    id: "sovereign",
     Icon: Server,
-    titleKey: "why_sovereign_title" as const,
-    descKey: "why_sovereign_desc" as const,
+    title: m.why_sovereign_title,
+    desc: m.why_sovereign_desc,
     iconBg: "rgba(226,192,141,0.1)",
     iconColor: "var(--accent-amber)",
   },
@@ -52,7 +56,7 @@ export default function WhySelfHosted() {
             const { Icon } = card;
             return (
               <div
-                key={card.titleKey}
+                key={card.id}
                 className="flex flex-col gap-2 rounded-2xl border border-border bg-card/30 p-6"
               >
                 <div
@@ -62,10 +66,10 @@ export default function WhySelfHosted() {
                   <Icon className="h-5 w-5" style={{ color: card.iconColor }} />
                 </div>
                 <p className="text-base font-semibold leading-6 text-foreground">
-                  {m[card.titleKey]()}
+                  {card.title()}
                 </p>
                 <p className="text-[14px] leading-[23px] text-muted-foreground">
-                  {m[card.descKey]()}
+                  {card.desc()}
                 </p>
               </div>
             );

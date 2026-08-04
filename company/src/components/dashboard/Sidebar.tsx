@@ -15,36 +15,36 @@ import ThemeToggle from "#/components/shared/ThemeToggle";
 import { signOut } from "#/server/fns/auth";
 
 const NAV_ITEMS = [
-  { to: "/dashboard" as const, exact: true, icon: Key, labelKey: "nav_token" },
+  { to: "/dashboard" as const, exact: true, icon: Key, label: m.nav_token },
   {
     to: "/dashboard/license" as const,
     exact: false,
     icon: Shield,
-    labelKey: "nav_license",
+    label: m.nav_license,
   },
   {
     to: "/dashboard/billing" as const,
     exact: false,
     icon: CreditCard,
-    labelKey: "nav_billing",
+    label: m.nav_billing,
   },
   {
     to: "/dashboard/api-keys" as const,
     exact: false,
     icon: Zap,
-    labelKey: "nav_api_keys",
+    label: m.nav_api_keys,
   },
   {
     to: "/dashboard/account" as const,
     exact: false,
     icon: User,
-    labelKey: "nav_account",
+    label: m.nav_account,
   },
   {
     to: "/support" as const,
     exact: false,
     icon: HelpCircle,
-    labelKey: "nav_support",
+    label: m.nav_support,
   },
 ] as const;
 
@@ -61,7 +61,7 @@ export default function Sidebar() {
           to: "/admin" as const,
           exact: false,
           icon: ShieldCheck,
-          labelKey: "nav_admin" as const,
+          label: m.nav_admin,
         },
       ]
     : NAV_ITEMS;
@@ -93,7 +93,7 @@ export default function Sidebar() {
                 <Icon
                   className={`h-4 w-4 shrink-0 ${active ? "text-primary" : ""}`}
                 />
-                {m[item.labelKey]()}
+                {item.label()}
               </Link>
             );
           })}
@@ -129,7 +129,7 @@ export default function Sidebar() {
               }`}
             >
               <Icon className="h-5 w-5" />
-              {m[item.labelKey]()}
+              {item.label()}
             </Link>
           );
         })}

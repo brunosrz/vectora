@@ -4,30 +4,30 @@ import { Server, User, Users, FolderOpen } from "lucide-react";
 const STEPS = [
   {
     Icon: Server,
-    titleKey: "team_step1_title" as const,
-    descKey: "team_step1_desc" as const,
+    title: m.team_step1_title,
+    desc: m.team_step1_desc,
     iconBg: "rgba(121,184,255,0.1)",
     iconColor: "var(--primary)",
     badges: ["PostgreSQL", "Qdrant", "Redis"],
   },
   {
     Icon: User,
-    titleKey: "team_step2_title" as const,
-    descKey: "team_step2_desc" as const,
+    title: m.team_step2_title,
+    desc: m.team_step2_desc,
     iconBg: "rgba(173,70,255,0.1)",
     iconColor: "var(--accent-purple)",
   },
   {
     Icon: Users,
-    titleKey: "team_step3_title" as const,
-    descKey: "team_step3_desc" as const,
+    title: m.team_step3_title,
+    desc: m.team_step3_desc,
     iconBg: "rgba(78,201,160,0.1)",
     iconColor: "var(--accent-green)",
   },
   {
     Icon: FolderOpen,
-    titleKey: "team_step4_title" as const,
-    descKey: "team_step4_desc" as const,
+    title: m.team_step4_title,
+    desc: m.team_step4_desc,
     iconBg: "rgba(226,192,141,0.1)",
     iconColor: "var(--accent-amber)",
   },
@@ -68,10 +68,10 @@ export default function TeamSetupSection() {
                 </div>
 
                 <p className="text-base font-semibold leading-6 text-foreground">
-                  {m[step.titleKey]()}
+                  {step.title()}
                 </p>
                 <p className="text-[14px] leading-5 text-muted-foreground">
-                  {m[step.descKey]()}
+                  {step.desc()}
                 </p>
 
                 {"badges" in step && step.badges && (

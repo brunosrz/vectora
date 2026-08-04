@@ -11,13 +11,13 @@ import type { PlanId } from "#/server/fns/subscription";
 import { toast } from "sonner";
 import { ExternalLink } from "lucide-react";
 
-const PLAN_LABEL_KEYS = {
-  "1m": "billing_plan_1m",
-  "3m": "billing_plan_3m",
-  "6m": "billing_plan_6m",
-  "12m": "billing_plan_12m",
-  "36m": "billing_plan_36m",
-} as const satisfies Record<PlanId, keyof typeof m>;
+const PLAN_LABELS = {
+  "1m": m.billing_plan_1m,
+  "3m": m.billing_plan_3m,
+  "6m": m.billing_plan_6m,
+  "12m": m.billing_plan_12m,
+  "36m": m.billing_plan_36m,
+} as const satisfies Record<PlanId, () => string>;
 
 export default function BillingSection() {
   const queryClient = useQueryClient();
@@ -90,7 +90,7 @@ export default function BillingSection() {
             >
               {PLANS.map((plan) => (
                 <option key={plan.id} value={plan.id}>
-                  {m[PLAN_LABEL_KEYS[plan.id]]()} —{" "}
+                  {PLAN_LABELS[plan.id]()} —{" "}
                   {isBR ? `R$${plan.priceBrl}` : `$${plan.priceUsd}`}
                 </option>
               ))}
