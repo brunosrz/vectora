@@ -193,7 +193,8 @@ describe("WorkspaceTrustDialog — mode=ingest, filtro de formato e bucket", () 
       (call) => call[0] === "/workspaces/ws-1/rag/ingest",
     ) as [string, RequestInit];
     const body = JSON.parse(ingestCall[1].body as string);
-    expect(body.file_types).toEqual(["xml", "tscn"]);
+    expect(body.file_types).toBe("all");
+    expect(body.include_exts).toBe("xml, tscn");
     expect(body.bucket_name).toBe("Godot Docs");
   });
 
@@ -229,6 +230,8 @@ describe("WorkspaceTrustDialog — mode=ingest, filtro de formato e bucket", () 
     ) as [string, RequestInit];
     const body = JSON.parse(ingestCall[1].body as string);
     expect(body.file_types).toBe("all");
+    expect(body.include_exts).toBeUndefined();
+    expect(body.exclude_exts).toBeUndefined();
     expect(body.bucket_name).toBeUndefined();
   });
 });

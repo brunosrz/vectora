@@ -216,10 +216,10 @@ def _build_cohere_embeddings() -> Any:
         if not key or not model:
             return None
 
-        from pydantic import SecretStr
-
+        # NÃO usar SecretStr: a lib chama str() internamente → "**********",
+        # causando 401. Mesmo padrão de backend/embedding/background.py.
         return CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=SecretStr(key),
+            cohere_api_key=key,
             model=model,
         )
     except Exception:

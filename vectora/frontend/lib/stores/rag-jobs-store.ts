@@ -31,13 +31,18 @@ interface RagJobsState {
   jobs: Record<string, RagJob>;
   /** Dispara a indexação; retorna o jobId (ou null em falha) e inicia o poll.
    * `fileTypes` aceita os 3 atalhos ou uma lista de extensões customizadas
-   * (ex. `["xml"]`). `bucketName` nomeia o bucket criado (default: nome
-   * da pasta, decidido pelo backend quando omitido). */
+   * (ex. `["xml"]`). `includeExts`/`excludeExts` (string CSV ou lista) são
+   * filtros de extensão que sobrepõem o atalho. `bucketName` nomeia o bucket
+   * criado (default: nome da pasta, decidido pelo backend quando omitido). */
   start: (
     workspaceId: string,
     path: string,
     fileTypes: "code" | "markdown" | "all" | string[],
-    bucketName?: string,
+    opts?: {
+      includeExts?: string | string[];
+      excludeExts?: string | string[];
+      bucketName?: string;
+    },
   ) => Promise<string | null>;
   /** Remove um job da lista (não cancela o processamento no backend). */
   dismiss: (jobId: string) => void;
@@ -67,7 +72,7 @@ function stopPoll(jobId: string) {
 export const useRagJobsStore = create<RagJobsState>((set) => ({
   jobs: {},
 
-  start: async (workspaceId, path, fileTypes, bucketName) => {
+  start: async (workspaceId, path, fileTypes, opts) => {
     let data: {
       job_id: string;
       total_chunks: number;
@@ -83,7 +88,9 @@ export const useRagJobsStore = create<RagJobsState>((set) => ({
           body: JSON.stringify({
             path,
             file_types: fileTypes,
-            bucket_name: bucketName || undefined,
+            include_exts: opts?.includeExts || undefined,
+            exclude_exts: opts?.excludeExts || undefined,
+            bucket_name: opts?.bucketName || undefined,
           }),
         },
       );

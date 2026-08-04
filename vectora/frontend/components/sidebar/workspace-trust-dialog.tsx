@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AlertTriangle,
   CheckCircle2,
   ChevronLeft,
   Cloud,
@@ -103,13 +104,11 @@ export function WorkspaceTrustDialog({
   const [newFolderName, setNewFolderName] = useState("");
   const [folderSubmitting, setFolderSubmitting] = useState(false);
 
-  // Ingest (mode="ingest"): filtro de tipo + job de indexação em progresso.
-  const [fileTypes, setFileTypes] = useState<"code" | "markdown" | "all">(
-    "all",
-  );
-  // Extensões customizadas (ex. "xml, tscn") — quando preenchido, ignora o
-  // atalho `fileTypes` e filtra só por essas extensões.
-  const [customExtensions, setCustomExtensions] = useState("");
+  // Ingest (mode="ingest"): filtros de extensão por inclusão/exclusão
+  // (separados por vírgula — ex. "xml, tscn"). includeExts restringe os
+  // formatos indexados; excludeExts remove formatos específicos.
+  const [includeExts, setIncludeExts] = useState("");
+  const [excludeExts, setExcludeExts] = useState("");
   const [bucketName, setBucketName] = useState("");
   const [ingestJobId, setIngestJobId] = useState<string | null>(null);
   const ingestJob = useRagJobsStore((s) =>
@@ -186,7 +185,8 @@ export function WorkspaceTrustDialog({
       setGitInit(true);
       setError(null);
       setIngestJobId(null);
-      setFileTypes("all");
+      setIncludeExts("");
+      setExcludeExts("");
       setPathInput(initialPath ?? "");
       lastLoadedPathRef.current = null;
       setTab("local");
@@ -320,16 +320,14 @@ export function WorkspaceTrustDialog({
       }
       onConfirmPath?.(listing.path);
       setSubmitting(true);
-      const customList = customExtensions
-        .split(",")
-        .map((ext) => ext.trim())
-        .filter(Boolean);
-      const jobId = await ragStart(
-        wsId,
-        listing.path,
-        customList.length > 0 ? customList : fileTypes,
-        bucketName.trim() || undefined,
-      );
+      // Filtros de extensão (CSV de formatos) — substituem o atalho de tipos.
+      const includeVal = includeExts.trim();
+      const excludeVal = excludeExts.trim();
+      const jobId = await ragStart(wsId, listing.path, "all", {
+        includeExts: includeVal || undefined,
+        excludeExts: excludeVal || undefined,
+        bucketName: bucketName.trim() || undefined,
+      });
       setSubmitting(false);
       if (jobId) setIngestJobId(jobId);
       else setError(m.workspace_ingest_failed());
@@ -367,6 +365,9 @@ export function WorkspaceTrustDialog({
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
               ) : ingestJob?.status === "no_files" ? (
                 <Database className="h-4 w-4 shrink-0 text-muted-foreground" />
+              ) : ingestJob?.status === "failed" ||
+                ingestJob?.status === "paused" ? (
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
               ) : (
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
               )}
@@ -374,39 +375,48 @@ export function WorkspaceTrustDialog({
                 {ingestJob?.path}
               </span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-muted/60">
-              <div
-                className="h-full bg-primary transition-all duration-300"
-                style={{
-                  width: `${
-                    ingestJob && ingestJob.total > 0
-                      ? Math.min(
-                          100,
-                          Math.round(
-                            (ingestJob.processed / ingestJob.total) * 100,
-                          ),
-                        )
-                      : ingestJob?.status === "done"
-                        ? 100
-                        : 5
-                  }%`,
-                }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {ingestJob?.status === "no_files"
-                ? m.workspace_ingest_no_files()
-                : `${ingestJob?.processed ?? 0} / ${ingestJob?.total ?? 0} ${m.workspace_ingest_chunks()}`}
-            </p>
+            {/* Erro de indexação (ex.: rate limit do Cohere) — refletido no
+            modal, não só na Memory tab. */}
+            {(ingestJob?.status === "failed" ||
+              ingestJob?.status === "paused") &&
+            ingestJob?.errorReason ? (
+              <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <span className="break-words text-amber-700 dark:text-amber-400">
+                  {ingestJob.errorReason}
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted/60">
+                  <div
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{
+                      width: `${
+                        ingestJob && ingestJob.total > 0
+                          ? Math.min(
+                              100,
+                              Math.round(
+                                (ingestJob.processed / ingestJob.total) * 100,
+                              ),
+                            )
+                          : ingestJob?.status === "done"
+                            ? 100
+                            : 5
+                      }%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {ingestJob?.status === "no_files"
+                    ? m.workspace_ingest_no_files()
+                    : `${ingestJob?.processed ?? 0} / ${ingestJob?.total ?? 0} ${m.workspace_ingest_chunks()}`}
+                </p>
+              </>
+            )}
             <DialogFooter>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>
                 {m.workspace_ingest_minimize()}
-              </Button>
-              <Button
-                onClick={() => onOpenChange(false)}
-                disabled={ingestJob?.status === "indexing"}
-              >
-                {m.workspace_ingest_done()}
               </Button>
             </DialogFooter>
           </div>
@@ -456,36 +466,26 @@ export function WorkspaceTrustDialog({
               <>
                 {mode === "ingest" && (
                   <div className="space-y-2">
-                    <Select
-                      value={fileTypes}
-                      onValueChange={(v) =>
-                        setFileTypes(v as "code" | "markdown" | "all")
-                      }
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          {m.workspace_ingest_types_all()}
-                        </SelectItem>
-                        <SelectItem value="code">
-                          {m.workspace_ingest_types_code()}
-                        </SelectItem>
-                        <SelectItem value="markdown">
-                          {m.workspace_ingest_types_markdown()}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">
-                        {m.workspace_ingest_custom_extensions_label()}
+                        {m.workspace_ingest_include_label()}
                       </label>
                       <Input
                         className="h-8 text-xs"
-                        value={customExtensions}
-                        onChange={(e) => setCustomExtensions(e.target.value)}
-                        placeholder={m.workspace_ingest_custom_extensions_placeholder()}
+                        value={includeExts}
+                        onChange={(e) => setIncludeExts(e.target.value)}
+                        placeholder={m.workspace_ingest_include_placeholder()}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        {m.workspace_ingest_exclude_label()}
+                      </label>
+                      <Input
+                        className="h-8 text-xs"
+                        value={excludeExts}
+                        onChange={(e) => setExcludeExts(e.target.value)}
+                        placeholder={m.workspace_ingest_exclude_placeholder()}
                       />
                     </div>
                     <div className="space-y-1">

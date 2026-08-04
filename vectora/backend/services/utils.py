@@ -135,8 +135,9 @@ def _build_concrete_model(  # noqa: PLR0911
             if not api_key:
                 msg = "COHERE_API_KEY não configurado. Adicione ao seu .env para usar o provider cohere."
                 raise ValueError(msg)
-            # NÃO usar SecretStr: o get_from_dict_or_env do langchain-core faz
-            # str(SecretStr) → "**********", causando 401 na API do Cohere.
+            # ChatCohere aceita a key como SecretStr (o SDK do chat resolve
+            # internamente); o CohereEmbeddings exige string crua — ver
+            # backend/embedding/background.py.
             return ChatCohere(
                 cohere_api_key=SecretStr(api_key),
                 model=model_name,

@@ -59,28 +59,75 @@ _CODE_EXTS = {
 }
 
 
-def _matches_file_type(path: Path, file_types: str | list[str]) -> bool:
-    """`file_types` aceita os 3 atalhos (`"all"`/`"code"`/`"markdown"`) ou
-    uma lista de extensões customizadas (ex. `["xml"]`, sem ponto ou com —
-    normalizado) — usada pra indexar só um formato específico, como docs de
-    engine que só existem em XML."""
-    ext = path.suffix.lstrip(".").lower()
+def _split_ext_list(
+    value: str | list[str] | None,
+) -> set[str]:
+    """Normaliza uma entrada de extensões (string CSV ou lista) para um set.
+
+    Aceita extensões com ou sem ponto, separadas por vírgula/espaço quando
+    string (ex. ``"xml, tscn"``). Vazio/None → set vazio.
+    """
+    if value is None:
+        return set()
+    if isinstance(value, str):
+        parts = [p.strip() for p in value.replace(";", ",").split(",")]
+    else:
+        parts = [str(p) for p in value]
+    return {p.lstrip(".").lower() for p in parts if p}
+
+
+def _type_allowed_exts(file_types: str | list[str]) -> set[str] | None:
+    """Conjunto de extensões permitidas pelo atalho ``file_types``.
+
+    ``None`` significa \"todos\" (o atalho ``\"all\"`` ou lista vazia).
+    ``file_types`` mantém os 3 atalhos por compatibilidade
+    (``\"all\"``/``\"code\"``/``\"markdown\"``) ou uma lista de extensões
+    customizadas (ex. ``[\"xml\"]``).
+    """
     if isinstance(file_types, list):
-        if not file_types:
-            return True
-        normalized = {t.lstrip(".").lower() for t in file_types}
-        return ext in normalized
+        return None if not file_types else {t.lstrip(".").lower() for t in file_types}
     if file_types == "markdown":
-        return ext in {"md", "markdown", "mdx"}
+        return {"md", "markdown", "mdx"}
     if file_types == "code":
-        return ext in _CODE_EXTS
-    return True  # "all"
+        return _CODE_EXTS
+    return None  # "all"
+
+
+def _matches_file_type(
+    path: Path,
+    file_types: str | list[str] = "all",
+    *,
+    include_exts: str | list[str] | None = None,
+    exclude_exts: str | list[str] | None = None,
+) -> bool:
+    """Decide se ``path`` entra na indexação.
+
+    Os filtros ``include_exts``/``exclude_exts`` (string CSV ou lista)
+    sobrepõem o atalho ``file_types``: quando ``include_exts`` é fornecido,
+    só entram arquivos com uma daquelas extensões; ``exclude_exts`` remove
+    sempre (precedência máxima). Sem filtros e com ``file_types=\"all\"`` →
+    tudo (default).
+    """
+    ext = path.suffix.lstrip(".").lower()
+
+    exclude = _split_ext_list(exclude_exts)
+    if exclude and ext in exclude:
+        return False
+
+    include = _split_ext_list(include_exts)
+    if include:
+        return ext in include
+
+    allowed = _type_allowed_exts(file_types)
+    return True if allowed is None else ext in allowed
 
 
 async def ingest_directory(
     directory_path: str,
     *,
     file_types: str | list[str] = "all",
+    include_exts: str | list[str] | None = None,
+    exclude_exts: str | list[str] | None = None,
     collection: str = "articles",
     workspace_id: str | None = None,
     job_id: str | None = None,
@@ -88,7 +135,9 @@ async def ingest_directory(
     """Varre uma pasta, faz chunk e enfileira no RAG agrupado por ``job_id``.
 
     Respeita ``.gitignore``/``.vectoraignore`` (via ``walk_files``) e filtra
-    por tipo de arquivo. Não bloqueia: o worker de embedding processa a fila.
+    por tipo de arquivo — ver ``_matches_file_type`` (atalhos ``file_types``
+    + filtros ``include_exts``/``exclude_exts`` em CSV). Não bloqueia: o
+    worker de embedding processa a fila.
 
     Returns:
         ``{job_id, total_files, total_chunks, status}``.
@@ -105,7 +154,16 @@ async def ingest_directory(
     job = job_id or str(uuid4())
     spec = load_ignore_spec(path)
     all_files, _skipped = walk_files(path, "**/*", spec)
-    files = [f for f in all_files if _matches_file_type(f, file_types)]
+    files = [
+        f
+        for f in all_files
+        if _matches_file_type(
+            f,
+            file_types,
+            include_exts=include_exts,
+            exclude_exts=exclude_exts,
+        )
+    ]
 
     if not files:
         return {

@@ -388,7 +388,7 @@ async def vector_search(
         # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
         # not the actual value, causing a 401 from Cohere.
         embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=SecretStr(api_key),
+            cohere_api_key=api_key,
             model=settings.embedding_model,
         )
 

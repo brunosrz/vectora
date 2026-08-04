@@ -193,10 +193,8 @@ def _build_index(embedding_model: str | None) -> Any:
         # em "**********" como API key. Passar a string diretamente.
         # NOTE: CohereEmbeddings stubs exigem client/async_client que são
         # opcionais em runtime. Mesmo padrão de src/services/background.py.
-        from pydantic import SecretStr
-
         _embeddings = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=SecretStr(_key),
+            cohere_api_key=_key,
             model=_model,
         )
 

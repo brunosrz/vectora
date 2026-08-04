@@ -3494,6 +3494,10 @@ class RagIngestRequest(BaseModel):
     # "code" | "markdown" | "all", ou uma lista de extensões customizadas
     # (ex. ["xml"]) — indexa só arquivos com essas extensões.
     file_types: str | list[str] = "all"
+    # Filtros de extensão (string CSV ou lista) que sobrepõem o atalho
+    # file_types: include_exts restringe, exclude_exts sempre remove.
+    include_exts: str | list[str] | None = None
+    exclude_exts: str | list[str] | None = None
     bucket_name: str | None = None
 
 
@@ -3733,6 +3737,8 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
             result = await ingest_directory(
                 body.path,
                 file_types=body.file_types,
+                include_exts=body.include_exts,
+                exclude_exts=body.exclude_exts,
                 collection=collection,
                 workspace_id=workspace_id or None,
                 job_id=job_id,

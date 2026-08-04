@@ -76,6 +76,39 @@ class TestMatchesFileTypeCustomExtensions:
         assert rag_ingest._matches_file_type(Path("qualquer.ext"), "all")
 
 
+class TestMatchesFileTypeIncludeExclude:
+    def test_include_csv_restricts_formats(self) -> None:
+        assert rag_ingest._matches_file_type(Path("a.xml"), include_exts="xml, tscn")
+        assert rag_ingest._matches_file_type(
+            Path("scene.tscn"), include_exts="xml, tscn"
+        )
+        assert not rag_ingest._matches_file_type(
+            Path("readme.md"), include_exts="xml, tscn"
+        )
+
+    def test_include_list_of_extensions(self) -> None:
+        assert rag_ingest._matches_file_type(Path("a.xml"), include_exts=["xml"])
+        assert not rag_ingest._matches_file_type(Path("a.md"), include_exts=["xml"])
+
+    def test_include_ignores_leading_dot(self) -> None:
+        assert rag_ingest._matches_file_type(Path("a.xml"), include_exts=".xml")
+
+    def test_exclude_removes_even_with_all_preset(self) -> None:
+        assert not rag_ingest._matches_file_type(
+            Path("pkg.lock"), exclude_exts="md, lock"
+        )
+        assert rag_ingest._matches_file_type(Path("readme.md"), exclude_exts="lock")
+
+    def test_include_and_exclude_combined(self) -> None:
+        # include restringe; exclude remove mesmo dentro do include.
+        assert rag_ingest._matches_file_type(
+            Path("a.xml"), include_exts="xml, md", exclude_exts="lock"
+        )
+        assert not rag_ingest._matches_file_type(
+            Path("a.lock"), include_exts="xml, lock", exclude_exts="lock"
+        )
+
+
 @pytest.mark.asyncio
 async def test_ingest_markdown_only(tmp_path: Path, _patched: _FakeQueue) -> None:
     _make_tree(tmp_path)
