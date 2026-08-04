@@ -669,7 +669,7 @@ async def stream_chat(
         )
         human_msg = _prepend_text_context(human_msg, planning_prefix)
 
-    # Pins (WB-1): injeta o conteúdo dos arquivos fixados no turno, para que
+    # Injeta o conteúdo dos arquivos fixados (pins) no turno, para que
     # "fixar" mantenha o arquivo no contexto do agente. Só em modo Dev (chat
     # puro não tem workspace). Defensivo — falha aqui nunca impede a conversa.
     if not chat_mode and workspace_id:

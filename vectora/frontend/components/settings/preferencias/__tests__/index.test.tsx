@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * PreferenciasDialog — alinhamento da barra de sub-abas (Sprint 12).
+ * PreferenciasDialog — alinhamento da barra de sub-abas.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
@@ -48,7 +48,7 @@ afterEach(() => {
 });
 
 describe("PreferenciasDialog", () => {
-  it("barra de sub-abas compensa o px-3 do TabsTrigger com -ml-3, alinhando o texto com o conteúdo abaixo (Sprint 12)", async () => {
+  it("barra de sub-abas compensa o px-3 do TabsTrigger com -ml-3, alinhando o texto com o conteúdo abaixo", async () => {
     render(<PreferenciasDialog />);
 
     await waitFor(() => {

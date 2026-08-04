@@ -11,10 +11,8 @@ from backend.transport.base import DirEntry, RunResult
 class LocalTransport:
     """Implementação direta sobre ``pathlib`` e ``asyncio.create_subprocess_exec``.
 
-    Wrapper transparente: nada de novo aqui — só consolida o filesystem
-    local atrás do mesmo Protocol que SSH/Codespace vão implementar
-    (G.2.4/5). Refactor das tools (G.2.3) vai eliminar o `open()` e
-    `subprocess` diretos no fs.py/git.py em favor desse backend.
+    Consolida o filesystem local atrás do mesmo Protocol implementado
+    por :class:`SshTransport` e :class:`CodespaceTransport`.
     """
 
     async def list_dir(self, path: str) -> list[DirEntry]:

@@ -1,11 +1,8 @@
 """Tools nativas utilitárias (backend/tools/native/) — cobre caminho feliz
-+ erro para cada uma das tools realmente registradas em ALL_TOOLS:
-time_now, time_parse, http_request (cada uma em seu próprio módulo) e
++ erro para cada uma das tools registradas em ALL_TOOLS: time_now,
+time_parse, http_request (cada uma em seu próprio módulo) e
 hash_text/base64_encode/base64_decode/jwt_decode/regex_test/json_query
-(consolidadas em crypto_utils.py). Os 7 arquivos duplicados que existiam
-em native/ (hash.py, base64_tool.py, http.py, json_query.py, jwt_tool.py,
-regex.py, time.py) nunca eram importados por `ALL_TOOLS` — código morto,
-removido nesta sprint; este arquivo passa a testar as versões reais.
+(consolidadas em crypto_utils.py).
 """
 
 from __future__ import annotations

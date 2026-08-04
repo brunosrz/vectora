@@ -1,4 +1,4 @@
-"""TDD — Background Memory Consolidation (FASE 4.3).
+"""Background Memory Consolidation.
 
 Job periódico que sintetiza as últimas 10 threads via LLM e atualiza
 ~/.vectora/AGENTS.md para que o agente tenha contexto persistente.

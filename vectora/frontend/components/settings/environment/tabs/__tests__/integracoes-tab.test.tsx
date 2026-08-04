@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Testes da IntegracoesTab — INT-8 + Sprint 12 (fusão com a antiga EnvsTab).
+ * Testes da IntegracoesTab.
  *
  * Cobre:
  * - Renderização com lista de integrações do backend (conectado / não conectado)
@@ -303,10 +303,9 @@ describe("IntegracoesTab", () => {
   });
 
   it("providers OAuth-only (gitlab/google/slack) também aceitam token manual", async () => {
-    // Erro/borda: antes só kind="apikey"|"hybrid" mostrava o botão de
-    // expandir pra colar token — providers OAuth-only (kind="oauth" sem
-    // hybrid) não tinham alternativa ao fluxo OAuth completo. Agora todos
-    // ganham o botão de expandir (title = "Colar token manualmente").
+    // Todo provider, independente de kind, expõe o botão de expandir pra
+    // colar token manualmente (title = "Colar token manualmente") — o fluxo
+    // OAuth não é a única via.
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
@@ -327,10 +326,9 @@ describe("IntegracoesTab", () => {
   });
 
   it("GitLab sem OAuth App configurado não mostra 'Conectar via OAuth' e já expõe o campo de token", async () => {
-    // Par de erro/borda do fix real: sem GITLAB_OAUTH_CLIENT_ID/SECRET no
-    // backend, o botão sempre falharia com 503 — a UI não deve nem
-    // oferecê-lo, e o token manual (única opção que funciona) já vem
-    // aberto, sem exigir um clique a mais no chevron.
+    // Sem GITLAB_OAUTH_CLIENT_ID/SECRET configurado no backend, o botão de
+    // OAuth não é oferecido; o campo de token manual (única opção
+    // funcional) já vem aberto, sem exigir clique extra no chevron.
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
@@ -612,7 +610,7 @@ describe("IntegracoesTab", () => {
     expect(keyInput.type).toBe("text");
   });
 
-  it("erro real do backend (com detail) aparece na UI da variável customizada, não a mensagem genérica (Sprint 11.3)", async () => {
+  it("erro real do backend (com detail) aparece na UI da variável customizada, não a mensagem genérica", async () => {
     global.fetch = vi
       .fn()
       .mockImplementation((url: string, init?: RequestInit) => {
@@ -666,7 +664,7 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("fetchIntegrations loga o erro no console quando a resposta falha, em vez de engolir silenciosamente (Sprint 11.3)", async () => {
+  it("fetchIntegrations loga o erro no console quando a resposta falha, em vez de engolir silenciosamente", async () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -704,9 +702,8 @@ describe("IntegracoesTab — instrução inline de credencial", () => {
   });
 
   it("integração fora das categorias fixas ainda renderiza — o catálogo é do backend, a lista de categorias é do frontend", async () => {
-    // Erro/borda que motivou o fallback: telegram/discord/email-connect
-    // existiam no catálogo do backend e não apareciam em tela nenhuma,
-    // porque `CATEGORIES` só monta cards de ids que ela própria lista.
+    // Uma integração com id fora de `CATEGORIES` cai no fallback de
+    // categoria genérica em vez de desaparecer da tela.
     mockFetch([
       ...BASE_INTEGRATIONS,
       {

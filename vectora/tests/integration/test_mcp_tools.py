@@ -154,8 +154,8 @@ class TestMcpFileTools:
         import backend.mcp.server as srv
         from backend.mcp.server import file_read_tool, file_write_tool
 
-        # Gate de aprovação MCP (Sprint 48) não é o que este teste cobre —
-        # aprova explicitamente pra exercer só o roundtrip write/read.
+        # O gate de aprovação MCP não é o que este teste cobre — aprova
+        # explicitamente pra exercer só o roundtrip write/read.
         monkeypatch.setattr(srv, "_mcp_write_approval_error", lambda: None)
 
         test_file = project_tmp_dir / "roundtrip.txt"

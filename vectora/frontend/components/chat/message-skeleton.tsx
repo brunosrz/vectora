@@ -1,5 +1,5 @@
 /**
- * MessageSkeleton — M4 (Loading skeletons)
+ * MessageSkeleton — Loading skeleton
  *
  * Exibido enquanto o histórico de uma thread está carregando.
  * Simula a forma visual de 3 mensagens alternadas (user + assistant + assistant).
@@ -67,7 +67,7 @@ export const MessageSkeletons = memo(function MessageSkeletons() {
 });
 
 /**
- * Alias — UX-9 padroniza o nome `MessageListSkeleton` entre os skeletons do
+ * Alias — padroniza o nome `MessageListSkeleton` entre os skeletons do
  * produto (`ThreadListSkeleton`, `FileTreeSkeleton`, `DiffSkeleton`,
  * `MessageListSkeleton`). Mantém `MessageSkeletons` para não quebrar imports
  * existentes.

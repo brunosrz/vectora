@@ -1,11 +1,11 @@
 """STT nativo do OpenRouter — ``POST /audio/transcriptions``.
 
-Terceiro formato de requisição do conjunto: as outras capacidades mandam JSON,
-esta manda **multipart** com o arquivo de áudio. Por isso o cliente ganha
-``post_multipart`` em vez de reaproveitar ``post_json``.
+Esse endpoint recebe **multipart** com o arquivo de áudio, diferente dos
+demais endpoints do provider que mandam JSON — por isso o cliente usa
+``post_multipart`` em vez de ``post_json``.
 
-O Vectora já transcreve por Whisper/Gemini
-(``backend/llm/transcription.py``); este sprint soma o OpenRouter à cadeia.
+`transcribe_audio` (``backend/llm/transcription.py``) inclui o OpenRouter
+como provider de STT, junto com Whisper e Gemini.
 """
 
 from __future__ import annotations
@@ -45,8 +45,7 @@ class TestTranscricao:
 
     @pytest.mark.asyncio
     async def test_manda_multipart_com_arquivo_e_nao_json(self):
-        """O endpoint é multipart. Mandar JSON aqui rende 400 do provider —
-        é o motivo de `post_multipart` existir separado de `post_json`."""
+        """O endpoint é multipart; mandar JSON aqui rende 400 do provider."""
         capturado: dict[str, str] = {}
 
         def handler(req: httpx.Request) -> httpx.Response:
@@ -181,8 +180,9 @@ class TestCadeiaDeTranscricao:
 
     @pytest.mark.asyncio
     async def test_sem_nenhuma_chave_continua_com_erro_claro(self, monkeypatch):
-        """Erro/borda: somar o OpenRouter à cadeia não pode ter apagado a
-        mensagem de "nenhuma chave configurada"."""
+        """Erro/borda: sem nenhum provider de STT configurado, o erro
+        identifica que falta chave, independente de qual provider seria
+        usado."""
         from backend.llm import transcription
         from backend.settings import settings as _s
 

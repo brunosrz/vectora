@@ -1,5 +1,4 @@
-"""Delegate — worktree isolado por task (Sprint 12 do plano de
-extensibilidade).
+"""Delegate — worktree isolado por task.
 
 Cada subagent task que edita arquivos pode rodar num git worktree próprio
 em vez do working tree principal, evitando que tasks concorrentes pisem

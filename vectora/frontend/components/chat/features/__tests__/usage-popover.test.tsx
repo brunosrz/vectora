@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * O medidor da appbar mostrava só a janela de contexto. Agora agrega o
- * consumo real dos providers (`GET /usage/providers`).
+ * O medidor da appbar agrega o consumo real dos providers
+ * (`GET /usage/providers`) além da janela de contexto.
  *
  * O invariante que importa: provider com falha aparece **como falha**, não
  * zerado — "0 crédito" faria o usuário achar que não gastou nada.
@@ -69,8 +69,8 @@ describe("UsagePopover — consumo por provider", () => {
   });
 
   it("provider com erro aparece como indisponível, não como zero", async () => {
-    // Erro/borda central do sprint: `used: 0` seria uma mentira — a consulta
-    // falhou, o consumo é desconhecido.
+    // `used: 0` seria uma mentira — a consulta falhou, o consumo é
+    // desconhecido.
     mockUsage([
       {
         provider: "openrouter",
@@ -92,7 +92,6 @@ describe("UsagePopover — consumo por provider", () => {
   });
 
   it("sem provider configurado mostra só a janela de contexto", async () => {
-    // Regressão: o comportamento anterior continua sendo o piso.
     mockUsage([]);
 
     await abrir();

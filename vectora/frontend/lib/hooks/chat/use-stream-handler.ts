@@ -81,7 +81,7 @@ function yieldToBrowser(): Promise<void> {
 }
 
 // ============================================================================
-// UX-15 — Resiliência de rede: status do SSE
+// Resiliência de rede: status do SSE
 // ============================================================================
 //
 // Não há `EventSource` aqui — o stream é lido via `fetch().body` (SSE manual,
@@ -265,7 +265,7 @@ export function useStreamHandler({
 
       let assistantContent = "";
       let resolvedRunId: string | undefined;
-      // UX-15 — primeiro evento recebido = conexão SSE estabelecida
+      // Primeiro evento recebido = conexão SSE estabelecida
       let sseConnected = false;
       // true só quando o loop termina por done/error/abort explícitos — se o
       // async generator simplesmente esgotar sem nenhum desses (queda de
@@ -318,7 +318,7 @@ export function useStreamHandler({
       // de separação (só quando há conteúdo prévio na bolha).
       let needsSeparator = false;
 
-      // UX-18 — marca início; `finally` desmarca por qualquer saída conhecida
+      // Marca início; `finally` desmarca por qualquer saída conhecida
       // (done/hitl/error/abort). Se a aba fechar/recarregar no meio, a marca
       // sobrevive e o próximo mount acusa "resposta pode ter sido interrompida".
       markStreamStarted(threadId);
@@ -335,7 +335,7 @@ export function useStreamHandler({
         );
 
         for await (const event of events) {
-          // UX-15 — primeiro evento do stream = conexão SSE de fato estabelecida
+          // Primeiro evento do stream = conexão SSE de fato estabelecida
           if (!sseConnected) {
             sseConnected = true;
             announceSSEConnected();
@@ -473,7 +473,7 @@ export function useStreamHandler({
             })),
           );
         } else {
-          // UX-15 — distingue queda de transporte (badge "Reconectando…") de
+          // Distingue queda de transporte (badge "Reconectando…") de
           // erro de aplicação reportado pelo próprio backend via evento `error`.
           announceSSEDropped(err);
           // Queda de transporte: preserva qualquer conteúdo parcial já
@@ -501,7 +501,7 @@ export function useStreamHandler({
         if (wantsNewWorkspace && !newWorkspaceConfirmed) {
           markCreateNewWorkspace(threadId);
         }
-        // UX-18 — qualquer saída conhecida do loop desmarca a thread como
+        // Qualquer saída conhecida do loop desmarca a thread como
         // "streaming em andamento". Se terminou sem done/error/abort (loop
         // esgotou em silêncio), a marca fica — mesmo já reconciliado acima,
         // preserva o aviso "resposta pode ter sido interrompida" num
@@ -551,19 +551,19 @@ export function useStreamHandler({
       );
 
       let assistantContent = "";
-      // UX-15 — primeiro evento recebido = conexão SSE estabelecida
+      // Primeiro evento recebido = conexão SSE estabelecida
       let sseConnected = false;
       // Mesma defesa em profundidade de processStream — ver comentário lá.
       let streamCompletedNormally = false;
 
-      // UX-18 — mesma marca de "stream em andamento" do processStream
+      // Mesma marca de "stream em andamento" do processStream
       markStreamStarted(threadId);
 
       try {
         const events = resumeChat(request, abortRef.current?.signal);
 
         for await (const event of events) {
-          // UX-15 — primeiro evento do stream = conexão SSE de fato estabelecida
+          // Primeiro evento do stream = conexão SSE de fato estabelecida
           if (!sseConnected) {
             sseConnected = true;
             announceSSEConnected();
@@ -629,7 +629,7 @@ export function useStreamHandler({
         if ((err as { name?: string }).name === "AbortError") {
           streamCompletedNormally = true;
         } else {
-          // UX-15 — mesma distinção transporte vs. aplicação do processStream
+          // Mesma distinção transporte vs. aplicação do processStream
           announceSSEDropped(err);
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
@@ -641,7 +641,7 @@ export function useStreamHandler({
           );
         }
       } finally {
-        // UX-18 — qualquer saída conhecida do loop (done/hitl/error/abort)
+        // Qualquer saída conhecida do loop (done/hitl/error/abort)
         // desmarca a thread como "streaming em andamento"; só sobra marcado
         // o caso em que a aba fechou/recarregou no meio da resposta (mesma
         // lógica de processStream — ver comentário lá).

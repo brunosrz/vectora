@@ -1,11 +1,11 @@
 """Memory tools: persistência de memórias entre sessões.
 
-Migrado para LangGraph BaseStore (E.B-11): usa ``langgraph.config.get_store()``
-para acessar o store injetado em ``create_deep_agent(store=...)``.
+Usa ``langgraph.config.get_store()`` para acessar o LangGraph BaseStore
+injetado em ``create_deep_agent(store=...)``.
 
 As memórias são isoladas por usuário no namespace ``("user", <user_id>, "memories")``,
 garantindo isolamento entre usuários e compatibilidade com o StoreBackend do
-CompositeBackend (E.B-8).
+CompositeBackend.
 """
 
 from __future__ import annotations

@@ -319,10 +319,9 @@ describe("killBackendTree", () => {
     expect(() => process.kill(pid, 0)).toThrow();
   });
 
-  // Cenário real do bug de órfãos investigado nesta sprint: o processo
-  // Python spawna o nats-server como SEU filho — matar só o pai (sem
-  // matar a árvore) deixa o filho vivo. Este teste replica isso com um
-  // "neto" de verdade (child_process.spawn dentro do dummy-backend),
+  // O processo Python spawna o nats-server como seu filho — matar só o pai
+  // (sem matar a árvore) deixaria o filho vivo. Este teste replica isso com
+  // um "neto" de verdade (child_process.spawn dentro do dummy-backend),
   // confirmando que killBackendTree mata os dois, não só o pai.
   it("mata a árvore inteira — o 'neto' spawnado pelo processo também morre", async () => {
     const port = await getFreePort();

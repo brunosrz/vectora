@@ -1,4 +1,4 @@
-"""Pins de sessão — persistência no backend (WB-1).
+"""Pins de sessão — persistência no backend.
 
 Contrato:
 1. _set_session_pins() grava a lista em vectora_sessions.extra["pins"],

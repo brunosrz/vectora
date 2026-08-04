@@ -1,12 +1,10 @@
 """``vectora doctor`` — encontra e limpa sidecars órfãos (nats-server) e
 diagnostica o AI Jail no Windows.
 
-Mitigação imediata para processos já acumulados numa máquina antes desta
-correção existir (ver Sprint NATS fix): varre TODOS os processos
-``nats-server`` do sistema por nome de imagem, não só os PIDs conhecidos
-pelo pid file de ``backend/scheduling/nats_sidecar.py`` — órfãos de
-sessões anteriores ao fix (ou de bugs anteriores) podem ter caído fora
-até dessa lista.
+Varre TODOS os processos ``nats-server`` do sistema por nome de imagem,
+não só os PIDs conhecidos pelo pid file de
+``backend/scheduling/nats_sidecar.py`` — assim também encontra órfãos
+que ficaram fora desse rastreamento.
 
 No Windows, também reporta o status do caminho real de sandbox (WSL2 —
 bwrap não roda nativo nesse SO, e Docker não é o caminho certo pra isso,
@@ -68,8 +66,8 @@ def _find_nats_server_pids_posix() -> list[int]:
 
 def find_nats_server_pids() -> list[int]:
     """Varre o sistema por nome de imagem — não depende de nenhum PID
-    file conhecido, então acha órfãos que o rastreamento normal já
-    perdeu (ex.: de antes desta correção)."""
+    file conhecido, então acha órfãos que o rastreamento normal (pid
+    file de ``nats_sidecar.py``) não cobre."""
     if sys.platform == "win32":
         return _find_nats_server_pids_win32()
     return _find_nats_server_pids_posix()

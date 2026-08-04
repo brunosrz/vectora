@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * WorkspaceTrustDialog (Q6)
+ * WorkspaceTrustDialog
  *
  * Fluxo de "trust folder": directory browser para escolher uma pasta,
  * confirmação explícita de confiança (explica os guard rails de escopo) e
@@ -67,7 +67,7 @@ interface WorkspaceTrustDialogProps {
   mode?: "trust" | "ingest";
   /** Callback opcional disparado no confirmar — recebe o path absoluto. */
   onConfirmPath?: (path: string) => void;
-  /** Pré-navega para esse caminho ao abrir (F.3.5 — quick access). */
+  /** Pré-navega para esse caminho ao abrir. */
   initialPath?: string;
 }
 
@@ -78,7 +78,7 @@ export function WorkspaceTrustDialog({
   onConfirmPath,
   initialPath,
 }: WorkspaceTrustDialogProps) {
-  // UX-16 — todo o fluxo (browse, trust, SSH, codespaces) depende do backend.
+  // Todo o fluxo (browse, trust, SSH, codespaces) depende do backend.
   const { offline } = useNetworkStatus();
   const create = useWorkspacesStore((s) => s.create);
   const getActive = useWorkspacesStore((s) => s.getActive);
@@ -199,7 +199,7 @@ export function WorkspaceTrustDialog({
     }
   }, [open, load, initialPath]);
 
-  // G.2.6 — carrega SSH keys e codespaces ao trocar de tab.
+  // Carrega SSH keys e codespaces ao trocar de tab.
   useEffect(() => {
     if (!open) return;
     if (tab === "ssh") {
@@ -412,7 +412,7 @@ export function WorkspaceTrustDialog({
           </div>
         ) : (
           <>
-            {/* G.2.6 — tabs Local / SSH / Codespace.
+            {/* Tabs Local / SSH / Codespace.
             mode="ingest" mantém só Local: ingest é fluxo local-only. */}
             {mode === "trust" && (
               <div className="flex gap-1 border-b border-border/60 pb-1">

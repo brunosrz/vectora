@@ -1,6 +1,6 @@
 """Tests para o campo ``name`` em src/services/auth.py.
 
-Cobre o que foi adicionado depois do Bloco C inicial:
+Cobre:
 - ``signup(..., name=...)`` aceita UTF-8 livre, sanitiza e limita.
 - ``update_profile(user_id, name=...)`` atualiza e devolve o User novo.
 - ``_row_to_user`` tolera bancos antigos sem a coluna (migration idempotente).

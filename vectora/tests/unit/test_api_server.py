@@ -44,13 +44,9 @@ def client(headless_app):
 
 
 class TestLifespan:
-    """Regressão: o ciclo de vida do app precisa INICIAR o embedding worker.
-
-    O bug original: ``_lifespan`` parava o BackgroundEmbeddingWorker no shutdown
-    mas nunca o iniciava no startup, então os chunks enfileirados por
-    ``ingest_docs``/``ingest_directory`` ficavam "pending" para sempre e o RAG
-    nunca recuperava nada — sem nenhum teste pegando isso (os testes de RAG
-    mockavam LanceDB/Cohere e davam falso verde).
+    """``_lifespan`` inicia o BackgroundEmbeddingWorker no startup (além de
+    pará-lo no shutdown), para que chunks enfileirados por
+    ``ingest_docs``/``ingest_directory`` sejam processados pelo RAG.
     """
 
     def test_lifespan_starts_embedding_worker(self, headless_app, monkeypatch):
@@ -82,10 +78,9 @@ class TestLifespan:
     def test_lifespan_runs_thread_cleanup_immediately_at_boot(
         self, headless_app, monkeypatch
     ):
-        """Regressão: o loop de limpeza de threads vazias só rodava a
-        primeira vez após 1h de sleep — threads fantasma de uma sessão
-        anterior (crash/cancelamento antes do 1º envio) ficavam visíveis
-        até essa 1ª execução tardia a cada restart do backend."""
+        """`cleanup_empty_threads` roda imediatamente no boot, sem esperar
+        o primeiro `asyncio.sleep` do loop de limpeza — threads vazias de
+        sessões anteriores não ficam visíveis até essa espera."""
         import backend.api.handlers.threads as threads_handler
 
         call_count = {"value": 0}
@@ -217,7 +212,7 @@ class TestWorkspacesActive:
 
 
 # ---------------------------------------------------------------------------
-# MCP sempre-ativo (Sprint 2) — montado em /mcp + lifespan composto
+# MCP sempre-ativo — montado em /mcp + lifespan composto
 # ---------------------------------------------------------------------------
 
 
@@ -233,15 +228,12 @@ class TestMcpMount:
         assert "/api/tools/schema" in paths
 
     def test_lifespan_nao_roda_bootstrap_de_env_do_mcp(self, headless_app, monkeypatch):
-        """Regressão: `vectora start`/`vectora web` não deve absorver
-        silenciosamente GOOGLE_API_KEY/COHERE_API_KEY/TAVILY_API_KEY/
-        VECTORA_TOKEN etc. de qualquer variável de ambiente do processo em
-        todo boot — isso persistia keys "fantasma" (sobras de ambiente do
-        SO de sessões antigas) como se o usuário as tivesse configurado, sem
-        indicar a origem. O bootstrap via env só é legítimo no entrypoint
-        stdio real (`vectora-mcp`, `backend/mcp/server.py::_mcp_lifespan`),
-        onde um cliente MCP registry de fato injeta as keys — nunca no boot
-        HTTP do FastAPI."""
+        """O boot HTTP do FastAPI (`vectora start`/`vectora web`) não chama
+        `bootstrap_env_from_mcp` — absorver GOOGLE_API_KEY/COHERE_API_KEY/
+        TAVILY_API_KEY/VECTORA_TOKEN etc. de variáveis de ambiente do
+        processo é exclusivo do entrypoint stdio real (`vectora-mcp`,
+        `backend/mcp/server.py::_mcp_lifespan`), onde um cliente MCP
+        registry injeta as keys explicitamente."""
         import backend.mcp.env_bootstrap as eb
 
         called = {"value": False}

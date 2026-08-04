@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * TDD — Traces colapsáveis (FASE 3.3)
+ * Traces colapsáveis
  *
  * Tool calls exibem nome + elapsed + colapsável "N ações".
  */

@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 /**
  * BrowserTab — navegação livre (barra de URL sempre ativa, histórico
- * voltar/avançar) e paridade com o antigo PreviewTab: servidores de dev
- * do workspace continuam iniciando/parando/logando, agora como atalhos
- * dentro do mesmo painel. Cobre o bug original (iframe só navega quando o
- * backend confirma a porta aberta, nunca só porque o processo existe) e
- * as novas capacidades (URL externa sem servidor configurado, back/forward).
+ * voltar/avançar) e gerenciamento de servidores de dev do workspace
+ * (iniciar/parar/logar) como atalhos dentro do mesmo painel. O iframe só
+ * navega quando o backend confirma a porta aberta, nunca só porque o
+ * processo existe. Cobre também URL externa sem servidor configurado e
+ * navegação back/forward.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import {
@@ -76,8 +76,7 @@ function mockFetch({
   configurations?: typeof LAUNCH.configurations;
   startRunning?: boolean;
   // Porta aberta (algo escutando) mas sem PID rastreado por este config —
-  // cenário de dois configs colidindo na mesma porta (ver Sprint fix
-  // "running externo").
+  // cenário de dois configs colidindo na mesma porta ("running externo").
   unmanagedRunning?: boolean;
   logLines?: string[];
 } = {}) {
@@ -311,7 +310,7 @@ describe("BrowserTab — histórico voltar/avançar", () => {
   });
 });
 
-describe("BrowserTab — auto-navegação quando um servidor sobe (Sprint fix 9.2)", () => {
+describe("BrowserTab — auto-navegação quando um servidor sobe", () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
   });
@@ -371,7 +370,7 @@ describe("BrowserTab — auto-navegação quando um servidor sobe (Sprint fix 9.
   });
 });
 
-describe("BrowserTab — console inline, não popup (Sprint fix 9.1)", () => {
+describe("BrowserTab — console inline, não popup", () => {
   it("painel do console renderiza dentro do container da própria aba, não num portal/dialog em document.body", async () => {
     mockFetch({ startRunning: false, logLines: ["ready"] });
     const { container } = render(<BrowserTab threadId="t1" />);
@@ -406,7 +405,7 @@ describe("BrowserTab — console inline, não popup (Sprint fix 9.1)", () => {
   });
 });
 
-describe("BrowserTab — sandbox do iframe (Sprint fix 9.3)", () => {
+describe("BrowserTab — sandbox do iframe", () => {
   it("servidor de dev do próprio workspace ganha allow-same-origin (CSS do Next.js precisa disso)", async () => {
     mockFetch({ startRunning: true });
     render(<BrowserTab threadId="t1" />);
@@ -615,7 +614,7 @@ describe("BrowserTab — servidor rodando mas não gerenciado pelo Vectora (port
   });
 });
 
-describe("BrowserTab — múltiplas abas (Sprint 11)", () => {
+describe("BrowserTab — múltiplas abas", () => {
   it("clicar em '+' cria uma aba nova em branco e a foca (nenhuma URL carregada ainda)", async () => {
     mockFetch({ configurations: [] });
     render(<BrowserTab threadId="t1" />);

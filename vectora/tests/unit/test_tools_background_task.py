@@ -1,4 +1,4 @@
-"""Tests TDD para create_background_task (FASE 2.4).
+"""Tests TDD para create_background_task.
 
 Cobre: criação de tarefa via serviço, kind inválido, ausência de sessão,
 tipo de trigger inválido e invariante de invalidates metadata.
@@ -153,7 +153,7 @@ async def test_sem_sessao_retorna_erro() -> None:
 
 
 def test_create_background_task_invalida_tasks() -> None:
-    # A aba foi renomeada de "background" para "tasks" (Tarefas).
+    # invalidates inclui "tasks" — a aba que exibe as tarefas em background.
     extras = getattr(create_background_task, "extras", {}) or {}
     assert "tasks" in extras.get("invalidates", [])
 
@@ -164,7 +164,7 @@ def test_create_background_task_e_destrutiva() -> None:
 
 
 # ---------------------------------------------------------------------------
-# schedule_task (Sprint "Schedule" — linguagem natural pra cron)
+# schedule_task — linguagem natural pra cron
 # ---------------------------------------------------------------------------
 
 

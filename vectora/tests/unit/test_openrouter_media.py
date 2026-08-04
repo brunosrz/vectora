@@ -1,14 +1,10 @@
 """Imagem e TTS nativos do OpenRouter.
 
-O ponto de atenção deste sprint é que os dois formatos de retorno são
-**opostos**: `POST /images` devolve base64 dentro de JSON (`data[].b64_json`)
-e `POST /audio/speech` devolve bytestream binário. Tratar os dois pelo mesmo
-caminho quebra um deles — imagem viraria arquivo de base64 em texto, ou áudio
-viraria lixo decodificado.
-
-Até aqui `backend/tools/media.py` levantava `NotImplementedError` quando o
-provider ativo era OpenRouter, o que é pior que não oferecer: a UI deixa
-escolher o modelo e a geração falha depois.
+Os dois formatos de retorno são **opostos**: `POST /images` devolve base64
+dentro de JSON (`data[].b64_json`) e `POST /audio/speech` devolve
+bytestream binário. Tratar os dois pelo mesmo caminho quebra um deles —
+imagem viraria arquivo de base64 em texto, ou áudio viraria lixo
+decodificado.
 """
 
 from __future__ import annotations
@@ -171,7 +167,7 @@ class TestTTS:
 
 
 class TestFormatosSaoOpostos:
-    """O invariante do sprint, num teste só.
+    """Imagem decodifica o base64 recebido; áudio usa o bytestream direto.
 
     Se alguém unificar os dois caminhos, um destes assert cai.
     """

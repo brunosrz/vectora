@@ -1,9 +1,10 @@
-"""Execução sandboxed real via `bwrap` (Linux-only, MVP do AI Jail).
+"""Execução sandboxed real via `bwrap` (Linux-only).
 
-macOS/Windows ficam fora de escopo desta sprint (mesma priorização do
-`ai-jail` original) — `run_local_sandboxed` assume um Linux com `bwrap`
-disponível; ausência do binário degrada com erro claro, nunca trava o
-caller (tools defensivas, CLAUDE.md regra 11).
+`run_local_sandboxed` assume um Linux com `bwrap` disponível; ausência
+do binário degrada com erro claro, nunca trava o caller (tools
+defensivas, CLAUDE.md regra 11). macOS/Windows não têm `bwrap` nativo —
+ver `backend/sandbox/workspace_jail.py` para o caminho de sandbox
+nessas plataformas.
 """
 
 from __future__ import annotations

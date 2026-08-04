@@ -1,4 +1,4 @@
-"""Registry de servidores MCP por usuário — Bloco S.
+"""Registry de servidores MCP por usuário.
 
 Cada usuário tem sua própria lista de servidores MCP (plugins), persistida em
 ``~/.vectora/mcp/<user_id>.json``. As tools desses servidores entram no grafo
@@ -44,7 +44,7 @@ def tools_version(user_id: str) -> int:
 
 def _bump_version(user_id: str) -> None:
     _versions[user_id] = _versions.get(user_id, 0) + 1
-    # Avisa as demais réplicas (Bloco G) — no modo lite é um no-op local.
+    # Avisa as demais réplicas — no modo lite é um no-op local.
     import json
 
     from backend.persistence.kv import publish_soon

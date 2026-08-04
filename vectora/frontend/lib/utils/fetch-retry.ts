@@ -2,7 +2,7 @@
  * fetchJsonWithRetry — leitura JSON com retry exponencial para chamadas
  * não-destrutivas (GET / revalidação em background).
  *
- * Política (UX-17):
+ * Política:
  *   - até `retries` tentativas extras (default 2 → 3 tentativas no total);
  *   - backoff exponencial a partir de `backoffMs` (default 300ms: 300, 600,
  *     1200…) com jitter de até 100ms para evitar thundering herd;

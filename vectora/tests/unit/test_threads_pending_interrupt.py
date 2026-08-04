@@ -1,8 +1,8 @@
-"""Testes para GET /threads/{thread_id}/pending-interrupt (Sprint 38.2).
+"""Testes para GET /threads/{thread_id}/pending-interrupt.
 
-Reidrata o HITLPanel após reload de página — o interrupt sobrevive a um
-restart do backend (checkpointer real), mas antes disso a UI só o mostrava
-quando chegava via streaming; um F5 no meio de uma pausa HITL perdia o card.
+O endpoint reidrata o HITLPanel após reload de página: o interrupt pendente
+sobrevive a um restart do backend (checkpointer real), então a rota consulta
+o checkpoint diretamente em vez de depender do evento de streaming.
 """
 
 from __future__ import annotations

@@ -1,5 +1,5 @@
 /**
- * TDD — lib/utils/string/string-helpers.ts
+ * lib/utils/string/string-helpers.ts
  * Cobre truncate, generateQuickTitle e generateThreadTitle.
  */
 

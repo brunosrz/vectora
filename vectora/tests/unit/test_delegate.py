@@ -1,4 +1,4 @@
-"""Delegate — worktree isolado por task (Sprint 12).
+"""Delegate — worktree isolado por task.
 
 create_task_worktree/remove_task_worktree reaproveitam _git_worktree_impl
 já usado pela tool git_worktree — aqui só cobrimos o wrapper: resolução do
@@ -92,9 +92,8 @@ async def test_remove_task_worktree_is_idempotent_on_missing_worktree():
 
 @pytest.mark.asyncio
 async def test_remove_task_worktree_also_deletes_the_branch():
-    # Sem isso, `git worktree add <task_id>` cria implicitamente uma
-    # branch com o nome da task, e remover só o worktree deixa essa
-    # branch órfã pra sempre — confirmado ao vivo contra um repo real.
+    # `git worktree add <task_id>` cria implicitamente uma branch com o
+    # nome da task; remover só o worktree deixaria essa branch órfã.
     with (
         patch("backend.workspace.workspace.workspace_registry") as mock_registry,
         patch("git.Repo") as mock_repo_cls,
@@ -264,13 +263,9 @@ async def test_remove_task_worktree_com_task_id_vazio_ainda_chama_impl():
 
 @pytest.mark.asyncio
 async def test_delegacao_sincrona_nunca_cria_worktree_so_background_cria(monkeypatch):
-    """Trava a decisão de produto: `task()` no meio de um turno roda no
-    workspace principal (troca de persona, não paralelismo), enquanto tarefa
-    em segundo plano isola em worktree próprio.
-
-    Sem esse teste, "consertar" a delegação síncrona pra também isolar passa
-    despercebido — e aí as edições do especialista sumiriam da vista do
-    usuário, que está olhando o workspace principal.
+    """`task()` no meio de um turno roda no workspace principal (troca de
+    persona, não paralelismo); tarefa em segundo plano isola em worktree
+    próprio.
     """
     from backend.scheduling import background_tasks as bg
 
@@ -294,7 +289,6 @@ async def test_delegacao_sincrona_nunca_cria_worktree_so_background_cria(monkeyp
     assert ws_id == "ws-efemero"
     assert criados == [("ws-principal", "task-bg")]
 
-    # Erro/borda proposital: nenhuma outra rota de background_tasks chama
-    # create_task_worktree — se a delegação síncrona passasse a chamar,
-    # `criados` teria entradas a mais e este assert falharia.
+    # Erro/borda: nenhuma outra rota de background_tasks chama
+    # create_task_worktree além do caminho de segundo plano.
     assert len(criados) == 1

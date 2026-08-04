@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * TDD — useOlderMessages (FASE 4.1)
+ * useOlderMessages
  *
  * Hook para carregar mensagens mais antigas de uma thread quando o utilizador
  * chegar ao topo da lista (IntersectionObserver).

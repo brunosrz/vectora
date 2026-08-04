@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SidebarFolders (F.3.5)
+ * SidebarFolders
  *
  * Painel "Pastas" no topo da sidebar com acesso rápido a:
  * - Workspaces ativos do usuário (click → ativa).

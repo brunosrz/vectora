@@ -1,8 +1,8 @@
 /**
- * DiffSkeleton — placeholder de carregamento da aba Diff do workbench
- * (UX-9). Simula o cabeçalho de grupo (Staged/Modificados — SX-FS-2B) e
- * algumas entradas de arquivo com badge de status, para que a forma do
- * skeleton já anuncie o layout que vai aparecer.
+ * DiffSkeleton — placeholder de carregamento da aba Diff do workbench.
+ * Simula o cabeçalho de grupo (Staged/Modificados) e algumas entradas de
+ * arquivo com badge de status, para que a forma do skeleton já anuncie o
+ * layout que vai aparecer.
  */
 
 import { memo } from "react";

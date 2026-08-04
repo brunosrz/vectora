@@ -93,7 +93,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
-  // Pins (WB-1): backend é a fonte de verdade — carrega ao abrir a sessão.
+  // Pins: backend é a fonte de verdade — carrega ao abrir a sessão.
   usePins(threadId);
 
   const filter = useWorkbenchStore((s) => s.getFiles(wsId).filter);

@@ -1,10 +1,10 @@
 """Handler de OAuth e registry de integrações externas.
 
-O1 — API Key integrations:
+Endpoints de API Key:
     GET  /integrations                  — lista integrações com status (conectado/não)
     POST /integrations/{id}/verify      — testa se a API key configurada é válida
 
-O2 — GitHub (via GitHub App) + GitLab/Google/Slack (via OAuth App clássico):
+Endpoints de OAuth — GitHub (via GitHub App) + GitLab/Google/Slack (via OAuth App clássico):
     GET  /auth/{provider}               — inicia o fluxo de autorização
     GET  /auth/{provider}/callback      — callback, salva token
     GET  /auth/{provider}/status        — {connected: bool, ...}
@@ -62,7 +62,7 @@ def _gateway_callback_url(
 
 
 # ---------------------------------------------------------------------------
-# Registry de integrações (O1)
+# Registry de integrações
 # ---------------------------------------------------------------------------
 
 #: Todas as integrações suportadas — consumido pela UI e pelo endpoint /integrations.
@@ -351,7 +351,7 @@ def _github_cfg() -> tuple[str, str, str]:
 
 
 # ---------------------------------------------------------------------------
-# O1 — Endpoints de integrações (listagem + status + verificação)
+# Endpoints de integrações (listagem + status + verificação)
 # ---------------------------------------------------------------------------
 
 
@@ -541,7 +541,7 @@ async def _verify_apikey(integration_id: str, token: str) -> tuple[bool, str]:  
 
 
 # ---------------------------------------------------------------------------
-# O2 — GitHub OAuth
+# GitHub OAuth
 # ---------------------------------------------------------------------------
 
 
@@ -668,7 +668,7 @@ async def github_oauth_disconnect(request: Request) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# O3 — GitLab OAuth
+# GitLab OAuth
 # ---------------------------------------------------------------------------
 
 
@@ -795,7 +795,7 @@ async def gitlab_oauth_disconnect(request: Request) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# O4 — Google OAuth (Drive + Gmail)
+# Google OAuth (Drive + Gmail)
 # ---------------------------------------------------------------------------
 
 
@@ -940,7 +940,7 @@ async def google_oauth_disconnect(request: Request) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# O5 — Slack OAuth
+# Slack OAuth
 # ---------------------------------------------------------------------------
 
 

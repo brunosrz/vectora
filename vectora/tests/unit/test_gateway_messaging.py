@@ -1,4 +1,4 @@
-"""Vectora Connect — camada de abstração de mensageria (Sprint 8).
+"""Vectora Connect — camada de abstração de mensageria.
 
 resolve_thread_id: reusa thread existente por platform_user_id, cria na
 primeira mensagem. handle_incoming_message: fecha o loop e nunca deixa o

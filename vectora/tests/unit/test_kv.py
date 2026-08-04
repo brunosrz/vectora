@@ -1,4 +1,4 @@
-"""Testes do KV distribuído (Bloco G — src/services/kv.py)."""
+"""Testes do KV distribuído (src/services/kv.py)."""
 
 from __future__ import annotations
 

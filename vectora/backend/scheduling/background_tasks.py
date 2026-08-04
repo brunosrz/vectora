@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 VALID_KINDS = {"routine", "heartbreak", "subagent"}
 #: "once" — execução única numa hora futura (``next_run_at`` explícito, sem
-#: ``cron_expr`` recorrente) — usado por ``schedule_subagent_task`` (WB-6).
+#: ``cron_expr`` recorrente) — usado por ``schedule_subagent_task``.
 VALID_TRIGGERS = {"interval", "once", "webhook", "manual", "subagent"}
 
 #: Limite de tarefas agendadas (não-``manual``) por workspace — evita um
@@ -69,14 +69,14 @@ class BackgroundTask:
     next_run_at: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
-    #: Estado do Kanban (Sprint 16) — lido/escrito via `backend.scheduling.kanban`,
+    #: Estado do Kanban — lido/escrito via `backend.scheduling.kanban`,
     #: nunca por SQL direto aqui. Default `"todo"` casa com o `DEFAULT` do
     #: schema; `create_task` já promove pra `"ready"` antes de devolver.
     status: str = "todo"
     block_kind: str | None = None
     block_reason: str | None = None
-    #: Perfil de agente customizado (Sprint 40) — `None` = comportamento
-    #: padrão do orchestrator, sem mudança de instrução/modelo/budget.
+    #: Perfil de agente customizado — `None` = comportamento padrão do
+    #: orchestrator, sem mudança de instrução/modelo/budget.
     agent_profile_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -269,9 +269,9 @@ async def create_task(
             _next_run(cfg.get("cron_expr")) if trigger_type == "interval" else None
         )
 
-    # Task com data de disparo futura nasce em "scheduled" (Sprint 41) —
-    # distingue de "todo" (sem data, esperando promoção por dependência) e
-    # de "ready" (acionável agora, ex.: manual criada direto no board).
+    # Task com data de disparo futura nasce em "scheduled" — distingue de
+    # "todo" (sem data, esperando promoção por dependência) e de "ready"
+    # (acionável agora, ex.: manual criada direto no board).
     status = "scheduled" if next_run is not None else "ready"
 
     conn = await _get_db()
@@ -738,11 +738,11 @@ async def run_task(
 
     run_id = str(uuid4())
 
-    # Claim atômico via CAS (Sprint 16/23): pega a task só se ainda estiver
-    # `ready` e sem claim — evita duas execuções concorrentes da mesma task
-    # (tick do scheduler cruzando com um disparo manual, por exemplo). Como
-    # o Kanban é camada acessória, um erro aqui não pode impedir a run de
-    # rodar — só a corrida real (claim_task devolvendo `False`) barra.
+    # Claim atômico via CAS: pega a task só se ainda estiver `ready` e sem
+    # claim — evita duas execuções concorrentes da mesma task (tick do
+    # scheduler cruzando com um disparo manual, por exemplo). Como o Kanban
+    # é camada acessória, um erro aqui não pode impedir a run de rodar —
+    # só a corrida real (claim_task devolvendo `False`) barra.
     try:
         from backend.scheduling.kanban import claim_task
 
@@ -768,8 +768,8 @@ async def run_task(
         prompt = task.instruction
         model_override: str | None = None
         if task.agent_profile_id:
-            # Perfil de agente customizado (Sprint 40): a instrução da task
-            # é o "o quê", a do perfil é o "como" — concatenadas, nunca uma
+            # Perfil de agente customizado: a instrução da task é o "o
+            # quê", a do perfil é o "como" — concatenadas, nunca uma
             # substituindo a outra. Falha ao carregar o perfil (apagado,
             # DB indisponível) degrada pro comportamento padrão da task,
             # nunca derruba a run.
@@ -820,9 +820,9 @@ async def run_task(
 
         subagent_type = task.trigger_config.get("subagent_type")
         if subagent_type:
-            # Agendamento de subagente específico (WB-6) — usa um worktree
-            # isolado quando é "coder" e a task tem workspace (evita
-            # concorrência com o workspace principal do usuário).
+            # Agendamento de subagente específico — usa um worktree isolado
+            # quando é "coder" e a task tem workspace (evita concorrência
+            # com o workspace principal do usuário).
             if subagent_type == "coder" and task.workspace_id:
                 configurable["workspace_id"] = await _worktree_workspace_id(
                     task.workspace_id, task.id
@@ -1208,8 +1208,8 @@ class BackgroundScheduler:
     async def tick(self) -> None:
         """Executa as interval/once tasks vencidas.
 
-        "interval" reagenda pelo cron; "once" (execução única, WB-6) só
-        desabilita a task depois de rodar — nunca refira sozinha.
+        "interval" reagenda pelo cron; "once" (execução única) só desabilita
+        a task depois de rodar — nunca refira sozinha.
 
         Recorrente atrasada além de ``CATCH_UP_GRACE`` (processo ficou horas
         parado) pula pro próximo horário em vez de disparar retroativamente:

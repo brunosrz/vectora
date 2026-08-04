@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * ErrorBanner — feedback inline padrão para stores com `error: string | null`
- * (UX-11). Usar onde um estado de carregamento falhou e o usuário precisa de
+ * ErrorBanner — feedback inline padrão para stores com `error: string | null`.
+ * Usar onde um estado de carregamento falhou e o usuário precisa de
  * uma ação clara para recuperar — não substitui o toast (que é para eventos
  * pontuais); o banner fica visível enquanto o erro persistir.
  *

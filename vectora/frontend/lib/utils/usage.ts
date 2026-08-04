@@ -1,5 +1,5 @@
 /**
- * Helpers de formatação e classificação para o medidor de uso (K.2.2).
+ * Helpers de formatação e classificação para o medidor de uso.
  */
 
 /** Formata número de tokens com sufixo k/M (1234 → "1.2k"). */
@@ -25,7 +25,6 @@ export function formatResetIn(seconds: number): string {
  * Classifica uma porcentagem em níveis semafóricos. As barras do popover
  * usam essas classes para refletir a saúde do consumo.
  *
- * Thresholds alinhados com C.17:
  *   ≥95% → "danger" (input bloqueado)
  *   ≥80% → "warn"   (aviso visual)
  *   <80% → "ok"

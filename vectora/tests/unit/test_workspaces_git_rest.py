@@ -1,8 +1,8 @@
-"""REST — git completo (Sprint 1): body/amend em POST .../git/commit, novos
-endpoints .../git/squash, .../git/reorder, .../git/cherry-pick.
+"""REST — git completo: body/amend em POST .../git/commit, e os endpoints
+.../git/squash, .../git/reorder, .../git/cherry-pick.
 
-Repo git real via tmp_path (mesmo padrão de test_bloco_g_git_tools.py);
-workspace_registry.get mockado apontando pro repo temporário.
+Repo git real via tmp_path; workspace_registry.get mockado apontando pro
+repo temporário.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """GitHub CLI tools — operações via `gh` CLI.
 
-G3 — Bloco G: gh_pr_list, gh_pr_create, gh_pr_view, gh_pr_merge,
-               gh_issue_list, gh_issue_create, gh_issue_view, gh_issue_comment.
+Tools expostas: gh_pr_list, gh_pr_create, gh_pr_view, gh_pr_merge,
+gh_issue_list, gh_issue_create, gh_issue_view, gh_issue_comment.
 
 Todas as tools:
 - Executam o binário `gh` via subprocess (sem imports do SDK GitHub).
@@ -85,7 +85,7 @@ def _resolve_cwd(workspace_id: str | None, config: RunnableConfig | None) -> str
 
 
 # ---------------------------------------------------------------------------
-# @tool wrappers (G3)
+# @tool wrappers
 # ---------------------------------------------------------------------------
 
 

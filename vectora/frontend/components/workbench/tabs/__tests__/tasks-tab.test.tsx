@@ -95,7 +95,7 @@ describe("TasksTab", () => {
     expect(screen.queryByTestId("background-run-now")).not.toBeInTheDocument();
   });
 
-  it("run awaiting_approval mostra aprovar/rejeitar/cancelar e aprova via endpoint (Sprint 3.4)", async () => {
+  it("run awaiting_approval mostra aprovar/rejeitar/cancelar e aprova via endpoint", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue({ ok: true, json: async () => ({}) });
@@ -242,7 +242,7 @@ describe("TasksTab", () => {
     expect(screen.getByTestId("background-run-now")).toBeInTheDocument();
   });
 
-  describe("card de execução colapsado (Sprint 8)", () => {
+  describe("card de execução colapsado", () => {
     function runsHook(summary: string, status = "done") {
       return baseHook({
         runs: [

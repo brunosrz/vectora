@@ -33,11 +33,11 @@ export interface Message {
   thinkingStartTime?: number;
   thinkingDuration?: number;
 
-  /** Label semântico do nó atualmente em execução (D2) */
+  /** Label semântico do nó atualmente em execução */
   currentNodeLabel?: string;
-  /** Durações por nó, acumuladas durante o stream (D3) */
+  /** Durações por nó, acumuladas durante o stream */
   nodeDurations?: { node: string; label: string; duration_ms: number }[];
-  /** Tool ativa no momento (FASE 3.1) — limpo quando tool termina */
+  /** Tool ativa no momento — limpo quando tool termina */
   activeTool?: { name: string; argsPreview: string; elapsedMs?: number } | null;
 
   // LangSmith tracing
@@ -53,21 +53,17 @@ export interface Message {
   // Interruption tracking
   wasInterrupted?: boolean;
 
-  // Item 3 — fork de checkpoint (editar mensagem / regenerar resposta)
   /** Checkpoint pai desta mensagem (ver HistoryMessage.checkpoint_id no
    * backend) — alvo de fork ao editar esta mensagem ou, se for a última
    * resposta do assistente, ao regenerá-la. */
   checkpointId?: string;
 
-  // M5 — Optimistic UI / error retry
   /** Mensagem é uma falha de stream — exibe botão de retry */
   isError?: boolean;
 
-  // C.28 — RAG citations
   /** Fontes RAG retornadas durante a resposta, para renderizar referências [N]. */
   ragCitations?: Array<{ index: number; source: string; chunk: string }>;
 
-  // Bloco E — HITL em Chat
   /** Preenchido quando o stream pausa para aprovação humana. */
   hitlPending?: {
     toolName: string;

@@ -8,11 +8,10 @@ Isso substitui o padrão artesanal ``config["configurable"]["user_id"]``
 presente nas tools — as tools podem acessar ``runtime.context.user_id``
 de forma tipada via ``ToolRuntime[VectoraContext]``.
 
-Migração:
-    Fase 1 (E.B-5, agora): ``VectoraContext`` criado e registrado no factory.
-        Tools antigas continuam lendo ``configurable`` — backward compat.
-    Fase 2 (E.B-11+): tools migram para ``runtime.context.*``.
-        Helper ``ctx_from(runtime, config)`` facilita a transição.
+Tools que ainda não recebem ``runtime: ToolRuntime[VectoraContext]`` por
+injeção automática continuam lendo ``configurable`` diretamente; o helper
+``ctx_from_config`` constrói o mesmo ``VectoraContext`` a partir desse dict
+para quem precisa da forma tipada sem a injeção do LangGraph.
 
 Campos intencionalmente simples (str/None) para compatibilidade com o
 serializer de ``configurable`` do LangGraph (não aceita tipos complexos).

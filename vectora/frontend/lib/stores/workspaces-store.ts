@@ -1,20 +1,19 @@
 /**
- * Workspaces Store — Zustand (G1, Q6)
+ * Workspaces Store — Zustand
  *
  * Cache client-side da lista de workspaces e do workspace ativo.
  * Padrão stale-while-revalidate: exibe cache imediatamente e revalida
  * em background. Ações async conversam com o proxy Hono em /workspaces.
  *
- * SX-UX-1:
- *  - `status`/`error` substituem `loading: boolean` (máquina `AsyncStatus`);
- *    `hasLoaded(fetchedAt)` indica se já existe cache renderizável — refresh
- *    em background não derruba esse cache para um estado "carregando".
- *  - `pending` rastreia operações individuais (hydrate/create/trust/gitInit)
- *    para que a UI desabilite só o botão certo, não a tela inteira.
- *  - Falhas de rede/servidor em ações do usuário viram toast (canal único de
- *    feedback — UX-7); nenhuma ação retorna silenciosamente `null`.
- *  - Persistência via `localStorage`, mas só de `active_id`: a lista de
- *    workspaces é sempre revalidada do backend (source of truth).
+ * - `status`/`error` substituem `loading: boolean` (máquina `AsyncStatus`);
+ *   `hasLoaded(fetchedAt)` indica se já existe cache renderizável — refresh
+ *   em background não derruba esse cache para um estado "carregando".
+ * - `pending` rastreia operações individuais (hydrate/create/trust/gitInit)
+ *   para que a UI desabilite só o botão certo, não a tela inteira.
+ * - Falhas de rede/servidor em ações do usuário viram toast (canal único de
+ *   feedback); nenhuma ação retorna silenciosamente `null`.
+ * - Persistência via `localStorage`, mas só de `active_id`: a lista de
+ *   workspaces é sempre revalidada do backend (source of truth).
  */
 
 import { create } from "zustand";
@@ -46,7 +45,7 @@ export interface WorkspaceInfo {
   git_remote: string | null;
   git_current_branch: string | null;
   git_default_branch: string | null;
-  /** G.2.1 — espelha src/types/workspace.py */
+  /** Espelha src/types/workspace.py */
   transport?: WorkspaceTransport;
   remote_host?: string | null;
   remote_path?: string | null;
@@ -68,7 +67,7 @@ export interface BrowseResult {
   parent: string | null;
   entries: DirEntry[];
   /** ID da safe-root que cobre o path atual; null quando privilegiado
-   *  navegando livre. Espelha o backend (F.3.2). */
+   *  navegando livre. Espelha o backend. */
   safe_root_id?: string | null;
   /** `true` quando `entries` lista volumes em vez de subdiretórios. */
   at_drives_root?: boolean;
@@ -77,7 +76,7 @@ export interface BrowseResult {
 /** Pseudo-path que dispara o modo "lista de discos" no backend. */
 export const DRIVES_PSEUDO_PATH = "__drives__";
 
-/** Resumo de uma safe-root para o painel de acesso rápido (F.3.5). */
+/** Resumo de uma safe-root para o painel de acesso rápido. */
 export interface SafeRootSummary {
   id: string;
   path: string;
@@ -85,7 +84,7 @@ export interface SafeRootSummary {
   builtin: boolean;
 }
 
-/** Codespace retornado por `gh codespace list` (G.2.5). */
+/** Codespace retornado por `gh codespace list`. */
 export interface CodespaceSummary {
   name: string;
   repository: string;
@@ -93,7 +92,7 @@ export interface CodespaceSummary {
   git_status?: Record<string, unknown> | null;
 }
 
-/** Operações individuais cujo progresso a UI precisa refletir (UX-8). */
+/** Operações individuais cujo progresso a UI precisa refletir. */
 export interface WorkspacesPending {
   hydrate: boolean;
   create: boolean;
@@ -116,7 +115,7 @@ interface WorkspacesState {
   status: AsyncStatus;
   /** Mensagem da última falha — `null` enquanto não houver erro. */
   error: string | null;
-  /** Progresso por operação — habilita feedback granular (UX-8). */
+  /** Progresso por operação — habilita feedback granular. */
   pending: WorkspacesPending;
   safeRoots: SafeRootSummary[];
 
@@ -146,10 +145,10 @@ interface WorkspacesState {
   trust: (id: string) => Promise<ActionResult<WorkspaceInfo>>;
   gitInit: (id: string) => Promise<ActionResult<WorkspaceInfo>>;
   browse: (path?: string) => Promise<BrowseResult | null>;
-  /** Carrega safe-roots visíveis para o usuário atual (F.3.5). */
+  /** Carrega safe-roots visíveis para o usuário atual. */
   loadSafeRoots: () => Promise<void>;
 
-  // G.2.6 — workspaces remotos
+  // Workspaces remotos
   listSshKeys: () => Promise<string[]>;
   uploadSshKey: (file: File) => Promise<string | null>;
   deleteSshKey: (keyId: string) => Promise<boolean>;
@@ -176,7 +175,7 @@ interface WorkspacesState {
  * Wrapper tolerante a falha (`| null`) usado pelas leituras auxiliares do
  * store (browse, safe-roots, ssh-keys, codespaces, set-active…).
  *
- * UX-17 — para `GET`s (leituras idempotentes) delega a `fetchJsonWithRetry`
+ * Para `GET`s (leituras idempotentes) delega a `fetchJsonWithRetry`
  * (retry exponencial em 5xx/queda de rede, sem retentar 4xx). Mutações
  * (`POST`/`PUT`/…) seguem sem retry — repetir poderia duplicar o efeito.
  */
@@ -270,7 +269,7 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           pending: { ...s.pending, hydrate: true },
         }));
         try {
-          // UX-17 — leitura idempotente: retenta em 5xx/queda de rede
+          // Leitura idempotente: retenta em 5xx/queda de rede
           // (até 2x, backoff exponencial) antes de admitir falha ao usuário.
           const data = await fetchJsonWithRetry<{
             workspaces: WorkspaceInfo[];

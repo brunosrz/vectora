@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * PluginsTab — gerenciador de servidores MCP (Bloco S).
+ * PluginsTab — gerenciador de servidores MCP.
  *
  * Lista os servidores MCP do usuário, permite adicionar/remover e fazer
  * health-check. Cada servidor tem transporte stdio (command+args) ou sse/http
@@ -343,7 +343,7 @@ export function PluginsTab() {
         </Button>
       )}
 
-      {/* Política de tools (S5 self-service) */}
+      {/* Política de tools (self-service) */}
       <div className="border-t border-border/60 pt-3">
         <ToolPolicyPanel />
       </div>

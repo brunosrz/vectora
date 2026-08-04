@@ -146,9 +146,9 @@ class TestEvaluateCommand:
 
     @pytest.mark.asyncio
     async def test_pre_aprovacao_nunca_e_usada_pra_pular_o_hitl(self):
-        """Trava o invariante do sprint: `evaluate_command` é uma função pura
-        que devolve bool — nenhuma tool nem tool call é executada aqui. Quem
-        decide pausar é `_REQUIRE_APPROVAL`, que não importa este módulo."""
+        """`evaluate_command` é uma função pura que devolve bool — nenhuma
+        tool nem tool call é executada aqui. Quem decide pausar é
+        `_REQUIRE_APPROVAL`, que não importa este módulo."""
         import backend.services.middleware as mw
 
         assert "smart_approval" not in mw.__dict__.get("__file__", "")

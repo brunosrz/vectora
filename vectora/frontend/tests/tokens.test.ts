@@ -1,5 +1,5 @@
 /**
- * TDD — Bloco R5: helpers do medidor de contexto (lib/utils/tokens.ts)
+ * Helpers do medidor de contexto (lib/utils/tokens.ts).
  *
  * estimateTokens: heurística ~4 chars/token.
  * formatTokens: formato compacto "164.8k" / "950".

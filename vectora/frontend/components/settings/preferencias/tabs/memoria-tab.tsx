@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MemoriaTab — lista e gerencia memórias persistentes do usuário (Bloco N).
+ * MemoriaTab — lista e gerencia memórias persistentes do usuário.
  *
  * Funcionalidades:
  * - Lista todas as memórias do usuário (fetch GET /memory)

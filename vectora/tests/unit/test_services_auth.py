@@ -1,4 +1,4 @@
-"""Testes unitários para src/services/auth.py (Bloco C — C1/C2).
+"""Testes unitários para src/services/auth.py.
 
 Cobre:
 - hash_password / verify_password
@@ -491,9 +491,8 @@ class TestEnvOverrides:
 
 class TestEnvOverridesLocalUser:
     """O usuário virtual "local" (modo sem conta) nunca tem linha em
-    `users` — `get/set/delete_env_override` precisam desviar pra
-    `runtime_settings` em vez de fazer UPDATE/SELECT sem efeito (Sprint
-    11.2)."""
+    `users` — `get/set/delete_env_override` desviam pra `runtime_settings`
+    em vez de fazer UPDATE/SELECT sem efeito."""
 
     @pytest.fixture(autouse=True)
     def _isolated_runtime_settings(self, tmp_path, monkeypatch):
@@ -550,7 +549,7 @@ class TestEnvOverridesLocalUser:
 
 
 # ---------------------------------------------------------------------------
-# Convites de signup (Q8)
+# Convites de signup
 # ---------------------------------------------------------------------------
 
 

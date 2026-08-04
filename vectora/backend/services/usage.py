@@ -1,4 +1,4 @@
-"""Rastreador de uso por usuário — janelas deslizantes em memória (K.2.1).
+"""Rastreador de uso por usuário — janelas deslizantes em memória.
 
 Conta requests por ``user_id`` dentro de múltiplas janelas de tempo simultâneas
 (curta, 5h e semanal) e expõe o consumo para o medidor de uso do plano
@@ -80,9 +80,9 @@ class UsageTracker:
     def usage(self, user_id: str, *, now: float | None = None) -> dict[str, object]:
         """Retorna o consumo atual nas três janelas mais um snapshot legado.
 
-        - ``five_hour`` e ``weekly``: alimentam o popover de uso (K.2.2).
+        - ``five_hour`` e ``weekly``: alimentam o popover de uso.
         - Campos top-level ``used``/``limit``/...: compatibilidade com o
-          consumidor original (R5), que olhava apenas a janela curta.
+          consumidor que olha apenas a janela curta.
         """
         ts = time.time() if now is None else now
         bucket = self._events.get(user_id, [])

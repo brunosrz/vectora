@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Testes do hook use-webhook-events (INT-8).
+ * Testes do hook use-webhook-events.
  *
  * Cobre:
  * - onEvent chamado quando SSE recebe mensagem

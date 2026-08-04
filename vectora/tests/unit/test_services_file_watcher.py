@@ -1,4 +1,4 @@
-"""TDD — File Watcher (FASE 5.1).
+"""File Watcher.
 
 Um watcher por workspace: detecta mudancas em disco com debounce 300ms
 e publica via KV pub/sub para que o SSE invalide os tabs do frontend.

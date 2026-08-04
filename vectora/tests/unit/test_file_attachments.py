@@ -1,9 +1,9 @@
-"""Bloco F — File Handling Completo — testes TDD.
+"""File Handling Completo — testes.
 
 Cobre:
-- F1: schemas Pydantic (Attachment, StreamChatRequest.attachments)
-- F1: _build_human_message — conversão de attachments para HumanMessage multimodal
-- F1: _mime_to_lang — detecção de linguagem por extensão de arquivo
+- schemas Pydantic (Attachment, StreamChatRequest.attachments)
+- _build_human_message — conversão de attachments para HumanMessage multimodal
+- _mime_to_lang — detecção de linguagem por extensão de arquivo
 """
 
 from __future__ import annotations

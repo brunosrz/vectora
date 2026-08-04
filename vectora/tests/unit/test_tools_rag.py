@@ -619,7 +619,7 @@ class TestIngestDocs:
 
 
 class TestManageRetriever:
-    """Bloco A5.3 — tool de gestão do RAG (list / delete / purge)."""
+    """Tool de gestão do RAG (list / delete / purge)."""
 
     @pytest.mark.asyncio
     async def test_delete_without_source_errors_early(self):
@@ -673,7 +673,7 @@ class TestManageRetriever:
 
     @pytest.mark.asyncio
     async def test_list_returns_documents_via_pandas(self):
-        """A6.1 — list parseia o DataFrame (metadata JSON) sem iterrows."""
+        """Parseia o DataFrame (metadata JSON) sem iterrows."""
         import pandas as pd
 
         from backend.tools.rag import manage_retriever
@@ -709,7 +709,7 @@ class TestManageRetriever:
 
     @pytest.mark.asyncio
     async def test_delete_matches_by_source_via_pandas(self):
-        """A6.1 — delete usa máscara booleana vetorizada sobre o DataFrame."""
+        """Delete usa máscara booleana vetorizada sobre o DataFrame."""
         import pandas as pd
 
         from backend.tools.rag import manage_retriever
@@ -742,7 +742,7 @@ class TestManageRetriever:
 
     @pytest.mark.asyncio
     async def test_delete_no_match_via_pandas(self):
-        """A6.1 — delete sem match retorna no_match, sem chamar table.delete."""
+        """Delete sem match retorna no_match, sem chamar table.delete."""
         import pandas as pd
 
         from backend.tools.rag import manage_retriever
@@ -769,7 +769,7 @@ class TestManageRetriever:
 
 
 # ---------------------------------------------------------------------------
-# _build_reranker — Cohere ↔ VoyageAI (Parte B)
+# _build_reranker — Cohere ↔ VoyageAI
 # ---------------------------------------------------------------------------
 
 

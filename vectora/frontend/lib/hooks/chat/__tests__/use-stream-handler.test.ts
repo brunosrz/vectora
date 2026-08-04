@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 /**
- * Tests do useStreamHandler.processStream — o núcleo do pipeline de chat
- * (bugs #2 streaming e #4 filtro de erro). Mocka o cliente SSE (`streamChat`)
- * para emitir sequências controladas de eventos e verifica o estado final das
- * mensagens: acumulação de tokens, erro classificado virando aviso limpo
- * (isError, sem JSON cru), e conclusão (runId, fim do "thinking").
+ * Tests do useStreamHandler.processStream — o núcleo do pipeline de chat.
+ * Mocka o cliente SSE (`streamChat`) para emitir sequências controladas de
+ * eventos e verifica o estado final das mensagens: acumulação de tokens,
+ * erro classificado virando aviso limpo (isError, sem JSON cru), e
+ * conclusão (runId, fim do "thinking").
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -80,7 +80,7 @@ describe("useStreamHandler.processStream", () => {
     expect(assistant?.isError).toBeFalsy();
   });
 
-  it("Item 3 — forkFromCheckpointId presente manda config.fork_from_checkpoint_id; ausente omite (edit/regenerate)", async () => {
+  it("forkFromCheckpointId presente manda config.fork_from_checkpoint_id; ausente omite (edit/regenerate)", async () => {
     streamChatMock.mockReturnValue(
       gen([
         { type: "thread", thread_id: "t1" },
@@ -140,10 +140,9 @@ describe("useStreamHandler.processStream", () => {
   });
 
   it("erro após conteúdo parcial real preserva o texto já gerado (não sobrescreve)", async () => {
-    // Regressão: QuotaExhaustedError no meio de um turno (ex.: orquestrador
-    // já respondeu algo, delegou pro subagente coder, que estourou quota) —
-    // o evento `error` sobrescrevia content inteiro pela mensagem genérica,
-    // descartando qualquer trabalho parcial já visível ao usuário.
+    // Cobre erro no meio de um turno (ex.: orquestrador já respondeu algo,
+    // delegou pro subagente coder, que estourou quota): o evento `error`
+    // deve anexar o aviso ao conteúdo parcial, nunca sobrescrevê-lo.
     streamChatMock.mockReturnValue(
       gen([
         { type: "thread", thread_id: "t1" },
@@ -199,7 +198,7 @@ describe("useStreamHandler.processStream", () => {
       capturedSignal = signal;
       return (async function* () {
         // Simula o modelo "pensando" sem produzir nenhum token ainda —
-        // exatamente o cenário em que o bug antigo travava o cancelamento.
+        // abort() precisa cancelar mesmo nesse estado.
         await new Promise((resolve) => setTimeout(resolve, 20));
         yield { type: "done", thread_id: "t1" } as StreamEvent;
       })();
@@ -245,10 +244,9 @@ describe("useStreamHandler.processStream", () => {
   });
 
   it("stream corta em silêncio (generator esgota sem done/error) — reconcilia com o histórico do backend", async () => {
-    // Reproduz o bug real: readSSEStream perde o evento final numa queda de
-    // conexão silenciosa — o for-await simplesmente esgota, sem throw e sem
-    // done/error. O conteúdo acumulado no client ("parte") não é o completo;
-    // o backend já persistiu tudo no checkpoint LangGraph.
+    // Numa queda de conexão silenciosa, o for-await simplesmente esgota,
+    // sem throw e sem done/error. O conteúdo acumulado no client ("parte")
+    // não é o completo; o backend já persistiu tudo no checkpoint LangGraph.
     streamChatMock.mockReturnValue(
       (async function* () {
         yield { type: "thread", thread_id: "t1" } as StreamEvent;
@@ -341,13 +339,12 @@ describe("useStreamHandler.processStream", () => {
   });
 
   it("race condition: assistantContent preservado mesmo com setMessages([]) externo durante stream", async () => {
-    // Documenta o sintoma do bug de race condition em loadThreadHistory:
-    // quando setMessages([]) é chamado externamente enquanto o stream processa
-    // tokens, o acumulador local do handler preserva o conteúdo — mas a
-    // mensagem do assistente SOME do estado React porque updateMessageInList
-    // em array vazio retorna [].
-    // O fix está em chat-interface.tsx (guard hasSentMessageRef), que impede
-    // setMessages([]) de ser chamado quando o usuário já enviou ao thread.
+    // Quando setMessages([]) é chamado externamente enquanto o stream
+    // processa tokens, o acumulador local do handler preserva o conteúdo —
+    // mas a mensagem do assistente some do estado React porque
+    // updateMessageInList em array vazio retorna []. chat-interface.tsx
+    // evita isso com o guard hasSentMessageRef, que impede setMessages([])
+    // quando o usuário já enviou ao thread.
 
     let externalWipe: (() => void) | undefined;
 
@@ -399,9 +396,9 @@ describe("useStreamHandler.processStream", () => {
   });
 
   it("race condition não ocorre quando hasSentMessageRef é checado antes de setMessages([])", () => {
-    // Especificação do guard adicionado em chat-interface.tsx:
-    // loadThreadHistory só chama setMessages([]) quando hasSentMessageRef
-    // NÃO aponta para o thread atual.
+    // Guard de chat-interface.tsx: loadThreadHistory só chama
+    // setMessages([]) quando hasSentMessageRef NÃO aponta para o thread
+    // atual.
     const setMessagesMock = vi.fn();
     const hasSentRef: { current: string | null } = { current: null };
     const currentThreadId = "thread-abc";
@@ -450,7 +447,7 @@ describe("useStreamHandler.processStream", () => {
     expect(single?.content).toBe("só uma bolha");
   });
 
-  // ── model_switched (A4 — fallback de provider por quota) ─────────────────────
+  // ── model_switched (fallback de provider por quota) ──────────────────────
 
   it("evento model_switched chama onModelSwitched(from, to)", async () => {
     const onModelSwitched = vi.fn();
@@ -730,10 +727,10 @@ describe("useStreamHandler.processStream", () => {
     expect(tc?.output).toBe("done");
   });
 
-  it("Sprint 0.4 — create_artifact só invalida o cache do Plan no tool_result (não no tool_call)", async () => {
-    // Bug real: invalidar em tool_call (on_tool_start) dispara o refetch
-    // antes do arquivo existir em disco — o painel Plan fica vazio até um
-    // pedido novo do usuário por acidente disparar outro ciclo.
+  it("create_artifact só invalida o cache do Plan no tool_result (não no tool_call)", async () => {
+    // Invalidar em tool_call (on_tool_start) dispararia o refetch antes do
+    // arquivo existir em disco, deixando o painel Plan vazio até um pedido
+    // novo do usuário disparar outro ciclo por acidente.
     useWorkbenchStore.getState().setPlanItems("t1", [
       {
         title: "Plano anterior",
@@ -788,7 +785,7 @@ describe("useStreamHandler.processStream", () => {
     expect(useWorkbenchStore.getState().plan["t1"]?.fetchedAt).toBe(0);
   });
 
-  it("Sprint 0.4 — tool_result com erro NÃO invalida o cache do workbench", async () => {
+  it("tool_result com erro NÃO invalida o cache do workbench", async () => {
     useWorkbenchStore.getState().setPlanItems("t1", [
       {
         title: "Plano existente",
@@ -1117,14 +1114,15 @@ describe("useStreamHandler — workspace de sessão nova", () => {
   });
 
   it("consome o sinal 'criar novo workspace': manda create_new_workspace e nunca o active_id stale", async () => {
-    // active_id stale de uma conversa anterior — sem o fix, vazaria como
-    // config.workspace_id mesmo o usuário tendo pedido um workspace novo.
+    // active_id stale de uma conversa anterior nunca deve vazar como
+    // config.workspace_id quando o usuário pediu um workspace novo.
     useWorkspacesStore.setState({ active_id: "ws-antigo" });
     markCreateNewWorkspace("t1");
 
     // Resposta realista do backend: create_new_workspace=true sempre resolve
-    // pra um workspace_id não-vazio no evento thread (confirma o sinal —
-    // sem isso o finally de use-stream-handler re-marcaria "t1" à toa).
+    // pra um workspace_id não-vazio no evento thread, confirmando o sinal
+    // (o finally de use-stream-handler só re-marca "t1" na ausência dessa
+    // confirmação).
     streamChatMock.mockReturnValue(
       gen([
         { type: "thread", thread_id: "t1", workspace_id: "ws-novo" },
@@ -1185,7 +1183,7 @@ describe("useStreamHandler — workspace de sessão nova", () => {
     expect(useWorkspacesStore.getState().active_id).toBe("ws-recem-criado");
   });
 
-  it("restaura o sinal 'criar novo workspace' se a conexão cair antes do evento thread confirmar (bug: retry usava workspace stale)", async () => {
+  it("restaura o sinal 'criar novo workspace' se a conexão cair antes do evento thread confirmar (evita retry com workspace stale)", async () => {
     useWorkspacesStore.setState({ active_id: "ws-antigo" });
     markCreateNewWorkspace("t1");
 

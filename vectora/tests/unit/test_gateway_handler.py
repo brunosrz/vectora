@@ -1,4 +1,4 @@
-"""TDD — backend/api/handlers/gateway.py (status/revoke do gateway local)."""
+"""backend/api/handlers/gateway.py (status/revoke do gateway local)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""KV distribuído + pub/sub — Bloco G (G1).
+"""KV distribuído + pub/sub.
 
 Abstração mínima de chave/valor com publish/subscribe para sincronizar caches
 in-memory entre réplicas do backend:

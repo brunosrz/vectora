@@ -1,4 +1,4 @@
-"""TDD — Modo de Planejamento Explícito (FASE 3.2).
+"""Modo de Planejamento Explícito.
 
 Cobre: detecção /plan no conteúdo, strip do prefixo, injeção de
 planning_mode no configurable e instrução de planejamento no contexto.

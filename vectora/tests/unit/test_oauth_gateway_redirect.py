@@ -1,4 +1,4 @@
-"""TDD — OAuth redirect_uri via gateway quando token disponível."""
+"""OAuth redirect_uri via gateway quando token disponível."""
 
 from __future__ import annotations
 

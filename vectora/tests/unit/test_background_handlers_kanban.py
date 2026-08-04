@@ -1,8 +1,6 @@
-"""`TaskOut` expõe o estado do Kanban + endpoint de desbloqueio (Sprint 23).
-
-Sem isso, mesmo com o backend calculando `status`/`block_kind` corretamente
-(Sprint 23.1-23.4), a API REST que o frontend consome não devolvia esses
-campos — o board continuaria vazio por outro motivo.
+"""`TaskOut` expõe o estado do Kanban (`status`/`block_kind`/`block_reason`)
+via API REST, e o endpoint de desbloqueio reseta uma task bloqueada para
+"ready", limpando o motivo do bloqueio.
 """
 
 from __future__ import annotations
@@ -74,8 +72,8 @@ async def test_get_tasks_devolve_status_do_kanban(db):
     assert len(saida) == 1
     assert saida[0].id == task.id
     # Task recorrente nasce com next_run_at futuro definido — status
-    # "scheduled" (Sprint 41), não "ready" (reservado pra tasks já
-    # acionáveis agora, como manual criada direto no board).
+    # "scheduled", não "ready" (reservado pra tasks já acionáveis agora,
+    # como manual criada direto no board).
     assert saida[0].status == "scheduled"
     assert saida[0].block_kind is None
 

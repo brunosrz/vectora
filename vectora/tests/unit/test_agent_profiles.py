@@ -1,7 +1,6 @@
-"""Perfis de agente customizados (Sprint 39) — preset reutilizável de
-instrução/escopo de tools/modelo/budget que uma task do Kanban pode
-referenciar em vez de rodar sempre com a personalidade genérica do
-orchestrator.
+"""Perfis de agente customizados — preset reutilizável de instrução/escopo
+de tools/modelo/budget que uma task do Kanban pode referenciar em vez de
+rodar sempre com a personalidade genérica do orchestrator.
 """
 
 from __future__ import annotations

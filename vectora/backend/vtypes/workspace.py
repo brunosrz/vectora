@@ -18,7 +18,7 @@ class Workspace(BaseModel):
     )
     manifest_version: int = Field(default=0, description="Versão atual do manifest.")
 
-    # G7 — campos git (preenchidos por detect_git_info ao criar o workspace)
+    # Preenchidos por detect_git_info ao criar o workspace.
     is_git_repo: bool = Field(
         default=False, description="True se o cwd é um repositório git."
     )
@@ -78,16 +78,16 @@ class Workspace(BaseModel):
     owner_id: str | None = Field(
         default=None,
         description="ID do usuário que criou/reivindicou este workspace primeiro. "
-        "None em workspaces legados (criados antes do Sprint 33) ou nunca "
-        "reivindicados — nesse caso o acesso não é restringido por dono. Em modo "
-        "servidor multi-usuário (VECTORA_AUTH_REQUIRED=true), um usuário "
-        "autenticado só acessa workspaces com owner_id == seu próprio id (ou "
-        "sem owner_id), exceto papéis root/admin.",
+        "None quando o workspace nunca foi reivindicado — nesse caso o acesso "
+        "não é restringido por dono. Em modo servidor multi-usuário "
+        "(VECTORA_AUTH_REQUIRED=true), um usuário autenticado só acessa "
+        "workspaces com owner_id == seu próprio id (ou sem owner_id), exceto "
+        "papéis root/admin.",
     )
 
-    # G.2.1 — Transporte do workspace. Workspaces remotos compartilham o
-    # mesmo modelo; ``cwd`` é o caminho remoto (ou ponto de montagem
-    # local quando o transport encapsula um túnel, ex.: Codespaces).
+    # Transporte do workspace. Workspaces remotos compartilham o mesmo
+    # modelo; ``cwd`` é o caminho remoto (ou ponto de montagem local quando
+    # o transport encapsula um túnel, ex.: Codespaces).
     transport: Literal["local", "ssh", "codespace"] = Field(
         default="local",
         description="Onde o filesystem do workspace vive: local, SSH ou GitHub Codespace.",

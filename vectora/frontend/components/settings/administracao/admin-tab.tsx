@@ -790,7 +790,7 @@ function ConfigSection() {
 }
 
 // ---------------------------------------------------------------------------
-// F.3.3 — Pastas Seguras (SafeRoot)
+// Pastas Seguras (SafeRoot)
 // ---------------------------------------------------------------------------
 
 interface SafeRootRow {
@@ -1026,7 +1026,7 @@ function SafeRootsPanel() {
         </div>
       )}
 
-      {/* Confirmação de remoção de safe-root (Radix Dialog — C.12) */}
+      {/* Confirmação de remoção de safe-root (Radix Dialog) */}
       <ConfirmDialog
         open={removeConfirmId !== null}
         title={m.admin_saferoots_confirm_title()}
@@ -1041,7 +1041,7 @@ function SafeRootsPanel() {
 }
 
 // ---------------------------------------------------------------------------
-// StoragePanel (F10)
+// StoragePanel
 // ---------------------------------------------------------------------------
 
 interface StorageBackendStatus {

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * HITLPanel — Painel de aprovação Human-in-the-Loop (Bloco E).
+ * HITLPanel — Painel de aprovação Human-in-the-Loop.
  *
  * Renderizado dentro de uma mensagem do assistente quando o stream pausa
  * para confirmação do usuário antes de executar uma tool destrutiva
@@ -66,9 +66,9 @@ export interface HITLPendingInfo {
   affectedPaths?: string[];
   /** Modo de permissão ativo (default/yolo/…). */
   permissionMode?: string;
-  /** Anotação do avaliador auxiliar/allowlist (Sprint 22) — nunca decide
-   * sozinho, só marca a sugestão como reconhecida. O painel ainda pausa
-   * esperando o clique de confirmação. */
+  /** Anotação do avaliador auxiliar/allowlist — nunca decide sozinho, só
+   * marca a sugestão como reconhecida. O painel ainda pausa esperando o
+   * clique de confirmação. */
   preApproved?: boolean;
   /** Workspace da sessão — necessário pra persistir "sempre permitir" na
    * allowlist (por workspace, ver backend/services/smart_approval.py). */

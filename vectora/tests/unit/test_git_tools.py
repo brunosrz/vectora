@@ -1,9 +1,8 @@
-"""Git completo (Sprint 1) — amend/squash/reorder/cherry-pick + paridade
-UI-tem/tool-não-tinha (fetch/merge/revert/compare/resolve_conflict/
-check_hooks) + checkout com create=True.
+"""Git completo — amend/squash/reorder/cherry-pick, fetch/merge/revert/
+compare/resolve_conflict/check_hooks, e checkout com create=True.
 
-Mesmo padrão de `test_bloco_g_git_tools.py`: repos temporários reais via
-gitpython, funções ``_git_*_impl`` testadas diretamente.
+Repos temporários reais via gitpython; funções ``_git_*_impl`` testadas
+diretamente.
 """
 
 from __future__ import annotations

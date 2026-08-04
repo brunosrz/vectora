@@ -130,7 +130,7 @@ export function ChatInterface({
   // Cached por threadId via Zustand — switching back não causa flash vazio.
   const [messages, setMessages] = useThreadMessages(threadId);
 
-  // C.17 — Barra de uso de contexto: estima tokens e deriva pct de uso.
+  // Barra de uso de contexto: estima tokens e deriva pct de uso.
   // Aviso (toast) em 80% e bloqueio de send em 95%.
   const contextTokens = estimateTokens(
     messages.map((m) => (typeof m.content === "string" ? m.content : "")),
@@ -159,7 +159,7 @@ export function ChatInterface({
   // Idioma do reconhecimento de voz acompanha o idioma da interface.
   const voiceLang = useSettingsStore((s) => s.language);
 
-  // A.2d — workspace ativo para o botão de rewind por mensagem.
+  // Workspace ativo para o botão de rewind por mensagem.
   const activeWorkspaceId = useWorkspacesStore((s) => s.active_id ?? undefined);
 
   const router = useRouter();
@@ -192,7 +192,7 @@ export function ChatInterface({
   const [inputError, setInputError] = useState<string | null>(null);
   const inputLengthRef = useRef(uiState.input.length);
 
-  // T10.4 — Consume drafts pré-populados por outras áreas (ex.: empty
+  // Consome drafts pré-populados por outras áreas (ex.: empty
   // state do PlanTab que faz "Pedir um plano ao Vectora"). O draft é
   // escrito no chat-input-store; aqui consumimos uma única vez ao mount
   // e a cada mudança no campo `draft`. Limpa o store após consumir.
@@ -255,7 +255,7 @@ export function ChatInterface({
   const baseInputRef = useRef(uiState.input);
 
   // Sem limite de tamanho de input — paste grande vira anexo via
-  // handleInputPaste (F.4.1). Mantemos o nome `setLimitedInput` por
+  // handleInputPaste. Mantemos o nome `setLimitedInput` por
   // compatibilidade com os call sites; ele apenas limpa erro e propaga.
   const setLimitedInput = useCallback(
     (value: string) => {
@@ -363,7 +363,7 @@ export function ChatInterface({
     },
   });
 
-  // E2 — HITL: retoma execução pausada após decisão do usuário
+  // HITL: retoma execução pausada após decisão do usuário
   const handleHitlDecision = useCallback(
     async (
       messageId: string,
@@ -455,8 +455,8 @@ export function ChatInterface({
         return;
       }
 
-      // UX-18 — se a aba fechou/recarregou no meio de uma resposta, a marca
-      // em localStorage (ver use-stream-handler.ts) ainda está presente;
+      // Se a aba fechou/recarregou no meio de uma resposta, a marca em
+      // localStorage (ver use-stream-handler.ts) ainda está presente;
       // avisamos o usuário de que a resposta anterior pode ter sido cortada.
       if (consumeInterruptedFlag(currentThreadId)) {
         // `translate` (não o `t` do useT()) — evita acrescentar dependência
@@ -645,7 +645,7 @@ export function ChatInterface({
           onThreadPersistFailed?.(threadId);
         }
 
-        // C.22 — Notificação OS quando resposta chega com aba oculta e >15s
+        // Notificação OS quando resposta chega com aba oculta e >15s
         const streamDuration = Date.now() - streamStart;
         if (
           streamDuration > 15_000 &&
@@ -714,7 +714,7 @@ export function ChatInterface({
             : "Failed to connect to the agent";
         const errorMessage = createUserMessage(errorMsg);
         errorMessage.role = "assistant";
-        // M5 — marcado para exibir botão de retry no MessageItem
+        // Marcado para exibir botão de retry no MessageItem
         errorMessage.isError = true;
 
         setMessages((prev) => [...prev, errorMessage]);
@@ -911,7 +911,7 @@ export function ChatInterface({
       return;
     }
 
-    // C.22 — Solicita permissão de notificação na primeira mensagem enviada.
+    // Solicita permissão de notificação na primeira mensagem enviada.
     if (
       typeof Notification !== "undefined" &&
       Notification.permission === "default"
@@ -954,7 +954,7 @@ export function ChatInterface({
     const previousMessages = messages;
     setMessages((prev) => [...prev, userMessage]);
 
-    // F.2.5 — Otimismo da sidebar: avisa o pai já no envio da primeira
+    // Otimismo da sidebar: avisa o pai já no envio da primeira
     // mensagem, com lastMessage vazio. handleThreadUpdate adiciona a
     // thread otimisticamente; o título da IA é gerado depois (no
     // segundo onThreadUpdate, ao final do stream). Sem isso, a sidebar
@@ -1182,7 +1182,7 @@ export function ChatInterface({
     }
   }, []);
 
-  // F.4.1 — paste grande vira anexo. Mantém UX do ChatGPT/Claude:
+  // Paste grande vira anexo. Mantém UX do ChatGPT/Claude:
   // texto curto cola normal; texto longo (> LARGE_PASTE_THRESHOLD)
   // entra como `pasted-<N>.txt` na grid de anexos. Imagens continuam
   // sendo capturadas pelo handlePaste do useFileUpload.

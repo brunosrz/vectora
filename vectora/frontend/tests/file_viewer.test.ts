@@ -1,5 +1,5 @@
 /**
- * TDD — components/workbench/file-viewer.tsx
+ * components/workbench/file-viewer.tsx
  * Cobre getMediaKind (detecção por extensão) e rawFileUrl (construção de URL).
  * Não monta componentes React — só testa as funções puras exportadas.
  */

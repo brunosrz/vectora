@@ -1,4 +1,4 @@
-"""`HITLEvent.pre_approved` — wiring do Sprint 22 dentro de `adapt_stream`.
+"""`HITLEvent.pre_approved` dentro de `adapt_stream`.
 
 O ponto crítico: `pre_approved` é só uma anotação no evento SSE. O
 `__interrupt__` já fez o grafo pausar antes deste código rodar — nada aqui
@@ -74,8 +74,8 @@ async def test_falha_no_avaliador_nao_derruba_o_stream(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_pre_approved_nao_afeta_a_emissao_do_evento_hitl():
-    """Regressão do invariante central: com ou sem pré-aprovação, o evento
-    `hitl` sempre é emitido — o pause já aconteceu no grafo antes disso."""
+    """Com ou sem pré-aprovação, o evento `hitl` sempre é emitido — o pause
+    já aconteceu no grafo antes disso."""
     events = [_interrupt_event("file_write", {"path": "x.py"})]
     out = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
 

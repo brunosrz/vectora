@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SkillsTab — gerenciador de skills do usuário (Bloco S8).
+ * SkillsTab — gerenciador de skills do usuário.
  *
  * Lista skills instaladas, permite instalar nova (via URL git ou path local) e
  * remover/verificar existentes. Cada skill é uma pasta com SKILL.md no root

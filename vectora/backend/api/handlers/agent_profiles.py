@@ -1,4 +1,4 @@
-"""Handler REST de perfis de agente customizados (Sprint 39).
+"""Handler REST de perfis de agente customizados.
 
 Endpoints (todos exigem autenticação, escopados ao usuário do request):
     GET    /agent-profiles          — lista perfis do usuário

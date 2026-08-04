@@ -1,8 +1,7 @@
 """PROVIDER_API_KEY_ENV — chaves de LLM/search sobrevivem à restauração
-pós-.env de projeto (Sprint 11.5: TAVILY_API_KEY tinha precedência
-invertida, ausente do dict que `_load_environment_hierarchy` usa pra
+pós-.env de projeto: `_load_environment_hierarchy` usa este dict pra
 restaurar o valor do usuário depois que um `.env` de projeto/repo
-esquecido no filesystem sobrescreve tudo)."""
+esquecido no filesystem sobrescreve tudo."""
 
 from __future__ import annotations
 

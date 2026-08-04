@@ -1,4 +1,4 @@
-"""TDD — GET /threads/{thread_id}/history (FASE 4.1).
+"""GET /threads/{thread_id}/history.
 
 Cobre: paginação por offset/limit, has_more, MESSAGES_CAP, erro de thread inexistente.
 """

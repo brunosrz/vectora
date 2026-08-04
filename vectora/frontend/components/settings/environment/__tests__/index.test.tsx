@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
  * EnvironmentDialog — ordem das abas. "Integrações" deve ser a primeira.
- * Skills e Plugins migraram pra Library (workbench) — só Integrações e
- * Provider Routing continuam aqui.
+ * O dialog só cobre Integrações e Provider Routing; Skills e Plugins vivem
+ * na Library (workbench).
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
@@ -59,7 +59,7 @@ describe("EnvironmentDialog", () => {
     expect(labels).toEqual(["Integrações", "Provider Routing"]);
   });
 
-  it("barra de sub-abas compensa o px-3 do TabsTrigger com -ml-3, alinhando o texto com o conteúdo abaixo (Sprint 12)", async () => {
+  it("barra de sub-abas compensa o px-3 do TabsTrigger com -ml-3, alinhando o texto com o conteúdo abaixo", async () => {
     render(<EnvironmentDialog />);
 
     await waitFor(() => {

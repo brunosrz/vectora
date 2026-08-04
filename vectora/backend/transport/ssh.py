@@ -42,8 +42,7 @@ class SshTransport:
     abre a conexão na primeira operação e a mantém até :meth:`close`.
 
     Para o terminal interativo (PTY) e operações de filesystem além de
-    read/write, usar ``run`` com comandos shell — é o caminho coberto
-    pelo refactor do G.2.3.
+    read/write, usar ``run`` com comandos shell.
     """
 
     def __init__(

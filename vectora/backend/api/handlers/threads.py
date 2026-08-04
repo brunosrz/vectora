@@ -7,7 +7,7 @@ Endpoints (todos POST, padrão ConnectRPC):
     POST /vectora.chat.v1.ThreadService/DeleteThread
     POST /vectora.chat.v1.ThreadService/GetHistory
 
-Endpoints REST de rewind (A.2):
+Endpoints REST de rewind:
     GET  /threads/{thread_id}/checkpoints  — lista checkpoints de turno
     POST /threads/{thread_id}/rewind       — restaura workspace para checkpoint
 
@@ -78,7 +78,7 @@ async def _ensure_schema(db: Any) -> None:
 
     Tabelas gerenciadas:
     - ``vectora_sessions`` — metadados de cada thread/sessão.
-    - ``vectora_checkpoint_artifacts`` — metadados dos snapshots de rewind (A.2).
+    - ``vectora_checkpoint_artifacts`` — metadados dos snapshots de rewind.
     """
     await db.execute("""
         CREATE TABLE IF NOT EXISTS vectora_sessions (
@@ -192,9 +192,8 @@ async def ensure_sessions_table() -> None:
 def _normalize_mode(mode: str | None) -> str:
     """Normaliza o modo de sessão.
 
-    O modo de desenvolvimento foi renomeado de ``"dev"`` para ``"code"``; linhas
-    antigas com ``"dev"`` (e o default ausente) são lidas como ``"code"``. O modo
-    conversacional ``"chat"`` é preservado.
+    Linhas gravadas com a chave ``"dev"`` (e o default ausente) são lidas
+    como ``"code"``. O modo conversacional ``"chat"`` é preservado.
     """
     if mode == "chat":
         return "chat"
@@ -306,7 +305,7 @@ async def _increment_message_count(thread_id: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Pins de sessão (WB-1) — arquivos fixados, persistidos em extra["pins"]
+# Pins de sessão — arquivos fixados, persistidos em extra["pins"]
 # ---------------------------------------------------------------------------
 
 
@@ -377,7 +376,7 @@ async def _set_session_pins(thread_id: str, pins: list[str]) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# Contador de turnos do Remember (WB-5) — gatilho automático a cada N turnos,
+# Contador de turnos do Remember — gatilho automático a cada N turnos,
 # persistido em extra (mesmo padrão de pins acima) — sem coluna nova.
 # ---------------------------------------------------------------------------
 
@@ -638,10 +637,9 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
     nenhum checkpoint real do LangGraph (tabela `checkpoints`, gerenciada
     pelo `AsyncSqliteSaver`) — sinal inequívoco de que o grafo nunca chegou
     a rodar pra essa thread (ex.: `message_count` incrementado antes do
-    agente inicializar, bug histórico de `stream_chat`). Sem essa passada,
-    threads assim ficam fantasma pra sempre: passam no filtro de
-    `message_count > 0` do `ListThreads` e a primeira passada só olha
-    `message_count = 0`.
+    agente inicializar). Sem essa passada, threads assim ficam fantasma pra
+    sempre: passam no filtro de `message_count > 0` do `ListThreads` e a
+    primeira passada só olha `message_count = 0`.
     """
     from datetime import timedelta
 
@@ -870,7 +868,7 @@ async def generate_title(request: GenerateTitleRequest) -> GenerateTitleResponse
 
 
 # ---------------------------------------------------------------------------
-# Rewind — A.2b: schema + endpoints REST
+# Rewind — schema + endpoints REST
 # ---------------------------------------------------------------------------
 
 
@@ -1064,7 +1062,7 @@ async def rewind_thread(
 
 
 # ---------------------------------------------------------------------------
-# C.27 — Activity endpoint: arquivos tocados + resumo de tool calls
+# Activity endpoint: arquivos tocados + resumo de tool calls
 MESSAGES_CAP = 200
 
 
@@ -1171,7 +1169,7 @@ async def thread_activity(thread_id: str) -> ActivityResponse:
     turn_count: int = turn_count_row[0] if turn_count_row else 0
 
     # tool_call_counts: derivado de files_touched por convenção (sem acesso ao
-    # grafo LangGraph aqui). Expandir em iterações futuras via VectoraTracer.
+    # grafo LangGraph aqui).
     return ActivityResponse(
         files_touched=unique_files,
         tool_call_counts={},
@@ -1221,7 +1219,7 @@ async def thread_pending_interrupt(
 
 
 # ---------------------------------------------------------------------------
-# Aprovação inteligente — allowlist persistente por workspace (Sprint 22)
+# Aprovação inteligente — allowlist persistente por workspace
 # ---------------------------------------------------------------------------
 
 

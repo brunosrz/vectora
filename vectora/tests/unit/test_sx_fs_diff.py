@@ -106,7 +106,7 @@ def test_diff_file_status_only_defaults_flags_to_none() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Sprint 6 — FS-2A: arquivo untracked exibido como diff puro de adição
+# Arquivo untracked exibido como diff puro de adição
 # ---------------------------------------------------------------------------
 
 

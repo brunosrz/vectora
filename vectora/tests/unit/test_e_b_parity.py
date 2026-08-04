@@ -1,17 +1,17 @@
-"""Testes de paridade E.B — verifica que o harness deepagents está corretamente
-configurado e que os componentes-chave do bloco E.B funcionam como esperado.
+"""Testes de paridade — verifica que o harness deepagents está corretamente
+configurado e que os componentes-chave funcionam como esperado.
 
 Cobertura:
-    - VectoraContext: construção correta a partir de config dict (E.B-5)
-    - Middleware stack: HITL + Summarization montados na ordem certa (E.B-3)
-    - HarnessProfiles: anthropic/google_genai/ollama registrados (E.B-4)
-    - FilesystemPermission: regras DENY/ALLOW/INTERRUPT (E.B-9)
-    - Memory tools: namespace correto + store API (E.B-11)
-    - backends.build_store: InMemoryStore sem index quando sem API key (E.B-11)
-    - backends.build_backend: rotas CompositeBackend corretas (E.B-8)
-    - agent_factory._subagent_specs: ABAC filtering (E.B-2)
-    - agent_factory._agents_md_paths: retorna None se não há AGENTS.md (E.B-11)
-    - LangSmith: enable/disable não crasham (E.B-13)
+    - VectoraContext: construção correta a partir de config dict
+    - Middleware stack: HITL + Summarization montados na ordem certa
+    - HarnessProfiles: anthropic/google_genai/ollama registrados
+    - FilesystemPermission: regras DENY/ALLOW/INTERRUPT
+    - Memory tools: namespace correto + store API
+    - backends.build_store: InMemoryStore sem index quando sem API key
+    - backends.build_backend: rotas CompositeBackend corretas
+    - agent_factory._subagent_specs: ABAC filtering
+    - agent_factory._agents_md_paths: retorna None se não há AGENTS.md
+    - LangSmith: enable/disable não crasham
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
-# E.B-5 — VectoraContext
+# VectoraContext
 # ---------------------------------------------------------------------------
 
 
@@ -76,7 +76,7 @@ class TestVectoraContext:
 
 
 # ---------------------------------------------------------------------------
-# E.B-3 — Middleware stack
+# Middleware stack
 # ---------------------------------------------------------------------------
 
 
@@ -114,7 +114,7 @@ class TestMiddlewareStack:
 
 
 # ---------------------------------------------------------------------------
-# E.B-4 — HarnessProfiles
+# HarnessProfiles
 # ---------------------------------------------------------------------------
 
 
@@ -141,7 +141,7 @@ class TestHarnessProfiles:
 
 
 # ---------------------------------------------------------------------------
-# E.B-9 — FilesystemPermission
+# FilesystemPermission
 # ---------------------------------------------------------------------------
 
 
@@ -220,7 +220,7 @@ class TestFilesystemPermission:
 
 
 # ---------------------------------------------------------------------------
-# E.B-11 — Memory tools namespace + store API
+# Memory tools namespace + store API
 # ---------------------------------------------------------------------------
 
 
@@ -272,13 +272,13 @@ class TestMemoryToolsNamespace:
 
 
 # ---------------------------------------------------------------------------
-# E.B-11 — backends.build_store
+# backends.build_store
 # ---------------------------------------------------------------------------
 
 
 class TestBuildStore:
     async def test_build_store_returns_async_sqlite_store(self):
-        """build_store() (async) retorna AsyncSqliteStore persistente (F5)."""
+        """build_store() (async) retorna AsyncSqliteStore persistente."""
         import contextlib
 
         from langgraph.store.sqlite.aio import AsyncSqliteStore
@@ -304,7 +304,7 @@ class TestBuildStore:
 
 
 # ---------------------------------------------------------------------------
-# E.B-8 — backends.build_backend routes
+# backends.build_backend routes
 # ---------------------------------------------------------------------------
 
 
@@ -318,7 +318,7 @@ class TestBuildBackend:
 
 
 # ---------------------------------------------------------------------------
-# E.B-2 — _subagent_specs ABAC
+# _subagent_specs ABAC
 # ---------------------------------------------------------------------------
 
 
@@ -414,7 +414,7 @@ class TestSubagentSpecs:
 
 
 # ---------------------------------------------------------------------------
-# E.B-11 — _agents_md_paths
+# _agents_md_paths
 # ---------------------------------------------------------------------------
 
 
@@ -449,7 +449,7 @@ class TestAgentsMdPaths:
 
 
 # ---------------------------------------------------------------------------
-# E.B-13 — LangSmith enable/disable
+# LangSmith enable/disable
 # ---------------------------------------------------------------------------
 
 

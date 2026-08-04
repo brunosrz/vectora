@@ -1,5 +1,5 @@
 /**
- * TDD — Bloco L: settings-store.ts
+ * settings-store.ts
  *
  * Testa:
  * - Valores padrão

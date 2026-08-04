@@ -1,6 +1,6 @@
 """ListThreads filtra threads vazias (message_count=0) e cleanup_empty_threads
-apaga as antigas o suficiente — UX-1 do plano de pré-lançamento (sessões
-fantasma na sidebar, resíduo de threads nunca usadas).
+apaga as antigas o suficiente — evita sessões fantasma na sidebar (resíduo
+de threads nunca usadas).
 """
 
 from __future__ import annotations

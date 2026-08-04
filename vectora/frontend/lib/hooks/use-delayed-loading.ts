@@ -3,7 +3,7 @@
 /**
  * useDelayedLoading — atrasa a exibição de um skeleton/spinner por `delayMs`
  * (default 100ms) para evitar o "flash" em buscas que resolvem quase
- * instantaneamente (cache quente, rede local). UX-9.
+ * instantaneamente (cache quente, rede local).
  *
  * Sem isso, todo fetch — mesmo um que leva 20ms — pisca um skeleton inteiro
  * na tela e o usuário percebe como "tremedeira" em vez de fluidez.

@@ -1,5 +1,5 @@
 /**
- * TDD — lib/utils/uuid.ts
+ * lib/utils/uuid.ts
  * Verifica formato RFC 4122 v4 e unicidade.
  */
 

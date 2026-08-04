@@ -1,17 +1,9 @@
-"""Testes para o fix de persistência de threads (session loss bug).
+"""Persistência de threads na tabela `vectora_sessions`.
 
-Bug: StreamChat cria threads no checkpointer LangGraph mas NUNCA grava na
-tabela `vectora_sessions`. Após reiniciar o servidor, ListThreads retorna
-lista vazia mesmo que o histórico exista nos checkpoints.
-
-Segundo problema: titles de threads só existem em estado React local — não
-sobrevivem a reload/restart.
-
-Fixes testados:
-1. _upsert_session() existe e faz UPSERT na tabela vectora_sessions
-2. stream_chat() chama _upsert_session() com o thread_id correto
-3. UpdateThread endpoint persiste title no campo extra JSON
-4. Thread criada via _upsert_session aparece em ListThreads
+Cobre: `_upsert_session()` grava/atualiza a tabela; `stream_chat()` chama
+`_upsert_session()` com o thread_id correto; o endpoint UpdateThread
+persiste o title no campo extra JSON; threads registradas via
+`_upsert_session()` aparecem em ListThreads.
 """
 
 from __future__ import annotations
@@ -363,14 +355,11 @@ class TestStreamChatRegistersThread:
 
     @pytest.mark.asyncio
     async def test_stream_chat_does_not_upsert_when_agent_init_fails(self):
-        """Bug: numa instalação sem provider configurado, `get_user_agent`
-        falha (GetEnvError) e ANTES do fix `_upsert_session` +
-        `_increment_message_count` já tinham rodado — a thread ficava com
-        message_count=1 sem nenhuma mensagem real, passava pelo filtro de
-        `list_threads` (message_count > 0) e nunca era pega por
-        `cleanup_empty_threads` (que só olha message_count=0): sessão fantasma
-        pra sempre. O registro em vectora_sessions só pode acontecer DEPOIS do
-        grafo inicializar com sucesso."""
+        """Erro/borda: quando `get_user_agent` falha (ex. sem provider
+        configurado), nem `_upsert_session` nem `_increment_message_count`
+        podem ter rodado — persistir a thread nesse ponto criaria uma sessão
+        com message_count > 0 sem mensagem real, invisível tanto ao filtro
+        de `list_threads` quanto a `cleanup_empty_threads`."""
         upsert_calls: list[str] = []
 
         async def mock_upsert(
@@ -438,14 +427,11 @@ class TestStreamChatRegistersThread:
     async def test_stream_chat_counts_user_message_even_without_assistant_reply(
         self,
     ):
-        """Regra correta: quem inicia a conversa é o usuário, então a thread
-        já deve contar como real assim que a mensagem dele é enviada ao
-        grafo — mesmo que o assistente nunca produza nenhum token (erro de
-        auth/quota/timeout do provider, `astream_events` sem nenhum evento).
-        Antes desse fix, message_count só incrementava no 1º token do
-        assistente (`adapt_stream`/`content_started`), então esse cenário
-        deixava a mensagem do usuário persistida no checkpointer LangGraph
-        mas invisível em ListThreads e sujeita a cleanup_empty_threads."""
+        """message_count incrementa assim que a mensagem do usuário é enviada
+        ao grafo, mesmo que o assistente nunca produza nenhum token (erro de
+        auth/quota/timeout do provider, `astream_events` sem nenhum evento) —
+        quem inicia a conversa é o usuário, então a thread já conta como
+        real nesse ponto."""
         increment_calls: list[str] = []
 
         async def mock_increment(thread_id: str) -> None:
@@ -652,12 +638,11 @@ class TestListThreadsIncludesUpserted:
 
     @pytest.mark.asyncio
     async def test_upserted_thread_appears_in_list(self):
-        """Thread com uma troca de mensagem real (_upsert_session, chamado
-        por stream_chat no início do turno; _increment_message_count,
-        chamado por adapt_stream no 1º token real emitido) aparece em
-        ListThreads. Usa aiosqlite real (não FakeDB) — o fake anterior não
-        aplicava o filtro `WHERE message_count > 0` de verdade, mascarando
-        esse comportamento."""
+        """Thread com uma troca de mensagem real (`_upsert_session` seguido
+        de `_increment_message_count`) aparece em ListThreads. Usa aiosqlite
+        real (não FakeDB): FakeDB não aplica o filtro
+        `WHERE message_count > 0` de verdade, o que mascararia esse
+        comportamento."""
         import aiosqlite
         from fastapi.testclient import TestClient
 
@@ -754,7 +739,7 @@ class TestListThreadsIncludesUpserted:
 
 
 # ---------------------------------------------------------------------------
-# 4. Modo: dev → code (Parte E) — _normalize_mode + _row_to_thread
+# Modo: dev → code — _normalize_mode + _row_to_thread
 # ---------------------------------------------------------------------------
 
 
@@ -829,7 +814,7 @@ class TestRowToThreadMode:
 
 
 # ---------------------------------------------------------------------------
-# Coluna mode de 1ª classe — migração, backfill e filtro (Parte E)
+# Coluna mode de 1ª classe — migração, backfill e filtro
 # ---------------------------------------------------------------------------
 
 
@@ -953,7 +938,7 @@ class TestModeColumn:
 
 
 # ---------------------------------------------------------------------------
-# Sessões fixadas (Sprint 4) — coluna pinned + ordenação + UpdateThread parcial
+# Sessões fixadas — coluna pinned + ordenação + UpdateThread parcial
 # ---------------------------------------------------------------------------
 
 

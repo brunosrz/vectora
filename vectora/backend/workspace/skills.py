@@ -1,4 +1,4 @@
-"""Registry de skills por usuário — Bloco S8.
+"""Registry de skills por usuário.
 
 Cada usuário tem uma pasta ``~/.vectora/skills/<user_id>/`` com:
 
@@ -14,8 +14,8 @@ Fontes suportadas:
 Validação: a raiz da skill deve ter ``SKILL.md`` com frontmatter declarando
 ``name`` e ``description``. Sem isso, a instalação é rejeitada.
 
-O resolver do agente (``graph`` no Bloco U) consulta
-``list_skill_paths(user_id)`` para montar o ``skills=[...]`` do Deep Agent.
+O resolver do agente consulta ``list_skill_paths(user_id)`` para montar o
+``skills=[...]`` do Deep Agent.
 """
 
 from __future__ import annotations
@@ -269,8 +269,8 @@ def install_skill(user_id: str, source: str) -> Skill:
 def install_skill_from_content(
     user_id: str, name: str, description: str, content: str
 ) -> Skill:
-    """Instala uma skill a partir de conteúdo gerado em memória (learning
-    loop — Sprint Remember), sem passar por git/cópia de path.
+    """Instala uma skill a partir de conteúdo gerado em memória pelo loop de
+    aprendizado, sem passar por git/cópia de path.
 
     Monta o ``SKILL.md`` (frontmatter + ``content``) direto no destino.
     Mesma regra de slug/duplicidade de ``install_skill``: já existe com o

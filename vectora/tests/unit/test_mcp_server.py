@@ -523,10 +523,10 @@ class TestGraphConfig:
 
 
 # ---------------------------------------------------------------------------
-# Gate de aprovação MCP (write/terminal) — achado da auditoria: file_write_tool/
-# file_edit_tool/terminal_tool chamavam .ainvoke() direto, fora do grafo, sem
-# HITL/permission_mode nenhum. Sprint 48 fecha isso com aprovação persistida
-# por workspace (Workspace.mcp_write_approved), checada antes do .ainvoke().
+# Gate de aprovação MCP (write/terminal): file_write_tool/file_edit_tool/
+# terminal_tool checam Workspace.mcp_write_approved antes de chamar
+# .ainvoke(), garantindo que escrita/execução fora do grafo exija aprovação
+# persistida por workspace.
 # ---------------------------------------------------------------------------
 
 

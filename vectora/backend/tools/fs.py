@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Q4 — Confinação ao workspace ativo (scope guard rails)
+# Confinação ao workspace ativo (scope guard rails)
 # ---------------------------------------------------------------------------
 
 
@@ -94,8 +94,7 @@ def _require_local(config: RunnableConfig | None) -> str:
     Tools sync (`file_read`, `file_write`, `file_edit`, `grep`, `list`)
     fazem I/O direto via ``Path()`` e não passam pelo ``TransportBackend``
     async. Quando o workspace é SSH ou Codespace, retornamos uma mensagem
-    clara — a próxima fase do G.2 vai expor essas operações via tools
-    async dedicadas (``remote_read``, ``remote_write``).
+    clara orientando o uso da tool `terminal`, que já suporta transporte remoto.
     """
     _, ws = _workspace_root(config)
     transport = str(getattr(ws, "transport", "local"))
@@ -778,9 +777,9 @@ async def terminal(
 
     root, _ws = _workspace_root(config)
 
-    # G.2.3 — Workspace remoto (SSH ou Codespace): delega via transport.
+    # Workspace remoto (SSH ou Codespace): delega via transport.
     # O streaming linha-a-linha e o stdin interativo não são suportados
-    # nesse caminho ainda; o output volta inteiro depois que o comando termina.
+    # nesse caminho; o output volta inteiro depois que o comando termina.
     transport = str(getattr(_ws, "transport", "local"))
     if transport != "local":
         from backend.transport import get_transport
@@ -811,8 +810,7 @@ async def terminal(
         # _pending_terminal, então um `stdin_input` de acompanhamento (pra
         # responder a um prompt interativo) simplesmente não encontra
         # comando pendente e retorna o erro claro já existente logo no
-        # topo desta função. Suporte a stdin interativo dentro do jail
-        # fica pra uma sprint futura, se virar fricção real.
+        # topo desta função. Stdin interativo dentro do jail não é suportado.
         try:
             worker = await jail_manager.get_or_spawn(
                 str(getattr(_ws, "id", root)), str(root), policy
@@ -835,7 +833,7 @@ async def terminal(
     try:
         # asyncio.create_subprocess_shell não bloqueia o event loop
         # permitindo que o UI (Rich panels) e outras tarefas continuem rodando.
-        # cwd confina o comando ao workspace ativo (Q4 — scope guard rails).
+        # cwd confina o comando ao workspace ativo (scope guard rails).
         # stdin=PIPE viabiliza responder a prompts interativos (stdin_input).
         proc = await asyncio.create_subprocess_shell(
             command,

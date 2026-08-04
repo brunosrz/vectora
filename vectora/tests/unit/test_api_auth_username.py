@@ -1,4 +1,4 @@
-"""Endpoints de username (Sprint G2) — disponibilidade + signup por username.
+"""Endpoints de username — disponibilidade + signup por username.
 
 Fixture função-a-função com banco temporário isolado (diferente do
 module-scoped de test_api_auth.py) porque estes testes dependem de estado de

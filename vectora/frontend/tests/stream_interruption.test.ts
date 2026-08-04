@@ -1,5 +1,5 @@
 /**
- * TDD — lib/utils/stream-interruption.ts
+ * lib/utils/stream-interruption.ts
  * Cobre markStreamStarted, markStreamEnded, consumeInterruptedFlag.
  * Usa localStorage mock do vitest (jsdom).
  */

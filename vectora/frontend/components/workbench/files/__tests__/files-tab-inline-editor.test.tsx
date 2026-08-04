@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Inline editor no viewer de arquivos (Sprint 6 — FS-1).
+ * Inline editor no viewer de arquivos.
  *
  * Testa a lógica de toggle edit/cancel e preenchimento do textarea.
  * Usa globalThis.fetch mockado para isolar chamadas de rede.
@@ -217,7 +217,7 @@ describe("FilesTab — botão abrir como janela por modo de interface", () => {
   });
 });
 
-describe("FilesTab inline editor (FS-1)", () => {
+describe("FilesTab inline editor", () => {
   it("botão Pencil com data-editing=false está presente no viewer", async () => {
     await act(async () => {
       await renderFilesTab();

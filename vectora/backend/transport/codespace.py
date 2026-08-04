@@ -6,9 +6,9 @@ codespaces e rodar comandos via ``gh codespace ssh -c <name>``. O
 gerenciar chaves SSH ou tokens diretamente.
 
 Workspaces remotos precisam do ``codespace_name`` no modelo
-:class:`src.types.Workspace` (G.2.1). O ``cwd`` no Codespace é o
-diretório default que o ``gh codespace ssh`` abre (``/workspaces/<repo>``
-na maioria dos templates), salvo ``remote_path`` definido.
+:class:`src.types.Workspace`. O ``cwd`` no Codespace é o diretório
+default que o ``gh codespace ssh`` abre (``/workspaces/<repo>`` na
+maioria dos templates), salvo ``remote_path`` definido.
 """
 
 from __future__ import annotations

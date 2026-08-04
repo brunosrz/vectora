@@ -613,7 +613,7 @@ class TestDeleteBuild:
 
 
 # ---------------------------------------------------------------------------
-# _run_build — status final (paused/error/done) — Parte C
+# _run_build — status final (paused/error/done)
 # ---------------------------------------------------------------------------
 
 
@@ -743,9 +743,8 @@ class TestRunBuildStatus:
 
 
 # ---------------------------------------------------------------------------
-# Sprint 33 — _check_workspace_access (dependência do router, vazamento
-# multi-usuário: sem isso um usuário autenticado lia/mutava o Context Graph
-# de outro workspace só sabendo o id).
+# _check_workspace_access — dependência do router que garante que um usuário
+# autenticado só lê/muta o Context Graph de workspaces que possui.
 # ---------------------------------------------------------------------------
 
 

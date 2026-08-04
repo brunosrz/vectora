@@ -84,7 +84,7 @@ function SignInPage() {
       }
 
       setUser(data.user as AuthUser);
-      // UX-20 — `vectora:return_to` (sessão caiu no meio do uso, salvo por
+      // `vectora:return_to` (sessão caiu no meio do uso, salvo por
       // `redirectToLogin`) tem prioridade sobre `?from=` (carregamento
       // inicial sem sessão, ver __root.tsx) por carregar path+query completos.
       const returnTo = consumeReturnTo();

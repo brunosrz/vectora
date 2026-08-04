@@ -1,17 +1,10 @@
 """Budget por tarefa em segundo plano, com corte automático.
 
-Do Paperclip: `budget_policies` com `hardStopEnabled` que pausa o agente ao
-estourar o limite. O Vectora é local-first single-tenant — não faz sentido
-org chart nem escopo por empresa — mas o conceito de **teto de custo por
-tarefa** é diretamente aplicável, e hoje nada impede uma tarefa mal
-configurada de rodar em loop gastando API.
-
-Duas decisões que os testes travam:
-
-- **Só a PRÓXIMA run é barrada.** Abortar uma run em andamento trunca o
-  output parcial, mesmo princípio do tratamento de erro de streaming.
-- **Sem budget definido, nada muda.** O corte é opt-in; tornar obrigatório
-  quebraria toda tarefa existente.
+Cada tarefa pode ter um `budget_cents` (próprio ou herdado do perfil de
+agente). `check_budget` soma o custo estimado das runs concluídas e barra
+apenas a PRÓXIMA run quando o teto é ultrapassado — a run em andamento
+nunca é abortada, para não truncar output parcial. Sem `budget_cents`
+definido (`None`), a tarefa nunca é barrada.
 """
 
 from __future__ import annotations
@@ -150,8 +143,8 @@ class TestRastreioDeCusto:
 class TestCorteAutomatico:
     @pytest.mark.asyncio
     async def test_task_sem_budget_nunca_e_barrada(self, db):
-        """Regressão: o corte é opt-in. Toda tarefa existente tem
-        `budget_cents = NULL` e precisa continuar rodando."""
+        """O corte é opt-in: task com `budget_cents = NULL` nunca é
+        barrada, não importa o custo acumulado."""
         from backend.scheduling.budget import check_budget
 
         await _task(db, "t1", budget_cents=None)
@@ -162,8 +155,8 @@ class TestCorteAutomatico:
     @pytest.mark.asyncio
     async def test_task_sem_budget_herda_do_perfil(self, db, monkeypatch):
         """Task sem budget próprio, mas com agent_profile_id, herda o teto
-        do perfil (Sprint 40) — nunca sobrescreve um budget que a task já
-        definiu explicitamente (ver teste seguinte)."""
+        do perfil — nunca sobrescreve um budget que a task já definiu
+        explicitamente (ver teste seguinte)."""
         from types import SimpleNamespace
 
         from backend.scheduling.budget import check_budget
@@ -244,8 +237,8 @@ class TestCorteAutomatico:
 
     @pytest.mark.asyncio
     async def test_task_barrada_vira_blocked_com_capability(self, db):
-        """O motivo aparece no card: `capability` é a taxonomia do Sprint 16
-        pra "não dá pra continuar assim"."""
+        """O motivo aparece no card: `block_kind="capability"` sinaliza que
+        a tarefa não pode continuar rodando como está configurada."""
         from backend.scheduling.budget import check_budget
         from backend.scheduling.kanban import get_task_status
 
@@ -287,8 +280,8 @@ class TestCorteAutomatico:
 class TestRunEmAndamento:
     @pytest.mark.asyncio
     async def test_estourar_no_meio_nao_aborta_a_run_atual(self, db):
-        """Decisão explícita: abortar trunca o output parcial, mesmo
-        princípio do tratamento de erro de streaming. Só a PRÓXIMA é barrada.
+        """Estourar o budget no meio de uma run não a aborta — trunca output
+        parcial. A run corrente termina normalmente; só a PRÓXIMA é barrada.
         """
         from backend.scheduling.budget import check_budget, record_run_cost
 

@@ -1,4 +1,4 @@
-"""Testes de integração dos endpoints HTTP de auth (Bloco C — C3/C8).
+"""Testes de integração dos endpoints HTTP de auth.
 
 Usa FastAPI TestClient com banco SQLite temporário e auth habilitada,
 cobrindo o fluxo end-to-end via HTTP (signup → signin → /me → refresh →
@@ -315,7 +315,7 @@ class TestUpdateMeEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# usage (R5)
+# usage
 # ---------------------------------------------------------------------------
 
 
@@ -338,7 +338,7 @@ class TestUsageEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# tools policy (S5)
+# tools policy
 # ---------------------------------------------------------------------------
 
 

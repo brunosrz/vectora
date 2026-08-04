@@ -156,7 +156,7 @@ async def test_install_learned_skill_mirrors_artifact_and_resolves_pending(
     monkeypatch, tmp_path
 ):
     """Instalar uma skill aprovada espelha um artifact na aba Plan e limpa
-    a proposta pendente do gatilho automático (WB-5)."""
+    a proposta pendente do gatilho automático."""
     from backend.workspace import skills as skills_module
 
     monkeypatch.setattr(

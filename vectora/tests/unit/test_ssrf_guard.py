@@ -1,9 +1,9 @@
-"""Testes para backend/browser/ssrf_guard.py (Sprint 34).
+"""Testes para backend/browser/ssrf_guard.py.
 
-fetch_url (tool + fallback local via Chromium) não podia navegar pra IPs
-privados/loopback/link-local/metadata — sem isso, `169.254.169.254`
+Bloqueia navegação de fetch_url (tool + fallback local via Chromium) para
+IPs privados/loopback/link-local/metadata — inclui `169.254.169.254`
 (metadata de nuvem) e `localhost:<porta>` (serviços internos, incluindo o
-próprio backend Vectora) eram alcançáveis via qualquer sessão de chat.
+próprio backend Vectora).
 """
 
 from __future__ import annotations

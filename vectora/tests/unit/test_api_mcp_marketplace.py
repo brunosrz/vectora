@@ -1,4 +1,4 @@
-"""TDD — MCP Marketplace (FASE 5.3).
+"""MCP Marketplace.
 
 GET  /mcp/registry  — lista conectores disponíveis
 POST /mcp/install   — registra um MCP no workspace
@@ -105,8 +105,8 @@ async def test_list_registry_prefers_remote_entry_over_local_when_id_matches(
 async def test_list_registry_propagates_icon_url_when_present_and_none_when_absent(
     monkeypatch, _no_remote_registry
 ):
-    """icon_url propaga do registry curado (D1) quando presente; entrada sem
-    o campo (ex. registry oficial de MCP, que não expõe ícone) vira None —
+    """icon_url propaga do registry curado quando presente; entrada sem o
+    campo (ex. registry oficial de MCP, que não expõe ícone) vira None —
     nunca inventa uma URL."""
     from unittest.mock import AsyncMock
 
@@ -163,9 +163,8 @@ async def test_list_registry_ignores_malformed_remote_entry(
 async def test_list_registry_merges_official_mcp_registry_entries(
     monkeypatch, _no_remote_registry
 ):
-    """Cobre o fix pedido ao vivo: a Library mostrava só os 6 conectores
-    hardcoded — agora entram também as entradas do registry oficial de MCP
-    (registry.modelcontextprotocol.io), mescladas sem duplicar id."""
+    """list_registry mescla o catálogo local com as entradas do registry
+    oficial de MCP (registry.modelcontextprotocol.io), sem duplicar id."""
     from unittest.mock import AsyncMock
 
     from backend.api.handlers import mcp_marketplace
@@ -272,9 +271,9 @@ async def test_list_registry_no_real_source_has_no_verified_entries_still_sorts(
 async def test_list_registry_fetches_remote_and_official_in_parallel(
     monkeypatch, _no_remote_registry
 ):
-    """Regressão de performance: as duas fontes remotas são buscadas em
-    paralelo (asyncio.gather), não sequencialmente — o tempo total fica perto
-    do maior atraso individual, não da soma dos dois."""
+    """As duas fontes remotas são buscadas em paralelo (asyncio.gather), não
+    sequencialmente — o tempo total fica perto do maior atraso individual,
+    não da soma dos dois."""
     import asyncio
     import time
 
@@ -304,9 +303,9 @@ async def test_list_registry_fetches_remote_and_official_in_parallel(
 async def test_install_mcp_resolves_connector_from_remote_or_official_registry(
     _functional_store, monkeypatch
 ):
-    """Fecha o gap encontrado: install_mcp só buscava em _REGISTRY (os 6
-    hardcoded) — agora resolve qualquer conector visível em list_registry(),
-    incluindo entradas do registry oficial de MCP."""
+    """install_mcp resolve qualquer conector visível em list_registry(),
+    incluindo entradas do registry oficial de MCP — não só o catálogo
+    local em _REGISTRY."""
     from unittest.mock import AsyncMock
 
     from backend.api.handlers import mcp_marketplace
@@ -357,9 +356,8 @@ def _functional_store(tmp_path, monkeypatch, _no_remote_registry):
 async def test_install_wires_into_functional_store_and_tools(
     _functional_store, monkeypatch
 ):
-    """Sprint 4.1: instalar um conector grava no MESMO store que o agente lê
-    (plugins), então get_user_mcp_tools passa a incluir as tools dele — antes o
-    install gravava num mcp.json paralelo que ninguém lia."""
+    """Instalar um conector grava no mesmo store que o agente lê (plugins),
+    então get_user_mcp_tools inclui as tools dele."""
     plugins = _functional_store
 
     req = InstallRequest(mcp_id=_REGISTRY[0].id)
@@ -441,7 +439,7 @@ async def test_install_uninstall_mcp_tratam_excecao_do_store(
     _functional_store, monkeypatch
 ):
     """Erro/borda: plugins.add_server/remove_server lançando não deve propagar
-    — install_mcp/uninstall_mcp devolvem status='error' (tools defensivas §11)."""
+    — install_mcp/uninstall_mcp devolvem status='error'."""
 
     def _boom_add(*a, **k):
         raise RuntimeError("disco cheio")

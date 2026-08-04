@@ -7,12 +7,12 @@ src/api/handlers/chat.py, garantindo zero alteração no caller.
 Arquitetura:
     - Agente principal (orchestrator) construído via create_deep_agent.
     - Subagents "coder" e "search" como SubAgent dicts; prompts importados
-      de src/agents/{coder,search}.py (E.B-2 extrai specs para módulos próprios).
+      de src/agents/{coder,search}.py, em módulos próprios por subagent.
     - HITL dinâmico por middleware: build_middleware_stack monta um único
       HumanInTheLoopMiddleware cujo predicate lê permission_mode do
       runtime.context por request (ver backend.services.middleware).
-    - Checkpointer: AsyncSqliteSaver (F4 migra para AsyncPostgresSaver em
-      STORAGE_MODE=complete).
+    - Checkpointer: AsyncSqliteSaver, ou AsyncPostgresSaver em
+      STORAGE_MODE=complete.
     - Singleton compartilhado entre todos os usuários; versionamento por user
       via _version_tracker detecta rebind necessário de tools/policy/skills.
 
@@ -474,7 +474,7 @@ async def _ensure_infra() -> None:
             # from_conn_string não aplica nenhum PRAGMA (nem WAL, nem
             # busy_timeout) — sem isso, duas sessões/workspaces escrevendo ao
             # mesmo tempo no mesmo checkpoints.db batem em "database is
-            # locked" na hora em vez de esperar (D2). Mesmos PRAGMAs do pool
+            # locked" na hora em vez de esperar. Mesmos PRAGMAs do pool
             # hardened de backend/storage/sqlite/pool.py.
             await _checkpointer.conn.executescript(
                 "PRAGMA journal_mode=WAL;"
@@ -721,7 +721,7 @@ async def get_user_agent(
     model_key = f"{base}#chat" if chat_mode else base
     workspace_key = effective_workspace_id or ""
 
-    # DE-5: Cache por sessão (user_id, model_key, workspace_id)
+    # Cache por sessão (user_id, model_key, workspace_id)
     if user_id:
         session_key = (user_id, model_key, workspace_key)
         if session_key not in _graphs_by_user:

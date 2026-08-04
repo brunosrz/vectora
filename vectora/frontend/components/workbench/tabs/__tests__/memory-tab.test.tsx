@@ -15,6 +15,60 @@ import {
 } from "@testing-library/react";
 import { MemoryTab } from "../memory-tab";
 
+function bucketsFetchMock(
+  buckets: {
+    id: string;
+    name: string;
+    description_md: string;
+    source_path: string | null;
+    created_at: string;
+    active: boolean;
+  }[],
+) {
+  return vi.fn(async (url: string, init?: RequestInit) => {
+    if (String(url).includes("/rag/workspace-summary")) {
+      return new Response(JSON.stringify({ collections: [] }));
+    }
+    if (String(url) === "/workspaces/ws-1/rag/buckets") {
+      return new Response(JSON.stringify(buckets));
+    }
+    if (
+      String(url).startsWith("/workspaces/ws-1/rag/buckets/") &&
+      init?.method === "PATCH"
+    ) {
+      return new Response(JSON.stringify({ active: true }));
+    }
+    if (
+      String(url).startsWith("/workspaces/ws-1/rag/buckets/") &&
+      init?.method === "DELETE"
+    ) {
+      return new Response(JSON.stringify({ ok: true }));
+    }
+    throw new Error(`unmocked fetch: ${url}`);
+  });
+}
+
+function stubFetch(journey: unknown, ok = true) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/memory/journey")) {
+        return ok
+          ? new Response(JSON.stringify(journey))
+          : new Response("erro", { status: 500 });
+      }
+      if (u.includes("/rag/workspace-summary")) {
+        return new Response(JSON.stringify({ collections: [] }));
+      }
+      if (u.includes("/rag/buckets")) {
+        return new Response(JSON.stringify([]));
+      }
+      throw new Error(`unmocked fetch: ${u}`);
+    }),
+  );
+}
+
 vi.mock("@/lib/paraglide/messages", () => ({
   m: new Proxy(
     {},
@@ -87,7 +141,7 @@ describe("MemoryTab", () => {
     );
   });
 
-  it("mostra que já há conteúdo indexado quando o workspace tem RAG de sessão anterior (regressão do bug)", async () => {
+  it("mostra que já há conteúdo indexado quando o workspace tem RAG de sessão anterior", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
@@ -254,40 +308,7 @@ describe("MemoryTab", () => {
     );
   });
 
-  describe("painel de buckets (Sprint 6)", () => {
-    function bucketsFetchMock(
-      buckets: {
-        id: string;
-        name: string;
-        description_md: string;
-        source_path: string | null;
-        created_at: string;
-        active: boolean;
-      }[],
-    ) {
-      return vi.fn(async (url: string, init?: RequestInit) => {
-        if (String(url).includes("/rag/workspace-summary")) {
-          return new Response(JSON.stringify({ collections: [] }));
-        }
-        if (String(url) === "/workspaces/ws-1/rag/buckets") {
-          return new Response(JSON.stringify(buckets));
-        }
-        if (
-          String(url).startsWith("/workspaces/ws-1/rag/buckets/") &&
-          init?.method === "PATCH"
-        ) {
-          return new Response(JSON.stringify({ active: true }));
-        }
-        if (
-          String(url).startsWith("/workspaces/ws-1/rag/buckets/") &&
-          init?.method === "DELETE"
-        ) {
-          return new Response(JSON.stringify({ ok: true }));
-        }
-        throw new Error(`unmocked fetch: ${url}`);
-      });
-    }
-
+  describe("painel de buckets", () => {
     it("lista os buckets do workspace ativo", async () => {
       vi.stubGlobal(
         "fetch",
@@ -420,27 +441,6 @@ describe("MemoryTab", () => {
 });
 
 describe("MemoryTab — painel do Remember", () => {
-  function stubFetch(journey: unknown, ok = true) {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) => {
-        const u = String(url);
-        if (u.includes("/memory/journey")) {
-          return ok
-            ? new Response(JSON.stringify(journey))
-            : new Response("erro", { status: 500 });
-        }
-        if (u.includes("/rag/workspace-summary")) {
-          return new Response(JSON.stringify({ collections: [] }));
-        }
-        if (u.includes("/rag/buckets")) {
-          return new Response(JSON.stringify([]));
-        }
-        throw new Error(`unmocked fetch: ${u}`);
-      }),
-    );
-  }
-
   it("lista fatos e skills aprendidas vindas do endpoint", async () => {
     stubFetch({
       facts: [

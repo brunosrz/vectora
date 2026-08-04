@@ -1,11 +1,11 @@
 """Deep research do Tavily — ``POST /research``, assíncrono.
 
 Responde **201** com ``request_id``/``status``; o resultado vem por polling
-(há também SSE com ``stream: true``, fora do escopo deste sprint).
+(a API também oferece SSE com ``stream: true``, não usado aqui).
 
-Teto de tempo obrigatório, pela mesma razão do vídeo do OpenRouter e do
-incidente do NATS: loop de espera sem corte gira para sempre quando o outro
-lado nunca conclui, e o sintoma chega como travamento, não como erro.
+O teto de tempo é obrigatório: um loop de espera sem corte gira para sempre
+quando o outro lado nunca conclui, e o sintoma chega como travamento, não
+como erro.
 """
 
 from __future__ import annotations

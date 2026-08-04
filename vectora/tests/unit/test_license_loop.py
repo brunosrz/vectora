@@ -1,4 +1,4 @@
-"""Testes do loop de revalidação de licença do servidor (Bloco K).
+"""Testes do loop de revalidação de licença do servidor.
 
 O loop roda no lifespan (``src/api/server.py``) e NUNCA pode derrubar o
 servidor — falha de licença/network vira warning e o estado fica visível

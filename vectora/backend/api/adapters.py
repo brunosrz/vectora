@@ -190,9 +190,9 @@ def _args_preview(tool_input: dict | str) -> str:
 
 # ---------------------------------------------------------------------------
 # Nós cuja saída do LLM é JSON estruturado (Pydantic) — não user-facing.
-# Com deepagents (E.B-1), o agente principal ("model") faz streaming natural;
-# nenhum nó usa structured output no caminho do usuário.
-# Mantido vazio para eventuais nós de síntese adicionados em E.B+.
+# O agente principal ("model") faz streaming natural; nenhum nó usa
+# structured output no caminho do usuário. Fica vazio até que algum nó de
+# síntese com structured output seja adicionado ao grafo.
 _STRUCTURED_OUTPUT_NODES: set[str] = set()
 
 
@@ -403,8 +403,8 @@ async def _mark_thread_has_content(thread_id: str) -> None:
 
 async def _pre_approved(tool_name: str, args: dict, workspace_id: str) -> bool:
     """Anotação da aprovação inteligente pro `HITLEvent` — nunca decide
-    sozinha, só marca a sugestão como reconhecida (Sprint 22). Falha aqui
-    nunca derruba o stream: é a mesma degradação de `evaluate_command`."""
+    sozinha, só marca a sugestão como reconhecida. Falha aqui nunca derruba
+    o stream: é a mesma degradação de `evaluate_command`."""
     try:
         from backend.services.smart_approval import evaluate_command
 
@@ -478,7 +478,8 @@ def adapt_stream(
         # disso, quando a mensagem do usuário foi enviada (`stream_chat`).
         content_started = False
 
-        # [F5 Resilience]
+        # Buffer de conteúdo parcial, persistido no KV periodicamente para
+        # sobreviver a um recarregamento de página durante a geração.
         accumulated_partial_content = ""
         last_kv_flush = 0.0
 
@@ -708,14 +709,12 @@ def adapt_stream(
                         ]
                         yield encode_event(RagCitationEvent(citations=citations))
 
-                # Com deepagents (E.B-1), o agente principal é o nó "model".
-                # O orchestrator antigo (structured output) foi removido.
-                # Thinking events: E.B-6 adiciona suporte via streaming v3.
+                # O agente principal é o nó "model" (deepagents).
                 # Checkpoint de rewind: disparado no on_chain_end do grafo raiz.
                 # O grafo raiz tem name="" ou "LangGraph" — usamos o nome do
                 # grafo configurado em create_deep_agent("name='vectora'").
                 if kind == "on_chain_end" and name == "vectora":
-                    # [F5 Resilience] Run completou com sucesso (e salvará checkpoint).
+                    # Run completou com sucesso (e salvará checkpoint).
                     # Limpa a versão parcial do KV para evitar duplicação no history.
                     from backend.persistence.kv import get_kv
 
@@ -732,7 +731,7 @@ def adapt_stream(
                     if workspace_id:
                         await _record_turn_checkpoint(workspace_id, thread_id, event)
 
-                    # Remember: gatilho automático a cada N turnos (WB-5).
+                    # Remember: gatilho automático a cada N turnos.
                     # Fire-and-forget — nunca bloqueia nem corta o stream.
                     from backend.services.remember_trigger import maybe_trigger_remember
 
@@ -797,8 +796,8 @@ def adapt_stream(
                         current_token_node = node_name
                     token_buffer_nonempty = True
 
-                    # [F5 Resilience] Acumular stream parcial no KV (NATS/Redis)
-                    # p/ sobrevivência a recarregamento durante geração
+                    # Acumula stream parcial no KV (NATS/Redis) para
+                    # sobreviver a recarregamento de página durante a geração
                     accumulated_partial_content += payload.content
                     now = time.monotonic()
                     if now - last_kv_flush > 0.5:

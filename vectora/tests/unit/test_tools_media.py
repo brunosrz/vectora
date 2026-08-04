@@ -190,8 +190,8 @@ def test_provider_vem_do_config_da_sessao_nao_do_global(monkeypatch):
 
 @pytest.mark.parametrize("capability", ["image", "tts"])
 def test_nenhuma_tool_de_midia_troca_de_provider_sozinha(capability, monkeypatch):
-    """Regressão explícita do invariante do sprint: mesmo com outro provider
-    perfeitamente capaz configurado, a tool recusa em vez de desviar."""
+    """Mesmo com outro provider perfeitamente capaz configurado, a tool
+    recusa em vez de desviar para ele."""
     from backend.settings import settings
 
     monkeypatch.setattr(settings, "ollama_image_model", "modelo-capaz", raising=False)
@@ -280,9 +280,8 @@ def test_reranker_type_recusa_provider_sem_api_de_rerank():
     """Só entra provider com endpoint de rerank de verdade.
 
     O OpenRouter tem: ``POST /api/v1/rerank`` (`model`, `query`, `documents`,
-    `top_n`). Este teste já excluiu o OpenRouter por uma afirmação errada de
-    que ele seria só proxy de chat. O Ollama segue fora — esse realmente não
-    tem o endpoint.
+    `top_n`), por isso é aceito. O Ollama não tem esse endpoint e continua
+    rejeitado.
     """
     import pydantic
 
@@ -301,9 +300,8 @@ def test_reranker_type_recusa_provider_sem_api_de_rerank():
 
 
 class TestOpenRouterLigadoNasTools:
-    """`generate_image`/`text_to_speech` com OpenRouter ativo deixavam de
-    levantar `NotImplementedError` — a UI oferecia o modelo e a geração
-    falhava depois, que é pior que não oferecer."""
+    """Com OpenRouter ativo e configurado, `generate_image`/`text_to_speech`
+    chamam o cliente nativo em vez de levantar `NotImplementedError`."""
 
     @staticmethod
     def _sem_key(monkeypatch) -> None:

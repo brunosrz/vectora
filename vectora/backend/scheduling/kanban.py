@@ -28,7 +28,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 #: Ciclo completo. `triage` e `archived` ficam fora das colunas principais
-#: da UI (ver Sprint 17), mas existem no modelo.
+#: da UI, mas existem no modelo.
 KANBAN_STATUSES: tuple[str, ...] = (
     "triage",
     "todo",
@@ -63,10 +63,10 @@ async def _get_db() -> Any:
 
     `vectora_background_tasks`/`vectora_task_links` vivem em
     `settings.db_dsn` (aplicado por `schema.sql`), não no banco de
-    threads/checkpoints do LangGraph. Apontar pro `_get_db` de
-    `threads.py` (erro corrigido aqui) fazia todo claim/status do Kanban
-    cair num banco sem essas tabelas — silenciado pelo try/except do
-    `tick()`, então o sintoma era só "nada do Kanban nunca atualiza".
+    threads/checkpoints do LangGraph usado por `threads.py::_get_db`. Usar
+    o banco errado aqui faz todo claim/status do Kanban cair num banco sem
+    essas tabelas — o try/except do `tick()` silencia o erro, então o
+    sintoma vira só "nada do Kanban nunca atualiza".
     """
     from backend.scheduling.background_tasks import _get_db as _tasks_db
 
@@ -125,8 +125,8 @@ async def claim_task(
 
     O CAS está no `WHERE`: só troca de dono se ainda estiver `ready`/
     `scheduled` e sem claim. `scheduled` entra aqui porque toda task
-    recorrente/agendada nasce nesse status (Sprint 41) e só o tick do
-    scheduler decide *quando* ela é due — não é o status quem barra isso,
+    recorrente/agendada nasce nesse status e só o tick do scheduler decide
+    *quando* ela é due — não é o status quem barra isso,
     é o filtro por `next_run_at` em `_list_due_interval_tasks`. Checar
     antes e gravar depois abriria a janela em que dois workers leem
     "livre" e ambos gravam.

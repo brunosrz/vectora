@@ -1,5 +1,5 @@
 /**
- * TDD — lib/utils/usage.ts
+ * lib/utils/usage.ts
  * Cobre formatTokens, formatResetIn, usageLevel, usageBarColor.
  */
 

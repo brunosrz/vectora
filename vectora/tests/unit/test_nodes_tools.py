@@ -46,13 +46,13 @@ def test_memory_tools_include_save_memory():
 
 
 def test_manage_retriever_registered():
-    # Bloco A5.3 — a tool de gestão do RAG deve estar disponível aos agentes.
+    # A tool de gestão do RAG deve estar disponível aos agentes.
     names = [t.name for t in ALL_TOOLS]
     assert "manage_retriever" in names
 
 
 def test_workspace_tools_registered():
-    # Bloco B6 — ferramentas de workspace expostas aos agentes.
+    # Ferramentas de workspace expostas aos agentes.
     names = [t.name for t in ALL_TOOLS]
     assert "workspace_describe" in names
     assert "workspace_list" in names
@@ -60,7 +60,7 @@ def test_workspace_tools_registered():
 
 
 def test_search_memory_registered():
-    # C4 — busca semântica em memórias deve estar disponível aos agentes.
+    # Busca semântica em memórias deve estar disponível aos agentes.
     names = [t.name for t in ALL_TOOLS]
     assert "search_memory" in names
 
@@ -94,7 +94,7 @@ def test_media_tools_registered():
 
 
 def test_background_task_tools_registered():
-    # Sprint 3.3/3.4 — o orquestrador lista/consulta E intervém em tasks/runs.
+    # O orquestrador lista/consulta E intervém em tasks/runs em background.
     names = {t.name for t in ALL_TOOLS}
     for expected in (
         "create_background_task",
@@ -107,7 +107,7 @@ def test_background_task_tools_registered():
 
 
 def test_browser_tools_registered():
-    # A2 — automação de browser sobre o preview do workspace (Playwright).
+    # Automação de browser sobre o preview do workspace (Playwright).
     names = {t.name for t in ALL_TOOLS}
     for expected in (
         "browser_screenshot",
@@ -120,10 +120,8 @@ def test_browser_tools_registered():
 
 
 def test_native_tools_registered():
-    # Utilitários nativos (backend/tools/native/) existem e têm testes
-    # próprios, mas até aqui nunca chegavam ao agente real — ALL_TOOLS não
-    # os importava e o único consumidor de backend/tools/__init__.py::TOOLS
-    # (mcp/server.py) também não. O agente ficava sem time_now/hash_text/etc.
+    # Utilitários nativos (backend/tools/native/) devem estar registrados em
+    # ALL_TOOLS para chegar ao agente real.
     names = {t.name for t in ALL_TOOLS}
     for expected in (
         "time_now",
@@ -148,7 +146,7 @@ def test_native_tools_registered_in_chat_mode():
 
 
 def test_graph_tools_registered():
-    # Context graph tools (GF-3) devem estar disponíveis aos agentes.
+    # Context graph tools devem estar disponíveis aos agentes.
     names = [t.name for t in ALL_TOOLS]
     for expected in (
         "build_knowledge_graph",

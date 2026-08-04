@@ -285,8 +285,8 @@ async def _ensure_schema(db: Any) -> None:
             "ALTER TABLE users ADD COLUMN username TEXT NOT NULL DEFAULT ''"
         )
     await db.commit()
-    # Identidade por username (Sprint G): backfill das rows sem username e
-    # índice único parcial (ignora '' — só existe transitoriamente antes do
+    # Backfill de username para rows que ainda não têm, seguido de índice
+    # único parcial (ignora '' — só existe transitoriamente antes do
     # backfill; a partir daqui todo usuário tem username preenchido).
     await _backfill_usernames(db)
     with contextlib.suppress(Exception):
@@ -298,7 +298,7 @@ async def _ensure_schema(db: Any) -> None:
 
 
 async def _backfill_usernames(db: Any) -> None:
-    """Preenche ``username`` para rows que ainda não têm (banco pré-Sprint-G).
+    """Preenche ``username`` para rows que ainda não têm.
 
     Deriva do ``name`` (ou do local-part do email), garantindo unicidade dentro
     do próprio backfill — colisão vira ``base#NNNN``, o mesmo formato do signup.
@@ -341,16 +341,16 @@ def _row_to_user(row: Any) -> UserInDB:
     env = {}
     with contextlib.suppress(Exception):
         env = json.loads(row["env_overrides_json"] or "{}")
-    # `name` foi adicionado em migration posterior; usa getattr-style para
-    # tolerar rows antigas no teste/banco que ainda não passou pelo ALTER.
+    # Acesso tolerante à ausência da coluna: rows de banco sem o ALTER
+    # aplicado (teste, ou schema desatualizado) não devem quebrar a leitura.
     try:
         name = row["name"] or ""
     except (IndexError, KeyError):
         name = ""
     from backend.rbac.username import slugify_username
 
-    # username é coluna persistida (Sprint G); para rows legadas ainda sem o
-    # backfill aplicado, cai no slug do nome como fallback de leitura.
+    # username é coluna persistida; se o backfill ainda não rodou nesta
+    # row, cai no slug do nome como fallback de leitura.
     try:
         username = row["username"] or ""
     except (IndexError, KeyError):

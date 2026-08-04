@@ -1,4 +1,4 @@
-"""Tests para src/services/plugins.py — registry de servidores MCP (Bloco S).
+"""Tests para src/services/plugins.py — registry de servidores MCP.
 
 CRUD por usuário, persistido em disco, isolado entre usuários. O diretório base
 é redirecionado para tmp_path nos testes.

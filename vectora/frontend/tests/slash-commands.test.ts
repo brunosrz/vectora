@@ -1,5 +1,5 @@
 /**
- * TDD — Bloco H: parser de slash commands (lib/constants/slash-commands.ts)
+ * Parser de slash commands (lib/constants/slash-commands.ts).
  */
 
 import { describe, it, expect } from "vitest";

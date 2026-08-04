@@ -5,10 +5,11 @@ Cada usuário tem um diretório ``~/.vectora/ssh-keys/<user_id>/`` (modo
 pelo ``key_id`` (sha256[:12] do conteúdo). Permissões de arquivo são
 0600.
 
-Esta é a versão pragmática usada pelo Bloco G.2.4. Integração total
-com o vault KeePassXC (mesmo storage de secrets do C11) é evolução
-futura — exige unlock por session que ainda não está plumado pra
-processos não-interativos como ``get_transport()``.
+Esta é uma implementação baseada em arquivos, sem integração com o
+vault KeePassXC (mesmo storage de secrets usado em outras partes do
+sistema) — essa integração exigiria unlock por sessão, que ainda não
+está disponível para processos não-interativos como
+``get_transport()``.
 """
 
 from __future__ import annotations

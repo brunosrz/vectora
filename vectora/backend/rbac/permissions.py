@@ -13,8 +13,8 @@ FilesystemPermission
 --------------------
 Regras declarativas first-match-wins para acesso ao filesystem pelo harness
 deepagents. Substitui ``resolve_within_workspace()`` em ferramentas migradas
-para o harness (E.B-9). Ferramentas artesanais legadas ainda usam
-``src/services/security.py::resolve_within_workspace`` até a migração completa.
+para o harness. Ferramentas artesanais legadas ainda usam
+``src/services/security.py::resolve_within_workspace``.
 
 Cada ``FsRule`` tem:
     pattern   — glob simples (`fnmatch`-compatible) ou prefixo ``path:``

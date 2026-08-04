@@ -1,5 +1,5 @@
 """GET /skills/catalog — catálogo curado de skills do registry remoto,
-distinto de GET /skills (que lista as instaladas). Sprint 6."""
+distinto de GET /skills (que lista as instaladas)."""
 
 from __future__ import annotations
 

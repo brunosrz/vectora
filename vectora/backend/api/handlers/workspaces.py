@@ -50,8 +50,8 @@ class WorkspaceInfo(BaseModel):
     git_remote: str | None = None
     git_current_branch: str | None = None
     git_default_branch: str | None = None
-    # G.2.1 — campos de transport. `local` é o default; SSH e Codespace
-    # populam os campos abaixo conforme criados.
+    # Campos de transport. `local` é o default; SSH e Codespace populam
+    # os campos abaixo conforme criados.
     transport: str = "local"
     remote_host: str | None = None
     remote_path: str | None = None
@@ -348,7 +348,7 @@ async def create_workspace(
 async def create_remote_workspace(
     request: Request, body: CreateRemoteWorkspaceRequest
 ) -> StatusResponse:
-    """Cria um workspace remoto (SSH ou Codespace). G.2.6."""
+    """Cria um workspace remoto (SSH ou Codespace)."""
     from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
@@ -1407,7 +1407,7 @@ async def workspace_git_diff_file(
 
 
 # ---------------------------------------------------------------------------
-# A.6 — Histórico de arquivo e visualização de revisão específica
+# Histórico de arquivo e visualização de revisão específica
 # ---------------------------------------------------------------------------
 
 _MAX_SHOW_BYTES = 512 * 1024  # 512 KiB — limite de conteúdo retornado por git show
@@ -1539,7 +1539,7 @@ async def git_show_file(
 
 
 # ---------------------------------------------------------------------------
-# A.7 — Git Log visual
+# Git Log visual
 # ---------------------------------------------------------------------------
 
 _MAX_COMMIT_DIFF_BYTES = 100 * 1024  # 100 KiB
@@ -1673,7 +1673,7 @@ async def git_commit_diff(
 
 
 # ---------------------------------------------------------------------------
-# A.15 — Stage / unstage / commit / discard inline
+# Stage / unstage / commit / discard inline
 # ---------------------------------------------------------------------------
 
 
@@ -1813,7 +1813,7 @@ async def git_cherry_pick_inline(
 
 
 # ---------------------------------------------------------------------------
-# A.14 — Worktree manager (view_router)
+# Worktree manager (view_router)
 # ---------------------------------------------------------------------------
 
 
@@ -1860,7 +1860,7 @@ async def create_workspace_worktree(
 
 
 # ---------------------------------------------------------------------------
-# A.12 — Comparar refs (estilo VS Code: lista de arquivos + diff por arquivo)
+# Comparar refs (estilo VS Code: lista de arquivos + diff por arquivo)
 # ---------------------------------------------------------------------------
 
 _MAX_COMPARE_FILES = 1000
@@ -1973,7 +1973,7 @@ async def git_compare_file(
 
 
 # ---------------------------------------------------------------------------
-# A.13 — Reverter commit
+# Reverter commit
 # ---------------------------------------------------------------------------
 
 
@@ -2279,7 +2279,7 @@ async def pr_create(
 
 
 # ---------------------------------------------------------------------------
-# A.11 — Abrir no VS Code
+# Abrir no VS Code
 # ---------------------------------------------------------------------------
 
 
@@ -2340,7 +2340,7 @@ async def vscode_options(workspace_id: str) -> VscodeOptionsResponse:
 
 
 # ---------------------------------------------------------------------------
-# A.10 — Gerenciador de .gitignore
+# Gerenciador de .gitignore
 # ---------------------------------------------------------------------------
 
 
@@ -2444,7 +2444,7 @@ async def update_gitignore(
 
 
 # ---------------------------------------------------------------------------
-# A.9 — Resolução de conflitos
+# Resolução de conflitos
 # ---------------------------------------------------------------------------
 
 
@@ -2532,7 +2532,7 @@ async def resolve_conflict(  # noqa: PLR0911
 
 
 # ---------------------------------------------------------------------------
-# A.8 — Stash Manager
+# Stash Manager
 # ---------------------------------------------------------------------------
 
 
@@ -2778,7 +2778,7 @@ async def move_fs_node(workspace_id: str, body: MoveFsNodeRequest) -> StatusResp
 
 
 # ---------------------------------------------------------------------------
-# A.5 — Busca de texto em arquivos do workspace
+# Busca de texto em arquivos do workspace
 # ---------------------------------------------------------------------------
 
 
@@ -2957,7 +2957,7 @@ async def search_workspace_files(
 
 
 # ---------------------------------------------------------------------------
-# C.24 — Stack hint (detects project type for contextual empty-state prompts)
+# Stack hint (detects project type for contextual empty-state prompts)
 # ---------------------------------------------------------------------------
 
 _STACK_MARKERS: list[tuple[str, str]] = [
@@ -3008,7 +3008,7 @@ async def stack_hint(workspace_id: str) -> StackHintResponse:
 
 
 # ---------------------------------------------------------------------------
-# A.17 — File watcher SSE
+# File watcher SSE
 # ---------------------------------------------------------------------------
 
 _WATCHER_DEBOUNCE_S = 0.3  # 300ms
@@ -3623,10 +3623,10 @@ class RagBucketResponse(BaseModel):
 
 @view_router.get("/{workspace_id}/rag/buckets", response_model=list[RagBucketResponse])
 async def list_rag_buckets(workspace_id: str) -> list[RagBucketResponse]:
-    """Buckets do workspace (Sprint 1.1) — usado pelo seletor de
-    publicação da Memory Library (Sprint 5) e pelo painel de buckets do
-    Memory tab (Sprint 6). `active` reflete se o bucket está na lista de
-    busca ativa deste workspace (`get_active_bucket_ids`)."""
+    """Buckets do workspace — usado pelo seletor de publicação da Memory
+    Library e pelo painel de buckets do Memory tab. `active` reflete se o
+    bucket está na lista de busca ativa deste workspace
+    (`get_active_bucket_ids`)."""
     from backend.services import rag_buckets
     from backend.workspace.runtime_settings import runtime_settings
 
@@ -3656,7 +3656,7 @@ async def toggle_rag_bucket(
     workspace_id: str, bucket_id: str, body: RagBucketToggleRequest
 ) -> RagBucketToggleRequest:
     """Ativa/desativa `bucket_id` na busca do workspace — reaproveita
-    `rag_buckets.set_active` (Sprint 1.1), sem lógica nova."""
+    `rag_buckets.set_active`, sem lógica nova."""
     from backend.services import rag_buckets
     from backend.workspace.runtime_settings import runtime_settings
 
@@ -3808,7 +3808,7 @@ async def rag_jobs(workspace_id: str) -> list[RagJobStatus]:
 
 
 # ---------------------------------------------------------------------------
-# Context bridge — arquivo em foco (FASE 2.1)
+# Context bridge — arquivo em foco
 # ---------------------------------------------------------------------------
 
 

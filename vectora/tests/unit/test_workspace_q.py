@@ -1,10 +1,4 @@
-"""Tests do Bloco Q backend — workspace trust, git init, worktree e handlers.
-
-Cobre lacunas de teste:
-    Q2 — trust/is_trusted no WorkspaceRegistry
-    Q3 — git_init_repo (idempotente)
-    Q5 — git_worktree (add/list/remove)
-    Q1 — handlers do WorkspaceService (Browse/Create/Trust/SetActive)
+"""Testes de workspace trust, git init, worktree e handlers do WorkspaceService.
 
 O registry é isolado do disco via instância fresca com _save no-op; as operações
 git rodam em repositórios temporários e worktrees redirecionadas para tmp_path.
@@ -40,7 +34,7 @@ def _req(user=None):
 
 
 # ---------------------------------------------------------------------------
-# Q2 — trust no registry
+# trust no registry
 # ---------------------------------------------------------------------------
 
 
@@ -77,7 +71,7 @@ class TestSessionWorkspace:
     def test_registers_workspace_without_creating_folder(
         self, reg, tmp_path, monkeypatch
     ):
-        """C.41 — Pasta não é criada no registro; apenas na primeira operação real."""
+        """Pasta não é criada no registro; apenas na primeira operação real."""
         monkeypatch.setattr(
             "backend.workspace.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
@@ -107,7 +101,7 @@ class TestSessionWorkspace:
 
 
 # ---------------------------------------------------------------------------
-# Q3 — git_init_repo
+# git_init_repo
 # ---------------------------------------------------------------------------
 
 
@@ -135,7 +129,7 @@ class TestGitInit:
 
 
 # ---------------------------------------------------------------------------
-# Q5 — git_worktree
+# git_worktree
 # ---------------------------------------------------------------------------
 
 
@@ -193,7 +187,7 @@ class TestWorktree:
 
 
 # ---------------------------------------------------------------------------
-# Q1 — handlers do WorkspaceService
+# handlers do WorkspaceService
 # ---------------------------------------------------------------------------
 
 
@@ -324,7 +318,7 @@ class TestWorkspaceHandlers:
 
 
 # ---------------------------------------------------------------------------
-# Sprint 33 — owner_id + require_workspace_access (vazamento multi-usuário)
+# owner_id + require_workspace_access (isolamento multi-usuário)
 # ---------------------------------------------------------------------------
 
 
@@ -340,7 +334,7 @@ class TestWorkspaceOwnership:
 
     def test_legacy_workspace_without_owner_stays_open(self, reg, tmp_path):
         # get_or_create() puro (sem create()) nunca seta owner_id — simula
-        # um workspace criado antes do Sprint 33.
+        # um workspace legado sem dono.
         ws = reg.get_or_create(str(tmp_path))
         assert ws.owner_id is None
 

@@ -102,9 +102,9 @@ def _client_ip(request: Request) -> str:
 def _token_exp(access_token: str) -> int | None:
     """Decodifica o `exp` (epoch seconds) de um access token recém-emitido.
 
-    UX-21 — devolvido em `TokenResponse.user.token_expires_at` para o
-    frontend agendar o aviso "sessão expira em breve" sem precisar decodificar
-    o JWT bruto (impossível: viaja em cookie httpOnly, opaco para o JS).
+    Devolvido em `TokenResponse.user.token_expires_at` para o frontend
+    agendar o aviso "sessão expira em breve" sem precisar decodificar o JWT
+    bruto (impossível: viaja em cookie httpOnly, opaco para o JS).
     Decodificação best-effort — token acabou de ser assinado por nós, então
     falha aqui só indicaria bug; não deve quebrar o fluxo de auth.
     """
@@ -332,8 +332,8 @@ async def me_endpoint(request: Request) -> UserResponse:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
-    # UX-21 — repassa o `exp` do access token (anexado pelo AuthMiddleware)
-    # para o frontend agendar o aviso de renovação de sessão.
+    # Repassa o `exp` do access token (anexado pelo AuthMiddleware) para o
+    # frontend agendar o aviso de renovação de sessão.
     token_exp = getattr(request.state, "token_exp", None)
     return UserResponse.from_user(user, token_expires_at=token_exp)
 
@@ -361,7 +361,7 @@ async def update_me_endpoint(
 
 @router.get("/usage")
 async def get_usage(request: Request) -> dict:
-    """Consumo de requisições do usuário na janela de rate limit (R5)."""
+    """Consumo de requisições do usuário na janela de rate limit."""
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
@@ -371,7 +371,7 @@ async def get_usage(request: Request) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# G.2.4 — Chaves SSH por usuário (workspaces remotos)
+# Chaves SSH por usuário (workspaces remotos)
 # ---------------------------------------------------------------------------
 
 
@@ -563,7 +563,7 @@ async def get_audit_log(
 
 
 # ---------------------------------------------------------------------------
-# Env overrides (C10)
+# Env overrides
 # ---------------------------------------------------------------------------
 
 

@@ -1,4 +1,4 @@
-"""Testes unitários para src/api/schemas.py e encode_event (Bloco A — A5/A7).
+"""Testes unitários para src/api/schemas.py e encode_event.
 
 Cobre:
 - Instanciação de todos os event types (TokenEvent, ToolCallEvent, etc.)

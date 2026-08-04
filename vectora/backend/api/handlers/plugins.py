@@ -1,4 +1,4 @@
-"""Handler de plugins MCP — gestão de servidores MCP por usuário (Bloco S).
+"""Handler de plugins MCP — gestão de servidores MCP por usuário.
 
 Endpoints (todos exigem autenticação via middleware):
     GET    /plugins                 — lista servidores MCP do usuário

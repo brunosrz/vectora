@@ -1,5 +1,5 @@
 /**
- * TDD — Bloco T (T5+T11): workbench-store
+ * workbench-store
  *
  * Cobre:
  * - Shell (terminais, painel, aba ativa, split, pins) — persistido.
@@ -398,8 +398,7 @@ describe("workbench-store: plan slice", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Tasks slice (Sprint 7 — cache real, era useState local em
-// use-background-tasks.ts)
+// Tasks slice
 // ---------------------------------------------------------------------------
 
 describe("workbench-store: tasks slice", () => {

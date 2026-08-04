@@ -121,7 +121,7 @@ async def install_learned_skill(
 
 
 async def _resolve_remember_pending(config: RunnableConfig | None) -> None:
-    """Limpa a proposta pendente do gatilho automático (WB-5) — instalar uma
+    """Limpa a proposta pendente do gatilho automático — instalar uma
     skill ou salvar um fato aprendido é o sinal de que a proposta foi
     resolvida, libera um novo gatilho automático a partir daqui."""
     try:

@@ -1,4 +1,4 @@
-"""Message queue distribuída — Bloco G (G3), base para a API externa.
+"""Message queue distribuída, base para a API externa.
 
 Fila de mensagens sobre **Redis Streams** com consumer groups
 (``XADD``/``XREADGROUP``/``XACK``): entrega at-least-once, múltiplos
@@ -10,8 +10,8 @@ consumidores em réplicas distintas, redelivery de mensagens não-ackadas.
 
 Nota: a fila de **embeddings** continua no ``src/services/queue.py`` (SQLite
 no lite; Postgres ``SKIP LOCKED`` no complete — já é multi-réplica seguro).
-Este módulo é a fundação para consumidores novos: webhooks de saída (Bloco L),
-jobs da REST API v1 (Bloco J) e tarefas assíncronas do agente.
+Este módulo é a fundação para consumidores novos: webhooks de saída,
+jobs da REST API v1 e tarefas assíncronas do agente.
 """
 
 from __future__ import annotations

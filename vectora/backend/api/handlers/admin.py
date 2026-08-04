@@ -1,4 +1,4 @@
-"""Handler do painel de administração — Bloco P.
+"""Handler do painel de administração.
 
 Endpoints (todos exigem role admin ou root):
     GET    /admin/users                      — lista todos os usuários
@@ -134,7 +134,7 @@ class UpdateSafeRootBody(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# P2 — Endpoints de administração
+# Endpoints de administração
 # ---------------------------------------------------------------------------
 
 
@@ -252,7 +252,7 @@ async def delete_user(request: Request, user_id: str) -> dict:
 
 @router.get("/users/{user_id}/tools")
 async def get_user_tools(request: Request, user_id: str) -> dict:
-    """Política de tools de um usuário (override ABAC — P2/S5)."""
+    """Política de tools de um usuário (override ABAC)."""
     user = _get_user(request)
     require_admin(user)
     from backend.nodes.tools import ALL_TOOLS
@@ -562,7 +562,7 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Ordem de fallback de providers LLM (Parte A) — persiste em settings.json
+# Ordem de fallback de providers LLM — persiste em settings.json
 # ---------------------------------------------------------------------------
 
 
@@ -692,7 +692,7 @@ async def patch_timezone(request: Request, body: TimezoneBody) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# F.3.3 — Pastas Seguras (SafeRoot)
+# Pastas Seguras (SafeRoot)
 # ---------------------------------------------------------------------------
 
 
@@ -931,7 +931,7 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# F10 — Storage endpoints
+# Storage endpoints
 # ---------------------------------------------------------------------------
 
 

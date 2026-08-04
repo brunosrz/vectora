@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ThemeProvider — Bloco L3
+ * ThemeProvider
  *
  * Envolve o app com o ThemeProvider do next-themes.
  * ThemeSync sincroniza o tema persistido no settings-store com next-themes

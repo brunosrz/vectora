@@ -9,9 +9,9 @@ from fastapi import Request
 
 
 def _fake_request() -> Request:
-    """Request mínimo pros handlers que agora exigem checagem de dono
-    (Sprint 33) — sem usuário autenticado, ``require_workspace_access``
-    trata como CLI local (sempre privilegiado)."""
+    """Request mínimo pros handlers que exigem checagem de dono — sem
+    usuário autenticado, ``require_workspace_access`` trata como CLI local
+    (sempre privilegiado)."""
     req = MagicMock(spec=Request)
     req.state = MagicMock()
     req.state.user = None

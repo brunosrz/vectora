@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 /**
- * Accordion — regressão do Sprint 0.1: Header/Trigger precisam de `min-w-0`
- * pra permitir que conteúdo filho (ex: título truncado/quebrado) de fato
- * encolha dentro do flex — sem isso, o trigger sempre cresce pra caber o
- * conteúdo inteiro, estourando o container.
+ * Accordion — Header/Trigger precisam de `min-w-0` pra permitir que
+ * conteúdo filho (ex: título truncado/quebrado) de fato encolha dentro do
+ * flex; sem isso, o trigger sempre cresce pra caber o conteúdo inteiro,
+ * estourando o container.
  */
 
 import { describe, it, expect, afterEach } from "vitest";

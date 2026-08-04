@@ -1,4 +1,4 @@
-"""NATS sidecar (D3) — spawn/readiness/shutdown do backend Python.
+"""NATS sidecar — spawn/readiness/shutdown do backend Python.
 
 Mesmo padrão de sidecar que o Electron já usa pro backend Python
 (resolve o binário, escolhe porta livre, lê stdout até o sinal de "pronto",
@@ -217,17 +217,14 @@ async def test_stop_nats_sidecar_without_running_process_is_noop():
 
 
 class TestOrphanPidFile:
-    """D3 tinha um bug real: cada novo processo Python (nova sessão `vectora
-    start`, ou pytest rodado de novo) não sabe de sidecars órfãos deixados por
-    uma sessão anterior que morreu sem passar pelo shutdown gracioso (kill
-    forçado, crash, fechar o terminal) — resultado observado em produção:
-    dezenas de `nats-server.exe` acumulados. Um PID file cross-processo
-    resolve: antes de spawnar, mata qualquer órfão vivo registrado.
+    """Um PID file cross-processo rastreia sidecars órfãos deixados por uma
+    sessão anterior que morreu sem passar pelo shutdown gracioso: antes de
+    spawnar um novo sidecar, `ensure_nats_sidecar()` mata qualquer PID vivo
+    registrado no arquivo.
 
     O rastreamento é uma LISTA de PIDs (não um único), varrida best-effort
-    (cada PID isolado por try/except) — um único PID sobrescrito perdia a
-    referência a órfãos anteriores pra sempre assim que uma checagem
-    falhasse uma vez; a lista sobrevive a falhas isoladas."""
+    (cada PID isolado por try/except) — assim uma falha isolada ao matar um
+    PID não derruba o rastreamento dos demais."""
 
     def test_pid_file_path_fica_dentro_do_store_dir(self, tmp_path):
         assert nats_sidecar._pid_file_path(tmp_path) == tmp_path / "sidecar.pid"
@@ -371,9 +368,8 @@ class TestOrphanPidFile:
     async def test_ensure_nats_sidecar_pid_is_alive_lancando_nao_aborta_a_subida(
         self, tmp_path, monkeypatch
     ):
-        # Erro/borda central desta sprint: uma exceção em `_pid_is_alive`
-        # (ex. o bug conhecido de `_pid_is_alive_win32` com stdout=None)
-        # nunca deve impedir o sidecar novo de subir.
+        # Erro/borda: uma exceção em `_pid_is_alive` (ex. stdout=None em
+        # `_pid_is_alive_win32`) nunca deve impedir o sidecar novo de subir.
         monkeypatch.setattr(nats_sidecar.settings, "vectora_home", tmp_path)
         store_dir = tmp_path / "nats"
         store_dir.mkdir(parents=True)

@@ -1,7 +1,6 @@
 """Gateway client — mantém WebSocket persistente com gateway.vectora.chat.
 
-Ex-relay (renomeado, Sprint 10 — sem alias de transição, decisão do
-produto). Cada instância do vectora recebe um subdomínio único (ex:
+Cada instância do vectora recebe um subdomínio único (ex:
 x7k2m.vectora.chat). Webhooks e callbacks OAuth externos chegam pelo gateway
 e são despachados ao FastAPI local sem abrir porta TCP pública.
 """

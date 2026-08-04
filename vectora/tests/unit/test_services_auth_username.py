@@ -1,8 +1,6 @@
-"""Identidade por username (Sprint G) — username é coluna persistida e única.
+"""Identidade por username — username é coluna persistida e única.
 
-Antes o username era derivado on-the-fly de ``slugify_username(name)`` (nunca
-gravado, nunca único, e descartado por signin/refresh/get_user_by_id). Aqui o
-contrato é: username persiste, é único, colisão vira ``base#NNNN``, e
+Contrato: username persiste, é único, colisão vira ``base#NNNN``, e
 signin/refresh/get_user_by_id carregam o valor gravado.
 """
 
@@ -122,7 +120,7 @@ def test_get_user_by_id_carrega_username_gravado():
 
 
 def test_backfill_gera_username_para_row_legada():
-    """Row inserida sem username (banco pré-Sprint-G) ganha um no _ensure_schema."""
+    """Row inserida sem username (schema legado) ganha um no _ensure_schema."""
     from backend.rbac import auth as auth_svc
 
     async def _scenario():

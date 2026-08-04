@@ -1,4 +1,4 @@
-"""Testes para os novos OAuth providers: GitLab, Google, Slack (INT-3/4/5).
+"""Testes dos OAuth providers GitLab, Google e Slack.
 
 Cobre:
 - Inicio de fluxo OAuth → redirect correto com parâmetros
@@ -313,7 +313,7 @@ class TestIntegrationsRegistry:
 
 
 # ---------------------------------------------------------------------------
-# GET /integrations — connected via env_var_aliases (Sprint B: token sem relay)
+# GET /integrations — connected via env_var_aliases, sem depender do relay
 # ---------------------------------------------------------------------------
 
 

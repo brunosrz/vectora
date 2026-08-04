@@ -1,7 +1,7 @@
 /**
- * Cliente de identidade por username (Sprint G) — auto-preenchimento a partir
- * do nome + checagem de disponibilidade no backend, usados no wizard de
- * criação de conta (`/auth/signup`).
+ * Cliente de identidade por username — auto-preenchimento a partir do nome
+ * + checagem de disponibilidade no backend, usados no wizard de criação de
+ * conta (`/auth/signup`).
  */
 
 export interface UsernameStatus {

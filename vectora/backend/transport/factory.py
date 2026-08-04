@@ -22,9 +22,8 @@ _CACHE: dict[str, TransportBackend] = {}
 def get_transport(workspace: Any) -> TransportBackend:
     """Resolve o backend correto para um workspace.
 
-    G.2.4/5 vão acrescentar ``SshTransport`` e ``CodespaceTransport``
-    aqui. Por ora só ``LocalTransport`` está implementado; transports
-    remotos caem em ``NotImplementedError`` até que cheguem.
+    Suporta ``local``, ``ssh`` e ``codespace``; qualquer outro valor de
+    ``workspace.transport`` cai em ``LocalTransport`` com aviso no log.
     """
     ws_id = getattr(workspace, "id", None)
     if ws_id is None:

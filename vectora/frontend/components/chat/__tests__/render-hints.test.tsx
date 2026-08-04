@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * TDD — Render Hints Novos (FASE 5.4)
+ * Render Hints Novos
  *
  * Verifica que ToolCallRenderer despacha para renderers corretos via registry.
  */

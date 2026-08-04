@@ -1,12 +1,8 @@
 """Roteador de backends de busca.
 
-Hoje a escolha é binária e implícita: tem `TAVILY_API_KEY` → Tavily; não tem
-→ o fallback de `backend/browser/search_fallback.py`. O usuário não consegue
-**escolher** pesquisar pelo browser embutido, que é o que ele pediu.
-
-Estrutura copiada do Hermes (`agent/web_search_registry.py:122` mantém uma
-ordem de preferência resolvida por disponibilidade), com os backends que o
-Vectora tem: `tavily`, `ollama-web`, `browser` e `duckduckgo`.
+Resolve o backend de busca (`tavily`, `ollama-web`, `browser`,
+`duckduckgo`) por disponibilidade de credencial, com ordem de preferência
+por padrão e escolha explícita via `rag_settings.search_backend`.
 """
 
 from __future__ import annotations
@@ -94,8 +90,8 @@ class TestResolucaoAutomatica:
 
 class TestEscolhaExplicita:
     def test_escolha_do_usuario_vence_a_ordem_de_preferencia(self, monkeypatch):
-        """O ponto do sprint: pesquisar pelo browser vira **escolha**, não
-        consequência de faltar chave. Mesmo com Tavily configurado."""
+        """Backend escolhido explicitamente vence a ordem de preferência
+        automática, mesmo com Tavily configurado."""
         _liga_tavily(monkeypatch)
         _escolhe(monkeypatch, "browser")
 

@@ -4,9 +4,6 @@ Cada plataforma externa (Telegram, Discord, Slack, WhatsApp, Signal, Email)
 normaliza sua mensagem nativa pro formato comum aqui definido antes de
 entrar no motor de chat já existente — a plataforma é só mais uma origem
 de turno de conversa, não um caminho de código paralelo.
-
-Conceito emprestado do "Connect" do Hermes Agent (mencionado no plano de
-extensibilidade) — implementação 100% própria, nunca dependência/fork.
 """
 
 from __future__ import annotations
@@ -54,8 +51,8 @@ async def resolve_thread_id(
     """Resolve o `thread_id` do Vectora pra uma mensagem externa —
     reaproveita a conversa já existente pra esse `platform_user_id`, ou cria
     uma nova na primeira mensagem. `lookup`/`create` são injetados (não
-    fixos numa storage específica) — cada integração real (Sprint 8+ do
-    plano) decide onde persistir o mapeamento.
+    fixos numa storage específica) — cada integração decide onde persistir
+    o mapeamento.
     """
     existing = await lookup(incoming.platform, incoming.platform_user_id)
     if existing is not None:

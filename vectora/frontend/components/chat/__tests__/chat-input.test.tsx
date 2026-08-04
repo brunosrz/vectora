@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
  * Tests para ChatInput: textarea controlado, botão de enviar (habilita só com
- * texto + usuário online) e callback onSend. Cobre o layout pós-swap
- * (enviar dentro da linha do input).
+ * texto + usuário online) e callback onSend. Cobre o layout com o botão de
+ * enviar dentro da linha do input.
  */
 
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
@@ -133,8 +133,8 @@ describe("ChatInput", () => {
     expect(onInputChange).toHaveBeenCalledWith("novo");
   });
 
-  // Sprint 4 — Modo Chat (toggle removido da AppBar; sidebar-mode-toggle é o ponto canônico)
-  it("toggle data-chatmode não existe na AppBar (removido — use a sidebar)", () => {
+  // sidebar-mode-toggle é o ponto canônico do toggle de Modo Chat, não a AppBar.
+  it("toggle data-chatmode não existe na AppBar (use a sidebar)", () => {
     render(<ChatInput {...baseProps()} />);
     expect(document.querySelector("[data-chatmode]")).toBeNull();
   });
@@ -312,9 +312,9 @@ describe("ChatInput — aviso de modelo sem suporte a imagem", () => {
   });
 
   // Responsividade por CONTAINER (não por viewport): no modo IDE o ChatInput
-  // vive numa sidebar estreita enquanto a janela segue larga; breakpoints `sm:`
-  // (viewport) nunca disparavam ali e o rodapé transbordava. O rodapé precisa
-  // reagir à largura do próprio composer via container queries do Tailwind v4.
+  // vive numa sidebar estreita enquanto a janela segue larga, então o rodapé
+  // precisa reagir à largura do próprio composer via container queries do
+  // Tailwind v4, não a breakpoints `sm:` de viewport.
   it("o rodapé usa container queries (@container/composer + @sm/composer)", () => {
     const { container } = render(<ChatInput {...baseProps()} />);
 

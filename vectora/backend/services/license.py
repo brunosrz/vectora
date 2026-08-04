@@ -1,7 +1,7 @@
-"""Validação de licença Vectora (Bloco T.12.7).
+"""Validação de licença Vectora.
 
 Cada instalação comercial precisa de um ``VECTORA_TOKEN`` (gerado pelo dashboard
-Vectora Company — ``docs/company.md`` B2/B5/F3). O Launcher (``src/launcher.py``)
+Vectora Company — ver ``docs/company.md``). O Launcher (``src/launcher.py``)
 chama ``validate_license_async`` antes de subir qualquer subprocesso; o backend
 expõe ``GET /license/status`` para o chat web mostrar trial banner / bloqueio.
 
@@ -20,7 +20,7 @@ Sem ``VECTORA_TOKEN`` configurado → tier ``free`` direto (uso local solo, sem
 conta) — **não é erro**. ``LicenseError`` só ocorre quando HÁ um token mas ele
 é inválido/expirado/revogado, ou a validação remota falha sem cache utilizável.
 
-**Auditoria**: cada validação grava em ``license_checks`` no Supabase (B1).
+**Auditoria**: cada validação grava em ``license_checks`` no Supabase.
 Sem logging local — alinhado com "self-hosted no dado, centralizado na
 licença".
 

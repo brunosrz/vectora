@@ -44,10 +44,9 @@ interface RagBucketEntry {
   active: boolean;
 }
 
-/** Painel de buckets do workspace (Sprint 6) — lista + toggle ativo/
- * inativo + remover + atalho pra indexar pasta nova sem depender do
- * composer de chat (Sprint 1.1/1.2, `GET/PATCH/DELETE
- * /workspaces/{id}/rag/buckets`). */
+/** Painel de buckets do workspace — lista + toggle ativo/inativo + remover +
+ * atalho pra indexar pasta nova sem depender do composer de chat
+ * (`GET/PATCH/DELETE /workspaces/{id}/rag/buckets`). */
 function useWorkspaceRagBuckets(workspaceId: string | undefined) {
   const [buckets, setBuckets] = useState<RagBucketEntry[]>([]);
 

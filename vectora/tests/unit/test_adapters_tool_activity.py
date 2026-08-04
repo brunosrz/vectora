@@ -1,4 +1,4 @@
-"""TDD — ToolActivityEvent no adapt_stream (FASE 3.1).
+"""ToolActivityEvent no adapt_stream.
 
 O adaptador deve emitir `tool_activity` em on_tool_start (elapsed_ms=None)
 e em on_tool_end (elapsed_ms≥0) para alimentar o AgentStatusLine.

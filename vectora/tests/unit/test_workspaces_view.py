@@ -1,13 +1,13 @@
 """Tests para o view_router de src/api/handlers/workspaces.py.
 
-Cobre os endpoints adicionados em T6/T7 (Workbench):
+Cobre os endpoints do Workbench:
 - GET /workspaces/{id}/tree            — lista dirs/files filtrando ruído.
 - GET /workspaces/{id}/file            — texto truncado, detecção de binário.
 - GET /workspaces/{id}/git/diff        — resumo (vazio em pastas não-git).
 - GET /workspaces/{id}/git/diff/file   — hunks (vazio quando sem mudanças).
 
-Os endpoints reusam ``services.security.resolve_within_workspace`` (Q4),
-então qualquer path fora do workspace devolve resposta vazia em vez de
+Os endpoints reusam ``services.security.resolve_within_workspace``, então
+qualquer path fora do workspace devolve resposta vazia em vez de
 listar/ler.
 """
 
@@ -208,7 +208,7 @@ class TestWorkspaceFile:
 
 
 # ---------------------------------------------------------------------------
-# PUT /workspaces/{id}/fs/file — A.1 (editor inline)
+# PUT /workspaces/{id}/fs/file — editor inline
 # ---------------------------------------------------------------------------
 
 
@@ -377,7 +377,7 @@ class TestWorkspaceGitDiffFile:
 
 
 # ---------------------------------------------------------------------------
-# Parser interno _parse_unified_diff (T7)
+# Parser interno _parse_unified_diff
 # ---------------------------------------------------------------------------
 
 
@@ -529,8 +529,9 @@ class TestGitCompareMerge:
 
 
 class TestGitLogPagination:
-    """Paginação de git_log (offset/has_more) — regressão do histórico do
-    workbench ficar preso aos primeiros 50 commits sem forma de avançar."""
+    """Paginação de git_log (offset/has_more): `has_more` sinaliza quando
+    há mais commits além da página atual, e `offset` avança sem repetir
+    commits já vistos."""
 
     @pytest.mark.asyncio
     async def test_has_more_true_when_more_commits_than_page(self, trusted_ws):
@@ -595,9 +596,9 @@ class TestPrEndpoints:
 
 
 class TestListRagBuckets:
-    """GET /workspaces/{id}/rag/buckets — buckets do workspace (Sprint 1.1),
-    usado pelo seletor de publicação da Memory Library e pelo painel de
-    buckets do Memory tab."""
+    """GET /workspaces/{id}/rag/buckets — buckets do workspace, usado pelo
+    seletor de publicação da Memory Library e pelo painel de buckets do
+    Memory tab."""
 
     @pytest.fixture(autouse=True)
     def _isolated_runtime_settings(self, tmp_path, monkeypatch):
@@ -666,7 +667,7 @@ class TestListRagBuckets:
 class TestToggleAndDeleteRagBucket:
     """PATCH/DELETE /workspaces/{id}/rag/buckets/{bucket_id} — reaproveitam
     rag_buckets.set_active/delete_bucket, usados pelo toggle e pelo botão
-    remover do painel de buckets (Sprint 6)."""
+    remover do painel de buckets."""
 
     @pytest.fixture(autouse=True)
     def _isolated_runtime_settings(self, tmp_path, monkeypatch):

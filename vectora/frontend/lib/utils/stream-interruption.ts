@@ -1,14 +1,12 @@
 /**
- * Detecção client-side de streaming interrompido (UX-18).
+ * Detecção client-side de streaming interrompido.
  *
- * Não existe (ainda) um endpoint de backend `GET /threads/{id}/status` capaz
- * de inspecionar o checkpoint do LangGraph e diferenciar "parado em HITL" de
- * "conexão caiu no meio da geração" — construir isso com segurança exige
- * entender a fundo o estado de interrupt do orchestrator (fora do escopo
- * desta sprint de UX). Em vez disso, marcamos localmente quando um stream
- * começa e desmarcamos quando ele termina por **qualquer** via conhecida
- * (done, hitl, error, abort do usuário) — só sobra marcado o caso em que a
- * aba fechou/recarregou/crashou no meio da resposta.
+ * Não há endpoint de backend capaz de inspecionar o checkpoint do LangGraph
+ * e diferenciar "parado em HITL" de "conexão caiu no meio da geração".
+ * Em vez disso, marcamos localmente quando um stream começa e desmarcamos
+ * quando ele termina por **qualquer** via conhecida (done, hitl, error,
+ * abort do usuário) — só sobra marcado o caso em que a aba
+ * fechou/recarregou/crashou no meio da resposta.
  *
  * Persistido em `localStorage` (sobrevive a reload/crash; `sessionStorage`
  * sumiria com a aba). Marca expira em 30min para não acusar falso-positivo

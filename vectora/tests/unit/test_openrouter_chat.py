@@ -1,11 +1,9 @@
 """``VectoraOpenRouterChat`` — chat nativo do OpenRouter.
 
-Substitui o caminho antigo (``ChatOpenAI`` com ``base_url`` trocado), que
-funciona por a API ser OpenAI-compatível mas descarta o que é do OpenRouter:
-`usage.cost`, roteamento por `provider` e os blocos de `reasoning`.
-
-Os testes de paridade travam o que já funcionava (streaming, tool calling) —
-esse é o caminho crítico do agente.
+Expõe os campos específicos do OpenRouter que uma integração OpenAI-
+compatível genérica não tem onde encaixar: `usage.cost`, roteamento por
+`provider` e os blocos de `reasoning`, além de streaming e tool calling
+(caminho crítico do agente).
 """
 
 from __future__ import annotations
@@ -55,9 +53,8 @@ class TestGenerate:
 
     @pytest.mark.asyncio
     async def test_usage_metadata_traz_o_custo(self):
-        """Regressão do motivo da migração: o cliente da OpenAI descarta
-        `usage.cost`, que é campo do OpenRouter. Sem isso não há como mostrar
-        gasto por turno no medidor (Sprint 15.19)."""
+        """`usage.cost` (campo específico do OpenRouter) é propagado pro
+        `response_metadata` — é o que alimenta o medidor de gasto por turno."""
 
         def handler(_req):
             return httpx.Response(200, json=_resposta_ok())
@@ -282,9 +279,8 @@ class TestStreaming:
 
 
 class TestStreamingToolCallsEUsage:
-    """`_astream` descartava `delta.tool_calls` e `usage` — o modelo nunca
-    conseguia de fato chamar uma tool no caminho streaming (só no
-    não-streaming), e `usage.cost` não chegava na sessão via chat normal."""
+    """`_astream` monta tool calls a partir dos fragmentos de `delta.tool_calls`
+    entre chunks e propaga `usage` (incluindo `cost`) do último evento SSE."""
 
     @pytest.mark.asyncio
     async def test_tool_call_fragmentada_em_varios_chunks_sai_completa(self):
@@ -346,8 +342,8 @@ class TestStreamingToolCallsEUsage:
 class TestProviderRouting:
     @pytest.mark.asyncio
     async def test_bloco_provider_vai_no_payload(self):
-        """Roteamento por provider é o motivo de primeira classe pra sair do
-        `ChatOpenAI`, que não tem onde encaixar esse campo."""
+        """O bloco `provider` (roteamento por ordem de provedores) vai no
+        payload quando configurado no construtor."""
         capturado: dict = {}
 
         def handler(req: httpx.Request) -> httpx.Response:

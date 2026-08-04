@@ -1,6 +1,6 @@
 /**
  * FileTreeSkeleton — placeholder de carregamento da árvore de arquivos do
- * workbench (UX-9). Simula linhas alternando ícone de pasta/arquivo com
+ * workbench. Simula linhas alternando ícone de pasta/arquivo com
  * indentação decrescente, para sugerir hierarquia sem dados reais.
  */
 

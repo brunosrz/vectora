@@ -1,4 +1,4 @@
-"""Handler de política de tools do usuário autenticado (Bloco S, S5).
+"""Handler de política de tools do usuário autenticado.
 
 Endpoints (exigem auth via middleware):
     GET /tools/policy   — tools desabilitadas do usuário + lista de built-ins

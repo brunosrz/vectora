@@ -1,8 +1,8 @@
-"""Bloco G — Git Tools — testes TDD.
+"""Git Tools — testes TDD.
 
-G3: git_status, git_log, git_diff, git_branch, git_checkout, git_commit,
-    git_stash, git_push (metadata + comportamento real em repo temporário).
-G3: gh tools — metadata e fallback gracioso quando gh não disponível.
+Cobre git_status, git_log, git_diff, git_branch, git_checkout, git_commit,
+git_stash, git_push (metadata + comportamento real em repo temporário) e as
+gh tools — metadata e fallback gracioso quando gh não disponível.
 
 Os testes usam gitpython para criar repos temporários reais via tmp_path.
 As funções-helper (_git_status_impl, etc.) são testadas diretamente;

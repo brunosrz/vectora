@@ -1,4 +1,4 @@
-"""Handler do terminal embarcado (Bloco T, T2).
+"""Handler do terminal embarcado.
 
 WebSocket:
     /vectora.terminal.v1/ws?thread_id=...&workspace_id=...&terminal_id=...&token=...
@@ -97,8 +97,8 @@ async def terminal_ws(ws: WebSocket) -> None:
         await ws.close(code=1008)
         return
 
-    # Sprint 33 — sem isso, um usuário autenticado abria terminal interativo
-    # (execução arbitrária) no workspace de outro usuário só sabendo o id.
+    # Sem isso, um usuário autenticado abria terminal interativo (execução
+    # arbitrária) no workspace de outro usuário só sabendo o id.
     owner_id = getattr(workspace, "owner_id", None)
     if owner_id is not None and user is not None:
         role = str(getattr(user, "role", "")).lower()
@@ -111,9 +111,9 @@ async def terminal_ws(ws: WebSocket) -> None:
             await ws.close(code=1008)
             return
 
-    # G.2.3 — PTY remoto (SSH/Codespace) ainda não implementado nesta
-    # camada (exige `asyncssh.connect().create_process(term_type=...)`
-    # e bombeio bytes em tempo real). Rejeitamos com mensagem clara.
+    # Terminal interativo só roda em transport "local" — PTY remoto
+    # (SSH/Codespace) usa a tool `terminal` (comandos one-shot) em vez
+    # deste WebSocket.
     transport = str(getattr(workspace, "transport", "local"))
     if transport != "local":
         await ws.send_text(

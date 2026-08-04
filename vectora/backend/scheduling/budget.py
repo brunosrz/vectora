@@ -1,9 +1,8 @@
 """Budget por tarefa em segundo plano, com corte automático.
 
-Inspirado no `budget_policies` do Paperclip (escopo empresa/projeto/agente,
-`hardStopEnabled` que pausa o agente). O Vectora é local-first
-single-tenant, então o escopo aqui é **a tarefa** — mas o problema é o mesmo:
-hoje nada impede uma tarefa mal configurada de rodar em loop gastando API.
+O Vectora é local-first single-tenant, então o escopo do budget é **a
+tarefa** — sem isso, nada impede uma tarefa mal configurada de rodar em
+loop gastando API.
 
 Duas decisões deliberadas:
 
@@ -39,8 +38,7 @@ _PRECO_POR_MILHAO_CENTS: dict[str, tuple[float, float]] = {
 
 async def _get_db() -> Any:
     """Mesmo banco de `vectora_background_tasks`/`vectora_background_runs` —
-    não `checkpoints.db` (ver docstring equivalente em `kanban.py::_get_db`
-    pro histórico do bug que essa correção fecha)."""
+    não `checkpoints.db` (ver docstring equivalente em `kanban.py::_get_db`)."""
     from backend.scheduling.background_tasks import _get_db as _tasks_db
 
     return await _tasks_db()
@@ -123,7 +121,7 @@ async def check_budget(task_id: str) -> bool:
     """`True` se a próxima run pode começar.
 
     Estourado: a task vira `blocked` com `block_kind="capability"` — a
-    taxonomia do Sprint 16 pra "não dá pra continuar assim". O motivo fica
+    taxonomia usada para "não dá pra continuar assim". O motivo fica
     no card em vez de a tarefa simplesmente parar de rodar em silêncio.
     """
     db = await _get_db()
@@ -139,8 +137,8 @@ async def check_budget(task_id: str) -> bool:
 
     teto = linha["budget_cents"]
     if teto is None and linha["agent_profile_id"]:
-        # Task sem budget próprio herda o teto do perfil de agente (Sprint
-        # 40) — só quando a task não definiu o próprio, nunca sobrescreve.
+        # Task sem budget próprio herda o teto do perfil de agente — só
+        # quando a task não definiu o próprio, nunca sobrescreve.
         try:
             from backend.services.agent_profiles import get_profile
 

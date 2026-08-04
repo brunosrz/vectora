@@ -1,4 +1,4 @@
-"""Testes HTTP dos endpoints de memória (UX-11).
+"""Testes HTTP dos endpoints de memória.
 
 Usa FastAPI TestClient com um LangGraph InMemoryStore real (mesmo tipo de
 BaseStore usado em produção via ``backend.services.agent_factory.get_store``),

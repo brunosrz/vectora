@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SlashCommandMenu (Bloco H)
+ * SlashCommandMenu
  *
  * Popup de autocomplete exibido ao digitar "/" no início do input. Lista os
  * comandos registrados; selecionar preenche o input com o comando.

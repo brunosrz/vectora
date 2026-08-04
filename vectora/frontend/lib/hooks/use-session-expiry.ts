@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * UX-21 — aviso de renovação de sessão.
+ * Aviso de renovação de sessão.
  *
  * O access token (`vectora_access`) é um cookie httpOnly: o JS não consegue
  * lê-lo nem decodificar seu `exp`. Por isso o backend agora repassa esse

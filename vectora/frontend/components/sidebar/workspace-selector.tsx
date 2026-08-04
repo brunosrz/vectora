@@ -92,7 +92,7 @@ function WorkspaceFolderIcon({
 }
 
 export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
-  // UX-16 — criar/confiar/inicializar workspace exigem o backend; offline
+  // Criar/confiar/inicializar workspace exigem o backend; offline
   // essas ações só produziriam erro silencioso.
   const { offline } = useNetworkStatus();
   const workspaces = useWorkspacesStore((s) => s.workspaces);

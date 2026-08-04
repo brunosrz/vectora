@@ -1,4 +1,4 @@
-"""Testes da message queue (Bloco G — src/services/mq.py)."""
+"""Testes da message queue (src/services/mq.py)."""
 
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 """Git tools — operações locais em repositórios git via GitPython.
 
-G3 — Bloco G: git_status, git_log, git_diff, git_branch,
-               git_checkout, git_commit, git_push, git_pull, git_stash.
+git_status, git_log, git_diff, git_branch, git_checkout, git_commit,
+git_push, git_pull, git_stash.
 
 Todas as tools:
 - Resolvem o CWD via _resolve_workspace (workspace_id → config → cwd atual)
@@ -62,9 +62,9 @@ def _open_repo(workspace_id: str | None, config: RunnableConfig | None) -> Any:
         return None, json.dumps(
             {"status": "error", "message": "Workspace não encontrado."}
         )
-    # G.2.3 — git tools ainda só rodam contra repos locais. Workspaces
+    # git tools ainda só rodam contra repos locais. Workspaces
     # SSH/Codespace precisam usar `terminal` (ou tools `remote_git_*`
-    # dedicadas, fora do escopo desta fase).
+    # dedicadas).
     transport = str(getattr(ws, "transport", "local"))
     if transport != "local":
         return None, json.dumps(
@@ -745,7 +745,7 @@ def _git_worktree_impl(
 
 
 # ---------------------------------------------------------------------------
-# A.15 — Stage / unstage / restore por caminho
+# Stage / unstage / restore por caminho
 # ---------------------------------------------------------------------------
 
 
@@ -785,7 +785,7 @@ def _git_restore_impl(repo: git.Repo, path: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# A.16 — pre-commit dry-run
+# pre-commit dry-run
 # ---------------------------------------------------------------------------
 
 
@@ -824,7 +824,7 @@ def _run_pre_commit_hooks(repo: git.Repo) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# @tool wrappers (G3)
+# @tool wrappers
 # ---------------------------------------------------------------------------
 
 
@@ -1578,7 +1578,7 @@ for _t in (
 
 
 # ---------------------------------------------------------------------------
-# G7 — helpers para detecção de git no workspace
+# Helpers para detecção de git no workspace
 # ---------------------------------------------------------------------------
 
 

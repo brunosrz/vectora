@@ -114,15 +114,15 @@ interface ChatInputProps {
   // Queued messages
   queuedMessages?: { content: string; id: string }[];
 
-  // Context meter (R5)
+  // Context meter
   tokensUsed?: number;
   modelId?: string;
 
-  // Modelo (seletor permanente no rodapé) — F.2.2/F.2.3
+  // Modelo (seletor permanente no rodapé)
   agentConfig?: AgentConfig;
   onAgentConfigChange?: (config: AgentConfig) => void;
 
-  // F.2.3 — overlay de drop zone mais explícito no estado vazio
+  // Overlay de drop zone mais explícito no estado vazio
   dropHintExpanded?: boolean;
   /** Callback de seleção de arquivo via @mention. */
   onAtMentionSelect?: (path: string, startIdx: number, endIdx: number) => void;
@@ -174,7 +174,7 @@ export function ChatInput({
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   const chatMode = useSettingsStore((s) => s.chatMode);
   const uiMode = useSettingsStore((s) => s.uiMode);
-  // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
+  // Sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
   const { offline } = useNetworkStatus();
@@ -184,7 +184,7 @@ export function ChatInput({
     }
   };
 
-  // F1/bugfix — Cohere (e Ollama) não aceitam imagem na mensagem; avisa
+  // Cohere (e Ollama) não aceitam imagem na mensagem; avisa
   // cedo em vez de deixar o envio estourar com o erro cru do provedor.
   const hasImageWithoutVisionSupport = useMemo(() => {
     const hasImage = attachedFiles.some((f) => f.mimeType.startsWith("image/"));
@@ -277,7 +277,7 @@ export function ChatInput({
               <AtMentionMenu input={input} onSelect={onAtMentionSelect} />
             )}
 
-            {/* Autocomplete de slash commands (Bloco H) */}
+            {/* Autocomplete de slash commands */}
             <SlashCommandMenu
               input={input}
               onSelect={(cmd: SlashCommand) => {

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ContaTab — Bloco L2 + edição de nome (Bloco C onboarding)
+ * ContaTab
  *
  * Exibe nome, email e role do usuário ativo. Permite editar o nome inline
  * (PATCH /auth/me) — aceita UTF-8 livre, espaços, acentos. Botão de mudar

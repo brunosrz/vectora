@@ -1,4 +1,4 @@
-"""Testes para backend/api/handlers/webhooks.py — INT-1 (infra) + INT-2 (GitHub).
+"""Testes para backend/api/handlers/webhooks.py — infraestrutura genérica de webhooks e handlers específicos por provider (GitHub, etc.).
 
 Cobre:
 - Verificação de assinatura por provider (válida → 200, inválida → 401)
@@ -355,7 +355,7 @@ class TestSSEBridge:
 
 
 # ---------------------------------------------------------------------------
-# Handlers específicos — GitHub (INT-2)
+# Handlers específicos — GitHub
 # ---------------------------------------------------------------------------
 
 

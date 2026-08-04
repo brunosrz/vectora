@@ -8,8 +8,7 @@ devolve 404. E exigem key mesmo com o Ollama rodando na máquina, o que precisa
 estar explícito na mensagem de erro: sem isso o usuário com o servidor local
 ligado não entende a recusa.
 
-Entram como mais um backend do roteador de busca (Sprint 15.18), não como
-tool própria.
+Entram como mais um backend do roteador de busca, não como tool própria.
 """
 
 from __future__ import annotations

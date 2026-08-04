@@ -1,4 +1,4 @@
-"""Sincronização de caches entre réplicas — Bloco G (G2).
+"""Sincronização de caches entre réplicas.
 
 Cada réplica mantém caches in-memory (L1): tools MCP resolvidas, LLM bindado,
 política de tools e workspace ativo. Quando uma réplica muda algo, publica no

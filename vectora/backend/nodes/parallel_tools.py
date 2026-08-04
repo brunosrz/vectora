@@ -1,4 +1,4 @@
-"""Execução paralela de tools (DE-12)."""
+"""Execução paralela de tools."""
 
 from __future__ import annotations
 

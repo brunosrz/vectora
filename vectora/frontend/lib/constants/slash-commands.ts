@@ -1,5 +1,5 @@
 /**
- * Slash commands (Bloco H) — registry e parser.
+ * Slash commands — registry e parser.
  *
  * Apenas comandos cuja ação já existe no Vectora hoje. O dispatch real vive no
  * chat-interface; aqui ficam o registro (para o autocomplete) e helpers puros

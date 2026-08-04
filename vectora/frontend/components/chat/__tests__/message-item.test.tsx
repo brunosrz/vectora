@@ -94,8 +94,7 @@ describe("MessageItem", () => {
     expect(onCopy).toHaveBeenCalledWith("texto", "x9");
   });
 
-  // Sprint 3b — botão copiar em mensagens do usuário
-  it("mensagem do usuário tem botão copiar (3b)", () => {
+  it("mensagem do usuário tem botão copiar", () => {
     const onCopy = vi.fn();
     render(
       <MessageItem
@@ -115,8 +114,7 @@ describe("MessageItem", () => {
     expect(onCopy).toHaveBeenCalledWith("minha pergunta", "u1");
   });
 
-  // Sprint 3c — botões assistente usam h-6 w-6 (não h-7 w-7)
-  it("botões do assistente usam h-6 w-6 (3c)", () => {
+  it("botões do assistente usam h-6 w-6 (não h-7 w-7)", () => {
     const { container } = render(
       <MessageItem
         {...baseProps(
@@ -221,7 +219,7 @@ describe("MessageItem", () => {
     expect(container.querySelector(".max-w-\\[85\\%\\]")).toBeNull();
   });
 
-  // ── D2 — Bloco de progresso do agente ─────────────────────────────────────
+  // ── Bloco de progresso do agente ──────────────────────────────────────────
 
   it("bloco <details> aparece quando isThinking=true (streaming ativo)", () => {
     const { container } = render(
@@ -258,8 +256,9 @@ describe("MessageItem", () => {
     expect(screen.getByText("Passo 2")).toBeInTheDocument();
   });
 
-  it("bloco <details> NÃO aparece com thinkingStartTime setado mas isThinking=false e sem steps (bug fix)", () => {
-    // Bug anterior: || message.thinkingStartTime era sempre truthy → retângulo preto vazio
+  it("bloco <details> NÃO aparece com thinkingStartTime setado mas isThinking=false e sem steps", () => {
+    // thinkingStartTime sozinho não deve bastar pra exibir o bloco — só
+    // isThinking=true ou thinkingSteps não-vazio o fazem.
     const { container } = render(
       <MessageItem
         {...baseProps(
@@ -363,8 +362,8 @@ describe("MessageItem", () => {
     expect(screen.queryByText(/``````/)).toBeNull();
   });
 
-  // Sprint 3a — metadata (timestamp) fica na barra de botões, não na bolha de conteúdo
-  it("metadata de duração está na barra justify-between, não na bolha de markdown (3a)", () => {
+  // Metadata (timestamp) fica na barra de botões, não na bolha de conteúdo
+  it("metadata de duração está na barra justify-between, não na bolha de markdown", () => {
     const { container } = render(
       <MessageItem
         {...baseProps(
@@ -445,17 +444,16 @@ describe("MessageItem", () => {
 });
 
 // ============================================================================
-// Streaming incremental — regressão de duplicação de tokens
+// Streaming incremental — acumulação sem duplicação de tokens
 //
-// Reproduz, via re-render sucessivo (o mesmo mecanismo que use-stream-handler
-// usa: content cresce a cada setMessages), o sintoma relatado: cada token do
-// astream aparecendo duplicado, cada um em seu próprio parágrafo, em vez de
-// acumular numa única string contínua ("Olá\n\nOlá\n\n!\n\n!..." em vez de
-// "Olá! Como posso ajudar você hoje?"). MessageItem é o componente de
-// apresentação — não é responsável por deduplicar (isso é do hook/adapter,
-// já coberto em use-stream-handler.test.ts e test_adapters_streaming.py),
-// mas precisa renderizar fielmente qualquer sequência de conteúdo crescente
-// sem introduzir quebras de parágrafo ou duplicação por conta própria.
+// Via re-render sucessivo (o mesmo mecanismo que use-stream-handler usa:
+// content cresce a cada setMessages), verifica que cada token do astream
+// acumula numa única string contínua, sem cada um virar seu próprio
+// parágrafo nem duplicar. MessageItem é o componente de apresentação — não
+// é responsável por deduplicar (isso é do hook/adapter, coberto em
+// use-stream-handler.test.ts e test_adapters_streaming.py), mas precisa
+// renderizar fielmente qualquer sequência de conteúdo crescente sem
+// introduzir quebras de parágrafo ou duplicação por conta própria.
 // ============================================================================
 
 function expectNoDuplication(history: string[], full: string) {

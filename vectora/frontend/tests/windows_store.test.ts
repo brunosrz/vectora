@@ -1,5 +1,5 @@
 /**
- * TDD — windows-store (workstation flutuante com abas por workspace)
+ * windows-store (workstation flutuante com abas por workspace)
  *
  * Cobre open/closeTab/setActiveTab/close/focus/minimize/restore/setBounds
  * e o z-order incremental. O store é singleton por módulo — reseta via

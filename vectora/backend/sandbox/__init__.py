@@ -1,5 +1,5 @@
 """AI Jail nativo — sandbox de execução por workspace (`vectora.toml`, seção
-`[sandbox]`). MVP Linux-first via bubblewrap. Ponto de integração real para
+`[sandbox]`). Linux-first via bubblewrap. Ponto de integração real para
 as tools do agente e o terminal interativo do usuário: `workspace_jail.
 jail_manager` — um worker jailado persistente por workspace (`terminal`,
 tools de arquivo e PTY interativo compartilham o mesmo processo jailado em

@@ -129,7 +129,7 @@ describe("auth no postRpc", () => {
   });
 });
 
-describe("ThreadService pins (WB-1)", () => {
+describe("ThreadService pins", () => {
   it("getThreadPins: POST GetThreadPins com thread_id", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({ thread_id: "t1", pins: ["a.py", "b.py"] }),

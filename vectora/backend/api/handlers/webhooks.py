@@ -1,6 +1,6 @@
 """Handler de Webhooks — recebe e despacha eventos de provedores externos.
 
-Infraestrutura genérica (INT-1) + handlers específicos (INT-2 GitHub, etc.).
+Infraestrutura genérica de recepção/verificação + handlers específicos por provider (GitHub, etc.).
 
 Endpoints:
     POST /webhook/{provider}  — recebe evento, verifica assinatura, persiste e emite SSE
@@ -137,7 +137,7 @@ _VERIFIERS: dict[str, tuple[str, Callable[[bytes, dict[str, str], str], bool]]] 
 }
 
 # ---------------------------------------------------------------------------
-# Handlers específicos por provider (INT-2+)
+# Handlers específicos por provider
 # ---------------------------------------------------------------------------
 
 

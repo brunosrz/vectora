@@ -158,8 +158,9 @@ class TestContextFile:
 
 
 class TestInjectionScanning:
-    """Sprint 35 — AGENTS.md/CLAUDE.md/etc hostis são bloqueados antes de
-    entrar no contexto do agente (scanner por assinatura, estilo Hermes)."""
+    """AGENTS.md/CLAUDE.md/etc com conteúdo hostil (tentativa de injeção de
+    prompt) são bloqueados por um scanner de assinatura antes de entrar no
+    contexto do agente."""
 
     def _make(self, tmp_path: Path, name: str, content: str) -> ContextFile:
         f = tmp_path / name

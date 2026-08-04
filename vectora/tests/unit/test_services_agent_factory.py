@@ -1,9 +1,9 @@
 """Testes para backend/services/agent_factory.py.
 
-Cobre: aget_thread_messages — bug crítico onde o histórico não era
-restaurado após restart (grafo NOOP não desserializa estado do deepagents), e
-o checkpoint_id pai anexado a cada mensagem (fork de checkpoint pra editar/
-regenerar — Item 3 do plano de migração backend/frontend).
+Cobre: aget_thread_messages — reconstrói o histórico de uma thread a partir
+do `aget_state_history` do checkpointer (fonte de verdade, sobrevive a
+restart), incluindo o checkpoint_id pai anexado a cada mensagem, usado para
+fork de checkpoint ao editar/regenerar uma resposta.
 """
 
 from __future__ import annotations
@@ -248,9 +248,8 @@ class TestAgetThreadMessages:
 
 
 # ─────────────────────────── aget_thread_todos ────────────────────────────
-# Popula a seção "Tasks" do Plan tab num reload de página — o SSE ao vivo
-# (TodosUpdatedEvent) já entrega isso, mas não persiste no client entre
-# streams; lê direto do snapshot mais recente do checkpoint (fonte real).
+# Popula a seção "Tasks" do Plan tab num reload de página, lendo direto do
+# snapshot mais recente do checkpoint (fonte de verdade dos todos).
 
 
 class TestAgetThreadTodos:
@@ -323,7 +322,7 @@ class TestAgetThreadTodos:
 
 
 class TestAgetThreadPendingInterrupt:
-    """Reidratação do HITLPanel após reload de página (Sprint 38.2) — lê
+    """Reidratação do HITLPanel após reload de página — lê
     ``snapshot.tasks[*].interrupts``, não ``snapshot.values``."""
 
     @pytest.mark.asyncio

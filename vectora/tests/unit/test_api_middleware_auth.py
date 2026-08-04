@@ -1,4 +1,4 @@
-"""Testes unitários para src/api/middleware/auth.py (Bloco C — C4).
+"""Testes unitários para src/api/middleware/auth.py.
 
 Cobre:
 - _is_public_route: rotas públicas corretas e rotas privadas
@@ -57,12 +57,10 @@ class TestIsPublicRoute:
         assert _is_public_route("/metrics") is False
 
     def test_sessions_background_tasks_are_private(self):
-        """Regressão: `/sessions/{thread_id}/background/*`
-        (backend/api/handlers/background.py) tinha o mesmo gap já corrigido
-        pro `/rag` no Sprint 33 — `/sessions` faltava em `_API_PREFIXES`,
-        então o path caía no fallback "não é rota de API → SPA → pública",
-        servindo GET/POST/PATCH/DELETE de tarefas em segundo plano sem
-        exigir token nenhum em modo servidor."""
+        """`/sessions` está em `_API_PREFIXES`, então rotas de tarefas em
+        segundo plano (`/sessions/{thread_id}/background/*`, ver
+        backend/api/handlers/background.py) exigem token em modo servidor —
+        não caem no fallback "não é rota de API → SPA → pública"."""
         from backend.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/sessions/thread-1/background/tasks") is False
@@ -172,8 +170,8 @@ class TestGetVirtualLocalUser:
         assert user.username == "bruno"
 
     def test_usa_username_persistido_quando_presente(self, _isolated_runtime_settings):
-        """Username escolhido no onboarding tem prioridade sobre o slugify do
-        nome — regressão: instância sem username ainda cai no fallback."""
+        """Username escolhido no onboarding tem prioridade sobre o slugify
+        do nome."""
         from backend.api.middleware.auth import _get_virtual_local_user
 
         _isolated_runtime_settings.set_local_user(

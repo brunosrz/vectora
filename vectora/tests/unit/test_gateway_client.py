@@ -1,4 +1,4 @@
-"""TDD — GatewayClient (backend/services/gateway/__init__.py)"""
+"""GatewayClient (backend/services/gateway/__init__.py)"""
 
 import asyncio
 import contextlib

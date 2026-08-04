@@ -1,8 +1,8 @@
-"""Sprint 0.3 — o orchestrator/coder precisam sempre fechar o turno com texto
-de confirmação depois de create_artifact/write_todos, mesmo quando a criação
-aconteceu dentro de uma delegação via task(). Bug real observado ao vivo: o
-turno terminava só com tool calls / subagent output cru, sem nenhuma frase
-pro usuário, e o usuário achava que o pedido tinha falhado.
+"""O orchestrator/coder devem sempre fechar o turno com texto de
+confirmação depois de create_artifact/write_todos, mesmo quando a criação
+acontece dentro de uma delegação via task() — um turno que termina só com
+tool calls / subagent output cru, sem nenhuma frase pro usuário, deixa a
+impressão de que o pedido falhou.
 """
 
 from __future__ import annotations

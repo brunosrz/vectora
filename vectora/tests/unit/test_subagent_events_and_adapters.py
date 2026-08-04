@@ -1,14 +1,9 @@
-"""Testes TDD para o Bloco D — Reasoning Reveal & Thinking UX.
+"""Reasoning Reveal & Thinking UX: eventos de stream do chat.
 
-Todos estes testes são escritos ANTES da implementação (TDD: red → green).
-
-Cobre:
-  D1 — ThinkingEvent: schema, extração do orchestrator, emissão no stream
-  D2 — Progresso semântico: mapeamento node → label humano
-  D3 — Duration badges: duration_ms nos NodeEvent de fim
-  D4 — Dev mode: campos extras acessíveis via flag
-
-Subseção por sub-bloco para facilitar implementação incremental.
+Cobre: SubagentOutputEvent (identidade do subagente delegado via task());
+mapeamento node → label humano (node_labels); duration_ms nos NodeEvent
+de início/fim; comportamentos de adapters que não podem regredir (tokens,
+tool calls/results, eventos thread/done/error).
 """
 
 from __future__ import annotations
@@ -29,7 +24,7 @@ def _isolated(_no_thread_persistence):
 
 
 class TestSubagentOutputEventSchema:
-    """SubagentOutputEvent substitui o ThinkingEvent morto (Sprint 2)."""
+    """SubagentOutputEvent carrega a identidade do subagente delegado via task()."""
 
     def test_thinking_event_foi_removido(self):
         """Erro/borda: o ThinkingEvent legado não existe mais no schema."""
@@ -175,7 +170,7 @@ class TestSubagentOutputEventSchema:
 
 
 # ===========================================================================
-# D2 — Progresso semântico: node → label
+# Progresso semântico: node → label
 # ===========================================================================
 
 
@@ -277,7 +272,7 @@ class TestNodeLabels:
 
 
 # ===========================================================================
-# D3 — Duration badges: duration_ms no NodeEvent de fim
+# Duration badges: duration_ms no NodeEvent de fim
 # ===========================================================================
 
 
@@ -393,12 +388,12 @@ class TestNodeEventDuration:
 
 
 # ===========================================================================
-# D1 — Comportamentos existentes do adapters que não devem regredir
+# Comportamentos existentes do adapters que não devem regredir
 # ===========================================================================
 
 
 class TestAdaptersRegression:
-    """Testes de não-regressão: comportamentos do adapters antes do Bloco D."""
+    """Testes de não-regressão: comportamentos correntes dos adapters."""
 
     def test_token_event_from_chat_model_stream(self):
         from backend.api.adapters import langgraph_event_to_payload
@@ -419,9 +414,8 @@ class TestAdaptersRegression:
         assert result.content == "hello"
 
     def test_orchestrator_tokens_now_emitted(self):
-        """O orchestrator deixou de usar structured output (set
-        _STRUCTURED_OUTPUT_NODES vazio), então seus tokens agora são
-        user-facing e viram TokenEvent — antes eram filtrados como JSON cru."""
+        """O orchestrator não usa structured output (_STRUCTURED_OUTPUT_NODES
+        vazio), então seus tokens são user-facing e viram TokenEvent."""
         from backend.api.adapters import langgraph_event_to_payload
         from backend.api.schemas import TokenEvent
 

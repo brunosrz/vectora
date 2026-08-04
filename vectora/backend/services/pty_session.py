@@ -1,4 +1,4 @@
-"""PtySession — pseudo-terminal cross-platform (Bloco T, T1).
+"""PtySession — pseudo-terminal cross-platform.
 
 Abstrai ``pywinpty`` (Windows/ConPTY) e ``ptyprocess`` (macOS/Linux) atrás de
 uma única classe assíncrona. I/O externo em **bytes** (o que o WebSocket envia
@@ -78,9 +78,9 @@ class PtySession:
         self.thread_id = thread_id
         self._proc = proc
         # Fan-out: cada WS que abre este terminal ganha sua própria fila via
-        # subscribe() — o read-loop faz broadcast pra todas. Sem isso, 2 abas
-        # no mesmo terminal_id competiam pelos itens de uma fila única (cada
-        # chunk ia pra só um dos dois consumidores, nunca pros dois).
+        # subscribe() — o read-loop faz broadcast do mesmo chunk pra todas as
+        # filas registradas, garantindo que múltiplas abas no mesmo
+        # terminal_id recebam a saída de forma independente.
         self._subscribers: list[asyncio.Queue[bytes | None]] = []
         self._closed = False
         self._read_task: asyncio.Task | None = None
@@ -110,13 +110,13 @@ class PtySession:
         cmd = argv or _default_shell()
         merged_env = {**os.environ, **(env or {})}
 
-        # 0.3 — PTY interativo compartilha a MESMA política jailada
+        # PTY interativo compartilha a MESMA política jailada
         # (backend.sandbox.workspace_jail) que `terminal`/`file_write`
         # daquela workspace: mesmos namespaces/rw_paths/ro_paths do bwrap.
-        # Só `backend="local"` suporta PTY interativo sandboxado nesta
-        # sprint (docker/ssh/modal exigiriam `-it`/`-tt`, sprint futura) —
-        # e só existe em Linux (bwrap). Nunca cai silenciosamente pra shell
-        # sem proteção quando o usuário configurou `[sandbox]`.
+        # Só `backend="local"` suporta PTY interativo sandboxado (docker/
+        # ssh/modal exigiriam `-it`/`-tt`) — e só existe em Linux (bwrap).
+        # Nunca cai silenciosamente pra shell sem proteção quando o usuário
+        # configurou `[sandbox]`.
         if policy is not None and policy.enabled:
             if policy.backend != "local":
                 raise RuntimeError(

@@ -32,8 +32,8 @@ _LANDLOCK_RULE_PATH_BENEATH = 1
 
 # ABI V1 (5.13+) — todos os direitos de filesystem definidos na v1 do
 # uapi/linux/landlock.h. V2 (renomear/linkar) e V3 (truncar) exigem
-# 5.19+/6.2+ — fora de escopo desta sprint (defesa V1 já cobre o caso de
-# uso: negar leitura/escrita fora dos paths declarados na política).
+# 5.19+/6.2+ e não são usados aqui — V1 já cobre o caso de uso: negar
+# leitura/escrita fora dos paths declarados na política.
 _ACCESS_FS_EXECUTE = 1 << 0
 _ACCESS_FS_WRITE_FILE = 1 << 1
 _ACCESS_FS_READ_FILE = 1 << 2
@@ -90,8 +90,8 @@ def _add_path_rule(
     libc: ctypes.CDLL, add_rule_nr: int, ruleset_fd: int, path: str, access: int
 ) -> bool:
     """Concede `access` sobre `path` no ruleset. Path inexistente não é
-    erro fatal (mesmo espírito do mask sem match, Sprint 4.4) — o worker
-    simplesmente nunca teve acesso a ele de qualquer forma."""
+    erro fatal — o worker simplesmente nunca teve acesso a ele de
+    qualquer forma."""
     try:
         parent_fd = os.open(
             path,

@@ -105,13 +105,12 @@ class TestMigrationRunner:
     async def test_colunas_do_kanban_chegam_em_banco_ja_populado(
         self, runner_conn, monkeypatch
     ):
-        """Regressão: `status`/`block_kind`/`claim_lock`/`budget_cents` etc
-        entraram direto no CREATE TABLE de `vectora_background_tasks` — no-op
-        em banco que já tem a tabela sem essas colunas, porque `CREATE TABLE
-        IF NOT EXISTS` não altera uma tabela existente. Sem os `ALTER TABLE`
-        correspondentes, o tick do scheduler quebrava com
-        `sqlite3.OperationalError: no such column: status` em todo boot
-        contra um banco criado antes do Sprint 16."""
+        """`CREATE TABLE IF NOT EXISTS` é no-op quando a tabela já existe sem
+        as colunas `status`/`block_kind`/`claim_lock`/`budget_cents` etc —
+        os `ALTER TABLE` correspondentes precisam rodar mesmo assim, senão o
+        tick do scheduler falha com `sqlite3.OperationalError: no such
+        column: status` contra um banco com o schema antigo de
+        `vectora_background_tasks`."""
         from backend.storage.migrations.runner import MigrationRunner
 
         # Simula o shape "pré-kanban": só as colunas que existiam antes.
@@ -165,8 +164,8 @@ class TestMigrationRunner:
         cols = {row[1] for row in await cur.fetchall()}
         assert {"tokens_used", "estimated_cost_cents"} <= cols
 
-        # Erro/borda: o tick real do scheduler (release_stale_claims) que
-        # quebrava em produção agora roda sem lançar.
+        # Erro/borda: release_stale_claims do scheduler roda sem lançar
+        # contra o schema migrado.
         from backend.scheduling import kanban
 
         async def _get_db():
@@ -250,10 +249,9 @@ class TestMigrationRunner:
 
     @pytest.mark.asyncio
     async def test_upgrade_from_old_versioned_control_table(self, runner_conn):
-        """Banco real que já rodou o sistema de migrations antigo (versionado,
-        NNNN_nome.sql) tem schema_migrations no formato (version, name,
-        applied_at, checksum) — sem coluna `id`. apply() não pode quebrar com
-        "no such column: id" nesse caso; reproduzido ao vivo em produção."""
+        """Um `schema_migrations` no formato antigo versionado (version, name,
+        applied_at, checksum) — sem coluna `id` — não pode fazer apply()
+        quebrar com "no such column: id"."""
         from backend.storage.migrations.runner import MigrationRunner
 
         await runner_conn.executescript("""
@@ -278,7 +276,7 @@ class TestMigrationRunner:
 
 
 class TestDataMigrationDryRun:
-    """Migrações de dados (F12) — apenas dry-run para não precisar de infra."""
+    """Migrações de dados — apenas dry-run para não precisar de infra."""
 
     @pytest.mark.asyncio
     async def test_to_postgres_dry_run(self, tmp_path):

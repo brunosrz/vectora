@@ -34,9 +34,8 @@ _active_builds: dict[str, asyncio.Task[None]] = {}
 def _check_workspace_access(request: Request, workspace_id: str) -> None:
     """Dependência de router: 404/403 antes de qualquer handler rodar.
 
-    Sprint 33 — sem isso, um usuário autenticado em modo servidor lia/mutava
-    o Context Graph de outro usuário só sabendo o workspace_id (nunca
-    verificado contra quem criou o workspace).
+    Garante que o Context Graph de um workspace só é lido/mutado por quem
+    tem acesso a esse workspace — o workspace_id sozinho não basta.
     """
     from backend.api.handlers.workspaces import require_workspace_access
 

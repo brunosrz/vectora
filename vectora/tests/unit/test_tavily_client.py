@@ -4,10 +4,6 @@ O `langchain-tavily` cobre só esses dois endpoints, e ainda prende
 `search_depth`/`max_results` na instanciação. A API tem seis: `/search`,
 `/extract`, `/crawl`, `/map`, `/research` e `/usage`.
 
-O Hermes chegou à mesma conclusão por conta própria — `plugins/web/tavily/
-provider.py:42` usa `httpx` direto, nem `tavily-python` nem LangChain — mas
-implementa só search e extract também.
-
 O contrato de saída das tools (`web_search` devolve `json.dumps(results)`)
 **não muda**: é o contrato com o LLM.
 """
@@ -218,7 +214,7 @@ class TestUsage:
     @pytest.mark.asyncio
     async def test_usage_devolve_consumo_da_key_e_do_plano(self):
         """`GET /usage` — endpoint que o `langchain-tavily` não expõe e que o
-        medidor de consumo (Sprint 15.19) vai usar."""
+        medidor de consumo usa para reportar o gasto da key/plano."""
 
         def handler(req: httpx.Request) -> httpx.Response:
             assert req.method == "GET"

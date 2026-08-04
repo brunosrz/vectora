@@ -1,4 +1,4 @@
-"""TDD — Memory Library (handler HTTP).
+"""Memory Library (handler HTTP).
 
 GET  /rag-library/catalog — lista buckets publicados
 POST /rag-library/install — baixa e instala um bucket como coleção LanceDB

@@ -289,8 +289,8 @@ def test_next_run_sem_timezone_configurado_usa_local_do_so(monkeypatch):
     monkeypatch.setattr("backend.workspace.runtime_settings.runtime_settings", _NoTz())
     assert bg._next_run("0 9 * * *") is not None
 
-    # Erro/borda: cron inválido continua retornando None (regressão) — o
-    # timezone não pode ter transformado um erro de parse em exceção.
+    # Erro/borda: cron inválido continua retornando None — o timezone não
+    # transforma um erro de parse em exceção.
     assert bg._next_run("isso não é cron") is None
 
 
@@ -444,14 +444,13 @@ async def test_run_task_error_path_records_error_and_skips_session(db, monkeypat
 
 
 # ---------------------------------------------------------------------------
-# Sprint 3.1 — a thread da run aparece na sidebar (ListThreads)
+# Visibilidade da thread da run na sidebar (ListThreads)
 # ---------------------------------------------------------------------------
 
 
 async def test_run_task_incrementa_message_count_da_thread(db, monkeypatch):
     """A run bem-sucedida chama _increment_message_count(run_thread_id) — é o
-    que faz ListThreads (filtra message_count>0) mostrá-la na sidebar. Antes a
-    thread era gravada com message_count=0 e nunca aparecia.
+    que faz ListThreads (filtra message_count>0) mostrá-la na sidebar.
 
     Testa o wiring com mock (o caminho real de I/O de sessão publica eventos
     que não isolam por event-loop nos testes; ListThreads+increment reais têm
@@ -510,14 +509,14 @@ async def test_run_task_incrementa_message_count_da_thread(db, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Sprint 3.2 — a run reporta o resultado de volta na sessão-mãe
+# A run reporta o resultado de volta na sessão-mãe
 # ---------------------------------------------------------------------------
 
 
 async def test_run_task_reporta_conclusao_na_sessao_mae(db, monkeypatch):
     """Ao concluir, a run posta uma AIMessage no checkpoint da sessão que criou
     a task (task.session_id) via graph.aupdate_state — o orquestrador principal
-    fica sabendo que a tarefa terminou (Hermes/Paperclip)."""
+    fica sabendo que a tarefa terminou."""
     agent = _FakeAgent(result={"messages": [{"content": "3 arquivos alterados"}]})
     _patch_agent(monkeypatch, agent)
 
@@ -578,7 +577,7 @@ async def test_report_to_parent_session_pula_sem_sessao_mae(db, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# HITL em background — interrupt → awaiting_approval → resume (Sprint 1.3)
+# HITL em background — interrupt → awaiting_approval → resume
 # ---------------------------------------------------------------------------
 
 
@@ -868,7 +867,7 @@ async def test_report_to_parent_session_tolera_falha_do_aupdate_state(db, monkey
 
 
 # ---------------------------------------------------------------------------
-# Sprint 3.3 — tools do orquestrador: listar/consultar tasks e runs
+# Tools do orquestrador: listar/consultar tasks e runs
 # ---------------------------------------------------------------------------
 
 
@@ -969,7 +968,7 @@ async def test_list_background_tasks_sem_session_id_e_task_sem_run(db, monkeypat
 
 
 # ---------------------------------------------------------------------------
-# Sprint 3.4 — intervenção: cancelar / aprovar via tool do orquestrador
+# Intervenção: cancelar / aprovar via tool do orquestrador
 # ---------------------------------------------------------------------------
 
 
@@ -1253,15 +1252,14 @@ async def test_record_subagent_delegation_tolerates_db_failure(db, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Sprint 23 — Kanban ligado à execução real (status/claim/block)
+# Kanban ligado à execução real (status/claim/block)
 # ---------------------------------------------------------------------------
 
 
 async def test_create_task_status_inicial_e_ready_nao_todo(db):
-    """Regressão do bug real: antes toda tarefa nascia com o DEFAULT
-    'todo' do schema e nunca saía de lá — o board ficava sempre vazio.
-    Task recorrente (`next_run_at` futuro definido) nasce "scheduled"
-    (Sprint 41), que `claim_task` também aceita — nunca "todo"."""
+    """Task recorrente (`next_run_at` futuro definido) nasce com status
+    "scheduled", que `claim_task` também aceita — nunca com o DEFAULT
+    "todo" do schema, que deixaria o board sempre vazio."""
     task = await bg.create_task(
         session_id="s1",
         user_id="u1",
@@ -1355,9 +1353,9 @@ async def test_run_task_unica_vira_done_ao_concluir(db, monkeypatch):
 async def test_run_task_erro_vira_blocked_transient_em_vez_de_travar_em_running(
     db, monkeypatch
 ):
-    """Erro/borda crítica: sem isso, uma run que lança deixaria o card preso
-    em `running` para sempre — o motivo real do incidente que este sprint
-    corrige."""
+    """Erro/borda: uma run que lança marca o card como `blocked` (motivo
+    `transient`, com a mensagem do erro) em vez de deixá-lo preso em
+    `running` para sempre."""
     from backend.scheduling import kanban
 
     agent = _FakeAgent(exc=RuntimeError("LLM caiu"))
@@ -1461,8 +1459,8 @@ async def test_update_task_nao_reabilita_por_cima_de_bloqueio_ativo(db):
 
 
 class TestRunTaskComPerfilDeAgente:
-    """Sprint 40 — task com `agent_profile_id` roda com a instrução/modelo
-    do perfil em vez do comportamento padrão do orchestrator."""
+    """Task com `agent_profile_id` roda com a instrução/modelo do perfil em
+    vez do comportamento padrão do orchestrator."""
 
     async def test_model_override_do_perfil_e_passado_ao_get_user_agent(
         self, db, monkeypatch
@@ -1520,8 +1518,8 @@ class TestRunTaskComPerfilDeAgente:
         assert chamadas[0] == "openrouter:gpt-4o"
 
     async def test_task_sem_perfil_nao_muda_comportamento(self, db, monkeypatch):
-        """Regressão: task sem agent_profile_id nunca chama get_profile nem
-        altera o model passado."""
+        """Task sem agent_profile_id nunca chama get_profile nem altera o
+        model passado."""
         from unittest.mock import AsyncMock
 
         agent = _FakeAgent(result={"messages": [{"content": "ok"}]})

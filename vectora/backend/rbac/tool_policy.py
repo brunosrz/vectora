@@ -1,4 +1,4 @@
-"""Política de tools por usuário — ABAC simples (Bloco S, S5).
+"""Política de tools por usuário — ABAC simples.
 
 Cada usuário tem uma lista de tools desabilitadas, persistida em
 ``~/.vectora/tools/<user_id>.json``. Por padrão, todas as tools são permitidas
@@ -66,7 +66,7 @@ def set_disabled(user_id: str, names: list[str]) -> None:
     payload = {"disabled": sorted(set(names))}
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     _versions[user_id] = _versions.get(user_id, 0) + 1
-    # Avisa as demais réplicas (Bloco G) — no modo lite é um no-op local.
+    # Avisa as demais réplicas — no modo lite é um no-op local.
     from backend.persistence.kv import publish_soon
 
     publish_soon(

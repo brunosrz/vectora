@@ -2,10 +2,10 @@
 
 /**
  * ToolPolicyPanel — controle do usuário sobre quais tools built-in o agente
- * pode usar em seu nome (Bloco S, S5 self-service).
+ * pode usar em seu nome.
  *
  * GET /tools/policy → {disabled, available}; PUT salva as desabilitadas.
- * Mudanças entram em vigor no próximo request (S4/S6 invalidam o cache).
+ * Mudanças entram em vigor no próximo request, que invalida o cache.
  */
 
 import { useEffect, useState } from "react";

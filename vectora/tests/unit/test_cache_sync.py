@@ -1,4 +1,4 @@
-"""Testes da sincronização de caches entre réplicas (Bloco G — cache_sync)."""
+"""Testes da sincronização de caches entre réplicas (cache_sync)."""
 
 from __future__ import annotations
 

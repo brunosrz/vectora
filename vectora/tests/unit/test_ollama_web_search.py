@@ -5,8 +5,7 @@ local. Exigem `OLLAMA_API_KEY` mesmo com o Ollama rodando na máquina — e a
 mensagem de erro precisa dizer isso, senão vira "por que não funciona se meu
 Ollama está ligado?".
 
-Entram como mais um backend do roteador de busca (Sprint 15.18), não como
-tool própria.
+Entram como mais um backend do roteador de busca, não como tool própria.
 """
 
 from __future__ import annotations

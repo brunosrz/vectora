@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * workbench-store — slice de pins (WB-1). O backend é a fonte de verdade (§8):
+ * workbench-store — slice de pins. O backend é a fonte de verdade (§8):
  * togglePinned atualiza o cache otimisticamente e chama SetThreadPins; loadPins
  * lê GetThreadPins; setPins reconcilia. Mocka o vectora-client.
  */

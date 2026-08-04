@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * PlanTab — Accordion multi-item unificando artifacts + write_todos
- * (Sprint 6): lista única, itens colapsáveis, vários abertos ao mesmo
- * tempo, markdown real por artifact, ícone/cor por `artifact_type`.
+ * PlanTab — Accordion multi-item unificando artifacts + write_todos: lista
+ * única, itens colapsáveis, vários abertos ao mesmo tempo, markdown real
+ * por artifact, ícone/cor por `artifact_type`.
  */
 
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
@@ -156,7 +156,7 @@ describe("PlanTab — Tasks (write_todos) dentro do Accordion", () => {
   });
 });
 
-describe("PlanTab — Accordion multi-item (Sprint 6)", () => {
+describe("PlanTab — Accordion multi-item", () => {
   it("todos os títulos viram AccordionTrigger (botões clicáveis)", async () => {
     const threadId = "t-accordion-1";
     useWorkbenchStore.getState().setPlanItems(threadId, [
@@ -187,8 +187,8 @@ describe("PlanTab — Accordion multi-item (Sprint 6)", () => {
   });
 
   it("título longo quebra em várias linhas em vez de truncar com '...'", async () => {
-    // Sprint 0.1 — bug real ao vivo: min-w-0 ausente no AccordionTrigger
-    // fazia o botão estourar a largura do painel em vez de conter o título.
+    // Sem min-w-0 no AccordionTrigger, o botão estoura a largura do painel
+    // em vez de conter o título.
     const threadId = "t-title-wrap";
     const longTitle =
       "plano de implementação do jogo da cobrinha em godot 4.7 com todos os detalhes";

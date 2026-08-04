@@ -95,8 +95,8 @@ describe("ContextGraphTab", () => {
     it("botão mostra graph_build_button só uma vez (sem CTA duplicado)", () => {
       setup();
       render(<ContextGraphTab threadId="t1" />);
-      // Só o botão da barra de ações — o CTA proeminente duplicado no
-      // estado vazio foi removido (Sprint 7).
+      // Só o botão da barra de ações — não há CTA proeminente duplicado
+      // no estado vazio.
       expect(screen.getAllByText("graph_build_button")).toHaveLength(1);
       expect(screen.getAllByTestId("graph-build-btn")).toHaveLength(1);
     });
@@ -330,7 +330,7 @@ describe("ContextGraphTab", () => {
     });
   });
 
-  describe("Atualizar e afetados (CG-9)", () => {
+  describe("Atualizar e afetados", () => {
     it("estado queued exibe graph_building", () => {
       setup({ status: { status: "queued" } });
       render(<ContextGraphTab threadId="t1" />);
@@ -391,7 +391,7 @@ describe("ContextGraphTab", () => {
     });
   });
 
-  describe("done — bordas (CG-9)", () => {
+  describe("done — bordas", () => {
     it("node_count null não exibe contagem de nós", () => {
       setup({ status: { status: "done", node_count: null, edge_count: null } });
       render(<ContextGraphTab threadId="t1" />);

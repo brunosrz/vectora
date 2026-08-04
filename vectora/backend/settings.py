@@ -456,7 +456,7 @@ class Settings(BaseSettings):
     reranker_top_k: int = 5
     """Number of results to rerank."""
 
-    # ── RAG Collections & Curadoria Web (Bloco A5) ───────────────────────────
+    # ── RAG Collections & Curadoria Web ───────────────────────────────────────
     rag_collection_default: str = "articles"
     """Coleção LanceDB para docs curados pelo usuário (ingest_docs, embedding manual).
     Conteúdo confiável — escolhido explicitamente pelo usuário."""
@@ -480,7 +480,7 @@ class Settings(BaseSettings):
     """Score mínimo do reranker para um resultado web sobreviver ao gate de
     curadoria. Abaixo disso é descartado antes mesmo do LLM judge."""
 
-    # ── RAG Curator (Bloco B4) ────────────────────────────────────────────────
+    # ── RAG Curator ────────────────────────────────────────────────────────────
     rag_curator_enabled: bool = True
     """Liga o curator de RAG (resumo automático do manifest após ingestão)."""
 
@@ -488,7 +488,7 @@ class Settings(BaseSettings):
     """Segundos de debounce após último doc indexado antes de disparar o curator.
     Garante que batchs grandes geram apenas 1 LLM call de síntese, não N."""
 
-    # ── Hybrid RAG — BM25 + Dense (Bloco C1) ─────────────────────────────────
+    # ── Hybrid RAG — BM25 + Dense ─────────────────────────────────────────────
     rag_hybrid_enabled: bool = True
     """Ativa busca híbrida: dense (Cohere) + sparse (BM25) com RRF merge.
     Melhora recall em queries curtas ou com termos técnicos exatos."""
@@ -497,14 +497,14 @@ class Settings(BaseSettings):
     """Candidatos por coleção para BM25 (pool maior que o resultado final).
     BM25 reordena esses candidatos; RRF faz a fusão final."""
 
-    # ── Multi-query retrieval (Bloco C2) ─────────────────────────────────────
+    # ── Multi-query retrieval ─────────────────────────────────────────────────
     rag_multi_query_enabled: bool = True
     """Gera N reformulações da query antes de buscar para aumentar o recall."""
 
     rag_multi_query_n: int = 3
     """Número de variantes da query geradas pelo LLM (inclui a original)."""
 
-    # ── HyDE — Hypothetical Document Embedding (Bloco C3) ────────────────────
+    # ── HyDE — Hypothetical Document Embedding ────────────────────────────────
     rag_hyde_enabled: bool = True
     """Ativa HyDE quando score inicial < threshold: gera documento hipotético,
     embeda-o e usa o vetor resultante para uma segunda busca."""
@@ -512,11 +512,11 @@ class Settings(BaseSettings):
     rag_hyde_threshold: float = 0.5
     """Score abaixo do qual HyDE é ativado — entre _SCORE_LOW (0.4) e _SCORE_HIGH (0.7)."""
 
-    # ── Semantic Memory (Bloco C4) ────────────────────────────────────────────
+    # ── Semantic Memory ────────────────────────────────────────────────────────
     memory_semantic_enabled: bool = True
     """Armazena embeddings das memórias para busca semântica via search_memory."""
 
-    # ── Parallel Agent Execution (Bloco C5) ──────────────────────────────────
+    # ── Parallel Agent Execution ──────────────────────────────────────────────
     rag_parallel_agents_enabled: bool = True
     """Permite ao orchestrator disparar múltiplos agentes em paralelo via asyncio.gather."""
 

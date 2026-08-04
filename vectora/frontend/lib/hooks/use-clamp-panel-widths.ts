@@ -3,9 +3,8 @@ import { useEffect } from "react";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 
-//: Reserva mínima pro conteúdo principal (chat/editor) não zerar quando o
-//: painel persistido é maior que a viewport atual — mesmo raciocínio do
-//: `min-w-0` do Sprint 29, mas pra largura em px persistida, não CSS.
+// Reserva mínima pro conteúdo principal (chat/editor) não zerar quando o
+// painel persistido é maior que a viewport atual.
 const MIN_MAIN_CONTENT_PX = 320;
 
 /**

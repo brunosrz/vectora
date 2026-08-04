@@ -10,10 +10,10 @@ from backend.tools.web import fetch_url, web_search
 
 class TestWebSearchFallback:
     def test_sem_tavily_api_key_usa_fallback_via_chromium(self, monkeypatch):
-        """Sem chave nenhuma o roteador elege o DuckDuckGo — o comportamento
-        histórico. O patch vai em `backend.settings.settings`, a fonte que o
-        roteador lê: mockar só o alias do módulo da tool deixaria o roteador
-        vendo a chave real do ambiente."""
+        """Sem chave nenhuma o roteador elege o DuckDuckGo. O patch vai em
+        `backend.settings.settings`, a fonte que o roteador lê: mockar só o
+        alias do módulo da tool deixaria o roteador vendo a chave real do
+        ambiente."""
         from backend.settings import settings as _s
 
         monkeypatch.setattr(_s, "tavily_api_key", "", raising=False)
@@ -82,7 +82,7 @@ class TestFetchUrlFallback:
             result = fetch_url.invoke({"url": "https://example.com"})
 
         mock_fallback.assert_called_once_with("https://example.com")
-        # Sprint 35 — conteúdo de fetch_url chega envelopado como não-confiável.
+        # Conteúdo de fetch_url chega envelopado como não-confiável.
         assert "conteúdo extraído" in result
         assert result.startswith('<untrusted_content source="https://example.com">')
 
@@ -102,8 +102,8 @@ class TestFetchUrlFallback:
 
 
 class TestFetchUrlSsrfGuard:
-    """Sprint 34 — fetch_url recusa URLs que resolvem pra IP privado/loopback/
-    link-local/metadata, antes de tentar Tavily ou o fallback Chromium."""
+    """fetch_url recusa URLs que resolvem pra IP privado/loopback/link-local/
+    metadata, antes de tentar Tavily ou o fallback Chromium."""
 
     def test_refuses_metadata_url_without_calling_tavily_or_fallback(self):
         with (
@@ -133,7 +133,7 @@ class TestFetchUrlSsrfGuard:
             ms.tavily_api_key = "real-key"
             result = fetch_url.invoke({"url": "https://example.com"})
 
-        # Sprint 35 — conteúdo de fetch_url chega envelopado como não-confiável.
+        # Conteúdo de fetch_url chega envelopado como não-confiável.
         assert "ok" in result
         assert result.startswith('<untrusted_content source="https://example.com">')
 

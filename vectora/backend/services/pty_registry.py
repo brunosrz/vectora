@@ -1,4 +1,4 @@
-"""Registry de sessões PTY ativas (Bloco T, T1).
+"""Registry de sessões PTY ativas.
 
 Singleton ``pty_registry`` keyed por ``terminal_id``. A unicidade do id é
 responsabilidade do criador (handler WS gera UUID curto). Múltiplas sessões

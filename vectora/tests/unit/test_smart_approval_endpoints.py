@@ -1,4 +1,4 @@
-"""Endpoints REST da allowlist de aprovação inteligente (Sprint 22)."""
+"""Endpoints REST da allowlist de aprovação inteligente."""
 
 from __future__ import annotations
 

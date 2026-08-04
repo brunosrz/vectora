@@ -23,10 +23,10 @@ export type ThemePreset = "default" | "custom" | (string & {});
 export type Lang = "en" | "es" | "pt";
 /** Lado da sidebar de sessões (workbench fica no lado oposto). */
 export type SidebarPosition = "left" | "right";
-/** Modos de permissão (R2) — espelham o permission_mode do backend. */
+/** Modos de permissão — espelham o permission_mode do backend. */
 export type PermissionMode =
   "ask" | "accept_edits" | "plan" | "auto" | "bypass";
-/** Nível de esforço de raciocínio do modelo (R4). */
+/** Nível de esforço de raciocínio do modelo. */
 export type ReasoningEffort = "low" | "medium" | "high" | "max";
 /** Modo de interface dentro do Dev (chatMode=false): "assistant" é o layout
  *  padrão de chat+workbench; "ide" é o layout VS Code com editor docked;
@@ -34,7 +34,7 @@ export type ReasoningEffort = "low" | "medium" | "high" | "max";
  *  só visível com VECTORA_DEV=1 — ver `use-feature-flags.ts`). */
 export type UiMode = "assistant" | "ide" | "kanban";
 
-/** Modos de permissão em ordem de exibição no seletor (R2). */
+/** Modos de permissão em ordem de exibição no seletor. */
 export const PERMISSION_MODES: PermissionMode[] = [
   "ask",
   "accept_edits",
@@ -43,7 +43,7 @@ export const PERMISSION_MODES: PermissionMode[] = [
   "bypass",
 ];
 
-/** Níveis de esforço em ordem de exibição (R4). */
+/** Níveis de esforço em ordem de exibição. */
 export const REASONING_EFFORTS: ReasoningEffort[] = [
   "low",
   "medium",
@@ -86,9 +86,9 @@ export interface SettingsState {
   trainingInstructions: string[];
   /** Idioma da interface */
   language: Lang;
-  /** Modo de permissão para ações destrutivas (R2) */
+  /** Modo de permissão para ações destrutivas */
   permissionMode: PermissionMode;
-  /** Esforço de raciocínio do modelo (R4) */
+  /** Esforço de raciocínio do modelo */
   reasoningEffort: ReasoningEffort;
   /** Largura da sidebar em px (desktop), arrastável pela borda direita. */
   sidebarWidth: number;
@@ -146,10 +146,10 @@ export interface SettingsState {
 const SIDEBAR_MIN_WIDTH = 180;
 const SIDEBAR_MAX_WIDTH = 480;
 
-/** Referência de conversão: 16px = "100%" no range antigo (pré-Sprint 13). */
+/** Referência de conversão: 16px = "100%" no range legado em porcentagem. */
 export const FONT_SCALE_BASE_PX = 16;
-/** Limites de tamanho de fonte (px) — 13px a 24px, equivalente ao antigo
- *  80%-150% sobre a base de 16px. */
+/** Limites de tamanho de fonte (px) — 13px a 24px, equivalente ao range
+ *  legado de 80%-150% sobre a base de 16px. */
 export const FONT_SCALE_MIN = 13;
 export const FONT_SCALE_MAX = 24;
 /** Limites de tamanho de fonte do Monaco (px). */
@@ -160,9 +160,9 @@ function clampFontScale(v: number): number {
   return Math.max(FONT_SCALE_MIN, Math.min(FONT_SCALE_MAX, Math.round(v)));
 }
 
-/** Converte um valor de fontScale persistido no formato antigo (%, 80-150)
- * pro novo formato (px, 13-24) — os dois ranges nunca se sobrepõem, então a
- * heurística de "acima do novo máximo" identifica o formato antigo sem
+/** Converte um valor de fontScale persistido no formato legado (%, 80-150)
+ * pro formato atual (px, 13-24) — os dois ranges nunca se sobrepõem, então a
+ * heurística de "acima do máximo em px" identifica o formato percentual sem
  * precisar de um marcador de versão explícito. Valores já em px passam
  * direto pelo clamp, sem reconversão (idempotente). */
 export function migrateFontScaleValue(v: unknown): number {
@@ -299,7 +299,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
-      version: 2, // v2: fontScale* migrou de % (80-150) pra px (13-24) e uiMode default voltou pra assistant
+      version: 2, // migrate() abaixo normaliza fontScale* (%→px) e uiMode ("ide"/ausente → "assistant")
       migrate: (persistedState) => {
         const s = persistedState as Record<string, unknown>;
         if (s && typeof s === "object") {
@@ -364,11 +364,10 @@ export function loadUserSettings(userId?: string): void {
 
 /**
  * Aplica as preferências durável do backend por cima do cache local.
- * Backend é fonte de verdade (CLAUDE.md §8): sobrevive a reinstalar o app ou
- * limpar o cache do navegador — era o caminho pelo qual `selectedModel`
- * "sobrevivia" ao repositório inteiro ser apagado (localStorage é por
- * origem do browser, não por instalação do app). Chamar uma vez no boot,
- * depois que o usuário estiver resolvido (ver `__root.tsx`).
+ * Backend é fonte de verdade: as preferências sobrevivem a reinstalar o app
+ * ou limpar o cache do navegador, já que o localStorage é por origem do
+ * browser, não por instalação do app. Chamar uma vez no boot, depois que o
+ * usuário estiver resolvido (ver `__root.tsx`).
  */
 export async function hydrateFromBackend(): Promise<void> {
   const prefs = await fetchPrefs();

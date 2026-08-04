@@ -1,6 +1,6 @@
 """Schedule — parser de linguagem natural (pt/en/es) pra expressão cron.
 
-MVP determinístico (regex), não um LLM call: cobre os padrões mais comuns
+Determinístico via regex, não um LLM call: cobre os padrões mais comuns
 ("todo dia às 9h"/"every day at 9am"/"todos los días a las 9h", "toda
 segunda às 14:30", "a cada 2 horas") sem depender de uma chamada de modelo
 extra nem introduzir não-determinismo nos testes. Os 3 idiomas são

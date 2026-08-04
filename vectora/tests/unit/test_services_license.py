@@ -1,4 +1,4 @@
-"""Testes do serviço de licença (Bloco T.12.7)."""
+"""Testes do serviço de licença."""
 
 from __future__ import annotations
 

@@ -34,9 +34,9 @@ class ChatConfig(BaseModel):
     chat_mode: bool = (
         False  # modo Chat: conversacional puro, sem workspace/tools de dev
     )
-    custom_system_prompt: str = ""  # L4 — instrução personalizada por usuário
-    permission_mode: str = "ask"  # R2 — ask|accept_edits|plan|auto|bypass
-    reasoning_effort: str = ""  # R4 — low|medium|high|max (vazio = default do modelo)
+    custom_system_prompt: str = ""  # instrução personalizada por usuário
+    permission_mode: str = "ask"  # ask|accept_edits|plan|auto|bypass
+    reasoning_effort: str = ""  # low|medium|high|max (vazio = default do modelo)
     # Idioma preferido do usuário (BCP-47 ou código curto: pt, en, es). Quando
     # vazio, o agente segue a heurística "adapte ao idioma da conversa".
     language: str = ""
@@ -48,7 +48,7 @@ class ChatConfig(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Attachments (F1 — File Handling)
+# Attachments
 # ---------------------------------------------------------------------------
 
 
@@ -628,7 +628,7 @@ class GetToolsResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Auth schemas (Bloco C)
+# Auth schemas
 # ---------------------------------------------------------------------------
 
 
@@ -636,7 +636,7 @@ class SignupRequest(BaseModel):
     email: str
     password: str
     name: str = ""
-    # Identidade do app (Sprint G). Vazio → derivado do nome no backend.
+    # Identidade do app. Vazio → derivado do nome no backend.
     username: str = ""
     invite_token: str = ""
 
@@ -709,7 +709,7 @@ class UserResponse(BaseModel):
     name: str = ""
     created_at: str
     last_login_at: str | None = None
-    # UX-21 — `exp` (epoch seconds) do access token corrente, repassado pelo
+    # `exp` (epoch seconds) do access token corrente, repassado pelo
     # middleware via request.state.token_exp. Permite ao frontend agendar um
     # aviso "sessão expira em breve" sem decodificar o JWT (cookie httpOnly —
     # opaco para o JS). `None` quando o middleware não anexou o claim.

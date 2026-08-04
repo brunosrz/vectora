@@ -122,7 +122,7 @@ class WorkspaceRegistry:
         wid = self.derive_id(resolved)
         if wid not in self._workspaces:
             name = Path(resolved).name or "workspace"
-            # G7 — auto-detecção de git
+            # Auto-detecção de git
             git_info: dict = {}
             try:
                 from backend.tools.git import detect_git_info
@@ -208,7 +208,7 @@ class WorkspaceRegistry:
     def bump_version(self, workspace_id: str) -> int:
         """Incrementa manifest_version e persiste. Retorna a nova versão.
 
-        Chamado pelo curator (B4) após reescrever o MANIFEST.md. O orchestrator
+        Chamado pelo curator após reescrever o MANIFEST.md. O orchestrator
         detecta o gap de versão e recarrega o contexto no próximo turno.
         """
         self._load()
@@ -400,7 +400,7 @@ class WorkspaceRegistry:
             return False
         self._active[user_id or "local"] = workspace_id
         self._save()
-        # Avisa as demais réplicas (Bloco G) — no modo lite é um no-op local.
+        # Avisa as demais réplicas — no modo lite é um no-op local.
         import json as _json
 
         from backend.persistence.kv import publish_soon
@@ -435,7 +435,7 @@ workspace_registry: WorkspaceRegistry = WorkspaceRegistry.instance()
 
 
 # ---------------------------------------------------------------------------
-# Mutex por (workspace_id, thread_id) — serializa escritas concorrentes (A.2)
+# Mutex por (workspace_id, thread_id) — serializa escritas concorrentes
 # ---------------------------------------------------------------------------
 #
 # Tools que escrevem no filesystem do workspace (fs.py, git.py, terminal) e o

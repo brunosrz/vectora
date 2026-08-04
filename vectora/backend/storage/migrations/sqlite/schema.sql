@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS invites (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email         ON users(email);
--- Identidade por username (Sprint G): índice único parcial (ignora '' —
--- só existe transitoriamente antes do backfill em backend/rbac/auth.py).
+-- Identidade por username: índice único parcial (ignora '' — só existe
+-- transitoriamente antes do backfill em backend/rbac/auth.py).
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username != '';
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_user          ON audit(user_id);
@@ -282,5 +282,5 @@ CREATE TABLE IF NOT EXISTS vectora_agent_profiles (
 CREATE INDEX IF NOT EXISTS idx_agent_profiles_user ON vectora_agent_profiles(user_id);
 
 -- Perfil de agente atribuído a uma task do Kanban — NULL = comportamento
--- padrão do orchestrator (regressão do que já existe).
+-- padrão do orchestrator.
 ALTER TABLE vectora_background_tasks ADD COLUMN agent_profile_id TEXT;

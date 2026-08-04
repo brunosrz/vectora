@@ -1,4 +1,4 @@
-"""Handler REST de perfis de agente customizados (Sprint 39)."""
+"""Handler REST de perfis de agente customizados."""
 
 from __future__ import annotations
 
@@ -106,8 +106,8 @@ class TestPatchAgentProfile:
         assert updated.name == "Y"
 
     async def test_atualizar_perfil_de_outro_usuario_vira_404(self, db):
-        """Erro/borda: usuário B não pode nem enxergar (muito menos editar) um
-        perfil de outro usuário — mesmo padrão de isolamento do Sprint 33."""
+        """Erro/borda: usuário B não pode nem enxergar (muito menos editar)
+        um perfil de outro usuário."""
         created = await post_agent_profile(
             _req("user-1"), CreateAgentProfileRequest(name="X")
         )

@@ -1,6 +1,5 @@
 /**
- * UX-20 — preserva o destino de navegação quando a sessão expira no meio
- * do uso.
+ * Preserva o destino de navegação quando a sessão expira no meio do uso.
  *
  * `vectora-client.ts::redirectToLogin` despacha um hard-redirect via
  * `window.location.href = "/auth/signin"` quando o refresh do token falha em

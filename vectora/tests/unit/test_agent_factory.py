@@ -1,4 +1,4 @@
-"""Testes para agent_factory.py — DE-5 (cache por sessão) e DE-12 (ParallelToolNode)."""
+"""Testes para agent_factory.py — cache de grafos por sessão e ParallelToolNode."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # ---------------------------------------------------------------------------
-# DE-5 — HarnessProfile / cache de grafos por sessão (user_id, model)
+# HarnessProfile / cache de grafos por sessão (user_id, model)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
 async def test_get_user_agent_creates_graph_per_user():
-    """get_user_agent com user_id cria entrada em _graphs_by_user (DE-5)."""
+    """get_user_agent com user_id cria entrada em _graphs_by_user."""
     fake_graph = MagicMock()
 
     with (
@@ -33,13 +33,13 @@ async def test_get_user_agent_creates_graph_per_user():
         graph = await af.get_user_agent(user_id="user-1", model="")
         assert graph is fake_graph
         # Chave de cache inclui workspace_id (string vazia quando não há
-        # workspace ativo pro usuário) — ver DE-5 na docstring de get_user_agent.
+        # workspace ativo pro usuário).
         assert ("user-1", "__default__", "") in af._graphs_by_user
 
 
 @pytest.mark.asyncio
 async def test_get_user_agent_isolates_users():
-    """Dois user_ids diferentes geram entradas isoladas no cache (DE-5)."""
+    """Dois user_ids diferentes geram entradas isoladas no cache."""
     fake_graph_1 = MagicMock(name="graph-user1")
     fake_graph_2 = MagicMock(name="graph-user2")
     graphs_seq = [fake_graph_1, fake_graph_2]
@@ -66,7 +66,7 @@ async def test_get_user_agent_isolates_users():
 
 @pytest.mark.asyncio
 async def test_get_user_agent_same_user_reuses_graph():
-    """Mesma (user_id, model) não reconstrói o grafo (cache hit) (DE-5)."""
+    """Mesma (user_id, model) não reconstrói o grafo (cache hit)."""
     fake_graph = MagicMock()
     build_mock = AsyncMock(return_value=fake_graph)
 
@@ -88,7 +88,7 @@ async def test_get_user_agent_same_user_reuses_graph():
 
 @pytest.mark.asyncio
 async def test_get_user_agent_no_user_id_uses_global_cache():
-    """Sem user_id usa cache global _graphs (DE-5 fallback)."""
+    """Sem user_id usa cache global _graphs (fallback)."""
     fake_graph = MagicMock()
 
     with patch(
@@ -155,13 +155,13 @@ async def test_get_user_agent_rejects_permission_mode_kwarg():
 
 
 # ---------------------------------------------------------------------------
-# DE-12 — ParallelToolNode — execução paralela de tools de tipos diferentes
+# ParallelToolNode — execução paralela de tools de tipos diferentes
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
 async def test_parallel_tool_node_runs_tools_concurrently():
-    """Tools de tipos diferentes acionam asyncio.gather (DE-12)."""
+    """Tools de tipos diferentes acionam asyncio.gather."""
     from langchain_core.tools import tool as lc_tool
 
     from backend.nodes.parallel_tools import ParallelToolNode
@@ -202,7 +202,7 @@ async def test_parallel_tool_node_runs_tools_concurrently():
 
 @pytest.mark.asyncio
 async def test_parallel_tool_node_same_type_not_parallelized():
-    """Tools do mesmo tipo não acionam asyncio.gather — delega para super (DE-12)."""
+    """Tools do mesmo tipo não acionam asyncio.gather — delega para super."""
     from langchain_core.tools import tool as lc_tool
 
     from backend.nodes.parallel_tools import ParallelToolNode
@@ -231,7 +231,7 @@ async def test_parallel_tool_node_same_type_not_parallelized():
 
 @pytest.mark.asyncio
 async def test_parallel_tool_node_empty_tool_calls_delegates():
-    """Sem tool_calls, asyncio.gather não é chamado — delega para super (DE-12)."""
+    """Sem tool_calls, asyncio.gather não é chamado — delega para super."""
     from backend.nodes.parallel_tools import ParallelToolNode
 
     node = ParallelToolNode(tools=[])
@@ -248,7 +248,7 @@ async def test_parallel_tool_node_empty_tool_calls_delegates():
 
 @pytest.mark.asyncio
 async def test_parallel_tool_node_unknown_tool_returns_error():
-    """Tool desconhecida retorna dict com chave 'error' (DE-12 — defensive)."""
+    """Tool desconhecida retorna dict com chave 'error' (defensivo, não lança)."""
     from backend.nodes.parallel_tools import ParallelToolNode
 
     node = ParallelToolNode(tools=[])

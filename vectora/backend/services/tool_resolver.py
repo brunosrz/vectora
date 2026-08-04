@@ -1,4 +1,4 @@
-"""Resolução do toolset por usuário — Bloco S (S4).
+"""Resolução do toolset por usuário.
 
 Combina as tools built-in permitidas (consultando ``tool_policy``) com as tools
 dos servidores MCP do usuário (``plugins.get_user_mcp_tools``). Usado pelos

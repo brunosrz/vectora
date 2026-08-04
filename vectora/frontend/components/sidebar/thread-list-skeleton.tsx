@@ -1,6 +1,6 @@
 /**
  * ThreadListSkeleton — placeholder de carregamento da lista de sessões na
- * sidebar (UX-9). Extraído do bloco inline que existia em `sidebar.tsx` para
+ * sidebar. Extraído do bloco inline que existia em `sidebar.tsx` para
  * reuso (ex.: dentro de grupos de workspace recém-expandidos).
  */
 

@@ -1,4 +1,4 @@
-"""TDD — sequential_thinking tool (FASE 5.2).
+"""sequential_thinking tool.
 
 Segue a spec MCP Anthropic: permite raciocinar passo a passo, revisitar
 pensamentos anteriores e chegar a uma conclusão antes de agir.
