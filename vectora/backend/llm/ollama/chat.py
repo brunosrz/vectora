@@ -137,12 +137,19 @@ class VectoraOllamaChat(BaseChatModel):
         return self.model_copy(update={"tools": convertidas, **kwargs})
 
     def _payload(self, messages: list[BaseMessage], **kwargs: Any) -> dict:
+        from backend.settings import settings
+
         corpo: dict[str, Any] = {
             "model": self.model,
             "messages": [_to_ollama_message(m) for m in messages],
         }
+        options: dict[str, Any] = {
+            "num_ctx": settings.ollama_num_ctx,
+            "num_predict": settings.ollama_num_predict,
+        }
         if self.temperature is not None:
-            corpo["options"] = {"temperature": self.temperature}
+            options["temperature"] = self.temperature
+        corpo["options"] = options
         if self.tools:
             corpo["tools"] = self.tools
         if self.think is not None:

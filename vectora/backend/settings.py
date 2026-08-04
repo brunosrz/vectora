@@ -84,6 +84,18 @@ class Settings(BaseSettings):
     modelos hospedados. O servidor local ignora o header de auth."""
     ollama_model: str = "llama2"
 
+    ollama_num_ctx: int = 32768
+    """Janela de contexto (`options.num_ctx`) enviada em toda chamada de chat.
+
+    Sem isso o Ollama usa o default do servidor (variável por VRAM/Modelfile,
+    tipicamente bem menor) — o Vectora não tinha controle nenhum sobre o
+    tamanho de contexto disponível pro uso agêntico, que exige janela grande.
+    """
+
+    ollama_num_predict: int = 4096
+    """Teto de tokens de geração (`options.num_predict`) — alto o bastante
+    pra não cortar respostas longas do agente."""
+
     # OpenRouter (proxy multi-provider via API compatível com OpenAI)
     openrouter_api_key: str | None = None
     openrouter_model: str = "openrouter/auto"

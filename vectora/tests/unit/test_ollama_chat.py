@@ -336,3 +336,47 @@ class TestThink:
         await _modelo(handler)._agenerate([HumanMessage("oi")])
 
         assert "think" not in capturado
+
+
+class TestNumCtxNumPredict:
+    """`options.num_ctx`/`num_predict` faltavam no payload — o Ollama caía no
+    default do servidor (variável por VRAM/Modelfile), sem controle nenhum
+    pelo Vectora sobre a janela de contexto disponível pro uso agêntico."""
+
+    @pytest.mark.asyncio
+    async def test_num_ctx_e_num_predict_sempre_no_payload(self, monkeypatch):
+        from backend.settings import settings as _s
+
+        monkeypatch.setattr(_s, "ollama_num_ctx", 16384, raising=False)
+        monkeypatch.setattr(_s, "ollama_num_predict", 2048, raising=False)
+
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            import json as _json
+
+            capturado.update(_json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        await _modelo(handler)._agenerate([HumanMessage("oi")])
+
+        assert capturado["options"]["num_ctx"] == 16384
+        assert capturado["options"]["num_predict"] == 2048
+
+    @pytest.mark.asyncio
+    async def test_temperature_convive_com_num_ctx_no_mesmo_options(self):
+        """Erro/borda: `temperature` não sobrescreve `options` — os dois
+        entram no mesmo dict, não em chamadas separadas de `_payload`."""
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            import json as _json
+
+            capturado.update(_json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        await _modelo(handler, temperature=0.3)._agenerate([HumanMessage("oi")])
+
+        assert capturado["options"]["temperature"] == 0.3
+        assert "num_ctx" in capturado["options"]
+        assert "num_predict" in capturado["options"]
