@@ -117,13 +117,22 @@ def _fetch_via_fallback(url: str) -> str:
     Mesmo contrato de `_search_via_fallback` — nunca propaga."""
     try:
         from backend.browser.search_fallback import fetch_fallback
+        from backend.services.prompt_injection import (
+            detect_injection,
+            envelope_untrusted,
+        )
 
         content = fetch_fallback(url)
         logger.info(
             "fetch_url fallback completed",
             extra={"url": url, "content_length": len(content)},
         )
-        return content
+        if (pattern := detect_injection(content)) is not None:
+            logger.warning(
+                "fetch_url: padrão de prompt injection detectado (log-only)",
+                extra={"url": url, "pattern": pattern},
+            )
+        return envelope_untrusted(content, source=url)
     except Exception:
         logger.exception("fetch_url fallback failed", extra={"url": url})
         return (
@@ -226,6 +235,14 @@ def web_search(
                 time.perf_counter() - t0,
                 {"query": query[:120], "n_results": n_results},
             )
+        from backend.services.prompt_injection import detect_injection
+
+        combined = " ".join(str(r.get("content", "")) for r in results)
+        if (pattern := detect_injection(combined)) is not None:
+            logger.warning(
+                "web_search: padrão de prompt injection detectado (log-only)",
+                extra={"query": query, "pattern": pattern},
+            )
         return json.dumps(results)
     except Exception as e:
         err = str(e)
@@ -325,7 +342,17 @@ def fetch_url(url: str) -> str:
                 time.perf_counter() - t0,
                 {"url": url[:120], "content_length": len(content)},
             )
-        return content
+        from backend.services.prompt_injection import (
+            detect_injection,
+            envelope_untrusted,
+        )
+
+        if (pattern := detect_injection(content)) is not None:
+            logger.warning(
+                "fetch_url: padrão de prompt injection detectado (log-only)",
+                extra={"url": url, "pattern": pattern},
+            )
+        return envelope_untrusted(content, source=url)
 
     except Exception as e:
         err = str(e)

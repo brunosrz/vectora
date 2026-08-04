@@ -310,7 +310,9 @@ def _load_session_context(workspace_id: str | None = None) -> str | None:
 
     project_docs = _load_project_docs()
     if project_docs:
-        parts.append(project_docs)
+        from backend.services.prompt_injection import envelope_workspace_context
+
+        parts.append(envelope_workspace_context(project_docs))
 
     workspaces_overview = _load_workspaces_overview(workspace_id)
     if workspaces_overview:

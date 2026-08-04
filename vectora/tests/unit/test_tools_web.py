@@ -82,7 +82,9 @@ class TestFetchUrlFallback:
             result = fetch_url.invoke({"url": "https://example.com"})
 
         mock_fallback.assert_called_once_with("https://example.com")
-        assert result == "conteúdo extraído"
+        # Sprint 35 — conteúdo de fetch_url chega envelopado como não-confiável.
+        assert "conteúdo extraído" in result
+        assert result.startswith('<untrusted_content source="https://example.com">')
 
     def test_sem_tavily_e_fallback_tambem_falha_retorna_erro_textual(self):
         with (
@@ -131,7 +133,9 @@ class TestFetchUrlSsrfGuard:
             ms.tavily_api_key = "real-key"
             result = fetch_url.invoke({"url": "https://example.com"})
 
-        assert result == "ok"
+        # Sprint 35 — conteúdo de fetch_url chega envelopado como não-confiável.
+        assert "ok" in result
+        assert result.startswith('<untrusted_content source="https://example.com">')
 
 
 class TestCrawlEMapExigemKey:

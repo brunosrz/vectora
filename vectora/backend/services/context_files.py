@@ -105,6 +105,20 @@ class ContextFile:
         if len(body) > truncate_at:
             body = body[:truncate_at] + "\n\n[... truncado ...]"
 
+        from backend.services.prompt_injection import detect_injection
+
+        matched = detect_injection(body)
+        if matched is not None:
+            logger.warning(
+                "context_files: padrão de prompt injection bloqueado",
+                extra={"path": str(path), "pattern": matched},
+            )
+            body = (
+                f"[BLOCKED: conteúdo de {path.name} continha um padrão de "
+                f"possível prompt injection ({matched}) — bloqueado por "
+                "segurança e não foi injetado no contexto do agente.]"
+            )
+
         title = str(meta.get("title") or "") or path.stem
         description = str(meta.get("description") or "")
         file_type = str(meta.get("type") or "context")
