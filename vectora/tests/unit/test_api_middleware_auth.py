@@ -56,6 +56,19 @@ class TestIsPublicRoute:
 
         assert _is_public_route("/metrics") is False
 
+    def test_sessions_background_tasks_are_private(self):
+        """Regressão: `/sessions/{thread_id}/background/*`
+        (backend/api/handlers/background.py) tinha o mesmo gap já corrigido
+        pro `/rag` no Sprint 33 — `/sessions` faltava em `_API_PREFIXES`,
+        então o path caía no fallback "não é rota de API → SPA → pública",
+        servindo GET/POST/PATCH/DELETE de tarefas em segundo plano sem
+        exigir token nenhum em modo servidor."""
+        from backend.api.middleware.auth import _is_public_route
+
+        assert _is_public_route("/sessions/thread-1/background/tasks") is False
+        assert _is_public_route("/sessions/thread-1/background/tasks/task-1") is False
+        assert _is_public_route("/sessions/thread-1/background/runs") is False
+
     def test_root_path_is_public_frontend(self):
         # Paths fora dos prefixos de API são proxy para o Next.js e
         # portanto públicos do ponto de vista do middleware Python —

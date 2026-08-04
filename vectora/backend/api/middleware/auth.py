@@ -47,6 +47,7 @@ _API_PREFIXES: tuple[str, ...] = (
     "/metrics",
     "/workspaces",
     "/agent-profiles",
+    "/sessions",
     "/rag",
     "/skills",
     "/artifacts",
