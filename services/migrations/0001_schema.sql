@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS issues (
 -- 'pending'/'failed'.
 -- source_lib/source_version são NOT NULL só pra linhas first-party
 -- (bibliotecas de código pré-indexadas, ex. "langchain 0.3.0"); publicações
--- da comunidade (Memory Library, Sprint 7) usam publisher_id em vez disso
+-- da comunidade (Memory Library) usam publisher_id em vez disso
 -- e ficam com source_lib/source_version vazios — não dá pra tornar essas
 -- colunas nullable retroativamente sem quebrar linhas antigas, então o
 -- handler de POST /publish grava string vazia ('') nesses dois campos para

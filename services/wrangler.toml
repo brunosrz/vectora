@@ -10,7 +10,7 @@ invocation_logs = true
 [observability.traces]
 enabled = false
 
-# gateway/ (ex-relay, Sprint 10) — OAuth/webhooks pro app desktop, WebSocket
+# gateway/ — OAuth/webhooks pro app desktop, WebSocket
 # bidirecional. Domínio migrado de relay.vectora.chat para
 # gateway.vectora.chat SEM alias/período de transição (decisão do produto —
 # não havia clientes antigos em produção pra coordenar). {token}.vectora.chat
