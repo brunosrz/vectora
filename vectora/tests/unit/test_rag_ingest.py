@@ -108,6 +108,40 @@ class TestMatchesFileTypeIncludeExclude:
             Path("a.lock"), include_exts="xml, lock", exclude_exts="lock"
         )
 
+    def test_exclude_folder_name_excludes_children(self) -> None:
+        # Nome de pasta exclui arquivos dentro dela (VS Code files.exclude).
+        assert not rag_ingest._matches_file_type(
+            Path("node_modules/foo/index.js"), exclude_exts="node_modules"
+        )
+        assert rag_ingest._matches_file_type(
+            Path("src/app.js"), exclude_exts="node_modules"
+        )
+
+    def test_exclude_glob_pattern_path(self) -> None:
+        # Glob de caminho remove tudo que casa (ex. **/*.min.js).
+        assert not rag_ingest._matches_file_type(
+            Path("src/app.min.js"), exclude_exts="**/*.min.js"
+        )
+        assert rag_ingest._matches_file_type(
+            Path("src/app.js"), exclude_exts="**/*.min.js"
+        )
+
+    def test_exclude_nested_folder(self) -> None:
+        assert not rag_ingest._matches_file_type(
+            Path("lib/vendor/utils/helper.ts"), exclude_exts="vendor"
+        )
+        assert rag_ingest._matches_file_type(
+            Path("lib/utils/helper.ts"), exclude_exts="vendor"
+        )
+
+    def test_include_folder_glob_only_that_folder(self) -> None:
+        assert rag_ingest._matches_file_type(
+            Path("src/components/Button.tsx"), include_exts="src/components"
+        )
+        assert not rag_ingest._matches_file_type(
+            Path("src/hooks/useThing.ts"), include_exts="src/components"
+        )
+
 
 @pytest.mark.asyncio
 async def test_ingest_markdown_only(tmp_path: Path, _patched: _FakeQueue) -> None:

@@ -61,19 +61,54 @@ _CODE_EXTS = {
 
 def _split_ext_list(
     value: str | list[str] | None,
-) -> set[str]:
-    """Normaliza uma entrada de extensões (string CSV ou lista) para um set.
+) -> list[str]:
+    """Normaliza uma entrada de filtros (string CSV ou lista) para uma lista.
 
-    Aceita extensões com ou sem ponto, separadas por vírgula/espaço quando
-    string (ex. ``"xml, tscn"``). Vazio/None → set vazio.
+    Aceita extensões (com ou sem ponto), nomes de pasta e globs de caminho
+    (ex. ``"node_modules"``, ``"**/*.min.js"``, ``"xml, tscn"``), separados
+    por vírgula/ponto-e-vírgula quando string. Vazio/None → lista vazia.
     """
     if value is None:
-        return set()
+        return []
     if isinstance(value, str):
         parts = [p.strip() for p in value.replace(";", ",").split(",")]
     else:
         parts = [str(p) for p in value]
-    return {p.lstrip(".").lower() for p in parts if p}
+    return [p for p in parts if p]
+
+
+def _is_glob_pattern(entry: str) -> bool:
+    """True se ``entry`` é um padrão de caminho/glob, não uma extensão simples.
+
+    Extensão simples = sem separador de caminho e sem curinga
+    (ex. ``"xml"``, ``".tscn"``). Tudo o que contém ``/``, ``\\\\`` ou
+    ``*``/``?``/``[`` (ex. ``"node_modules"`` não, mas ``"**/vendor/**"``
+    sim) é tratado como padrão de caminho relativo.
+    """
+    return any(ch in entry for ch in ("/", "\\", "*", "?", "["))
+
+
+def _path_matches_any(relative: str, patterns: list[str]) -> bool:
+    """Checa se ``relative`` (caminho POSIX relativo ao root) casa um padrão.
+
+    Padrões de glob usam ``fnmatch``; nomes de pasta simples casam se a pasta
+    (ou qualquer ancestral) bate, e também casam o próprio arquivo que vive
+    dentro dela. Ex. padrão ``node_modules`` exclui ``node_modules/foo.js``.
+    """
+    import fnmatch
+
+    for pat in patterns:
+        if not _is_glob_pattern(pat):
+            # Nome de pasta: casa se o caminho inteiro ou qualquer ancestral
+            # termina nesse segmento de pasta.
+            segments = relative.split("/")
+            if any(seg == pat for seg in segments):
+                return True
+            continue
+        norm = pat.replace("\\", "/")
+        if fnmatch.fnmatch(relative, norm) or fnmatch.fnmatch(relative, f"{norm}/**"):
+            return True
+    return False
 
 
 def _type_allowed_exts(file_types: str | list[str]) -> set[str] | None:
@@ -103,20 +138,38 @@ def _matches_file_type(
     """Decide se ``path`` entra na indexação.
 
     Os filtros ``include_exts``/``exclude_exts`` (string CSV ou lista)
-    sobrepõem o atalho ``file_types``: quando ``include_exts`` é fornecido,
-    só entram arquivos com uma daquelas extensões; ``exclude_exts`` remove
-    sempre (precedência máxima). Sem filtros e com ``file_types=\"all\"`` →
-    tudo (default).
+    sobrepõem o atalho ``file_types``. Cada entrada pode ser uma **extensão**
+    (``\"xml\"``/``\".tscn\"``), um **nome de pasta** (``\"node_modules\"``,
+    exclui tudo dentro dela) ou um **glob de caminho** (``\"**/vendor/**\"``,
+    ``\"**/*.min.js\"``) — mesmo estilo dos padrões de `files.exclude` do
+    VS Code. ``exclude_exts`` remove sempre (precedência máxima). Sem filtros
+    e com ``file_types=\"all\"`` → tudo (default).
     """
+    # Caminho relativo (POSIX) a partir do root — path é sempre absoluto aqui
+    # (walk_files devolve caminhos resolvidos dentro do diretório raiz).
+    rel = str(path).replace("\\", "/")
     ext = path.suffix.lstrip(".").lower()
 
     exclude = _split_ext_list(exclude_exts)
-    if exclude and ext in exclude:
-        return False
+    if exclude:
+        if ext in {p.lstrip(".").lower() for p in exclude if not _is_glob_pattern(p)}:
+            return False
+        if _path_matches_any(rel, exclude):
+            return False
 
     include = _split_ext_list(include_exts)
     if include:
-        return ext in include
+        include_exts_only = [p for p in include if not _is_glob_pattern(p)]
+        include_globs = [p for p in include if _is_glob_pattern(p)]
+
+        # Extensão simples (ex. "xml"): o ext precisa estar no conjunto.
+        if include_exts_only:
+            if ext not in {p.lstrip(".").lower() for p in include_exts_only}:
+                return False
+        # Glob de caminho: se algum glob casa, inclui; se há globs mas
+        # nenhum casa (e não há extensão simples casando), exclui.
+        if include_globs and not _path_matches_any(rel, include_globs):
+            return False
 
     allowed = _type_allowed_exts(file_types)
     return True if allowed is None else ext in allowed
@@ -154,11 +207,13 @@ async def ingest_directory(
     job = job_id or str(uuid4())
     spec = load_ignore_spec(path)
     all_files, _skipped = walk_files(path, "**/*", spec)
+    # Glob de pasta/arquivo casa contra o caminho RELATIVO ao root (mesmo
+    # contrato dos padrões de files.exclude do VS Code).
     files = [
         f
         for f in all_files
         if _matches_file_type(
-            f,
+            f.relative_to(path),
             file_types,
             include_exts=include_exts,
             exclude_exts=exclude_exts,

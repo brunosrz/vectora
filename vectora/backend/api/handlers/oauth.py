@@ -101,7 +101,7 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "name": "Cohere",
         "env_var": "COHERE_API_KEY",
         "kind": "apikey",
-        "description": "Command R+ e reranker semântico",
+        "description": "Command R+ (chat), embeddings e reranker semântico",
         "docs_url": "https://dashboard.cohere.com/api-keys",
         "icon": "cohere",
     },
@@ -441,14 +441,21 @@ async def _verify_apikey(integration_id: str, token: str) -> tuple[bool, str]:  
             return False, f"Anthropic retornou {r.status_code}"
 
         if integration_id == "cohere":
-            r = await client.post(
-                "https://api.cohere.com/v1/tokenize",
+            # GET /v2/models lista modelos disponíveis — endpoint estável e
+            # leve, sem custo; o antigo /v1/tokenize exigia um modelo válido
+            # no body e retornava erro mesmo com chave correta se o modelo
+            # tivesse sido descontinuado.
+            r = await client.get(
+                "https://api.cohere.com/v2/models",
                 headers={"Authorization": f"Bearer {token}"},
-                json={"text": "test", "model": "command"},
             )
             if r.status_code == 200:
                 return True, "Chave válida"
-            return False, f"Cohere retornou {r.status_code}"
+            try:
+                err = r.json().get("message", "")
+            except Exception:
+                err = ""
+            return False, err or f"Cohere retornou {r.status_code}"
 
         if integration_id == "tavily":
             r = await client.post(
@@ -492,6 +499,20 @@ async def _verify_apikey(integration_id: str, token: str) -> tuple[bool, str]:  
                 email = r.json().get("email", "")
                 return True, f"Conectado como {email}"
             return False, f"Google retornou {r.status_code}"
+
+        if integration_id == "gemini":
+            # Gemini usa a Google AI Studio API key — validada listando modelos.
+            r = await client.get(
+                "https://generativelanguage.googleapis.com/v1beta/models",
+                params={"key": token},
+            )
+            if r.status_code == 200:
+                return True, "Chave válida"
+            try:
+                err = r.json().get("error", {}).get("message", "")
+            except Exception:
+                err = ""
+            return False, err or f"Gemini retornou {r.status_code}"
 
         if integration_id in ("google-drive", "gmail"):
             r = await client.get(

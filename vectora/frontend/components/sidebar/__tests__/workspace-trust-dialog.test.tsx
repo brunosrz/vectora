@@ -174,9 +174,10 @@ describe("WorkspaceTrustDialog — mode=ingest, filtro de formato e bucket", () 
     render(<WorkspaceTrustDialog open onOpenChange={() => {}} mode="ingest" />);
     await waitFor(() => screen.getByText("projeto-a"));
 
-    fireEvent.change(screen.getByPlaceholderText("e.g. xml, tscn"), {
-      target: { value: "xml, tscn" },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. xml, tscn, src/components"),
+      { target: { value: "xml, tscn" } },
+    );
     fireEvent.change(screen.getByPlaceholderText("Bucket name"), {
       target: { value: "Godot Docs" },
     });
