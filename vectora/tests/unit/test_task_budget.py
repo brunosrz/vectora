@@ -43,6 +43,7 @@ async def db(tmp_path, monkeypatch):
             claim_lock   TEXT,
             claim_expires_at TEXT,
             budget_cents INTEGER,
+            agent_profile_id TEXT,
             updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
         );
         CREATE TABLE vectora_background_runs (
@@ -70,12 +71,18 @@ async def db(tmp_path, monkeypatch):
     await conn.close()
 
 
-async def _task(conn, task_id: str, budget_cents: int | None = None) -> None:
+async def _task(
+    conn,
+    task_id: str,
+    budget_cents: int | None = None,
+    agent_profile_id: str | None = None,
+) -> None:
     await conn.execute(
         "INSERT INTO vectora_background_tasks "
-        "(id, session_id, user_id, kind, name, instruction, trigger_type, budget_cents) "
-        "VALUES (?, 's1', 'u1', 'subagent', 'n', 'i', 'interval', ?)",
-        (task_id, budget_cents),
+        "(id, session_id, user_id, kind, name, instruction, trigger_type, "
+        "budget_cents, agent_profile_id) "
+        "VALUES (?, 's1', 'u1', 'subagent', 'n', 'i', 'interval', ?, ?)",
+        (task_id, budget_cents, agent_profile_id),
     )
     await conn.commit()
 
@@ -148,6 +155,69 @@ class TestCorteAutomatico:
 
         await _task(db, "t1", budget_cents=None)
         await _run(db, "t1", "r1", custo=9999.0)
+
+        assert await check_budget("t1") is True
+
+    @pytest.mark.asyncio
+    async def test_task_sem_budget_herda_do_perfil(self, db, monkeypatch):
+        """Task sem budget próprio, mas com agent_profile_id, herda o teto
+        do perfil (Sprint 40) — nunca sobrescreve um budget que a task já
+        definiu explicitamente (ver teste seguinte)."""
+        from types import SimpleNamespace
+
+        from backend.scheduling.budget import check_budget
+
+        await _task(db, "t1", budget_cents=None, agent_profile_id="prof-1")
+        await _run(db, "t1", "r1", custo=150.0)
+
+        async def _fake_get_profile(profile_id):
+            assert profile_id == "prof-1"
+            return SimpleNamespace(budget_cents=100)
+
+        monkeypatch.setattr(
+            "backend.services.agent_profiles.get_profile", _fake_get_profile
+        )
+
+        assert await check_budget("t1") is False
+
+    @pytest.mark.asyncio
+    async def test_budget_proprio_da_task_nao_e_sobrescrito_pelo_perfil(
+        self, db, monkeypatch
+    ):
+        from types import SimpleNamespace
+
+        from backend.scheduling.budget import check_budget
+
+        await _task(db, "t1", budget_cents=1000, agent_profile_id="prof-1")
+        await _run(db, "t1", "r1", custo=150.0)
+
+        async def _fake_get_profile(profile_id):
+            # Nunca deveria ser chamado — task já tem budget_cents próprio.
+            raise AssertionError("get_profile não deveria ser chamado")
+
+        monkeypatch.setattr(
+            "backend.services.agent_profiles.get_profile", _fake_get_profile
+        )
+
+        assert await check_budget("t1") is True
+
+    @pytest.mark.asyncio
+    async def test_falha_ao_carregar_perfil_degrada_para_sem_limite(
+        self, db, monkeypatch
+    ):
+        """Erro/borda: perfil apagado ou DB indisponível não pode impedir a
+        run de rodar — degrada pro comportamento padrão (sem limite)."""
+        from backend.scheduling.budget import check_budget
+
+        await _task(db, "t1", budget_cents=None, agent_profile_id="prof-sumiu")
+        await _run(db, "t1", "r1", custo=9999.0)
+
+        async def _fake_get_profile(profile_id):
+            raise RuntimeError("perfil não encontrado")
+
+        monkeypatch.setattr(
+            "backend.services.agent_profiles.get_profile", _fake_get_profile
+        )
 
         assert await check_budget("t1") is True
 

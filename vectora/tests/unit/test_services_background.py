@@ -1443,3 +1443,145 @@ async def test_update_task_nao_reabilita_por_cima_de_bloqueio_ativo(db):
     estado = await kanban.get_task_status(task.id)
     assert estado["status"] == "blocked"
     assert estado["block_kind"] == "capability"
+
+
+class TestRunTaskComPerfilDeAgente:
+    """Sprint 40 — task com `agent_profile_id` roda com a instrução/modelo
+    do perfil em vez do comportamento padrão do orchestrator."""
+
+    async def test_model_override_do_perfil_e_passado_ao_get_user_agent(
+        self, db, monkeypatch
+    ):
+        from unittest.mock import AsyncMock
+
+        import aiosqlite
+
+        from backend.services import agent_profiles
+
+        async def _connect_profiles():
+            conn: Any = await aiosqlite.connect(db)
+            conn.row_factory = lambda c, r: dict(
+                zip([col[0] for col in c.description], r, strict=False)
+            )
+            return conn
+
+        monkeypatch.setattr(agent_profiles, "_get_db", _connect_profiles)
+
+        await agent_profiles.create_profile(
+            "u1", "Perfil X", model_override="openrouter:gpt-4o"
+        )
+        profiles = await agent_profiles.list_profiles("u1")
+        profile_id = profiles[0].id
+
+        agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
+        # get_user_agent é chamado mais de uma vez por run_task (ex.
+        # report_to_parent_session chama de novo, com model default, ao
+        # concluir) — grava a lista inteira e checa a PRIMEIRA chamada, que
+        # é a que roda o turno de verdade.
+        chamadas: list[str] = []
+
+        async def _fake_get_agent(
+            user_id=None, model="", chat_mode=False, workspace_id=None
+        ):
+            chamadas.append(model)
+            return agent
+
+        monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_agent)
+        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+
+        task = await bg.create_task(
+            session_id="sess-perfil",
+            user_id="u1",
+            kind="routine",
+            name="Com perfil",
+            instruction="Rode os testes",
+            trigger_type="manual",
+            trigger_config={},
+            agent_profile_id=profile_id,
+        )
+
+        await bg.run_task(task, "manual")
+
+        assert chamadas[0] == "openrouter:gpt-4o"
+
+    async def test_task_sem_perfil_nao_muda_comportamento(self, db, monkeypatch):
+        """Regressão: task sem agent_profile_id nunca chama get_profile nem
+        altera o model passado."""
+        from unittest.mock import AsyncMock
+
+        agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
+        chamadas: list[str] = []
+
+        async def _fake_get_agent(
+            user_id=None, model="", chat_mode=False, workspace_id=None
+        ):
+            chamadas.append(model)
+            return agent
+
+        monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_agent)
+        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+
+        task = await bg.create_task(
+            session_id="sess-sem-perfil",
+            user_id="u1",
+            kind="routine",
+            name="Sem perfil",
+            instruction="Rode os testes",
+            trigger_type="manual",
+            trigger_config={},
+        )
+
+        await bg.run_task(task, "manual")
+
+        assert chamadas[0] == ""
+
+    async def test_perfil_apagado_degrada_para_comportamento_padrao(
+        self, db, monkeypatch
+    ):
+        """Erro/borda: agent_profile_id aponta pra um perfil que não existe
+        mais (apagado) — a run continua normalmente, sem instrução/modelo
+        extra, em vez de falhar."""
+        from unittest.mock import AsyncMock
+
+        import aiosqlite
+
+        from backend.services import agent_profiles
+
+        async def _connect_profiles():
+            conn: Any = await aiosqlite.connect(db)
+            conn.row_factory = lambda c, r: dict(
+                zip([col[0] for col in c.description], r, strict=False)
+            )
+            return conn
+
+        monkeypatch.setattr(agent_profiles, "_get_db", _connect_profiles)
+
+        agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
+        monkeypatch.setattr(
+            agent_factory, "get_user_agent", _fake_get_agent_factory(agent)
+        )
+        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+
+        task = await bg.create_task(
+            session_id="sess-perfil-sumiu",
+            user_id="u1",
+            kind="routine",
+            name="Perfil sumiu",
+            instruction="Rode os testes",
+            trigger_type="manual",
+            trigger_config={},
+            agent_profile_id="perfil-que-nunca-existiu",
+        )
+
+        run_thread_id = await bg.run_task(task, "manual")
+
+        assert run_thread_id is not None
+
+
+def _fake_get_agent_factory(agent):
+    async def _fake_get_agent(
+        user_id=None, model="", chat_mode=False, workspace_id=None
+    ):
+        return agent
+
+    return _fake_get_agent

@@ -75,6 +75,9 @@ class BackgroundTask:
     status: str = "todo"
     block_kind: str | None = None
     block_reason: str | None = None
+    #: Perfil de agente customizado (Sprint 40) — `None` = comportamento
+    #: padrão do orchestrator, sem mudança de instrução/modelo/budget.
+    agent_profile_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -122,6 +125,7 @@ def _row_to_task(row: dict[str, Any]) -> BackgroundTask:
         status=row.get("status") or "todo",
         block_kind=row.get("block_kind"),
         block_reason=row.get("block_reason"),
+        agent_profile_id=row.get("agent_profile_id"),
     )
 
 
@@ -246,6 +250,7 @@ async def create_task(
     trigger_config: dict[str, Any] | None = None,
     workspace_id: str | None = None,
     next_run_at: str | None = None,
+    agent_profile_id: str | None = None,
 ) -> BackgroundTask:
     """Cria uma tarefa. Levanta ValueError em kind/trigger/cron inválidos.
 
@@ -271,8 +276,9 @@ async def create_task(
             """
             INSERT INTO vectora_background_tasks
               (id, session_id, workspace_id, user_id, kind, name, instruction,
-               trigger_type, trigger_config, enabled, next_run_at, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'ready')
+               trigger_type, trigger_config, enabled, next_run_at, status,
+               agent_profile_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'ready', ?)
             """,
             (
                 task_id,
@@ -285,6 +291,7 @@ async def create_task(
                 trigger_type,
                 json.dumps(cfg),
                 next_run,
+                agent_profile_id,
             ),
         )
         await conn.commit()
@@ -305,6 +312,7 @@ async def create_task(
         enabled=True,
         next_run_at=next_run,
         status="ready",
+        agent_profile_id=agent_profile_id,
     )
 
 
@@ -752,6 +760,42 @@ async def run_task(
         from backend.vtypes.context import ctx_from_config
 
         prompt = task.instruction
+        model_override: str | None = None
+        if task.agent_profile_id:
+            # Perfil de agente customizado (Sprint 40): a instrução da task
+            # é o "o quê", a do perfil é o "como" — concatenadas, nunca uma
+            # substituindo a outra. Falha ao carregar o perfil (apagado,
+            # DB indisponível) degrada pro comportamento padrão da task,
+            # nunca derruba a run.
+            try:
+                from backend.services.agent_profiles import get_profile
+
+                profile = await get_profile(task.agent_profile_id)
+                if profile is not None:
+                    if profile.instruction_path:
+                        try:
+                            from pathlib import Path
+
+                            persona = Path(profile.instruction_path).read_text(
+                                encoding="utf-8"
+                            )
+                            prompt = f"{persona}\n\n---\n\n{prompt}"
+                        except OSError:
+                            logger.warning(
+                                "background_tasks: instruction_path do perfil %s "
+                                "ilegível",
+                                task.agent_profile_id,
+                                exc_info=True,
+                            )
+                    model_override = profile.model_override
+            except Exception:
+                logger.warning(
+                    "background_tasks: falha ao carregar perfil %s da task %s",
+                    task.agent_profile_id,
+                    task.id,
+                    exc_info=True,
+                )
+
         if payload:
             evt = json.dumps(payload, ensure_ascii=False)[:4000]
             prompt = f"{prompt}\n\n## Evento recebido\n```json\n{evt}\n```"
@@ -783,6 +827,7 @@ async def run_task(
         else:
             agent = await agent_factory.get_user_agent(
                 user_id=task.user_id,
+                model=model_override or "",
                 workspace_id=task.workspace_id,
             )
 

@@ -128,7 +128,8 @@ async def check_budget(task_id: str) -> bool:
     """
     db = await _get_db()
     async with db.execute(
-        "SELECT budget_cents FROM vectora_background_tasks WHERE id = ?",
+        "SELECT budget_cents, agent_profile_id FROM vectora_background_tasks "
+        "WHERE id = ?",
         (task_id,),
     ) as cur:
         linha = await cur.fetchone()
@@ -137,8 +138,24 @@ async def check_budget(task_id: str) -> bool:
         return True
 
     teto = linha["budget_cents"]
+    if teto is None and linha["agent_profile_id"]:
+        # Task sem budget próprio herda o teto do perfil de agente (Sprint
+        # 40) — só quando a task não definiu o próprio, nunca sobrescreve.
+        try:
+            from backend.services.agent_profiles import get_profile
+
+            profile = await get_profile(linha["agent_profile_id"])
+            if profile is not None:
+                teto = profile.budget_cents
+        except Exception:
+            logger.warning(
+                "budget: falha ao carregar budget do perfil da task %s",
+                task_id,
+                exc_info=True,
+            )
     if teto is None:
-        # Sem budget definido o comportamento não muda — o corte é opt-in.
+        # Sem budget definido (nem na task, nem no perfil) o comportamento
+        # não muda — o corte é opt-in.
         return True
 
     total, desconhecidas = await accumulated_cents(task_id)
