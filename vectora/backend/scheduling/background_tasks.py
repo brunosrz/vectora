@@ -1262,6 +1262,135 @@ async def sync_github_issue_to_kanban(
 
 
 # ---------------------------------------------------------------------------
+# Alertas de observabilidade → Kanban (caminho determinístico, sem LLM)
+#
+# Contrato genérico pra qualquer ferramenta de alerta (Sentry, Grafana,
+# PagerDuty, etc.) — sem parsing nativo de vendor nenhum. O provider aponta
+# seu webhook de saída pra POST /webhook/observability com o payload já no
+# formato {title, description, severity, url, external_id} (ver docs/content/
+# guides/observability-webhooks.en.md).
+# ---------------------------------------------------------------------------
+
+#: Chave de agrupamento das tasks 'webhook' que ligam alertas de
+#: observabilidade ao Kanban — mesmo papel do `provider == "github"` em
+#: `_find_github_issue_sync_anchor`.
+_OBSERVABILITY_PROVIDER = "observability"
+
+#: Marca os cards criados por este sync no `trigger_config.source`, junto da
+#: chave de idempotência (`external_id`) — mesmo papel do `"github_issue"`.
+_OBSERVABILITY_SOURCE = "observability_alert"
+
+#: `severity` → status inicial do card. `critical`/`high` precisam de
+#: atenção imediata (`triage`); `medium`/`low` entram na fila normal
+#: (`todo`). Severidade ausente ou desconhecida cai em `todo` — nunca
+#: escala sozinha pra `triage` sem o sinal explícito do alertador.
+_SEVERITY_TO_STATUS: dict[str, str] = {
+    "critical": "triage",
+    "high": "triage",
+    "medium": "todo",
+    "low": "todo",
+}
+
+
+async def _find_observability_sync_anchor() -> BackgroundTask | None:
+    """Task 'webhook' que liga alertas de observabilidade ao Kanban.
+
+    Mesmo princípio do `_find_github_issue_sync_anchor`: o usuário liga o
+    sync criando uma task com trigger_type='webhook' e
+    trigger_config={"provider": "observability"} — os cards de alerta nascem
+    na mesma session/workspace dessa task-âncora. Sem task assim
+    (habilitada), o sync está desligado.
+    """
+    conn = await _get_db()
+    try:
+        cur = await conn.execute(
+            "SELECT * FROM vectora_background_tasks "
+            "WHERE enabled = 1 AND trigger_type = 'webhook'",
+        )
+        rows = await cur.fetchall()
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
+    for row in rows:
+        task = _row_to_task(row)
+        if task.trigger_config.get("provider") == _OBSERVABILITY_PROVIDER:
+            return task
+    return None
+
+
+async def find_task_by_observability_alert(
+    session_id: str, external_id: str
+) -> BackgroundTask | None:
+    """Card já ligado a esse `external_id`, se existir.
+
+    Chave de idempotência do sync — reentrega do mesmo alerta (retry do
+    alertador, at-least-once delivery) atualiza o card em vez de duplicar.
+    """
+    for t in await list_tasks(session_id):
+        cfg = t.trigger_config
+        if (
+            cfg.get("source") == _OBSERVABILITY_SOURCE
+            and cfg.get("external_id") == external_id
+        ):
+            return t
+    return None
+
+
+async def sync_observability_alert_to_kanban(
+    alert: dict[str, Any],
+) -> BackgroundTask | None:
+    """Espelha um alerta de observabilidade genérico num card do Kanban.
+
+    Determinístico, sem LLM no meio — mesmo caminho de
+    `sync_github_issue_to_kanban`. `severity` decide o status inicial via
+    `_SEVERITY_TO_STATUS`. Reentrega do mesmo `alert["external_id"]`
+    atualiza nome/descrição/status do card existente em vez de duplicar.
+
+    Retorna `None` sem efeito quando não há task-âncora configurada (sync
+    desligado). Espera `alert` já validado (`title`/`external_id`
+    presentes) — quem chama (`receive_observability_webhook`) valida antes.
+    """
+    anchor = await _find_observability_sync_anchor()
+    if anchor is None:
+        return None
+
+    from backend.scheduling import kanban
+
+    external_id = str(alert["external_id"])
+    title = str(alert["title"])
+    description = str(alert.get("description") or "")[:_ISSUE_BODY_MAX_CHARS]
+    severity = str(alert.get("severity") or "").lower()
+    status = _SEVERITY_TO_STATUS.get(severity, "todo")
+    cfg = {
+        "source": _OBSERVABILITY_SOURCE,
+        "external_id": external_id,
+        "severity": severity,
+        "url": str(alert.get("url") or ""),
+    }
+
+    existing = await find_task_by_observability_alert(anchor.session_id, external_id)
+    if existing is not None:
+        await update_task(
+            existing.id, name=title, instruction=description, trigger_config=cfg
+        )
+        await kanban.set_status(existing.id, status)
+        return await get_task(existing.id)
+
+    task = await create_task(
+        session_id=anchor.session_id,
+        user_id=anchor.user_id,
+        kind="routine",
+        name=title,
+        instruction=description,
+        trigger_type="manual",
+        trigger_config=cfg,
+        workspace_id=anchor.workspace_id,
+    )
+    await kanban.set_status(task.id, status)
+    return await get_task(task.id)
+
+
+# ---------------------------------------------------------------------------
 # Scheduler (interval)
 # ---------------------------------------------------------------------------
 

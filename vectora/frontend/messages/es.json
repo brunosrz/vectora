@@ -1302,5 +1302,9 @@
   "kanban_task_name": "Nombre",
   "kanban_task_instruction": "Instrucción",
   "kanban_create": "Crear",
-  "kanban_action_run_now": "Ejecutar ahora"
+  "kanban_action_run_now": "Ejecutar ahora",
+  "kanban_select_task": "Seleccionar tarea",
+  "kanban_selection_count": "{n} seleccionadas",
+  "kanban_action_archive": "Archivar",
+  "kanban_triage_dropzone": "Suelta aquí para posponer (triage)"
 }

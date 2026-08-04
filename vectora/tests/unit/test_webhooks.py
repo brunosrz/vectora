@@ -15,6 +15,7 @@ import hashlib
 import hmac
 import json
 import time
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -519,3 +520,182 @@ class TestGitHubHandlers:
             ),
         ):
             await _handle_github("issues", payload, MagicMock())  # não levanta
+
+
+# ---------------------------------------------------------------------------
+# Endpoint genérico de observabilidade — POST /webhook/observability
+# ---------------------------------------------------------------------------
+
+
+class TestObservabilityWebhookEndpoint:
+    """Contrato fixo {title, description?, severity?, url?, external_id},
+    sem parsing nativo de vendor — Sentry/Grafana/PagerDuty apontam o
+    webhook de saída pra cá."""
+
+    @pytest.fixture
+    def obs_db(self, tmp_path, monkeypatch):
+        import asyncio
+        from pathlib import Path
+
+        import aiosqlite
+
+        import backend
+        from backend.scheduling import background_tasks as bg
+        from backend.scheduling import kanban
+
+        schema_path = (
+            Path(backend.__file__).parent
+            / "storage"
+            / "migrations"
+            / "sqlite"
+            / "schema.sql"
+        )
+        db_path = str(tmp_path / "obs.db")
+
+        async def _connect() -> Any:
+            conn: Any = await aiosqlite.connect(db_path)
+            conn.row_factory = lambda c, r: dict(
+                zip([col[0] for col in c.description], r, strict=False)
+            )
+            return conn
+
+        async def _setup() -> None:
+            conn = await _connect()
+            await conn.executescript(schema_path.read_text(encoding="utf-8"))
+            await conn.commit()
+            await conn.close()
+
+        asyncio.run(_setup())
+        monkeypatch.setattr(bg, "_get_db", _connect)
+        monkeypatch.setattr(kanban, "_get_db", _connect)
+        return db_path
+
+    def _post(self, client: TestClient, payload: dict, secret: str | None = "s3cr3t"):
+        headers = {"content-type": "application/json"}
+        if secret is not None:
+            headers["x-webhook-secret"] = secret
+        return client.post("/webhook/observability", json=payload, headers=headers)
+
+    def test_secret_invalido_retorna_401_e_nao_processa(
+        self, client: TestClient
+    ) -> None:
+        with (
+            patch.dict("os.environ", {"OBSERVABILITY_WEBHOOK_SECRET": "correto"}),
+            patch(
+                "backend.api.handlers.webhooks._persist_event",
+                new_callable=AsyncMock,
+            ) as mock_persist,
+        ):
+            resp = self._post(
+                client, {"title": "x", "external_id": "1"}, secret="errado"
+            )
+        assert resp.status_code == 401
+        mock_persist.assert_not_awaited()
+
+    def test_secret_ausente_retorna_401(self, client: TestClient) -> None:
+        with patch.dict("os.environ", {"OBSERVABILITY_WEBHOOK_SECRET": "correto"}):
+            resp = self._post(client, {"title": "x", "external_id": "1"}, secret=None)
+        assert resp.status_code == 401
+
+    def test_secret_nao_configurado_no_servidor_retorna_401(
+        self, client: TestClient
+    ) -> None:
+        # Sem OBSERVABILITY_WEBHOOK_SECRET no ambiente não há verificação
+        # HMAC de vendor pra cair como alternativa (diferente do github/etc)
+        # — a rota fica fechada até o operador configurar o secret.
+        with patch.dict("os.environ", {}, clear=True):
+            resp = self._post(client, {"title": "x", "external_id": "1"})
+        assert resp.status_code == 401
+
+    @patch("backend.api.handlers.webhooks._persist_event", new_callable=AsyncMock)
+    def test_payload_sem_title_retorna_400(
+        self, mock_persist: AsyncMock, client: TestClient
+    ) -> None:
+        with patch.dict("os.environ", {"OBSERVABILITY_WEBHOOK_SECRET": "s3cr3t"}):
+            resp = self._post(client, {"external_id": "1"})
+        assert resp.status_code == 400
+        mock_persist.assert_not_awaited()
+
+    @patch("backend.api.handlers.webhooks._persist_event", new_callable=AsyncMock)
+    def test_payload_sem_external_id_retorna_400(
+        self, mock_persist: AsyncMock, client: TestClient
+    ) -> None:
+        with patch.dict("os.environ", {"OBSERVABILITY_WEBHOOK_SECRET": "s3cr3t"}):
+            resp = self._post(client, {"title": "Erro 500 em produção"})
+        assert resp.status_code == 400
+        mock_persist.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_severidade_mapeia_status_e_reentrega_atualiza_card(
+        self, client: TestClient, obs_db: str
+    ) -> None:
+        """Caminho feliz: severidade `critical` cria o card em `triage`.
+        Reentrega do mesmo `external_id` com severidade `low` atualiza o
+        MESMO card (nome + status), sem criar um segundo."""
+        from backend.scheduling import background_tasks as bg
+
+        anchor = await bg.create_task(
+            session_id="s-obs",
+            user_id="u1",
+            kind="routine",
+            name="Sync observabilidade",
+            instruction="",
+            trigger_type="webhook",
+            trigger_config={"provider": "observability"},
+        )
+
+        with patch.dict("os.environ", {"OBSERVABILITY_WEBHOOK_SECRET": "s3cr3t"}):
+            resp_critical = self._post(
+                client,
+                {
+                    "title": "Erro 500 em /checkout",
+                    "description": "NullPointerException no gateway de pagamento",
+                    "severity": "critical",
+                    "url": "https://sentry.io/issues/1",
+                    "external_id": "sentry-1",
+                },
+            )
+            assert resp_critical.status_code == 200
+
+            tasks = await bg.list_tasks(anchor.session_id)
+            cards = [
+                t for t in tasks if t.trigger_config.get("external_id") == "sentry-1"
+            ]
+            assert len(cards) == 1
+            assert cards[0].status == "triage"
+
+            resp_low = self._post(
+                client,
+                {
+                    "title": "Erro 500 em /checkout (resolvido)",
+                    "severity": "low",
+                    "external_id": "sentry-1",
+                },
+            )
+            assert resp_low.status_code == 200
+
+        tasks_after = await bg.list_tasks(anchor.session_id)
+        cards_after = [
+            t for t in tasks_after if t.trigger_config.get("external_id") == "sentry-1"
+        ]
+        assert len(cards_after) == 1
+        assert cards_after[0].status == "todo"
+        assert cards_after[0].name == "Erro 500 em /checkout (resolvido)"
+
+    @pytest.mark.asyncio
+    async def test_sem_task_ancora_nao_cria_card_mas_responde_200(
+        self, client: TestClient, obs_db: str
+    ) -> None:
+        """Sync desligado (nenhuma task 'webhook' com provider=observability
+        configurada) — o endpoint aceita e persiste o evento, mas nenhum
+        card nasce. Erro/borda do sync, não do transporte HTTP."""
+        with patch.dict("os.environ", {"OBSERVABILITY_WEBHOOK_SECRET": "s3cr3t"}):
+            resp = self._post(
+                client,
+                {
+                    "title": "Latência alta",
+                    "severity": "high",
+                    "external_id": "grafana-1",
+                },
+            )
+        assert resp.status_code == 200

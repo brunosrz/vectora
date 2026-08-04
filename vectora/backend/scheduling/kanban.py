@@ -51,6 +51,17 @@ BLOCK_KINDS: tuple[str, ...] = (
 
 _DEFAULT_CLAIM_TTL_S = 900
 
+#: Transições acionáveis por ação humana direta (drag-and-drop no board ou
+#: `PATCH .../tasks/{id}` com campo `status`). `running` só é alcançado pelo
+#: claim atômico do scheduler (`claim_task`) e `done` só pela run terminando
+#: de verdade — nenhum dos dois aparece como alvo aqui, então nenhuma ação
+#: manual chega lá por mais que o alvo esteja em `KANBAN_STATUSES`.
+MANUAL_TRANSITIONS: dict[str, frozenset[str]] = {
+    "todo": frozenset({"ready", "triage"}),
+    "ready": frozenset({"triage"}),
+    "blocked": frozenset({"ready"}),
+}
+
 #: Bloqueios consecutivos (não-`dependency`) antes de escalar pra `triage`
 #: em vez de deixar o card preso em `blocked` pra sempre esperando alguém
 #: notar. Zera quando a task sai de `blocked` com sucesso (`set_status`
@@ -149,6 +160,27 @@ async def set_status(task_id: str, status: str) -> None:
         )
     await db.commit()
     _emit_kanban_event(task_id, status)
+
+
+async def manual_transition(task_id: str, target_status: str) -> None:
+    """Move a task por ação humana direta (drag-and-drop ou `PATCH` de status).
+
+    Valida a transição contra `MANUAL_TRANSITIONS`, não só o alvo contra
+    `KANBAN_STATUSES` — `set_status` sozinho aceitaria `*→running`/`*→done`,
+    que precisam ficar exclusivos do claim atômico e da run terminando.
+    `blocked→ready` passa por `unblock_task` (mesma função do botão
+    "Desbloquear") para também limpar `block_kind`/`block_reason`.
+    """
+    estado = await get_task_status(task_id)
+    atual = estado["status"]
+    permitidos = MANUAL_TRANSITIONS.get(atual, frozenset())
+    if target_status not in permitidos:
+        msg = f"transição {atual!r} → {target_status!r} não é permitida manualmente"
+        raise ValueError(msg)
+    if atual == "blocked" and target_status == "ready":
+        await unblock_task(task_id)
+        return
+    await set_status(task_id, target_status)
 
 
 async def claim_task(

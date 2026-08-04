@@ -1331,6 +1331,121 @@ async def test_issue_edited_updates_title_and_instruction_without_status_change(
 
 
 # ---------------------------------------------------------------------------
+# Alertas de observabilidade → Kanban (sync determinístico, sem LLM)
+# ---------------------------------------------------------------------------
+
+
+async def _make_observability_sync_anchor(**overrides: Any) -> Any:
+    cfg = {"provider": "observability"}
+    cfg.update(overrides.pop("trigger_config", {}))
+    return await bg.create_task(
+        session_id=overrides.pop("session_id", "s-obs"),
+        user_id=overrides.pop("user_id", "u1"),
+        kind="heartbreak",
+        name="sync observabilidade",
+        instruction="",
+        trigger_type="webhook",
+        trigger_config=cfg,
+        workspace_id=overrides.pop("workspace_id", "ws1"),
+    )
+
+
+async def test_alerta_critico_cria_card_em_triage_sem_llm(db, monkeypatch):
+    calls: list[Any] = []
+    monkeypatch.setattr(
+        agent_factory, "get_user_agent", lambda *a, **k: calls.append((a, k))
+    )
+    await _make_observability_sync_anchor()
+
+    card = await bg.sync_observability_alert_to_kanban(
+        {
+            "title": "Erro 500 em /checkout",
+            "description": "NullPointerException",
+            "severity": "critical",
+            "url": "https://sentry.io/issues/1",
+            "external_id": "sentry-1",
+        }
+    )
+
+    assert card is not None
+    assert card.name == "Erro 500 em /checkout"
+    assert card.instruction == "NullPointerException"
+    assert card.status == "triage"
+    assert card.trigger_type == "manual"
+    assert card.trigger_config["source"] == "observability_alert"
+    assert card.trigger_config["external_id"] == "sentry-1"
+    assert calls == []  # nunca chamou o agente — caminho 100% determinístico
+
+    found = await bg.find_task_by_observability_alert("s-obs", "sentry-1")
+    assert found is not None
+    assert found.id == card.id
+
+    # Borda: nenhuma task 'webhook' habilitada com provider=observability —
+    # sync desligado, não cria nada nem levanta.
+    conn = await bg._get_db()
+    await conn.execute("UPDATE vectora_background_tasks SET enabled = 0")
+    await conn.commit()
+    await conn.close()
+    assert (
+        await bg.sync_observability_alert_to_kanban(
+            {"title": "y", "external_id": "sentry-2"}
+        )
+        is None
+    )
+
+
+async def test_alerta_baixo_cria_card_em_todo(db):
+    await _make_observability_sync_anchor()
+
+    card = await bg.sync_observability_alert_to_kanban(
+        {"title": "CPU acima de 80%", "severity": "low", "external_id": "grafana-1"}
+    )
+
+    assert card is not None
+    assert card.status == "todo"
+
+
+async def test_reentrega_do_mesmo_external_id_atualiza_em_vez_de_duplicar(db):
+    """Mesmo contrato de idempotência do sync de GitHub Issues: reentrega
+    do mesmo `external_id` atualiza o card existente, nunca duplica."""
+    await _make_observability_sync_anchor()
+
+    primeiro = await bg.sync_observability_alert_to_kanban(
+        {
+            "title": "Latência alta em /api",
+            "severity": "high",
+            "external_id": "pd-42",
+        }
+    )
+    segundo = await bg.sync_observability_alert_to_kanban(
+        {
+            "title": "Latência alta em /api (resolvido)",
+            "severity": "low",
+            "external_id": "pd-42",
+        }
+    )
+
+    assert primeiro is not None
+    assert segundo is not None
+    assert segundo.id == primeiro.id  # mesmo card, não duplicou
+    assert primeiro.status == "triage"
+    assert segundo.name == "Latência alta em /api (resolvido)"
+    assert segundo.status == "todo"
+
+    tasks = await bg.list_tasks("s-obs")
+    cards_do_alerta = [
+        t for t in tasks if t.trigger_config.get("external_id") == "pd-42"
+    ]
+    assert len(cards_do_alerta) == 1
+
+    # Borda: alerta sem "external_id" nunca chega até aqui em produção (o
+    # endpoint HTTP valida antes) — a função também não levanta com um
+    # payload mínimo mal formado do chamador.
+    with pytest.raises(KeyError):
+        await bg.sync_observability_alert_to_kanban({"title": "sem id"})
+
+
+# ---------------------------------------------------------------------------
 # Delegação de subagente (tool `task`) → histórico na aba Tarefas
 # ---------------------------------------------------------------------------
 

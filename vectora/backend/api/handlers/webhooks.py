@@ -3,7 +3,11 @@
 Infraestrutura genérica de recepção/verificação + handlers específicos por provider (GitHub, etc.).
 
 Endpoints:
-    POST /webhook/{provider}  — recebe evento, verifica assinatura, persiste e emite SSE
+    POST /webhook/{provider}      — recebe evento, verifica assinatura, persiste e emite SSE
+    POST /webhook/observability   — contrato genérico de alerta (Sentry, Grafana,
+                                     PagerDuty, ...) → card do Kanban, sem parsing
+                                     nativo de vendor (ver docs/content/guides/
+                                     observability-webhooks.en.md)
 
 Provedores suportados:
     github   — X-Hub-Signature-256 (HMAC-SHA256)
@@ -22,6 +26,7 @@ Configuração (env vars / Settings):
     RESEND_WEBHOOK_SECRET
     SENDGRID_WEBHOOK_KEY
     MAILGUN_WEBHOOK_SIGNING_KEY
+    OBSERVABILITY_WEBHOOK_SECRET — secret do header X-Webhook-Secret
 """
 
 from __future__ import annotations
@@ -392,6 +397,80 @@ async def _persist_event(
             provider,
             event_type,
         )
+
+
+# ---------------------------------------------------------------------------
+# Endpoint genérico de observabilidade — sem parsing nativo de vendor
+#
+# Contrato fixo: {title, description?, severity?, url?, external_id}. Ao
+# contrário dos providers acima (assinatura HMAC própria de cada vendor),
+# aqui a autenticação é um secret simples de header — não há uma assinatura
+# de vendor específica pra verificar quando o "vendor" é qualquer ferramenta
+# de alerta que o usuário aponte pra cá (Sentry, Grafana, PagerDuty, ...).
+# Registrado ANTES de `/webhook/{provider}`: precisa vencer o path genérico
+# na resolução de rotas do FastAPI, senão cairia no dispatcher sem o
+# `X-Webhook-Secret` sendo verificado.
+# ---------------------------------------------------------------------------
+
+
+@router.post("/webhook/observability")
+async def receive_observability_webhook(request: Request) -> Response:
+    """Recebe um alerta de observabilidade genérico e sincroniza um card do
+    Kanban — sem LLM no meio, mesmo caminho determinístico do sync de
+    GitHub Issues (`sync_observability_alert_to_kanban`).
+
+    Autenticação: header `X-Webhook-Secret` comparado (tempo constante) a
+    `OBSERVABILITY_WEBHOOK_SECRET`. Sem secret configurado no servidor ou
+    header ausente/incorreto, a requisição nunca chega a ser processada —
+    diferente dos outros providers, aqui não há uma verificação HMAC de
+    vendor pra usar como alternativa.
+    """
+    secret = os.environ.get("OBSERVABILITY_WEBHOOK_SECRET", "")
+    received = request.headers.get("x-webhook-secret", "")
+    if not secret or not hmac.compare_digest(received, secret):
+        logger.warning("webhook: secret inválido/ausente provider=observability")
+        raise HTTPException(status_code=401, detail="Secret inválido")
+
+    body = await request.body()
+    try:
+        payload: WebhookPayload = json.loads(body) if body else {}
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Payload JSON inválido") from None
+
+    title = payload.get("title")
+    external_id = payload.get("external_id")
+    if not title or not external_id:
+        raise HTTPException(
+            status_code=400,
+            detail="payload requer 'title' e 'external_id'",
+        )
+
+    logger.info(
+        "webhook: alerta de observabilidade recebido external_id=%s", external_id
+    )
+    await _persist_event("observability", "alert", payload, workspace_id=None)
+
+    try:
+        from backend.scheduling.background_tasks import (
+            sync_observability_alert_to_kanban,
+        )
+
+        await sync_observability_alert_to_kanban(payload)
+    except Exception:
+        logger.exception("webhook: falha ao sincronizar alerta com o kanban")
+
+    _emit_sse_event(
+        provider="observability",
+        event_type="alert",
+        data={
+            "title": title,
+            "external_id": external_id,
+            "severity": payload.get("severity"),
+            "url": payload.get("url"),
+        },
+    )
+
+    return Response(status_code=200)
 
 
 # ---------------------------------------------------------------------------

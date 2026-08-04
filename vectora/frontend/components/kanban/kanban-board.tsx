@@ -7,13 +7,21 @@
  * fora daqui: sete colunas viram ruído visual, e essas duas não são o
  * fluxo do dia a dia.
  *
- * Sem drag-and-drop nesta primeira leva. Arrastar um card tem efeito real
- * no agente — "Done → Ready" reabriria uma tarefa concluída — então as
- * ações ficam em botões explícitos, reaproveitando os endpoints que já
- * existem.
+ * Drag-and-drop só nas transições seguras (`DRAG_TRANSITIONS`), reaproveitando
+ * os mesmos endpoints dos botões explícitos — nunca uma chamada nova. `*→running`
+ * (exclusivo do claim atômico do scheduler) e `*→done` (só a run terminando de
+ * verdade decide) nunca disparam chamada nenhuma: o board os recusa antes de
+ * qualquer fetch, e o backend (`kanban.manual_transition`) recusaria de novo se
+ * o frontend tentasse.
  */
 
 import { useEffect, useRef, useState } from "react";
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 
 import { m } from "@/lib/paraglide/messages";
 
@@ -151,16 +159,90 @@ const COLUNAS: { status: string; label: () => string }[] = [
   { status: "done", label: () => m.kanban_column_done() },
 ];
 
+//: Pares acionáveis por drag-and-drop — espelha
+//: `backend/scheduling/kanban.py::MANUAL_TRANSITIONS`. `running` e `done`
+//: nunca aparecem como alvo: são exclusivos do claim atômico do scheduler e
+//: da run terminando de verdade, respectivamente. O backend recusa de novo
+//: se este mapa algum dia divergir — esta cópia é só pra recusar o drop
+//: antes de qualquer chamada de rede.
+const DRAG_TRANSITIONS: Record<string, string[]> = {
+  todo: ["ready", "triage"],
+  ready: ["triage"],
+  blocked: ["ready"],
+};
+
+function isDragAllowed(from: string, to: string): boolean {
+  return (DRAG_TRANSITIONS[from] ?? []).includes(to);
+}
+
+async function patchStatus(
+  threadId: string,
+  taskId: string,
+  status: string,
+): Promise<void> {
+  await fetch(`/sessions/${threadId}/background/tasks/${taskId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+}
+
+async function unblockTaskRequest(
+  threadId: string,
+  taskId: string,
+): Promise<void> {
+  await fetch(`/sessions/${threadId}/background/tasks/${taskId}/unblock`, {
+    method: "POST",
+    credentials: "include",
+  });
+}
+
+async function bulkArchive(threadId: string, taskIds: string[]): Promise<void> {
+  await fetch(`/sessions/${threadId}/background/tasks/bulk`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ task_ids: taskIds, action: "archive" }),
+  });
+}
+
+/** Aplica (ou recusa) uma transição de drag-and-drop. `false` sem chamada de
+ * rede nenhuma quando o par não está em `DRAG_TRANSITIONS` — o card volta
+ * pro lugar porque o estado local nunca mudou. `blocked→ready` reaproveita o
+ * mesmo endpoint do botão "Desbloquear"; os demais pares usam `PATCH` de
+ * status, mesma rota que valida a transição em `kanban.manual_transition`. */
+export async function applyDragTransition(
+  threadId: string,
+  task: KanbanTask,
+  targetStatus: string,
+): Promise<boolean> {
+  if (targetStatus === task.status) return false;
+  if (!isDragAllowed(task.status, targetStatus)) return false;
+  if (task.status === "blocked" && targetStatus === "ready") {
+    await unblockTaskRequest(threadId, task.id);
+  } else {
+    await patchStatus(threadId, task.id, targetStatus);
+  }
+  return true;
+}
+
 function TaskCard({
   task,
   threadId,
+  selected,
+  onToggleSelect,
   onChanged,
 }: {
   task: KanbanTask;
   threadId: string;
+  selected: boolean;
+  onToggleSelect: (shiftKey: boolean) => void;
   onChanged: () => void;
 }) {
   const base = `/sessions/${threadId}/background/tasks/${task.id}`;
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({ id: task.id });
 
   const desbloquear = () => {
     void fetch(`${base}/unblock`, {
@@ -179,9 +261,39 @@ function TaskCard({
     );
   };
 
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: isDragging ? 10 : undefined,
+      }
+    : undefined;
+
   return (
-    <div className="rounded-md border bg-card px-2.5 py-2 space-y-1">
-      <p className="text-xs font-medium leading-snug">{task.name}</p>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="rounded-md border bg-card px-2.5 py-2 space-y-1"
+    >
+      <div className="flex items-start gap-1.5">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => {}}
+          onClick={(e) => {
+            e.preventDefault();
+            onToggleSelect(e.shiftKey);
+          }}
+          aria-label={m.kanban_select_task()}
+          className="mt-0.5 shrink-0"
+        />
+        <p
+          className="text-xs font-medium leading-snug flex-1 cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          {task.name}
+        </p>
+      </div>
       {/* Dependência aparece como badge, não como linha desenhada: a v1 não
           precisa de grafo pra dizer "espera aquele outro". */}
       {task.blocked_by?.length ? (
@@ -224,8 +336,60 @@ function TaskCard({
   );
 }
 
+function Column({
+  status,
+  label,
+  count,
+  children,
+}: {
+  status: string;
+  label: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`w-60 shrink-0 flex flex-col gap-2 rounded-md ${
+        isOver ? "bg-accent/40" : ""
+      }`}
+      data-testid={`kanban-col-${status}`}
+    >
+      <div className="flex items-center justify-between px-1">
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        <span className="text-[10px] text-muted-foreground">{count}</span>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+//: Alvo de drop pra "esconder/adiar" (`todo`/`ready` → `triage`) — não é uma
+//: coluna do board (triage não faz parte do fluxo ativo, ver comentário no
+//: topo do arquivo), só uma faixa fina que aceita o drop.
+function TriageDropzone() {
+  const { setNodeRef, isOver } = useDroppable({ id: "triage" });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`mb-2 rounded-md border border-dashed px-2 py-1.5 text-[10px] text-muted-foreground ${
+        isOver ? "bg-accent/40 border-primary" : ""
+      }`}
+    >
+      {m.kanban_triage_dropzone()}
+    </div>
+  );
+}
+
 export function KanbanBoard({ threadId }: { threadId: string }) {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
   const carregar = () => {
     let cancelado = false;
@@ -335,43 +499,100 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     COLUNAS.some((c) => c.status === t.status),
   );
 
+  const toggleSelect = (taskId: string, shiftKey: boolean) => {
+    setSelected((atual) => {
+      const next = new Set(atual);
+      if (shiftKey && lastSelectedId) {
+        // Range simples na ordem em que os cards visíveis aparecem — não
+        // precisa respeitar coluna, só a ordem visual do board.
+        const ids = visiveis.map((t) => t.id);
+        const de = ids.indexOf(lastSelectedId);
+        const ate = ids.indexOf(taskId);
+        if (de !== -1 && ate !== -1) {
+          const [ini, fim] = de < ate ? [de, ate] : [ate, de];
+          for (const id of ids.slice(ini, fim + 1)) next.add(id);
+        } else {
+          next.add(taskId);
+        }
+      } else if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+    setLastSelectedId(taskId);
+  };
+
+  const arquivarSelecionadas = () => {
+    const ids = Array.from(selected);
+    void bulkArchive(threadId, ids).then(() => {
+      setSelected(new Set());
+      carregar();
+    });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const task = tasks.find((t) => t.id === active.id);
+    if (!task) return;
+    const targetStatus = String(over.id);
+    void applyDragTransition(threadId, task, targetStatus).then((aplicado) => {
+      if (aplicado) carregar();
+    });
+  };
+
   return (
     <div className="flex-1 min-h-0 overflow-x-auto p-4">
       <NewTaskForm threadId={threadId} onCreated={carregar} />
+      {selected.size > 0 && (
+        <div className="mb-3 flex items-center gap-3 rounded-md border bg-card px-3 py-1.5">
+          <span className="text-xs">
+            {m.kanban_selection_count({ n: selected.size })}
+          </span>
+          <button
+            onClick={arquivarSelecionadas}
+            className="text-xs text-primary hover:underline"
+          >
+            {m.kanban_action_archive()}
+          </button>
+        </div>
+      )}
       {visiveis.length === 0 ? (
         <p className="text-xs text-muted-foreground">{m.kanban_empty()}</p>
       ) : (
-        <div className="flex gap-3 min-w-max h-full">
-          {COLUNAS.map((coluna) => {
-            const daColuna = visiveis.filter((t) => t.status === coluna.status);
-            return (
-              <div
-                key={coluna.status}
-                className="w-60 shrink-0 flex flex-col gap-2"
-                data-testid={`kanban-col-${coluna.status}`}
-              >
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {coluna.label()}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {daColuna.length}
-                  </span>
-                </div>
-                <div className="space-y-2">
+        <DndContext onDragEnd={handleDragEnd}>
+          <TriageDropzone />
+          <div className="flex gap-3 min-w-max h-full">
+            {COLUNAS.map((coluna) => {
+              const daColuna = visiveis.filter(
+                (t) => t.status === coluna.status,
+              );
+              return (
+                <Column
+                  key={coluna.status}
+                  status={coluna.status}
+                  label={coluna.label()}
+                  count={daColuna.length}
+                >
                   {daColuna.map((task) => (
                     <TaskCard
                       key={task.id}
                       task={task}
                       threadId={threadId}
+                      selected={selected.has(task.id)}
+                      onToggleSelect={(shiftKey) =>
+                        toggleSelect(task.id, shiftKey)
+                      }
                       onChanged={carregar}
                     />
                   ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </Column>
+              );
+            })}
+          </div>
+        </DndContext>
       )}
     </div>
   );

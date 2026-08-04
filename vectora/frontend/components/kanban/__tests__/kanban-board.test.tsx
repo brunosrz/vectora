@@ -17,7 +17,7 @@ import {
 } from "@testing-library/react";
 
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
-import { KanbanBoard } from "../kanban-board";
+import { applyDragTransition, KanbanBoard } from "../kanban-board";
 
 function mockTasks(tasks: unknown[]) {
   // A resposta real de GET /sessions/{id}/background/tasks é `list[TaskOut]`
@@ -533,6 +533,144 @@ describe("KanbanBoard", () => {
       within(screen.getByTestId("kanban-col-done")).getByText("tarefa"),
     ).toBeInTheDocument();
     vi.useRealTimers();
+  });
+
+  it("drag de todo pra ready chama o mesmo PATCH de status que a promoção manual usaria", async () => {
+    const chamadas: { url: string; method: string; body?: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        chamadas.push({
+          url,
+          method: init?.method ?? "GET",
+          body: init?.body as string | undefined,
+        });
+        return new Response(JSON.stringify({}), { status: 200 });
+      }),
+    );
+
+    const aplicado = await applyDragTransition(
+      "s1",
+      task({ id: "a", status: "todo" }),
+      "ready",
+    );
+
+    expect(aplicado).toBe(true);
+    expect(chamadas).toHaveLength(1);
+    expect(chamadas[0].method).toBe("PATCH");
+    expect(chamadas[0].url).toBe("/sessions/s1/background/tasks/a");
+    expect(JSON.parse(chamadas[0].body ?? "{}")).toEqual({ status: "ready" });
+  });
+
+  it("drag de blocked pra ready reaproveita o endpoint /unblock do botão", async () => {
+    const chamadas: { url: string; method: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        chamadas.push({ url, method: init?.method ?? "GET" });
+        return new Response(JSON.stringify({}), { status: 200 });
+      }),
+    );
+
+    const aplicado = await applyDragTransition(
+      "s1",
+      task({ id: "a", status: "blocked" }),
+      "ready",
+    );
+
+    expect(aplicado).toBe(true);
+    expect(chamadas).toEqual([
+      { url: "/sessions/s1/background/tasks/a/unblock", method: "POST" },
+    ]);
+  });
+
+  it("drag de ready pra done é recusado — nenhuma chamada de API acontece", async () => {
+    // Erro/borda de regressão: `*→done` é exclusivo da run terminando de
+    // verdade — arrastar o card nunca pode ter efeito, mesmo no frontend.
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({}), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const aplicado = await applyDragTransition(
+      "s1",
+      task({ id: "a", status: "ready" }),
+      "done",
+    );
+
+    expect(aplicado).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("drag de todo pra running é recusado — nenhuma chamada de API acontece", async () => {
+    // Erro/borda: `*→running` é exclusivo do claim atômico do scheduler.
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({}), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const aplicado = await applyDragTransition(
+      "s1",
+      task({ id: "a", status: "todo" }),
+      "running",
+    );
+
+    expect(aplicado).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("marcar 2 cards e clicar Arquivar dispara o endpoint bulk com os ids certos", async () => {
+    const chamadas: { url: string; method: string; body?: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        chamadas.push({
+          url,
+          method: init?.method ?? "GET",
+          body: init?.body as string | undefined,
+        });
+        return new Response(
+          JSON.stringify(
+            init?.method === "PATCH"
+              ? []
+              : [
+                  task({ id: "a", name: "tarefa a", status: "todo" }),
+                  task({ id: "b", name: "tarefa b", status: "todo" }),
+                  task({ id: "c", name: "tarefa c", status: "todo" }),
+                ],
+          ),
+          { status: 200 },
+        );
+      }),
+    );
+
+    await montar();
+    const checkboxes = screen.getAllByLabelText(/selecionar tarefa/i);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[1]);
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /arquivar/i }).click();
+    });
+
+    const bulk = chamadas.find((c) => c.url.endsWith("/tasks/bulk"));
+    expect(bulk).toBeTruthy();
+    expect(bulk?.method).toBe("PATCH");
+    expect(JSON.parse(bulk?.body ?? "{}")).toEqual({
+      task_ids: ["a", "b"],
+      action: "archive",
+    });
+  });
+
+  it("barra de seleção não aparece sem cards marcados", async () => {
+    mockTasks([task({ id: "a", status: "todo" })]);
+
+    await montar();
+
+    expect(
+      screen.queryByRole("button", { name: /arquivar/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("unmount fecha a conexão SSE ativa", async () => {

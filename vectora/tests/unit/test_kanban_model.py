@@ -387,6 +387,65 @@ class TestEscalonamentoDeBloqueio:
         assert row["block_count"] == 0
 
 
+class TestTransicaoManual:
+    """Drag-and-drop no board (e `PATCH .../tasks/{id}` com `status`) só pode
+    acionar os pares em `MANUAL_TRANSITIONS` — `running` é exclusivo do claim
+    atômico do scheduler e `done` só a run terminando de verdade decide."""
+
+    @pytest.mark.asyncio
+    async def test_todo_para_ready_e_permitida(self, db):
+        from backend.scheduling.kanban import get_task_status, manual_transition
+
+        await _cria(db, "t1", status="todo")
+        await manual_transition("t1", "ready")
+
+        assert (await get_task_status("t1"))["status"] == "ready"
+
+    @pytest.mark.asyncio
+    async def test_blocked_para_ready_passa_por_unblock_e_limpa_o_motivo(self, db):
+        """`blocked→ready` reaproveita `unblock_task` — não é um `set_status`
+        cru, senão o card voltaria pra `ready` com o motivo do bloqueio preso."""
+        from backend.scheduling.kanban import (
+            block_task,
+            get_task_status,
+            manual_transition,
+        )
+
+        await _cria(db, "t1", status="ready")
+        await block_task("t1", "needs_input", "falta chave")
+        await manual_transition("t1", "ready")
+
+        estado = await get_task_status("t1")
+        assert estado["status"] == "ready"
+        assert estado["block_kind"] is None
+        assert estado["block_reason"] is None
+
+    @pytest.mark.asyncio
+    async def test_ready_para_running_e_recusada(self, db):
+        """Erro/borda: `running` só é alcançável pelo claim atômico
+        (`claim_task`) — arrastar um card pra lá nunca pode ter efeito."""
+        from backend.scheduling.kanban import get_task_status, manual_transition
+
+        await _cria(db, "t1", status="ready")
+
+        with pytest.raises(ValueError, match="não é permitida manualmente"):
+            await manual_transition("t1", "running")
+
+        assert (await get_task_status("t1"))["status"] == "ready"
+
+    @pytest.mark.asyncio
+    async def test_ready_para_done_e_recusada(self, db):
+        """Erro/borda: só a run terminando de verdade decide `done`."""
+        from backend.scheduling.kanban import get_task_status, manual_transition
+
+        await _cria(db, "t1", status="ready")
+
+        with pytest.raises(ValueError, match="não é permitida manualmente"):
+            await manual_transition("t1", "done")
+
+        assert (await get_task_status("t1"))["status"] == "ready"
+
+
 class TestEventoSSE:
     """Toda transição de status emite o evento que o board consome via SSE
     (`backend/api/handlers/webhooks.py::_emit_sse_event`) — o board troca o

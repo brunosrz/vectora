@@ -116,3 +116,60 @@ async def test_unblock_endpoint_com_task_de_outra_session_e_404(db):
         await bg_api.unblock_task_endpoint(_fake_request(), "sessao-errada", task.id)
 
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_bulk_archive_processa_cada_item_isoladamente(db):
+    """Feliz: arquiva as 3 tasks selecionadas. Erro/borda: um dos ids não
+    existe — as outras 2 completam mesmo assim e a resposta reporta o
+    erro por-item, sem abortar o lote inteiro."""
+    tasks = [
+        await bg.create_task(
+            session_id="s1",
+            user_id="u1",
+            kind="routine",
+            name=f"t{i}",
+            instruction="i",
+            trigger_type="manual",
+            trigger_config={},
+        )
+        for i in range(3)
+    ]
+    task_ids = [t.id for t in tasks]
+    body = bg_api.BulkTaskActionRequest(
+        task_ids=[*task_ids, "id-inexistente"], action="archive"
+    )
+
+    saida = await bg_api.bulk_tasks_endpoint(_fake_request(), "s1", body)
+
+    assert len(saida) == 4
+    por_id = {r.task_id: r for r in saida}
+    for task_id in task_ids:
+        assert por_id[task_id].ok is True
+        assert por_id[task_id].error is None
+        atualizado = await bg.get_task(task_id)
+        assert atualizado is not None
+        assert atualizado.status == "archived"
+    assert por_id["id-inexistente"].ok is False
+    assert por_id["id-inexistente"].error is not None
+
+
+@pytest.mark.asyncio
+async def test_bulk_com_acao_desconhecida_e_recusado(db):
+    """Erro/borda: ação fora de `_BULK_ACTIONS` é rejeitada antes de tocar
+    em qualquer task — não existe ação parcial pra um lote inválido."""
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    body = bg_api.BulkTaskActionRequest(task_ids=[task.id], action="deletar")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await bg_api.bulk_tasks_endpoint(_fake_request(), "s1", body)
+
+    assert exc_info.value.status_code == 400

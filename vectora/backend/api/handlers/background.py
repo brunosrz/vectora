@@ -64,6 +64,20 @@ class UpdateTaskRequest(BaseModel):
     instruction: str | None = None
     enabled: bool | None = None
     trigger_config: dict[str, Any] | None = None
+    #: Transição manual de status (drag-and-drop no board) — validada contra
+    #: `kanban.MANUAL_TRANSITIONS`, nunca um `UPDATE` direto.
+    status: str | None = None
+
+
+class BulkTaskActionRequest(BaseModel):
+    task_ids: list[str]
+    action: str
+
+
+class BulkTaskResult(BaseModel):
+    task_id: str
+    ok: bool
+    error: str | None = None
 
 
 class RunOut(BaseModel):
@@ -161,14 +175,62 @@ async def post_task(
     return _to_out(task)
 
 
+#: Ações suportadas por `PATCH /tasks/bulk`. Só "archive" nesta leva — outras
+#: ações em lote (ex.: cancelar) entram quando o produto pedir.
+_BULK_ACTIONS = {"archive"}
+
+
+@router.patch("/tasks/bulk", response_model=list[BulkTaskResult])
+async def bulk_tasks_endpoint(
+    request: Request, thread_id: str, body: BulkTaskActionRequest
+) -> list[BulkTaskResult]:
+    """Ação em lote da barra de seleção múltipla do Kanban.
+
+    Cada `task_id` roda isolado (try/except por item): uma falha (id
+    inexistente, task de outra session) não aborta os demais — a resposta
+    reporta sucesso/erro por-item em vez de tudo-ou-nada.
+    """
+    from backend.scheduling import kanban
+
+    _user_id(request)
+    if body.action not in _BULK_ACTIONS:
+        raise HTTPException(
+            status_code=400, detail=f"ação {body.action!r} não suportada"
+        )
+
+    results: list[BulkTaskResult] = []
+    for task_id in body.task_ids:
+        try:
+            await _require_task(thread_id, task_id)
+            await kanban.set_status(task_id, "archived")
+            results.append(BulkTaskResult(task_id=task_id, ok=True))
+        except HTTPException as exc:
+            results.append(
+                BulkTaskResult(task_id=task_id, ok=False, error=str(exc.detail))
+            )
+        except Exception as exc:
+            logger.exception(
+                "background: falha ao aplicar ação em lote",
+                extra={"task_id": task_id, "action": body.action},
+            )
+            results.append(BulkTaskResult(task_id=task_id, ok=False, error=str(exc)))
+    return results
+
+
 @router.patch("/tasks/{task_id}", response_model=TaskOut)
 async def patch_task(
     request: Request, thread_id: str, task_id: str, body: UpdateTaskRequest
 ) -> TaskOut:
+    from backend.scheduling import kanban
     from backend.scheduling.background_tasks import update_task
 
     _user_id(request)
     await _require_task(thread_id, task_id)
+    if body.status is not None:
+        try:
+            await kanban.manual_transition(task_id, body.status)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
     try:
         updated = await update_task(
             task_id,
