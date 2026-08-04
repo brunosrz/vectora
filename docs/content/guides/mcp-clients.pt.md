@@ -35,7 +35,7 @@ Em produção, use a URL HTTPS pública do seu servidor:
 
 25 tools nativas ficam disponíveis pro cliente externo: arquivos, git (só-leitura), Context Graph, RAG, busca, terminal e delegação — ver a lista completa em [Servidor MCP](../../reference/mcp-server).
 
-**Escrita e terminal exigem aprovação por workspace.** Diferente do chat (que passa pelo `HumanInTheLoopMiddleware`), um client MCP chama as tools direto — sem essa aprovação, `file_write`/`file_edit`/`terminal` recusam a execução. Aprove uma vez em **Configurações → Workspace** (ou `POST /workspaces/approve-mcp-write`) antes de pedir pro client escrever ou rodar comandos. Tools só-leitura funcionam sem aprovação nenhuma.
+**Escrita e terminal exigem aprovação por workspace.** Diferente do chat (que passa pelo `HumanInTheLoopMiddleware`), um client MCP chama as tools direto — sem essa aprovação, `file_write`/`file_edit`/`terminal` recusam a execução. Aprove uma vez via `POST /workspaces/approve-mcp-write` antes de pedir pro client escrever ou rodar comandos. Tools só-leitura funcionam sem aprovação nenhuma.
 
 ## Adicionando MCP servers de terceiros ao Vectora
 

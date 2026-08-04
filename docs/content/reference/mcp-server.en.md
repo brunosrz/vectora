@@ -30,7 +30,7 @@ See the [Connecting MCP Clients](../../guides/mcp-clients) guide for full instru
 **An authenticated MCP client doesn't go through the LangGraph graph** — `file_write`, `file_edit`, and `terminal` call the underlying tool directly, outside the `HumanInTheLoopMiddleware`/`permission_mode` that protects chat. To close that gap without introducing per-call friction (the point of MCP is to operate without pausing on every tool), these 3 tools require a **persisted per-workspace approval**:
 
 - Without approval: `file_write_tool`/`file_edit_tool`/`terminal_tool` refuse with a clear message — nothing executes.
-- Approve once: `POST /workspaces/approve-mcp-write` (or the toggle under **Settings → Workspace**) unlocks the 3 tools for that workspace until revoked.
+- Approve once: `POST /workspaces/approve-mcp-write` unlocks the 3 tools for that workspace until revoked.
 - Read-only tools (files, git, Context Graph, search, RAG) **never** go through this gate — no approval needed.
 
 Every call to the 3 gated tools (approved or refused) emits a structured log (`mcp_write_call`) for auditing.
