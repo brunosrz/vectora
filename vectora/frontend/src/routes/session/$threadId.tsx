@@ -11,6 +11,7 @@ import {
   WorkbenchNavBar,
 } from "@/components/workbench/workbench-panel";
 import { HorizontalSplit } from "@/components/layout/horizontal-split";
+import { IdeModeLayout } from "@/components/layout/ide-mode-layout";
 import { LicenseBanner } from "@/components/layout/license-banner";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
 import {
@@ -24,6 +25,7 @@ import { DockedEditor } from "@/components/workbench/windows/docked-editor";
 import { SessionSwitcher } from "@/components/header/session-switcher";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
+import { useIsNarrowViewport } from "@/lib/hooks/use-media-query";
 import { PANEL_TRANSITION } from "@/lib/motion/transitions";
 import { useWebhookWorkbench } from "@/lib/hooks/use-webhook-workbench";
 import { useClampPanelWidths } from "@/lib/hooks/use-clamp-panel-widths";
@@ -110,6 +112,9 @@ function SessionPage() {
   // Painel do workbench: visível e redimensionável via workbench-store. O gate
   // de hidratação evita divergência SSR/cliente do estado persistido.
   const hydrated = useHydrated();
+  // Abaixo do breakpoint `md`, o modo IDE não cabe com todos os painéis lado
+  // a lado — IdeModeLayout colapsa para um só painel visível por vez.
+  const isNarrowViewport = useIsNarrowViewport();
   const workbenchOpen = useWorkbenchStore((s) => s.isOpen(threadId));
   const splitSize = useWorkbenchStore((s) => s.splitSize);
   const setSplitSize = useWorkbenchStore((s) => s.setSplitSize);
@@ -614,88 +619,106 @@ function SessionPage() {
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="flex flex-1 min-h-0 overflow-hidden"
           >
-            {/* WorkbenchNavBar — esquerda, 48px, vai ao topo absoluto */}
-            <WorkbenchNavBar threadId={threadId} side="left" />
-
-            {/* WorkbenchContent — esquerda, redimensionável, vai ao topo */}
-            {hydrated && workbenchOpen && (
-              <div
-                ref={workbenchResizeRef}
-                className="relative shrink-0"
-                style={{ width: splitSize }}
-              >
-                <WorkbenchContent
-                  threadId={threadId}
-                  side="left"
-                  onAddToContext={pushMention}
-                  onSendPrompt={pushDraft}
-                />
+            <IdeModeLayout
+              isNarrow={isNarrowViewport}
+              navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
+              workbenchContent={
+                hydrated && workbenchOpen ? (
+                  <div
+                    ref={workbenchResizeRef}
+                    className={
+                      isNarrowViewport
+                        ? "relative flex-1 min-w-0"
+                        : "relative shrink-0"
+                    }
+                    style={isNarrowViewport ? undefined : { width: splitSize }}
+                  >
+                    <WorkbenchContent
+                      threadId={threadId}
+                      side="left"
+                      onAddToContext={pushMention}
+                      onSendPrompt={pushDraft}
+                    />
+                    {!isNarrowViewport && (
+                      <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label="Redimensionar workbench"
+                        onPointerDown={onWorkbenchResizeDown}
+                        onPointerMove={onWorkbenchResizeMove}
+                        onPointerUp={onWorkbenchResizeUp}
+                        onPointerCancel={onWorkbenchResizeUp}
+                        className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
+                      />
+                    )}
+                  </div>
+                ) : null
+              }
+              editor={
+                <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+                  <Header
+                    showToolCalls={showToolCalls}
+                    onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+                    onShowShortcuts={() => setShowShortcutsDialog(true)}
+                    onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+                    showModeSwitch={!chatMode}
+                  />
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <DockedEditor activeWorkspaceId={activeWorkspaceId} />
+                  </div>
+                </div>
+              }
+              chat={
                 <div
-                  role="separator"
-                  aria-orientation="vertical"
-                  aria-label="Redimensionar workbench"
-                  onPointerDown={onWorkbenchResizeDown}
-                  onPointerMove={onWorkbenchResizeMove}
-                  onPointerUp={onWorkbenchResizeUp}
-                  onPointerCancel={onWorkbenchResizeUp}
-                  className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
-                />
-              </div>
-            )}
-
-            {/* DockedEditor — coluna central: Header ao topo + editor abaixo */}
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-              <Header
-                showToolCalls={showToolCalls}
-                onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-                onShowShortcuts={() => setShowShortcutsDialog(true)}
-                onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-                showModeSwitch={!chatMode}
-              />
-              <div className="flex-1 min-h-0 overflow-hidden">
-                <DockedEditor activeWorkspaceId={activeWorkspaceId} />
-              </div>
-            </div>
-
-            {/* Chat sidebar — direita, vai ao topo, bg-sidebar em tudo */}
-            <div
-              ref={chatSidebarRef}
-              className="relative shrink-0 flex flex-col border-l border-border/60 bg-sidebar"
-              style={{ width: hydrated ? chatSidebarWidth : 256 }}
-            >
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-label="Redimensionar chat"
-                onPointerDown={onChatSidebarResizeDown}
-                onPointerMove={onChatSidebarResizeMove}
-                onPointerUp={onChatSidebarResizeUp}
-                onPointerCancel={onChatSidebarResizeUp}
-                className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
-              />
-              <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/40 shrink-0 min-w-0">
-                <SessionSwitcher
-                  threads={wsThreads}
-                  currentThreadId={threadId}
-                  onSelectThread={handleSelectThread}
-                  onNewSession={handleNewChat}
-                />
-              </div>
-              <div className="flex-1 min-h-0">
-                <ChatInterface
-                  threadId={threadId}
-                  showToolCalls={showToolCalls}
-                  agentConfig={agentConfig}
-                  onAgentConfigChange={setAgentConfig}
-                  onThreadUpdate={handleThreadUpdate}
-                  onThreadPersistFailed={handleThreadPersistFailed}
-                  onThreadNotFound={handleThreadNotFound}
-                  inputLocked={inputLocked}
-                  isNewThread={isNew(threadId)}
-                  compact
-                />
-              </div>
-            </div>
+                  ref={chatSidebarRef}
+                  className={
+                    isNarrowViewport
+                      ? "relative flex flex-col h-full bg-sidebar"
+                      : "relative shrink-0 flex flex-col h-full border-l border-border/60 bg-sidebar"
+                  }
+                  style={
+                    isNarrowViewport
+                      ? undefined
+                      : { width: hydrated ? chatSidebarWidth : 256 }
+                  }
+                >
+                  {!isNarrowViewport && (
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label="Redimensionar chat"
+                      onPointerDown={onChatSidebarResizeDown}
+                      onPointerMove={onChatSidebarResizeMove}
+                      onPointerUp={onChatSidebarResizeUp}
+                      onPointerCancel={onChatSidebarResizeUp}
+                      className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
+                    />
+                  )}
+                  <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/40 shrink-0 min-w-0">
+                    <SessionSwitcher
+                      threads={wsThreads}
+                      currentThreadId={threadId}
+                      onSelectThread={handleSelectThread}
+                      onNewSession={handleNewChat}
+                    />
+                  </div>
+                  <div className="flex-1 min-h-0">
+                    <ChatInterface
+                      threadId={threadId}
+                      showToolCalls={showToolCalls}
+                      agentConfig={agentConfig}
+                      onAgentConfigChange={setAgentConfig}
+                      onThreadUpdate={handleThreadUpdate}
+                      onThreadPersistFailed={handleThreadPersistFailed}
+                      onThreadNotFound={handleThreadNotFound}
+                      inputLocked={inputLocked}
+                      isNewThread={isNew(threadId)}
+                      compact
+                    />
+                  </div>
+                </div>
+              }
+            />
 
             <KeyboardShortcutsDialog
               open={showShortcutsDialog}
