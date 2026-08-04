@@ -36,6 +36,7 @@ from fastapi.responses import Response as FastAPIResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.api.handlers.admin import router as admin_router
+from backend.api.handlers.agent_profiles import router as agent_profiles_router
 from backend.api.handlers.artifacts import router as artifacts_router
 from backend.api.handlers.auth import router as auth_router
 from backend.api.handlers.background import router as background_router
@@ -573,6 +574,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(rag_router)
     app.include_router(terminal_router)
     app.include_router(background_router)
+    app.include_router(agent_profiles_router)
     app.include_router(graph_router)
     app.include_router(mcp_marketplace_router)
     # REST API v1 — structured output endpoints

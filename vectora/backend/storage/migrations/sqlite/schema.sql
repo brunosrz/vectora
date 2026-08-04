@@ -254,3 +254,29 @@ CREATE TABLE IF NOT EXISTS connect_thread_mappings (
     created_at       TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (platform, platform_user_id)
 );
+
+-- Perfis de agente customizados: preset reutilizável (instrução, escopo de
+-- tools, modelo, budget) que uma task do Kanban pode referenciar em vez de
+-- rodar sempre com a personalidade genérica do orchestrator. tool_scope/
+-- instruction_path/model_override NULL = herda o comportamento padrão.
+CREATE TABLE IF NOT EXISTS vectora_agent_profiles (
+    id                TEXT PRIMARY KEY,
+    user_id           TEXT NOT NULL,
+    name              TEXT NOT NULL,
+    title             TEXT NOT NULL DEFAULT '',
+    icon              TEXT NOT NULL DEFAULT '',
+    color             TEXT NOT NULL DEFAULT '',
+    instruction_path  TEXT,
+    tool_scope        TEXT NOT NULL DEFAULT '[]',
+    model_override    TEXT,
+    budget_cents      INTEGER,
+    status            TEXT NOT NULL DEFAULT 'active',
+    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_profiles_user ON vectora_agent_profiles(user_id);
+
+-- Perfil de agente atribuído a uma task do Kanban — NULL = comportamento
+-- padrão do orchestrator (regressão do que já existe).
+ALTER TABLE vectora_background_tasks ADD COLUMN agent_profile_id TEXT;
