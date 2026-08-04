@@ -740,3 +740,71 @@ class TestRunBuildStatus:
         assert s.status == "paused"
         assert s.step is None
         assert s.partial is True
+
+
+# ---------------------------------------------------------------------------
+# Sprint 33 — _check_workspace_access (dependência do router, vazamento
+# multi-usuário: sem isso um usuário autenticado lia/mutava o Context Graph
+# de outro workspace só sabendo o id).
+# ---------------------------------------------------------------------------
+
+
+class TestCheckWorkspaceAccess:
+    def _fake_owned_workspace(self, owner_id: str | None):
+        ws = MagicMock()
+        ws.owner_id = owner_id
+        return ws
+
+    def test_raises_403_for_other_users_workspace(self):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.context_graph import _check_workspace_access
+
+        ws = self._fake_owned_workspace("alice")
+        registry = MagicMock()
+        registry.get = MagicMock(return_value=ws)
+        req = _fake_request(user_id="bob")
+        req.state.user.role = "member"
+
+        with (
+            patch("backend.workspace.workspace.workspace_registry", registry),
+            pytest.raises(HTTPException) as exc,
+        ):
+            _check_workspace_access(req, "ws-1")
+        assert exc.value.status_code == 403
+
+    def test_allows_owner(self):
+        from backend.api.handlers.context_graph import _check_workspace_access
+
+        ws = self._fake_owned_workspace("alice")
+        registry = MagicMock()
+        registry.get = MagicMock(return_value=ws)
+        req = _fake_request(user_id="alice")
+        req.state.user.role = "member"
+
+        with patch("backend.workspace.workspace.workspace_registry", registry):
+            _check_workspace_access(req, "ws-1")  # não levanta
+
+    def test_allows_workspace_without_owner(self):
+        from backend.api.handlers.context_graph import _check_workspace_access
+
+        ws = self._fake_owned_workspace(None)
+        registry = MagicMock()
+        registry.get = MagicMock(return_value=ws)
+        req = _fake_request(user_id="bob")
+        req.state.user.role = "member"
+
+        with patch("backend.workspace.workspace.workspace_registry", registry):
+            _check_workspace_access(req, "ws-1")  # não levanta — legado/sem dono
+
+    def test_allows_root_regardless_of_owner(self):
+        from backend.api.handlers.context_graph import _check_workspace_access
+
+        ws = self._fake_owned_workspace("alice")
+        registry = MagicMock()
+        registry.get = MagicMock(return_value=ws)
+        req = _fake_request(user_id="bob")
+        req.state.user.role = "root"
+
+        with patch("backend.workspace.workspace.workspace_registry", registry):
+            _check_workspace_access(req, "ws-1")  # não levanta

@@ -321,3 +321,118 @@ class TestWorkspaceHandlers:
                 MkdirRequest(path=str(tmp_path), name="nova"),
             )
         assert exc.value.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# Sprint 33 — owner_id + require_workspace_access (vazamento multi-usuário)
+# ---------------------------------------------------------------------------
+
+
+class TestWorkspaceOwnership:
+    def test_create_claims_ownership_for_first_user(self, reg, tmp_path):
+        ws = reg.create(str(tmp_path), user_id="alice")
+        assert ws.owner_id == "alice"
+
+    def test_create_does_not_reassign_existing_owner(self, reg, tmp_path):
+        reg.create(str(tmp_path), user_id="alice")
+        ws = reg.create(str(tmp_path), user_id="bob")
+        assert ws.owner_id == "alice"
+
+    def test_legacy_workspace_without_owner_stays_open(self, reg, tmp_path):
+        # get_or_create() puro (sem create()) nunca seta owner_id — simula
+        # um workspace criado antes do Sprint 33.
+        ws = reg.get_or_create(str(tmp_path))
+        assert ws.owner_id is None
+
+    def test_can_access_workspace_owner_allowed(self, reg, tmp_path):
+        from backend.api.handlers.workspaces import can_access_workspace
+
+        ws = reg.create(str(tmp_path), user_id="alice")
+        req = _req(SimpleNamespace(id="alice", role="member"))
+        assert can_access_workspace(ws, req) is True
+
+    def test_can_access_workspace_other_user_denied(self, reg, tmp_path):
+        from backend.api.handlers.workspaces import can_access_workspace
+
+        ws = reg.create(str(tmp_path), user_id="alice")
+        req = _req(SimpleNamespace(id="bob", role="member"))
+        assert can_access_workspace(ws, req) is False
+
+    def test_can_access_workspace_root_bypasses_ownership(self, reg, tmp_path):
+        from backend.api.handlers.workspaces import can_access_workspace
+
+        ws = reg.create(str(tmp_path), user_id="alice")
+        req = _req(SimpleNamespace(id="bob", role="root"))
+        assert can_access_workspace(ws, req) is True
+
+    def test_can_access_workspace_no_owner_open_to_anyone(self, reg, tmp_path):
+        from backend.api.handlers.workspaces import can_access_workspace
+
+        ws = reg.get_or_create(str(tmp_path))
+        req = _req(SimpleNamespace(id="whoever", role="member"))
+        assert can_access_workspace(ws, req) is True
+
+    def test_can_access_workspace_no_authenticated_user_treated_as_local_root(
+        self, reg, tmp_path
+    ):
+        from backend.api.handlers.workspaces import can_access_workspace
+
+        ws = reg.create(str(tmp_path), user_id="alice")
+        # request.state.user None = CLI local sem auth → _is_privileged=True
+        assert can_access_workspace(ws, _req(None)) is True
+
+    def test_require_workspace_access_raises_403_for_other_user(self, reg, tmp_path):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.workspaces import require_workspace_access
+
+        ws = reg.create(str(tmp_path), user_id="alice")
+        req = _req(SimpleNamespace(id="bob", role="member"))
+        with pytest.raises(HTTPException) as exc:
+            require_workspace_access(ws.id, req)
+        assert exc.value.status_code == 403
+
+    def test_require_workspace_access_returns_none_for_unknown_workspace(self, reg):
+        from backend.api.handlers.workspaces import require_workspace_access
+
+        assert require_workspace_access("naoexiste", _req(None)) is None
+
+    def test_require_workspace_access_allows_owner(self, reg, tmp_path):
+        from backend.api.handlers.workspaces import require_workspace_access
+
+        ws = reg.create(str(tmp_path), user_id="alice")
+        req = _req(SimpleNamespace(id="alice", role="member"))
+        assert require_workspace_access(ws.id, req).id == ws.id
+
+    @pytest.mark.asyncio
+    async def test_list_workspaces_filters_out_other_users_workspaces(
+        self, reg, tmp_path
+    ):
+        from backend.api.handlers.workspaces import list_workspaces
+
+        sub_a = tmp_path / "a"
+        sub_a.mkdir()
+        sub_b = tmp_path / "b"
+        sub_b.mkdir()
+        reg.create(str(sub_a), user_id="alice")
+        reg.create(str(sub_b), user_id="bob")
+
+        req = _req(SimpleNamespace(id="alice", role="member"))
+        result = await list_workspaces(req)
+
+        ids = {w.cwd for w in result.workspaces}
+        assert str(sub_a.resolve()) in ids
+        assert str(sub_b.resolve()) not in ids
+
+    @pytest.mark.asyncio
+    async def test_set_active_workspace_forbidden_for_other_user(self, reg, tmp_path):
+        from backend.api.handlers.workspaces import (
+            SetActiveRequest,
+            set_active_workspace,
+        )
+
+        ws = reg.create(str(tmp_path), user_id="alice")
+        req = _req(SimpleNamespace(id="bob", role="member"))
+        with pytest.raises(Exception) as exc:
+            await set_active_workspace(req, SetActiveRequest(workspace_id=ws.id))
+        assert getattr(exc.value, "status_code", None) == 403

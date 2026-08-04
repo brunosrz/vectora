@@ -138,6 +138,10 @@ async def post_task(
     from backend.scheduling.background_tasks import create_task
 
     uid = _user_id(request)
+    if body.workspace_id:
+        from backend.api.handlers.workspaces import require_workspace_access
+
+        require_workspace_access(body.workspace_id, request)
     try:
         task = await create_task(
             session_id=thread_id,

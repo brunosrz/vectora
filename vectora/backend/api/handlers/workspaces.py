@@ -25,7 +25,7 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -212,6 +212,45 @@ def _is_privileged(request: Request) -> bool:
     return role in {"root", "admin"}
 
 
+def can_access_workspace(ws: Any, request: Request) -> bool:
+    """True se o usuário do request pode acessar ``ws``.
+
+    Regras: root/admin sempre podem; workspace sem ``owner_id`` (legado ou
+    nunca reivindicado) nunca é restringido; caso contrário exige
+    ``ws.owner_id == user_id``. Sem isso, qualquer usuário autenticado em
+    modo servidor conseguia ler/mutar o workspace de outro só sabendo o id.
+    """
+    if _is_privileged(request):
+        return True
+    owner_id = getattr(ws, "owner_id", None)
+    if owner_id is None:
+        return True
+    return owner_id == _user_id(request)
+
+
+def require_workspace_access(workspace_id: str, request: Request) -> Any:
+    """Garante que o request pode acessar ``workspace_id``, se ele existir.
+
+    Levanta 403 se o workspace existe mas pertence a outro usuário. Workspace
+    inexistente **não** levanta aqui — devolve ``None`` e deixa o handler
+    chamador decidir como reportar "não encontrado" (a maioria destes
+    handlers já tem seu próprio caminho gracioso, `StatusResponse(status=
+    "error", ...)`, e duplicar isso aqui mudaria o contrato existente).
+    Ponto único reusado por handlers de outros módulos (terminal, rag,
+    background, context_graph) que resolvem workspace_id vindo do cliente.
+    """
+    from backend.workspace.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return None
+    if not can_access_workspace(ws, request):
+        raise HTTPException(
+            status_code=403, detail="Você não tem acesso a este workspace."
+        )
+    return ws
+
+
 def _to_info(ws: Any) -> WorkspaceInfo:
     """Converte um ``vectora.types.Workspace`` (duck-typed para evitar import cycle)."""
     return WorkspaceInfo(
@@ -245,7 +284,11 @@ async def list_workspaces(request: Request) -> ListWorkspacesResponse:
     uid = _user_id(request)
     active = workspace_registry.get_active(uid)
     return ListWorkspacesResponse(
-        workspaces=[_to_info(ws) for ws in workspace_registry.list_all()],
+        workspaces=[
+            _to_info(ws)
+            for ws in workspace_registry.list_all()
+            if can_access_workspace(ws, request)
+        ],
         active_id=active.id if active else None,
     )
 
@@ -272,6 +315,7 @@ async def set_active_workspace(
     from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
+    require_workspace_access(body.workspace_id, request)
     ok = workspace_registry.set_active(body.workspace_id, uid)
     if not ok:
         return StatusResponse(status="error", message="Workspace não encontrado.")
@@ -330,6 +374,7 @@ async def trust_workspace(request: Request, body: TrustRequest) -> StatusRespons
     from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
+    require_workspace_access(body.workspace_id, request)
     ok = workspace_registry.trust(body.workspace_id, uid)
     if not ok:
         return StatusResponse(status="error", message="Workspace não encontrado.")
@@ -349,6 +394,7 @@ async def approve_hooks(request: Request, body: ApproveHooksRequest) -> StatusRe
     from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
+    require_workspace_access(body.workspace_id, request)
     ok = workspace_registry.approve_hooks(body.workspace_id, uid)
     if not ok:
         return StatusResponse(status="error", message="Workspace não encontrado.")
@@ -370,6 +416,7 @@ async def approve_mcp_write(
     from backend.workspace.workspace import workspace_registry
 
     uid = _user_id(request)
+    require_workspace_access(body.workspace_id, request)
     ok = workspace_registry.approve_mcp_write(body.workspace_id, uid)
     if not ok:
         return StatusResponse(status="error", message="Workspace não encontrado.")
@@ -378,7 +425,7 @@ async def approve_mcp_write(
 
 
 @router.post("/GitInitWorkspace", response_model=StatusResponse)
-async def git_init_workspace(body: GitInitRequest) -> StatusResponse:
+async def git_init_workspace(request: Request, body: GitInitRequest) -> StatusResponse:
     """Inicializa um repositório git na pasta do workspace."""
     from backend.tools.git import detect_git_info, git_init_repo
     from backend.workspace.workspace import workspace_registry
@@ -386,6 +433,10 @@ async def git_init_workspace(body: GitInitRequest) -> StatusResponse:
     ws = workspace_registry.get(body.workspace_id)
     if ws is None:
         return StatusResponse(status="error", message="Workspace não encontrado.")
+    if not can_access_workspace(ws, request):
+        raise HTTPException(
+            status_code=403, detail="Você não tem acesso a este workspace."
+        )
 
     result = git_init_repo(ws.cwd)
     if result.get("status") == "error":
@@ -827,8 +878,10 @@ async def approve_mcp_write_rest(
 
 
 @view_router.post("/git-init", response_model=StatusResponse)
-async def git_init_workspace_rest(body: GitInitRequest) -> StatusResponse:
-    return await git_init_workspace(body)
+async def git_init_workspace_rest(
+    request: Request, body: GitInitRequest
+) -> StatusResponse:
+    return await git_init_workspace(request, body)
 
 
 @view_router.get("/active", response_model=ActiveWorkspaceResponse)

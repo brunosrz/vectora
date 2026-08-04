@@ -294,6 +294,11 @@ class WorkspaceRegistry:
         confiável. Re-detecta o estado git após um eventual ``git init``.
         """
         ws = self.get_or_create(path)
+        if ws.owner_id is None and user_id is not None:
+            # Primeira reivindicação vence — workspaces legados/sem dono
+            # ficam livres pra qualquer request.create() os reivindicar.
+            ws.owner_id = user_id
+            self._save()
         if git_init and not ws.is_git_repo:
             try:
                 from backend.tools.git import detect_git_info, git_init_repo
@@ -365,6 +370,7 @@ class WorkspaceRegistry:
             ws.trusted = True
             ws.trusted_at = ws.created_at
             ws.trusted_by = user_id
+            ws.owner_id = user_id
         self._workspaces[wid] = ws
         self._save()
         return ws

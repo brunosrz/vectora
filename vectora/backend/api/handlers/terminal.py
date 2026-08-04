@@ -97,6 +97,20 @@ async def terminal_ws(ws: WebSocket) -> None:
         await ws.close(code=1008)
         return
 
+    # Sprint 33 — sem isso, um usuário autenticado abria terminal interativo
+    # (execução arbitrária) no workspace de outro usuário só sabendo o id.
+    owner_id = getattr(workspace, "owner_id", None)
+    if owner_id is not None and user is not None:
+        role = str(getattr(user, "role", "")).lower()
+        if role not in {"root", "admin"} and str(getattr(user, "id", "")) != owner_id:
+            await ws.send_text(
+                json.dumps(
+                    {"type": "error", "message": "acesso negado a este workspace"}
+                )
+            )
+            await ws.close(code=1008)
+            return
+
     # G.2.3 — PTY remoto (SSH/Codespace) ainda não implementado nesta
     # camada (exige `asyncssh.connect().create_process(term_type=...)`
     # e bombeio bytes em tempo real). Rejeitamos com mensagem clara.

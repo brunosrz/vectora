@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,9 @@ async def list_collections() -> dict[str, Any]:
 
 
 @router.get("/workspace-summary")
-async def get_workspace_rag_summary(workspace_id: str) -> dict[str, Any]:
+async def get_workspace_rag_summary(
+    request: Request, workspace_id: str
+) -> dict[str, Any]:
     """O que já está indexado NESTE workspace, por coleção.
 
     RAG é escopo de workspace (persiste no LanceDB entre sessões), não de
@@ -101,7 +103,10 @@ async def get_workspace_rag_summary(workspace_id: str) -> dict[str, Any]:
     LanceDB), então a contagem exige ler o metadata de cada linha — mesmo
     custo já pago por `manage_retriever(action="list")` em `tools/rag.py`.
     """
+    from backend.api.handlers.workspaces import require_workspace_access
     from backend.tools.rag import _parse_metadata
+
+    require_workspace_access(workspace_id, request)
 
     db = await _connect_lancedb()
     if db is None:
@@ -145,7 +150,7 @@ class RagSearchBody(BaseModel):
 
 
 @router.post("/search")
-async def search_rag(body: RagSearchBody) -> dict[str, Any]:
+async def search_rag(request: Request, body: RagSearchBody) -> dict[str, Any]:
     """Busca direta do usuário na base RAG — mesma `vector_search` que o agente usa.
 
     Sem `collection`, busca em toda coleção indexada com o `workspace_id`
@@ -160,7 +165,7 @@ async def search_rag(body: RagSearchBody) -> dict[str, Any]:
     if body.collection:
         collections = [body.collection]
     elif body.workspace_id:
-        summary = await get_workspace_rag_summary(body.workspace_id)
+        summary = await get_workspace_rag_summary(request, body.workspace_id)
         collections = [c["name"] for c in summary["collections"]]
     else:
         collections = ["articles"]

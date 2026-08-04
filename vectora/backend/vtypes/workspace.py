@@ -75,6 +75,16 @@ class Workspace(BaseModel):
         default=None, description="ID do usuário que aprovou a escrita via MCP."
     )
 
+    owner_id: str | None = Field(
+        default=None,
+        description="ID do usuário que criou/reivindicou este workspace primeiro. "
+        "None em workspaces legados (criados antes do Sprint 33) ou nunca "
+        "reivindicados — nesse caso o acesso não é restringido por dono. Em modo "
+        "servidor multi-usuário (VECTORA_AUTH_REQUIRED=true), um usuário "
+        "autenticado só acessa workspaces com owner_id == seu próprio id (ou "
+        "sem owner_id), exceto papéis root/admin.",
+    )
+
     # G.2.1 — Transporte do workspace. Workspaces remotos compartilham o
     # mesmo modelo; ``cwd`` é o caminho remoto (ou ponto de montagem
     # local quando o transport encapsula um túnel, ex.: Codespaces).

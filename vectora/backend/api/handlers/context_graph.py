@@ -22,7 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
@@ -30,8 +30,23 @@ logger = logging.getLogger(__name__)
 
 _active_builds: dict[str, asyncio.Task[None]] = {}
 
+
+def _check_workspace_access(request: Request, workspace_id: str) -> None:
+    """Dependência de router: 404/403 antes de qualquer handler rodar.
+
+    Sprint 33 — sem isso, um usuário autenticado em modo servidor lia/mutava
+    o Context Graph de outro usuário só sabendo o workspace_id (nunca
+    verificado contra quem criou o workspace).
+    """
+    from backend.api.handlers.workspaces import require_workspace_access
+
+    require_workspace_access(workspace_id, request)
+
+
 router = APIRouter(
-    prefix="/workspaces/{workspace_id}/context-graph", tags=["context-graph"]
+    prefix="/workspaces/{workspace_id}/context-graph",
+    tags=["context-graph"],
+    dependencies=[Depends(_check_workspace_access)],
 )
 
 _GRAPH_DIR = ".vectora/context-graph"

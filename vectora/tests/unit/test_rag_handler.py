@@ -2,9 +2,32 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from fastapi import Request
+
+
+def _fake_request() -> Request:
+    """Request mínimo pros handlers que agora exigem checagem de dono
+    (Sprint 33) — sem usuário autenticado, ``require_workspace_access``
+    trata como CLI local (sempre privilegiado)."""
+    req = MagicMock(spec=Request)
+    req.state = MagicMock()
+    req.state.user = None
+    return req
+
+
+@pytest.fixture(autouse=True)
+def _bypass_workspace_ownership():
+    """As classes deste arquivo testam a lógica de agregação de coleções,
+    não o gate de dono do workspace (coberto em test_workspaces_view.py) —
+    mantém o mock local só pra não travar em request/workspace reais."""
+    with patch(
+        "backend.api.handlers.workspaces.require_workspace_access",
+        return_value=None,
+    ):
+        yield
 
 
 class TestRagSettingsEndpoints:
@@ -69,7 +92,7 @@ class TestWorkspaceRagSummary:
         from backend.api.handlers import rag as handler
 
         with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=None)):
-            out = await handler.get_workspace_rag_summary("ws-1")
+            out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
         assert out == {"collections": []}
 
     @pytest.mark.asyncio
@@ -97,7 +120,7 @@ class TestWorkspaceRagSummary:
         fake_db.open_table = AsyncMock(return_value=fake_table)
 
         with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=fake_db)):
-            out = await handler.get_workspace_rag_summary("ws-1")
+            out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
 
         assert out == {"collections": [{"name": "articles", "count": 2}]}
 
@@ -117,7 +140,7 @@ class TestWorkspaceRagSummary:
         fake_db.open_table = AsyncMock(return_value=fake_table)
 
         with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=fake_db)):
-            out = await handler.get_workspace_rag_summary("ws-1")
+            out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
 
         assert out == {"collections": []}
 
@@ -144,7 +167,7 @@ class TestWorkspaceRagSummary:
         fake_db.open_table = _open_table
 
         with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=fake_db)):
-            out = await handler.get_workspace_rag_summary("ws-1")
+            out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
 
         assert out == {"collections": [{"name": "articles", "count": 1}]}
 
@@ -171,7 +194,8 @@ class TestRagSearch:
         )
         with patch.object(vector_search, "coroutine", AsyncMock(return_value=raw)):
             out = await handler.search_rag(
-                RagSearchBody(query="oi", collection="articles", limit=5)
+                _fake_request(),
+                RagSearchBody(query="oi", collection="articles", limit=5),
             )
 
         assert out["query"] == "oi"
@@ -186,7 +210,7 @@ class TestRagSearch:
 
         mocked = AsyncMock(return_value='{"status": "no_results", "results": []}')
         with patch.object(vector_search, "coroutine", mocked):
-            out = await handler.search_rag(RagSearchBody(query="oi"))
+            out = await handler.search_rag(_fake_request(), RagSearchBody(query="oi"))
 
         mocked.assert_awaited_once_with(query="oi", collection="articles", limit=5)
         assert out["results"] == []
@@ -207,7 +231,7 @@ class TestRagSearch:
             patch.object(vector_search, "coroutine", AsyncMock()) as mocked,
         ):
             out = await handler.search_rag(
-                RagSearchBody(query="oi", workspace_id="ws-vazio")
+                _fake_request(), RagSearchBody(query="oi", workspace_id="ws-vazio")
             )
 
         mocked.assert_not_awaited()
@@ -280,7 +304,7 @@ class TestRagCollectionsRealLanceDB:
         )
 
         with patch.object(settings, "lancedb_dir", tmp_path):
-            out = await handler.get_workspace_rag_summary("ws-real")
+            out = await handler.get_workspace_rag_summary(_fake_request(), "ws-real")
 
         assert isinstance(out, dict)
         assert isinstance(out["collections"], list)
