@@ -277,6 +277,15 @@ def fetch_url(url: str) -> str:
         logger.warning("fetch_url called with invalid URL", extra={"url": url})
         return "Error: URL must start with http:// or https://"
 
+    from backend.browser.ssrf_guard import is_url_ssrf_safe
+
+    if not is_url_ssrf_safe(url):
+        logger.warning("fetch_url refused SSRF-unsafe URL", extra={"url": url})
+        return (
+            "Error: URL refused — resolves to a private/loopback/link-local/"
+            "metadata IP address (blocked for security, SSRF)."
+        )
+
     if not settings.tavily_api_key:
         logger.warning("TAVILY_API_KEY not configured — usando fallback via Chromium")
         return _fetch_via_fallback(url)

@@ -107,6 +107,14 @@ def fetch_fallback(url: str) -> str:
     """Navega até `url` num Chromium real e retorna o texto visível da
     página. Levanta em caso de falha — mesmo contrato de `search_fallback`.
     """
+    from backend.browser.ssrf_guard import is_url_ssrf_safe
+
+    if not is_url_ssrf_safe(url):
+        raise ValueError(
+            f"URL recusada: {url!r} resolve para um IP privado/loopback/"
+            "link-local/metadata — bloqueado por segurança (SSRF)."
+        )
+
     browser = _get_browser()
     page = browser.new_page()
     try:

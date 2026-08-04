@@ -72,6 +72,7 @@ class TestFetchUrlFallback:
     def test_sem_tavily_api_key_usa_fallback_via_chromium(self):
         with (
             patch("backend.tools.web.settings") as ms,
+            patch("backend.browser.ssrf_guard.is_url_ssrf_safe", return_value=True),
             patch(
                 "backend.browser.search_fallback.fetch_fallback",
                 return_value="conteúdo extraído",
@@ -86,6 +87,7 @@ class TestFetchUrlFallback:
     def test_sem_tavily_e_fallback_tambem_falha_retorna_erro_textual(self):
         with (
             patch("backend.tools.web.settings") as ms,
+            patch("backend.browser.ssrf_guard.is_url_ssrf_safe", return_value=True),
             patch(
                 "backend.browser.search_fallback.fetch_fallback",
                 side_effect=RuntimeError("chromium ausente"),
@@ -95,6 +97,41 @@ class TestFetchUrlFallback:
             result = fetch_url.invoke({"url": "https://example.com"})
 
         assert "Error" in result
+
+
+class TestFetchUrlSsrfGuard:
+    """Sprint 34 — fetch_url recusa URLs que resolvem pra IP privado/loopback/
+    link-local/metadata, antes de tentar Tavily ou o fallback Chromium."""
+
+    def test_refuses_metadata_url_without_calling_tavily_or_fallback(self):
+        with (
+            patch("backend.tools.web.settings") as ms,
+            patch("backend.browser.ssrf_guard.is_url_ssrf_safe", return_value=False),
+            patch("backend.tools.web._get_extract_tool") as mock_extract,
+            patch("backend.browser.search_fallback.fetch_fallback") as mock_fallback,
+        ):
+            ms.tavily_api_key = "real-key"
+            result = fetch_url.invoke({"url": "http://169.254.169.254/latest/"})
+
+        assert "Error" in result
+        mock_extract.assert_not_called()
+        mock_fallback.assert_not_called()
+
+    def test_allows_public_url_with_tavily_configured(self):
+        mock_client = MagicMock()
+        with (
+            patch("backend.tools.web.settings") as ms,
+            patch("backend.browser.ssrf_guard.is_url_ssrf_safe", return_value=True),
+            patch("backend.tools.web._get_extract_tool", return_value=mock_client),
+            patch(
+                "backend.tools.web._invoke_backend",
+                new=AsyncMock(return_value=[{"content": "ok", "raw_content": ""}]),
+            ),
+        ):
+            ms.tavily_api_key = "real-key"
+            result = fetch_url.invoke({"url": "https://example.com"})
+
+        assert result == "ok"
 
 
 class TestCrawlEMapExigemKey:
