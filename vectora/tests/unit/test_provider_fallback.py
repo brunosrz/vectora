@@ -48,6 +48,19 @@ class TestIsQuotaError:
     def test_non_quota_value_error(self):
         assert pf.is_quota_error(ValueError("bad input")) is False
 
+    def test_openrouter_rate_limit_error_reconhecida_por_tipo(self):
+        """Reconhece por `isinstance`, não por substring — mensagem sem
+        nenhum marker de `_QUOTA_MARKERS` ainda é detectada como quota."""
+        from backend.llm.openrouter.client import OpenRouterRateLimitError
+
+        exc = OpenRouterRateLimitError("too many requests, slow down")
+        assert pf.is_quota_error(exc) is True
+
+    def test_generic_exception_com_texto_de_rate_limit_ainda_funciona(self):
+        """Regressão: exceção não tipada (Anthropic/Gemini/Cohere levantam a
+        exceção genérica da própria SDK) continua reconhecida via substring."""
+        assert pf.is_quota_error(Exception("429 rate limit exceeded")) is True
+
     def test_empty(self):
         assert pf.is_quota_error(Exception("")) is False
 

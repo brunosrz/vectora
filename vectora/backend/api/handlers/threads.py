@@ -37,6 +37,7 @@ from backend.api.schemas import (
     GetThreadPinsRequest,
     GetThreadRequest,
     HistoryMessage,
+    HITLEvent,
     ListThreadsRequest,
     ListThreadsResponse,
     PagedHistoryResponse,
@@ -1175,6 +1176,47 @@ async def thread_activity(thread_id: str) -> ActivityResponse:
         files_touched=unique_files,
         tool_call_counts={},
         turn_count=turn_count,
+    )
+
+
+class PendingInterruptResponse(BaseModel):
+    interrupt: HITLEvent | None = None
+
+
+@router.get(
+    "/threads/{thread_id}/pending-interrupt", response_model=PendingInterruptResponse
+)
+async def thread_pending_interrupt(
+    thread_id: str, workspace_id: str | None = None
+) -> PendingInterruptResponse:
+    """Reidrata o HITLPanel após um reload de página.
+
+    O interrupt sobrevive a um restart do backend (checkpointer real, sem
+    ``MemorySaver``), mas a UI só o mostra quando chega via streaming — um
+    F5 no meio de uma pausa HITL perdia o card até o usuário mandar mensagem
+    nova. Chamado pelo frontend ao montar a sessão.
+    """
+    from backend.services.agent_factory import aget_thread_pending_interrupt
+
+    pending = await aget_thread_pending_interrupt(thread_id, workspace_id)
+    if pending is None:
+        return PendingInterruptResponse(interrupt=None)
+
+    pre_approved = False
+    with contextlib.suppress(Exception):
+        from backend.services.smart_approval import evaluate_command
+
+        pre_approved = await evaluate_command(
+            pending["tool_name"], pending["args"], workspace_id=workspace_id or ""
+        )
+
+    return PendingInterruptResponse(
+        interrupt=HITLEvent(
+            tool_name=pending["tool_name"],
+            args_json=json.dumps(pending["args"]),
+            interrupt_id=pending["interrupt_id"],
+            pre_approved=pre_approved,
+        )
     )
 
 

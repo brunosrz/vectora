@@ -886,6 +886,61 @@ async def aget_thread_todos(
     return snapshot.values.get("todos", []) or []
 
 
+async def aget_thread_pending_interrupt(
+    thread_id: str, workspace_id: str | None = None
+) -> dict[str, Any] | None:
+    """Devolve o interrupt pendente da thread (se houver), pra reidratar o
+    HITLPanel após um reload de página.
+
+    O interrupt sobrevive a um restart do backend — o checkpointer é real,
+    não ``MemorySaver`` — mas a UI só *mostra* a proposta quando a mensagem
+    chega via streaming; um F5 no meio de uma pausa HITL perdia o card até
+    o usuário mandar uma mensagem nova. Lê ``snapshot.tasks[*].interrupts``
+    (não ``snapshot.values``) — é onde o LangGraph guarda o interrupt de um
+    nó pausado, mesmo formato que ``adapters.py`` consome ao vivo do
+    ``on_chain_stream``.
+
+    Retorna ``None`` se não houver interrupt pendente ou se a thread não
+    existir — nunca lança, é consultado num reload de página.
+    """
+    await _ensure_infra()
+    if _checkpointer is None:
+        return None
+
+    from langchain_core.runnables import RunnableConfig
+
+    graph = await get_user_agent(workspace_id=workspace_id)
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    try:
+        snapshot = await graph.aget_state(config)
+    except Exception:
+        logger.debug(
+            "aget_thread_pending_interrupt: falha ao ler state thread=%s",
+            thread_id,
+            exc_info=True,
+        )
+        return None
+
+    if not snapshot or not snapshot.tasks:
+        return None
+
+    for task in snapshot.tasks:
+        interrupts = getattr(task, "interrupts", None) or ()
+        for intr in interrupts:
+            intr_val = getattr(intr, "value", None)
+            if not isinstance(intr_val, list) or not intr_val:
+                continue
+            first = intr_val[0]
+            if not isinstance(first, dict):
+                continue
+            return {
+                "tool_name": first.get("name", "unknown"),
+                "args": first.get("args", {}) or {},
+                "interrupt_id": first.get("id", ""),
+            }
+    return None
+
+
 def reset_default_graph() -> None:
     """Invalida o grafo do modelo padrão após troca de provider/model.
 

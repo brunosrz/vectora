@@ -66,9 +66,22 @@ class QuotaExhaustedError(Exception):
 
 
 def is_quota_error(exc: BaseException) -> bool:
-    """True se a exceção indica quota/rate-limit esgotada."""
+    """True se a exceção indica quota/rate-limit esgotada.
+
+    Checa tipo antes de substring — exceções tipadas de provider (ex.
+    `OpenRouterRateLimitError`) são reconhecidas mesmo se a mensagem exata
+    mudar; o substring continua como rede de segurança pra exceções não
+    tipadas de outros providers (Anthropic/Gemini/Cohere levantam erro
+    genérico da SDK, não uma classe própria de rate limit).
+    """
     if isinstance(exc, QuotaExhaustedError):
         return True
+
+    from backend.llm.openrouter.client import OpenRouterRateLimitError
+
+    if isinstance(exc, OpenRouterRateLimitError):
+        return True
+
     msg = str(exc).lower()
     return any(marker in msg for marker in _QUOTA_MARKERS)
 

@@ -320,3 +320,82 @@ class TestAgetThreadTodos:
             result = await af.aget_thread_todos("thread-err")
 
         assert result == []
+
+
+class TestAgetThreadPendingInterrupt:
+    """Reidratação do HITLPanel após reload de página (Sprint 38.2) — lê
+    ``snapshot.tasks[*].interrupts``, não ``snapshot.values``."""
+
+    @pytest.mark.asyncio
+    async def test_no_checkpointer_returns_none(self):
+        import backend.services.agent_factory as af
+
+        original = af._checkpointer
+        af._checkpointer = None
+        try:
+            result = await af.aget_thread_pending_interrupt("thread-abc")
+        finally:
+            af._checkpointer = original
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_returns_pending_interrupt_from_snapshot_tasks(self):
+        import backend.services.agent_factory as af
+
+        intr = MagicMock()
+        intr.value = [{"name": "file_write", "args": {"path": "a.py"}, "id": "intr-1"}]
+        task = MagicMock()
+        task.interrupts = (intr,)
+        snap = MagicMock()
+        snap.tasks = (task,)
+        mock_graph = AsyncMock()
+        mock_graph.aget_state = AsyncMock(return_value=snap)
+
+        with (
+            patch.object(af, "_checkpointer", MagicMock()),
+            patch.object(af, "_ensure_infra", AsyncMock()),
+            patch.object(af, "get_user_agent", AsyncMock(return_value=mock_graph)),
+        ):
+            result = await af.aget_thread_pending_interrupt("thread-ok")
+
+        assert result == {
+            "tool_name": "file_write",
+            "args": {"path": "a.py"},
+            "interrupt_id": "intr-1",
+        }
+
+    @pytest.mark.asyncio
+    async def test_no_pending_task_returns_none(self):
+        """Erro/borda: thread sem nenhuma pausa ativa — `tasks` vazio, não erro."""
+        import backend.services.agent_factory as af
+
+        snap = MagicMock()
+        snap.tasks = ()
+        mock_graph = AsyncMock()
+        mock_graph.aget_state = AsyncMock(return_value=snap)
+
+        with (
+            patch.object(af, "_checkpointer", MagicMock()),
+            patch.object(af, "_ensure_infra", AsyncMock()),
+            patch.object(af, "get_user_agent", AsyncMock(return_value=mock_graph)),
+        ):
+            result = await af.aget_thread_pending_interrupt("thread-no-pending")
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_aget_state_exception_returns_none(self):
+        import backend.services.agent_factory as af
+
+        mock_graph = AsyncMock()
+        mock_graph.aget_state = AsyncMock(side_effect=RuntimeError("db error"))
+
+        with (
+            patch.object(af, "_checkpointer", MagicMock()),
+            patch.object(af, "_ensure_infra", AsyncMock()),
+            patch.object(af, "get_user_agent", AsyncMock(return_value=mock_graph)),
+        ):
+            result = await af.aget_thread_pending_interrupt("thread-err")
+
+        assert result is None
