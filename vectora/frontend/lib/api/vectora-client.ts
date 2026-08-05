@@ -166,6 +166,18 @@ export interface Thread {
   pinned?: boolean;
 }
 
+/** Anexo persistido de uma mensagem do histórico — `url`, quando presente,
+ * aponta pra `GET /threads/{id}/attachments/{filename}` (sobrevive a
+ * restart do backend, diferente do base64 que só existe durante o turno
+ * ao vivo). */
+export interface HistoryAttachment {
+  name: string;
+  mimeType: string;
+  kind: string;
+  size: number;
+  url?: string | null;
+}
+
 export interface HistoryMessage {
   role: "human" | "assistant";
   content: string;
@@ -174,6 +186,7 @@ export interface HistoryMessage {
    * existir) — alvo de fork pra "editar e reenviar"/"regenerar". Vazio
    * quando o backend não conseguiu resolver. */
   checkpoint_id?: string;
+  attachments?: HistoryAttachment[];
 }
 
 export interface ToolSchema {

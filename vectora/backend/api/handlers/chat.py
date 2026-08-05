@@ -20,6 +20,7 @@ import logging
 import os
 import uuid
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -94,6 +95,17 @@ _EXT_TO_LANG: dict[str, str] = {
     "xml": "xml",
 }
 
+#: Extensão de fallback por MIME quando `att.name` não carrega uma (ex.:
+#: screenshot colado direto do clipboard, sem nome de arquivo real).
+_EXT_BY_MIME: dict[str, str] = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "image/svg+xml": ".svg",
+}
+
 
 def _mime_to_lang(filename: str) -> str:
     """Detecta a linguagem de programação pela extensão do arquivo.
@@ -119,6 +131,24 @@ def _resolve_provider(model_spec: str) -> str:
     return (os.getenv("LLM_PROVIDER") or runtime_settings.active_provider).replace(
         "-", "_"
     )
+
+
+async def _model_supports_vision(model_spec: str) -> bool:
+    """Capability de visão do modelo escolhido — provider fixo
+    (``VISION_CAPABLE_PROVIDERS``) pros diretos, mas OpenRouter varia por
+    modelo servido (alguns processam imagem, outros não), então delega pro
+    catálogo público em vez de bloquear o provider inteiro."""
+    provider = _resolve_provider(model_spec)
+    if provider in VISION_CAPABLE_PROVIDERS:
+        return True
+    if provider == "openrouter":
+        from backend.api.handlers.provider_routing import (
+            openrouter_model_supports_image,
+        )
+
+        _, _, model_id = model_spec.partition(":")
+        return await openrouter_model_supports_image(model_id or model_spec)
+    return False
 
 
 async def _model_no_vision_stream(thread_id: str) -> AsyncGenerator[str]:
@@ -204,11 +234,52 @@ async def _transcribe_attachment(att: Attachment) -> str:
     return f"\n[Áudio: {att.name}]\n{transcript}"
 
 
-async def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
+#: Diretório onde anexos de imagem sobrevivem a restart do processo —
+#: `additional_kwargs` do LangGraph fica só no checkpoint (não é servido
+#: por nenhuma rota), então sem copiar o arquivo pra cá o histórico via
+#: REST (`GET /threads/{id}/history`) nunca tem de onde buscar a imagem de
+#: volta depois que o backend reinicia.
+_CHAT_ATTACHMENTS_DIRNAME = "chat-attachments"
+
+
+def _persist_image_attachment(thread_id: str, att: Attachment) -> str | None:
+    """Copia o anexo de imagem pra ``~/.vectora/chat-attachments/<thread_id>/``
+    e devolve a URL servível por `GET /threads/{thread_id}/attachments/{name}`.
+
+    Falha de disco (permissão, sem espaço) nunca aborta o turno — a imagem
+    já foi enviada ao provider via base64 inline; só a reexibição depois de
+    um restart fica indisponível, o que é preferível a quebrar o chat.
+    """
+    from backend.settings import settings
+
+    try:
+        raw = base64.b64decode(att.base64_data)
+        ext = Path(att.name).suffix or _EXT_BY_MIME.get(att.mime_type, "")
+        filename = f"{uuid.uuid4().hex}{ext}"
+        safe_thread = thread_id.replace("/", "").replace("\\", "").replace("..", "")
+        target_dir = settings.vectora_home / _CHAT_ATTACHMENTS_DIRNAME / safe_thread
+        target_dir.mkdir(parents=True, exist_ok=True)
+        (target_dir / filename).write_bytes(raw)
+        return f"/threads/{safe_thread}/attachments/{filename}"
+    except Exception:
+        logger.exception(
+            "chat: falha ao persistir anexo de imagem %s (thread=%s)",
+            att.name,
+            thread_id,
+        )
+        return None
+
+
+async def _build_human_message(
+    content: str, attachments: list[Attachment], thread_id: str
+) -> Any:
     """Constrói HumanMessage com suporte a conteúdo multimodal.
 
     - Sem attachments → ``HumanMessage(content=str)`` simples
-    - Imagem → content list com ``type=image_url`` (formato OpenAI)
+    - Imagem → content list com ``type=image_url`` (formato OpenAI); o
+      arquivo também é copiado pra disco (`_persist_image_attachment`) pra
+      sobreviver a um restart do backend, já que o inline base64 só existe
+      dentro do checkpoint do LangGraph, que a API REST de histórico não lê.
     - Áudio → transcrito via Whisper (STT) e injetado como texto
     - Código/PDF/texto → injetado como bloco de código ou texto no content list
 
@@ -221,6 +292,7 @@ async def _build_human_message(content: str, attachments: list[Attachment]) -> A
         return HumanMessage(content=content)
 
     parts: list[str | dict[str, Any]] = [{"type": "text", "text": content}]
+    persisted_urls: dict[int, str | None] = {}
 
     for att in attachments:
         if att.kind == AttachmentKind.IMAGE:
@@ -244,6 +316,8 @@ async def _build_human_message(content: str, attachments: list[Attachment]) -> A
                     )
             except Exception:
                 pass
+
+            persisted_urls[id(att)] = _persist_image_attachment(thread_id, att)
 
             parts.append(
                 {
@@ -280,6 +354,7 @@ async def _build_human_message(content: str, attachments: list[Attachment]) -> A
                 "mimeType": att.mime_type,
                 "kind": att.kind.value,
                 "size": len(base64.b64decode(att.base64_data)),
+                "url": persisted_urls.get(id(att)),
             }
             for att in attachments
         ]
@@ -551,9 +626,7 @@ async def stream_chat(
     # hífen do resto de settings.py; comparar contra a forma normalizada
     # bloqueava até modelos com suporte real a visão (ex.: Gemini).
     has_image = any(att.kind == AttachmentKind.IMAGE for att in request.attachments)
-    if has_image and _resolve_provider(request.config.model) not in (
-        VISION_CAPABLE_PROVIDERS
-    ):
+    if has_image and not await _model_supports_vision(request.config.model):
         return StreamingResponse(
             _model_no_vision_stream(thread_id),
             media_type="text/event-stream",
@@ -654,7 +727,9 @@ async def stream_chat(
         "recursion_limit": request.config.recursion_limit or 50,
     }
 
-    human_msg = await _build_human_message(request.content, request.attachments)
+    human_msg = await _build_human_message(
+        request.content, request.attachments, thread_id
+    )
 
     # Planning mode: injeta instrução de planejamento no HumanMessage
     if planning_mode:

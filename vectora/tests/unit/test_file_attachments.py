@@ -223,11 +223,20 @@ class TestStreamChatRequestAttachments:
 
 
 class TestBuildHumanMessage:
+    @pytest.fixture(autouse=True)
+    def _isolated_vectora_home(self, tmp_path, monkeypatch):
+        """`_build_human_message` com imagem grava em `settings.vectora_home`
+        (`_persist_image_attachment`) — nunca aponta pro `~/.vectora` real
+        do ambiente rodando o teste."""
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "vectora_home", tmp_path)
+
     @pytest.mark.asyncio
     async def test_no_attachments_returns_plain_string(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
-        msg = await _build_human_message("olá", [])
+        msg = await _build_human_message("olá", [], "t1")
         assert isinstance(msg, HumanMessage)
         assert msg.content == "olá"
 
@@ -235,7 +244,7 @@ class TestBuildHumanMessage:
     async def test_empty_list_returns_plain_string(self) -> None:
         from backend.api.handlers.chat import _build_human_message
 
-        msg = await _build_human_message("teste", [])
+        msg = await _build_human_message("teste", [], "t1")
         assert isinstance(msg.content, str)
         assert msg.content == "teste"
 
@@ -250,7 +259,7 @@ class TestBuildHumanMessage:
             mime_type="image/png",
             base64_data=raw,
         )
-        msg = await _build_human_message("veja isso", [att])
+        msg = await _build_human_message("veja isso", [att], "t1")
 
         assert isinstance(msg.content, list)
         # Parte 0: texto original
@@ -259,6 +268,67 @@ class TestBuildHumanMessage:
         assert msg.content[1]["type"] == "image_url"
         assert "data:image/png;base64," in msg.content[1]["image_url"]["url"]
         assert raw in msg.content[1]["image_url"]["url"]
+
+    @pytest.mark.asyncio
+    async def test_image_attachment_e_persistida_em_disco_pra_sobreviver_a_restart(
+        self, tmp_path
+    ) -> None:
+        """Sem isso, `additional_kwargs["attachments_meta"]` só existe dentro
+        do checkpoint do LangGraph — o histórico via REST não tem de onde
+        buscar a imagem de volta depois que o backend reinicia."""
+        from backend.api.handlers.chat import _build_human_message
+
+        raw_bytes = b"\x89PNG\r\n\x1a\nfake-image-content"
+        att = Attachment(
+            kind=AttachmentKind.IMAGE,
+            name="screenshot.png",
+            mime_type="image/png",
+            base64_data=_b64_bytes(raw_bytes),
+        )
+        msg = await _build_human_message("veja isso", [att], "thread-xyz")
+
+        meta = msg.additional_kwargs["attachments_meta"][0]
+        assert (
+            meta["url"]
+            == "/threads/thread-xyz/attachments/" + meta["url"].rsplit("/", 1)[-1]
+        )
+
+        persisted_path = (
+            tmp_path
+            / "chat-attachments"
+            / "thread-xyz"
+            / meta["url"].rsplit("/", 1)[-1]
+        )
+        assert persisted_path.is_file()
+        assert persisted_path.read_bytes() == raw_bytes
+
+    @pytest.mark.asyncio
+    async def test_falha_ao_persistir_nao_aborta_o_turno(self, monkeypatch) -> None:
+        """Erro/borda: disco cheio/sem permissão não pode derrubar o chat —
+        a imagem já foi enviada ao provider via base64 inline, só a
+        reexibição pós-restart fica indisponível. Testa
+        `_persist_image_attachment` isolado (não via `_build_human_message`)
+        pra exercitar o `try/except` real da função, não um mock que o
+        contorna."""
+        from pathlib import Path as PathCls
+
+        from backend.api.handlers.chat import _persist_image_attachment
+
+        def _boom(self, *_a: object, **_kw: object) -> None:
+            raise OSError("disco cheio")
+
+        monkeypatch.setattr(PathCls, "mkdir", _boom)
+
+        att = Attachment(
+            kind=AttachmentKind.IMAGE,
+            name="img.png",
+            mime_type="image/png",
+            base64_data=_b64_bytes(b"bytes"),
+        )
+
+        url = _persist_image_attachment("t1", att)
+
+        assert url is None
 
     @pytest.mark.asyncio
     async def test_code_attachment_injects_code_block(self) -> None:
@@ -271,7 +341,7 @@ class TestBuildHumanMessage:
             mime_type="text/x-python",
             base64_data=_b64(code),
         )
-        msg = await _build_human_message("explique", [att])
+        msg = await _build_human_message("explique", [att], "t1")
 
         assert isinstance(msg.content, list)
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
@@ -290,7 +360,7 @@ class TestBuildHumanMessage:
             mime_type="application/pdf",
             base64_data=_b64(content),
         )
-        msg = await _build_human_message("resuma", [att])
+        msg = await _build_human_message("resuma", [att], "t1")
 
         assert isinstance(msg.content, list)
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
@@ -308,7 +378,7 @@ class TestBuildHumanMessage:
             mime_type="text/plain",
             base64_data=_b64(content),
         )
-        msg = await _build_human_message("leia", [att])
+        msg = await _build_human_message("leia", [att], "t1")
 
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
         assert content in all_text
@@ -329,7 +399,7 @@ class TestBuildHumanMessage:
             mime_type="text/x-python",
             base64_data=_b64("x = 1"),
         )
-        msg = await _build_human_message("analyze", [img_att, code_att])
+        msg = await _build_human_message("analyze", [img_att, code_att], "t1")
 
         assert isinstance(msg.content, list)
         assert len(msg.content) == 3  # texto + image_url + texto-código
@@ -352,7 +422,7 @@ class TestBuildHumanMessage:
             mime_type="image/jpeg",
             base64_data=_b64_bytes(b"img2"),
         )
-        msg = await _build_human_message("compare", [att1, att2])
+        msg = await _build_human_message("compare", [att1, att2], "t1")
 
         assert len(msg.content) == 3  # text + 2 images
         assert msg.content[1]["type"] == "image_url"
@@ -375,7 +445,7 @@ class TestBuildHumanMessage:
             "backend.llm.transcription.transcribe_audio",
             AsyncMock(return_value="fale sobre o projeto"),
         ):
-            msg = await _build_human_message("ouça isso", [att])
+            msg = await _build_human_message("ouça isso", [att], "t1")
 
         assert isinstance(msg.content, list)
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
@@ -401,7 +471,7 @@ class TestBuildHumanMessage:
             "backend.llm.transcription.transcribe_audio",
             AsyncMock(side_effect=TranscriptionError("sem chave configurada")),
         ):
-            msg = await _build_human_message("ouça isso", [att])
+            msg = await _build_human_message("ouça isso", [att], "t1")
 
         assert isinstance(msg.content, list)
         all_text = "\n".join(p["text"] for p in msg.content if p["type"] == "text")
@@ -477,6 +547,15 @@ class TestStreamChatBlocksImageForNonVisionProvider:
     ('image content is not supported for this model'). Agora recusa antes
     de chamar o provider, com um ErrorEvent(code='MODEL_NO_VISION')."""
 
+    @pytest.fixture(autouse=True)
+    def _isolated_vectora_home(self, tmp_path, monkeypatch):
+        """`stream_chat` com anexo de imagem grava em `settings.vectora_home`
+        (`_persist_image_attachment`) — nunca aponta pro `~/.vectora` real
+        do ambiente rodando o teste."""
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "vectora_home", tmp_path)
+
     @pytest.mark.asyncio
     async def test_cohere_with_image_returns_model_no_vision_without_calling_provider(
         self,
@@ -526,6 +605,73 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             request = StreamChatRequest(
                 content="o que tem nessa imagem?",
                 config=ChatConfig(model="google-genai:gemini-2.5-flash"),
+                attachments=[_image_attachment()],
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert "MODEL_NO_VISION" not in body
+
+    @pytest.mark.asyncio
+    async def test_openrouter_model_without_vision_is_blocked(self) -> None:
+        """Modelo OpenRouter real sem `input_modalities: [..., "image"]` no
+        catálogo é bloqueado — igual a um provider direto sem visão."""
+        from backend.api.handlers import chat as chat_mod
+
+        mock_get_user_agent = AsyncMock()
+        with (
+            patch("backend.services.agent_factory.get_user_agent", mock_get_user_agent),
+            patch(
+                "backend.api.handlers.provider_routing.openrouter_model_supports_image",
+                new=AsyncMock(return_value=False),
+            ),
+        ):
+            request = StreamChatRequest(
+                content="o que tem nessa imagem?",
+                config=ChatConfig(model="openrouter:deepseek/deepseek-r1"),
+                attachments=[_image_attachment()],
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert '"code": "MODEL_NO_VISION"' in body
+        mock_get_user_agent.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_openrouter_model_with_vision_is_not_blocked(self) -> None:
+        """Erro/borda central do bug original: nem todo modelo servido via
+        OpenRouter é igual — um com `input_modalities` incluindo "image" no
+        catálogo não pode ser bloqueado só por o provider ser "openrouter"."""
+        from backend.api.handlers import chat as chat_mod
+
+        async def _empty_events(*_a: object, **_kw: object):
+            for _ in ():
+                yield
+
+        mock_graph = MagicMock()
+        mock_graph.astream_events = MagicMock(return_value=_empty_events())
+
+        with (
+            patch(
+                "backend.services.agent_factory.get_user_agent",
+                new=AsyncMock(return_value=mock_graph),
+            ),
+            patch(
+                "backend.api.handlers.threads._upsert_session",
+                new=AsyncMock(),
+            ),
+            patch(
+                "backend.api.handlers.provider_routing.openrouter_model_supports_image",
+                new=AsyncMock(return_value=True),
+            ),
+        ):
+            request = StreamChatRequest(
+                content="o que tem nessa imagem?",
+                config=ChatConfig(model="openrouter:openai/gpt-4o"),
                 attachments=[_image_attachment()],
             )
             http_request = MagicMock()

@@ -5,6 +5,7 @@
  */
 
 import type { Message } from "../../types";
+import type { HistoryMessage } from "../../api/vectora-client";
 
 // ============================================================================
 // Message ID Generation
@@ -67,4 +68,41 @@ export const ensureMessageExists = (
 ): Message[] => {
   const existing = messages.find((m) => m.id === messageId);
   return existing ? messages : [...messages, baseMessage];
+};
+
+// ============================================================================
+// History Conversion
+// ============================================================================
+
+/**
+ * Convert one `HistoryMessage` (REST history page) into a UI `Message`.
+ *
+ * Image attachments only carry over when `url` is populated — that's the
+ * persisted file path (`GET /threads/{id}/attachments/{filename}`), the
+ * only thing that survives a backend restart. Attachments without a URL
+ * (persistence failed, or messages from before this field existed) drop
+ * silently; the turn's text is still shown.
+ */
+export const historyMessageToMessage = (
+  hist: HistoryMessage,
+  id: string,
+): Message => {
+  const images = hist.attachments
+    ?.filter((att) => att.kind === "image" && att.url)
+    .map((att) => ({
+      id: att.url as string,
+      url: att.url as string,
+      mimeType: att.mimeType,
+      name: att.name,
+      size: att.size,
+    }));
+
+  return {
+    id,
+    role: hist.role === "human" ? "user" : "assistant",
+    content: hist.content,
+    timestamp: hist.created_at ? new Date(hist.created_at) : new Date(),
+    checkpointId: hist.checkpoint_id,
+    ...(images?.length ? { images } : {}),
+  } as Message;
 };

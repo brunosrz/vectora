@@ -224,6 +224,11 @@ class OpenRouterModelInfo(BaseModel):
     id: str
     name: str
     context_length: int | None = None
+    #: `architecture.input_modalities` da API do OpenRouter — inclui "image"
+    #: só nos modelos que de fato processam imagem. Varia por modelo, não
+    #: por ser servido via OpenRouter — daí não dar pra tratar "OpenRouter"
+    #: como um bloco único vision-capable ou não.
+    input_modalities: list[str] = []
 
 
 class OpenRouterCatalogResponse(BaseModel):
@@ -350,6 +355,37 @@ def _filtrar(models: list[OpenRouterModelInfo], q: str) -> list[OpenRouterModelI
     return [m for m in models if needle in m.id.lower() or needle in m.name.lower()]
 
 
+async def _ensure_openrouter_catalog_cached(client: Any) -> None:
+    """Popula `_catalog_cache` se expirado — extraído de
+    `discover_openrouter_models` pra ser reaproveitado por
+    `openrouter_model_supports_image`, que precisa do catálogo fora do
+    contexto de uma rota (sem `Depends`)."""
+    now = time.monotonic()
+    if now - _catalog_cache["fetched_at"] <= _OPENROUTER_CATALOG_TTL_S:
+        return
+    try:
+        resp = await client.get(f"{_OPENROUTER_BASE_URL}/models")
+        resp.raise_for_status()
+        data = resp.json()
+        _catalog_cache["models"] = [
+            OpenRouterModelInfo(
+                id=m["id"],
+                name=m.get("name", m["id"]),
+                context_length=m.get("context_length"),
+                input_modalities=list(
+                    m.get("architecture", {}).get("input_modalities") or []
+                ),
+            )
+            for m in data.get("data", [])
+            if m.get("id")
+        ]
+        _catalog_cache["fetched_at"] = now
+    except Exception:
+        logger.warning(
+            "provider_routing: falha ao buscar catálogo OpenRouter", exc_info=True
+        )
+
+
 @router.get("/openrouter/models")
 async def discover_openrouter_models(
     client: Annotated[Any, Depends(_get_http_client)], q: str = ""
@@ -357,41 +393,47 @@ async def discover_openrouter_models(
     """Catálogo público de modelos da OpenRouter (não exige key). Cacheado em
     memória por _OPENROUTER_CATALOG_TTL_S — a lista muda pouco e evita bater
     na API a cada tecla digitada na busca do frontend."""
-    now = time.monotonic()
-    if now - _catalog_cache["fetched_at"] > _OPENROUTER_CATALOG_TTL_S:
-        try:
-            resp = await client.get(f"{_OPENROUTER_BASE_URL}/models")
-            resp.raise_for_status()
-            data = resp.json()
-            _catalog_cache["models"] = [
-                OpenRouterModelInfo(
-                    id=m["id"],
-                    name=m.get("name", m["id"]),
-                    context_length=m.get("context_length"),
-                )
-                for m in data.get("data", [])
-                if m.get("id")
-            ]
-            _catalog_cache["fetched_at"] = now
-        except Exception:
-            logger.warning(
-                "provider_routing: falha ao buscar catálogo OpenRouter", exc_info=True
-            )
-            if not _catalog_cache["models"]:
-                # Sem rede e sem cache: a lista embutida é o que impede o
-                # seletor de aparecer vazio, que o usuário lê como "o Vectora
-                # não suporta OpenRouter" em vez de "estou sem internet".
-                # Não é gravada no cache — a próxima tentativa tem que buscar
-                # o catálogo real, não se dar por satisfeita com a lista curta.
-                embutidos = [
-                    OpenRouterModelInfo(**m) for m in OPENROUTER_FALLBACK_MODELS
-                ]
-                return OpenRouterCatalogResponse(
-                    models=_filtrar(embutidos, q)[:100],
-                )
+    await _ensure_openrouter_catalog_cached(client)
+    if not _catalog_cache["models"]:
+        # Sem rede e sem cache: a lista embutida é o que impede o seletor de
+        # aparecer vazio, que o usuário lê como "o Vectora não suporta
+        # OpenRouter" em vez de "estou sem internet". Não é gravada no
+        # cache — a próxima tentativa tem que buscar o catálogo real, não se
+        # dar por satisfeita com a lista curta.
+        embutidos = [OpenRouterModelInfo(**m) for m in OPENROUTER_FALLBACK_MODELS]
+        return OpenRouterCatalogResponse(models=_filtrar(embutidos, q)[:100])
 
     models: list[OpenRouterModelInfo] = _filtrar(_catalog_cache["models"], q)
     return OpenRouterCatalogResponse(models=models[:100])
+
+
+async def openrouter_model_supports_image(model_id: str) -> bool:
+    """Capability real de visão do modelo `model_id` (ex.:
+    "anthropic/claude-3.5-sonnet"), consultando o catálogo público
+    cacheado — nunca trata "openrouter" como um bloco único com/sem visão,
+    já que isso varia por modelo servido.
+
+    Modelo ausente do catálogo (id incomum, catálogo indisponível e cache
+    vazio) devolve `True` — fail-open: deixa a chamada real ao provider
+    decidir em vez de bloquear um modelo que pode muito bem suportar
+    imagem, já que o catálogo cobre a esmagadora maioria dos ids reais.
+    """
+    import httpx
+
+    if not _catalog_cache["models"]:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                await _ensure_openrouter_catalog_cached(client)
+        except Exception:
+            logger.debug(
+                "provider_routing: catálogo indisponível pra checar vision de %s",
+                model_id,
+            )
+
+    for m in _catalog_cache["models"]:
+        if m.id == model_id:
+            return "image" in m.input_modalities
+    return True
 
 
 @router.get("/openrouter/registered")

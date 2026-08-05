@@ -7,6 +7,7 @@ import {
   createUserMessage,
   generateMessageId,
   extractTextFromContent,
+  historyMessageToMessage,
 } from "@/lib/utils/chat";
 import { truncate } from "@/lib/utils/string";
 import { useStreamHandler, useFeedback, useChatState } from "@/lib/hooks/chat";
@@ -510,17 +511,8 @@ export function ChatInterface({
         }
 
         const convertedMessages: Message[] = historyMessages
-          .map(
-            (hist, idx) =>
-              ({
-                id: `history-${currentThreadId}-${idx}`,
-                role: hist.role === "human" ? "user" : "assistant",
-                content: hist.content,
-                timestamp: hist.created_at
-                  ? new Date(hist.created_at)
-                  : new Date(),
-                checkpointId: hist.checkpoint_id,
-              }) as Message,
+          .map((hist, idx) =>
+            historyMessageToMessage(hist, `history-${currentThreadId}-${idx}`),
           )
           .filter((message) => message.content.trim().length > 0);
 

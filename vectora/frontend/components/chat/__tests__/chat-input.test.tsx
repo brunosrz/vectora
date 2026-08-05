@@ -11,10 +11,16 @@ import {
   screen,
   cleanup,
   fireEvent,
+  waitFor,
 } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ChatInput } from "../chat-input";
 import { m } from "@/lib/paraglide/messages";
+import { checkOpenRouterModelSupportsImage } from "@/lib/api/openrouter-vision";
+
+vi.mock("@/lib/api/openrouter-vision", () => ({
+  checkOpenRouterModelSupportsImage: vi.fn(),
+}));
 
 // Estado mockável para o settings store — cobre ChatInput e EffortMenu.
 const mockSettings = {
@@ -330,5 +336,64 @@ describe("ChatInput — aviso de modelo sem suporte a imagem", () => {
 
     // Nenhum breakpoint de viewport (`sm:`) deve sobrar no rodapé — só container.
     expect(container.querySelector(".sm\\:flex-nowrap")).toBeNull();
+  });
+});
+
+describe("ChatInput — capability de imagem no OpenRouter varia por modelo", () => {
+  const imageFile = {
+    id: "f1",
+    mimeType: "image/png",
+    base64: "aGVsbG8=",
+    name: "foto.png",
+  };
+
+  it("consulta o catálogo pelo id do modelo sem o prefixo do provedor", async () => {
+    vi.mocked(checkOpenRouterModelSupportsImage).mockResolvedValue(true);
+    render(
+      <ChatInput
+        {...baseProps({
+          attachedFiles: [imageFile],
+          agentConfig: { model: "openrouter:openai/gpt-4o" },
+        })}
+      />,
+    );
+    await waitFor(() => {
+      expect(checkOpenRouterModelSupportsImage).toHaveBeenCalledWith(
+        "openai/gpt-4o",
+      );
+    });
+  });
+
+  it("não mostra aviso quando o modelo OpenRouter suporta imagem", async () => {
+    vi.mocked(checkOpenRouterModelSupportsImage).mockResolvedValue(true);
+    render(
+      <ChatInput
+        {...baseProps({
+          attachedFiles: [imageFile],
+          agentConfig: { model: "openrouter:openai/gpt-4o" },
+        })}
+      />,
+    );
+    await waitFor(() => {
+      expect(checkOpenRouterModelSupportsImage).toHaveBeenCalled();
+    });
+    expect(
+      screen.queryByText(m.chat_input_no_vision_warning()),
+    ).not.toBeInTheDocument();
+  });
+
+  it("mostra aviso quando o modelo OpenRouter não suporta imagem", async () => {
+    vi.mocked(checkOpenRouterModelSupportsImage).mockResolvedValue(false);
+    render(
+      <ChatInput
+        {...baseProps({
+          attachedFiles: [imageFile],
+          agentConfig: { model: "openrouter:some-text-only-model" },
+        })}
+      />,
+    );
+    expect(
+      await screen.findByText(m.chat_input_no_vision_warning()),
+    ).toBeInTheDocument();
   });
 });

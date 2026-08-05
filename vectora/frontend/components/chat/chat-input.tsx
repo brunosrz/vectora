@@ -37,6 +37,7 @@ import {
   isProviderVisionCapable,
   type ModelOption,
 } from "@/lib/config/deployment-config";
+import { checkOpenRouterModelSupportsImage } from "@/lib/api/openrouter-vision";
 import { m } from "@/lib/paraglide/messages";
 
 interface VscodeOption {
@@ -184,14 +185,39 @@ export function ChatInput({
     }
   };
 
+  const hasImage = attachedFiles.some((f) => f.mimeType.startsWith("image/"));
+  const provider = agentConfig?.model
+    ? getModelProvider(agentConfig.model as ModelOption)
+    : undefined;
+
+  // OpenRouter serve modelos de vários fornecedores com capability variável
+  // por modelo — consulta o catálogo (cacheado no backend) em vez de tratar
+  // o provedor inteiro como sem suporte a imagem.
+  const [openRouterSupportsImage, setOpenRouterSupportsImage] = useState(true);
+  useEffect(() => {
+    if (provider !== "openrouter" || !hasImage || !agentConfig?.model) {
+      setOpenRouterSupportsImage(true);
+      return;
+    }
+    let cancelled = false;
+    const openRouterModelId = agentConfig.model.slice(
+      agentConfig.model.indexOf(":") + 1,
+    );
+    checkOpenRouterModelSupportsImage(openRouterModelId).then((supported) => {
+      if (!cancelled) setOpenRouterSupportsImage(supported);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [provider, hasImage, agentConfig?.model]);
+
   // Cohere (e Ollama) não aceitam imagem na mensagem; avisa
   // cedo em vez de deixar o envio estourar com o erro cru do provedor.
   const hasImageWithoutVisionSupport = useMemo(() => {
-    const hasImage = attachedFiles.some((f) => f.mimeType.startsWith("image/"));
-    if (!hasImage || !agentConfig?.model) return false;
-    const provider = getModelProvider(agentConfig.model as ModelOption);
+    if (!hasImage || !provider) return false;
+    if (provider === "openrouter") return !openRouterSupportsImage;
     return !isProviderVisionCapable(provider);
-  }, [attachedFiles, agentConfig?.model]);
+  }, [hasImage, provider, openRouterSupportsImage]);
 
   // Auto-grow do textarea: ajusta a altura ao conteúdo até o teto de 240px;
   // depois disso o próprio textarea passa a scrollar internamente. Resolve

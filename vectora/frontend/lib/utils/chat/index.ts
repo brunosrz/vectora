@@ -10,6 +10,7 @@ export {
   createUserMessage,
   updateMessageInList,
   ensureMessageExists,
+  historyMessageToMessage,
 } from "./message-helpers";
 
 // Content helpers

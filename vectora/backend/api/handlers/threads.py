@@ -25,6 +25,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from backend.api.schemas import (
@@ -1102,8 +1103,10 @@ async def get_thread_history_paginated(
     has_more = start > 0
 
     messages = [
-        HistoryMessage(role=role, content=text, checkpoint_id=checkpoint_id)
-        for role, text, checkpoint_id, _att in page
+        HistoryMessage(
+            role=role, content=text, checkpoint_id=checkpoint_id, attachments=att
+        )
+        for role, text, checkpoint_id, att in page
     ]
 
     if offset == 0:
@@ -1127,6 +1130,21 @@ async def get_thread_history_paginated(
         has_more=has_more,
         total_count=total,
     )
+
+
+@router.get("/threads/{thread_id}/attachments/{filename}")
+async def get_thread_attachment(thread_id: str, filename: str) -> FileResponse:
+    """Serve um anexo de imagem persistido por `_persist_image_attachment`
+    (`chat.py`) — `attachments[].url` no histórico aponta pra cá. Sanitiza
+    os dois segmentos (sem `..`/separador) antes de tocar o filesystem."""
+    from backend.settings import settings
+
+    safe_thread = thread_id.replace("/", "").replace("\\", "").replace("..", "")
+    safe_filename = filename.replace("/", "").replace("\\", "").replace("..", "")
+    path = settings.vectora_home / "chat-attachments" / safe_thread / safe_filename
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Anexo não encontrado.")
+    return FileResponse(path)
 
 
 # ---------------------------------------------------------------------------

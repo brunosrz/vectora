@@ -532,6 +532,137 @@ class TestCatalogoOpenRouterComFallback:
 
         assert [m.id for m in resultado.models] == ["cacheado/modelo"]
 
+    @pytest.mark.asyncio
+    async def test_catalogo_extrai_input_modalities_por_modelo(self):
+        """`input_modalities` varia por modelo — não é um campo fixo do
+        provider, é o que permite checar vision por modelo em vez de por
+        provider inteiro."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        from backend.api.handlers.provider_routing import discover_openrouter_models
+
+        self._reset_cache()
+        resp = MagicMock()
+        resp.raise_for_status = MagicMock()
+        resp.json = MagicMock(
+            return_value={
+                "data": [
+                    {
+                        "id": "openai/gpt-4o",
+                        "name": "GPT-4o",
+                        "architecture": {"input_modalities": ["text", "image"]},
+                    },
+                    {
+                        "id": "deepseek/deepseek-r1",
+                        "name": "DeepSeek R1",
+                        "architecture": {"input_modalities": ["text"]},
+                    },
+                ]
+            }
+        )
+        client = MagicMock()
+        client.get = AsyncMock(return_value=resp)
+
+        resultado = await discover_openrouter_models(client)
+
+        by_id = {m.id: m for m in resultado.models}
+        assert by_id["openai/gpt-4o"].input_modalities == ["text", "image"]
+        assert by_id["deepseek/deepseek-r1"].input_modalities == ["text"]
+
+
+class TestOpenRouterModelSupportsImage:
+    """`openrouter_model_supports_image` — checagem de vision por modelo
+    real, não por "openrouter" como bloco único."""
+
+    @staticmethod
+    def _reset_cache() -> None:
+        from backend.api.handlers import provider_routing as pr
+
+        pr._catalog_cache["fetched_at"] = float("-inf")
+        pr._catalog_cache["models"] = []
+
+    @pytest.mark.asyncio
+    async def test_modelo_com_image_no_catalogo_retorna_true(self):
+        from backend.api.handlers import provider_routing as pr
+        from backend.api.handlers.provider_routing import (
+            OpenRouterModelInfo,
+            openrouter_model_supports_image,
+        )
+
+        self._reset_cache()
+        pr._catalog_cache["fetched_at"] = 0.0
+        pr._catalog_cache["models"] = [
+            OpenRouterModelInfo(
+                id="openai/gpt-4o", name="GPT-4o", input_modalities=["text", "image"]
+            )
+        ]
+
+        assert await openrouter_model_supports_image("openai/gpt-4o") is True
+
+    @pytest.mark.asyncio
+    async def test_modelo_sem_image_no_catalogo_retorna_false(self):
+        """Erro/borda central deste bug: nem todo modelo do OpenRouter
+        processa imagem — o catálogo é quem decide, não o provider."""
+        from backend.api.handlers import provider_routing as pr
+        from backend.api.handlers.provider_routing import (
+            OpenRouterModelInfo,
+            openrouter_model_supports_image,
+        )
+
+        self._reset_cache()
+        pr._catalog_cache["fetched_at"] = 0.0
+        pr._catalog_cache["models"] = [
+            OpenRouterModelInfo(
+                id="deepseek/deepseek-r1",
+                name="DeepSeek R1",
+                input_modalities=["text"],
+            )
+        ]
+
+        assert await openrouter_model_supports_image("deepseek/deepseek-r1") is False
+
+    @pytest.mark.asyncio
+    async def test_modelo_ausente_do_catalogo_falha_aberto(self, monkeypatch):
+        """Modelo não encontrado (id incomum, catálogo indisponível) não
+        pode bloquear preventivamente — fail-open deixa a chamada real ao
+        provider decidir."""
+        from backend.api.handlers import provider_routing as pr
+        from backend.api.handlers.provider_routing import (
+            OpenRouterModelInfo,
+            openrouter_model_supports_image,
+        )
+
+        self._reset_cache()
+        pr._catalog_cache["fetched_at"] = 0.0
+        pr._catalog_cache["models"] = [
+            OpenRouterModelInfo(id="outro/modelo", name="Outro", input_modalities=[])
+        ]
+
+        assert await openrouter_model_supports_image("id/inexistente") is True
+
+    @pytest.mark.asyncio
+    async def test_cache_vazio_tenta_popular_antes_de_checar(self, monkeypatch):
+        from backend.api.handlers import provider_routing as pr
+        from backend.api.handlers.provider_routing import (
+            openrouter_model_supports_image,
+        )
+
+        self._reset_cache()
+
+        async def _fake_ensure(client):
+            pr._catalog_cache["models"] = [
+                pr.OpenRouterModelInfo(
+                    id="openai/gpt-4o",
+                    name="GPT-4o",
+                    input_modalities=["text", "image"],
+                )
+            ]
+            pr._catalog_cache["fetched_at"] = 0.0
+
+        monkeypatch.setattr(pr, "_ensure_openrouter_catalog_cached", _fake_ensure)
+
+        assert await openrouter_model_supports_image("openai/gpt-4o") is True
+
 
 class TestNineRouterConfig:
     def test_status_not_configured_by_default(self, client, clean_nine_router_config):
