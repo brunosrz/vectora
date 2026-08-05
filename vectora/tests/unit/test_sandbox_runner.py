@@ -59,7 +59,7 @@ async def test_unknown_backend_fails_closed_without_running_anything(
     tmp_path, monkeypatch
 ):
     (tmp_path / "vectora.toml").write_text(
-        '[sandbox]\nenabled = true\nbackend = "singularity"\n', encoding="utf-8"
+        '[sandbox]\nenabled = true\nbackend = "not-a-real-backend"\n', encoding="utf-8"
     )
     create_mock = AsyncMock()
     monkeypatch.setattr(runner.asyncio, "create_subprocess_exec", create_mock)
@@ -67,7 +67,7 @@ async def test_unknown_backend_fails_closed_without_running_anything(
     result = await runner.run_sandboxed(["ls"], str(tmp_path))
 
     assert result.exit_code == 126
-    assert "singularity" in result.stderr
+    assert "not-a-real-backend" in result.stderr
     create_mock.assert_not_awaited()
 
 

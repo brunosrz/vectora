@@ -26,7 +26,7 @@ name = "vectora"
 # usuário) num worker jailado por workspace. Ausente = sandbox desligado
 # (comportamento atual do produto, sem regressão).
 # enabled = true
-# backend = "local"              # "local" (bwrap/WSL2) | "docker" | "ssh" | "modal"
+# backend = "local"              # "local" (bwrap/WSL2/macOS Seatbelt) | "docker" | "singularity" | "ssh" | "modal"
 # rw_paths = ["."]                # paths com leitura+escrita liberada dentro do jail
 # ro_paths = []                   # paths só-leitura adicionais
 # mask = [".env", "**/*.pem", "**/.ssh/**", "**/.aws/**"]  # nunca visíveis ao worker

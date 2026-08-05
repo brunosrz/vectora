@@ -6,10 +6,12 @@ não só os PIDs conhecidos pelo pid file de
 ``backend/scheduling/nats_sidecar.py`` — assim também encontra órfãos
 que ficaram fora desse rastreamento.
 
-No Windows, também reporta o status do caminho real de sandbox (WSL2 —
-bwrap não roda nativo nesse SO, e Docker não é o caminho certo pra isso,
-ver ``backend/sandbox/workspace_jail.py``): WSL2 instalado ou não, distro
-WSL2 elegível encontrada, e se ``bwrap`` está instalado dentro dela.
+Também reporta o status do backend de sandbox nativo da plataforma: no
+Windows, o caminho real é WSL2 (bwrap não roda nativo nesse SO, e Docker
+não é o caminho certo pra isso, ver ``backend/sandbox/workspace_jail.py``)
+— WSL2 instalado ou não, distro WSL2 elegível encontrada, e se ``bwrap``
+está instalado dentro dela. No macOS, o backend ``"macos"`` (Seatbelt via
+``sandbox-exec``) — disponível ou não.
 """
 
 from __future__ import annotations
@@ -76,19 +78,27 @@ def find_nats_server_pids() -> list[int]:
 async def _report_sandbox_status(console: Console) -> None:
     """Diagnóstico do sandbox por plataforma.
 
-    Linux: `bwrap` é nativo, nada a checar aqui. macOS: o backend `local`
-    **não funciona** (bwrap é Linux-only) — avisa proativamente em vez de
-    deixar o usuário descobrir na primeira execução. Windows: depende de
-    WSL2, checado abaixo.
+    Linux: `bwrap` é nativo, nada a checar aqui — `backend = "singularity"`
+    continua disponível como alternativa (ambientes HPC/cluster sem daemon
+    Docker). macOS: `backend = "macos"` (Seatbelt via `sandbox-exec`) é o
+    caminho nativo no host — reporta se o binário está disponível (interface
+    legada da Apple, pode sumir numa versão futura sem aviso). Windows:
+    depende de WSL2, checado abaixo.
     """
     if sys.platform == "darwin":
         console.print("\n[bold]Sandbox (AI Jail):[/bold]")
-        console.print(
-            "[yellow]✖ backend 'local' não é suportado no macOS — bwrap é "
-            "Linux-only e não há equivalente implementado aqui. Use "
-            "`backend = \"docker\"` (ou 'ssh'/'modal') no [sandbox] do "
-            "vectora.toml.[/yellow]"
-        )
+        if shutil.which("sandbox-exec") is not None:
+            console.print(
+                "[green]✔ sandbox-exec disponível[/green] — use "
+                '`backend = "macos"` no [sandbox] do vectora.toml para '
+                "isolamento nativo no host (Seatbelt/SBPL)."
+            )
+        else:
+            console.print(
+                "[yellow]✖ sandbox-exec não encontrado neste macOS — "
+                "backend 'macos' indisponível. Use `backend = \"docker\"` "
+                "(ou 'ssh'/'modal') no [sandbox] do vectora.toml.[/yellow]"
+            )
         return
     if sys.platform != "win32":
         return

@@ -16,8 +16,10 @@ from pathlib import Path
 
 from backend.sandbox.docker import run_docker_sandboxed
 from backend.sandbox.linux import SandboxResult, run_local_sandboxed
+from backend.sandbox.macos import run_macos_sandboxed
 from backend.sandbox.modal import run_modal_sandboxed
 from backend.sandbox.policy import SandboxPolicy, parse_policy
+from backend.sandbox.singularity import run_singularity_sandboxed
 from backend.sandbox.ssh import run_ssh_sandboxed
 
 logger = logging.getLogger(__name__)
@@ -27,13 +29,16 @@ _BACKENDS = {
     "docker": run_docker_sandboxed,
     "ssh": run_ssh_sandboxed,
     "modal": run_modal_sandboxed,
+    "macos": run_macos_sandboxed,
+    "singularity": run_singularity_sandboxed,
 }
 
 #: Backends que criam um ambiente novo (container/sandbox cloud) por
 #: execução. Cada um custa recurso real de máquina ou de conta cobrada, e
-#: nada no fluxo do agente impede N chamadas paralelas — `local` e `ssh`
-#: não entram porque reusam um worker/conexão existente.
-_BATCH_BACKENDS = frozenset({"docker", "modal"})
+#: nada no fluxo do agente impede N chamadas paralelas — `local`, `macos`
+#: e `ssh` não entram porque reusam um worker/conexão existente (ou, no
+#: caso do `macos`, rodam direto no host sem criar um ambiente novo).
+_BATCH_BACKENDS = frozenset({"docker", "modal", "singularity"})
 
 MAX_CONCURRENT_BATCH_RUNS_PER_WORKSPACE = 3
 
