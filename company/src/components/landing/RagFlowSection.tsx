@@ -8,6 +8,7 @@ import {
 import type { DiagramNode } from "#/components/landing/diagram-kit";
 
 const BULLETS = [
+  m.rag_bullet_library,
   m.rag_bullet_formats,
   m.rag_bullet_embeddings,
   m.rag_bullet_search,

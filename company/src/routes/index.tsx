@@ -3,6 +3,7 @@ import { m } from "#/paraglide/messages";
 import Hero from "#/components/landing/Hero";
 import ShowcaseGifs from "#/components/landing/ShowcaseGifs";
 import AgenticFlowSection from "#/components/landing/AgenticFlowSection";
+import CapabilitiesSection from "#/components/landing/CapabilitiesSection";
 import RagFlowSection from "#/components/landing/RagFlowSection";
 import TeamSetupSection from "#/components/landing/TeamSetupSection";
 import WhySelfHosted from "#/components/landing/WhySelfHosted";
@@ -100,6 +101,7 @@ function LandingPage() {
       <Hero />
       <ShowcaseGifs />
       <AgenticFlowSection />
+      <CapabilitiesSection />
       <RagFlowSection />
       <TeamSetupSection />
       <WhySelfHosted />
