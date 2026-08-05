@@ -376,12 +376,16 @@ resto do componente (ícone de provider, `onChange`) já funciona igual
 porque o formato de id é o mesmo `provider:model`.
 
 `deployment-config.ts::ModelConfig.provider` ganha `"ollama"` e
-`"openrouter"` no union type; `isProviderVisionCapable()` retorna `false`
-pros dois por padrão (Ollama depende do modelo local — não dá pra saber
-sem introspecção; OpenRouter varia por modelo agregado — mais seguro
-recusar imagem por padrão do que assumir suporte e estourar erro cru na
-API de terceiro, mesmo princípio do Sprint V1 do bugfix — ver
-`rustling-hatching-summit.md`).
+`"openrouter"` no union type. Ollama fica em `isProviderVisionCapable()`
+retornando `false` por padrão (modelo local, não dá pra introspectar sem
+consultar o daemon). OpenRouter **não** trata mais o provider inteiro
+como sem visão — a capability real varia por modelo agregado, então a
+checagem consulta `architecture.input_modalities` do catálogo público da
+OpenRouter por `model_id` (`checkOpenRouterModelSupportsImage` no
+frontend, `openrouter_model_supports_image` no backend), com fallback
+aberto (assume suporte) só quando o modelo está ausente do catálogo —
+bloquear o provider inteiro causava falso negativo pra modelos que
+processam imagem de verdade.
 
 ---
 

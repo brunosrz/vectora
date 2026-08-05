@@ -277,8 +277,16 @@ O que ficou, e o que existe hoje no repositório:
   frontend React pode estar visível (janela Electron) ou oculto
   (headless/bandeja). IPC via named pipe/unix socket, nunca TCP — web/VPS é
   a única superfície TCP, por design.
-- **MCP sempre-ativo.** Montado no mesmo processo FastAPI (`/mcp`), não um
-  processo stdio separado.
+- **MCP é client, não server.** O servidor MCP embutido (`/mcp`, montado
+  no mesmo processo FastAPI, invocável por Claude Desktop e outros
+  harnesses) foi removido — sem autenticação real e com risco de
+  canibalização (assinar Pro só pra usar o RAG via outro harness, sem
+  nunca abrir o resto do workspace). O Vectora só **consome** servidores
+  MCP externos (`backend/tools/mcp.py`, marketplace de conectores).
+- **Sem API pública.** A API REST `/v1` (extract/classify/jobs) chegou a
+  existir e foi removida antes do lançamento — sem autenticação de
+  terceiros real, sem SDKs, sem tração. Visão OEM de longo prazo, não
+  fundação técnica atual.
 - **Free/Pro, sem SaaS obrigatório.** Free é 100% local, sem conta. Pro é
   opcional, cobre trial/billing/licenciamento — servido por
   `services.vectora.company` (um Worker Cloudflare próprio, que substituiu o

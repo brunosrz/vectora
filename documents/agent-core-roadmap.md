@@ -77,45 +77,26 @@ busca web (Tavily) como fallback.
 
 #### 4. MCP (Model Context Protocol)
 
-| Ingrediente                          | Onde                                             | Função                                                                                                                                                                    |
-| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **mcp** (SDK oficial)                | (transporte e tipos)                             | tipos, transports stdio/SSE, runtime do servidor MCP (`mcp>=2.0`)                                                                                                         |
-| **`mcp.server.mcpserver.MCPServer`** | `backend/mcp/server.py` (`mcp = MCPServer(...)`) | wrapper de alto nível (decorators `@mcp.tool()`); converte funções Python em tool definitions MCP automaticamente. Faz parte do pacote `mcp` — **não** é uma dep separada |
-| **langchain-mcp-adapters**           | `backend/services/plugins.py`                    | Vectora **como cliente** MCP (consome outros servidores MCP como tools)                                                                                                   |
+> **O servidor MCP embutido foi removido.** O Vectora expunha até
+> 25 tools via `/mcp` (FastMCP), invocável por Claude Desktop e outros
+> harnesses — sem autenticação nenhuma, e com risco de canibalização
+> (assinar Pro só pra usar o RAG via outro harness, sem nunca abrir o
+> resto do workspace). Decisão: o Vectora é um **workspace com IA**, não
+> um workspace **de** IA consumido de fora por outro agente — expor
+> servidor MCP esconderia o diferencial (usuário e agente nas mesmas
+> superfícies) atrás de uma interface que o esvazia. `backend/mcp/server.py`,
+> `backend/mcp/proxy.py` e `backend/mcp/env_bootstrap.py` foram removidos
+> por completo.
 
-O Vectora pode ser **invocado pelo Claude Desktop** (Vectora como tool MCP
-via MCPServer em stdio/SSE, montado em `/mcp` no mesmo processo FastAPI —
-sobe com todo boot do backend, regra 16 do CLAUDE.md) ou pode **chamar
-outros servidores MCP** (plugins MCP por usuário virando `BaseTool` do
-agente).
+| Ingrediente                 | Onde                   | Função                                                                                     |
+| --------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| **mcp** (SDK oficial)       | (transporte e tipos)   | tipos e transports stdio/SSE usados pelo lado **cliente** (`mcp>=2.0`)                     |
+| **langchain-mcp-adapters**  | `backend/tools/mcp.py` | Vectora **como cliente** MCP (`call_mcp_tool`, consome servidores MCP externos como tools) |
+| **`backend/mcp/client.py`** | client MCP genérico    | usado por `backend/workspace/plugins.py` — instalação/consumo de plugins MCP por usuário   |
 
-**Superfície exposta (25 tools, `backend/mcp/server.py`)**: as mesmas
-categorias de leitura que o chat usa — arquivo (`file_read`/`file_edit`/
-`file_write`), busca (`grep`, `list_dir`, `vector_search`, `web_search`,
-`fetch_url`), RAG (`embedding`, `ingest_docs`, `manage_retriever`),
-workspace (`workspace_describe`/`workspace_list`/`bucket_summary`), git
-só-leitura (`git_status`/`git_diff`/`git_log`), Context Graph
-(`graph_query`/`graph_explain`/`graph_path`/`graph_affected`), terminal,
-delegação (`delegate_task_to_vectora`) e métricas (`vectora_metrics`).
-Kanban e Schedule ainda não têm tool própria no MCP — dependem de peças
-que a versão de chat tem e o MCP standalone ainda não (tools de Kanban em
-si; `thread_id` de sessão de chat pro Schedule).
-
-**Gate de aprovação pra escrita/terminal.** Diferente do resto do grafo
-LangGraph, as 3 tools MCP que mutam estado do host
-(`file_write_tool`/`file_edit_tool`/`terminal_tool`) chamam a tool interna
-via `.ainvoke()` **direto**, fora do `HumanInTheLoopMiddleware`/
-`permission_mode` do chat — um client MCP autenticado não passa pelo
-grafo, então nenhuma dessas proteções se aplica por padrão. Em vez de um
-`interrupt()` síncrono por chamada (que quebraria a promessa de operação
-sem fricção do MCP), a mitigação é uma **aprovação persistida por
-workspace**: `Workspace.mcp_write_approved` (mesmo padrão de
-`hooks_approved`), setada uma vez via `POST /workspaces/approve-mcp-write`
-(ou a UI em Configurações > Workspace) e checada antes de cada chamada às
-3 tools — sem aprovação, a tool recusa com mensagem clara em vez de
-executar. Tools só-leitura (arquivo, git, grafo, busca) nunca passam por
-esse gate. Toda chamada gated (aprovada ou recusada) emite log estruturado
-`mcp_write_call` para auditoria.
+O Vectora só **chama** servidores MCP externos (marketplace de
+conectores, `/mcp/registry|install|uninstall`, agora exigindo auth) —
+nunca é invocado por outro harness via MCP.
 
 #### 5. Terminal (PTY persistente)
 
@@ -394,7 +375,8 @@ agente **aprender o estilo de conversa, contexto e relacionamentos**.
 
 Sub-bloco proposto: **SX-RAG-2 — Chat history ingestion** (entra junto
 de SX-FS-\* na frente System Experience). Endpoint
-`POST /v1/rag/import-chat {source, content}` aceita os formatos suportados.
+`POST /rag/import-chat {source, content}` (sem prefixo `/v1` — esse
+namespace foi descontinuado, ver seção 4) aceita os formatos suportados.
 
 ##### 21.2 Document loaders — fontes além de filesystem
 
@@ -422,7 +404,7 @@ Hoje só indexamos arquivos locais. Community traz:
 | `CSVLoader`, `JSONLoader`                 | dados estruturados                                 |
 
 Sub-bloco proposto: **SX-RAG-3 — Conector zoo** com gates de
-configuração (cada loader vira opção no `POST /v1/rag/ingest` quando o
+configuração (cada loader vira opção no `POST /rag/ingest` quando o
 user tiver as credenciais correspondentes no vault).
 
 ##### 21.3 Chat message histories — alternativa exportável ao checkpointer
@@ -1451,14 +1433,26 @@ remotos como ferramentas.
 [Claude Desktop] ──ACP──> [Vectora] ──MCP/tools──> [Postgres/GitHub/...]
 ```
 
+> **Reavaliar o componente `.server` à luz da decisão do servidor MCP.**
+> `deepagents-acp.server` proporia expor o Vectora como agente remoto
+> invocável por outro harness (Claude Desktop etc.) — exatamente o
+> mesmo risco que motivou remover o servidor MCP embutido: um dev que
+> entra por ACP nunca vê o workspace, só uma ferramenta remota. Se este
+> item avançar, `.adapter` (Vectora consumindo outros agentes ACP,
+> análogo ao MCP client) é o pedaço coerente com o posicionamento atual;
+> `.server` precisa da mesma discussão estratégica que já matou o
+> servidor MCP antes de entrar em produção.
+
 3 componentes da lib:
 
-- `deepagents-acp.server` — Vectora expõe `/acp/v1` autenticado.
+- `deepagents-acp.server` — Vectora expõe um agente remoto autenticado.
 - `deepagents-acp.adapter` — Vectora consome outros agentes ACP como
   subagent.
 - `deepagents-acp.ide-integration` — conector VSCode/JetBrains nativo.
 
-Bloco I4 já mapeia. Implementação concreta em DE-12 + J7 (REST público).
+Bloco I4 já mapeia. Implementação concreta em DE-12 + J7 (a API pública
+`/v1` que serviria de base pra isso foi removida — ver
+`competitor-assimilation-backlog.md` para o racional).
 
 ---
 
@@ -1471,7 +1465,7 @@ comunidade LangChain.
 
 ```ts
 const { messages, status, interrupt, submit, stop } = useStream({
-  apiUrl: "/v1/agent",
+  apiUrl: "/agent",
   apiKey: token,
   threadId,
   assistantId: "vectora",
@@ -1644,12 +1638,12 @@ próprio.
 
 ##### DE-7 — Structured output
 
-Adicionar `response_format=` opcional ao `/v1/chat/stream` e expor
-endpoints especializados:
-
-- `POST /v1/extract` `{schema, text}` → JSON validado.
-- `POST /v1/classify` `{labels, text}` → label + confidence.
-- `POST /v1/generate-config` `{type, hints}` → dict tipado.
+> **Superado.** Propunha reviver o namespace público `/v1` (que chegou a
+> existir como `POST /v1/extract`/`/v1/classify`/`/v1/jobs` e foi
+> removido antes do lançamento por falta de fundação real — sem auth de
+> terceiros, sem SDKs, sem tração). Se `response_format=` estruturado
+> fizer sentido, entra como parâmetro do endpoint de chat **interno**
+> (autenticado, não público), não como um novo endpoint `/v1/*`.
 
 Auto-detecta `ProviderStrategy` (Anthropic/OpenAI/Gemini) ou
 `ToolStrategy` (fallback).
@@ -1692,10 +1686,12 @@ trusted no B2):
 Plano F (storage) deve cobrir o caso lite (sem sandbox), DE-11 cobre o
 pro com sandbox managed.
 
-##### DE-12 — ACP server público
+##### DE-12 — ACP server (ver nota de reavaliação na seção 10)
 
-Bloco I4 + J7 já mapeiam. DE-12 confirma o caminho:
-`/v1/acp` → `deepagents-acp.server` mount → autenticado via OAuth2
+Bloco I4 + J7 já mapeiam. Caminho técnico, **condicionado à decisão
+estratégica pendente** (seção 10 — mesmo risco que motivou remover o
+servidor MCP embutido): `/acp` (sem `/v1`, esse namespace foi
+descontinuado) → `deepagents-acp.server` mount → autenticado via OAuth2
 client credentials (J1).
 
 ##### DE-13 — Background memory consolidation
@@ -1707,14 +1703,15 @@ Segundo deep agent (`consolidation_agent`) em `langgraph.json` com cron
 
 ##### DE-14 — Time travel + edit/regenerate via update_state
 
-Endpoints REST:
+Endpoints REST (sob `backend/api/handlers/threads.py`, sem prefixo `/v1`
+— esse namespace foi descontinuado, ver seção 4):
 
-- `GET /v1/threads/{tid}/checkpoints` → lista (já temos SX-FS-3 que pede).
-- `POST /v1/threads/{tid}/rewind {checkpoint_id}` → cria novo run no
+- `GET /threads/{tid}/checkpoints` → lista (já temos SX-FS-3 que pede).
+- `POST /threads/{tid}/rewind {checkpoint_id}` → cria novo run no
   checkpoint anterior.
-- `POST /v1/threads/{tid}/messages/{mid}/edit {content}` → `update_state`
+- `POST /threads/{tid}/messages/{mid}/edit {content}` → `update_state`
   - invoke novo.
-- `POST /v1/threads/{tid}/fork {from_checkpoint_id}` → cria novo thread
+- `POST /threads/{tid}/fork {from_checkpoint_id}` → cria novo thread
   copiando histórico até o checkpoint.
 
 Tudo 10–30 linhas cada — LangGraph já entrega a primitiva.
@@ -1723,22 +1720,22 @@ Tudo 10–30 linhas cada — LangGraph já entrega a primitiva.
 
 #### 14. Arquivos críticos (Bloco DE)
 
-| Sub   | Arquivos                                                                                                                                  |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| DE-1  | `backend/services/agent_factory.py` (rewrite), deletar `build_graph` interno; `backend/services/context.py` (novo, `VectoraContext`)      |
-| DE-2  | `backend/services/middleware.py` (novo); deletar `hitl_check`, `_resolve_pre_interrupt`, `_apply_hitl_edit`                               |
-| DE-3  | `backend/services/backends.py` (novo); deprecate `backend/services/security.py::resolve_within_workspace`; refactor `backend/tools/fs.py` |
-| DE-4  | deletar `backend/services/memory.py`; refactor `backend/tools/memory.py` para usar store nativo; migration script                         |
-| DE-5  | `backend/services/profiles.py` (novo); registra profile por modelo no startup                                                             |
-| DE-6  | `backend/api/adapters.py` (refactor v2→v3), `backend/api/node_labels.py` (extensão p/ subagent paths)                                     |
-| DE-7  | `backend/api/handlers/{extract,classify}.py` (novos); `backend/api/handlers/chat.py` (`response_format` opcional)                         |
-| DE-8  | `backend/services/guardrails.py` (novo); `vectora/frontend/src/components/admin/guardrails-panel.tsx` (UI)                                |
-| DE-9  | `backend/services/telemetry/langsmith.py` (novo); env `VECTORA_LANGSMITH_KEY`                                                             |
-| DE-10 | `backend/services/agent_factory.py` (subagents como `AsyncSubAgent`)                                                                      |
-| DE-11 | `backend/services/sandboxes/{modal,e2b}.py` (novos); reuso de I1 (sandbox + worktree)                                                     |
-| DE-12 | `backend/api/handlers/v1/acp.py` (mount); `pyproject.toml` (+`deepagents-acp`)                                                            |
-| DE-13 | `backend/agents/consolidation.py` (novo); `langgraph.json`; cron via SCons                                                                |
-| DE-14 | `backend/api/handlers/threads.py` (+checkpoints, rewind, edit, fork); `backend/services/checkpoint.py` (helpers)                          |
+| Sub   | Arquivos                                                                                                                                      |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| DE-1  | `backend/services/agent_factory.py` (rewrite), deletar `build_graph` interno; `backend/services/context.py` (novo, `VectoraContext`)          |
+| DE-2  | `backend/services/middleware.py` (novo); deletar `hitl_check`, `_resolve_pre_interrupt`, `_apply_hitl_edit`                                   |
+| DE-3  | `backend/services/backends.py` (novo); deprecate `backend/services/security.py::resolve_within_workspace`; refactor `backend/tools/fs.py`     |
+| DE-4  | deletar `backend/services/memory.py`; refactor `backend/tools/memory.py` para usar store nativo; migration script                             |
+| DE-5  | `backend/services/profiles.py` (novo); registra profile por modelo no startup                                                                 |
+| DE-6  | `backend/api/adapters.py` (refactor v2→v3), `backend/api/node_labels.py` (extensão p/ subagent paths)                                         |
+| DE-7  | `backend/api/handlers/chat.py` (`response_format` opcional no endpoint interno — não `/v1/extract`/`/v1/classify`, removidos)                 |
+| DE-8  | `backend/services/guardrails.py` (novo); `vectora/frontend/src/components/admin/guardrails-panel.tsx` (UI)                                    |
+| DE-9  | `backend/services/telemetry/langsmith.py` (novo); env `VECTORA_LANGSMITH_KEY`                                                                 |
+| DE-10 | `backend/services/agent_factory.py` (subagents como `AsyncSubAgent`)                                                                          |
+| DE-11 | `backend/services/sandboxes/{modal,e2b}.py` (novos); reuso de I1 (sandbox + worktree)                                                         |
+| DE-12 | `backend/api/handlers/acp.py` (mount, sem `/v1`; `.server` exige reavaliação estratégica, ver seção 10); `pyproject.toml` (+`deepagents-acp`) |
+| DE-13 | `backend/agents/consolidation.py` (novo); `langgraph.json`; cron via SCons                                                                    |
+| DE-14 | `backend/api/handlers/threads.py` (+checkpoints, rewind, edit, fork); `backend/services/checkpoint.py` (helpers)                              |
 
 ---
 
@@ -1786,15 +1783,18 @@ Remover (deps fantasma confirmadas em `documents/agent-core-roadmap.md`):
   semantic search funciona via `store.search(namespace, query=...)`.
 - Streaming v3: cliente JS consome `stream.subagents` e renderiza cada
   subagent em bloco. Latência first-token ≤ atual.
-- Structured output: `POST /v1/extract` retorna Pydantic validado.
+- Structured output: `response_format=` no endpoint de chat interno
+  retorna Pydantic validado (ver nota do DE-7 — não é mais `/v1/extract`).
 - Guardrails: tentar enviar email com `sk-...` no body → PIIMiddleware
   bloqueia com `[REDACTED_API_KEY]`.
 - LangSmith: setar `VECTORA_LANGSMITH_KEY=...` → próxima invocation
   aparece no dashboard em <30s.
 - Time travel: clicar "Voltar até aqui" na 3ª mensagem → 4ª+ apagadas,
   nova resposta gerada do mesmo checkpoint.
-- ACP: Claude Desktop → "Add ACP server" → URL Vectora → tools do
-  Vectora aparecem disponíveis para o Claude.
+- ACP: `deepagents-acp.adapter` → Vectora consome outro agente ACP como
+  subagent (ver nota da seção 10 — o lado `.server`, que exporia o
+  Vectora pra outro harness, exige a mesma discussão que já matou o
+  servidor MCP).
 
 ---
 

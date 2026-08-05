@@ -168,7 +168,9 @@ infra."_ Chatbot de suporte com RAG sobre a KB da empresa, citações
 verificáveis, handoff para humano. Ataca o mesmo espaço de Intercom Fin/
 Zendesk AI, mas para setores regulados que não podem mandar conversas de
 cliente para clouds de terceiros. Reusa ~90% do stack Vectora Pro
-(pipeline RAG, multi-LLM, storage, REST API); a equipe entrega apenas
+(pipeline RAG, multi-LLM, storage) — precisaria construir uma API
+autenticada própria pra esse produto, não existe uma pública reusável
+hoje; a equipe entrega apenas
 widget JS + dashboard + lógica de handoff. Modelo: SaaS $50/mês até 500
 conversas + $0.10/conversa adicional, ou self-hosted $299/mês flat.
 
@@ -238,6 +240,17 @@ se torna viável.
 ---
 
 ## Licenciamento OEM
+
+> **Visão de longo prazo, sem fundação técnica atual.** Uma API pública
+> `/v1` (extract/classify/jobs) chegou a ser construída e foi removida
+> antes do lançamento — sem autenticação de terceiros real (só
+> rate-limit por tier), sem SDKs, sem tração, sem sentido em sustentar
+> meio-caminho de uma visão OEM que ainda não era prioridade. Todo o
+> modelo de tiers/termos abaixo descreve **para onde a Vectora Company
+> pode ir se e quando** decidir priorizar OEM de novo — não o que existe
+> hoje. Se avançar, nasce com autenticação de verdade (API key/OAuth2
+> client_credentials) desde o design, não como reaproveitamento do que
+> foi descontinuado.
 
 ### O cenário que o modelo resolve
 
@@ -481,10 +494,11 @@ separado.
 
 ### Site (vectora.company)
 
-Landing single-page com hero, vídeos de produto sem narração, explicação
-de RAG via diagrama animado, diagramas de arquitetura (CLI/MCP/Chat Web,
-agentes especializados, empresa em VPS com múltiplos usuários), tabela de
-planos, FAQ e páginas legais. Autenticação e dashboard (token, status de
+Landing single-page com hero (pitch de workspace compartilhado),
+vídeos de produto sem narração, seções de capacidades (Browser, Sandbox,
+Context Graph, Library dentro do RAG), diagramas de arquitetura
+(CLI/Chat Web/Desktop, agentes especializados, empresa em VPS com
+múltiplos usuários), tabela de planos, FAQ e páginas legais. Autenticação e dashboard (token, status de
 licença, histórico de validações, gestão de assinatura) consomem os
 endpoints de `services` descritos acima — não mais Supabase Auth SSR.
 i18n inicial: `pt-BR` (default) e `en`.

@@ -20,15 +20,28 @@
 
 ### A frase canônica
 
-> **"Vectora é o agente de produtividade local-first para engenheiros
-> sêniores e seus times — escreve código com contexto real do projeto,
-> e atende o resto da empresa (PM, marketing, design, exec) com a mesma
-> base de conhecimento."**
+> **"Vectora é o workspace com IA local-first para engenheiros sêniores
+> e seus times — usuário e agente compartilham as mesmas ferramentas
+> (filesystem, git, terminal, browser, RAG), e o mesmo workspace atende
+> o resto da empresa (PM, marketing, design, exec) com a mesma base de
+> conhecimento."**
 
 Cabe num tweet. Diz para quem é (engenheiros sêniores + times), o que
-faz (produtividade, não só código), o diferencial técnico (local-first,
-contexto real via RAG), e a expansão natural (resto da empresa via
-mesma KB).
+faz (workspace compartilhado, não um chat que só narra pro usuário), o
+diferencial estrutural (autonomia real do usuário nas mesmas
+superfícies do agente, local-first), e a expansão natural (resto da
+empresa via mesmo workspace).
+
+> **Por que workspace, não RAG.** RAG é replicável por qualquer
+> concorrente que decida investir nisso, mesmo sem acesso ao
+> código-fonte — vender RAG como diferencial principal ensina a
+> concorrência a copiar exatamente a peça mais fácil de copiar. O
+> workspace compartilhado (usuário e agente nas mesmas 9 tabs do
+> workbench, autonomia real, não mediada) é estrutural: um concorrente
+> teria que refazer o produto do zero pra competir nisso. RAG continua
+> sendo capacidade central — via **Library**, que reduz custo de
+> aquisição com buckets prontos — mas dentro do workspace, não como
+> pitch primário.
 
 ### O Problema
 
@@ -62,14 +75,17 @@ O plano **Pro é opcional** e cobre trial, billing e licenciamento via
 um backend SaaS que hospeda ou executa instâncias do produto por conta
 do usuário. Contratar Pro não muda onde o agente roda; muda apenas
 quais recursos (stack de alto desempenho, chat web multi-usuário,
-webhooks, REST API) ficam disponíveis.
+webhooks) ficam disponíveis.
 
 A diferença para outras alternativas self-hosted: Vectora é um
 **produto comercial maduro**, não um projeto de fim de semana. Entrega
-RAG de produção, chat web multi-usuário com RBAC, integração MCP
-nativa, instaladores assinados, auto-update e suporte direto do
-fundador — combinação que produtos open-source de hobby raramente
-entregam junta.
+workspace compartilhado de verdade (filesystem/git/terminal/browser/RAG
+nas mesmas 9 tabs pro usuário e pro agente), RAG de produção, chat web
+multi-usuário com RBAC, instaladores assinados, auto-update e suporte
+direto do fundador — combinação que produtos open-source de hobby
+raramente entregam junta. Consome servidores MCP externos (marketplace
+de conectores) mas não expõe a si mesmo como servidor MCP — ver
+"O que Vectora NÃO é".
 
 **Por que local-first significa controle real:**
 
@@ -93,6 +109,12 @@ produto atual evolui sob licença comercial.
 
 ### O que Vectora **é**
 
+- **Workspace compartilhado, não um agente narrando pra um espectador.**
+  Usuário e agente usam as mesmas funções de serviço para filesystem,
+  git, terminal, browser, context graph e RAG — 8 das 9 tabs do
+  workbench são interativas para os dois lados. Em Claude Code Desktop,
+  Hermes Desktop, Antigravity e equivalentes, só o agente age; o humano
+  só vê o resultado.
 - **Local-first, sem login obrigatório.** Free tier funciona
   inteiramente offline de conta — só as APIs de LLM/RAG que você mesmo
   configurar exigem rede.
@@ -119,20 +141,22 @@ produto atual evolui sob licença comercial.
 
 ### O que Vectora **NÃO é** (anti-positioning explícito)
 
-| Vectora **NÃO é**                                       | Para isso use:                                                                                         |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Gerador de apps com 1 prompt                            | Lovable, v0, Bolt.new, Replit Agent                                                                    |
-| Autocomplete inline no editor                           | GitHub Copilot, Codeium, Cursor Tab                                                                    |
-| Substituto de engenheiro júnior                         | Devin, Cognition, Magic.dev (quando provarem que funcionam de verdade)                                 |
-| Chat de IA para conversa casual                         | ChatGPT, Claude.ai, Gemini app                                                                         |
-| Assistente de reuniões                                  | Perssua, Otter.ai, Fireflies                                                                           |
-| Wiki/documentação editorial colaborativa                | Notion, Confluence, Outline                                                                            |
-| BI tool / dashboard SaaS dedicado                       | Metabase, Looker, Tableau                                                                              |
-| Automação no-code de workflows                          | Zapier, n8n, Make                                                                                      |
-| Plataforma de hosting de apps                           | Vercel, Netlify, Render                                                                                |
-| Sistema de tickets / project management                 | Jira, Linear, Asana                                                                                    |
-| CRM                                                     | Salesforce, HubSpot, Pipedrive                                                                         |
-| Backend SaaS que hospeda instâncias do produto por você | Não existe — Vectora não roda "na nossa nuvem"; `services.vectora.company` só cuida de licença/billing |
+| Vectora **NÃO é**                                                                 | Para isso use:                                                                                                                                               |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Gerador de apps com 1 prompt                                                      | Lovable, v0, Bolt.new, Replit Agent                                                                                                                          |
+| Autocomplete inline no editor                                                     | GitHub Copilot, Codeium, Cursor Tab                                                                                                                          |
+| Substituto de engenheiro júnior                                                   | Devin, Cognition, Magic.dev (quando provarem que funcionam de verdade)                                                                                       |
+| Chat de IA para conversa casual                                                   | ChatGPT, Claude.ai, Gemini app                                                                                                                               |
+| Assistente de reuniões                                                            | Perssua, Otter.ai, Fireflies                                                                                                                                 |
+| Wiki/documentação editorial colaborativa                                          | Notion, Confluence, Outline                                                                                                                                  |
+| BI tool / dashboard SaaS dedicado                                                 | Metabase, Looker, Tableau                                                                                                                                    |
+| Automação no-code de workflows                                                    | Zapier, n8n, Make                                                                                                                                            |
+| Plataforma de hosting de apps                                                     | Vercel, Netlify, Render                                                                                                                                      |
+| Sistema de tickets / project management                                           | Jira, Linear, Asana                                                                                                                                          |
+| CRM                                                                               | Salesforce, HubSpot, Pipedrive                                                                                                                               |
+| Backend SaaS que hospeda instâncias do produto por você                           | Não existe — Vectora não roda "na nossa nuvem"; `services.vectora.company` só cuida de licença/billing                                                       |
+| Servidor MCP embutido / engine consumível por outro harness (Claude Code, Hermes) | Não existe mais — Vectora consome MCPs externos (client), mas expor a si mesmo como servidor MCP esconderia o workspace atrás de uma interface que o esvazia |
+| API REST pública `/v1` para terceiros construírem produto em cima                 | Não existe — removida antes do lançamento por falta de fundação (auth, SDKs); se voltar, nasce com autenticação de verdade desde o design                    |
 
 Vectora **integra** com vários destes (via MCP ou plugins DLC), mas
 **não substitui** nenhum.
@@ -204,8 +228,8 @@ aprovação explícita do fundador.
 ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐
 │ SELF-HOSTED OPEN    │      │ ★ VECTORA ★         │      │ AUTOCOMPLETE / IDE  │
 │ Aider, Continue.dev │      │ Local-first comerc. │      │ GitHub Copilot,     │
-│ OpenCode, OpenDevin │      │ RAG-first + MCP +   │      │ Codeium, Tabnine    │
-│ Hermes Agent, Cline │      │ chat web + REST API │      │ Pieces              │
+│ OpenCode, OpenDevin │      │ Workspace + RAG +   │      │ Codeium, Tabnine    │
+│ Hermes Agent, Cline │      │ chat web multi-user │      │ Pieces              │
 └─────────────────────┘      └─────────────────────┘      └─────────────────────┘
                                           │
                                           │
@@ -371,8 +395,8 @@ pesada.
 
 > _"Continue.dev é a opção open source para extensão de IDE. Se você só
 > quer chat dentro do VS Code e tudo bem configurar JSON, use. Vectora
-> oferece VSIX equivalente + chat web + CLI + REST API + RAG de
-> produção — pagando $7-20/mês."_
+> oferece VSIX equivalente + chat web + CLI + workspace compartilhado +
+> RAG de produção — pagando $7-20/mês."_
 
 #### 6. Sourcegraph Cody
 
@@ -552,8 +576,10 @@ Oportunidades de diferenciação:
 3. Beta program estruturado com recompensa — ninguém formaliza →
    `launch-and-distribution.md`
 4. Chat web multi-usuário local-first → Vectora único
-5. REST API + OAuth + Webhooks para sistemas internos → ninguém no
-   segmento PME
+5. ~~REST API + OAuth + Webhooks para sistemas internos~~ — API pública
+   `/v1` removida antes do lançamento (sem auth real, sem SDKs, sem
+   tração); se voltar a fazer sentido estratégico, nasce com
+   autenticação de verdade desde o design, não como meio-caminho
 6. Seis modalidades de IA nativas (LLM+embedding+rerank+TTS+STT+imagem)
    → ninguém combina; ver `extensibility-roadmap.md`
 7. Instalação modular via packs Nuitka — ninguém faz, binário pesado
@@ -562,30 +588,30 @@ Oportunidades de diferenciação:
 
 ### Matriz comparativa consolidada
 
-| Feature                       | Vectora  | Claude Code | Cursor | Aider | Continue |  Cody   |  Devin  | Copilot |
-| ----------------------------- | :------: | :---------: | :----: | :---: | :------: | :-----: | :-----: | :-----: |
-| Local-first / self-hosted     |    ✅    |     ❌      |   ❌   |  ✅   |    ✅    |   ✅¹   |   ❌    |   ❌    |
-| Multi-LLM (não-lock-in)       |    ✅    |     ❌      |   ✅   |  ✅   |    ✅    |   ✅    |  Parc.  |  Parc.  |
-| RAG dedicado com sub-agente   |    ✅    |     ❌      | Parc.  |  ❌   |    ❌    |  Parc.  |   ❌    |   ❌    |
-| Multi-agente especializado    |    ✅    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |  Parc.  |   ❌    |
-| Chat web multi-usuário (RBAC) |    ✅    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| MCP client (consumir)         |    ✅    |     ✅      | Plan.  |  ❌   |  Plan.   |   ❌    |   ❌    |   ❌    |
-| MCP Library integrada (UI)    |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| REST API + SDKs               |    🔄    |    Parc.    |   ❌   |  ❌   |    ❌    |   ✅    |   ❌    |   ❌    |
-| Webhooks                      |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Desktop app assinado          |    ✅    |     ❌      |   ✅   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| VSIX (VS Code extension)      |    🔄    |     ❌      |  N/A   |  ❌   |    ✅    |   ✅    |   ❌    |   ✅    |
-| Áudio nativo (STT + TTS)      |    🔄    |     ❌      |   ❌   | Parc. |    ❌    |   ❌    |   ❌    |   ❌    |
-| Geração de imagens            |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Persona packs (não-devs)      |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Hooks (pre/post tool)         |    🔄    |     ✅      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Plan mode explícito           |    🔄    |     ✅      |   ❌   | Parc. |    ❌    |   ❌    |   ✅    |   ❌    |
-| Custom slash commands hier.   |    🔄    |     ✅      | Parc.  | Parc. |    ✅    |   ❌    |   ❌    |   ❌    |
-| Auto-commit por mudança       |    📋    |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Live preview embedded         |    🔄    |     ✅²     |   ❌   |  ❌   |    ❌    |   ❌    |   ✅    |   ❌    |
-| Architect/coder split         |    📋    |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Programa beta formal          |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Custo                         | $7–20/mo |   $20+/mo   | $20/mo | Free  |   Free   | $60+/mo | $500/mo | $19/mo  |
+| Feature                                              |    Vectora    | Claude Code | Cursor | Aider | Continue |  Cody   |  Devin  | Copilot |
+| ---------------------------------------------------- | :-----------: | :---------: | :----: | :---: | :------: | :-----: | :-----: | :-----: |
+| Local-first / self-hosted                            |      ✅       |     ❌      |   ❌   |  ✅   |    ✅    |   ✅¹   |   ❌    |   ❌    |
+| Multi-LLM (não-lock-in)                              |      ✅       |     ❌      |   ✅   |  ✅   |    ✅    |   ✅    |  Parc.  |  Parc.  |
+| RAG dedicado com sub-agente                          |      ✅       |     ❌      | Parc.  |  ❌   |    ❌    |  Parc.  |   ❌    |   ❌    |
+| Multi-agente especializado                           |      ✅       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |  Parc.  |   ❌    |
+| Chat web multi-usuário (RBAC)                        |      ✅       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| MCP client (consumir)                                |      ✅       |     ✅      | Plan.  |  ❌   |  Plan.   |   ❌    |   ❌    |   ❌    |
+| MCP/Skills/Memory Library (UI, publish+verify+busca) |      ✅       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| REST API pública `/v1` p/ terceiros                  | ❌ (removida) |    Parc.    |   ❌   |  ❌   |    ❌    |   ✅    |   ❌    |   ❌    |
+| Webhooks                                             |      🔄       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Desktop app assinado                                 |      ✅       |     ❌      |   ✅   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| VSIX (VS Code extension)                             |      🔄       |     ❌      |  N/A   |  ❌   |    ✅    |   ✅    |   ❌    |   ✅    |
+| Áudio nativo (STT + TTS)                             |      🔄       |     ❌      |   ❌   | Parc. |    ❌    |   ❌    |   ❌    |   ❌    |
+| Geração de imagens                                   |      🔄       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Persona packs (não-devs)                             |      🔄       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Hooks (pre/post tool)                                |      🔄       |     ✅      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Plan mode explícito                                  |      🔄       |     ✅      |   ❌   | Parc. |    ❌    |   ❌    |   ✅    |   ❌    |
+| Custom slash commands hier.                          |      🔄       |     ✅      | Parc.  | Parc. |    ✅    |   ❌    |   ❌    |   ❌    |
+| Auto-commit por mudança                              |      📋       |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Live preview embedded (painel Console/Network/DOM)   |      ✅       |     ✅²     |   ❌   |  ❌   |    ❌    |   ❌    |   ✅    |   ❌    |
+| Architect/coder split                                |      📋       |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Programa beta formal                                 |      🔄       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Custo                                                |   $7–20/mo    |   $20+/mo   | $20/mo | Free  |   Free   | $60+/mo | $500/mo | $19/mo  |
 
 ¹ Self-hosted é Sourcegraph Enterprise pago
 ² Claude Code ganhou navegador embutido + detecção de dev server em
@@ -610,28 +636,31 @@ transparência + ARPU baixo).
 
 ### Radar de assimilação — jul/2026
 
-> **O norte não muda: RAG.** O maior poder do Vectora sempre será a
-> recuperação (RAG híbrido + Context Graph), e a **rag-library** é o
-> objetivo central pós-lançamento — retriever como produto, indexação
-> incremental, biblioteca de conhecimento compartilhável. Tudo neste
-> radar é **paridade secundária**: assimilamos o que os concorrentes
-> fazem bem para não ficar atrás em UX de agente, mas nunca à custa do
-> diferencial de RAG. Priorização = (impacto no usuário) × (distância do
-> nosso norte); features que competem com o tempo da rag-library ficam
+> **O norte não muda: workspace compartilhado.** O diferencial
+> estrutural do Vectora é usuário e agente operando nas mesmas
+> superfícies (filesystem, git, terminal, browser, RAG) — RAG híbrido +
+> Context Graph são capacidades centrais dentro desse workspace, com a
+> **Library** como pilar de aquisição (buckets prontos, publish/verify),
+> não o pitch primário (RAG é replicável por qualquer concorrente que
+> invista nisso; o workspace não é). Tudo neste radar é **paridade
+> secundária**: assimilamos o que os concorrentes fazem bem para não
+> ficar atrás em UX de agente, mas nunca à custa do diferencial de
+> workspace. Priorização = (impacto no usuário) × (distância do nosso
+> norte); features que competem com o tempo do workspace/Library ficam
 > pós-1.0.
 
 **Claude Code (v2.1.x) — o benchmark de UX de agente:**
 
-| Feature deles                          | Status no Vectora                                            |
-| -------------------------------------- | ------------------------------------------------------------ |
-| Navegador embutido (DOM/console/net)   | 📋 evoluir o A2/Playwright → pane de preview/QA no workbench |
-| Detecção de dev server (`launch.json`) | 📋 config `preview` + auto-start no workbench                |
-| Checkpoints + `/rewind` por sessão     | 📋 snapshot pré-mudança sobre o checkpointer LangGraph       |
-| Dynamic workflows / agent swarm        | 📋 opcional, sempre sob HITL + workspace visível             |
-| Subagentes em background por padrão    | ✅ background tasks + fila NATS (jobs)                       |
-| Fallback model chain                   | ✅ `FallbackChatModel`                                       |
-| Streaming resiliente a erro no meio    | ✅ `adapt_stream` + classify_stream_error                    |
-| Auto mode bloqueia git/terraform       | 🔄 permission modes (HITL) — falta a lista de bloqueio       |
+| Feature deles                          | Status no Vectora                                                     |
+| -------------------------------------- | --------------------------------------------------------------------- |
+| Navegador embutido (DOM/console/net)   | ✅ painel Console/Network/Elements no workbench, sobre Playwright+CDP |
+| Detecção de dev server (`launch.json`) | 📋 config `preview` + auto-start no workbench                         |
+| Checkpoints + `/rewind` por sessão     | 📋 snapshot pré-mudança sobre o checkpointer LangGraph                |
+| Dynamic workflows / agent swarm        | 📋 opcional, sempre sob HITL + workspace visível                      |
+| Subagentes em background por padrão    | ✅ background tasks + fila NATS (jobs)                                |
+| Fallback model chain                   | ✅ `FallbackChatModel`                                                |
+| Streaming resiliente a erro no meio    | ✅ `adapt_stream` + classify_stream_error                             |
+| Auto mode bloqueia git/terraform       | 🔄 permission modes (HITL) — falta a lista de bloqueio                |
 
 **Hermes Agent (Nous Research, self-hosted, v0.18.0 jul/2026):**
 referência de transparência e local-first radical, com learning loop
@@ -645,10 +674,12 @@ destiladas em
 
 **Paperclip (paperclipai, MIT, 2026):** orquestração de _times_ de
 agentes — org chart, budgets/governança, ticketing com heartbeats e
-**Company Artifacts indexados** (semente de rag-library). Features
+**Company Artifacts** (feed unificado de outputs, sem embeddings nem
+vector store — agregação relacional + busca trigram, não RAG). Features
 acionáveis no mesmo backlog (P-1..P-4). Público é "rodar empresa com
-agentes"; assimilamos as **primitivas** (artefatos indexados, budgets,
-gates de PR), **não** o "zero-human company" (anti-Devin).
+agentes"; assimilamos as **primitivas** (feed de artefatos, budgets,
+gates de PR), **não** o "zero-human company" (anti-Devin) nem a
+premissa de que já existe base de RAG pronta pra copiar de lá.
 
 **Regra de ouro (anti-Devin):** qualquer feature de escala (swarm,
 workflows, background pesado) entra **com HITL e workspace visível**.
@@ -823,9 +854,9 @@ Vectora Company.
 **CTO de PME tech:**
 
 > _"Local-first comercial. Sem markup de tokens. Mesmo agente atende
-> seus devs (via VSIX/chat), seu PM (via persona pack), e sistemas
-> internos (via REST API). $20/mês por seat ou plano Team para o time
-> inteiro."_
+> seus devs (via VSIX/chat), seu PM (via persona pack), e o resto do
+> time — todo mundo no mesmo workspace, com a mesma base de
+> conhecimento. $20/mês por seat ou plano Team para o time inteiro."_
 
 **Empresa em setor regulado:**
 
@@ -840,21 +871,25 @@ Vectora Company.
 > assistente que conhece os clientes, as campanhas e a marca — porque
 > tudo já está no RAG da empresa."_
 
-**Integrador / partner:**
+**Integrador / partner (visão OEM de longo prazo, sem fundação técnica
+hoje — a API pública `/v1` foi removida antes do lançamento):**
 
-> _"REST API limpa, OAuth2 client credentials, SDKs Python/TS. O
-> Vectora vira o motor RAG do seu produto sem você precisar construir
-> o pipeline do zero."_
+> _"Se e quando a Vectora Company priorizar OEM de novo, nasce com
+> autenticação de terceiros de verdade desde o design — API key/OAuth2
+> client credentials real, SDKs — não como reaproveitamento do que foi
+> descontinuado."_
 
 ### Por que agora
 
-O Vectora resolve o problema adjacente que nenhum concorrente resolve
-de verdade: fazer o agente conhecer o projeto. RAG **como pilar
-central**, não feature secundária — o único agente de desenvolvimento
-com sub-agente dedicado exclusivamente à recuperação e auditoria de
-conhecimento. Quando o Vectora responde sobre o projeto, responde **com
-base no que foi indexado** — não no que o modelo achou que era
-verdade.
+O Vectora resolve dois problemas que nenhum concorrente resolve de
+verdade ao mesmo tempo: dar ao agente um **workspace real** (não uma
+narração do que ele fez em superfícies que o usuário nunca toca) e
+fazer o agente **conhecer o projeto** — RAG com sub-agente dedicado
+exclusivamente à recuperação e auditoria de conhecimento. Quando o
+Vectora responde sobre o projeto, responde **com base no que foi
+indexado** — não no que o modelo achou que era verdade. O workspace é
+o que nenhum concorrente consegue copiar rápido; o RAG é a capacidade
+que torna esse workspace útil desde o primeiro dia.
 
 ### Arquitetura de agentes (para audiência técnica)
 
@@ -898,23 +933,26 @@ de chat).
 CLI (configuração/shell via SSH em VPS), chat web multi-usuário (RBAC),
 e desktop app nativo assinado (Windows/macOS/Linux, Electron + Nuitka
 onefile, IPC local nunca TCP). O Vectora consome servidores MCP de
-terceiros (client), mas não se expõe como servidor MCP nem API pública
-para integradores externos — ver Sprints 1-2 do plano de 0.1.11 para o
-racional dessa decisão.
+terceiros (client), mas não se expõe como servidor MCP nem como API
+pública para integradores externos: as duas formas reduziriam o Vectora
+de volta a "só mais um agente conversando com você" — um dev que entra
+via MCP nunca vê o workspace; um cliente que entra via API só vê um
+endpoint, produto nenhum. Os dois esconderiam o diferencial real atrás
+de uma interface que o esvazia.
 
 ### Modelo de negócio
 
 Preços deliberadamente baixos — volume e fidelização, não margem alta
 em poucas contas.
 
-| Plano          | Preço                | Inclui                                                                                                                                               |
-| -------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Free**       | Grátis, permanente   | 100% local, sem conta. CLI + Desktop + stack econômica (SQLite/LanceDB). Traz as próprias chaves de API.                                             |
-| **Plus**       | $7 / R$20 por mês    | Tudo do Free + quotas mensais leves de créditos de parceiros (Cohere/Tavily), sem precisar de chave própria.                                         |
-| **Pro**        | $20 / R$55 por mês   | Tudo do Plus + chat web multi-usuário + stack de alto desempenho (Postgres/Qdrant/Redis) + webhooks. Billing/licença via `services.vectora.company`. |
-| **Team**       | $49 / R$130 por mês  | Tudo do Pro + Host/Client + VSIX + SSO (quando essas frentes entregarem).                                                                            |
-| **OEM**        | A partir de $199/mês | Uso comercial via REST API para servir usuários externos, tiers escaláveis.                                                                          |
-| **Enterprise** | Contrato customizado | SLA, suporte dedicado, DPA, revenue share, on-premise air-gapped.                                                                                    |
+| Plano          | Preço                | Inclui                                                                                                                                                                                                                                  |
+| -------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Free**       | Grátis, permanente   | 100% local, sem conta. CLI + Desktop + stack econômica (SQLite/LanceDB). Traz as próprias chaves de API.                                                                                                                                |
+| **Plus**       | $7 / R$20 por mês    | Tudo do Free + quotas mensais leves de créditos de parceiros (Cohere/Tavily), sem precisar de chave própria.                                                                                                                            |
+| **Pro**        | $20 / R$55 por mês   | Tudo do Plus + chat web multi-usuário + stack de alto desempenho (Postgres/Qdrant/Redis) + webhooks. Billing/licença via `services.vectora.company`.                                                                                    |
+| **Team**       | $49 / R$130 por mês  | Tudo do Pro + Host/Client + VSIX + SSO (quando essas frentes entregarem).                                                                                                                                                               |
+| **OEM**        | A partir de $199/mês | Visão de longo prazo, sem fundação técnica hoje — a API pública `/v1` foi removida antes do lançamento; se este plano avançar, nasce com autenticação de terceiros de verdade desde o design, não como reaproveitamento do que existia. |
+| **Enterprise** | Contrato customizado | SLA, suporte dedicado, DPA, revenue share, on-premise air-gapped.                                                                                                                                                                       |
 
 A assinatura cobre software, suporte, atualizações e créditos
 opcionais de parceiros (Cohere/Tavily) — nunca tokens de LLM/embedding
@@ -934,12 +972,12 @@ diretamente no código (com HITL para ações destrutivas). Histórico de
 sessões e KB ficam no servidor da empresa; custo escala com tokens
 consumidos nas APIs escolhidas, não por assento na cobrança da Vectora.
 
-Dois modos de integração com sistemas internos via headless REST API:
-
-| Modo         | Como funciona                                                | Para quem                                               |
-| ------------ | ------------------------------------------------------------ | ------------------------------------------------------- |
-| **Headless** | Sistema usa Vectora diretamente como backend via REST/OAuth  | Quem precisa que 100% das respostas venham do RAG       |
-| **MCP**      | Outros agentes delegam tarefas para o Vectora quando preciso | Times que já têm agente preferido e querem estender RAG |
+Hoje o único modo de integração com sistemas internos é indireto: o
+Vectora **consome** servidores MCP de terceiros (client), não expõe a
+si mesmo como servidor MCP nem como API pública headless para outro
+sistema chamar. Um modo headless de verdade (sistema interno usando o
+Vectora diretamente como backend via API autenticada) exigiria a mesma
+fundação que a API pública `/v1` nunca teve — não existe hoje.
 
 ### Parceiros estratégicos
 
@@ -977,7 +1015,8 @@ proposta.
 do uso); time de 3–10 devs (Pro numa VPS de R$50–100/mês, cada dev via
 chat web ou MCP do editor preferido); PME tech até 50 devs (Pro
 multi-tenant, Team quando Host/Client entregar); empresa com sistemas
-internos (tier OEM para alimentar produtos próprios via REST API).
+internos (tier OEM, visão de longo prazo sem fundação técnica hoje —
+ver seção de pricing acima).
 
 **NÃO é para:** quem quer chat de IA para conversa casual (ChatGPT
 free); quem quer assistente de reunião (Perssua); quem só quer
@@ -987,8 +1026,7 @@ autocomplete de código sem RAG (GitHub Copilot).
 
 Vectora hoje cobre o **Tier 1** do plano de portfólio. Em
 desenvolvimento nos próximos meses: IA+ (TTS/STT/geração de imagem),
-Deep Agents com sandbox e worktree por usuário, hardening de storage,
-REST API v1 completa, cache distribuído. **Tier 2** (6–12 meses): VSIX
+hardening de storage, cache distribuído. **Tier 2** (6–12 meses): VSIX
 oficial, Host/Client (servidor central + cliente local por dev),
 marketplace de plugins/DLC pagos. **Tier 3** (ano 2+): produtos
 independentes que funcionam sem o Vectora mas se integram via RAG —

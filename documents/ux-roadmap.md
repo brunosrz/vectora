@@ -861,7 +861,8 @@ self-hosted onde o user não quer enviar áudio para servidor da Google
   `pt-BR`, `en-US`, `es-ES`). Não hardcoded `en-US` no caller.
 - **Fallback remoto** quando `isSupported === false`:
   - Provider primário: gravação local via `MediaRecorder` → upload para
-    `POST /v1/audio/transcribe` (endpoint novo) → backend
+    `POST /audio/transcribe` (endpoint novo, sem prefixo `/v1` — esse
+    namespace foi descontinuado) → backend
     chama Cohere/OpenAI Whisper conforme `effective_env` do user.
   - Indicação clara "modo nuvem" vs "modo browser local" no tooltip.
 - **Push-to-talk vs continuous**: toggle em Settings → Preferências →
@@ -893,7 +894,7 @@ mensagem (autodetect via primeiros chars ou metadata da resposta).
 já implementado). Falta inteligência por tipo de conteúdo:
 
 - **URL**: detecta padrão; opcionalmente busca `<title>` + OG image via
-  `GET /v1/web/preview?url=...` e renderiza card ao invés do bare URL.
+  `GET /web/preview?url=...` (sem `/v1`) e renderiza card ao invés do bare URL.
   Toggle "expandir como card" no Settings.
 - **Código com língua detectável**: detecta lang via `highlight.js
 auto` ou heurística simples (regex de `def `, `function `, `class `,

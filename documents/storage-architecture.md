@@ -143,3 +143,52 @@ task.cancel()
 - Integração do `AsyncConnectionPool` com `AsyncSqliteSaver`
 - `SqliteStore` para o `BaseStore` do LangGraph (memória do agente)
 - `LanceDB` como `VectorStore` nativo do LangChain
+
+---
+
+## Configuração unificada — registry declarativo (`backend/config/`)
+
+O Vectora tem, e continua tendo, **4 mecanismos de persistência de
+configuração desacoplados**: `.env`/`os.environ`/`settings` singleton via
+`backend/services/env_keys.py`, `RuntimeSettings` em SQLite
+(`backend/workspace/runtime_settings.py`), tabelas SQLite ad hoc do
+`provider_routing.py` (modelos registrados por gateway), e
+`~/.vectora/config.toml` via `backend/services/license.py`. O registry em
+`backend/config/` não substitui nenhum deles — declara, por cima, um
+contrato tipado único, hoje consumido pelo CLI auto-gerado (abaixo).
+Motivação original: `PATCH /admin/api-keys` e `POST /auth/envs` cada um
+com sua própria lógica de "grava no `.env` + atualiza `os.environ` +
+atualiza `settings`" (motivo original da existência do `env_keys.py`) —
+migrar esses dois handlers REST pra delegar ao registry, como prova de
+conceito antes de expandir pra mais categorias, **continua pendente**.
+
+**Peças:**
+
+- `backend/config/registry.py` — `SettingField` (chave, categoria,
+  `cli_flag`, descrição, adapter, `secret: bool`) e o registry global
+  (`setting_field()` para declarar, `get_field`/`fields_for_category`/
+  `all_categories` para consultar). Chave duplicada levanta
+  `DuplicateSettingFieldError` — cada campo só pode ser declarado uma vez.
+- `backend/config/adapters.py` — `EnvAdapter`, `RuntimeSettingsAdapter`,
+  `ConfigTomlAdapter`: cada um sabe ler/escrever num dos mecanismos reais
+  acima. Um `SettingField` não guarda valor — delega ao adapter.
+- `backend/config/fields.py` — onde os campos são de fato declarados;
+  importar este módulo (feito uma vez em `backend/config/__init__.py`) é o
+  que popula o registry. Cobre hoje as categorias `integrations` (API keys
+  de LLM/search), `connect` (tokens de bot de mensageria) e `preferences`
+  (tema, idioma, timezone, `default_model`, `allow_public_signup`).
+
+**Escopo deliberado: só pares chave→valor escalares entram no registry.**
+Recursos em formato de coleção — modelos registrados por gateway
+(`provider_routing.py`), memórias (`memory.py`), perfil de conta
+(`/auth/me`) — não são forçados nesse molde; continuam com CRUD próprio,
+especializado. O registry resolve a duplicação de get/set de config
+simples, não tenta virar ORM genérico.
+
+**CLI auto-gerado** (`backend/cli/config.py`): um subcomando por
+categoria, construído a partir do registry —
+`vectora config <categoria> --get [chave]` / `--set chave=valor`. Chave
+que não existe na categoria retorna erro amigável, não stack trace.
+Comandos anteriores a este registry (`config keys`, `config docker/qdrant/
+redis`) continuam existindo como estão — cobrem wizards interativos e
+orquestração de infra, não um simples get/set.
