@@ -10,6 +10,7 @@ nestes testes (não depende de Chromium instalado).
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -32,6 +33,9 @@ class _FakePage:
         self.inner_text = AsyncMock(return_value="Olá mundo")
         self.mouse = AsyncMock()
         self.mouse.wheel = AsyncMock()
+        self.wait_for_selector = AsyncMock()
+        self.drag_and_drop = AsyncMock()
+        self.set_input_files = AsyncMock()
 
     async def _goto(self, url: str, **_kwargs: object) -> None:
         self.url = url
@@ -175,6 +179,136 @@ async def test_browser_fill_writes_value_and_rejects_missing_field(
         {"selector": "#missing", "value": "x"}, config=_config()
     )
     assert err.startswith("Error:")
+
+
+@pytest.mark.asyncio
+async def test_browser_click_e_fill_sem_selector_nem_uid_retornam_erro(
+    monkeypatch, fake_page
+):
+    """Borda: nem `selector` nem `uid` informados — nunca tenta clicar/
+    preencher às cegas."""
+    monkeypatch.setattr(
+        browser_tools,
+        "resolve_dev_server_url",
+        AsyncMock(return_value="http://localhost:5173"),
+    )
+
+    click_err = await browser_tools.browser_click.ainvoke({}, config=_config())
+    assert click_err.startswith("Error:")
+
+    fill_err = await browser_tools.browser_fill.ainvoke(
+        {"value": "x"}, config=_config()
+    )
+    assert fill_err.startswith("Error:")
+
+
+@pytest.mark.asyncio
+async def test_browser_click_por_uid_clica_no_centro_do_box_model(
+    monkeypatch, fake_page
+):
+    """`uid` (de browser_snapshot) resolve via CDP box model e clica no
+    centro — não depende de seletor CSS."""
+    monkeypatch.setattr(
+        browser_tools,
+        "resolve_dev_server_url",
+        AsyncMock(return_value="http://localhost:5173"),
+    )
+    tab_page = SimpleNamespace(mouse=SimpleNamespace(click=AsyncMock()))
+    tab = SimpleNamespace(cdp=SimpleNamespace(), page=tab_page)
+    monkeypatch.setattr(browser_tools, "get_tab_state", lambda _wid: tab)
+    monkeypatch.setattr(
+        browser_tools, "resolve_uid_center", AsyncMock(return_value=(10.0, 20.0))
+    )
+
+    result = await browser_tools.browser_click.ainvoke({"uid": "102"}, config=_config())
+
+    assert result.startswith("[OK]")
+    assert "uid=102" in result
+    tab_page.mouse.click.assert_awaited_once_with(10.0, 20.0)
+
+
+@pytest.mark.asyncio
+async def test_browser_click_por_uid_nao_encontrado_retorna_erro(
+    monkeypatch, fake_page
+):
+    """Erro/borda: `uid` de um elemento que já saiu do DOM (snapshot
+    desatualizado) devolve erro tipado, não exceção."""
+    monkeypatch.setattr(
+        browser_tools,
+        "resolve_dev_server_url",
+        AsyncMock(return_value="http://localhost:5173"),
+    )
+    tab = SimpleNamespace(cdp=SimpleNamespace(), page=SimpleNamespace())
+    monkeypatch.setattr(browser_tools, "get_tab_state", lambda _wid: tab)
+    monkeypatch.setattr(
+        browser_tools, "resolve_uid_center", AsyncMock(return_value=None)
+    )
+
+    result = await browser_tools.browser_click.ainvoke({"uid": "999"}, config=_config())
+
+    assert result.startswith("Error:")
+    assert "999" in result
+
+
+@pytest.mark.asyncio
+async def test_browser_click_por_uid_nao_numerico_retorna_erro(monkeypatch, fake_page):
+    """Borda: `uid` que não é o `backendDOMNodeId` numérico esperado."""
+    monkeypatch.setattr(
+        browser_tools,
+        "resolve_dev_server_url",
+        AsyncMock(return_value="http://localhost:5173"),
+    )
+    tab = SimpleNamespace(cdp=SimpleNamespace(), page=SimpleNamespace())
+    monkeypatch.setattr(browser_tools, "get_tab_state", lambda _wid: tab)
+    resolve_mock = AsyncMock()
+    monkeypatch.setattr(browser_tools, "resolve_uid_center", resolve_mock)
+
+    result = await browser_tools.browser_click.ainvoke(
+        {"uid": "not-a-number"}, config=_config()
+    )
+
+    assert result.startswith("Error:")
+    resolve_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_browser_fill_por_uid_preenche_via_cdp(monkeypatch, fake_page):
+    monkeypatch.setattr(
+        browser_tools,
+        "resolve_dev_server_url",
+        AsyncMock(return_value="http://localhost:5173"),
+    )
+    tab = SimpleNamespace(cdp=SimpleNamespace(), page=SimpleNamespace())
+    monkeypatch.setattr(browser_tools, "get_tab_state", lambda _wid: tab)
+    set_value_mock = AsyncMock(return_value=True)
+    monkeypatch.setattr(browser_tools, "set_value_by_uid", set_value_mock)
+
+    result = await browser_tools.browser_fill.ainvoke(
+        {"uid": "103", "value": "a@b.com"}, config=_config()
+    )
+
+    assert result.startswith("[OK]")
+    set_value_mock.assert_awaited_once_with(tab.cdp, 103, "a@b.com")
+
+
+@pytest.mark.asyncio
+async def test_browser_fill_por_uid_falha_retorna_erro(monkeypatch, fake_page):
+    monkeypatch.setattr(
+        browser_tools,
+        "resolve_dev_server_url",
+        AsyncMock(return_value="http://localhost:5173"),
+    )
+    tab = SimpleNamespace(cdp=SimpleNamespace(), page=SimpleNamespace())
+    monkeypatch.setattr(browser_tools, "get_tab_state", lambda _wid: tab)
+    monkeypatch.setattr(
+        browser_tools, "set_value_by_uid", AsyncMock(return_value=False)
+    )
+
+    result = await browser_tools.browser_fill.ainvoke(
+        {"uid": "103", "value": "x"}, config=_config()
+    )
+
+    assert result.startswith("Error:")
 
 
 @pytest.mark.asyncio
@@ -424,3 +558,214 @@ class TestPreviewLogsTool:
         assert result != ""
         assert "web" in result
         assert "nunca foi iniciado" in result
+
+
+class TestBrowserWaitFor:
+    @pytest.mark.asyncio
+    async def test_estado_invalido_retorna_erro_sem_chamar_playwright(
+        self, monkeypatch, fake_page
+    ):
+        result = await browser_tools.browser_wait_for.ainvoke(
+            {"selector": "#x", "state": "invalido"}, config=_config()
+        )
+
+        assert result.startswith("Error:")
+        fake_page.wait_for_selector.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sucesso_confirma_estado_atingido(self, monkeypatch, fake_page):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+
+        result = await browser_tools.browser_wait_for.ainvoke(
+            {"selector": "#ready", "state": "visible", "timeout_ms": 2000},
+            config=_config(),
+        )
+
+        assert result.startswith("[OK]")
+        fake_page.wait_for_selector.assert_awaited_once_with(
+            "#ready", state="visible", timeout=2000
+        )
+
+    @pytest.mark.asyncio
+    async def test_timeout_devolve_erro_tipado_nao_excecao(
+        self, monkeypatch, fake_page
+    ):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+        fake_page.wait_for_selector.side_effect = TimeoutError("timeout")
+
+        result = await browser_tools.browser_wait_for.ainvoke(
+            {"selector": "#nunca-aparece"}, config=_config()
+        )
+
+        assert result.startswith("Error:")
+        assert "#nunca-aparece" in result
+
+
+class TestBrowserDrag:
+    @pytest.mark.asyncio
+    async def test_arrasta_com_sucesso(self, monkeypatch, fake_page):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+
+        result = await browser_tools.browser_drag.ainvoke(
+            {"source_selector": "#card-1", "target_selector": "#column-done"},
+            config=_config(),
+        )
+
+        assert result.startswith("[OK]")
+        fake_page.drag_and_drop.assert_awaited_once_with(
+            "#card-1", "#column-done", timeout=5000
+        )
+
+    @pytest.mark.asyncio
+    async def test_elemento_nao_encontrado_retorna_erro(self, monkeypatch, fake_page):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+        fake_page.drag_and_drop.side_effect = TimeoutError("not found")
+
+        result = await browser_tools.browser_drag.ainvoke(
+            {"source_selector": "#ghost", "target_selector": "#target"},
+            config=_config(),
+        )
+
+        assert result.startswith("Error:")
+
+
+class TestBrowserUploadFile:
+    @pytest.mark.asyncio
+    async def test_arquivo_inexistente_no_host_retorna_erro_sem_chamar_playwright(
+        self, monkeypatch, fake_page, tmp_path
+    ):
+        result = await browser_tools.browser_upload_file.ainvoke(
+            {
+                "selector": "input[type=file]",
+                "file_path": str(tmp_path / "nao-existe.png"),
+            },
+            config=_config(),
+        )
+
+        assert result.startswith("Error:")
+        fake_page.set_input_files.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_anexa_arquivo_existente_com_sucesso(
+        self, monkeypatch, fake_page, tmp_path
+    ):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+        f = tmp_path / "avatar.png"
+        f.write_bytes(b"fake-png")
+
+        result = await browser_tools.browser_upload_file.ainvoke(
+            {"selector": "input[type=file]", "file_path": str(f)}, config=_config()
+        )
+
+        assert result.startswith("[OK]")
+        fake_page.set_input_files.assert_awaited_once_with(
+            "input[type=file]", str(f), timeout=5000
+        )
+
+
+class TestBrowserFillForm:
+    @pytest.mark.asyncio
+    async def test_campos_vazios_retorna_erro(self, monkeypatch, fake_page):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+
+        result = await browser_tools.browser_fill_form.ainvoke(
+            {"fields": {}}, config=_config()
+        )
+
+        import json as _json
+
+        assert _json.loads(result)["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_todos_os_campos_preenchidos_com_sucesso(
+        self, monkeypatch, fake_page
+    ):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+
+        import json as _json
+
+        result = _json.loads(
+            await browser_tools.browser_fill_form.ainvoke(
+                {"fields": {"#name": "Bruno", "#email": "b@x.com"}}, config=_config()
+            )
+        )
+
+        assert result["status"] == "ok"
+        assert result["results"] == {"#name": "ok", "#email": "ok"}
+
+    @pytest.mark.asyncio
+    async def test_falha_parcial_continua_pros_demais_campos_e_reporta_status_partial(
+        self, monkeypatch, fake_page
+    ):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+
+        async def _fill(selector, value, **_kwargs):
+            if selector == "#missing":
+                raise TimeoutError("not found")
+
+        fake_page.fill.side_effect = _fill
+
+        import json as _json
+
+        result = _json.loads(
+            await browser_tools.browser_fill_form.ainvoke(
+                {"fields": {"#ok": "x", "#missing": "y"}}, config=_config()
+            )
+        )
+
+        assert result["status"] == "partial"
+        assert result["results"]["#ok"] == "ok"
+        assert result["results"]["#missing"].startswith("error:")
+
+    @pytest.mark.asyncio
+    async def test_todos_os_campos_falham_reporta_status_error(
+        self, monkeypatch, fake_page
+    ):
+        monkeypatch.setattr(
+            browser_tools,
+            "resolve_dev_server_url",
+            AsyncMock(return_value="http://localhost:5173"),
+        )
+        fake_page.fill.side_effect = TimeoutError("not found")
+
+        import json as _json
+
+        result = _json.loads(
+            await browser_tools.browser_fill_form.ainvoke(
+                {"fields": {"#a": "1", "#b": "2"}}, config=_config()
+            )
+        )
+
+        assert result["status"] == "error"

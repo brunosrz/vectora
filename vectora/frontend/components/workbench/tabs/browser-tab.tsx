@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronRight,
+  Code2,
   ExternalLink,
   Loader2,
   Play,
@@ -22,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { m as msg } from "@/lib/paraglide/messages";
+import { BrowserDevtoolsPanel } from "./browser-devtools-panel";
 
 interface LaunchConfig {
   name: string;
@@ -129,6 +131,10 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   const [consoleFor, setConsoleFor] = useState<string | null>(null);
   const [consoleLines, setConsoleLines] = useState<string[]>([]);
   const [consoleLoading, setConsoleLoading] = useState(false);
+  // Painel de devtools da sessão do AGENTE (Playwright headless) — distinto
+  // do console de stdout do dev server acima, que é sobre o processo, não
+  // sobre a página que o agente navega via tools de browser.
+  const [devtoolsOpen, setDevtoolsOpen] = useState(false);
 
   // Múltiplas abas — cada uma com seu próprio histórico (web) ou sua
   // própria WebContentsView (desktop, cada uma com viewId próprio; o
@@ -936,6 +942,14 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
         >
           <ExternalLink className="h-3 w-3" />
         </a>
+        <button
+          data-testid="browser-devtools-toggle"
+          className={`rounded p-1 hover:bg-accent transition-colors ${devtoolsOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          onClick={() => setDevtoolsOpen((v) => !v)}
+          title={msg.workbench_browser_devtools_toggle()}
+        >
+          <Code2 className="h-3 w-3" />
+        </button>
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col">
@@ -1057,6 +1071,13 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
             )}
           </div>
         </div>
+      )}
+
+      {devtoolsOpen && wsId && (
+        <BrowserDevtoolsPanel
+          wsId={wsId}
+          onClose={() => setDevtoolsOpen(false)}
+        />
       )}
     </div>
   );

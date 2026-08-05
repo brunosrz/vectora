@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+from pathlib import Path
 from typing import Annotated, Any
 from urllib.parse import urlparse
 
@@ -23,7 +24,13 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
 from backend.browser.dev_server import resolve_dev_server_url
-from backend.browser.session import get_browser_page, has_browser_session
+from backend.browser.session import (
+    get_browser_page,
+    get_tab_state,
+    has_browser_session,
+    resolve_uid_center,
+    set_value_by_uid,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -148,20 +155,45 @@ async def browser_screenshot(
     }
 )
 async def browser_click(
-    selector: str,
+    selector: str | None = None,
+    uid: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Clica no elemento da página atual que casa com o seletor CSS.
+    """Clica no elemento da página atual — por seletor CSS ou por `uid` (de
+    `browser_snapshot`, mais confiável em markup sem classe/id estável).
 
     Args:
-        selector: Seletor CSS (ex.: "button.submit", "#login-form input[type=email]")
+        selector: Seletor CSS (ex.: "button.submit", "#login-form input[type=email]").
+            Ignorado se `uid` for informado.
+        uid: uid de `browser_snapshot` (`backendDOMNodeId`) — usa CDP em vez
+            de seletor, mais resistente a componentes gerados dinamicamente.
 
     Returns:
-        Confirmação ou mensagem de erro (seletor não encontrado, etc.)
+        Confirmação ou mensagem de erro (elemento não encontrado, nem
+        `selector` nem `uid` informados, etc.)
     """
     page, err = await _resolve_page(config)
     if page is None:
         return err
+    if uid is not None:
+        workspace_id = _workspace_id(config)
+        tab = get_tab_state(workspace_id)
+        if tab is None:
+            return _NO_PAGE_ERROR
+        center = await resolve_uid_center(tab.cdp, int(uid)) if uid.isdigit() else None
+        if center is None:
+            return (
+                f"Error: não foi possível localizar elemento com uid={uid!r} — "
+                "pode ter saído do DOM desde o último `browser_snapshot`."
+            )
+        try:
+            await tab.page.mouse.click(*center)
+            return f"[OK] Clicado: uid={uid}"
+        except Exception:
+            logger.exception("browser_click (uid) failed", extra={"uid": uid})
+            return f"Error: falha ao clicar no elemento uid={uid}."
+    if not selector:
+        return "Error: informe `selector` ou `uid`."
     try:
         await page.click(selector, timeout=5000)
         return f"[OK] Clicado: {selector}"
@@ -215,15 +247,18 @@ async def browser_scroll(
     }
 )
 async def browser_fill(
-    selector: str,
     value: str,
+    selector: str | None = None,
+    uid: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Preenche um campo da página atual (input/textarea) com o valor indicado.
+    """Preenche um campo da página atual (input/textarea) — por seletor CSS
+    ou por `uid` (de `browser_snapshot`).
 
     Args:
-        selector: Seletor CSS do campo
-        value: Texto a preencher
+        value: Texto a preencher.
+        selector: Seletor CSS do campo. Ignorado se `uid` for informado.
+        uid: uid de `browser_snapshot` (`backendDOMNodeId`).
 
     Returns:
         Confirmação ou mensagem de erro.
@@ -231,6 +266,22 @@ async def browser_fill(
     page, err = await _resolve_page(config)
     if page is None:
         return err
+    if uid is not None:
+        workspace_id = _workspace_id(config)
+        tab = get_tab_state(workspace_id)
+        if tab is None:
+            return _NO_PAGE_ERROR
+        ok = (
+            await set_value_by_uid(tab.cdp, int(uid), value) if uid.isdigit() else False
+        )
+        if not ok:
+            return (
+                f"Error: não foi possível preencher elemento com uid={uid!r} — "
+                "pode ter saído do DOM ou não ser input/textarea."
+            )
+        return f"[OK] Preenchido: uid={uid}"
+    if not selector:
+        return "Error: informe `selector` ou `uid`."
     try:
         await page.fill(selector, value, timeout=5000)
         return f"[OK] Preenchido: {selector}"
@@ -270,6 +321,182 @@ async def browser_read_dom(
     except Exception:
         logger.exception("browser_read_dom failed", extra={"selector": selector})
         return f"Error: seletor '{selector}' não encontrado na página."
+
+
+_WAIT_FOR_STATES = ("visible", "hidden", "attached", "detached")
+
+
+@tool(
+    extras={
+        "render_hint": "text",
+        "category": "browser",
+        "destructive": False,
+        "icon": "clock",
+    }
+)
+async def browser_wait_for(
+    selector: str,
+    state: str = "visible",
+    timeout_ms: int = 5000,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Espera até o elemento atingir o estado indicado antes de continuar —
+    use antes de clicar/ler algo que pode não estar pronto ainda (ex.:
+    conteúdo carregado via fetch depois da navegação).
+
+    Args:
+        selector: seletor CSS do elemento a esperar.
+        state: "visible" | "hidden" | "attached" | "detached".
+        timeout_ms: tempo máximo de espera em milissegundos.
+
+    Returns:
+        Confirmação ou erro (timeout, `state` inválido).
+    """
+    if state not in _WAIT_FOR_STATES:
+        return f"Error: `state` deve ser um de {_WAIT_FOR_STATES}."
+    page, err = await _resolve_page(config)
+    if page is None:
+        return err
+    try:
+        await page.wait_for_selector(selector, state=state, timeout=timeout_ms)
+        return f"[OK] '{selector}' atingiu o estado '{state}'."
+    except Exception:
+        logger.exception(
+            "browser_wait_for failed", extra={"selector": selector, "state": state}
+        )
+        return (
+            f"Error: '{selector}' não atingiu o estado '{state}' dentro de "
+            f"{timeout_ms}ms."
+        )
+
+
+@tool(
+    extras={
+        "render_hint": "text",
+        "category": "browser",
+        "destructive": True,
+        "icon": "move",
+    }
+)
+async def browser_drag(
+    source_selector: str,
+    target_selector: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Arrasta o elemento `source_selector` e solta sobre `target_selector`
+    (drag and drop) — útil pra reordenar listas, mover cards de kanban, etc.
+
+    Args:
+        source_selector: seletor CSS do elemento a arrastar.
+        target_selector: seletor CSS de onde soltar.
+
+    Returns:
+        Confirmação ou mensagem de erro.
+    """
+    page, err = await _resolve_page(config)
+    if page is None:
+        return err
+    try:
+        await page.drag_and_drop(source_selector, target_selector, timeout=5000)
+        return f"[OK] Arrastado: '{source_selector}' -> '{target_selector}'"
+    except Exception:
+        logger.exception(
+            "browser_drag failed",
+            extra={"source": source_selector, "target": target_selector},
+        )
+        return (
+            f"Error: falha ao arrastar '{source_selector}' até "
+            f"'{target_selector}' (elemento não encontrado ou drag não suportado)."
+        )
+
+
+@tool(
+    extras={
+        "render_hint": "text",
+        "category": "browser",
+        "destructive": True,
+        "icon": "upload",
+    }
+)
+async def browser_upload_file(
+    selector: str,
+    file_path: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Define o arquivo de um `<input type=file>` — sempre um caminho local
+    do host (nunca simula clique/upload via UI de sistema, que não existe
+    em modo headless).
+
+    Args:
+        selector: seletor CSS do input[type=file].
+        file_path: caminho absoluto do arquivo no host a anexar.
+
+    Returns:
+        Confirmação ou erro (arquivo inexistente, elemento não é input de
+        arquivo, etc.)
+    """
+    page, err = await _resolve_page(config)
+    if page is None:
+        return err
+    if not Path(file_path).is_file():
+        return f"Error: arquivo '{file_path}' não existe no host."
+    try:
+        await page.set_input_files(selector, file_path, timeout=5000)
+        return f"[OK] Arquivo anexado: '{file_path}' em '{selector}'"
+    except Exception:
+        logger.exception("browser_upload_file failed", extra={"selector": selector})
+        return (
+            f"Error: não foi possível anexar arquivo em '{selector}' (elemento "
+            "não encontrado ou não é input[type=file])."
+        )
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "browser",
+        "destructive": True,
+        "icon": "keyboard",
+    }
+)
+async def browser_fill_form(
+    fields: dict[str, str],
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Preenche múltiplos campos da página atual numa só chamada — cada
+    chave de `fields` é um seletor CSS, cada valor o texto a preencher.
+    Continua pros campos seguintes mesmo se um falhar (reporta por campo,
+    nunca aborta no primeiro erro).
+
+    Args:
+        fields: mapa `{seletor_css: valor}`.
+
+    Returns:
+        JSON `{"status": "ok"|"partial"|"error", "results": {seletor:
+        "ok"|"error: ..."}}`.
+    """
+    page, err = await _resolve_page(config)
+    if page is None:
+        return err
+    if not fields:
+        return json.dumps({"status": "error", "error": "`fields` vazio."})
+
+    results: dict[str, str] = {}
+    for selector, value in fields.items():
+        try:
+            await page.fill(selector, value, timeout=5000)
+            results[selector] = "ok"
+        except Exception:
+            logger.exception(
+                "browser_fill_form failed for field", extra={"selector": selector}
+            )
+            results[selector] = "error: elemento não encontrado ou não preenchível"
+
+    failed = [k for k, v in results.items() if v != "ok"]
+    status = (
+        "ok" if not failed else ("error" if len(failed) == len(fields) else "partial")
+    )
+    return json.dumps({"status": status, "results": results})
 
 
 async def _resolve_dev_server_name(

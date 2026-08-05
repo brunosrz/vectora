@@ -304,6 +304,65 @@ def set_dialog_policy(
     return True
 
 
+#: Seta o `value` nativo (via o setter do protótipo, não a propriedade
+#: sobrescrita por React) e dispara `input`/`change` — sem isso, campos
+#: controlados por React ignoram uma atribuição direta de `.value` (o setter
+#: sintético do React só reage ao dispatch do evento nativo depois do valor
+#: mudar na engine, não à mudança em si).
+_SET_VALUE_JS = """
+function(value) {
+  const proto = this.tagName === 'TEXTAREA'
+    ? window.HTMLTextAreaElement.prototype
+    : window.HTMLInputElement.prototype;
+  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+  if (setter) { setter.call(this, value); } else { this.value = value; }
+  this.dispatchEvent(new Event('input', { bubbles: true }));
+  this.dispatchEvent(new Event('change', { bubbles: true }));
+}
+"""
+
+
+async def resolve_uid_center(
+    cdp: Any, backend_node_id: int
+) -> tuple[float, float] | None:
+    """Centro (x, y) em coordenadas de viewport do elemento identificado por
+    `backend_node_id` (o `uid` de `browser_snapshot`), via CDP
+    `DOM.getBoxModel`. `None` se o nó não existe mais (saiu do DOM desde o
+    snapshot) — quem chama trata como "não encontrado", nunca propaga."""
+    try:
+        box = await cdp.send("DOM.getBoxModel", {"backendNodeId": backend_node_id})
+    except Exception:
+        return None
+    quad = box.get("model", {}).get("content")
+    if not quad or len(quad) < 8:
+        return None
+    xs = quad[0::2]
+    ys = quad[1::2]
+    return (sum(xs) / len(xs), sum(ys) / len(ys))
+
+
+async def set_value_by_uid(cdp: Any, backend_node_id: int, value: str) -> bool:
+    """Preenche o elemento identificado por `backend_node_id` com `value`,
+    de um jeito compatível com inputs controlados por React (ver
+    `_SET_VALUE_JS`). `False` se o nó não existe mais ou não é
+    input/textarea."""
+    try:
+        resolved = await cdp.send("DOM.resolveNode", {"backendNodeId": backend_node_id})
+        object_id = resolved["object"]["objectId"]
+        await cdp.send(
+            "Runtime.callFunctionOn",
+            {
+                "functionDeclaration": _SET_VALUE_JS,
+                "objectId": object_id,
+                "arguments": [{"value": value}],
+            },
+        )
+        return True
+    except Exception:
+        logger.debug("browser_session: falha ao preencher elemento por uid")
+        return False
+
+
 async def close_browser_session(workspace_id: str) -> None:
     """Fecha e descarta a sessão de browser de um workspace, se existir."""
     session = _sessions.pop(workspace_id, None)

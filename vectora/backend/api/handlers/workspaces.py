@@ -3448,6 +3448,153 @@ async def browser_detect(workspace_id: str) -> DetectResponse:
 
 
 # ---------------------------------------------------------------------------
+# Browser devtools — espelha backend/tools/browser_devtools.py em REST pro
+# painel visual do workbench (frontend/components/workbench/tabs/
+# browser-devtools-panel.tsx). Sessão é a do AGENTE (Playwright headless,
+# backend/browser/session.py) — distinta da view que o usuário vê no resto
+# da aba Browser (iframe/WebContentsView), que não expõe console/network.
+# ---------------------------------------------------------------------------
+
+
+class DevtoolsTab(BaseModel):
+    tab_id: str
+    url: str
+    active: bool
+
+
+class DevtoolsTabsResponse(BaseModel):
+    tabs: list[DevtoolsTab]
+
+
+class DevtoolsConsoleMessage(BaseModel):
+    type: str
+    text: str
+
+
+class DevtoolsConsoleResponse(BaseModel):
+    messages: list[DevtoolsConsoleMessage]
+
+
+class DevtoolsNetworkRequest(BaseModel):
+    request_id: str
+    url: str
+    method: str
+    resource_type: str
+    status: int | str | None = None
+    error: str | None = None
+
+
+class DevtoolsNetworkResponse(BaseModel):
+    requests: list[DevtoolsNetworkRequest]
+
+
+class DevtoolsEvaluateRequest(BaseModel):
+    script: str
+    tab_id: str | None = None
+
+
+class DevtoolsEvaluateResponse(BaseModel):
+    status: str
+    result: Any = None
+    error: str | None = None
+
+
+@view_router.get(
+    "/{workspace_id}/browser/devtools/tabs", response_model=DevtoolsTabsResponse
+)
+async def devtools_tabs(workspace_id: str) -> DevtoolsTabsResponse:
+    """Abas da sessão de browser do agente — vazio se nenhuma sessão existe
+    ainda (agente nunca navegou/abriu aba nesse workspace)."""
+    from backend.browser.session import list_tabs
+
+    tabs = await list_tabs(workspace_id)
+    return DevtoolsTabsResponse(tabs=[DevtoolsTab(**t) for t in tabs])
+
+
+@view_router.get(
+    "/{workspace_id}/browser/devtools/console",
+    response_model=DevtoolsConsoleResponse,
+)
+async def devtools_console(
+    workspace_id: str, tab_id: str | None = None, limit: int = 200
+) -> DevtoolsConsoleResponse:
+    """Mensagens de console capturadas ao vivo da aba do agente."""
+    from backend.browser.session import get_tab_state
+
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return DevtoolsConsoleResponse(messages=[])
+    messages = list(tab.console_log)[-limit:]
+    return DevtoolsConsoleResponse(
+        messages=[DevtoolsConsoleMessage(**m) for m in messages]
+    )
+
+
+@view_router.delete(
+    "/{workspace_id}/browser/devtools/console", response_model=StatusResponse
+)
+async def devtools_clear_console(
+    workspace_id: str, tab_id: str | None = None
+) -> StatusResponse:
+    """Limpa o buffer de console capturado da aba (não afeta o console real)."""
+    from backend.browser.session import get_tab_state
+
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return StatusResponse(status="error", message="nenhuma sessão/aba encontrada")
+    tab.console_log.clear()
+    return StatusResponse(status="ok")
+
+
+@view_router.get(
+    "/{workspace_id}/browser/devtools/network",
+    response_model=DevtoolsNetworkResponse,
+)
+async def devtools_network(
+    workspace_id: str,
+    tab_id: str | None = None,
+    resource_type: str | None = None,
+    limit: int = 200,
+) -> DevtoolsNetworkResponse:
+    """Requisições de rede capturadas ao vivo da aba do agente."""
+    from backend.browser.session import get_tab_state
+
+    tab = get_tab_state(workspace_id, tab_id)
+    if tab is None:
+        return DevtoolsNetworkResponse(requests=[])
+    entries = list(tab.network_log)
+    if resource_type:
+        entries = [e for e in entries if e.get("resource_type") == resource_type]
+    return DevtoolsNetworkResponse(
+        requests=[DevtoolsNetworkRequest(**e) for e in entries[-limit:]]
+    )
+
+
+@view_router.post(
+    "/{workspace_id}/browser/devtools/evaluate",
+    response_model=DevtoolsEvaluateResponse,
+)
+async def devtools_evaluate(
+    workspace_id: str, body: DevtoolsEvaluateRequest
+) -> DevtoolsEvaluateResponse:
+    """Executa JS arbitrário na aba do agente — mesmo caminho que a tool
+    `browser_evaluate`, exposto ao painel visual pra inspeção manual do DOM."""
+    from backend.browser.session import get_tab_state
+
+    tab = get_tab_state(workspace_id, body.tab_id)
+    if tab is None:
+        return DevtoolsEvaluateResponse(
+            status="error", error="nenhuma sessão/aba encontrada"
+        )
+    try:
+        result = await tab.page.evaluate(body.script)
+        return DevtoolsEvaluateResponse(status="ok", result=result)
+    except Exception as exc:
+        logger.exception("devtools_evaluate failed")
+        return DevtoolsEvaluateResponse(status="error", error=str(exc))
+
+
+# ---------------------------------------------------------------------------
 # RAG — indexação direta de pasta (sem passar pelo chat) + progresso por job
 # ---------------------------------------------------------------------------
 

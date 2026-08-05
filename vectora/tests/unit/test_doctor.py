@@ -137,11 +137,12 @@ class TestReportSandboxStatus:
         console.print.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_no_macos_avisa_que_backend_local_nao_existe(self, monkeypatch):
-        """bwrap é Linux-only e não há equivalente implementado no macOS —
-        o doctor tem que dizer isso, não ficar em silêncio como no Linux
-        (onde o silêncio significa 'está tudo certo')."""
+    async def test_macos_sem_sandbox_exec_recomenda_alternativas(self, monkeypatch):
+        """Sem `sandbox-exec` instalado (interface legada da Apple, pode ter
+        sido removida), o doctor não finge suporte ao backend nativo —
+        orienta pra docker/ssh/modal."""
         monkeypatch.setattr(doctor.sys, "platform", "darwin")
+        monkeypatch.setattr(doctor.shutil, "which", lambda _name: None)
         # Erro/borda: se o caminho do macOS caísse no ramo do Windows, isto
         # explodiria — a checagem de WSL2 não existe nesse SO.
         monkeypatch.setattr(
@@ -155,8 +156,29 @@ class TestReportSandboxStatus:
         printed = " ".join(str(c.args[0]) for c in console.print.call_args_list)
         assert "macOS" in printed
         assert "docker" in printed
-        # Não pode fingir suporte com uma API que nunca foi implementada.
-        assert "sandbox-exec" not in printed
+        assert "indisponível" in printed
+
+    @pytest.mark.asyncio
+    async def test_macos_com_sandbox_exec_recomenda_backend_nativo(self, monkeypatch):
+        """Com `sandbox-exec` disponível, o doctor aponta o backend nativo
+        `"macos"` (Seatbelt) em vez de só recomendar docker/ssh/modal."""
+        monkeypatch.setattr(doctor.sys, "platform", "darwin")
+        monkeypatch.setattr(
+            doctor.shutil,
+            "which",
+            lambda name: "/usr/bin/sandbox-exec" if name == "sandbox-exec" else None,
+        )
+        monkeypatch.setattr(
+            "backend.sandbox.policy.detect_wsl2",
+            AsyncMock(side_effect=AssertionError("WSL2 não se aplica ao macOS")),
+        )
+        console = MagicMock()
+
+        await doctor._report_sandbox_status(console)
+
+        printed = " ".join(str(c.args[0]) for c in console.print.call_args_list)
+        assert "sandbox-exec disponível" in printed
+        assert 'backend = "macos"' in printed
 
     @pytest.mark.asyncio
     async def test_sem_wsl2_orienta_a_instalar(self, monkeypatch):
