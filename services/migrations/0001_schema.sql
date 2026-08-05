@@ -231,14 +231,28 @@ CREATE TABLE IF NOT EXISTS mcp_catalog (
   updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- `vectora_verified` = selo oficial/curado (seed manual ou discovery), como
+-- em `mcp_catalog`. `verified` (Sprint 6, publish de comunidade) é um gate
+-- SEPARADO — curadoria de admin sobre item publicado por usuário via
+-- `POST /skills` (`catalog_source='community'`), mesmo papel de
+-- `rag_packages.verified`. Uma skill pode ter `verified=1` sem nunca ganhar
+-- o selo `vectora_verified` (que continua exclusivo de curadoria oficial).
+-- `publisher_id` NULL pra linhas curadas/discovery, preenchido só pra
+-- publicações de comunidade. D1/SQLite não suporta `ALTER TABLE ... ADD
+-- COLUMN IF NOT EXISTS` — bancos já provisionados antes desta mudança
+-- precisam de `ALTER TABLE skills_catalog ADD COLUMN <col> ...` manual
+-- (uma vez, fora deste arquivo) antes de reaplicar.
 CREATE TABLE IF NOT EXISTS skills_catalog (
   id               TEXT PRIMARY KEY,
   name             TEXT NOT NULL,
   description      TEXT NOT NULL,
   source           TEXT NOT NULL, -- git URL, mesmo formato aceito por POST /skills
   tags             TEXT NOT NULL DEFAULT '[]', -- JSON array serializado
+  category         TEXT,
   catalog_source   TEXT NOT NULL DEFAULT 'curated',
   vectora_verified INTEGER NOT NULL DEFAULT 0,
+  publisher_id     TEXT REFERENCES users(id),
+  verified         INTEGER NOT NULL DEFAULT 0,
   downloads_count  INTEGER NOT NULL DEFAULT 0,
   updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );

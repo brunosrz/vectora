@@ -5,9 +5,15 @@ Endpoints (todos exigem autenticação via middleware):
     POST   /skills                 — instala skill (body: {source})
     DELETE /skills/{skill_id}      — remove skill
     POST   /skills/{skill_id}/verify — revalida SKILL.md (após edição manual)
+    POST   /skills/publish         — publica no catálogo remoto (Sprint 6)
 
 O user_id vem de ``request.state.user`` (CLI/root → ``"local"``). Skills são
 isoladas por usuário (cada um tem sua pasta ``~/.vectora/skills/<id>/``).
+
+Publicação exige um ``session_token`` de conta vectora.company — mesmo
+``VECTORA_TOKEN`` já usado pelo license check (`backend.services.
+license._get_token`), mesmo padrão de `backend/api/handlers/
+memory_library.py::post_publish`.
 """
 
 from __future__ import annotations
@@ -15,8 +21,10 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
 from backend.services import registry_client
+from backend.services.registry_client import RegistryClientError
 from backend.workspace.skills import (
     InstallSkillRequest,
     install_skill,
@@ -28,6 +36,14 @@ from backend.workspace.skills import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/skills", tags=["skills"])
+
+
+class PublishSkillRequest(BaseModel):
+    source: str
+    name: str
+    description: str
+    category: str | None = None
+    tags: list[str] = []
 
 
 def _user_id(request: Request) -> str:
@@ -78,3 +94,29 @@ async def delete_user_skill(request: Request, skill_id: str) -> dict:
 async def verify_user_skill(request: Request, skill_id: str) -> dict:
     """Revalida o SKILL.md da skill (útil após edição manual no disco)."""
     return verify_skill(_user_id(request), skill_id)
+
+
+@router.post("/publish")
+async def publish_user_skill(req: PublishSkillRequest) -> dict:
+    """Publica `source` (URL git) no catálogo remoto de skills —
+    `verified=false` até curadoria manual de admin."""
+    from backend.services import license
+
+    token = license._get_token()
+    if not token:
+        return {
+            "status": "error",
+            "error": "Nenhuma conta vectora.company conectada (VECTORA_TOKEN ausente).",
+        }
+    try:
+        remote_id = await registry_client.publish_skill(
+            req.name,
+            req.description,
+            req.source,
+            category=req.category,
+            tags=req.tags,
+            session_token=token,
+        )
+    except RegistryClientError as exc:
+        return {"status": "error", "error": str(exc)}
+    return {"status": "published", "skill_id": remote_id}

@@ -70,8 +70,14 @@ handler):
   enfileira de verdade (`rag_reindex`), mas o consumer sempre marca
   `status='failed'`: não existe provedor de storage externo configurado.
 - `/registry/*` — `mcp`, `skills`, `extensions` — "um registry, três
-  catálogos" (`documents/extensibility-roadmap.md` §5), todos placeholder
-  (`{entries: []}`) até existir curadoria de verdade.
+  catálogos" (`documents/extensibility-roadmap.md` §5). `mcp` já lê D1 de
+  verdade (6 conectores curados no seed + discovery automático). `skills`
+  também lê D1 e agora aceita publish da comunidade (`POST /skills`,
+  autenticado, `verified=0` até curadoria via `PATCH
+/admin/skills/:id/verify`) — lista vazia continua sendo estado válido até
+  a primeira publicação/curadoria. `?q=`/`?category=`/`?tags=` filtram os
+  dois catálogos. Só `extensions` continua placeholder (`{entries: []}`) —
+  depende do SDK de extensões, que ainda não existe.
 - `/telemetry/ingest` — ingestão genérica de eventos do backend Python local
   (sem auth — Free não tem conta); só enfileira (`telemetry_ingest`), grava
   em `telemetry_events` no consumer.

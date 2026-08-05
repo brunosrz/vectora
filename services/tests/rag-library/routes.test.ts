@@ -87,6 +87,46 @@ describe("GET /rag-library", () => {
   });
 });
 
+describe("GET /rag-library?q=", () => {
+  it("filtra por nome/descrição", async () => {
+    const id = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO rag_packages (id, name, description, source_lib, source_version, size_bytes, checksum, storage_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(
+        id,
+        "godot-4.7-docs",
+        "documentação da engine Godot",
+        "godot",
+        "4.7",
+        1024,
+        "abc",
+        "https://storage.example.com/godot.tar.gz",
+      )
+      .run();
+    await env.DB.prepare(
+      "INSERT INTO rag_packages (id, name, description, source_lib, source_version, size_bytes, checksum, storage_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(
+        crypto.randomUUID(),
+        "react-docs",
+        "documentação do React",
+        "react",
+        "19",
+        1024,
+        "def",
+        "https://storage.example.com/react.tar.gz",
+      )
+      .run();
+
+    const res = await ragLibrary.request("/?q=godot", {}, env);
+    const body = await res.json<Array<{ id: string; name: string }>>();
+
+    expect(body).toHaveLength(1);
+    expect(body[0]?.id).toBe(id);
+  });
+});
+
 describe("POST /rag-library/:id/reindex", () => {
   it("marca status=pending e enfileira o job rag_reindex", async () => {
     const id = await makePackage("ready");

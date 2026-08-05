@@ -146,6 +146,7 @@ from backend.tools.library import (
     list_memory_bucket_catalog,
     list_skills_catalog,
     publish_memory_bucket_tool,
+    publish_skill_tool,
     save_mcp_env_var,
     uninstall_mcp,
     verify_skill,
@@ -284,6 +285,7 @@ LIBRARY_TOOLS: list[BaseTool] = [
     delete_skill,
     verify_skill,
     publish_memory_bucket_tool,
+    publish_skill_tool,
     save_mcp_env_var,
 ]
 
@@ -448,6 +450,7 @@ for _t in [
     delete_skill,
     verify_skill,
     publish_memory_bucket_tool,
+    publish_skill_tool,
     save_mcp_env_var,
     workspace_describe,
     workspace_list,

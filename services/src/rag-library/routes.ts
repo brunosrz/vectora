@@ -48,9 +48,19 @@ interface RagPackageRow {
 }
 
 ragLibrary.get("/", async (c) => {
+  const q = c.req.query("q");
+  const base =
+    "SELECT id, name, description, source_lib, source_version, size_bytes, checksum, embed_model, publisher_id, verified, downloads_count, license, updated_at FROM rag_packages";
+  if (!q) {
+    const { results } = await c.env.DB.prepare(`${base} ORDER BY name`).all();
+    return c.json(results);
+  }
+  const like = `%${q}%`;
   const { results } = await c.env.DB.prepare(
-    "SELECT id, name, description, source_lib, source_version, size_bytes, checksum, embed_model, publisher_id, verified, downloads_count, license, updated_at FROM rag_packages ORDER BY name",
-  ).all();
+    `${base} WHERE name LIKE ? COLLATE NOCASE OR description LIKE ? COLLATE NOCASE ORDER BY name`,
+  )
+    .bind(like, like)
+    .all();
   return c.json(results);
 });
 
