@@ -21,8 +21,6 @@ nem modo.
 
 from __future__ import annotations
 
-import os
-
 from fastapi import APIRouter, HTTPException, Request
 
 from backend.api.middleware.auth import _auth_enabled
@@ -35,15 +33,12 @@ router = APIRouter(prefix="/settings", tags=["flags"])
 async def get_flags() -> dict:
     from backend.workspace.runtime_settings import runtime_settings
 
-    # Features anteriormente em beta (IDE mode, Library, Context Graph) agora são
-    # estáveis e habilitadas por padrão para todos os usuários.
-    #
-    # `enable_kanban_mode` usa o mesmo mecanismo que gateou o IDE mode antes
-    # de graduar: `VECTORA_DEV=1` **exato**. Aceitar "true"/"yes" faria a
-    # flag ligar sem querer num ambiente de usuário que copiou um .env.
+    # Features anteriormente em beta (IDE mode, Library, Context Graph, Kanban)
+    # agora são estáveis e habilitadas por padrão para todos os usuários —
+    # `enable_kanban_mode` (gate dev-only via VECTORA_DEV=1) foi removida na
+    # Sprint 7 do plano 0.1.11 quando o Kanban virou feature pública.
     return {
         "enable_features_beta": True,
-        "enable_kanban_mode": os.environ.get("VECTORA_DEV") == "1",
         "auth_required": _auth_enabled(),
         "local_configured": bool(runtime_settings.local_user_name),
     }

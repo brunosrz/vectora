@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 /**
- * Board do 3º modo de interface.
+ * Board do 3º modo de interface (feature pública desde a Sprint 7).
  *
- * Cinco colunas fixas; `triage`/`archived` existem no modelo mas ficam fora
- * — sete colunas viram ruído e essas duas não são o fluxo do dia a dia.
+ * Cinco colunas fixas, sempre visíveis mesmo com 0 tasks; `triage` fica fora
+ * (dropzone própria) e `archived` só aparece com o filtro "mostrar
+ * arquivadas" ligado.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -140,9 +141,10 @@ describe("KanbanBoard", () => {
     expect(screen.getByText(/bloqueado por: t0/i)).toBeInTheDocument();
   });
 
-  it("triage e archived não aparecem nas cinco colunas", async () => {
+  it("triage e archived não aparecem nas cinco colunas por padrão", async () => {
     // Erro/borda: mostrá-los junto encheria o board de cards fora do fluxo
-    // ativo — os dois existem no modelo mas não têm coluna aqui.
+    // ativo — os dois existem no modelo mas não têm coluna aqui (archived só
+    // aparece com o filtro "mostrar arquivadas" ligado).
     mockTasks([
       task({ id: "a", name: "em triagem", status: "triage" }),
       task({ id: "b", name: "arquivada", status: "archived" }),
@@ -152,6 +154,18 @@ describe("KanbanBoard", () => {
 
     expect(screen.queryByText("em triagem")).not.toBeInTheDocument();
     expect(screen.queryByText("arquivada")).not.toBeInTheDocument();
+  });
+
+  it("colunas ficam visíveis mesmo com 0 tasks (não é bug, é board novo)", async () => {
+    mockTasks([]);
+
+    await montar();
+
+    expect(screen.getByTestId("kanban-col-todo")).toBeInTheDocument();
+    expect(screen.getByTestId("kanban-col-ready")).toBeInTheDocument();
+    expect(screen.getByTestId("kanban-col-running")).toBeInTheDocument();
+    expect(screen.getByTestId("kanban-col-blocked")).toBeInTheDocument();
+    expect(screen.getByTestId("kanban-col-done")).toBeInTheDocument();
     expect(screen.getByText(/nenhuma tarefa/i)).toBeInTheDocument();
   });
 
@@ -685,5 +699,84 @@ describe("KanbanBoard", () => {
     unmount();
 
     expect(es.closed).toBe(true);
+  });
+
+  it("card mostra prioridade não-normal, tenant e assignee quando presentes", async () => {
+    mockTasks([
+      task({
+        id: "a",
+        status: "todo",
+        priority: "urgent",
+        workspace_id: "ws-1",
+        agent_profile_id: "profile-x",
+      }),
+    ]);
+
+    await montar();
+
+    expect(screen.getByText("urgent")).toBeInTheDocument();
+    expect(screen.getByText("workspace: ws-1")).toBeInTheDocument();
+    expect(screen.getByText("perfil: profile-x")).toBeInTheDocument();
+  });
+
+  it("prioridade 'normal' não aparece como badge (ruído visual desnecessário)", async () => {
+    mockTasks([task({ id: "a", status: "todo", priority: "normal" })]);
+
+    await montar();
+
+    expect(screen.queryByText("normal")).not.toBeInTheDocument();
+  });
+
+  it("filtro de busca esconde cards que não casam com o nome", async () => {
+    mockTasks([
+      task({ id: "a", name: "corrigir bug do login", status: "todo" }),
+      task({ id: "b", name: "atualizar docs", status: "todo" }),
+    ]);
+
+    await montar();
+    const busca = screen.getByPlaceholderText(/buscar por nome/i);
+    fireEvent.change(busca, { target: { value: "bug" } });
+
+    expect(screen.getByText("corrigir bug do login")).toBeInTheDocument();
+    expect(screen.queryByText("atualizar docs")).not.toBeInTheDocument();
+  });
+
+  it("filtro de tenant restringe aos cards do workspace escolhido", async () => {
+    mockTasks([
+      task({
+        id: "a",
+        name: "tarefa ws1",
+        status: "todo",
+        workspace_id: "ws-1",
+      }),
+      task({
+        id: "b",
+        name: "tarefa ws2",
+        status: "todo",
+        workspace_id: "ws-2",
+      }),
+    ]);
+
+    await montar();
+    const seletor = screen.getByLabelText(/todos os workspaces/i);
+    fireEvent.change(seletor, { target: { value: "ws-1" } });
+
+    expect(screen.getByText("tarefa ws1")).toBeInTheDocument();
+    expect(screen.queryByText("tarefa ws2")).not.toBeInTheDocument();
+  });
+
+  it("toggle 'mostrar arquivadas' revela a coluna archived", async () => {
+    mockTasks([task({ id: "a", name: "arquivada", status: "archived" })]);
+
+    await montar();
+    expect(screen.queryByTestId("kanban-col-archived")).not.toBeInTheDocument();
+
+    const toggle = screen.getByLabelText(/mostrar arquivadas/i);
+    fireEvent.click(toggle);
+
+    expect(screen.getByTestId("kanban-col-archived")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("kanban-col-archived")).getByText("arquivada"),
+    ).toBeInTheDocument();
   });
 });

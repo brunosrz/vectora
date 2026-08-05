@@ -201,6 +201,10 @@ ALTER TABLE vectora_background_tasks ADD COLUMN budget_cents INTEGER;
 -- com sucesso. Ao atingir BLOCK_RECURRENCE_LIMIT, block_task() escala pra
 -- "triage" em vez de deixar o card preso em "blocked" pra sempre.
 ALTER TABLE vectora_background_tasks ADD COLUMN block_count INTEGER NOT NULL DEFAULT 0;
+-- Prioridade exibida no card do Kanban (Sprint 7) — "low" | "normal" |
+-- "high" | "urgent". Não afeta ordem de claim (`claim_task` continua FIFO
+-- por `ready`/`scheduled`); é só sinal visual pro humano triar mais rápido.
+ALTER TABLE vectora_background_tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal';
 
 CREATE INDEX IF NOT EXISTS idx_background_tasks_session ON vectora_background_tasks(session_id);
 CREATE INDEX IF NOT EXISTS idx_background_tasks_due     ON vectora_background_tasks(enabled, trigger_type);

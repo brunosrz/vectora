@@ -1,11 +1,13 @@
 "use client";
 
 /**
- * Board do 3º modo de interface (dev-only, ver `enableKanbanMode`).
+ * Board do 3º modo de interface — feature pública (promovida da flag
+ * dev-only `enableKanbanMode` na Sprint 7 do plano 0.1.11).
  *
- * Cinco colunas fixas. `triage` e `archived` existem no modelo mas ficam
- * fora daqui: sete colunas viram ruído visual, e essas duas não são o
- * fluxo do dia a dia.
+ * Cinco colunas fixas, sempre visíveis (mesmo com 0 tasks — colunas vazias
+ * não são bug, são o estado normal de um board recém-criado). `triage` fica
+ * fora das colunas principais (dropzone própria, ver `TriageDropzone`);
+ * `archived` só aparece quando o filtro "mostrar arquivadas" está ativo.
  *
  * Drag-and-drop só nas transições seguras (`DRAG_TRANSITIONS`), reaproveitando
  * os mesmos endpoints dos botões explícitos — nunca uma chamada nova. `*→running`
@@ -135,7 +137,22 @@ export interface KanbanTask {
   block_kind: string | null;
   block_reason: string | null;
   blocked_by?: string[];
+  //: "tenant" do card — já existia no backend (`workspace_id`), só não
+  //: chegava até aqui.
+  workspace_id?: string | null;
+  //: "assignee" do card — perfil de agente atribuído.
+  agent_profile_id?: string | null;
+  //: "low" | "normal" | "high" | "urgent" — sinal visual, não afeta ordem
+  //: real de claim.
+  priority?: string;
 }
+
+const PRIORITY_CLASS: Record<string, string> = {
+  low: "text-muted-foreground",
+  normal: "text-muted-foreground",
+  high: "text-amber-600 dark:text-amber-400",
+  urgent: "text-destructive",
+};
 
 interface KanbanSseEventData {
   task_id: string;
@@ -294,6 +311,29 @@ function TaskCard({
           {task.name}
         </p>
       </div>
+      {(task.priority && task.priority !== "normal") ||
+      task.workspace_id ||
+      task.agent_profile_id ? (
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px]">
+          {task.priority && task.priority !== "normal" && (
+            <span
+              className={`font-medium uppercase ${PRIORITY_CLASS[task.priority] ?? "text-muted-foreground"}`}
+            >
+              {task.priority}
+            </span>
+          )}
+          {task.workspace_id && (
+            <span className="text-muted-foreground/70">
+              {m.kanban_tenant_label({ id: task.workspace_id })}
+            </span>
+          )}
+          {task.agent_profile_id && (
+            <span className="text-muted-foreground/70">
+              {m.kanban_assignee_label({ id: task.agent_profile_id })}
+            </span>
+          )}
+        </div>
+      ) : null}
       {/* Dependência aparece como badge, não como linha desenhada: a v1 não
           precisa de grafo pra dizer "espera aquele outro". */}
       {task.blocked_by?.length ? (
@@ -363,7 +403,15 @@ function Column({
         </span>
         <span className="text-[10px] text-muted-foreground">{count}</span>
       </div>
-      <div className="space-y-2">{children}</div>
+      <div className="space-y-2">
+        {count === 0 ? (
+          <p className="px-1 text-[10px] text-muted-foreground/60">
+            {m.kanban_column_empty()}
+          </p>
+        ) : (
+          children
+        )}
+      </div>
     </div>
   );
 }
@@ -390,6 +438,10 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [tenantFilter, setTenantFilter] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   const carregar = () => {
     let cancelado = false;
@@ -493,11 +545,32 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     };
   }, [threadId]);
 
-  // `triage`/`archived` não têm coluna: mostrá-los junto encheria o board de
-  // cards que não são o fluxo ativo.
-  const visiveis = tasks.filter((t) =>
-    COLUNAS.some((c) => c.status === t.status),
-  );
+  // `triage` nunca tem coluna (dropzone própria); `archived` só entra
+  // quando o filtro "mostrar arquivadas" está ativo.
+  const colunasAtivas = showArchived
+    ? [
+        ...COLUNAS,
+        { status: "archived", label: () => m.kanban_column_archived() },
+      ]
+    : COLUNAS;
+
+  const tenants = Array.from(
+    new Set(tasks.map((t) => t.workspace_id).filter((v): v is string => !!v)),
+  ).toSorted();
+  const assignees = Array.from(
+    new Set(
+      tasks.map((t) => t.agent_profile_id).filter((v): v is string => !!v),
+    ),
+  ).toSorted();
+
+  const buscaLower = search.trim().toLowerCase();
+  const visiveis = tasks.filter((t) => {
+    if (!colunasAtivas.some((c) => c.status === t.status)) return false;
+    if (buscaLower && !t.name.toLowerCase().includes(buscaLower)) return false;
+    if (tenantFilter && t.workspace_id !== tenantFilter) return false;
+    if (assigneeFilter && t.agent_profile_id !== assigneeFilter) return false;
+    return true;
+  });
 
   const toggleSelect = (taskId: string, shiftKey: boolean) => {
     setSelected((atual) => {
@@ -546,6 +619,54 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   return (
     <div className="flex-1 min-h-0 overflow-x-auto p-4">
       <NewTaskForm threadId={threadId} onCreated={carregar} />
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={m.kanban_filter_search_placeholder()}
+          aria-label={m.kanban_filter_search_label()}
+          className="w-40 rounded border bg-background px-2 py-1 text-xs"
+        />
+        {tenants.length > 0 && (
+          <select
+            value={tenantFilter}
+            onChange={(e) => setTenantFilter(e.target.value)}
+            aria-label={m.kanban_filter_tenant_all()}
+            className="rounded border bg-background px-2 py-1 text-xs"
+          >
+            <option value="">{m.kanban_filter_tenant_all()}</option>
+            {tenants.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+        )}
+        {assignees.length > 0 && (
+          <select
+            value={assigneeFilter}
+            onChange={(e) => setAssigneeFilter(e.target.value)}
+            aria-label={m.kanban_filter_assignee_all()}
+            className="rounded border bg-background px-2 py-1 text-xs"
+          >
+            <option value="">{m.kanban_filter_assignee_all()}</option>
+            {assignees.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+        )}
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+          />
+          {m.kanban_filter_show_archived()}
+        </label>
+      </div>
       {selected.size > 0 && (
         <div className="mb-3 flex items-center gap-3 rounded-md border bg-card px-3 py-1.5">
           <span className="text-xs">
@@ -559,41 +680,38 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
           </button>
         </div>
       )}
-      {visiveis.length === 0 ? (
-        <p className="text-xs text-muted-foreground">{m.kanban_empty()}</p>
-      ) : (
-        <DndContext onDragEnd={handleDragEnd}>
-          <TriageDropzone />
-          <div className="flex gap-3 min-w-max h-full">
-            {COLUNAS.map((coluna) => {
-              const daColuna = visiveis.filter(
-                (t) => t.status === coluna.status,
-              );
-              return (
-                <Column
-                  key={coluna.status}
-                  status={coluna.status}
-                  label={coluna.label()}
-                  count={daColuna.length}
-                >
-                  {daColuna.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      threadId={threadId}
-                      selected={selected.has(task.id)}
-                      onToggleSelect={(shiftKey) =>
-                        toggleSelect(task.id, shiftKey)
-                      }
-                      onChanged={carregar}
-                    />
-                  ))}
-                </Column>
-              );
-            })}
-          </div>
-        </DndContext>
+      {tasks.length === 0 && (
+        <p className="mb-2 text-xs text-muted-foreground">{m.kanban_empty()}</p>
       )}
+      <DndContext onDragEnd={handleDragEnd}>
+        <TriageDropzone />
+        <div className="flex gap-3 min-w-max h-full">
+          {colunasAtivas.map((coluna) => {
+            const daColuna = visiveis.filter((t) => t.status === coluna.status);
+            return (
+              <Column
+                key={coluna.status}
+                status={coluna.status}
+                label={coluna.label()}
+                count={daColuna.length}
+              >
+                {daColuna.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    threadId={threadId}
+                    selected={selected.has(task.id)}
+                    onToggleSelect={(shiftKey) =>
+                      toggleSelect(task.id, shiftKey)
+                    }
+                    onChanged={carregar}
+                  />
+                ))}
+              </Column>
+            );
+          })}
+        </div>
+      </DndContext>
     </div>
   );
 }

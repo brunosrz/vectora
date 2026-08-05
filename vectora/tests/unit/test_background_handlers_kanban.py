@@ -79,6 +79,54 @@ async def test_get_tasks_devolve_status_do_kanban(db):
 
 
 @pytest.mark.asyncio
+async def test_get_tasks_devolve_priority_e_agent_profile_id(db):
+    """Sprint 7 do plano 0.1.11 — 'tenant' (workspace_id) já chegava ao
+    card; 'assignee' (agent_profile_id) e prioridade não chegavam."""
+    await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="subagent",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        workspace_id="ws-1",
+        agent_profile_id="profile-x",
+        priority="high",
+    )
+
+    saida = await bg_api.get_tasks(_fake_request(), "s1")
+
+    assert len(saida) == 1
+    assert saida[0].workspace_id == "ws-1"
+    assert saida[0].agent_profile_id == "profile-x"
+    assert saida[0].priority == "high"
+
+
+@pytest.mark.asyncio
+async def test_post_task_aceita_priority_e_patch_atualiza(db):
+    criada = await bg_api.post_task(
+        _fake_request(),
+        "s1",
+        bg_api.CreateTaskRequest(
+            kind="routine",
+            name="A",
+            instruction="i",
+            trigger_type="manual",
+            priority="urgent",
+        ),
+    )
+    assert criada.priority == "urgent"
+
+    atualizada = await bg_api.patch_task(
+        _fake_request(),
+        "s1",
+        criada.id,
+        bg_api.UpdateTaskRequest(priority="low"),
+    )
+    assert atualizada.priority == "low"
+
+
+@pytest.mark.asyncio
 async def test_unblock_endpoint_devolve_pra_ready_e_limpa_o_motivo(db):
     task = await bg.create_task(
         session_id="s1",

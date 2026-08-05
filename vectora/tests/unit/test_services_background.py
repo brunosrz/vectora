@@ -155,6 +155,66 @@ async def test_create_task_persists_then_validation_rejects_bad_input(db):
         )
 
 
+async def test_create_task_priority_default_e_persistida(db):
+    """Sprint 7 do plano 0.1.11 — prioridade é sinal visual do card do
+    Kanban, propagada de ponta a ponta (default 'normal' se omitida)."""
+    default_task = await bg.create_task(
+        session_id="sess-1",
+        user_id="uuid-aaa",
+        kind="routine",
+        name="sem prioridade explícita",
+        instruction="x",
+        trigger_type="manual",
+    )
+    assert default_task.priority == "normal"
+
+    urgent_task = await bg.create_task(
+        session_id="sess-1",
+        user_id="uuid-aaa",
+        kind="routine",
+        name="com prioridade",
+        instruction="x",
+        trigger_type="manual",
+        priority="urgent",
+    )
+    assert urgent_task.priority == "urgent"
+    got = await bg.get_task(urgent_task.id)
+    assert got is not None
+    assert got.priority == "urgent"
+
+    # Erro/borda: prioridade fora da taxonomia é rejeitada antes de gravar.
+    with pytest.raises(ValueError):
+        await bg.create_task(
+            session_id="sess-1",
+            user_id="uuid-aaa",
+            kind="routine",
+            name="x",
+            instruction="x",
+            trigger_type="manual",
+            priority="critica-demais",
+        )
+
+
+async def test_update_task_priority(db):
+    task = await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="x",
+        instruction="i",
+        trigger_type="manual",
+    )
+    assert task.priority == "normal"
+
+    updated = await bg.update_task(task.id, priority="high")
+    assert updated is not None
+    assert updated.priority == "high"
+
+    # Erro/borda: prioridade inválida no update também é rejeitada.
+    with pytest.raises(ValueError):
+        await bg.update_task(task.id, priority="nao-existe")
+
+
 async def test_update_and_delete_roundtrip(db):
     task = await bg.create_task(
         session_id="s",

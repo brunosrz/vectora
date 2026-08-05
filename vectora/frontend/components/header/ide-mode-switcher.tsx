@@ -3,7 +3,6 @@
 import { Bot, Code2, KanbanSquare } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { useElementWidth } from "@/lib/hooks/use-element-width";
 import { m } from "@/lib/paraglide/messages";
 import type { UiMode } from "@/lib/stores/settings-store";
@@ -73,7 +72,6 @@ function ModeButton({
 export function IdeModeSwitch({ show = false }: IdeModeProps) {
   const uiMode = useSettingsStore((s) => s.uiMode);
   const setUiMode = useSettingsStore((s) => s.setUiMode);
-  const { enableKanbanMode } = useFeatureFlags();
   const [ref, width] = useElementWidth<HTMLDivElement>();
 
   if (!show) return null;
@@ -117,23 +115,17 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
           label={m.ide_mode_ide()}
           labelSize={labelSize}
         />
-        {/* Fora do dev mode o seletor continua binário — o usuário comum não
-            vê a opção existir, em vez de vê-la desabilitada. */}
-        {enableKanbanMode && (
-          <>
-            <div className="w-px bg-border/40 self-stretch" />
-            <ModeButton
-              mode="kanban"
-              active={uiMode === "kanban"}
-              onClick={() => {
-                if (uiMode !== "kanban") setUiMode("kanban");
-              }}
-              Icon={KanbanSquare}
-              label={m.ide_mode_kanban()}
-              labelSize={labelSize}
-            />
-          </>
-        )}
+        <div className="w-px bg-border/40 self-stretch" />
+        <ModeButton
+          mode="kanban"
+          active={uiMode === "kanban"}
+          onClick={() => {
+            if (uiMode !== "kanban") setUiMode("kanban");
+          }}
+          Icon={KanbanSquare}
+          label={m.ide_mode_kanban()}
+          labelSize={labelSize}
+        />
       </div>
     </div>
   );

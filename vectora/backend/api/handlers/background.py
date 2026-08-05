@@ -48,6 +48,11 @@ class TaskOut(BaseModel):
     status: str
     block_kind: str | None = None
     block_reason: str | None = None
+    #: `workspace_id` já é o "tenant" do card; `agent_profile_id` é o
+    #: "assignee" — os dois já existiam no modelo mas não chegavam ao card
+    #: do Kanban (Sprint 7 do plano 0.1.11).
+    agent_profile_id: str | None = None
+    priority: str = "normal"
 
 
 class CreateTaskRequest(BaseModel):
@@ -57,6 +62,7 @@ class CreateTaskRequest(BaseModel):
     trigger_type: str
     trigger_config: dict[str, Any] = {}
     workspace_id: str | None = None
+    priority: str = "normal"
 
 
 class UpdateTaskRequest(BaseModel):
@@ -67,6 +73,7 @@ class UpdateTaskRequest(BaseModel):
     #: Transição manual de status (drag-and-drop no board) — validada contra
     #: `kanban.MANUAL_TRANSITIONS`, nunca um `UPDATE` direto.
     status: str | None = None
+    priority: str | None = None
 
 
 class BulkTaskActionRequest(BaseModel):
@@ -119,6 +126,8 @@ def _to_out(t: BackgroundTask) -> TaskOut:
         status=t.status,
         block_kind=t.block_kind,
         block_reason=t.block_reason,
+        agent_profile_id=t.agent_profile_id,
+        priority=t.priority,
     )
 
 
@@ -166,6 +175,7 @@ async def post_task(
             trigger_type=body.trigger_type,
             trigger_config=body.trigger_config,
             workspace_id=body.workspace_id,
+            priority=body.priority,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -238,6 +248,7 @@ async def patch_task(
             instruction=body.instruction,
             enabled=body.enabled,
             trigger_config=body.trigger_config,
+            priority=body.priority,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

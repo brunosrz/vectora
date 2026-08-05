@@ -1339,5 +1339,14 @@
   "kanban_select_task": "Select task",
   "kanban_selection_count": "{n} selected",
   "kanban_action_archive": "Archive",
-  "kanban_triage_dropzone": "Drop here to postpone (triage)"
+  "kanban_triage_dropzone": "Drop here to postpone (triage)",
+  "kanban_tenant_label": "workspace: {id}",
+  "kanban_assignee_label": "profile: {id}",
+  "kanban_column_empty": "Empty",
+  "kanban_column_archived": "Archived",
+  "kanban_filter_search_placeholder": "Search by name...",
+  "kanban_filter_search_label": "Search tasks",
+  "kanban_filter_tenant_all": "All workspaces",
+  "kanban_filter_assignee_all": "All profiles",
+  "kanban_filter_show_archived": "Show archived"
 }

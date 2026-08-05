@@ -32,6 +32,7 @@ VALID_KINDS = {"routine", "heartbreak", "subagent"}
 #: "once" — execução única numa hora futura (``next_run_at`` explícito, sem
 #: ``cron_expr`` recorrente) — usado por ``schedule_subagent_task``.
 VALID_TRIGGERS = {"interval", "once", "webhook", "manual", "subagent"}
+VALID_PRIORITIES = {"low", "normal", "high", "urgent"}
 
 #: Limite de tarefas agendadas (não-``manual``) por workspace — evita um
 #: workspace acumular centenas de tarefas `interval`/`webhook`/`once` sem
@@ -78,6 +79,9 @@ class BackgroundTask:
     #: Perfil de agente customizado — `None` = comportamento padrão do
     #: orchestrator, sem mudança de instrução/modelo/budget.
     agent_profile_id: str | None = None
+    #: Sinal visual do card no Kanban — "low" | "normal" | "high" | "urgent".
+    #: Não afeta ordem real de claim (`claim_task` é FIFO por status).
+    priority: str = "normal"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -98,6 +102,8 @@ class BackgroundTask:
             "status": self.status,
             "block_kind": self.block_kind,
             "block_reason": self.block_reason,
+            "agent_profile_id": self.agent_profile_id,
+            "priority": self.priority,
         }
 
 
@@ -126,6 +132,7 @@ def _row_to_task(row: dict[str, Any]) -> BackgroundTask:
         block_kind=row.get("block_kind"),
         block_reason=row.get("block_reason"),
         agent_profile_id=row.get("agent_profile_id"),
+        priority=row.get("priority") or "normal",
     )
 
 
@@ -153,12 +160,20 @@ async def _get_db() -> Any:
 # ---------------------------------------------------------------------------
 
 
-def _validate(kind: str, trigger_type: str, trigger_config: dict[str, Any]) -> None:
+def _validate(
+    kind: str,
+    trigger_type: str,
+    trigger_config: dict[str, Any],
+    priority: str = "normal",
+) -> None:
     if kind not in VALID_KINDS:
         msg = f"kind inválido: {kind!r}. Válidos: {sorted(VALID_KINDS)}"
         raise ValueError(msg)
     if trigger_type not in VALID_TRIGGERS:
         msg = f"trigger inválido: {trigger_type!r}. Válidos: {sorted(VALID_TRIGGERS)}"
+        raise ValueError(msg)
+    if priority not in VALID_PRIORITIES:
+        msg = f"priority inválida: {priority!r}. Válidas: {sorted(VALID_PRIORITIES)}"
         raise ValueError(msg)
     if trigger_type == "interval":
         cron = (trigger_config or {}).get("cron_expr")
@@ -251,8 +266,9 @@ async def create_task(
     workspace_id: str | None = None,
     next_run_at: str | None = None,
     agent_profile_id: str | None = None,
+    priority: str = "normal",
 ) -> BackgroundTask:
-    """Cria uma tarefa. Levanta ValueError em kind/trigger/cron inválidos.
+    """Cria uma tarefa. Levanta ValueError em kind/trigger/cron/priority inválidos.
 
     ``next_run_at`` — override explícito de quando disparar, usado por
     agendamentos de execução única (sem ``cron_expr`` recorrente, ex.
@@ -260,7 +276,7 @@ async def create_task(
     calcula normalmente a partir de ``trigger_config["cron_expr"]``.
     """
     cfg = trigger_config or {}
-    _validate(kind, trigger_type, cfg)
+    _validate(kind, trigger_type, cfg, priority)
     task_id = str(uuid4())
     if next_run_at is not None:
         next_run = next_run_at
@@ -282,8 +298,8 @@ async def create_task(
             INSERT INTO vectora_background_tasks
               (id, session_id, workspace_id, user_id, kind, name, instruction,
                trigger_type, trigger_config, enabled, next_run_at, status,
-               agent_profile_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+               agent_profile_id, priority)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
             """,
             (
                 task_id,
@@ -298,6 +314,7 @@ async def create_task(
                 next_run,
                 status,
                 agent_profile_id,
+                priority,
             ),
         )
         await conn.commit()
@@ -319,6 +336,7 @@ async def create_task(
         next_run_at=next_run,
         status=status,
         agent_profile_id=agent_profile_id,
+        priority=priority,
     )
 
 
@@ -379,6 +397,15 @@ async def update_task(task_id: str, **updates: Any) -> BackgroundTask | None:
         if task.trigger_type == "interval":
             sets.append("next_run_at = ?")
             args.append(_next_run(cfg.get("cron_expr")))
+    if "priority" in updates and updates["priority"] is not None:
+        priority = updates["priority"]
+        if priority not in VALID_PRIORITIES:
+            msg = (
+                f"priority inválida: {priority!r}. Válidas: {sorted(VALID_PRIORITIES)}"
+            )
+            raise ValueError(msg)
+        sets.append("priority = ?")
+        args.append(priority)
     if not sets:
         return task
 

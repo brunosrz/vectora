@@ -1339,5 +1339,14 @@
   "kanban_select_task": "Selecionar tarefa",
   "kanban_selection_count": "{n} selecionadas",
   "kanban_action_archive": "Arquivar",
-  "kanban_triage_dropzone": "Solte aqui para adiar (triagem)"
+  "kanban_triage_dropzone": "Solte aqui para adiar (triagem)",
+  "kanban_tenant_label": "workspace: {id}",
+  "kanban_assignee_label": "perfil: {id}",
+  "kanban_column_empty": "Vazio",
+  "kanban_column_archived": "Arquivado",
+  "kanban_filter_search_placeholder": "Buscar por nome...",
+  "kanban_filter_search_label": "Buscar tarefas",
+  "kanban_filter_tenant_all": "Todos os workspaces",
+  "kanban_filter_assignee_all": "Todos os perfis",
+  "kanban_filter_show_archived": "Mostrar arquivadas"
 }
