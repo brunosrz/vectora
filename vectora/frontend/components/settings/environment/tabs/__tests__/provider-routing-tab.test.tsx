@@ -592,9 +592,8 @@ describe("ProviderRoutingTab — 9Router", () => {
 });
 
 describe("MediaModelsSection", () => {
-  // Movido de preferencias-tab (Sprint 3, 0.1.11): é config por gateway
-  // (Ollama/OpenRouter), não preferência genérica de usuário — ver
-  // provider-routing-tab.tsx para o racional completo.
+  // Config por gateway (Ollama/OpenRouter), não preferência genérica de
+  // usuário — ver provider-routing-tab.tsx para o racional completo.
   it("repinta com o valor efetivo devolvido pelo backend ao limpar o campo", async () => {
     // Cenário do invariante: o usuário limpa o campo, mas existe env var —
     // o que passa a valer é a env. Mostrar o campo vazio faria parecer que a

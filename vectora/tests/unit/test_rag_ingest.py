@@ -1,4 +1,4 @@
-"""Testes do serviço de ingest direto no RAG (Fase A)."""
+"""Testes do serviço de ingest direto no RAG."""
 
 from __future__ import annotations
 

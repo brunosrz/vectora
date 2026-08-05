@@ -1,6 +1,5 @@
 /**
- * registry/ (Fase F) — "um registry, três catálogos"
- * (documents/extensibility-roadmap.md §5): mcp, skills e extensions são
+ * registry/ — "um registry, três catálogos": mcp, skills e extensions são
  * recursos irmãos do mesmo Worker, não três serviços diferentes.
  *
  * `mcp` e `skills` são catálogos reais em D1 (`mcp_catalog`/`skills_catalog`,
@@ -13,7 +12,7 @@
  * registry remoto está vazio ou fora do ar — lista vazia aqui é um estado
  * válido, não erro.
  *
- * `POST /skills` (Sprint 6) abre publicação de skills à comunidade — padrão
+ * `POST /skills` abre publicação de skills à comunidade — padrão
  * convergente dos registries reais (SkillRegistry.io, OpenAgentSkill,
  * Vercel Agent Skills): unidade de distribuição é uma URL de repositório
  * git, não upload de blob — o Vectora clona sob demanda na instalação
@@ -25,7 +24,7 @@
  *
  * `extensions` continua placeholder — depende do SDK de autoria
  * (`vectora_ext` Python, `@vectora/extension-sdk` TS) e do Extension Host,
- * nenhum dos dois existe ainda (fora de escopo, roadmap §2).
+ * nenhum dos dois existe ainda.
  */
 import { Hono } from "hono";
 import type { Env } from "../gateway/types";

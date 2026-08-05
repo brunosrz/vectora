@@ -1,6 +1,6 @@
 /**
- * rag-library/ (Fase E + Sprint 7 Memory Library) — catálogo de bancos RAG
- * pré-indexados, dois tipos de linha na mesma tabela `rag_packages`:
+ * rag-library/ — catálogo de bancos RAG pré-indexados, dois tipos de
+ * linha na mesma tabela `rag_packages`:
  *
  * - First-party: bibliotecas de código pré-indexadas pela Vectora
  *   (`source_lib`/`source_version`, ex. "langchain 0.3.0"), sem publisher.
@@ -22,9 +22,8 @@ export const ragLibrary = new Hono<{ Bindings: Env }>();
 
 /**
  * Motivo fixo de falha do reindex — não existe provedor de storage externo
- * configurado ainda (decisão em aberto, ver documents/plan.md Bloco K e o
- * histórico de decisões da Fase E). Marcar como "failed" com esse motivo é
- * o comportamento honesto pro estado atual da infra: o job roda de verdade,
+ * configurado ainda. Marcar como "failed" com esse motivo é o
+ * comportamento honesto pro estado atual da infra: o job roda de verdade,
  * só não tem onde baixar/indexar nada ainda.
  */
 export const NO_STORAGE_PROVIDER_REASON =

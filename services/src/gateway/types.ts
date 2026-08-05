@@ -13,7 +13,7 @@ export interface Env {
   // updates/
   R2: R2Bucket;
   KV: KVNamespace;
-  // auth/billing/license/gdpr/api-keys/issues (Fase B/C)
+  // auth/billing/license/gdpr/api-keys/issues
   DB: D1Database;
   APP_URL: string;
   RESEND_API_KEY: string;

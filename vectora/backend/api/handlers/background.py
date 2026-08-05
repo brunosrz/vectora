@@ -49,8 +49,7 @@ class TaskOut(BaseModel):
     block_kind: str | None = None
     block_reason: str | None = None
     #: `workspace_id` já é o "tenant" do card; `agent_profile_id` é o
-    #: "assignee" — os dois já existiam no modelo mas não chegavam ao card
-    #: do Kanban (Sprint 7 do plano 0.1.11).
+    #: "assignee".
     agent_profile_id: str | None = None
     priority: str = "normal"
 

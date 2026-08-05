@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * Board do 3º modo de interface — feature pública (promovida da flag
- * dev-only `enableKanbanMode` na Sprint 7 do plano 0.1.11).
+ * Board do 3º modo de interface — feature pública, sem gate de flag.
  *
  * Cinco colunas fixas, sempre visíveis (mesmo com 0 tasks — colunas vazias
  * não são bug, são o estado normal de um board recém-criado). `triage` fica

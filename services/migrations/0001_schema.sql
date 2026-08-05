@@ -173,8 +173,8 @@ CREATE TABLE IF NOT EXISTS issues (
   created_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Fase E — biblioteca de bancos RAG pré-indexados (catálogo só-leitura;
--- artefatos de verdade vivem em storage externo, não Cloudflare). status:
+-- Biblioteca de bancos RAG pré-indexados (catálogo só-leitura; artefatos
+-- de verdade vivem em storage externo, não Cloudflare). status:
 -- pacotes existentes nascem 'ready' — só quem passa por /reindex entra em
 -- 'pending'/'failed'.
 -- source_lib/source_version são NOT NULL só pra linhas first-party
@@ -203,12 +203,12 @@ CREATE TABLE IF NOT EXISTS rag_packages (
   updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Registry real de MCP/Skills (Fase F, `services/src/registry/routes.ts`) —
+-- Registry real de MCP/Skills (`services/src/registry/routes.ts`) —
 -- substitui os placeholders `{entries: []}`. Seed inicial migra os 6
 -- conectores hoje hardcoded em `backend/api/handlers/mcp_marketplace.py`
 -- (fonte de verdade passa a ser este catálogo; a lista Python vira só
--- fallback offline). `extensions` fica de fora (roadmap §2, SDK ainda não
--- existe) — não crie tabela pra ela até o SDK de extensões existir.
+-- fallback offline). `extensions` fica de fora — SDK de extensões ainda
+-- não existe, não crie tabela pra ela até existir.
 --
 -- `catalog_source` distingue linhas curadas manualmente (seed abaixo,
 -- sempre 'curated') das descobertas automaticamente pelo discovery cron
@@ -232,8 +232,8 @@ CREATE TABLE IF NOT EXISTS mcp_catalog (
 );
 
 -- `vectora_verified` = selo oficial/curado (seed manual ou discovery), como
--- em `mcp_catalog`. `verified` (Sprint 6, publish de comunidade) é um gate
--- SEPARADO — curadoria de admin sobre item publicado por usuário via
+-- em `mcp_catalog`. `verified` é um gate SEPARADO — curadoria de admin sobre
+-- item publicado por usuário via
 -- `POST /skills` (`catalog_source='community'`), mesmo papel de
 -- `rag_packages.verified`. Uma skill pode ter `verified=1` sem nunca ganhar
 -- o selo `vectora_verified` (que continua exclusivo de curadoria oficial).

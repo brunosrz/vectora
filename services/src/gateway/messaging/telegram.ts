@@ -1,17 +1,15 @@
 /**
- * Vectora Connect — adapter Telegram (piloto, Sprint 8 do plano de
- * extensibilidade). Normaliza o webhook do Telegram Bot API pro formato
- * comum que o backend Python consome (`backend/services/gateway/messaging.py`
- * — mesmos campos: platform, platform_user_id, text).
+ * Vectora Connect — adapter Telegram (piloto). Normaliza o webhook do
+ * Telegram Bot API pro formato comum que o backend Python consome
+ * (`backend/services/gateway/messaging.py` — mesmos campos: platform,
+ * platform_user_id, text).
  *
- * Escopo real desta sessão: só o normalizador (puro, testável) e a rota
- * HTTP que o recebe. O encaminhamento de verdade pro backend via
- * `GatewaySession` (Durable Object, WebSocket) e o envio da resposta de
- * volta via `sendMessage` da Bot API ficam para uma sprint de integração
- * dedicada — sem isso ainda funcionando, expor o webhook em produção
- * receberia mensagens reais sem responder nada, pior que não ter o
- * endpoint. Documentado aqui em vez de fingir que já funciona ponta a
- * ponta (CLAUDE.md regra 9).
+ * Cobre só o normalizador (puro, testável) e a rota HTTP que o recebe.
+ * O encaminhamento pro backend via `GatewaySession` (Durable Object,
+ * WebSocket) e o envio de resposta via `sendMessage` da Bot API ainda não
+ * existem — sem isso, expor o webhook em produção receberia mensagens
+ * reais sem responder nada, pior que não ter o endpoint (CLAUDE.md
+ * regra 9: não fingir que já funciona ponta a ponta).
  */
 import { Hono } from "hono";
 import type { Env } from "../types";

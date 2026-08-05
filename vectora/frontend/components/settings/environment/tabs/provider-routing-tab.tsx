@@ -904,9 +904,8 @@ function NineRouterSection() {
 
 /** Modelos de imagem/TTS para os providers de gateway.
  *
- * Movido de Preferências → Provider Routing (Sprint 3, 0.1.11): é config por
- * gateway (Ollama/OpenRouter), mesma natureza dos modelos LLM registrados
- * acima — não uma preferência genérica de usuário.
+ * Config por gateway (Ollama/OpenRouter), mesma natureza dos modelos LLM
+ * registrados acima — não uma preferência genérica de usuário.
  *
  * Só Ollama e OpenRouter aparecem aqui: Gemini/OpenAI resolvem a capacidade
  * sozinhos pelo catálogo (`PROVIDER_CAPABILITIES`) e não têm o que escolher.

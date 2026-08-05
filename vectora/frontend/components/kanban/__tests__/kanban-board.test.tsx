@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Board do 3º modo de interface (feature pública desde a Sprint 7).
+ * Board do 3º modo de interface, feature pública.
  *
  * Cinco colunas fixas, sempre visíveis mesmo com 0 tasks; `triage` fica fora
  * (dropzone própria) e `archived` só aparece com o filtro "mostrar

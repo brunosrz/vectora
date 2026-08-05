@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Kanban é o 3º modo de interface, feature pública desde a Sprint 7 do
- * plano 0.1.11 (era dev-only via `enableKanbanMode`/`VECTORA_DEV=1`).
+ * Kanban é o 3º modo de interface, feature pública — sem gate de flag.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

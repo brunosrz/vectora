@@ -156,8 +156,8 @@ async def test_create_task_persists_then_validation_rejects_bad_input(db):
 
 
 async def test_create_task_priority_default_e_persistida(db):
-    """Sprint 7 do plano 0.1.11 — prioridade é sinal visual do card do
-    Kanban, propagada de ponta a ponta (default 'normal' se omitida)."""
+    """Prioridade é sinal visual do card do Kanban, propagada de ponta a
+    ponta (default 'normal' se omitida)."""
     default_task = await bg.create_task(
         session_id="sess-1",
         user_id="uuid-aaa",

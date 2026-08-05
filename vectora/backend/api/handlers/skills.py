@@ -1,11 +1,11 @@
-"""Handler de skills — gestão de capacidades reutilizáveis por usuário (S8).
+"""Handler de skills — gestão de capacidades reutilizáveis por usuário.
 
 Endpoints (todos exigem autenticação via middleware):
     GET    /skills                 — lista skills instaladas
     POST   /skills                 — instala skill (body: {source})
     DELETE /skills/{skill_id}      — remove skill
     POST   /skills/{skill_id}/verify — revalida SKILL.md (após edição manual)
-    POST   /skills/publish         — publica no catálogo remoto (Sprint 6)
+    POST   /skills/publish         — publica no catálogo remoto
 
 O user_id vem de ``request.state.user`` (CLI/root → ``"local"``). Skills são
 isoladas por usuário (cada um tem sua pasta ``~/.vectora/skills/<id>/``).

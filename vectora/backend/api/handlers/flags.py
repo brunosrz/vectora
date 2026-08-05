@@ -35,8 +35,7 @@ async def get_flags() -> dict:
 
     # Features anteriormente em beta (IDE mode, Library, Context Graph, Kanban)
     # agora são estáveis e habilitadas por padrão para todos os usuários —
-    # `enable_kanban_mode` (gate dev-only via VECTORA_DEV=1) foi removida na
-    # Sprint 7 do plano 0.1.11 quando o Kanban virou feature pública.
+    # não há mais gate `enable_kanban_mode`/VECTORA_DEV=1 pro Kanban.
     return {
         "enable_features_beta": True,
         "auth_required": _auth_enabled(),

@@ -80,8 +80,8 @@ async def test_get_tasks_devolve_status_do_kanban(db):
 
 @pytest.mark.asyncio
 async def test_get_tasks_devolve_priority_e_agent_profile_id(db):
-    """Sprint 7 do plano 0.1.11 — 'tenant' (workspace_id) já chegava ao
-    card; 'assignee' (agent_profile_id) e prioridade não chegavam."""
+    """`TaskOut` expõe tenant (workspace_id), assignee (agent_profile_id) e
+    priority — os três campos do card do Kanban."""
     await bg.create_task(
         session_id="s1",
         user_id="u1",

@@ -30,8 +30,7 @@ export type PermissionMode =
 export type ReasoningEffort = "low" | "medium" | "high" | "max";
 /** Modo de interface dentro do Dev (chatMode=false): "assistant" é o layout
  *  padrão de chat+workbench; "ide" é o layout VS Code com editor docked;
- *  "kanban" é o board multi-agente (feature pública desde a Sprint 7 do
- *  plano 0.1.11). */
+ *  "kanban" é o board multi-agente. */
 export type UiMode = "assistant" | "ide" | "kanban";
 
 /** Modos de permissão em ordem de exibição no seletor. */

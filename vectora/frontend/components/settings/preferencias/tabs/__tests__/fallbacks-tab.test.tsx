@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * FallbacksTab (Sprint 3, 0.1.11) — extraído de preferencias-tab.tsx para
- * aba própria. Cobre: carregar a ordem do backend, adicionar/remover um
- * modelo da fila, e o caso de borda "backend não devolve lista".
+ * FallbacksTab — aba de ordem de fallback de modelos. Cobre: carregar a
+ * ordem do backend, adicionar/remover um modelo da fila, e o caso de
+ * borda "backend não devolve lista".
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import {
