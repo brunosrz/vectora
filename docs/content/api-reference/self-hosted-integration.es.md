@@ -3,9 +3,9 @@ title: Integración Self-Hosted (API Interna)
 weight: 6
 ---
 
-Todo lo documentado en [Overview](../overview), [Classify](../classify), [Extract](../extract) y [Jobs](../jobs) es la API `/v1/*` **pública y estable**. Esta página documenta algo distinto: la **API interna** — el mismo conjunto de endpoints que el frontend de Vectora usa contra tu propia instancia self-hosted.
+Esta página documenta la **API interna** de Vectora — el mismo conjunto de endpoints que el frontend de Vectora usa contra tu propia instancia self-hosted.
 
-Es real, funciona, y es lo que impulsa el chat, el RAG, los gateways y los settings. Pero **no es un contrato público estable** — la forma de los endpoints puede cambiar entre releases sin aviso de deprecación, como pasa con cualquier API interna de frontend. Úsala para tus propios scripts, dashboards o automatizaciones contra *tu propia* instancia de Vectora, no para construir un producto que corre en servidores de terceros (para eso, espera los endpoints `/v1/*` del [roadmap](../roadmap)).
+Es real, funciona, y es lo que impulsa el chat, el RAG, los gateways y los settings. Pero **no es un contrato público estable** — la forma de los endpoints puede cambiar entre releases sin aviso de deprecación, como pasa con cualquier API interna de frontend. Úsala para tus propios scripts, dashboards o automatizaciones contra *tu propia* instancia de Vectora, no para construir un producto que corre en servidores de terceros.
 
 ## Autenticación
 
@@ -28,7 +28,7 @@ Los access tokens expiran; llama a `POST /auth/refresh` con el `refresh_token` p
 
 ## Schema completo: usa el Swagger UI
 
-Esta página da 1-2 ejemplos por área — para la forma exacta de request/response de cada campo, la fuente de verdad es el spec OpenAPI generado automáticamente (el mismo que hay detrás del link `/docs` de [Overview](../overview)):
+Esta página da 1-2 ejemplos por área — para la forma exacta de request/response de cada campo, la fuente de verdad es el spec OpenAPI generado automáticamente, servido por la propia instancia:
 
 ```text
 GET /docs           # Swagger UI interactivo — prueba requests desde el navegador
@@ -69,7 +69,3 @@ curl -N -X POST http://localhost:8080/vectora.chat.v1.ChatService/StreamChat \
 ### `/models/providers` — el catálogo agregado de modelos
 
 Combina el catálogo estático de providers (Gemini, OpenAI, Anthropic, Cohere) con lo que hayas registrado vía los gateways de arriba — esto alimenta el selector de modelo en la UI del chat.
-
-### `/mcp` — no es REST
-
-Si estás integrando un cliente compatible con MCP (Claude Code, Claude Desktop, Cursor) en vez de escribir llamadas HTTP crudas, `/mcp` habla el protocolo MCP, no REST — mira [Conectando Clientes MCP](../../guides/mcp-clients) en su lugar.

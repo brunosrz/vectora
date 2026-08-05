@@ -47,6 +47,8 @@ function mockFetch(
     nineRouterConfigSaveOk: boolean;
     nineRouterConfigSaveDetail: string;
     nineRouterRegisterOk: boolean;
+    mediaModelsGet: { models: Record<string, string> } | null;
+    mediaModelsPatch: { models: Record<string, string> };
   }>,
 ) {
   global.fetch = vi
@@ -232,6 +234,20 @@ function mockFetch(
         return Promise.resolve({
           ok: true,
           json: async () => ({ ok: true }),
+        } as Response);
+      }
+      if (url === "/admin/media-models" && !method) {
+        const body = handlers.mediaModelsGet;
+        return Promise.resolve({
+          ok: body !== null,
+          status: body === null ? 500 : 200,
+          json: async () => body ?? {},
+        } as Response);
+      }
+      if (url === "/admin/media-models" && method === "PATCH") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => handlers.mediaModelsPatch ?? { models: {} },
         } as Response);
       }
       return Promise.resolve({
@@ -572,5 +588,44 @@ describe("ProviderRoutingTab — 9Router", () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/localhost:20128/i)).toBeTruthy();
     });
+  });
+});
+
+describe("MediaModelsSection", () => {
+  // Movido de preferencias-tab (Sprint 3, 0.1.11): é config por gateway
+  // (Ollama/OpenRouter), não preferência genérica de usuário — ver
+  // provider-routing-tab.tsx para o racional completo.
+  it("repinta com o valor efetivo devolvido pelo backend ao limpar o campo", async () => {
+    // Cenário do invariante: o usuário limpa o campo, mas existe env var —
+    // o que passa a valer é a env. Mostrar o campo vazio faria parecer que a
+    // capacidade ficou desligada.
+    mockFetch({
+      mediaModelsGet: { models: { ollama_image_model: "escolha-da-ui" } },
+      mediaModelsPatch: { models: { ollama_image_model: "modelo-da-env" } },
+    });
+
+    render(<ProviderRoutingTab />);
+
+    const campo = (await screen.findByLabelText(
+      "Ollama — image",
+    )) as HTMLInputElement;
+    expect(campo.value).toBe("escolha-da-ui");
+
+    fireEvent.change(campo, { target: { value: "" } });
+    fireEvent.blur(campo);
+
+    // Erro/borda: o campo NÃO fica vazio — mostra o que de fato vale agora.
+    await waitFor(() => expect(campo.value).toBe("modelo-da-env"));
+  });
+
+  it("backend fora do ar deixa os campos vazios sem quebrar a aba (edge)", async () => {
+    mockFetch({ mediaModelsGet: null });
+
+    render(<ProviderRoutingTab />);
+
+    const campo = (await screen.findByLabelText(
+      "Ollama — voice",
+    )) as HTMLInputElement;
+    expect(campo.value).toBe("");
   });
 });

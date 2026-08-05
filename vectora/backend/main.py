@@ -1,8 +1,8 @@
 """Vectora CLI — ponto de entrada unificado.
 
 vectora                 imprime o help (descobre a CLI de configuração)
-vectora start           sobe backend + MCP + SPA (fullstack)
-vectora start --headless  sobe sem janela (bandeja + backend + MCP)
+vectora start           sobe backend + SPA (fullstack)
+vectora start --headless  sobe sem janela (bandeja + backend)
 vectora web             sobe só como webapp — sem Electron, sem bandeja
 
 Configuração (operacional, para VPS via SSH):
@@ -129,10 +129,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(
         prog="vectora",
-        description="Vectora — workspace de IA com RAG e MCP nativos",
+        description="Vectora — workspace de IA com RAG nativo",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""exemplos:
-  vectora start                        sobe backend + MCP + SPA (fullstack)
+  vectora start                        sobe backend + SPA (fullstack)
   vectora start --headless             servidor headless (VPS/systemd)
   vectora start --port 9000            porta customizada
   vectora web                          webapp puro — sem Electron, sem bandeja
@@ -163,14 +163,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", metavar="subcommand")
 
-    # ── start — backend + MCP + SPA (fullstack/headless) ──────────────────────
+    # ── start — backend + SPA (fullstack/headless) ─────────────────────────────
     start_p = sub.add_parser(
         "start",
-        help="Sobe o Vectora completo (backend + MCP + SPA)",
+        help="Sobe o Vectora completo (backend + SPA)",
         description=(
-            "Sobe o backend completo (FastAPI + /mcp) servindo a SPA via uvicorn.\n\n"
+            "Sobe o backend completo (FastAPI) servindo a SPA via uvicorn.\n\n"
             "  vectora start              -> fullstack (janela quando há desktop)\n"
-            "  vectora start --headless   -> só bandeja + backend + MCP, sem janela\n\n"
+            "  vectora start --headless   -> só bandeja + backend, sem janela\n\n"
             "Em host sem display (VPS/Docker), roda como servidor puro."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -178,7 +178,7 @@ def _build_parser() -> argparse.ArgumentParser:
     start_p.add_argument(
         "--headless",
         action="store_true",
-        help="Não abre janela — mantém backend + MCP + bandeja ativos.",
+        help="Não abre janela — mantém backend + bandeja ativos.",
     )
     start_p.add_argument("--host", default="0.0.0.0", help="Host de escuta")  # noqa: S104  # nosec B104
     start_p.add_argument("--port", type=int, default=None, help="Porta (default: 8080)")
@@ -203,7 +203,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "web",
         help="Sobe o Vectora como webapp puro (sem Electron, sem bandeja)",
         description=(
-            "Sobe o backend completo (FastAPI + /mcp) servindo a SPA via uvicorn,\n"
+            "Sobe o backend completo (FastAPI) servindo a SPA via uvicorn,\n"
             "acessível só pelo browser — nunca abre janela Electron nem ícone de\n"
             "bandeja, mesmo numa máquina com display. Equivalente ao modo\n"
             "servidor/VPS, mas utilizável em qualquer máquina."
@@ -238,7 +238,10 @@ def _build_parser() -> argparse.ArgumentParser:
             "  keys                 wizard de API keys + LLM provider\n"
             "  docker [up|down|status]  infra local (Postgres, Redis, Qdrant)\n"
             "  qdrant <url> [--api-key KEY]  testa e persiste Qdrant\n"
-            "  redis <url>          testa e persiste Redis"
+            "  redis <url>          testa e persiste Redis\n"
+            "  integrations|connect|preferences [--get KEY]... [--set KEY=VALUE]...\n"
+            "                       schema declarativo (backend/config/registry.py) —\n"
+            "                       mesmas categorias do frontend (Ambiente/Preferências)"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -246,7 +249,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "config_action",
         nargs="?",
         default=None,
-        choices=["keys", "docker", "qdrant", "redis"],
+        choices=[
+            "keys",
+            "docker",
+            "qdrant",
+            "redis",
+            "integrations",
+            "connect",
+            "preferences",
+        ],
         help="Ação de configuração (sem ação = mostra/edita settings).",
     )
     config_p.add_argument(
@@ -270,8 +281,16 @@ def _build_parser() -> argparse.ArgumentParser:
             "Edita uma chave. Repetível. "
             "LLM: active_provider, active_model. "
             "Storage: storage_mode, postgres_dsn, redis_url, qdrant_url, qdrant_api_key. "
-            "API keys: google_api_key, openai_api_key, anthropic_api_key, cohere_api_key, tavily_api_key."
+            "API keys: google_api_key, openai_api_key, anthropic_api_key, cohere_api_key, tavily_api_key. "
+            "Categorias do registry (integrations/connect/preferences): mesmo formato KEY=VALUE."
         ),
+    )
+    config_p.add_argument(
+        "--get",
+        metavar="KEY",
+        action="append",
+        dest="get_values",
+        help="[integrations|connect|preferences] Lê uma chave do registry. Repetível.",
     )
 
     # ── sessions ──────────────────────────────────────────────────────────────
@@ -365,12 +384,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 # ---------------------------------------------------------------------------
-# start — backend + MCP + SPA via uvicorn
+# start — backend + SPA via uvicorn
 # ---------------------------------------------------------------------------
 
 
 def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
-    """``vectora start`` — sobe FastAPI (+ /mcp) servindo a SPA via uvicorn.
+    """``vectora start`` — sobe FastAPI servindo a SPA via uvicorn.
 
     Em ``--headless`` registra ``VECTORA_HEADLESS=1`` para a bandeja/Electron
     decidirem não abrir janela; o servidor em si é idêntico.

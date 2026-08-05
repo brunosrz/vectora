@@ -110,10 +110,9 @@ Camadas:
   - `lite` (default): SQLite (`aiosqlite`) + LanceDB (vetores)
   - `complete`: PostgreSQL (`asyncpg`) + Qdrant + Redis
   - Usuários/auth/settings **sempre** em SQLite, independente do modo.
-- **`tools/`** — tools LangChain registradas no agente: `fs.py`, `git.py`, `web.py`, `rag.py`, `mcp.py`, etc.
+- **`tools/`** — tools LangChain registradas no agente: `fs.py`, `git.py`, `web.py`, `rag.py`, `mcp.py`, etc. `mcp.py` é o client MCP (`call_mcp_tool`) que consome servidores MCP externos.
 - **`agents/`** — specs de subagents (coder, search) + identidade do agente.
 - **`nodes/`** — nós LangGraph do engine de chat.
-- **`mcp/`** — servidor MCP montado em `/mcp` no mesmo processo FastAPI.
 
 Configuração: `backend/settings.py` (Pydantic Settings). Hierarquia: `defaults.env` → `.env` → `~/.vectora/.env`.
 
@@ -262,11 +261,15 @@ Nunca tratá-los como produtos separados. O backend sempre roda; o
 frontend pode estar **visível** (janela) ou **oculto** (headless/
 bandeja). Isso é um modo de operação, não dois produtos.
 
-## 16. MCP é sempre-ativo
+## 16. MCP é client, não server
 
-O MCP server inicia com todo boot do backend, montado no FastAPI em
-`/mcp` (mesma porta/processo) — não depende de modo nem de processo
-separado. Não há MCP stdio standalone.
+O Vectora consome servidores MCP externos (marketplace de conectores,
+`call_mcp_tool` em `backend/tools/mcp.py`) — não expõe a si mesmo como
+servidor MCP para outros harnesses. Proibido reintroduzir um servidor
+MCP embutido: expor o Vectora via protocolo MCP dá acesso ao RAG e
+demais ferramentas a partir de outro produto (Claude Code, Hermes),
+sem passar pelo workspace compartilhado que é o diferencial real do
+produto.
 
 ## 17. Arquitetura de agente é deep-agent
 

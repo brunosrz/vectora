@@ -45,7 +45,6 @@ class WorkspaceInfo(BaseModel):
     cwd: str
     trusted: bool = False
     hooks_approved: bool = False
-    mcp_write_approved: bool = False
     is_git_repo: bool = False
     git_remote: str | None = None
     git_current_branch: str | None = None
@@ -96,10 +95,6 @@ class TrustRequest(BaseModel):
 
 
 class ApproveHooksRequest(BaseModel):
-    workspace_id: str
-
-
-class ApproveMcpWriteRequest(BaseModel):
     workspace_id: str
 
 
@@ -259,7 +254,6 @@ def _to_info(ws: Any) -> WorkspaceInfo:
         cwd=ws.cwd,
         trusted=getattr(ws, "trusted", False),
         hooks_approved=getattr(ws, "hooks_approved", False),
-        mcp_write_approved=getattr(ws, "mcp_write_approved", False),
         is_git_repo=getattr(ws, "is_git_repo", False),
         git_remote=getattr(ws, "git_remote", None),
         git_current_branch=getattr(ws, "git_current_branch", None),
@@ -396,28 +390,6 @@ async def approve_hooks(request: Request, body: ApproveHooksRequest) -> StatusRe
     uid = _user_id(request)
     require_workspace_access(body.workspace_id, request)
     ok = workspace_registry.approve_hooks(body.workspace_id, uid)
-    if not ok:
-        return StatusResponse(status="error", message="Workspace não encontrado.")
-    ws = workspace_registry.get(body.workspace_id)
-    return StatusResponse(status="ok", workspace=_to_info(ws) if ws else None)
-
-
-@router.post("/ApproveMcpWrite", response_model=StatusResponse)
-async def approve_mcp_write(
-    request: Request, body: ApproveMcpWriteRequest
-) -> StatusResponse:
-    """Aprova escrita/terminal via clients MCP externos neste workspace.
-
-    O servidor MCP (``/mcp``) chama ``file_write``/``file_edit``/``terminal``
-    direto via ``.ainvoke()``, fora do grafo do deep-agent — sem
-    HumanInTheLoopMiddleware/permission_mode. Sem esta aprovação essas tools
-    recusam com mensagem clara em vez de rodar sem consentimento algum.
-    """
-    from backend.workspace.workspace import workspace_registry
-
-    uid = _user_id(request)
-    require_workspace_access(body.workspace_id, request)
-    ok = workspace_registry.approve_mcp_write(body.workspace_id, uid)
     if not ok:
         return StatusResponse(status="error", message="Workspace não encontrado.")
     ws = workspace_registry.get(body.workspace_id)
@@ -868,13 +840,6 @@ async def approve_hooks_rest(
     request: Request, body: ApproveHooksRequest
 ) -> StatusResponse:
     return await approve_hooks(request, body)
-
-
-@view_router.post("/approve-mcp-write", response_model=StatusResponse)
-async def approve_mcp_write_rest(
-    request: Request, body: ApproveMcpWriteRequest
-) -> StatusResponse:
-    return await approve_mcp_write(request, body)
 
 
 @view_router.post("/git-init", response_model=StatusResponse)

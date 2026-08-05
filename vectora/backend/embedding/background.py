@@ -215,12 +215,26 @@ class BackgroundEmbeddingWorker:
         # e é resetado ao encontrar items (evita 12+ queries/min em idle).
         self._poll_interval: float = POLL_INTERVAL_MIN
         self._queue: Any = None
+        # Backoff exponencial + dedup de log para erros persistentes no loop
+        # principal (ex: storage_mode inconsistente com a licença efetiva).
+        self._consecutive_errors: int = 0
+        self._last_error_type: type[BaseException] | None = None
 
     async def _get_queue(self) -> Any:
-        """Obtém (e inicializa uma vez) a queue de acordo com storage_mode."""
+        """Obtém (e inicializa uma vez) a queue de acordo com storage_mode.
+
+        Usa ``get_effective_storage_mode()`` (não ``self.config.storage_mode``
+        cru) porque o modo configurado pode ser "complete" enquanto a licença
+        efetiva rebaixa para "lite" — sem isso o worker tenta abrir pool
+        Postgres, `require_pro()` levanta 402, e como o loop nunca cacheia
+        esse resultado negativo, o erro se repete a cada ciclo.
+        """
         if self._queue is not None:
             return self._queue
-        if self.config.storage_mode == "complete" and self.config.postgres_dsn:
+        from backend.services.license import get_effective_storage_mode
+
+        effective_mode = get_effective_storage_mode()
+        if effective_mode == "complete" and self.config.postgres_dsn:
             from backend.embedding.queue import PostgresQueueDB
 
             q = PostgresQueueDB()
@@ -306,8 +320,11 @@ class BackgroundEmbeddingWorker:
                     await asyncio.sleep(POLL_INTERVAL_MAX)
                     continue
 
-                # Obter queue (lazy-loaded do singleton)
+                # Obter queue (lazy-loaded do singleton) — chegar aqui sem
+                # exceção já é sinal de recuperação, reseta o backoff.
                 queue = await self._get_queue()
+                self._consecutive_errors = 0
+                self._last_error_type = None
 
                 # Buscar até BATCH_SIZE documentos pendentes
                 pending = await queue.get_pending(limit=BATCH_SIZE)
@@ -344,9 +361,35 @@ class BackgroundEmbeddingWorker:
             except asyncio.CancelledError:
                 logger.info("Worker foi cancelado")
                 break
-            except Exception:
-                logger.exception("Erro no loop principal do worker")
-                await asyncio.sleep(POLL_INTERVAL_MIN)
+            except Exception as exc:
+                # Backoff exponencial com log único por causa de erro (não o
+                # traceback completo a cada ciclo) — evita o loop de spam que
+                # aconteceria se _get_queue()/get_pending() falharem de forma
+                # persistente (ex: config inconsistente entre storage_mode e
+                # DSN configurado).
+                self._consecutive_errors += 1
+                backoff = min(
+                    POLL_INTERVAL_MIN * (2**self._consecutive_errors),
+                    POLL_INTERVAL_MAX,
+                )
+                if self._consecutive_errors <= 1 or self._last_error_type is not type(
+                    exc
+                ):
+                    logger.exception(
+                        "Erro no loop principal do worker (tentativa %d, backoff %.0fs)",
+                        self._consecutive_errors,
+                        backoff,
+                    )
+                else:
+                    logger.warning(
+                        "embedding_worker_error_repetido tipo=%s tentativa=%d backoff=%.0fs",
+                        type(exc).__name__,
+                        self._consecutive_errors,
+                        backoff,
+                    )
+                self._last_error_type = type(exc)
+                await asyncio.sleep(backoff)
+                continue
 
     async def _process_record(
         self, record: EmbeddingQueueRecord, queue: Any | None = None

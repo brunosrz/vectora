@@ -53,6 +53,13 @@ const PreferenciasTab = lazyWithRetry(
     })),
   "preferencias-tab",
 );
+const FallbacksTab = lazyWithRetry(
+  () =>
+    import("./tabs/fallbacks-tab").then((mod) => ({
+      default: mod.FallbacksTab,
+    })),
+  "fallbacks-tab",
+);
 
 function TabFallback() {
   return (
@@ -93,6 +100,9 @@ export function PreferenciasDialog() {
             <TabsTrigger value="preferencias" className="rounded-md text-xs">
               Geral
             </TabsTrigger>
+            <TabsTrigger value="fallbacks" className="rounded-md text-xs">
+              Fallbacks
+            </TabsTrigger>
             <TabsTrigger value="memoria" className="rounded-md text-xs">
               Memória
             </TabsTrigger>
@@ -111,6 +121,9 @@ export function PreferenciasDialog() {
               <Suspense fallback={<TabFallback />}>
                 <TabsContent value="preferencias" className="mt-0">
                   <PreferenciasTab />
+                </TabsContent>
+                <TabsContent value="fallbacks" className="mt-0">
+                  <FallbacksTab />
                 </TabsContent>
                 <TabsContent value="memoria" className="mt-0">
                   <MemoriaTab />

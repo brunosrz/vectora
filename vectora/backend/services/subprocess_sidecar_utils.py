@@ -41,11 +41,21 @@ async def terminate_gracefully(
 ) -> None:
     """``terminate()`` → espera ``timeout_seconds``s → ``kill()`` se não
     morreu a tempo. Nunca lança — best-effort, loga qualquer exceção além
-    do timeout esperado."""
+    do timeout esperado.
+
+    ``ProcessLookupError`` é tratado como caso esperado (idempotente), não
+    erro: o processo já pode ter saído sozinho entre o momento em que o
+    shutdown decide encerrá-lo e a chamada a ``terminate()`` — comum sob
+    ``CancelledError`` do lifespan encadeando com o encerramento do
+    sidecar. Logar isso como warning com traceback completo só polui o log
+    de shutdown sem indicar nenhum problema real.
+    """
     try:
         proc.terminate()
         await asyncio.wait_for(proc.wait(), timeout=timeout_seconds)
     except TimeoutError:
         proc.kill()
+    except ProcessLookupError:
+        logger.debug("%s: processo já havia saído antes do terminate()", log_prefix)
     except Exception:
         logger.warning("%s: erro ao encerrar", log_prefix, exc_info=True)

@@ -212,42 +212,14 @@ class TestWorkspacesActive:
 
 
 # ---------------------------------------------------------------------------
-# MCP sempre-ativo — montado em /mcp + lifespan composto
+# API tools schema — rota interna consumida pelo frontend
 # ---------------------------------------------------------------------------
 
 
-class TestMcpMount:
-    """O MCP sobe com todo boot do backend, montado em /mcp."""
-
-    def test_mcp_mounted_at_slash_mcp(self, headless_app):
-        paths = _collect_route_paths(headless_app.routes)
-        assert "/mcp" in paths, "MCP não montado em /mcp"
-
+class TestApiToolsSchema:
     def test_api_tools_schema_route_exists(self, headless_app):
         paths = _collect_route_paths(headless_app.routes)
         assert "/api/tools/schema" in paths
-
-    def test_lifespan_nao_roda_bootstrap_de_env_do_mcp(self, headless_app, monkeypatch):
-        """O boot HTTP do FastAPI (`vectora start`/`vectora web`) não chama
-        `bootstrap_env_from_mcp` — absorver GOOGLE_API_KEY/COHERE_API_KEY/
-        TAVILY_API_KEY/VECTORA_TOKEN etc. de variáveis de ambiente do
-        processo é exclusivo do entrypoint stdio real (`vectora-mcp`,
-        `backend/mcp/server.py::_mcp_lifespan`), onde um cliente MCP
-        registry injeta as keys explicitamente."""
-        import backend.mcp.env_bootstrap as eb
-
-        called = {"value": False}
-
-        def _fake_bootstrap() -> bool:
-            called["value"] = True
-            return False
-
-        monkeypatch.setattr(eb, "bootstrap_env_from_mcp", _fake_bootstrap)
-
-        with TestClient(headless_app, raise_server_exceptions=False):
-            pass
-
-        assert not called["value"]
 
 
 # ---------------------------------------------------------------------------

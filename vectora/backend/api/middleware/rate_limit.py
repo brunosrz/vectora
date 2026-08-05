@@ -7,9 +7,6 @@ Limites por endpoint:
     POST /auth/signup         → 3 req/hora por IP
     POST /auth/change-password → 3 req/hora por user_id
     POST /auth/refresh        → 20 req/min por IP
-    POST /v1/*                → diferenciado por tier (``tier_rate_limit``,
-                                  ver ``backend/services/subscription.py``):
-                                  free 10/min, pro 100/min.
 
 Os outros endpoints (StreamChat, etc.) não têm rate limit aqui —
 são protegidos pela autenticação obrigatória.
@@ -44,15 +41,6 @@ def _get_client_ip(request: Request) -> str:
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
-
-
-def tier_rate_limit() -> str:
-    """Limite dinâmico por tier — usado como ``@limiter.limit(tier_rate_limit)``
-    nos endpoints REST ``/v1/*``. Não bloqueia o tier free, só aperta o
-    throttle."""
-    from backend.rbac.subscription import get_current_tier
-
-    return "100/minute" if get_current_tier() == "pro" else "10/minute"
 
 
 def attach_limiter(app: FastAPI) -> None:

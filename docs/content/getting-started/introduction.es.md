@@ -41,7 +41,7 @@ El mismo backend sirve cuatro superficies distintas, al mismo tiempo:
 1. **Chat web** — interfaz React multiusuario, con un workbench (archivos, git, terminal, RAG, Context Graph) — ver [Usando el chat](../guides/using-the-chat) y [Usando el workbench](../guides/using-the-workbench).
 2. **CLI** — `vectora start`, `vectora config`, `vectora storage` — ver la [referencia de la CLI](../reference/cli).
 3. **Servidor MCP** — montado en `/mcp` en el mismo proceso, siempre activo. Conecta Claude Code, Claude Desktop o cualquier cliente MCP — ver [Servidor MCP](../reference/mcp-server).
-4. **API REST** — endpoints `/v1/classify`, `/v1/extract` y `/v1/jobs` para integrar el agente en otros sistemas — ver [Referencia de la API](../api-reference/overview).
+4. **API REST interna** — el mismo conjunto de endpoints que usa el frontend (chat, RAG, gateways, settings), disponible para automatizaciones contra tu propia instancia — ver [Integración Self-Hosted](../api-reference/self-hosted-integration).
 
 ## Free vs. Pro
 

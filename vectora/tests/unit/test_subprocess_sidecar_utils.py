@@ -80,3 +80,19 @@ class TestTerminateGracefully:
         )
 
         logger.warning.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_process_lookup_error_e_tratado_como_esperado_nao_warning(self):
+        # Regressão: processo que já saiu sozinho antes do terminate() (comum
+        # sob CancelledError encadeado do shutdown do lifespan) não deve virar
+        # warning com traceback completo — é caso esperado, idempotente.
+        proc = MagicMock()
+        proc.terminate = MagicMock(side_effect=ProcessLookupError())
+        logger = MagicMock()
+
+        await terminate_gracefully(
+            proc, timeout_seconds=5.0, logger=logger, log_prefix="x"
+        )
+
+        logger.debug.assert_called_once()
+        logger.warning.assert_not_called()

@@ -59,9 +59,6 @@ from backend.api.handlers.terminal import router as terminal_router
 from backend.api.handlers.threads import router as thread_router
 from backend.api.handlers.tools import router as tools_router
 from backend.api.handlers.usage import router as usage_router
-from backend.api.handlers.v1.classify import router as v1_classify_router
-from backend.api.handlers.v1.extract import router as v1_extract_router
-from backend.api.handlers.v1.jobs import router as v1_jobs_router
 from backend.api.handlers.webhooks import router as webhooks_router
 from backend.api.handlers.workspaces import router as workspace_router
 from backend.api.handlers.workspaces import view_router as workspace_view_router
@@ -165,18 +162,6 @@ async def _license_revalidation_loop() -> None:
         except Exception as exc:
             logger.warning("license: falha inesperada na validação — %s", exc)
         await asyncio.sleep(_LICENSE_REVALIDATE_INTERVAL_S)
-
-
-async def _run_jobs_worker(stop_event: asyncio.Event) -> None:
-    """Roda o worker da fila de jobs; encerra silenciosamente em erro fatal."""
-    try:
-        from backend.services.jobs import run_jobs_worker
-
-        await run_jobs_worker(stop_event=stop_event)
-    except asyncio.CancelledError:
-        raise
-    except Exception as exc:
-        logger.warning("api/server: jobs worker encerrou: %s", exc)
 
 
 @asynccontextmanager
@@ -299,12 +284,6 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: cache_llm indisponível: %s", exc)
 
-    # Worker que consome a fila de jobs assíncronos da API.
-    jobs_stop = asyncio.Event()
-    jobs_worker_task: asyncio.Task[None] = asyncio.create_task(
-        _run_jobs_worker(jobs_stop)
-    )
-
     # Worker que processa a fila de embeddings (RAG): lê os chunks PENDING e
     # grava os vetores no LanceDB. SEM ele, tudo que `ingest_docs`/
     # `ingest_directory` enfileiram fica "pending" para sempre e o RAG nunca
@@ -418,9 +397,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         except Exception:
             logger.debug("api/server: erro ao encerrar cache_sync")
 
-        # Para o worker de jobs e fecha a message queue (Redis Streams).
-        jobs_stop.set()
-        jobs_worker_task.cancel()
+        # Fecha a message queue (Redis Streams / NATS JetStream) — usada por
+        # background tasks/kanban, não exclusiva do worker de jobs removido.
         try:
             from backend.scheduling.mq import get_mq
 
@@ -577,24 +555,6 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(agent_profiles_router)
     app.include_router(graph_router)
     app.include_router(mcp_marketplace_router)
-    # REST API v1 — structured output endpoints
-    app.include_router(v1_extract_router)
-    app.include_router(v1_classify_router)
-    # REST API v1 — jobs assíncronos
-    app.include_router(v1_jobs_router)
-
-    # ── MCP server (sempre-ativo, montado em /mcp) ────────────────────────────
-    # Sobe junto de todo boot do backend (vectora start) reusando a MESMA
-    # instância FastMCP — sem processo separado. Agentes externos (Claude
-    # Desktop/Code) conectam em /mcp mesmo com a janela do app oculta. Montado
-    # ANTES do catch-all da SPA para que /mcp/* não caia no index.html.
-    try:
-        from backend.mcp.server import mcp_asgi_app
-
-        app.mount("/mcp", mcp_asgi_app())
-        logger.info("api/server: MCP montado em /mcp")
-    except Exception as exc:
-        logger.warning("api/server: falha ao montar MCP em /mcp: %s", exc)
 
     # ── Discovery Layer — schema das tools ─────────────────────────────────
     @app.get("/api/tools/schema")

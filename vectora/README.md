@@ -1,6 +1,6 @@
 # <img src="backend/assets/vectora.png" width="32" height="32"> Vectora
 
-**Vectora** é um assistente de IA self-hosted para equipes de desenvolvimento — roda inteiramente no seu servidor, integra como sub-agente em qualquer orquestrador compatível com MCP (Claude Code, Claude Desktop, extensões VS Code) e vem com um chat web multi-usuário completo.
+**Vectora** é um assistente de IA self-hosted para equipes de desenvolvimento — roda inteiramente no seu servidor, com um workbench completo (arquivos, git, terminal, RAG, Context Graph, browser) compartilhado entre você e o agente, e vem com um chat web multi-usuário.
 
 No seu núcleo, o Vectora resolve o **problema do abismo de conhecimento**: os LLMs não conhecem sua base de código, sua documentação ou as versões mais recentes da sua stack. O Vectora preenche essa lacuna por dois caminhos complementares: **RAG híbrido** (BM25 + vetores densos + reranker Cohere/VoyageAI) para recuperação por similaridade, e o **Context Graph** — um grafo de conhecimento nativo do workspace (funções, classes, conceitos e suas relações, via tree-sitter + extração semântica por LLM) para contexto estrutural.
 
@@ -93,7 +93,7 @@ cp .env.example .env
 # Instalar dependências do frontend (SPA Vite)
 pnpm --dir frontend install
 
-# Terminal 1 — backend completo + MCP (/mcp) + SPA (porta 8080)
+# Terminal 1 — backend completo + SPA (porta 8080)
 uv run vectora start --port 8080
 # Terminal 2 — frontend dev (Vite, porta 3000, faz proxy p/ a API)
 pnpm --dir frontend dev
@@ -108,26 +108,8 @@ O frontend cobre toda a configuração, mas em VPS via SSH a CLI Rich expõe o e
 ```bash
 uv run vectora config keys         # wizard de API keys + provider de LLM
 uv run vectora config docker up    # sobe Postgres + Redis + Qdrant local
-uv run vectora start --headless    # backend + MCP, sem janela (bandeja)
+uv run vectora start --headless    # backend, sem janela (bandeja)
 ```
-
----
-
-## Integração MCP
-
-O MCP server sobe **junto** com o Vectora (`vectora start`), montado em `/mcp` no mesmo processo FastAPI (via `FastMCP`, SSE) — não há processo MCP separado. Conecte qualquer cliente MCP (Claude Code/Desktop) à URL `/mcp` do seu Vectora em execução:
-
-```json
-{
-  "mcpServers": {
-    "Vectora": {
-      "url": "http://localhost:8080/mcp"
-    }
-  }
-}
-```
-
-Em produção, use a URL pública (HTTPS) do seu servidor: `https://vectora.seudominio.com/mcp`.
 
 ---
 
@@ -205,14 +187,14 @@ vectora [comando] [opções]
 
 Comandos:
   (sem args)           Imprime este help
-  start                Backend completo + MCP (/mcp) + SPA (fullstack)
-  start --headless     Sobe sem janela (bandeja + backend + MCP)
+  start                Backend completo + SPA (fullstack)
+  start --headless     Sobe sem janela (bandeja + backend)
   config               Mostra/edita settings; subcomandos: keys, docker, qdrant, redis
   storage              Migrations, diagnóstico, backup/restore, wizard BaaS
   sessions             Listar todas as sessões salvas
 
 Opções de start:
-  --headless           Não abre janela (mantém backend + MCP + bandeja)
+  --headless           Não abre janela (mantém backend + bandeja)
   --host <host>        Host de escuta (padrão: 0.0.0.0)
   --port <n>           Porta (padrão: 8080)
   --ssl-certfile/-keyfile <pem>   TLS (serve em https://)
@@ -275,8 +257,8 @@ O projeto segue TDD (par caminho-feliz + caminho-de-erro no mesmo teste) — ver
 | Suíte                              | Arquivos | Testes     | Como rodar                                                        |
 | ---------------------------------- | -------- | ---------- | ----------------------------------------------------------------- |
 | **Backend — unit** (`tests/unit/`) | 137      | 2.387      | `uv run pytest tests/unit -q`                                     |
-| **Backend — integration**          | 5        | 47         | `uv run pytest tests/integration -q` (Postgres/Redis/Qdrant/MCP)  |
-| **Backend — e2e**                  | 2        | 22         | `uv run pytest tests/e2e -q` (MCP resources/routes reais)         |
+| **Backend — integration**          | 5        | 43         | `uv run pytest tests/integration -q` (Postgres/Redis/Qdrant)      |
+| **Backend — e2e**                  | 1        | 6          | `uv run pytest tests/e2e -q` (execuções reais do agente)          |
 | **Backend — stress**               | 4        | 7          | `uv run pytest tests/stress -q` (concorrência, sem APIs externas) |
 | **Backend — total**                | **148**  | **2.463**  | `uv run pytest tests -q`                                          |
 | **Frontend — vitest**              | 90       | 1.008      | `pnpm --dir frontend exec vitest run`                             |
@@ -291,24 +273,24 @@ O projeto segue TDD (par caminho-feliz + caminho-de-erro no mesmo teste) — ver
 
 ### Backend
 
-| Camada                | Tecnologia                                                                                                                                                                                |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Linguagem             | Python 3.13 / [uv](https://docs.astral.sh/uv/)                                                                                                                                            |
-| Servidor              | FastAPI ≥0.138 + Uvicorn — serve API, SSE, WebSocket e a SPA (`StaticFiles`)                                                                                                              |
-| Framework de agente   | [LangChain](https://langchain.com/) 1.3 + [LangGraph](https://langchain-ai.github.io/langgraph/) 1.2 + [deepagents](https://github.com/langchain-ai/deepagents) 0.6 (`create_deep_agent`) |
-| Providers de LLM      | `langchain-google-genai`, `langchain-openai`, `langchain-anthropic`, `langchain-cohere`, cliente nativo Ollama/OpenRouter                                                                 |
-| Banco vetorial        | [LanceDB](https://lancedb.github.io/lancedb/) (lite, default) / Qdrant (complete)                                                                                                         |
-| Embeddings + rerank   | Cohere `embed-multilingual-v3.0` + `rerank-multilingual-v3.0`, com VoyageAI como alternativa                                                                                              |
-| Busca web             | Tavily via `langchain-tavily`                                                                                                                                                             |
-| Retrieval esparso     | `rank-bm25` (híbrido com busca vetorial densa)                                                                                                                                            |
-| Context Graph         | `tree-sitter` (Python/JS/TS/Go/Rust/Java/C/C++/JSON) + `networkx` + `rapidfuzz`                                                                                                           |
-| Persistência          | SQLite + `aiosqlite` (WAL) + LangGraph Checkpointer (Postgres via `asyncpg` no modo complete)                                                                                             |
-| Cache/KV              | Redis (`redis[hiredis]`, `langchain-redis`) — modo complete                                                                                                                               |
-| Terminal              | PTY via `pywinpty` (Windows) / `ptyprocess` (Unix)                                                                                                                                        |
-| Protocolo de contexto | [MCP](https://modelcontextprotocol.io/) ≥1.28 via [FastMCP](https://github.com/jlowin/fastmcp), montado em `/mcp`                                                                         |
-| Segurança             | `argon2-cffi` (senhas), `pyjwt`, `pynacl`, `pykeepass` (vault KeePassXC), `slowapi` (rate limit)                                                                                          |
-| Interface CLI         | [Rich](https://rich.readthedocs.io/)                                                                                                                                                      |
-| Build/Distribuição    | Nuitka (compila o backend em C) + PyInstaller (empacota) + Electron + `electron-builder`                                                                                                  |
+| Camada              | Tecnologia                                                                                                                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Linguagem           | Python 3.13 / [uv](https://docs.astral.sh/uv/)                                                                                                                                            |
+| Servidor            | FastAPI ≥0.138 + Uvicorn — serve API, SSE, WebSocket e a SPA (`StaticFiles`)                                                                                                              |
+| Framework de agente | [LangChain](https://langchain.com/) 1.3 + [LangGraph](https://langchain-ai.github.io/langgraph/) 1.2 + [deepagents](https://github.com/langchain-ai/deepagents) 0.6 (`create_deep_agent`) |
+| Providers de LLM    | `langchain-google-genai`, `langchain-openai`, `langchain-anthropic`, `langchain-cohere`, cliente nativo Ollama/OpenRouter                                                                 |
+| Banco vetorial      | [LanceDB](https://lancedb.github.io/lancedb/) (lite, default) / Qdrant (complete)                                                                                                         |
+| Embeddings + rerank | Cohere `embed-multilingual-v3.0` + `rerank-multilingual-v3.0`, com VoyageAI como alternativa                                                                                              |
+| Busca web           | Tavily via `langchain-tavily`                                                                                                                                                             |
+| Retrieval esparso   | `rank-bm25` (híbrido com busca vetorial densa)                                                                                                                                            |
+| Context Graph       | `tree-sitter` (Python/JS/TS/Go/Rust/Java/C/C++/JSON) + `networkx` + `rapidfuzz`                                                                                                           |
+| Persistência        | SQLite + `aiosqlite` (WAL) + LangGraph Checkpointer (Postgres via `asyncpg` no modo complete)                                                                                             |
+| Cache/KV            | Redis (`redis[hiredis]`, `langchain-redis`) — modo complete                                                                                                                               |
+| Terminal            | PTY via `pywinpty` (Windows) / `ptyprocess` (Unix)                                                                                                                                        |
+| Cliente MCP         | [MCP](https://modelcontextprotocol.io/) via `langchain-mcp-adapters` (`MultiServerMCPClient`) — consome servidores MCP de terceiros                                                       |
+| Segurança           | `argon2-cffi` (senhas), `pyjwt`, `pynacl`, `pykeepass` (vault KeePassXC), `slowapi` (rate limit)                                                                                          |
+| Interface CLI       | [Rich](https://rich.readthedocs.io/)                                                                                                                                                      |
+| Build/Distribuição  | Nuitka (compila o backend em C) + PyInstaller (empacota) + Electron + `electron-builder`                                                                                                  |
 
 ### Frontend
 

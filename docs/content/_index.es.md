@@ -22,7 +22,7 @@ En su núcleo, Vectora cierra la **brecha de conocimiento** entre un LLM y tu c�
 | Ver todos los comandos de la CLI            | [Referencia de la CLI](./reference/cli)           |
 | Desplegar en un servidor                    | [Requisitos](./deployment/requirements)           |
 | Entender auth, secretos y BYOK              | [Seguridad](./security/authentication)            |
-| Usar la API REST                            | [Referencia de la API](./api-reference/overview)  |
+| Usar la API REST                            | [Referencia de la API](./api-reference)  |
 
 ## Qué es Vectora (y qué no es)
 

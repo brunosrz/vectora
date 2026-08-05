@@ -22,7 +22,7 @@ At its core, Vectora closes the **knowledge gap** between an LLM and your curren
 | See all CLI commands                      | [CLI reference](./reference/cli)             |
 | Deploy on a server                        | [Requirements](./deployment/requirements)      |
 | Understand auth, secrets, and BYOK        | [Security](./security/authentication)          |
-| Use the REST API                          | [API reference](./api-reference/overview)      |
+| Use the REST API                          | [API reference](./api-reference)      |
 
 ## What Vectora is (and isn't)
 

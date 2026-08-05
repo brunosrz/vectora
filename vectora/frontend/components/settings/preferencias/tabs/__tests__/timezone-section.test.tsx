@@ -9,13 +9,7 @@
  * seleção — deixar o valor novo na tela faria o usuário crer que salvou.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  render,
-  screen,
-  cleanup,
-  waitFor,
-  fireEvent,
-} from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/paraglide/messages", () => ({
   m: new Proxy({}, { get: (_t, prop) => () => String(prop) }),
@@ -95,73 +89,5 @@ describe("TimezoneSection", () => {
     await waitFor(() =>
       expect(screen.queryByText("prefs_timezone_section")).toBeNull(),
     );
-  });
-});
-
-describe("MediaModelsSection", () => {
-  it("repinta com o valor efetivo devolvido pelo backend ao limpar o campo", async () => {
-    // Cenário do invariante: o usuário limpa o campo, mas existe env var —
-    // o que passa a valer é a env. Mostrar o campo vazio faria parecer que a
-    // capacidade ficou desligada.
-    const patches: string[] = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string, init?: RequestInit) => {
-        const u = String(url);
-        const method = init?.method ?? "GET";
-        if (u.includes("/admin/media-models") && method === "GET") {
-          return new Response(
-            JSON.stringify({ models: { ollama_image_model: "escolha-da-ui" } }),
-          );
-        }
-        if (u.includes("/admin/media-models") && method === "PATCH") {
-          patches.push(String(init?.body));
-          return new Response(
-            JSON.stringify({ models: { ollama_image_model: "modelo-da-env" } }),
-          );
-        }
-        if (u.includes("/admin/timezone")) {
-          return new Response(
-            JSON.stringify({ timezone: "UTC", available: ZONAS }),
-          );
-        }
-        return new Response(JSON.stringify({}));
-      }),
-    );
-
-    render(<PreferenciasTab />);
-
-    const campo = (await screen.findByLabelText(
-      "prefs_media_models_ollama_image",
-    )) as HTMLInputElement;
-    expect(campo.value).toBe("escolha-da-ui");
-
-    fireEvent.change(campo, { target: { value: "" } });
-    fireEvent.blur(campo);
-
-    await waitFor(() => expect(patches.length).toBe(1));
-    // Erro/borda: o campo NÃO fica vazio — mostra o que de fato vale agora.
-    await waitFor(() => expect(campo.value).toBe("modelo-da-env"));
-  });
-
-  it("backend fora do ar deixa os campos vazios sem quebrar a aba (edge)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) => {
-        if (String(url).includes("/admin/media-models")) {
-          return new Response("erro", { status: 500 });
-        }
-        return new Response(
-          JSON.stringify({ timezone: "UTC", available: ZONAS }),
-        );
-      }),
-    );
-
-    render(<PreferenciasTab />);
-
-    const campo = (await screen.findByLabelText(
-      "prefs_media_models_ollama_tts",
-    )) as HTMLInputElement;
-    expect(campo.value).toBe("");
   });
 });

@@ -113,3 +113,51 @@ async def test_process_record_rate_limit_trips_breaker_without_retry(
     # mark_processing chamado uma única vez (sem o loop de 3 tentativas).
     assert queue.mark_processing_calls == 1
     assert queue.archived_reason is not None
+
+
+@pytest.mark.asyncio
+async def test_get_queue_uses_effective_storage_mode_not_raw_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """storage_mode='complete' configurado + licença Free deve cair pro
+    backend local (SQLite/LanceDB) — nunca chamar get_pg_pool()/require_pro().
+
+    Regressão: o worker lia self.config.storage_mode (valor cru) em vez de
+    get_effective_storage_mode() (valor pós-licença), então uma instalação
+    com storage_mode='complete' configurado mas sem licença Pro entrava num
+    loop de erro 402 a cada ciclo do worker.
+    """
+    worker = BackgroundEmbeddingWorker()
+    worker.config.storage_mode = "complete"
+    worker.config.postgres_dsn = "postgresql://fake/db"
+
+    monkeypatch.setattr(
+        "backend.services.license.get_effective_storage_mode",
+        lambda: "lite",
+    )
+
+    postgres_queue_called = False
+
+    class _FakePostgresQueueDB:
+        def __init__(self) -> None:
+            nonlocal postgres_queue_called
+            postgres_queue_called = True
+
+        async def _ensure_table(self) -> None:
+            pass
+
+    monkeypatch.setattr("backend.embedding.queue.PostgresQueueDB", _FakePostgresQueueDB)
+
+    sqlite_queue_called = False
+
+    async def _fake_get_embedding_queue(_dsn: str) -> object:
+        nonlocal sqlite_queue_called
+        sqlite_queue_called = True
+        return _FakeQueue()
+
+    monkeypatch.setattr(_bg_mod, "get_embedding_queue", _fake_get_embedding_queue)
+
+    await worker._get_queue()
+
+    assert sqlite_queue_called is True
+    assert postgres_queue_called is False

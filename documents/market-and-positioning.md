@@ -108,8 +108,8 @@ produto atual evolui sob licença comercial.
 - **Multi-modal nativo.** LLM + embedding + reranker + STT + TTS +
   geração de imagem sob protocolos abstratos — trocar provider é
   mudança de config, não de código.
-- **Multi-acesso.** O mesmo agente atende via CLI, chat web, desktop
-  app, MCP server (delegação) e REST API (integração).
+- **Multi-acesso.** O mesmo agente atende via CLI, chat web e desktop
+  app.
 - **Multi-pessoa.** A mesma instalação serve devs sêniores, PMs,
   marketing, design e executivos — cada perfil acessa via persona
   packs que afinam o agente para seu domínio.
@@ -168,6 +168,9 @@ Toda peça pública (site, README, post, deck, vídeo) deve passar por:
 - [ ] Nenhuma referência a "Vectora Cloud" rodando desktop de terceiros
       em Docker, a Supabase como backend, ou a uma rede neural própria
       (VCR) roteando o agente — nada disso existe no produto atual
+- [ ] Nenhuma referência ao Vectora expondo servidor MCP ou API REST
+      pública para terceiros — removidos (0.1.11); Vectora só consome
+      MCP (client), nunca expõe a si mesmo como servidor MCP
 
 Mudança de posicionamento (pivô de público, lançamento de produto
 Tier 3, concorrente novo relevante) exige atualização deste doc com
@@ -566,7 +569,6 @@ Oportunidades de diferenciação:
 | RAG dedicado com sub-agente   |    ✅    |     ❌      | Parc.  |  ❌   |    ❌    |  Parc.  |   ❌    |   ❌    |
 | Multi-agente especializado    |    ✅    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |  Parc.  |   ❌    |
 | Chat web multi-usuário (RBAC) |    ✅    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
-| MCP server (expor delegação)  |    ✅    |     ❌²     |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | MCP client (consumir)         |    ✅    |     ✅      | Plan.  |  ❌   |  Plan.   |   ❌    |   ❌    |   ❌    |
 | MCP Library integrada (UI)    |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | REST API + SDKs               |    🔄    |    Parc.    |   ❌   |  ❌   |    ❌    |   ✅    |   ❌    |   ❌    |
@@ -580,14 +582,13 @@ Oportunidades de diferenciação:
 | Plan mode explícito           |    🔄    |     ✅      |   ❌   | Parc. |    ❌    |   ❌    |   ✅    |   ❌    |
 | Custom slash commands hier.   |    🔄    |     ✅      | Parc.  | Parc. |    ✅    |   ❌    |   ❌    |   ❌    |
 | Auto-commit por mudança       |    📋    |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
-| Live preview embedded         |    🔄    |     ✅³     |   ❌   |  ❌   |    ❌    |   ❌    |   ✅    |   ❌    |
+| Live preview embedded         |    🔄    |     ✅²     |   ❌   |  ❌   |    ❌    |   ❌    |   ✅    |   ❌    |
 | Architect/coder split         |    📋    |     ❌      |   ❌   |  ✅   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Programa beta formal          |    🔄    |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Custo                         | $7–20/mo |   $20+/mo   | $20/mo | Free  |   Free   | $60+/mo | $500/mo | $19/mo  |
 
 ¹ Self-hosted é Sourcegraph Enterprise pago
-² Claude Code é cliente MCP, não server (não pode ser delegado-a)
-³ Claude Code ganhou navegador embutido + detecção de dev server em
+² Claude Code ganhou navegador embutido + detecção de dev server em
 v2.1.x (jul/2026) — vira paridade a assimilar, ver Radar abaixo
 🔄 Em desenvolvimento · 📋 Planejado (não documentado formalmente ainda)
 
@@ -841,22 +842,9 @@ Vectora Company.
 
 **Integrador / partner:**
 
-> _"REST API limpa, OAuth2 client credentials, SDKs Python/TS, MCP
-> server expondo todas as tools. O Vectora vira o motor RAG do seu
-> produto sem você precisar construir o pipeline do zero."_
-
-### Concorrente e parceiro ao mesmo tempo
-
-À primeira vista, Vectora compete com Claude Code, Cursor, OpenCode e
-Hermes Agent — como CLI ou chat, é alternativa direta. Mas Vectora tem
-um modo que nenhum concorrente direto tem: **modo MCP**. Expõe
-`delegate_to_vectora` — qualquer agente externo pode invocar.
-
-Um dev pode continuar usando Claude Code ou Cursor no dia a dia e,
-quando chega num limite (indexar conhecimento, RAG em docs internas,
-busca com relevância semântica), **delega para o Vectora**. Nossos
-concorrentes viram usuários do Vectora — não substituímos o fluxo de
-trabalho, o estendemos.
+> _"REST API limpa, OAuth2 client credentials, SDKs Python/TS. O
+> Vectora vira o motor RAG do seu produto sem você precisar construir
+> o pipeline do zero."_
 
 ### Por que agora
 
@@ -875,8 +863,8 @@ agentes especializados orquestrados via `create_deep_agent`
 (LangGraph/deepagents):
 
 - **Vectora Agent (orquestrador)** — recebe a tarefa, decide qual
-  subagente acionar, consolida respostas. Ponto de entrada único, para
-  o usuário e para quem delega via MCP.
+  subagente acionar, consolida respostas. Ponto de entrada único para
+  o usuário.
 - **Vectora RAG Agent** — indexa qualquer base (docs, código, wikis,
   PDFs) e responde com contexto real do projeto. Nenhum concorrente
   direto tem sub-agente dedicado a isso.
@@ -905,28 +893,28 @@ abstrato: trocar provider é mudança de config. Geração de vídeo fica
 fora de escopo por ora (custo 20–100× maior, latência inviável para UX
 de chat).
 
-### Cinco modos de uso (mesmo binário)
+### Três modos de uso (mesmo binário)
 
-CLI/TUI, chat web multi-usuário (RBAC), desktop app nativo assinado
-(Windows/macOS/Linux, Electron + Nuitka onefile, IPC local nunca TCP),
-MCP server (consumido por Claude Code, Cursor, Zed, JetBrains e
-qualquer cliente MCP), e modo headless via REST API v1 (OAuth2 client
-credentials, compat OpenAI, webhooks) para integradores (n8n, Zapier,
-Make, GitHub Actions, sistemas corporativos).
+CLI (configuração/shell via SSH em VPS), chat web multi-usuário (RBAC),
+e desktop app nativo assinado (Windows/macOS/Linux, Electron + Nuitka
+onefile, IPC local nunca TCP). O Vectora consome servidores MCP de
+terceiros (client), mas não se expõe como servidor MCP nem API pública
+para integradores externos — ver Sprints 1-2 do plano de 0.1.11 para o
+racional dessa decisão.
 
 ### Modelo de negócio
 
 Preços deliberadamente baixos — volume e fidelização, não margem alta
 em poucas contas.
 
-| Plano          | Preço                | Inclui                                                                                                                                                             |
-| -------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Free**       | Grátis, permanente   | 100% local, sem conta. CLI + MCP + Desktop + stack econômica (SQLite/LanceDB). Traz as próprias chaves de API.                                                     |
-| **Plus**       | $7 / R$20 por mês    | Tudo do Free + quotas mensais leves de créditos de parceiros (Cohere/Tavily), sem precisar de chave própria.                                                       |
-| **Pro**        | $20 / R$55 por mês   | Tudo do Plus + chat web multi-usuário + stack de alto desempenho (Postgres/Qdrant/Redis) + webhooks + REST API v1. Billing/licença via `services.vectora.company`. |
-| **Team**       | $49 / R$130 por mês  | Tudo do Pro + Host/Client + VSIX + SSO (quando essas frentes entregarem).                                                                                          |
-| **OEM**        | A partir de $199/mês | Uso comercial via REST API para servir usuários externos, tiers escaláveis.                                                                                        |
-| **Enterprise** | Contrato customizado | SLA, suporte dedicado, DPA, revenue share, on-premise air-gapped.                                                                                                  |
+| Plano          | Preço                | Inclui                                                                                                                                               |
+| -------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Free**       | Grátis, permanente   | 100% local, sem conta. CLI + Desktop + stack econômica (SQLite/LanceDB). Traz as próprias chaves de API.                                             |
+| **Plus**       | $7 / R$20 por mês    | Tudo do Free + quotas mensais leves de créditos de parceiros (Cohere/Tavily), sem precisar de chave própria.                                         |
+| **Pro**        | $20 / R$55 por mês   | Tudo do Plus + chat web multi-usuário + stack de alto desempenho (Postgres/Qdrant/Redis) + webhooks. Billing/licença via `services.vectora.company`. |
+| **Team**       | $49 / R$130 por mês  | Tudo do Pro + Host/Client + VSIX + SSO (quando essas frentes entregarem).                                                                            |
+| **OEM**        | A partir de $199/mês | Uso comercial via REST API para servir usuários externos, tiers escaláveis.                                                                          |
+| **Enterprise** | Contrato customizado | SLA, suporte dedicado, DPA, revenue share, on-premise air-gapped.                                                                                    |
 
 A assinatura cobre software, suporte, atualizações e créditos
 opcionais de parceiros (Cohere/Tavily) — nunca tokens de LLM/embedding
@@ -975,8 +963,6 @@ proposta.
 | Multi-LLM (OpenAI+Gemini+Anthropic+Cohere) |         ✅          |     ❌      |     ✅     |     Parcial     |     ✅     | Parcial |
 | Multi-agente especializado                 |         ✅          |     ❌      |     ❌     |     Parcial     |  Parcial   |   ❌    |
 | Chat web multi-usuário (RBAC)              |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
-| MCP server (parceiro de outros agentes)    |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
-| REST API + SDKs Python/TS                  |         ✅          |   Parcial   |     ❌     |       ❌        |     ❌     |   ❌    |
 | Webhooks                                   |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
 | App desktop nativo assinado                |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ✅    |
 | Auto-update                                |         ✅          |     n/a     |   manual   |       n/a       |   manual   |   ✅    |

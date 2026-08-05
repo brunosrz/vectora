@@ -12,7 +12,8 @@
 
 import { create } from "zustand";
 
-export type PreferenciasTab = "preferencias" | "conta" | "memoria";
+export type PreferenciasTab =
+  "preferencias" | "fallbacks" | "conta" | "memoria";
 
 interface PreferenciasDialogState {
   open: boolean;

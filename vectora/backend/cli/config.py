@@ -286,6 +286,9 @@ def _show_or_set(args: argparse.Namespace) -> None:
         ("vectora config qdrant <url>", "configura e testa Qdrant"),
         ("vectora config redis <url>", "configura e testa Redis"),
         ("vectora config --set KEY=VALUE", "edita uma chave diretamente"),
+        ("vectora config integrations", "API keys de LLM/search (--get/--set)"),
+        ("vectora config connect", "tokens de bot de mensageria (--get/--set)"),
+        ("vectora config preferences", "tema/idioma/timezone/etc (--get/--set)"),
         ("vectora auth login", "autentica no servidor Vectora"),
         ("vectora storage info", "status de saúde de todos os backends"),
     ]
@@ -309,6 +312,64 @@ def _show_or_set(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Categorias do registry declarativo (backend/config/registry.py) — mesmas
+# categorias das abas do frontend (Ambiente/Preferências). Get/set genéricos
+# aqui; recursos em formato de coleção (provider-routing, memory, account)
+# continuam com seus próprios comandos, não entram nesta lista — ver
+# docstring de backend/config/registry.py.
+# ---------------------------------------------------------------------------
+
+_REGISTRY_CATEGORIES = frozenset({"integrations", "connect", "preferences"})
+
+
+def _run_category_command(category: str, args: argparse.Namespace) -> None:
+    """``vectora config <categoria> [--get KEY]... [--set KEY=VALUE]...`` —
+    despacha pro registry declarativo em vez do ``_ALL_KEYS``/``_apply_set_values``
+    fixo usado pela chamada sem ação (LLM/storage legado)."""
+    from backend.config import fields_for_category, get_field
+
+    get_values: list[str] = getattr(args, "get_values", None) or []
+    set_values: list[str] = getattr(args, "set_values", None) or []
+
+    if not get_values and not set_values:
+        fields = fields_for_category(category)
+        if not fields:
+            print(f"Nenhum campo registrado na categoria '{category}'.")
+            return
+        print(f"Campos de '{category}':")
+        for f in fields:
+            if f.secret:
+                raw = f.get()
+                shown = _mask_key(str(raw)) if raw else "— não configurada"
+            else:
+                shown = f.get()
+            print(f"  {f.key:<24} {shown}   ({f.cli_flag})")
+        return
+
+    for key in get_values:
+        field = get_field(key.strip().lower())
+        if field is None or field.category != category:
+            print(f"❌ Chave '{key}' não existe na categoria '{category}'.")
+            sys.exit(1)
+        raw = field.get()
+        shown = _mask_key(str(raw)) if field.secret and raw else raw
+        print(f"{field.key}={shown}")
+
+    for kv in set_values:
+        if "=" not in kv:
+            print(f"❌ Formato inválido '{kv}'. Use KEY=VALUE.")
+            sys.exit(1)
+        key, _, value = kv.partition("=")
+        field = get_field(key.strip().lower())
+        if field is None or field.category != category:
+            print(f"❌ Chave '{key}' não existe na categoria '{category}'.")
+            sys.exit(1)
+        field.set(value.strip())
+        shown = _mask_key(value.strip()) if field.secret else value.strip()
+        print(f"✓ {field.key}={shown}")
+
+
+# ---------------------------------------------------------------------------
 # Dispatcher principal
 # ---------------------------------------------------------------------------
 
@@ -319,6 +380,10 @@ def run_config(args: argparse.Namespace) -> None:
 
     if action is None:
         _show_or_set(args)
+        return
+
+    if action in _REGISTRY_CATEGORIES:
+        _run_category_command(action, args)
         return
 
     if action == "keys":

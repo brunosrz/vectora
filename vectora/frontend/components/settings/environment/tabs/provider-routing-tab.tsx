@@ -22,6 +22,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { m } from "@/lib/paraglide/messages";
 
 interface OllamaModelInfo {
@@ -901,12 +902,104 @@ function NineRouterSection() {
   );
 }
 
+/** Modelos de imagem/TTS para os providers de gateway.
+ *
+ * Movido de Preferências → Provider Routing (Sprint 3, 0.1.11): é config por
+ * gateway (Ollama/OpenRouter), mesma natureza dos modelos LLM registrados
+ * acima — não uma preferência genérica de usuário.
+ *
+ * Só Ollama e OpenRouter aparecem aqui: Gemini/OpenAI resolvem a capacidade
+ * sozinhos pelo catálogo (`PROVIDER_CAPABILITIES`) e não têm o que escolher.
+ * Campo vazio devolve o controle pra env var correspondente, se houver —
+ * não desliga a capacidade. */
+function MediaModelsSection() {
+  const [models, setModels] = useState<Record<string, string>>({});
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await fetch("/admin/media-models");
+        if (!res.ok || !alive) return;
+        const data = (await res.json()) as { models?: Record<string, string> };
+        if (alive) setModels(data.models ?? {});
+      } catch {
+        if (alive) setModels({});
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function handleSave(key: string, value: string) {
+    setError("");
+    try {
+      const res = await fetch("/admin/media-models", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { models?: Record<string, string> };
+      // Repinta com o valor EFETIVO devolvido pelo backend: se o campo foi
+      // limpo e existe env var, o que passa a valer é a env — mostrar o campo
+      // vazio faria parecer que a capacidade ficou desligada.
+      setModels(data.models ?? {});
+    } catch {
+      setError(m.prefs_media_models_error());
+    }
+  }
+
+  const campos: { key: string; label: string }[] = [
+    { key: "ollama_image_model", label: m.prefs_media_models_ollama_image() },
+    { key: "ollama_tts_model", label: m.prefs_media_models_ollama_tts() },
+    {
+      key: "openrouter_image_model",
+      label: m.prefs_media_models_openrouter_image(),
+    },
+    {
+      key: "openrouter_tts_model",
+      label: m.prefs_media_models_openrouter_tts(),
+    },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <Label>{m.prefs_media_models_section()}</Label>
+      <p className="text-xs text-muted-foreground">
+        {m.prefs_media_models_hint()}
+      </p>
+      {campos.map(({ key, label }) => (
+        <div key={key} className="flex items-center justify-between gap-3">
+          <Label htmlFor={key} className="text-xs font-normal">
+            {label}
+          </Label>
+          <Input
+            id={key}
+            className="w-[240px]"
+            value={models[key] ?? ""}
+            autoComplete="off"
+            onChange={(e) =>
+              setModels((prev) => ({ ...prev, [key]: e.target.value }))
+            }
+            onBlur={(e) => void handleSave(key, e.target.value)}
+          />
+        </div>
+      ))}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export function ProviderRoutingTab() {
   return (
     <div className="space-y-4">
       <OllamaSection />
       <OpenRouterSection />
       <NineRouterSection />
+      <MediaModelsSection />
     </div>
   );
 }
