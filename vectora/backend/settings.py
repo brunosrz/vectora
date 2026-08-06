@@ -729,6 +729,13 @@ class Settings(BaseSettings):
         log_level). ~/.vectora/.env guarda segredos (API keys). Projeto .env tem
         prioridade máxima para desenvolvimento local.
         """
+        # Variáveis já presentes no processo (Docker/systemd/CI/testes) antes
+        # de qualquer .env ser carregado — têm prioridade sobre os arquivos
+        # abaixo mesmo quando eles usam override=True entre si, senão um
+        # `.env` de projeto esquecido no filesystem vence silenciosamente um
+        # env var que o operador/teste setou de propósito.
+        _operator_env = dict(os.environ)
+
         # Level 5 (lowest): Load embedded defaults.env via setdefault
         try:
             defaults_env = resources.files("backend").joinpath("defaults.env")
@@ -828,10 +835,11 @@ class Settings(BaseSettings):
             load_dotenv(project_env, override=True)
             logger.debug(f"Loaded project .env from {project_env}")
 
-        # Chaves de LLM são a exceção: um .env de projeto/repo esquecido no
-        # filesystem (git-ignorado, então invisível em git status/PRs) não
-        # pode silenciosamente vencer a chave que o usuário configurou de
-        # propósito em ~/.vectora/.env — restaura o valor do usuário e avisa.
+        # Chaves de LLM são um caso à parte dentro da própria hierarquia de
+        # .env: um .env de projeto/repo esquecido no filesystem (git-ignorado,
+        # então invisível em git status/PRs) não pode silenciosamente vencer
+        # a chave que o usuário configurou de propósito em ~/.vectora/.env —
+        # restaura o valor do usuário.
         for _key_name in set(PROVIDER_API_KEY_ENV.values()):
             if _key_name is None:
                 continue
@@ -843,6 +851,11 @@ class Settings(BaseSettings):
                     f"do usuário (fonte de verdade para chaves de LLM)"
                 )
                 os.environ[_key_name] = _user_value
+
+        # Nenhum .env (defaults/usuário/projeto) pode vencer uma variável que
+        # já estava no processo antes desta função rodar — restaura por
+        # cima de tudo que foi carregado acima.
+        os.environ.update(_operator_env)
 
     def _initialize_directories(self) -> None:
         """Create all required directories if they don't exist."""

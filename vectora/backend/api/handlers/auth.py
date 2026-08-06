@@ -583,11 +583,16 @@ async def get_envs(request: Request) -> dict:
 @router.post("/envs")
 async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
     from backend.rbac import auth as auth_svc
+    from backend.rbac.subscription import require_pro
     from backend.services.env_keys import CONNECT_ENV_KEYS, RUNTIME_ENV_KEYS
 
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
+    # Salvar credencial de Connect exige tier pro; remover não — o usuário
+    # sempre pode apagar a própria credencial, mesmo sem Pro.
+    if body.key.upper() in CONNECT_ENV_KEYS:
+        require_pro()
     await auth_svc.set_env_override(user.id, body.key, body.value)
 
     # Keys de LLM/search (GOOGLE_API_KEY etc.) precisam valer na PRÓXIMA

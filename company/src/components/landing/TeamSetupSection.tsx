@@ -43,6 +43,16 @@ export default function TeamSetupSection() {
   return (
     <section className="px-4 py-[23px] sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1024px] flex-col items-center gap-[22px]">
+        {/* Selo Pro ANTES do título — todo o fluxo abaixo (conta root,
+            convidar equipe) só existe no plano pago; sinalizar isso antes
+            dos passos evita o leitor montar o fluxo mental de "como
+            funciona" achando que é Free até só descobrir no bloco final. */}
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <span className="text-[12px] font-medium text-primary">
+            {m.team_pro_eyebrow()}
+          </span>
+        </div>
         <h2 className="text-center text-[28px] font-semibold leading-[36px] text-foreground">
           {m.team_heading()}
         </h2>

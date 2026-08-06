@@ -21,6 +21,7 @@ Cobre:
 from __future__ import annotations
 
 import os
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -546,6 +547,82 @@ class TestEnvOverridesEndpoints:
 
         r = client.get("/auth/envs", headers=headers)
         assert "DEL_KEY" not in r.json()["keys"]
+
+    def test_set_connect_key_without_pro_returns_402(
+        self, client, monkeypatch, tmp_path
+    ):
+        """Telegram/Discord/Slack/Email (Connect) exigem tier pro."""
+        from backend.services import license as lic
+
+        monkeypatch.setattr(lic, "CACHE_PATH", tmp_path / "license_cache.json")
+        monkeypatch.delenv("VECTORA_LICENSE_BYPASS", raising=False)
+        access = self._get_fresh_token(client)
+        headers = {"Authorization": f"Bearer {access}"}
+
+        r = client.post(
+            "/auth/envs",
+            json={"key": "TELEGRAM_BOT_TOKEN", "value": "123:abc"},
+            headers=headers,
+        )
+        assert r.status_code == 402
+
+    def test_set_connect_key_with_pro_succeeds(self, client, monkeypatch):
+        monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+        # sync_adapters tentaria conectar de verdade com um token falso —
+        # isola o efeito colateral, o teste cobre o gate, não o adapter.
+        monkeypatch.setattr(
+            "backend.api.handlers.auth._sync_connect_adapters",
+            AsyncMock(return_value=None),
+        )
+        access = self._get_fresh_token(client)
+        headers = {"Authorization": f"Bearer {access}"}
+
+        r = client.post(
+            "/auth/envs",
+            json={"key": "DISCORD_BOT_TOKEN", "value": "tok"},
+            headers=headers,
+        )
+        assert r.status_code == 200
+
+    def test_delete_connect_key_never_gated(self, client, monkeypatch, tmp_path):
+        """Remover a própria credencial nunca é bloqueado — mesmo caído pra
+        Free depois de ter salvo com Pro, o usuário sempre pode limpar."""
+        from backend.services import license as lic
+
+        monkeypatch.setattr(lic, "CACHE_PATH", tmp_path / "license_cache.json")
+        monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+        monkeypatch.setattr(
+            "backend.api.handlers.auth._sync_connect_adapters",
+            AsyncMock(return_value=None),
+        )
+        access = self._get_fresh_token(client)
+        headers = {"Authorization": f"Bearer {access}"}
+        client.post(
+            "/auth/envs",
+            json={"key": "SLACK_BOT_TOKEN", "value": "xoxb-1"},
+            headers=headers,
+        )
+
+        monkeypatch.delenv("VECTORA_LICENSE_BYPASS", raising=False)
+        r = client.delete("/auth/envs/SLACK_BOT_TOKEN", headers=headers)
+        assert r.status_code == 200
+
+    def test_set_non_connect_key_never_gated(self, client, monkeypatch, tmp_path):
+        """Erro/borda inverso: uma key fora de CONNECT_ENV_KEYS (ex. token do
+        GitHub, usado por git tools/RAG) nunca passa por require_pro."""
+        from backend.services import license as lic
+
+        monkeypatch.setattr(lic, "CACHE_PATH", tmp_path / "license_cache.json")
+        monkeypatch.delenv("VECTORA_LICENSE_BYPASS", raising=False)
+        access = self._get_fresh_token(client)
+        headers = {"Authorization": f"Bearer {access}"}
+
+        r = client.post(
+            "/auth/envs",
+            json={"key": "GITHUB_TOKEN", "value": "ghp_x"},
+            headers=headers,
+        )
+        assert r.status_code == 200
 
     def test_set_env_llm_key_applies_to_os_environ_and_settings(
         self, client, monkeypatch, tmp_path

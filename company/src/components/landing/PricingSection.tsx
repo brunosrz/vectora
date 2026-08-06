@@ -14,7 +14,8 @@ const FREE = {
   badge: m.pricing_free_badge,
   features: [
     m.pricing_feat_local_tools,
-    m.pricing_feat_rag_unlimited,
+    m.pricing_feat_workspace_complete,
+    m.pricing_feat_model_routing,
     m.pricing_feat_no_account,
   ],
 };
