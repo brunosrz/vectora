@@ -60,7 +60,9 @@ export default function Hero() {
             backgroundClip: "text",
           }}
         >
-          {m.hero_tagline()}
+          {m.hero_tagline_line1()}
+          <br />
+          {m.hero_tagline_line2()}
         </h1>
 
         {/* Subtítulo */}
