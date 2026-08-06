@@ -1,5 +1,11 @@
 import { m } from "#/paraglide/messages";
-import { Server, User, Users, FolderOpen } from "lucide-react";
+import { Server, User, Users, FolderOpen, Check } from "lucide-react";
+
+const EXTRA_BULLETS = [
+  m.team_extra_bullet_storage,
+  m.team_extra_bullet_access,
+  m.team_extra_bullet_automation,
+];
 
 const STEPS = [
   {
@@ -94,6 +100,26 @@ export default function TeamSetupSection() {
         {/* Barra de compatibilidade */}
         <div className="rounded-2xl border border-border bg-card/30 px-6 py-4 text-center text-[14px] leading-5 text-muted-foreground">
           {m.team_compat()}
+        </div>
+
+        {/* Reforço do que o Pro entrega além do fluxo de setup acima —
+            eficiência do storage completo, controle de acesso em escala,
+            automação — não é só "sobe mais rápido", é operar diferente. */}
+        <div className="w-full rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <p className="mb-3 text-center text-[15px] font-semibold text-foreground">
+            {m.team_extra_heading()}
+          </p>
+          <ul className="mx-auto flex max-w-[720px] flex-col gap-2.5">
+            {EXTRA_BULLETS.map((bullet) => (
+              <li
+                key={bullet()}
+                className="flex items-start gap-2.5 text-[14px] leading-5 text-muted-foreground"
+              >
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>{bullet()}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
