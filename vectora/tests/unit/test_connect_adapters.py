@@ -231,6 +231,7 @@ def _manager_limpo():
 
 
 def test_configured_platforms_exige_credencial_completa(monkeypatch):
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
     for var in (
         "TELEGRAM_BOT_TOKEN",
         "DISCORD_BOT_TOKEN",
@@ -263,6 +264,59 @@ def test_configured_platforms_exige_credencial_completa(monkeypatch):
     # Token em branco conta como ausente (campo limpo na UI).
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "   ")
     assert "telegram" not in manager.configured_platforms()
+
+
+def test_configured_platforms_vazio_sem_tier_pro(monkeypatch):
+    """Sem Pro, nenhuma plataforma sobe mesmo com credencial completa salva."""
+    for var in ("SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "EMAIL_IMAP_HOST"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.delenv("VECTORA_LICENSE_BYPASS", raising=False)
+    monkeypatch.setattr("backend.rbac.subscription.read_cached_status", lambda: None)
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("DISCORD_BOT_TOKEN", "abc")
+
+    assert manager.configured_platforms() == set()
+
+    # Erro/borda: com Pro (bypass), a mesma credencial já salva volta a contar.
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+    assert manager.configured_platforms() == {"telegram", "discord"}
+
+
+@pytest.mark.asyncio
+async def test_sync_adapters_desliga_tudo_no_downgrade_de_tier(monkeypatch):
+    """Downgrade pro->free: sync_adapters reconcilia contra vazio e desliga."""
+    for var in (
+        "DISCORD_BOT_TOKEN",
+        "SLACK_BOT_TOKEN",
+        "SLACK_APP_TOKEN",
+        "EMAIL_IMAP_HOST",
+        "EMAIL_IMAP_USER",
+        "EMAIL_IMAP_PASSWORD",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:abc")
+
+    async def _start(platform):
+        return f"handle-{platform}"
+
+    parados: list[str] = []
+
+    async def _stop(platform, _handle):
+        parados.append(platform)
+
+    monkeypatch.setattr(manager, "_start_platform", _start)
+    monkeypatch.setattr(manager, "_stop_platform", _stop)
+
+    await manager.sync_adapters()
+    assert manager.running_platforms() == {"telegram"}
+
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "0")
+    monkeypatch.setattr("backend.rbac.subscription.read_cached_status", lambda: None)
+    status = await manager.sync_adapters()
+    assert status["telegram"] == "stopped"
+    assert manager.running_platforms() == set()
+    assert parados == ["telegram"]
 
 
 @pytest.mark.asyncio

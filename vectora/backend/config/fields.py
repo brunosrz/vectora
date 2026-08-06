@@ -104,6 +104,36 @@ setting_field(
     adapter=EnvAdapter("SLACK_APP_TOKEN"),
     secret=True,
 )
+setting_field(
+    "email_imap_host",
+    category="connect",
+    cli_flag="--email-imap-host",
+    description="Host IMAP da caixa de entrada monitorada (Vectora Connect).",
+    adapter=EnvAdapter("EMAIL_IMAP_HOST"),
+)
+setting_field(
+    "email_imap_user",
+    category="connect",
+    cli_flag="--email-imap-user",
+    description="Usuário IMAP da caixa de entrada monitorada (Vectora Connect).",
+    adapter=EnvAdapter("EMAIL_IMAP_USER"),
+)
+setting_field(
+    "email_imap_password",
+    category="connect",
+    cli_flag="--email-imap-password",
+    description="Senha/app-password IMAP (Vectora Connect).",
+    adapter=EnvAdapter("EMAIL_IMAP_PASSWORD"),
+    secret=True,
+)
+setting_field(
+    "email_smtp_host",
+    category="connect",
+    cli_flag="--email-smtp-host",
+    description="Host SMTP para envio de resposta (Vectora Connect); "
+    "se omitido, usa o mesmo host do IMAP.",
+    adapter=EnvAdapter("EMAIL_SMTP_HOST"),
+)
 
 # ── preferences — RuntimeSettings global (SQLite app_settings) ──
 

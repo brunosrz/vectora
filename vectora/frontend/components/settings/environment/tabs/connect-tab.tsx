@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ProBadge } from "@/components/ui/pro-badge";
 import { m } from "@/lib/paraglide/messages";
 import { useToastStore } from "@/lib/stores/toast-store";
 
@@ -87,7 +88,10 @@ export function ConnectTab() {
             <div className="flex items-center gap-3">
               <MessageCircle className="w-5 h-5 text-blue-500" />
               <div>
-                <h4 className="text-sm font-semibold">Telegram</h4>
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  Telegram
+                  <ProBadge />
+                </h4>
                 <p className="text-xs text-muted-foreground">
                   Integração via webhook oficial do Telegram Bot API
                 </p>
@@ -118,7 +122,10 @@ export function ConnectTab() {
             <div className="flex items-center gap-3">
               <MessageCircle className="w-5 h-5 text-indigo-500" />
               <div>
-                <h4 className="text-sm font-semibold">Discord</h4>
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  Discord
+                  <ProBadge />
+                </h4>
                 <p className="text-xs text-muted-foreground">
                   Responda mensagens em servidores do Discord
                 </p>
@@ -164,7 +171,10 @@ export function ConnectTab() {
             <div className="flex items-center gap-3">
               <Mail className="w-5 h-5 text-red-500" />
               <div>
-                <h4 className="text-sm font-semibold">Email (IMAP/SMTP)</h4>
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  Email (IMAP/SMTP)
+                  <ProBadge />
+                </h4>
                 <p className="text-xs text-muted-foreground">
                   Delegue ao assistente a leitura e resposta de e-mails
                 </p>

@@ -34,6 +34,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProBadge } from "@/components/ui/pro-badge";
 import {
   Dialog,
   DialogContent,
@@ -525,9 +526,10 @@ function IntegrationCard({
       {/* Webhook URL — para providers com webhook configurado */}
       {hasWebhook && integ.connected && (
         <div className="px-3 pb-3 border-t pt-3 space-y-1.5">
-          <p className="text-xs text-muted-foreground font-medium">
+          <div className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
             {m.integrations_webhook_url()}
-          </p>
+            <ProBadge />
+          </div>
           <div className="flex gap-1.5">
             <code className="flex-1 text-xs bg-muted px-2 py-1 rounded font-mono truncate">
               {webhookUrl}

@@ -34,6 +34,7 @@ async function fetchStatus(): Promise<LicenseStatus | null> {
   try {
     const res = await fetch("/license/status", {
       headers: { Accept: "application/json" },
+      credentials: "include",
     });
     if (!res.ok && res.status !== 503) return null;
     return (await res.json()) as LicenseStatus;

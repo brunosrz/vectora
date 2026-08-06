@@ -622,6 +622,7 @@
   "admin_storage_mode_desc": "\"Lite\" usa SQLite + LanceDB local, con NATS embebido cubriendo colas y pub/sub — funciona sin ninguna infraestructura externa y es el predeterminado. \"Completo\" activa Postgres, Redis y Qdrant — requiere configurar las conexiones abajo antes de activar.",
   "admin_storage_mode_lite": "Lite (predeterminado)",
   "admin_storage_mode_complete": "Completo",
+  "pro_badge_label": "Pro",
   "admin_storage_backend_checkpointer": "Checkpointer (SQLite)",
   "admin_storage_backend_store": "BaseStore (AsyncSqliteStore)",
   "admin_storage_backend_lancedb": "LanceDB (VectorStore)",

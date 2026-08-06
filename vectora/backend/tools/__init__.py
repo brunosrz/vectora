@@ -34,6 +34,7 @@ from backend.tools.browser import (
 )
 from backend.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
 from backend.tools.git import git_stage, git_unstage
+from backend.tools.github import github_fetch_pr_diff, github_post_pr_comment
 from backend.tools.mcp import call_mcp_tool
 from backend.tools.memory import delete_memory, get_memory, save_memory
 from backend.tools.native import (
@@ -76,6 +77,9 @@ def _build_tools_list() -> list[BaseTool]:
 
     # Git stage/unstage (operações de index)
     tools.extend([git_stage, git_unstage])
+
+    # GitHub API (saída de rede — modelo de referência PR review via webhook)
+    tools.extend([github_fetch_pr_diff, github_post_pr_comment])
 
     # Browser: navegação livre + automação sobre a página atual
     tools.extend(
@@ -143,6 +147,8 @@ __all__ = [
     "get_tools",
     "git_stage",
     "git_unstage",
+    "github_fetch_pr_diff",
+    "github_post_pr_comment",
     "grep",
     "hash_text",
     "http_request",

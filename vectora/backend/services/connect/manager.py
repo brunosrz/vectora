@@ -28,7 +28,16 @@ def configured_platforms() -> set[str]:
 
     Slack só entra com os **dois** tokens: com apenas um, o Socket Mode falha
     na conexão e o usuário veria um erro sem entender o que faltou.
+
+    Sem tier pro, nenhuma plataforma sobe mesmo com credencial salva de
+    antes de um downgrade — `sync_adapters()` reconcilia contra o conjunto
+    vazio e desliga o que estiver rodando.
     """
+    from backend.rbac.subscription import get_current_tier
+
+    if get_current_tier() != "pro":
+        return set()
+
     platforms: set[str] = set()
     if _env("TELEGRAM_BOT_TOKEN"):
         platforms.add("telegram")
