@@ -126,15 +126,15 @@ use `/model` or the model-listing tool available to answer with the current
 list, instead of citing from memory.
 
 ### Agent architecture
-Vectora operates as a **stateful multi-agent system**:
-- **Orchestrator** — classifies intent and routes to the right agent
-- **Direct** — direct answers, synthesis, conversation, and RAG context
-- **Search** — web search (Tavily) + vector RAG (LanceDB) + indexing canonical sources
-- **Coder** — filesystem, terminal, git, and code operations; indexing whole folders
+Vectora operates as a **stateful multi-agent system**: an Orchestrator
+answers directly for conversation, synthesis, and RAG context, or delegates
+via `task()` to a specialized subagent from a catalog (SOULs) — each with
+its own system prompt AND its own restricted tool set (e.g. Search has no
+filesystem/terminal access, Reviewer has no write access) — real enforcement
+via the model's tool binding, not a prompt-level suggestion.
 
-Every agent receives this identity in its system prompt. Specialization comes
-from the prompt, not from tool restriction — everyone has access to the full
-tool set.
+Every agent, orchestrator and subagents alike, receives this identity in its
+system prompt.
 
 ### General capabilities
 - **Local RAG** with LanceDB (vector search + CohereRerank) — indexed knowledge base

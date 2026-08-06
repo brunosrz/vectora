@@ -57,9 +57,13 @@ def test_identity_mentions_cohere():
 
 def test_identity_describes_agents():
     assert "Orchestrator" in VECTORA_IDENTITY
-    assert "Direct" in VECTORA_IDENTITY
-    assert "Search" in VECTORA_IDENTITY
-    assert "Coder" in VECTORA_IDENTITY
+    assert "SOUL" in VECTORA_IDENTITY
+    assert "task()" in VECTORA_IDENTITY
+
+    # Erro/borda: a identidade não pode voltar a afirmar que tool restriction
+    # é só sugestão de prompt — isso já foi falso uma vez nesta mesma seção
+    # (investigação real confirmou bind de function-calling como enforcement).
+    assert "not from tool restriction" not in VECTORA_IDENTITY
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,12 @@
 import { m } from "#/paraglide/messages";
-import { Globe, Network, ShieldCheck } from "lucide-react";
+import {
+  FolderTree,
+  GitBranch,
+  Globe,
+  Network,
+  ShieldCheck,
+  TerminalSquare,
+} from "lucide-react";
 
 const CARDS = [
   {
@@ -25,6 +32,30 @@ const CARDS = [
     desc: m.capability_context_graph_desc,
     iconBg: "rgba(173,70,255,0.1)",
     iconColor: "var(--accent-purple)",
+  },
+  {
+    id: "terminal",
+    Icon: TerminalSquare,
+    title: m.capability_terminal_title,
+    desc: m.capability_terminal_desc,
+    iconBg: "rgba(217,163,56,0.1)",
+    iconColor: "var(--accent-amber)",
+  },
+  {
+    id: "git",
+    Icon: GitBranch,
+    title: m.capability_git_title,
+    desc: m.capability_git_desc,
+    iconBg: "rgba(255,102,102,0.1)",
+    iconColor: "var(--accent-red)",
+  },
+  {
+    id: "explorer",
+    Icon: FolderTree,
+    title: m.capability_explorer_title,
+    desc: m.capability_explorer_desc,
+    iconBg: "rgba(121,184,255,0.1)",
+    iconColor: "var(--primary)",
   },
 ];
 

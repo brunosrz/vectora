@@ -6,11 +6,15 @@ src/api/handlers/chat.py, garantindo zero alteração no caller.
 
 Arquitetura:
     - Agente principal (orchestrator) construído via create_deep_agent.
-    - Subagents "coder" e "search" como SubAgent dicts; prompts importados
-      de src/agents/{coder,search}.py, em módulos próprios por subagent.
+    - Subagents como SubAgent dicts derivados de backend.agents.souls.SOUL_CATALOG
+      — catálogo de specs pré-compiladas (nome, descrição, prompt, tools); o
+      orquestrador escolhe qual delegar por `task(subagent_type=<nome>)`.
     - HITL dinâmico por middleware: build_middleware_stack monta um único
       HumanInTheLoopMiddleware cujo predicate lê permission_mode do
-      runtime.context por request (ver backend.services.middleware).
+      runtime.context por request (ver backend.services.middleware) — o mesmo
+      middleware é passado a cada subagent spec, senão delegação não pausa
+      pra aprovação (deepagents só herda o `interrupt_on` top-level de
+      create_deep_agent, que o Vectora nunca usa, não o `middleware=` custom).
     - Checkpointer: AsyncSqliteSaver, ou AsyncPostgresSaver em
       STORAGE_MODE=complete.
     - Singleton compartilhado entre todos os usuários; versionamento por user
@@ -82,15 +86,14 @@ frontend renders the markdown directly.
 
 ## When to delegate with `task()`
 
-Use `task()` for specialists:
+Use `task(subagent_type=<name>, description="detailed instruction")` for
+specialists. Available SOULs:
 
-- **`task(subagent_type="coder", description="detailed instruction")`** —
-  filesystem, code, terminal, git, npm, pip, tests, folder
-  indexing/embedding. Write the instruction as if delegating to a coworker
-  who hasn't read the conversation.
+{{DELEGATION_SOULS}}
 
-- **`task(subagent_type="search", description="what to research")`** —
-  real-time web search, URL fetch, current internet information.
+Each SOUL only has the tools listed above — delegating a filesystem edit to
+`search` (or a web search to `coder`) fails, not falls back. Write the
+instruction as if delegating to a coworker who hasn't read the conversation.
 
 ### How to write the instruction
 
@@ -172,12 +175,16 @@ Acknowledge him based on this system prompt — no RAG, no web search.
 
 ## Absolute rules
 
-1. If the user explicitly names an agent, ALWAYS respect it.
+1. If the user explicitly names a SOUL, ALWAYS respect it.
 2. Creating/editing files, running code, git → **coder**.
 3. Web search, URL fetch → **search**.
 4. Queries against already-indexed documents → call `vector_search` or `search_memory` directly.
 5. Indexing/embedding requests → **coder** with `ingest_docs`.
-6. Fallback: when in doubt between answering and delegating → **answer directly**.
+6. Reviewing a diff/PR without changing anything → **reviewer**. Writing/running tests → **tester**.
+   CI/infra/config → **devops**. Docs/README/guides → **writer-docs**. Local data files/scripts
+   → **data-analyst**. Security-focused code audit → **security-auditor**. Verifying UI behavior
+   in a real browser → **browser-qa**. Research-and-write-a-plan-only, no execution → **planner**.
+7. Fallback: when in doubt between answering and delegating → **answer directly**.
 """
 
 # ---------------------------------------------------------------------------
@@ -185,8 +192,11 @@ Acknowledge him based on this system prompt — no RAG, no web search.
 # ---------------------------------------------------------------------------
 
 
-def _subagent_specs(user_id: str | None = None) -> list[Any]:
-    """Retorna a lista de SubAgent specs filtrada pela política de tools.
+def _subagent_specs(
+    user_id: str | None = None, middleware: list[Any] | None = None
+) -> list[Any]:
+    """Retorna a lista de SubAgent specs (dict do deepagents) a partir do
+    catálogo de SOULs, filtrada pela política de tools.
 
     Importações lazy evitam circular imports e carregamento desnecessário
     em contextos que não instanciam o grafo (CLI, testes unitários).
@@ -196,20 +206,33 @@ def _subagent_specs(user_id: str | None = None) -> list[Any]:
     (admin kill-switch) com o ABAC por usuário. O disable global se aplica
     mesmo sem ``user_id`` (sessão local sem auth).
 
-    As specs base são definidas em ``src/agents/{coder,search}.py`` como
-    ``SUBAGENT_SPEC`` — ponto único de verdade para nome, descrição e tools.
+    ``middleware``, quando passado, é atribuído a cada spec — mesma stack do
+    agente principal (inclui o HITL dinâmico). Sem isso, tools destrutivas
+    chamadas dentro de uma delegação nunca pausam pra aprovação, mesmo em
+    ``permission_mode="ask"``: deepagents só herda o `interrupt_on`
+    top-level de ``create_deep_agent`` (nunca setado aqui), não o
+    ``middleware=`` do agente pai.
+
+    As specs base vêm de ``backend.agents.souls.SOUL_CATALOG`` — ponto único
+    de verdade para nome, descrição, prompt e tools de cada SOUL.
     """
-    import copy
-
-    from backend.agents.coder import SUBAGENT_SPEC as CODER_SPEC
-    from backend.agents.search import SUBAGENT_SPEC as SEARCH_SPEC
-
-    specs = [copy.copy(CODER_SPEC), copy.copy(SEARCH_SPEC)]
+    from backend.agents.souls import SOUL_CATALOG
 
     disabled = tool_policy.effective_disabled(user_id)
+    specs: list[Any] = []
+    for soul in SOUL_CATALOG.values():
+        tools = [t for t in soul.tools if t.name not in disabled]
+        spec: dict[str, Any] = {
+            "name": soul.name,
+            "description": soul.description,
+            "system_prompt": soul.system_prompt,
+            "tools": tools,
+        }
+        if middleware is not None:
+            spec["middleware"] = middleware
+        specs.append(spec)
+
     if disabled:
-        for spec in specs:
-            spec["tools"] = [t for t in spec["tools"] if t.name not in disabled]
         logger.debug(
             "agent_factory: subagent tools filtradas user=%s disabled=%s",
             user_id,
@@ -356,24 +379,40 @@ def _load_session_context(workspace_id: str | None = None) -> str | None:
     return "\n\n---\n\n".join(parts) if parts else None
 
 
+def _build_delegation_souls_block() -> str:
+    """Lista as SOULs do catálogo (nome + description) para o prompt do
+    orquestrador — import lazy, mesmo motivo do resto do módulo (evita
+    carregar ``nodes.tools`` em contexto que não instancia o grafo)."""
+    from backend.agents.souls import SOUL_CATALOG
+
+    return "\n".join(
+        f'- **`task(subagent_type="{soul.name}", ...)`** — {soul.description}'
+        for soul in SOUL_CATALOG.values()
+    )
+
+
 def _build_session_system_prompt(
     workspace_id: str | None = None,
 ) -> str:
     """Monta system prompt completo com contexto da sessão.
 
     Concatena o prompt base do orchestrator com:
-    1. AGENTS.md / CLAUDE.md / GEMINI.md do workspace (se existirem)
-    2. MANIFEST.md do workspace ativo (truncado)
+    1. A lista de SOULs disponíveis para delegação (catálogo dinâmico)
+    2. AGENTS.md / CLAUDE.md / GEMINI.md do workspace (se existirem)
+    3. MANIFEST.md do workspace ativo (truncado)
 
     Chamado a cada compilação do grafo — lazy e cacheado via singleton.
     """
+    base = _ORCHESTRATOR_PROMPT.replace(
+        "{DELEGATION_SOULS}", _build_delegation_souls_block()
+    )
     try:
         ctx = _load_session_context(workspace_id)
         if ctx:
-            return _ORCHESTRATOR_PROMPT + f"\n\n---\n\n## Contexto do Projeto\n\n{ctx}"
+            return base + f"\n\n---\n\n## Contexto do Projeto\n\n{ctx}"
     except Exception:
         pass
-    return _ORCHESTRATOR_PROMPT
+    return base
 
 
 # ---------------------------------------------------------------------------
@@ -580,9 +619,6 @@ async def _build_graph_async(
             user_id,
             disabled,
         )
-    # Chat puro não usa subagents (coder/search são orientados a dev/filesystem).
-    subagents = [] if chat_mode else _subagent_specs(user_id)
-
     system_prompt = _build_session_system_prompt()
 
     global _profiles_registered
@@ -598,6 +634,12 @@ async def _build_graph_async(
     from backend.services.middleware import build_middleware_stack
 
     middleware = build_middleware_stack()
+
+    # Chat puro não usa subagents (SOULs são orientadas a dev/filesystem/busca).
+    # middleware=middleware propaga o mesmo HITL dinâmico do agente principal
+    # pras delegações — sem isso, tools destrutivas dentro de um `task()`
+    # nunca pausam pra aprovação.
+    subagents = [] if chat_mode else _subagent_specs(user_id, middleware=middleware)
 
     from backend.vtypes.context import VectoraContext
     from backend.workspace.skills import list_skill_paths

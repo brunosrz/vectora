@@ -7,8 +7,10 @@ impressão de que o pedido falhou.
 
 from __future__ import annotations
 
-from backend.agents.coder import SYSTEM_PROMPT as CODER_PROMPT
+from backend.agents.souls import SOUL_CATALOG
 from backend.services.agent_factory import _ORCHESTRATOR_PROMPT
+
+CODER_PROMPT = SOUL_CATALOG["coder"].system_prompt
 
 
 def test_orchestrator_exige_texto_apos_delegacao():

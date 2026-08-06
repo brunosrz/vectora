@@ -171,21 +171,20 @@ async def schedule_subagent_task(
     when: str,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
-    """Agenda um subagente ESPECÍFICO (coder ou search) — não o agente
-    principal completo — pra rodar sozinho numa hora futura, a partir de
-    uma descrição em linguagem natural do horário (ex.: "em 30 minutos",
-    "daqui 2 horas"). Distinto de `schedule_task`: aquela reagenda o
-    orchestrator completo recorrentemente; esta dispara só o subagente
-    pedido, uma única vez.
+    """Agenda uma SOUL ESPECÍFICA do catálogo — não o agente principal
+    completo — pra rodar sozinha numa hora futura, a partir de uma descrição
+    em linguagem natural do horário (ex.: "em 30 minutos", "daqui 2 horas").
+    Distinto de `schedule_task`: aquela reagenda o orchestrator completo
+    recorrentemente; esta dispara só a SOUL pedida, uma única vez.
 
-    Quando `subagent_type="coder"` e a sessão tem um workspace ativo, a
+    Quando a SOUL edita filesystem/git e a sessão tem um workspace ativo, a
     execução roda num worktree isolado (mesma proteção contra concorrência
     da delegação síncrona via `task()`) — nunca disputa arquivos com o
     workspace principal do usuário.
 
     Args:
-        subagent_type: "coder" ou "search".
-        description: O que o subagente deve fazer (vira a instrução).
+        subagent_type: nome de uma SOUL do catálogo (ver `SUBAGENT_TYPES`).
+        description: O que a SOUL deve fazer (vira a instrução).
         when: Horário em linguagem natural (ex.: "em 30 minutos", "daqui 1 hora").
 
     Returns:

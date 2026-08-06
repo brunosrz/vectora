@@ -411,3 +411,131 @@ async def test_grafo_real_interrompe_em_ask_e_nao_em_auto():
     assert await _interrupted(agent, "ask") is True
     # auto (automático): o MESMO grafo roda sem pausa.
     assert await _interrupted(agent, "auto") is False
+
+
+# ── Regressão: HITL propagado pra dentro de uma delegação via task() ────────
+#
+# Achado real (não hipotético): SubAgent specs do deepagents só herdam o
+# `interrupt_on` TOP-LEVEL de `create_deep_agent` — nunca setado pelo
+# Vectora — e não o `middleware=` custom do agente pai. Sem passar
+# `middleware=middleware` em cada spec (agent_factory._subagent_specs),
+# `file_write`/`terminal` chamados DENTRO de um `task()` nunca pausavam pra
+# aprovação, mesmo em permission_mode="ask". Este teste prova a lacuna
+# fechada, não só a ausência dela — GraphInterrupt tem que vir de dentro do
+# subgrafo delegado, não do agente principal.
+
+
+def _build_hitl_agent_with_subagent():
+    from collections.abc import AsyncIterator
+
+    from langchain_core.language_models.chat_models import BaseChatModel
+    from langchain_core.messages import AIMessage
+    from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+    from langchain_core.tools import tool
+    from langgraph.checkpoint.memory import InMemorySaver
+
+    from backend.vtypes.context import VectoraContext
+
+    _DELEGATE_MARKER = "delegate-then-write"
+
+    @tool
+    def file_write(path: str, content: str) -> str:
+        """Escreve um arquivo (dummy de teste)."""
+        return f"escrito {path}"
+
+    class FakeModel(BaseChatModel):
+        """Um único fake serve tanto o orquestrador quanto o subagent —
+        decide pelo conteúdo das mensagens, não por qual grafo o invoca
+        (mesma reutilização de modelo que agent_factory faz de verdade)."""
+
+        model_config = {"arbitrary_types_allowed": True}
+
+        @property
+        def _llm_type(self) -> str:
+            return "fake-tc-delegating"
+
+        def bind_tools(self, tools, **kwargs):
+            return self
+
+        def _next(self, messages) -> AIMessage:
+            has_tool_result = any(getattr(m, "type", "") == "tool" for m in messages)
+            if has_tool_result:
+                return AIMessage(content="feito")
+
+            is_inside_subagent = any(
+                _DELEGATE_MARKER in str(getattr(m, "content", "")) for m in messages
+            )
+            if is_inside_subagent:
+                return AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "file_write",
+                            "args": {"path": "/x.txt", "content": "oi"},
+                            "id": "call_write",
+                        }
+                    ],
+                )
+            return AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "task",
+                        "args": {
+                            "subagent_type": "writer",
+                            "description": _DELEGATE_MARKER,
+                        },
+                        "id": "call_task",
+                    }
+                ],
+            )
+
+        def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+            return ChatResult(
+                generations=[ChatGeneration(message=self._next(messages))]
+            )
+
+        async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+            return ChatResult(
+                generations=[ChatGeneration(message=self._next(messages))]
+            )
+
+        async def _astream(
+            self, messages, stop=None, run_manager=None, **kwargs
+        ) -> AsyncIterator[ChatGenerationChunk]:
+            next_message = self._next(messages)
+            yield ChatGenerationChunk(
+                message=AIMessageChunk(**next_message.model_dump())
+            )
+
+    from deepagents import create_deep_agent
+
+    middleware = build_middleware_stack()
+    model = FakeModel()
+
+    return create_deep_agent(
+        model,
+        tools=[],
+        system_prompt="orquestrador de teste",
+        subagents=[
+            {
+                "name": "writer",
+                "description": "escreve arquivos",
+                "system_prompt": "subagent de teste",
+                "tools": [file_write],
+                "middleware": middleware,
+            }
+        ],
+        middleware=middleware,
+        context_schema=VectoraContext,
+        checkpointer=InMemorySaver(),
+    )
+
+
+@pytest.mark.asyncio
+async def test_subagent_com_middleware_propagado_interrompe_em_ask():
+    agent = _build_hitl_agent_with_subagent()
+    # Sem middleware propagado (bug original), isso nunca interrompia: a
+    # delegação via task() concluía o file_write direto, sem pausa.
+    assert await _interrupted(agent, "ask") is True
+    assert await _interrupted(agent, "auto") is False

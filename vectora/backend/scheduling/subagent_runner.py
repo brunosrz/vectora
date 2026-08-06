@@ -1,11 +1,11 @@
-"""Invoca um subagente específico (coder/search) isoladamente, fora do
-fluxo síncrono de delegação do orchestrator (tool `task()`).
+"""Invoca uma SOUL específica isoladamente, fora do fluxo síncrono de
+delegação do orchestrator (tool `task()`).
 
 Diferente de ``agent_factory.get_user_agent`` (grafo completo com todas as
-tools + os dois subagentes disponíveis via `task()`), aqui o grafo compilado
-usa SÓ as tools e o system prompt do ``SUBAGENT_SPEC`` do tipo pedido — o
-LLM não tem a opção de responder fora do escopo daquele subagente. Reusa o
-mesmo checkpointer/store compartilhado (``agent_factory.get_checkpointer``/
+tools + o catálogo inteiro de SOULs disponível via `task()`), aqui o grafo
+compilado usa SÓ as tools e o system prompt da SOUL pedida — o LLM não tem a
+opção de responder fora do escopo daquela SOUL. Reusa o mesmo
+checkpointer/store compartilhado (``agent_factory.get_checkpointer``/
 ``get_store``) para as runs aparecerem na mesma infraestrutura de
 threads/histórico que o resto do produto.
 """
@@ -17,24 +17,46 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-SUBAGENT_TYPES = ("coder", "search")
 
+def _spec_for(subagent_type: str) -> Any:
+    from backend.agents.souls import SOUL_CATALOG
 
-def _spec_for(subagent_type: str) -> dict[str, Any]:
-    if subagent_type == "coder":
-        from backend.agents.coder import SUBAGENT_SPEC
-    elif subagent_type == "search":
-        from backend.agents.search import SUBAGENT_SPEC
-    else:
+    soul = SOUL_CATALOG.get(subagent_type)
+    if soul is None:
         raise ValueError(
             f"subagent_type inválido: {subagent_type!r}. Válidos: {SUBAGENT_TYPES}"
         )
-    return SUBAGENT_SPEC
+    return soul
+
+
+#: Nomes das SOULs do catálogo, espelhados aqui como literal — não pode vir
+#: de ``SOUL_CATALOG`` em import-time: ``backend/tools/background.py`` importa
+#: este nome no topo do módulo e é importado por ``backend/nodes/tools.py``,
+#: que ``souls.py`` importa de volta (ciclo nodes.tools → background →
+#: subagent_runner → souls → nodes.tools). Testado contra o catálogo real em
+#: ``tests/unit/test_scheduling_subagent_runner.py``.
+SUBAGENT_TYPES = (
+    "coder",
+    "search",
+    "reviewer",
+    "tester",
+    "devops",
+    "writer-docs",
+    "data-analyst",
+    "security-auditor",
+    "browser-qa",
+    "planner",
+)
 
 
 async def build_subagent_graph(subagent_type: str, model_id: str = "") -> Any:
-    """Compila um grafo deepagents isolado, só com as tools/prompt do
-    subagente pedido — sem `subagents=` (não delega mais fundo)."""
+    """Compila um grafo deepagents isolado, só com as tools/prompt da SOUL
+    pedida — sem `subagents=` (não delega mais fundo).
+
+    Propaga o mesmo middleware do agente principal (HITL dinâmico incluso) —
+    sem isso, uma execução agendada de SOUL nunca pausa pra aprovação mesmo
+    chamando `terminal`/`file_write`.
+    """
     from typing import cast as _cast
 
     from deepagents import create_deep_agent
@@ -42,8 +64,9 @@ async def build_subagent_graph(subagent_type: str, model_id: str = "") -> Any:
 
     from backend.llm.fallback_chat_model import FallbackChatModel
     from backend.services import agent_factory
+    from backend.services.middleware import build_middleware_stack
 
-    spec = _spec_for(subagent_type)
+    soul = _spec_for(subagent_type)
 
     checkpointer = await agent_factory.get_checkpointer()
     store = await agent_factory.get_store()
@@ -54,8 +77,9 @@ async def build_subagent_graph(subagent_type: str, model_id: str = "") -> Any:
 
     return create_deep_agent(
         llm,
-        tools=spec["tools"],
-        system_prompt=spec["system_prompt"],
+        tools=soul.tools,
+        system_prompt=soul.system_prompt,
+        middleware=build_middleware_stack(),
         checkpointer=checkpointer,
         store=store,
         name=f"vectora-subagent-{subagent_type}",

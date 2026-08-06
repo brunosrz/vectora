@@ -323,18 +323,20 @@ class TestBuildBackend:
 
 
 class TestSubagentSpecs:
-    def test_subagent_specs_returns_two(self):
-        """Por padrão retorna coder + search."""
+    def test_subagent_specs_returns_full_catalog(self):
+        """Por padrão retorna uma spec por SOUL do catálogo, incluindo coder + search."""
+        from backend.agents.souls import SOUL_CATALOG
         from backend.services.agent_factory import _subagent_specs
 
         specs = _subagent_specs()
         names = [s["name"] for s in specs]
         assert "coder" in names
         assert "search" in names
-        assert len(specs) == 2
+        assert len(specs) == len(SOUL_CATALOG)
 
     def test_subagent_specs_abac_filtering(self):
         """Com user_id e disabled tools, tools são removidas das specs."""
+        from backend.agents.souls import Soul
         from backend.services.agent_factory import _subagent_specs
 
         fake_tool = MagicMock()
@@ -342,25 +344,25 @@ class TestSubagentSpecs:
         fake_tool2 = MagicMock()
         fake_tool2.name = "terminal"
 
+        fake_catalog = {
+            "coder": Soul(
+                name="coder",
+                description="d",
+                system_prompt="s",
+                tools=[fake_tool, fake_tool2],
+                needs_worktree_isolation=True,
+            ),
+            "search": Soul(
+                name="search",
+                description="d",
+                system_prompt="s",
+                tools=[],
+                needs_worktree_isolation=False,
+            ),
+        }
+
         with (
-            patch(
-                "backend.agents.coder.SUBAGENT_SPEC",
-                {
-                    "name": "coder",
-                    "description": "d",
-                    "system_prompt": "s",
-                    "tools": [fake_tool, fake_tool2],
-                },
-            ),
-            patch(
-                "backend.agents.search.SUBAGENT_SPEC",
-                {
-                    "name": "search",
-                    "description": "d",
-                    "system_prompt": "s",
-                    "tools": [],
-                },
-            ),
+            patch("backend.agents.souls.SOUL_CATALOG", fake_catalog),
             patch("backend.rbac.tool_policy.get_disabled", return_value=["file_write"]),
         ):
             specs = _subagent_specs(user_id="u1")
@@ -374,6 +376,7 @@ class TestSubagentSpecs:
         self, tmp_path, monkeypatch
     ):
         """Kill-switch global (admin) filtra subagents mesmo sem user_id (sessão local)."""
+        from backend.agents.souls import Soul
         from backend.rbac import tool_policy
         from backend.services.agent_factory import _subagent_specs
 
@@ -385,26 +388,24 @@ class TestSubagentSpecs:
         fake_tool2 = MagicMock()
         fake_tool2.name = "terminal"
 
-        with (
-            patch(
-                "backend.agents.coder.SUBAGENT_SPEC",
-                {
-                    "name": "coder",
-                    "description": "d",
-                    "system_prompt": "s",
-                    "tools": [fake_tool, fake_tool2],
-                },
+        fake_catalog = {
+            "coder": Soul(
+                name="coder",
+                description="d",
+                system_prompt="s",
+                tools=[fake_tool, fake_tool2],
+                needs_worktree_isolation=True,
             ),
-            patch(
-                "backend.agents.search.SUBAGENT_SPEC",
-                {
-                    "name": "search",
-                    "description": "d",
-                    "system_prompt": "s",
-                    "tools": [],
-                },
+            "search": Soul(
+                name="search",
+                description="d",
+                system_prompt="s",
+                tools=[],
+                needs_worktree_isolation=False,
             ),
-        ):
+        }
+
+        with patch("backend.agents.souls.SOUL_CATALOG", fake_catalog):
             specs = _subagent_specs()  # sem user_id — sessão local
 
         coder_spec = next(s for s in specs if s["name"] == "coder")

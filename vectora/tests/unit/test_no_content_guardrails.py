@@ -85,8 +85,7 @@ class TestPromptsSemRecusaDeConteudo:
         raiz = Path(__file__).resolve().parents[2] / "backend"
         return [
             raiz / "agents" / "_identity.py",
-            raiz / "agents" / "coder.py",
-            raiz / "agents" / "search.py",
+            raiz / "agents" / "souls.py",
             raiz / "services" / "agent_factory.py",
         ]
 

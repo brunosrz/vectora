@@ -855,14 +855,17 @@ async def run_task(
 
         subagent_type = task.trigger_config.get("subagent_type")
         if subagent_type:
-            # Agendamento de subagente específico — usa um worktree isolado
-            # quando é "coder" e a task tem workspace (evita concorrência
-            # com o workspace principal do usuário).
-            if subagent_type == "coder" and task.workspace_id:
+            from backend.agents.souls import SOUL_CATALOG
+            from backend.scheduling.subagent_runner import build_subagent_graph
+
+            # Agendamento de SOUL específica — usa um worktree isolado quando
+            # a SOUL edita filesystem/git e a task tem workspace (evita
+            # concorrência com o workspace principal do usuário).
+            soul = SOUL_CATALOG.get(subagent_type)
+            if soul is not None and soul.needs_worktree_isolation and task.workspace_id:
                 configurable["workspace_id"] = await _worktree_workspace_id(
                     task.workspace_id, task.id
                 )
-            from backend.scheduling.subagent_runner import build_subagent_graph
 
             agent = await build_subagent_graph(subagent_type)
         else:

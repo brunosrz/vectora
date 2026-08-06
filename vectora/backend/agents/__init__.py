@@ -1,12 +1,10 @@
-"""Vectora Agents — specs dos sub-agents do deep-agent.
+"""Vectora Agents — catálogo de SOULs (specs de subagent do deep-agent).
 
-Os sub-agents (coder, search) são declarados como ``SUBAGENT_SPEC`` e
-consumidos por ``agent_factory._subagent_specs()`` em ``create_deep_agent``.
+O catálogo (nome, descrição, prompt, tools) vive em ``backend.agents.souls``
+e é consumido por ``agent_factory._subagent_specs()`` em ``create_deep_agent``.
+Import direto de ``backend.agents.souls`` (não deste ``__init__``) — mantém
+o carregamento de ``nodes.tools`` (pesado) lazy pra quem só precisa de
+``backend.agents._identity`` (ex.: CLI, contexto sem grafo).
 """
 
 from __future__ import annotations
-
-from backend.agents.coder import SUBAGENT_SPEC as CODER_SPEC
-from backend.agents.search import SUBAGENT_SPEC as SEARCH_SPEC
-
-__all__ = ["CODER_SPEC", "SEARCH_SPEC"]

@@ -1,7 +1,9 @@
 """Testes para backend/scheduling/subagent_runner.py.
 
-Cobre: resolução de spec por tipo de subagente e montagem do grafo isolado
-(sem `subagents=`, checkpointer/store compartilhados com o agente principal).
+Cobre: resolução de spec por SOUL, montagem do grafo isolado (sem
+`subagents=`, checkpointer/store/middleware compartilhados com o agente
+principal), e paridade entre `SUBAGENT_TYPES` (literal estático, evita
+ciclo de import) e o catálogo real.
 """
 
 from __future__ import annotations
@@ -17,20 +19,27 @@ from backend.scheduling.subagent_runner import (
 )
 
 
-def test_subagent_types_cobre_coder_e_search():
-    assert SUBAGENT_TYPES == ("coder", "search")
+def test_subagent_types_bate_com_o_catalogo_real():
+    """SUBAGENT_TYPES é um literal estático (evita ciclo de import
+    nodes.tools -> background -> subagent_runner -> souls -> nodes.tools) —
+    esse teste é o que garante que ele nunca fica desatualizado."""
+    from backend.agents.souls import SOUL_CATALOG
+
+    assert set(SUBAGENT_TYPES) == set(SOUL_CATALOG)
+    assert "coder" in SUBAGENT_TYPES
+    assert "search" in SUBAGENT_TYPES
 
 
-def test_spec_for_coder_retorna_spec_do_coder():
-    from backend.agents import coder
+def test_spec_for_coder_retorna_soul_do_coder():
+    from backend.agents.souls import SOUL_CATALOG
 
-    assert _spec_for("coder") == coder.SUBAGENT_SPEC
+    assert _spec_for("coder") is SOUL_CATALOG["coder"]
 
 
-def test_spec_for_search_retorna_spec_do_search():
-    from backend.agents import search
+def test_spec_for_search_retorna_soul_do_search():
+    from backend.agents.souls import SOUL_CATALOG
 
-    assert _spec_for("search") == search.SUBAGENT_SPEC
+    assert _spec_for("search") is SOUL_CATALOG["search"]
 
 
 def test_spec_for_tipo_invalido_levanta_value_error():
@@ -43,6 +52,7 @@ async def test_build_subagent_graph_monta_grafo_sem_subagents_param():
     fake_checkpointer = MagicMock()
     fake_store = MagicMock()
     fake_graph = MagicMock()
+    fake_middleware = [MagicMock()]
 
     with (
         patch(
@@ -53,6 +63,10 @@ async def test_build_subagent_graph_monta_grafo_sem_subagents_param():
             "backend.services.agent_factory.get_store",
             new=AsyncMock(return_value=fake_store),
         ),
+        patch(
+            "backend.services.middleware.build_middleware_stack",
+            return_value=fake_middleware,
+        ),
         patch("deepagents.create_deep_agent", return_value=fake_graph) as mock_create,
     ):
         result = await build_subagent_graph("coder")
@@ -62,6 +76,7 @@ async def test_build_subagent_graph_monta_grafo_sem_subagents_param():
         assert "subagents" not in kwargs
         assert kwargs["checkpointer"] is fake_checkpointer
         assert kwargs["store"] is fake_store
+        assert kwargs["middleware"] is fake_middleware
         assert kwargs["name"] == "vectora-subagent-coder"
 
 
