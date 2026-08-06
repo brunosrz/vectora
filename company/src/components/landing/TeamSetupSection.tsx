@@ -5,6 +5,7 @@ const EXTRA_BULLETS = [
   m.team_extra_bullet_storage,
   m.team_extra_bullet_access,
   m.team_extra_bullet_automation,
+  m.team_extra_bullet_connect,
 ];
 
 const STEPS = [

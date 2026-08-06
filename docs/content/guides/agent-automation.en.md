@@ -3,7 +3,7 @@ title: Agent Automation
 weight: 6
 ---
 
-Beyond answering in the current turn, Vectora's agent can delegate work to isolated subagents, schedule work for later, learn reusable patterns from a session, and (in a limited, scaffolded form today) receive messages from outside the chat UI.
+Beyond answering in the current turn, Vectora's agent can delegate work to isolated subagents, schedule work for later, learn reusable patterns from a session, react to external webhooks, and receive messages from outside the chat UI.
 
 ## Delegate — isolated subagent execution
 
@@ -24,12 +24,17 @@ Every 5 turns of a conversation, Vectora automatically reviews the transcript fo
 
 You can also trigger this manually, or have the agent save a specific fact or install a specific skill directly — both of those actions require your approval the same way, and both leave a visible artifact in the **Plan tab** once approved, so what Vectora learned about your project stays visible and consultable, not just a diff that scrolls away.
 
-## Vectora Connect — status
+## Webhook-triggered automation
 
-Vectora Connect is the interface for delivering chat messages through platforms other than the built-in UI (Telegram, Discord, WhatsApp, etc.), following the "Connect" concept from Hermes Agent. Today, this exists as a **generic scaffolding layer only**: message envelopes and thread-resolution plumbing that any platform adapter could plug into — but no concrete platform (Telegram or otherwise) is wired in yet. If you're evaluating Vectora for multi-platform messaging today, treat this as a planned capability, not a working integration.
+Beyond schedules, a background task can also be triggered by an inbound webhook — a GitHub PR opening, a GitHub issue changing state, or an alert from your observability stack. The event's payload is embedded in the agent's instruction, so it reads the same context a human would paste in. See [Webhook Templates](../webhook-templates) for the concrete models Vectora ships (PR review, issue sync, observability alerts) and [Observability Webhooks](../observability-webhooks) for the generic alerting contract.
+
+## Vectora Connect — receiving messages from outside the chat UI
+
+Vectora Connect delivers chat through platforms other than the built-in UI — Telegram (long polling), Discord (WebSocket Gateway), Slack (Socket Mode), and email (IMAP/SMTP) are implemented and running today, each translating that platform's native message format into the same turn the built-in chat UI produces, then replying back through that platform. Connect is a **Pro** feature — see [pricing](https://vectora.chat/pricing).
 
 ## See also
 
+- [Webhook Templates](../webhook-templates) — the three webhook-triggered automation models
 - [Sessions & Workspaces](../../concepts/sessions-and-workspaces) — what a workspace is and how trust works
 - [AI Jail](../../concepts/ai-jail) — sandboxing terminal/file access per workspace
 - [Using the Workbench](../using-the-workbench) — the Tasks and Plan tabs in practice

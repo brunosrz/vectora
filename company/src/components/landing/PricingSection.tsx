@@ -31,6 +31,7 @@ const PRO = {
     m.pricing_feat_sso,
     m.pricing_feat_storage_scalable,
     m.pricing_feat_webhooks,
+    m.pricing_feat_connect,
     m.pricing_feat_priority_sla,
   ],
 };

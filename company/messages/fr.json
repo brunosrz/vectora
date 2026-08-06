@@ -308,6 +308,7 @@
   "theme_dark": "Passer au thème sombre",
   "nav_menu": "Ouvrir le menu",
   "pricing_feat_webhooks": "Webhooks",
+  "pricing_feat_connect": "Connect",
   "pricing_feat_sso": "SSO / SAML",
   "pricing_feat_workspace_complete": "RAG, Library, Navigateur, Sandbox et Context Graph — tout inclus",
   "pricing_feat_model_routing": "Routage de modèle : Ollama, OpenRouter, 9Router ou connexion directe (Gemini, Cohere, OpenAI, Anthropic)",

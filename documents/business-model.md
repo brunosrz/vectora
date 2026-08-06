@@ -76,6 +76,26 @@ monetização dessa via de uso.
 | Free  | 100% local, sem conta, SQLite + LanceDB                                        | Grátis        |
 | Pro   | Trial/billing/licenciamento via `services.vectora.company`, features avançadas | ver dashboard |
 
+O critério do que é Free e do que é Pro **não é custo de operação** — o
+Vectora é 100% BYOK (o usuário traz a própria chave de LLM/embedding/busca;
+não existe custo de LLM pro Vectora Company em nenhum plano). O boundary é
+puramente decisão de posicionamento/venda: capacidade central do
+agente/workspace nunca vira paga; paga quem precisa de login
+multiusuário, automação disparada de fora do produto, ou mensageria
+externa.
+
+**Sempre Free (permanente):** RAG, Library (Skills/MCP/Memory), Navegador
+(Browser + devtools), filesystem/git/terminal, Context Graph, Sandbox/AI
+Jail, Kanban, tarefas recorrentes (`trigger_type="interval"`),
+subagentes/delegação, Remember, todas as chaves BYOK, Desktop app (a
+interface de agente local), CLI (só configuração/shell via SSH em VPS —
+nunca TUI de chat), integrações GitHub/GitLab/Google via OAuth.
+
+**Pro (motivo de upgrade):** chat web multi-usuário/convites, storage
+completo Postgres+Qdrant+Redis, automação disparada por webhook, Connect
+completo (Telegram, Discord, Slack, Email), SSO/SAML (ainda não
+implementado tecnicamente — só na pricing copy).
+
 O desenho de planos pagos (Plus/Pro/Team com tiers de preço fixos,
 Host/Client, VSIX incluso) é a direção de médio prazo descrita nas seções
 de Tier 2 abaixo; o mecanismo de billing que sustenta qualquer plano pago

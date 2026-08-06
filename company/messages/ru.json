@@ -308,6 +308,7 @@
   "theme_dark": "Переключиться на тёмную тему",
   "nav_menu": "Открыть меню",
   "pricing_feat_webhooks": "Webhooks",
+  "pricing_feat_connect": "Connect",
   "pricing_feat_sso": "SSO / SAML",
   "pricing_feat_workspace_complete": "RAG, Library, браузер, Sandbox и Context Graph — всё включено",
   "pricing_feat_model_routing": "Маршрутизация моделей: Ollama, OpenRouter, 9Router или прямое подключение (Gemini, Cohere, OpenAI, Anthropic)",
