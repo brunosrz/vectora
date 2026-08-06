@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
+import { getDocsUrl } from "#/lib/docs-url";
 import Logo from "./Logo";
 
 export default function Footer() {
@@ -27,7 +28,7 @@ export default function Footer() {
           <p className={titleClass}>{m.footer_product()}</p>
           <div className={linksGridClass}>
             <a
-              href="https://docs.vectora.company"
+              href={getDocsUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className={linkClass}

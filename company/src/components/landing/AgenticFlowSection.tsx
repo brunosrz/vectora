@@ -1,4 +1,5 @@
 import { m } from "#/paraglide/messages";
+import { getDocsUrl } from "#/lib/docs-url";
 import {
   DiagramArc,
   DiagramArrowDefs,
@@ -190,7 +191,7 @@ export default function AgenticFlowSection() {
           </ul>
 
           <a
-            href="https://docs.vectora.company"
+            href={getDocsUrl()}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[14px] font-medium leading-5 text-primary transition-colors hover:text-primary/80"

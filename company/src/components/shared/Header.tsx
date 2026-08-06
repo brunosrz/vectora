@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import type { SessionUser } from "#/server/fns/auth";
 import { getLocale, locales, setLocale } from "#/paraglide/runtime";
+import { getDocsUrl } from "#/lib/docs-url";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
@@ -55,7 +56,7 @@ export default function Header({ session }: { session: SessionUser | null }) {
           aria-label="Navegação principal"
         >
           <a
-            href="https://docs.vectora.company"
+            href={getDocsUrl()}
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground transition-colors hover:text-foreground"
@@ -181,7 +182,7 @@ export default function Header({ session }: { session: SessionUser | null }) {
         >
           <div className="flex flex-col gap-0.5 text-sm">
             <a
-              href="https://docs.vectora.company"
+              href={getDocsUrl()}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileOpen(false)}

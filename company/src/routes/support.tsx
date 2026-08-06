@@ -3,6 +3,7 @@ import { m } from "#/paraglide/messages";
 import { Mail, BookOpen, Users, MessageCircle, FileText } from "lucide-react";
 import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
+import { getDocsUrl } from "#/lib/docs-url";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
@@ -69,20 +70,23 @@ const CHANNELS = [
     sla: null,
     badge: "WhatsApp only",
   },
-  {
-    icon: BookOpen,
-    title: "Documentação",
-    desc: "Guias de instalação, API reference e tutoriais",
-    action: {
-      label: "docs.vectora.company",
-      href: "https://docs.vectora.company",
-    },
-    sla: null,
-    badge: null,
-  },
 ];
 
 function SupportPage() {
+  const channels = [
+    ...CHANNELS,
+    {
+      icon: BookOpen,
+      title: "Documentação",
+      desc: "Guias de instalação e tutoriais",
+      action: {
+        label: "docs.vectora.company",
+        href: getDocsUrl(),
+      },
+      sla: null,
+      badge: null as string | null,
+    },
+  ];
   return (
     <Container size="prose" className="py-16">
       <PageHeader
@@ -113,7 +117,7 @@ function SupportPage() {
       </div>
 
       <div className="space-y-3">
-        {CHANNELS.map((ch) => {
+        {channels.map((ch) => {
           const Icon = ch.icon;
           return (
             <div

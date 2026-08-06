@@ -35,28 +35,47 @@ const SHIPPED = [
     label:
       "OpenRouter gateway — catálogo de modelos via API key própria do usuário",
   },
-  { label: "MCP server sempre-ativo — Claude Code, Claude Desktop e outros" },
+  {
+    label:
+      "MCP client — conecta servidores MCP de terceiros, marketplace de conectores",
+  },
   { label: "Chat web multi-usuário (plano Pro)" },
   { label: "docs.vectora.company — documentação completa" },
   { label: "vectora.company — site institucional e dashboard de licença" },
   { label: "Autenticação + billing (Stripe INTL + Asaas BR)" },
   { label: "VECTORA_TOKEN — recuperável a qualquer momento, com rotação" },
-  { label: "REST API /v1 — classify, extract, jobs + API keys com escopos" },
   { label: "Suporte multi-idioma — 7 locales (pt, en, es, fr, it, de, ru)" },
   { label: "Sistema de issues e feedback pelo site" },
   { label: "Webhooks de billing com Stripe e Asaas" },
   { label: "GDPR — exportação de dados e exclusão de conta em 30 dias" },
+  {
+    label:
+      "Context Graph nativo — tree-sitter + extração por LLM, GraphRAG, análise de impacto",
+  },
+  {
+    label:
+      "Sandbox / AI Jail — bwrap + seccomp + Landlock (Linux), WSL2 (Windows), Seatbelt (macOS), Singularity/Apptainer",
+  },
+  {
+    label:
+      "Navegador com devtools — painel Console/Network/Elements no workbench, sobre Playwright + CDP",
+  },
+  {
+    label:
+      "Kanban multi-agente — feature pública, com prioridade/dependências/filtros",
+  },
+  {
+    label:
+      "Library — publish/busca/curadoria de Skills, MCP e buckets de Memory",
+  },
 ];
 
-const BUILDING = [
-  { label: "Context Graph nativo — tree-sitter + extração por LLM" },
-  { label: "IDE mode — layout de editor no workbench" },
-];
+const BUILDING = [{ label: "IDE mode — layout de editor no workbench" }];
 
 const PLANNED = [
   {
     label:
-      "REST API pública completa — auth, threads/chat, workspaces, git, terminal, RAG, tasks, webhooks e settings via API (hoje só classify/extract/jobs são públicos)",
+      "API pública — visão de longo prazo, sem fundação técnica hoje; se avançar, nasce com autenticação de terceiros de verdade desde o design",
   },
   { label: "Integração nativa com VS Code e JetBrains via ACP" },
   { label: "SDK Python — pacote PyPI oficial (plugins/extensões do Vectora)" },
