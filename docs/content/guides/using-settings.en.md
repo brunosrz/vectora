@@ -35,4 +35,4 @@ Instance-wide settings — only visible to administrators.
 ## See also
 
 - [Security: Authentication and RBAC](../../security/authentication)
-- [MCP server](../../reference/mcp-server) — how the Environment tab's MCP plugins connect
+- [MCP client](../../reference/mcp-client) — how the Environment tab's MCP plugins connect

@@ -35,4 +35,4 @@ Configuración de toda la instancia — solo visible para administradores.
 ## Ver también
 
 - [Seguridad: Autenticación y RBAC](../../security/authentication)
-- [Servidor MCP](../../reference/mcp-server) — cómo se conectan los plugins MCP de la pestaña Entorno
+- [Cliente MCP](../../reference/mcp-client) — cómo se conectan los plugins MCP de la pestaña Entorno

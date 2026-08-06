@@ -25,7 +25,7 @@ Modo **complete** (Postgres + Qdrant + Redis) soma os requisitos desses três se
 
 ## Rede
 
-- Porta HTTP configurável (padrão `8080`) — chat web, API REST, e MCP (`/mcp`) compartilham a mesma porta.
+- Porta HTTP configurável (padrão `8080`) — o chat web e seus endpoints internos compartilham a mesma porta.
 - TLS não é terminado pelo próprio Vectora — use um reverse proxy (Nginx, Caddy, Traefik) na frente em produção.
 - Nenhuma porta TCP adicional é necessária — o desktop fala com o backend local via IPC (named pipe/unix socket), não TCP.
 

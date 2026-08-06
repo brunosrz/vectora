@@ -39,7 +39,7 @@ cp .env.example .env
 Duas janelas de terminal:
 
 ```bash
-# Terminal 1 — backend completo + MCP (/mcp) + SPA (porta 8080)
+# Terminal 1 — backend completo + SPA (porta 8080)
 uv run vectora start --port 8080
 
 # Terminal 2 — frontend dev (Vite, porta 3000, faz proxy pra API)
@@ -60,7 +60,7 @@ O seletor de modelo no chat só mostra os providers com chave configurada — se
 
 ## Licença
 
-O app funciona **sem licença** no modo Free (100% local). Para desbloquear os recursos Pro (chat web multi-usuário, storage complete, webhooks, API REST com rate limit maior), você precisa de um `VECTORA_TOKEN`, obtido no [dashboard](https://vectora.company/dashboard) após assinar um plano pago.
+O app funciona **sem licença** no modo Free (100% local). Para desbloquear os recursos Pro (chat web multi-usuário, storage complete, automações disparadas por webhook), você precisa de um `VECTORA_TOKEN`, obtido no [dashboard](https://vectora.company/dashboard) após assinar um plano pago.
 
 ## Próximo passo
 

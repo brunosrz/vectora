@@ -3,7 +3,7 @@ title: Referência de Tools
 weight: 3
 ---
 
-O Vectora vem com **70+ tools nativas**, organizadas por categoria. A filosofia é "batteries included": o que é de alta frequência e utilidade ampla vem embutido, em vez de exigir que você instale um MCP server separado pra cada coisa.
+O Vectora vem com **160+ tools nativas**, organizadas por categoria. A filosofia é "batteries included": o que é de alta frequência e utilidade ampla vem embutido, em vez de exigir que você instale um MCP server separado pra cada coisa.
 
 | Categoria         | Ferramentas                                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------------------------ |

@@ -15,9 +15,9 @@ O RAG depende de `COHERE_API_KEY` (ou uma chave VoyageAI configurada como altern
 
 O workspace provavelmente ainda está **não confiável**. Veja [Primeiro workspace](../first-workspace) — clique em "Confio nesta pasta" pra liberar escrita e terminal.
 
-## Um cliente MCP externo (Claude Code, Claude Desktop) não conecta
+## As tools de um servidor MCP conectado não aparecem
 
-Confirme que o Vectora está rodando e que a URL usada é `http://<seu-host>:<porta>/mcp` (não `/mcp/sse` — o servidor é montado direto em `/mcp` via SSE no mesmo processo). Em produção, use a URL HTTPS pública do seu servidor. Veja [Servidor MCP](../../reference/mcp-server).
+Confira o status do conector em **Configurações → Ambiente → Plugins** — uma conexão `stdio`/`sse`/`http` que falhou mostra um erro ali. Veja [Cliente MCP](../../reference/mcp-client).
 
 ## `vectora storage complete` não conecta no Postgres/Qdrant/Redis
 

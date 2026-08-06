@@ -22,7 +22,7 @@ Transported via an `httpOnly` + `SameSite=Lax` cookie (protected against XSS sin
 
 ## Rate limiting
 
-`slowapi` applies limits per IP/user/email — for example, login attempts and the `/v1/*` REST API (10/min on the Free tier, 100/min on Pro).
+`slowapi` applies limits to sensitive `/auth/*` endpoints — sign in, sign up, password change, token refresh — by IP or user, to slow down brute-force attempts.
 
 ## Auditing
 

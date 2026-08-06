@@ -7,7 +7,7 @@ weight: 2
 El trial/suscripción/licenciamiento son gestionados por `services.vectora.company`, un pequeño Cloudflare Worker — no una "Vectora Cloud" que aloja tu instancia. Pago internacional vía Stripe; en Brasil, vía Asaas (PIX, boleto, tarjeta).
 
 **¿Qué cambia entre Free y Pro?**
-Free es 100% local, sin cuenta. Pro desbloquea chat web multiusuario, almacenamiento completo (Postgres+Qdrant+Redis), webhooks y la API REST con un límite de tasa más alto — ver [precios actuales](https://vectora.company/#pricing).
+Free es 100% local, sin cuenta. Pro desbloquea chat web multiusuario, almacenamiento completo (Postgres+Qdrant+Redis) y automatizaciones disparadas por webhook — ver [precios actuales](https://vectora.company/#pricing).
 
 **¿Cancelar mi suscripción borra mis datos?**
 No. Tus datos permanecen en **tu** servidor — cancelar la suscripción solo baja el nivel de vuelta a Free (las funciones Pro dejan de funcionar), no borra nada localmente.

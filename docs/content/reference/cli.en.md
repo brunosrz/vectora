@@ -12,8 +12,8 @@ vectora [command] [options]
 | Command            | What it does                                                           |
 | ------------------ | ---------------------------------------------------------------------- |
 | _(no args)_        | prints help                                                            |
-| `start`            | starts the full backend + MCP (`/mcp`) + the SPA (fullstack)           |
-| `start --headless` | starts without opening a window (backend + MCP + tray)                 |
+| `start`            | starts the full backend + the SPA (fullstack)                         |
+| `start --headless` | starts without opening a window (backend + tray)                       |
 | `config`           | shows/edits settings; subcommands: `keys`, `docker`, `qdrant`, `redis` |
 | `storage`          | migrations, diagnostics, backup/restore, BaaS wizard                   |
 | `sessions`         | lists all saved sessions                                               |

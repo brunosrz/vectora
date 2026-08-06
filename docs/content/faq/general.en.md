@@ -16,7 +16,7 @@ Google Gemini, OpenAI, Anthropic, Cohere, and Ollama (fully local). The model se
 Partially. With local Ollama, the LLM runs offline — but RAG (Cohere/VoyageAI) and web search (Tavily) still depend on the network, unless you configure local alternatives.
 
 **What's the difference between Vectora and a coding assistant like Copilot?**
-Copilot is autocomplete. Vectora is a full agent with dedicated RAG, terminal, git, multi-user web chat, and an MCP server — built to actually know your project, not just suggest the next line.
+Copilot is autocomplete. Vectora is a full agent with dedicated RAG, terminal, git, multi-user web chat, and a shared workspace with the agent — built to actually know your project, not just suggest the next line.
 
 **Is there a mobile version?**
 No. Vectora is desktop (Windows/macOS/Linux) + a web chat accessible from any browser (including mobile, via the server running on a company VPS/server).

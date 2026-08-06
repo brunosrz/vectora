@@ -35,4 +35,4 @@ Configurações da instância inteira — só visível pra administradores.
 ## Veja também
 
 - [Segurança: Autenticação e RBAC](../../security/authentication)
-- [Servidor MCP](../../reference/mcp-server) — como os plugins MCP da aba Ambiente se conectam
+- [Cliente MCP](../../reference/mcp-client) — como os plugins MCP da aba Ambiente se conectam

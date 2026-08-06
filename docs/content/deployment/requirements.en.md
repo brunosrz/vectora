@@ -25,7 +25,7 @@ weight: 1
 
 ## Network
 
-- Configurable HTTP port (default `8080`) — web chat, REST API, and MCP (`/mcp`) share the same port.
+- Configurable HTTP port (default `8080`) — the web chat and its internal endpoints share the same port.
 - TLS isn't terminated by Vectora itself — use a reverse proxy (Nginx, Caddy, Traefik) in front in production.
 - No additional TCP port is needed — the desktop talks to the local backend via IPC (named pipe/unix socket), not TCP.
 

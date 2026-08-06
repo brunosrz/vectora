@@ -3,7 +3,7 @@ title: Tools Reference
 weight: 3
 ---
 
-Vectora viene con **70+ herramientas nativas**, organizadas por categoría. La filosofía es "baterías incluidas": lo que es de alta frecuencia y ampliamente útil viene integrado, en lugar de requerir instalar un servidor MCP separado para todo.
+Vectora viene con **160+ herramientas nativas**, organizadas por categoría. La filosofía es "baterías incluidas": lo que es de alta frecuencia y ampliamente útil viene integrado, en lugar de requerir instalar un servidor MCP separado para todo.
 
 | Categoría          | Herramientas                                                                                                    |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------- |

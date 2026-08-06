@@ -22,7 +22,7 @@ Cookies `httpOnly` não viajam em conexões WebSocket cross-origin — por isso 
 
 ## Rate limiting
 
-`slowapi` aplica limites por IP/usuário/email — por exemplo, tentativas de login e a API REST `/v1/*` (10/min no tier Free, 100/min no Pro).
+`slowapi` aplica limites aos endpoints sensíveis `/auth/*` — login, cadastro, troca de senha, refresh de token — por IP ou usuário, pra desacelerar tentativas de força bruta.
 
 ## Auditoria
 

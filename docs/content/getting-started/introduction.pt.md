@@ -5,7 +5,7 @@ weight: 1
 
 ## O que é o Vectora
 
-Vectora é um **agente de IA self-hosted** para equipes de desenvolvimento. Ele roda inteiramente no seu servidor — sua VPS, sua máquina local, o servidor da sua empresa — e resolve o problema que a maioria dos assistentes de IA ignora: **fazer o agente conhecer de verdade o seu projeto**, não só gerar código genérico.
+Vectora é um **workspace de IA self-hosted** para equipes de desenvolvimento. Ele roda inteiramente no seu servidor — sua VPS, sua máquina local, o servidor da sua empresa — e resolve dois problemas que a maioria dos assistentes de IA ignora: te dar, a você e ao agente, as **mesmas superfícies de trabalho** (filesystem, terminal, git, navegador — não um chat narrando ações que você nunca vê), e **fazer o agente conhecer de verdade o seu projeto**, não só gerar código genérico.
 
 Isso acontece por dois caminhos que trabalham juntos:
 
@@ -26,7 +26,7 @@ Você (CLI / Chat Web / MCP client)
    │         │
    └────┬────┘
         ▼
-  70+ tools nativas (arquivos, git, terminal, RAG, web, integrações)
+  160+ tools nativas (arquivos, git, terminal, navegador, RAG, web, integrações)
         │
         ▼
   SQLite + LanceDB (lite, default)  ou  Postgres + Qdrant + Redis (complete)
@@ -34,21 +34,20 @@ Você (CLI / Chat Web / MCP client)
 
 O **orchestrator** é o supervisor: responde direto quando a pergunta é simples, ou delega para um subagente especializado (`coder` para operações de arquivo/git/terminal, `search` para busca web e RAG) via middleware human-in-the-loop (HITL) que pausa antes de ações destrutivas para você aprovar.
 
-## Os quatro jeitos de usar
+## Os três jeitos de usar
 
-O mesmo backend atende quatro superfícies diferentes, ao mesmo tempo:
+O mesmo backend atende três superfícies diferentes, ao mesmo tempo:
 
-1. **Chat web** — interface React multi-usuário, com workbench (arquivos, git, terminal, RAG, Context Graph) — veja [Usando o chat](../guides/using-the-chat) e [Usando a workbench](../guides/using-the-workbench).
+1. **Chat web** — interface React multi-usuário, com workbench (arquivos, git, terminal, navegador, RAG, Context Graph, Kanban) compartilhada entre você e o agente — veja [Usando o chat](../guides/using-the-chat) e [Usando a workbench](../guides/using-the-workbench).
 2. **CLI** — `vectora start`, `vectora config`, `vectora storage` — veja a [referência de CLI](../reference/cli).
-3. **MCP server** — montado em `/mcp` no mesmo processo, sempre ativo. Conecte Claude Code, Claude Desktop ou qualquer cliente MCP — veja [Servidor MCP](../reference/mcp-server).
-4. **API REST interna** — o mesmo conjunto de endpoints que o frontend usa (chat, RAG, gateways, settings), disponível pra automações contra a sua própria instância — veja [Integração Self-Hosted](../api-reference/self-hosted-integration).
+3. **MCP client** — o Vectora se conecta a servidores MCP que você instalar (um marketplace de conectores, mais registro manual) pra que o agente use as tools deles. O Vectora não se expõe como servidor MCP pra outros harnesses — veja [Cliente MCP](../reference/mcp-client).
 
 ## Free vs. Pro
 
 Vectora é **software comercial de código fechado** — você roda na sua infraestrutura, mas o código pertence à Vectora Company (mesmo modelo do Cursor, Linear, Notion).
 
 - **Free** — 100% local, sem conta, sem nenhuma dependência da Vectora Company. Você traz suas próprias chaves de API (LLM, Cohere/Voyage para embeddings, Tavily para busca web). Storage lite (SQLite + LanceDB).
-- **Pro** — opcional, cobre trial/billing/licenciamento via `services.vectora.company` (um Worker Cloudflare pequeno, não um "Vectora Cloud" que hospeda sua instância). Desbloqueia chat web multi-usuário, storage complete (Postgres + Qdrant + Redis), webhooks e a API REST com rate limit maior.
+- **Pro** — opcional, cobre trial/billing/licenciamento via `services.vectora.company` (um Worker Cloudflare pequeno, não um "Vectora Cloud" que hospeda sua instância). Desbloqueia chat web multi-usuário, storage complete (Postgres + Qdrant + Redis) e automações disparadas por webhook.
 
 Veja [preços atualizados](https://vectora.company/#pricing).
 

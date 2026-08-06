@@ -3,7 +3,7 @@ title: Tools Reference
 weight: 3
 ---
 
-Vectora ships with **70+ native tools**, organized by category. The philosophy is "batteries included": whatever is high-frequency and broadly useful comes built in, instead of requiring a separate MCP server install for everything.
+Vectora ships with **160+ native tools**, organized by category. The philosophy is "batteries included": whatever is high-frequency and broadly useful comes built in, instead of requiring a separate MCP server install for everything.
 
 | Category          | Tools                                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------- |
