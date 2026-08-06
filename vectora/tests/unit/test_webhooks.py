@@ -634,15 +634,16 @@ class TestObservabilityWebhookEndpoint:
         MESMO card (nome + status), sem criar um segundo."""
         from backend.scheduling import background_tasks as bg
 
-        anchor = await bg.create_task(
-            session_id="s-obs",
-            user_id="u1",
-            kind="routine",
-            name="Sync observabilidade",
-            instruction="",
-            trigger_type="webhook",
-            trigger_config={"provider": "observability"},
-        )
+        with patch.dict("os.environ", {"VECTORA_LICENSE_BYPASS": "1"}):
+            anchor = await bg.create_task(
+                session_id="s-obs",
+                user_id="u1",
+                kind="routine",
+                name="Sync observabilidade",
+                instruction="",
+                trigger_type="webhook",
+                trigger_config={"provider": "observability"},
+            )
 
         with patch.dict("os.environ", {"OBSERVABILITY_WEBHOOK_SECRET": "s3cr3t"}):
             resp_critical = self._post(

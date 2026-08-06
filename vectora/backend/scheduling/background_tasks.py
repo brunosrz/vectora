@@ -26,6 +26,8 @@ from zoneinfo import ZoneInfo
 
 from croniter import croniter
 
+from backend.rbac.subscription import require_pro
+
 logger = logging.getLogger(__name__)
 
 VALID_KINDS = {"routine", "heartbreak", "subagent"}
@@ -277,6 +279,8 @@ async def create_task(
     """
     cfg = trigger_config or {}
     _validate(kind, trigger_type, cfg, priority)
+    if trigger_type == "webhook":
+        require_pro()
     task_id = str(uuid4())
     if next_run_at is not None:
         next_run = next_run_at

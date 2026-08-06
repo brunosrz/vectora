@@ -51,6 +51,15 @@ async def db(tmp_path, monkeypatch):
     return db_path
 
 
+@pytest.fixture(autouse=True)
+def _pro_tier_by_default(monkeypatch):
+    """Tarefas `webhook` exigem tier pro (`create_task`); os testes deste
+    arquivo cobrem o resto do ciclo de vida, não o gating em si — default
+    pro aqui, `TestWebhookTaskRequiresPro` abaixo testa o gating de verdade.
+    """
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+
+
 class _FakeAgent:
     def __init__(self, result: Any = None, exc: Exception | None = None) -> None:
         self.result = result
@@ -235,6 +244,58 @@ async def test_update_and_delete_roundtrip(db):
     assert await bg.delete_task(task.id) is True
     assert await bg.delete_task(task.id) is False
     assert await bg.get_task(task.id) is None
+
+
+# ---------------------------------------------------------------------------
+# Gating: task com trigger_type="webhook" exige tier pro
+# ---------------------------------------------------------------------------
+
+
+class TestWebhookTaskRequiresPro:
+    async def test_free_tier_e_rejeitada_com_402(self, db, monkeypatch, tmp_path):
+        monkeypatch.delenv("VECTORA_LICENSE_BYPASS", raising=False)
+        from backend.services import license as lic
+
+        monkeypatch.setattr(lic, "CACHE_PATH", tmp_path / "license_cache.json")
+        from fastapi import HTTPException
+
+        with pytest.raises(HTTPException) as exc:
+            await bg.create_task(
+                session_id="s",
+                user_id="u",
+                kind="routine",
+                name="sync",
+                instruction="i",
+                trigger_type="webhook",
+                trigger_config={"provider": "github", "events": ["push"]},
+            )
+        assert exc.value.status_code == 402
+
+    async def test_pro_tier_cria_normalmente(self, db, monkeypatch):
+        monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+        task = await bg.create_task(
+            session_id="s",
+            user_id="u",
+            kind="routine",
+            name="sync",
+            instruction="i",
+            trigger_type="webhook",
+            trigger_config={"provider": "github", "events": ["push"]},
+        )
+        assert task.trigger_type == "webhook"
+
+    async def test_outros_triggers_nao_exigem_pro(self, db, monkeypatch):
+        """manual/interval/once/subagent seguem livres — só webhook é pago."""
+        monkeypatch.delenv("VECTORA_LICENSE_BYPASS", raising=False)
+        task = await bg.create_task(
+            session_id="s",
+            user_id="u",
+            kind="routine",
+            name="manual-task",
+            instruction="i",
+            trigger_type="manual",
+        )
+        assert task.trigger_type == "manual"
 
 
 # ---------------------------------------------------------------------------

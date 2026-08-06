@@ -65,6 +65,13 @@ async def db(tmp_path, monkeypatch):
     return db_path
 
 
+@pytest.fixture(autouse=True)
+def _pro_tier_by_default(monkeypatch):
+    """Tarefas `webhook` exigem tier pro — este arquivo cobre o handler
+    REST, não o gating em si (coberto em test_services_background.py)."""
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+
+
 async def test_post_task_with_uuid_user_does_not_crash(db):
     out = await post_task(
         _req(),

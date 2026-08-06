@@ -1,8 +1,9 @@
 """Testes de gating por tier de assinatura (free/pro).
 
-`get_current_tier`/`require_pro` (`backend/services/subscription.py`) e os
-pontos de integração: `storage/factory.py` (Postgres/Qdrant → pro-only) e o
-rate limit diferenciado dos endpoints `/v1/*`.
+`get_current_tier`/`require_pro` (`backend/rbac/subscription.py`) e os
+pontos de integração: `storage/factory.py` (Postgres/Qdrant → pro-only) e
+`scheduling/background_tasks.py::create_task` (trigger_type="webhook" →
+pro-only, testado em test_services_background.py::TestWebhookTaskRequiresPro).
 """
 
 from __future__ import annotations

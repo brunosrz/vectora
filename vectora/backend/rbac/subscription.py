@@ -2,9 +2,9 @@
 
 Modelo: uso solo local é sempre `free` (sem conta, sem `VECTORA_TOKEN`).
 Capacidades de time — chat web multi-usuário, convites, SSO/SAML, storage
-escalável (Postgres/Qdrant/Redis), webhooks, REST API com rate limit maior —
-exigem `tier=pro`, que só existe com um `VECTORA_TOKEN` válido validado contra
-o Supabase (ver `backend/services/license.py`).
+escalável (Postgres/Qdrant/Redis), tasks disparadas por webhook — exigem
+`tier=pro`, que só existe com um `VECTORA_TOKEN` válido validado contra o
+Supabase (ver `backend/services/license.py`).
 
 `get_current_tier` lê o cache local (escrito no boot pelo launcher / pelo loop
 de revalidação de 6h em `backend/api/server.py`) — nunca faz chamada de rede

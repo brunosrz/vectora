@@ -120,6 +120,7 @@ async def test_webhook_via_gateway_producao_dispara_background_task(
     monkeypatch.setattr(settings, "vectora_home", tmp_path)
     monkeypatch.setattr(rbac_auth, "_db_conn", None)
 
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
     task = await bg.create_task(
         session_id="e2e-gateway",
         user_id="e2e-user",
