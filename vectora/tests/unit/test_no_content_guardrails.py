@@ -34,23 +34,22 @@ def _reset_capture():
 
 
 class TestGeminiSafetySettings:
-    def test_gemini_manda_threshold_permissivo_em_todas_as_categorias(
+    def test_gemini_usa_client_nativo_com_safety_settings_permissivos(
         self, monkeypatch
     ):
-        from langchain_google_genai import HarmBlockThreshold
+        """`_build_concrete_model("google_genai", ...)` produz
+        `VectoraGoogleChat` — o comportamento em si (`safetySettings` com
+        `BLOCK_NONE` em todas as categorias) é testado diretamente em
+        `test_google_chat.py::test_safety_settings_permissivos_em_todas_categorias`,
+        sem duplicar aqui."""
+        from backend.llm.google.chat import VectoraGoogleChat
 
-        monkeypatch.setattr(
-            "langchain_google_genai.ChatGoogleGenerativeAI", _FakeChatModel
-        )
         monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
 
-        _build_concrete_model("google_genai", "gemini-2.5-flash", 0.7)
+        modelo = _build_concrete_model("google_genai", "gemini-2.5-flash", 0.7)
 
-        settings = (_FakeChatModel.last_kwargs or {}).get("safety_settings")
-        assert settings, "Gemini instanciado sem safety_settings"
-        assert all(v is HarmBlockThreshold.BLOCK_NONE for v in settings.values()), (
-            "alguma categoria ficou com threshold restritivo"
-        )
+        assert isinstance(modelo, VectoraGoogleChat)
+        assert _FakeChatModel.last_kwargs is None
 
     def test_provider_sem_suporte_nao_recebe_safety_settings(self, monkeypatch):
         """Erro/borda: `safety_settings` é kwarg do SDK do Google — outro
