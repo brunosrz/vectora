@@ -123,61 +123,83 @@ class TestRedisLLMCache:
             reset_llm_cache()
 
 
-class TestRedisChatHistory:
-    """RedisChatMessageHistory via get_chat_history()."""
+class TestNativeRedisCacheRoundtrip:
+    """Round-trip real contra Redis — cache exato e semântico nativos
+    (`backend/llm/native_redis_cache.py`). fakeredis não implementa `FT.*`,
+    então esta cobertura só existe aqui (contra `redis-stack-server`)."""
 
+    @pytest.mark.asyncio
     @pytest.mark.storage
-    def test_get_chat_history_wrong_backend_returns_none(self, monkeypatch):
-        """get_chat_history() retorna None quando backend != redis."""
-        import backend.settings as _s
-        from backend.storage.redis.chat_history import get_chat_history
-
-        monkeypatch.setattr(_s.settings, "cache_history_backend", "default")
-        result = get_chat_history("session-abc")
-        assert result is None
-
-    @pytest.mark.storage
-    def test_get_chat_history_no_redis_url_returns_none(self, monkeypatch):
-        """Erro: sem redis_url configurado, retorna None mesmo com backend=redis."""
-        import backend.settings as _s
-        from backend.storage.redis.chat_history import get_chat_history
-
-        monkeypatch.setattr(_s.settings, "cache_history_backend", "redis")
-        monkeypatch.setattr(_s.settings, "redis_url", None)
-        result = get_chat_history("session-abc")
-        assert result is None
-
-    @pytest.mark.storage
-    def test_get_chat_history_returns_history_object(
-        self, _storage_stack_ok, redis_url, monkeypatch
-    ):
-        """Com backend=redis e Redis acessível, retorna RedisChatMessageHistory."""
+    async def test_cache_exato_roundtrip(self, _storage_stack_ok, redis_url):
         if not _storage_stack_ok:
             pytest.skip("Docker indisponível — Redis não iniciado")
 
-        # Pré-checa conectividade autenticada. A porta pode estar aberta com um
-        # Redis legado sem --requirepass (o probe de _storage_stack_ok só testa
-        # o socket), e aí a URL default com senha falharia no AUTH. Isso é
-        # desconfiguração de ambiente, não bug — pula com motivo. Em setup limpo
-        # (compose recriou o Redis com senha) o ping passa e o teste roda.
-        import redis as _redis
-        from redis.exceptions import RedisError
+        from langchain_core.outputs import Generation
 
-        _probe = _redis.from_url(redis_url)
-        try:
-            _probe.ping()
-        except RedisError as exc:
-            pytest.skip(f"Redis local incompatível com a URL default: {exc}")
-        finally:
-            _probe.close()
+        from backend.llm.native_redis_cache import NativeRedisCache
 
-        from langchain_redis import RedisChatMessageHistory
+        cache = NativeRedisCache(redis_url=redis_url, ttl=30)
+        gens = [Generation(text="resposta de teste")]
 
-        import backend.settings as _s
-        from backend.storage.redis.chat_history import get_chat_history
+        await cache.aupdate("prompt exato", "llm-config-a", gens)
+        result = await cache.alookup("prompt exato", "llm-config-a")
+        assert result is not None
+        assert result[0].text == "resposta de teste"
 
-        monkeypatch.setattr(_s.settings, "cache_history_backend", "redis")
-        monkeypatch.setattr(_s.settings, "redis_url", redis_url)
+        # Erro/borda: prompt diferente é sempre miss, mesmo logo após o hit.
+        miss = await cache.alookup("prompt totalmente diferente", "llm-config-a")
+        assert miss is None
 
-        result = get_chat_history("session-test-xyz")
-        assert isinstance(result, RedisChatMessageHistory)
+        await cache.aclear()
+        assert await cache.alookup("prompt exato", "llm-config-a") is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.storage
+    async def test_cache_semantico_hit_e_miss_por_threshold(
+        self, _storage_stack_ok, redis_url
+    ):
+        if not _storage_stack_ok:
+            pytest.skip("Docker indisponível — Redis não iniciado")
+
+        from langchain_core.outputs import Generation
+
+        from backend.llm.native_redis_cache import NativeRedisSemanticCache
+
+        class _FixedEmbeddings:
+            """Embeddings determinísticos — mesmo vetor pra prompts
+            'próximos', vetor ortogonal pra prompts 'distantes', sem
+            depender de credencial Cohere real no ambiente de teste."""
+
+            async def aembed_query(self, text: str) -> list[float]:
+                if "clima" in text:
+                    return [1.0, 0.0, 0.0, 0.0]
+                return [0.0, 1.0, 0.0, 0.0]
+
+            def embed_query(self, text: str) -> list[float]:
+                return [1.0, 0.0, 0.0, 0.0] if "clima" in text else [0.0, 1.0, 0.0, 0.0]
+
+        cache = NativeRedisSemanticCache(
+            embeddings=_FixedEmbeddings(),
+            redis_url=redis_url,
+            distance_threshold=0.1,
+            ttl=30,
+        )
+        gens = [Generation(text="vai chover amanhã")]
+        await cache.aupdate("como está o clima hoje", "llm-config-b", gens)
+
+        # Hit: mesmo vetor (prompt semanticamente "igual" pro embeddings fake).
+        hit = await cache.alookup("qual é o clima agora", "llm-config-b")
+        assert hit is not None
+        assert hit[0].text == "vai chover amanhã"
+
+        # Erro/borda: vetor ortogonal (distância 1.0) fica muito acima do
+        # threshold 0.1 — precisa ser miss, não um falso positivo.
+        miss = await cache.alookup("me conte uma piada", "llm-config-b")
+        assert miss is None
+
+        # Erro/borda: mesmo vetor, mas llm_string diferente (outro modelo)
+        # nunca deve dar hit — cada config tem seu próprio espaço via TAG.
+        other_llm = await cache.alookup("qual é o clima agora", "llm-config-outro")
+        assert other_llm is None
+
+        await cache.aclear()

@@ -19,7 +19,6 @@ async def _run_sessions_async() -> None:
     try:
         settings = Settings()
         # Threads são armazenados em checkpoints.db (usado pelo threads API handler).
-        # SessionService usa backend.db (arquivo diferente) — não lê sessões reais.
         checkpoints_db = settings.vectora_home / "checkpoints.db"
         if not checkpoints_db.exists():
             sessions = []

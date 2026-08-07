@@ -105,4 +105,4 @@ async def embed_direct(text: str, collection: str) -> None:
         collection=collection,
         doc_metadata="{}",
     )
-    await worker._write_to_lancedb(record, vector)
+    await worker._write_to_vector_store(record, vector)

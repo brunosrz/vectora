@@ -259,11 +259,7 @@ class Settings(BaseSettings):
     """TTL das entradas de cache LLM (segundos). Default 1h."""
 
     cache_distance_threshold: float = 0.2
-    """Limiar de distância do ``RedisSemanticCache`` (menor = mais estrito)."""
-
-    cache_history_backend: Literal["default", "redis"] = "default"
-    """Backend do histórico de chat. ``default`` usa SQLite/Postgres; ``redis``
-    usa ``RedisChatMessageHistory``."""
+    """Limiar de distância do cache semântico nativo (menor = mais estrito)."""
 
     # ============================================================================
     # QDRANT (complete)

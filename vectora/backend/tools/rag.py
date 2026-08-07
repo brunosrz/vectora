@@ -21,34 +21,14 @@ from backend.settings import settings
 
 try:
     import lancedb
-    import pandas as pd
     from langchain_cohere import CohereEmbeddings, CohereRerank
 except ImportError:
     lancedb = None  # type: ignore
-    pd = None  # type: ignore
     CohereEmbeddings = None  # type: ignore
     CohereRerank = None  # type: ignore
     SecretStr = None  # type: ignore
 
 logger = logging.getLogger(__name__)
-
-
-def _parse_metadata(raw: object) -> dict[str, Any]:
-    """Desserializa o campo `metadata` de uma linha LanceDB para dict.
-
-    O metadata é gravado como string JSON pelo background worker. Aceita
-    também dict já desserializado (defensivo) e devolve {} em qualquer falha.
-    """
-    if isinstance(raw, dict):
-        # type narrow: dict desserializado vindo do LanceDB
-        return dict(raw)  # ty: ignore[no-matching-overload]
-    if not isinstance(raw, str) or not raw:
-        return {}
-    try:
-        parsed = json.loads(raw)
-        return parsed if isinstance(parsed, dict) else {}
-    except (json.JSONDecodeError, ValueError):
-        return {}
 
 
 def _is_cohere_quota_error(err: str) -> bool:
@@ -300,34 +280,22 @@ def _resolve_search_collections(workspace_id: str | None) -> list[str]:
 
 
 async def _search_one_collection(
-    db: Any, collection: str, query_vector: Any, limit: int
+    backend: Any, collection: str, query_vector: Any, limit: int
 ) -> list[dict[str, Any]]:
-    """Busca vetorial numa única tabela LanceDB. Tabela ausente/timeout
-    devolve lista vazia (nunca lança) — chamador decide o que fazer com
-    zero resultados de uma coleção específica dentro de um fan-out."""
-    try:
-        async with asyncio.timeout(10):
-            table = await db.open_table(collection)
-    except Exception:
-        logger.debug("vector_search: coleção %s indisponível", collection)
-        return []
-    try:
-        async with asyncio.timeout(10):
-            search_results = await (
-                table.vector_search(query_vector).limit(limit).to_pandas()
-            )
-    except TimeoutError:
-        logger.warning("vector_search: timeout na coleção %s", collection)
-        return []
+    """Busca vetorial numa única coleção via `VectorStoreBackend` — LanceDB
+    (lite) ou Qdrant (complete), conforme `storage_mode`. Coleção
+    ausente/timeout devolve lista vazia (backend nunca lança) — chamador
+    decide o que fazer com zero resultados dentro de um fan-out."""
+    hits = await backend.search(collection, query_vector, limit)
     return [
         {
-            "id": str(row["id"]),
-            "score": float(row.get("_distance", 0.0)),
-            "content": row["text"],
-            "metadata": json.loads(row.get("metadata", "{}")),
-            "collection": collection,
+            "id": hit.id,
+            "score": hit.score,
+            "content": hit.content,
+            "metadata": hit.metadata,
+            "collection": hit.collection,
         }
-        for _, row in search_results.iterrows()
+        for hit in hits
     ]
 
 
@@ -382,7 +350,9 @@ async def vector_search(
             [collection] if collection else _resolve_search_collections(workspace_id)
         )
 
-        db = await lancedb.connect_async(str(settings.lancedb_dir))
+        from backend.storage.factory import get_vector_store_backend
+
+        backend = await get_vector_store_backend()
 
         # NOTE: do NOT wrap in SecretStr here.
         # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
@@ -402,7 +372,7 @@ async def vector_search(
         )
 
         fanned_out = [
-            await _search_one_collection(db, coll, query_vector, limit)
+            await _search_one_collection(backend, coll, query_vector, limit)
             for coll in collections
         ]
         results = sorted(
@@ -701,10 +671,6 @@ async def manage_retriever(
     Returns:
         JSON com o resultado da operação
     """
-    if lancedb is None:
-        return json.dumps({"status": "error", "error": "LanceDB não instalado."})
-    if settings.lancedb_dir is None:
-        return json.dumps({"status": "error", "error": "lancedb_dir não configurado."})
     if action == "delete" and not source:
         return json.dumps(
             {
@@ -713,17 +679,19 @@ async def manage_retriever(
             }
         )
 
+    from backend.storage.factory import get_vector_store_backend
+
     try:
-        db = await lancedb.connect_async(str(settings.lancedb_dir))
+        backend = await get_vector_store_backend()
     except Exception as e:
         return json.dumps(
-            {"status": "error", "error": f"Falha ao conectar LanceDB: {e}"}
+            {"status": "error", "error": f"Falha ao conectar ao vector store: {e}"}
         )
 
     # purge — apaga a coleção inteira
     if action == "purge":
         try:
-            await db.drop_table(collection)
+            await backend.purge(collection)
             logger.info("manage_retriever_purge", extra={"collection": collection})
             return json.dumps({"status": "purged", "collection": collection})
         except Exception as e:
@@ -731,11 +699,16 @@ async def manage_retriever(
                 {"status": "error", "error": f"Falha ao apagar '{collection}': {e}"}
             )
 
-    # list / delete — abrem a tabela e escaneiam os metadados
+    # list / delete — lê todos os documentos da coleção
     try:
-        async with asyncio.timeout(10):
-            table = await db.open_table(collection)
-    except Exception:
+        async with asyncio.timeout(15):
+            rows = await backend.list_rows(collection)
+    except Exception as e:
+        return json.dumps(
+            {"status": "error", "error": f"Falha ao ler '{collection}': {e}"}
+        )
+
+    if not rows:
         return json.dumps(
             {
                 "status": "no_results",
@@ -743,37 +716,17 @@ async def manage_retriever(
             }
         )
 
-    try:
-        async with asyncio.timeout(15):
-            df = await table.to_pandas()
-    except Exception as e:
-        return json.dumps(
-            {"status": "error", "error": f"Falha ao ler '{collection}': {e}"}
-        )
-
-    # Parse do metadata vetorizado — uma passada pandas (.map), sem iterrows()
-    # (iterrows é notoriamente lento; .map roda em C sobre a Series inteira).
-    if "metadata" not in df.columns or "id" not in df.columns:
-        return json.dumps(
-            {
-                "status": "no_results",
-                "message": f"Coleção '{collection}' sem schema id/metadata",
-            }
-        )
-    ids = df["id"].astype(str)
-    meta = df["metadata"].map(_parse_metadata)
-
     if action == "list":
         items = [
             {
-                "id": doc_id,
-                "source": m.get("source") or m.get("url", ""),
-                "title": m.get("title", ""),
-                "origin": m.get("origin", ""),
-                "relevance_score": m.get("relevance_score"),
-                "indexed_at": m.get("indexed_at", ""),
+                "id": row.id,
+                "source": row.metadata.get("source") or row.metadata.get("url", ""),
+                "title": row.metadata.get("title", ""),
+                "origin": row.metadata.get("origin", ""),
+                "relevance_score": row.metadata.get("relevance_score"),
+                "indexed_at": row.metadata.get("indexed_at", ""),
             }
-            for doc_id, m in zip(ids, meta, strict=False)
+            for row in rows
         ]
         return json.dumps(
             {
@@ -785,7 +738,6 @@ async def manage_retriever(
         )
 
     # action == "delete" — 'source' já validado no início da função.
-    # Match por substring via máscara booleana vetorizada sobre o DataFrame.
     needle = (source or "").lower()
 
     def _meta_matches(m: dict[str, Any]) -> bool:
@@ -795,7 +747,7 @@ async def manage_retriever(
             or needle in str(m.get("title", "")).lower()
         )
 
-    matched = ids[meta.map(_meta_matches)].tolist()
+    matched = [row.id for row in rows if _meta_matches(row.metadata)]
     if not matched:
         return json.dumps(
             {
@@ -806,18 +758,16 @@ async def manage_retriever(
         )
 
     try:
-        # queue_ids são UUIDs — sem aspas/escape a tratar no predicado SQL.
-        id_list = ", ".join(f"'{i}'" for i in matched)
-        await table.delete(f"id IN ({id_list})")
+        deleted = await backend.delete(collection, matched)
         logger.info(
             "manage_retriever_delete",
-            extra={"collection": collection, "deleted": len(matched)},
+            extra={"collection": collection, "deleted": deleted},
         )
         return json.dumps(
             {
                 "status": "deleted",
                 "collection": collection,
-                "deleted": len(matched),
+                "deleted": deleted,
                 "ids": matched,
             }
         )

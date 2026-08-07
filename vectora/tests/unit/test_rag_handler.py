@@ -2,10 +2,55 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import Request
+
+from backend.storage.vectorstore.base import VectorRow
+
+
+@dataclass
+class _FakeVectorStoreBackend:
+    """Dublê de `VectorStoreBackend` — mesma interface que LanceDBBackend/
+    QdrantBackend implementam, sem tocar storage real. `rows_by_collection`
+    simula o que `list_rows()` devolveria por coleção; `broken` simula uma
+    coleção que levanta exceção ao ler (schema corrompido, timeout, etc)."""
+
+    rows_by_collection: dict[str, list[VectorRow]] = field(default_factory=dict)
+    broken: set[str] = field(default_factory=set)
+
+    async def list_collections(self) -> list[str]:
+        return list(self.rows_by_collection)
+
+    async def list_rows(self, collection: str) -> list[VectorRow]:
+        if collection in self.broken:
+            raise RuntimeError("tabela corrompida")
+        return self.rows_by_collection.get(collection, [])
+
+    async def count(self, collection: str) -> int | None:
+        if collection in self.broken:
+            return None
+        return len(self.rows_by_collection.get(collection, []))
+
+    async def purge(self, collection: str) -> None:
+        if collection not in self.rows_by_collection:
+            raise RuntimeError(f"coleção {collection!r} não encontrada")
+        del self.rows_by_collection[collection]
+
+    async def search(self, collection, query_vector, limit):  # pragma: no cover
+        raise NotImplementedError
+
+    async def upsert(self, collection, rows):  # pragma: no cover
+        raise NotImplementedError
+
+    async def delete(self, collection, ids):  # pragma: no cover
+        raise NotImplementedError
+
+
+def _row(doc_id: str, metadata: dict) -> VectorRow:
+    return VectorRow(id=doc_id, vector=[], text="", metadata=metadata)
 
 
 def _fake_request() -> Request:
@@ -60,86 +105,85 @@ class TestRagSettingsEndpoints:
 
 class TestRagCollections:
     @pytest.mark.asyncio
-    async def test_list_empty_when_lancedb_unavailable(self):
+    async def test_list_empty_when_backend_has_no_collections(self):
         from backend.api.handlers import rag as handler
 
-        with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=None)):
+        fake = _FakeVectorStoreBackend()
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=fake),
+        ):
             out = await handler.list_collections()
         assert out == {"collections": []}
 
     @pytest.mark.asyncio
-    async def test_delete_raises_503_when_unavailable(self):
+    async def test_delete_raises_404_when_collection_missing(self):
         from fastapi import HTTPException
 
         from backend.api.handlers import rag as handler
 
-        with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=None)):
+        fake = _FakeVectorStoreBackend()
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=fake),
+        ):
             with pytest.raises(HTTPException) as exc:
                 await handler.delete_collection("articles")
-        assert exc.value.status_code == 503
+        assert exc.value.status_code == 404
 
 
 class TestWorkspaceRagSummary:
     """GET /rag/workspace-summary — RAG é escopo de workspace, não de thread.
 
-    Devolve o que já está indexado NAQUELE workspace, direto do LanceDB,
-    contando linhas por coleção cujo metadata.workspace_id bate — independente
-    de thread ou de qualquer evento de streaming em andamento.
+    Devolve o que já está indexado NAQUELE workspace, contando documentos
+    por coleção cujo metadata.workspace_id bate — independente de thread ou
+    de qualquer evento de streaming em andamento.
     """
 
     @pytest.mark.asyncio
-    async def test_empty_when_lancedb_unavailable(self):
+    async def test_empty_when_no_collections(self):
         from backend.api.handlers import rag as handler
 
-        with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=None)):
+        fake = _FakeVectorStoreBackend()
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=fake),
+        ):
             out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
         assert out == {"collections": []}
 
     @pytest.mark.asyncio
     async def test_counts_only_rows_matching_workspace_id(self):
-        import pandas as pd
-
         from backend.api.handlers import rag as handler
 
-        df = pd.DataFrame(
-            {
-                "id": ["1", "2", "3"],
-                "metadata": [
-                    '{"workspace_id": "ws-1", "source": "a.md"}',
-                    '{"workspace_id": "ws-2", "source": "b.md"}',
-                    '{"workspace_id": "ws-1", "source": "c.md"}',
-                ],
+        fake = _FakeVectorStoreBackend(
+            rows_by_collection={
+                "articles": [
+                    _row("1", {"workspace_id": "ws-1", "source": "a.md"}),
+                    _row("2", {"workspace_id": "ws-2", "source": "b.md"}),
+                    _row("3", {"workspace_id": "ws-1", "source": "c.md"}),
+                ]
             }
         )
-        fake_table = AsyncMock()
-        fake_table.to_pandas = AsyncMock(return_value=df)
-        fake_db = AsyncMock()
-        fake_db.list_tables = AsyncMock(
-            return_value=type("T", (), {"tables": ["articles"]})()
-        )
-        fake_db.open_table = AsyncMock(return_value=fake_table)
-
-        with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=fake_db)):
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=fake),
+        ):
             out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
 
         assert out == {"collections": [{"name": "articles", "count": 2}]}
 
     @pytest.mark.asyncio
     async def test_omits_collections_with_zero_matches(self):
-        import pandas as pd
-
         from backend.api.handlers import rag as handler
 
-        df = pd.DataFrame({"id": ["1"], "metadata": ['{"workspace_id": "ws-other"}']})
-        fake_table = AsyncMock()
-        fake_table.to_pandas = AsyncMock(return_value=df)
-        fake_db = AsyncMock()
-        fake_db.list_tables = AsyncMock(
-            return_value=type("T", (), {"tables": ["web_cache"]})()
+        fake = _FakeVectorStoreBackend(
+            rows_by_collection={"web_cache": [_row("1", {"workspace_id": "ws-other"})]}
         )
-        fake_db.open_table = AsyncMock(return_value=fake_table)
-
-        with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=fake_db)):
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=fake),
+        ):
             out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
 
         assert out == {"collections": []}
@@ -147,26 +191,19 @@ class TestWorkspaceRagSummary:
     @pytest.mark.asyncio
     async def test_tolerates_one_broken_collection_and_still_reports_others(self):
         """Edge — uma coleção corrompida/sem schema não deve derrubar as demais."""
-        import pandas as pd
-
         from backend.api.handlers import rag as handler
 
-        good_df = pd.DataFrame({"id": ["1"], "metadata": ['{"workspace_id": "ws-1"}']})
-
-        async def _open_table(name: str):
-            if name == "broken":
-                raise RuntimeError("tabela corrompida")
-            table = AsyncMock()
-            table.to_pandas = AsyncMock(return_value=good_df)
-            return table
-
-        fake_db = AsyncMock()
-        fake_db.list_tables = AsyncMock(
-            return_value=type("T", (), {"tables": ["broken", "articles"]})()
+        fake = _FakeVectorStoreBackend(
+            rows_by_collection={
+                "broken": [],
+                "articles": [_row("1", {"workspace_id": "ws-1"})],
+            },
+            broken={"broken"},
         )
-        fake_db.open_table = _open_table
-
-        with patch.object(handler, "_connect_lancedb", AsyncMock(return_value=fake_db)):
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=fake),
+        ):
             out = await handler.get_workspace_rag_summary(_fake_request(), "ws-1")
 
         assert out == {"collections": [{"name": "articles", "count": 1}]}
@@ -243,10 +280,32 @@ class TestRagCollectionsRealLanceDB:
     validando o FORMATO do retorno (chaves/tipos), não conteúdo fixo.
 
     Mantém as classes TestRagCollections/TestWorkspaceRagSummary acima (que
-    mockam `_connect_lancedb`) — esta é a 2ª passada, sem mock nenhum de
-    storage, só a instância Cohere/embedding continua fora do escopo (RAG
+    mockam `get_vector_store_backend`) — esta é a 2ª passada, sem mock nenhum
+    de storage, só a instância Cohere/embedding continua fora do escopo (RAG
     handler nunca chama embedding pra listar/gerenciar coleções).
     """
+
+    @pytest.fixture(autouse=True)
+    def _reset_vector_store_singleton(self, monkeypatch):
+        """`get_vector_store_backend()` cacheia um singleton por processo —
+        sem resetar, o 2º teste desta classe reusaria o `LanceDBBackend` do
+        1º, apontando pro `tmp_path` errado.
+
+        Também força `storage_mode="lite"` explicitamente: a classe testa
+        LanceDB de propósito, mas `get_effective_storage_mode()` lê estado
+        global (`settings.storage_mode` + cache de licença) que outro teste
+        da suíte pode ter deixado em "complete" — sem isso, o teste vira
+        Qdrant por engano dependendo da ordem de execução (mesma lição de
+        hermeticidade: nunca depender de estado ambiente deixado por outro
+        teste)."""
+        from backend.storage import factory
+
+        monkeypatch.setattr(
+            "backend.services.license.get_effective_storage_mode", lambda: "lite"
+        )
+        factory._reset_singletons()
+        yield
+        factory._reset_singletons()
 
     @pytest.mark.asyncio
     async def test_list_collections_shape_with_real_table(self, tmp_path):

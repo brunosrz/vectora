@@ -11,88 +11,82 @@ import pytest
 class TestVectorSearch:
     @pytest.mark.asyncio
     async def test_vector_search_full_path_no_rerank(self):
-        """Covers lines 128-224: full vector_search with mocked LanceDB + Cohere."""
+        """vector_search com VectorStoreBackend mockado (LanceDB ou Qdrant,
+        indiferente pro tool — ele só fala com o Protocol) + Cohere embeddings."""
         from unittest.mock import AsyncMock, MagicMock, patch
 
-        # Mock a pandas-like DataFrame row
-        mock_row = MagicMock()
-        mock_row.get.side_effect = lambda k, d=None: {
-            "_distance": 0.1,
-            "text": "content",
-            "metadata": "{}",
-        }.get(k, d)
-        mock_row.__getitem__ = lambda self, k: {
-            "id": "1",
-            "_distance": 0.1,
-            "text": "content",
-            "metadata": "{}",
-        }[k]
+        from backend.storage.vectorstore.base import VectorHit
 
-        mock_df = MagicMock()
-        mock_df.iterrows.return_value = iter([(0, mock_row)])
-
-        mock_table = MagicMock()
-        mock_table.vector_search.return_value.limit.return_value.to_pandas = AsyncMock(
-            return_value=mock_df
+        mock_backend = AsyncMock()
+        mock_backend.search = AsyncMock(
+            return_value=[
+                VectorHit(
+                    id="1",
+                    score=0.1,
+                    content="content",
+                    metadata={},
+                    collection="articles",
+                )
+            ]
         )
-
-        mock_db = AsyncMock()
-        mock_db.open_table = AsyncMock(return_value=mock_table)
 
         mock_embeddings = MagicMock()
         mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
-
-        mock_lancedb = MagicMock()
-        mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
 
         from backend.tools.rag import vector_search
 
         with patch("backend.tools.rag.settings") as ms:
             ms.get_cohere_api_key.return_value = "test-key"
-            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
             ms.embedding_model = "embed-english-v3.0"
             ms.reranker_type = "none"
-            with patch("backend.tools.rag.lancedb", mock_lancedb):
-                with patch("backend.tools.rag.CohereEmbeddings", mock_embeddings):
-                    with patch("backend.tools.rag.SecretStr", lambda x: x):
-                        with patch("backend.tools.rag.CohereRerank", None):
-                            result = await vector_search.ainvoke(
-                                {
-                                    "query": "test query",
-                                    "collection": "articles",
-                                    "limit": 5,
-                                }
-                            )
+            with (
+                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
+                patch("backend.tools.rag.SecretStr", lambda x: x),
+                patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory.get_vector_store_backend",
+                    AsyncMock(return_value=mock_backend),
+                ),
+            ):
+                result = await vector_search.ainvoke(
+                    {
+                        "query": "test query",
+                        "collection": "articles",
+                        "limit": 5,
+                    }
+                )
         data = json.loads(result)
         assert "results" in data
         assert len(data["results"]) == 1
 
     @pytest.mark.asyncio
     async def test_vector_search_table_not_found(self):
-        """Covers the except-on-open_table path returning no_results."""
+        """Coleção ausente: backend.search() devolve [] (contrato do
+        Protocol), vector_search reporta no_results."""
         from unittest.mock import AsyncMock, MagicMock, patch
 
-        mock_db = AsyncMock()
-        mock_db.open_table = AsyncMock(side_effect=Exception("table not found"))
+        mock_backend = AsyncMock()
+        mock_backend.search = AsyncMock(return_value=[])
 
         mock_embeddings = MagicMock()
         mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2]
-
-        mock_lancedb = MagicMock()
-        mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
 
         from backend.tools.rag import vector_search
 
         with patch("backend.tools.rag.settings") as ms:
             ms.get_cohere_api_key.return_value = "test-key"
-            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
             ms.embedding_model = "embed-english-v3.0"
-            with patch("backend.tools.rag.lancedb", mock_lancedb):
-                with patch("backend.tools.rag.CohereEmbeddings", mock_embeddings):
-                    with patch("backend.tools.rag.SecretStr", lambda x: x):
-                        result = await vector_search.ainvoke(
-                            {"query": "test", "collection": "articles", "limit": 5}
-                        )
+            with (
+                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
+                patch("backend.tools.rag.SecretStr", lambda x: x),
+                patch(
+                    "backend.storage.factory.get_vector_store_backend",
+                    AsyncMock(return_value=mock_backend),
+                ),
+            ):
+                result = await vector_search.ainvoke(
+                    {"query": "test", "collection": "articles", "limit": 5}
+                )
         data = json.loads(result)
         assert data["status"] == "no_results"
 
@@ -128,36 +122,31 @@ class TestVectorSearchBucketFanout:
     workspace (backend/services/rag_buckets.py) — não a tabela `articles`
     inteira sempre."""
 
-    def _mock_lancedb(self, tables: dict[str, list[dict]]):
+    def _mock_backend(self, tables: dict[str, list[dict]]):
         """`tables` mapeia nome de coleção -> lista de linhas (dicts com
-        id/_distance/text/metadata) que essa tabela "contém"."""
+        id/_distance/text/metadata) que essa coleção "contém". Devolve um
+        `VectorStoreBackend` fake cujo `.search()` só sabe responder pelas
+        coleções presentes em `tables` — mesmo contrato que
+        LanceDBBackend/QdrantBackend implementam de verdade."""
+        from backend.storage.vectorstore.base import VectorHit
 
-        async def _open_table(name: str):
-            if name not in tables:
-                raise Exception(f"table {name} not found")
-            rows = tables[name]
-            mock_df = MagicMock()
+        async def _search(collection: str, query_vector, limit: int):
+            if collection not in tables:
+                return []
+            return [
+                VectorHit(
+                    id=str(row["id"]),
+                    score=float(row.get("_distance", 0.0)),
+                    content=row["text"],
+                    metadata=json.loads(row.get("metadata", "{}")),
+                    collection=collection,
+                )
+                for row in tables[collection]
+            ]
 
-            def _row(d):
-                r = MagicMock()
-                r.get.side_effect = lambda k, default=None: d.get(k, default)
-                r.__getitem__ = lambda self, k, d=d: d[k]
-                return r
-
-            mock_df.iterrows.return_value = iter(
-                [(i, _row(d)) for i, d in enumerate(rows)]
-            )
-            table = MagicMock()
-            table.vector_search.return_value.limit.return_value.to_pandas = AsyncMock(
-                return_value=mock_df
-            )
-            return table
-
-        mock_db = AsyncMock()
-        mock_db.open_table = AsyncMock(side_effect=_open_table)
-        mock_lancedb = MagicMock()
-        mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
-        return mock_lancedb
+        mock_backend = AsyncMock()
+        mock_backend.search = AsyncMock(side_effect=_search)
+        return mock_backend
 
     @pytest.mark.asyncio
     async def test_searches_only_active_buckets_of_workspace(self, tmp_path):
@@ -179,7 +168,7 @@ class TestVectorSearchBucketFanout:
                 {"id": "2", "_distance": 0.05, "text": "ts lib doc", "metadata": "{}"}
             ],
         }
-        mock_lancedb = self._mock_lancedb(tables)
+        mock_backend = self._mock_backend(tables)
         mock_embeddings = MagicMock()
         mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
 
@@ -188,13 +177,15 @@ class TestVectorSearchBucketFanout:
             patch("backend.workspace.runtime_settings.runtime_settings", rs),
         ):
             ms.get_cohere_api_key.return_value = "test-key"
-            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
             ms.embedding_model = "embed-english-v3.0"
             with (
-                patch("backend.tools.rag.lancedb", mock_lancedb),
                 patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
                 patch("backend.tools.rag.SecretStr", lambda x: x),
                 patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory.get_vector_store_backend",
+                    AsyncMock(return_value=mock_backend),
+                ),
             ):
                 result = await vector_search.ainvoke(
                     {"query": "test", "limit": 5},
@@ -218,7 +209,7 @@ class TestVectorSearchBucketFanout:
                 {"id": "1", "_distance": 0.1, "text": "dado legado", "metadata": "{}"}
             ]
         }
-        mock_lancedb = self._mock_lancedb(tables)
+        mock_backend = self._mock_backend(tables)
         mock_embeddings = MagicMock()
         mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
 
@@ -227,13 +218,15 @@ class TestVectorSearchBucketFanout:
             patch("backend.workspace.runtime_settings.runtime_settings", rs),
         ):
             ms.get_cohere_api_key.return_value = "test-key"
-            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
             ms.embedding_model = "embed-english-v3.0"
             with (
-                patch("backend.tools.rag.lancedb", mock_lancedb),
                 patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
                 patch("backend.tools.rag.SecretStr", lambda x: x),
                 patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory.get_vector_store_backend",
+                    AsyncMock(return_value=mock_backend),
+                ),
             ):
                 result = await vector_search.ainvoke(
                     {"query": "test", "limit": 5},
@@ -262,7 +255,7 @@ class TestVectorSearchBucketFanout:
                 {"id": "2", "_distance": 0.1, "text": "manual doc", "metadata": "{}"}
             ],
         }
-        mock_lancedb = self._mock_lancedb(tables)
+        mock_backend = self._mock_backend(tables)
         mock_embeddings = MagicMock()
         mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
 
@@ -271,13 +264,15 @@ class TestVectorSearchBucketFanout:
             patch("backend.workspace.runtime_settings.runtime_settings", rs),
         ):
             ms.get_cohere_api_key.return_value = "test-key"
-            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
             ms.embedding_model = "embed-english-v3.0"
             with (
-                patch("backend.tools.rag.lancedb", mock_lancedb),
                 patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
                 patch("backend.tools.rag.SecretStr", lambda x: x),
                 patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory.get_vector_store_backend",
+                    AsyncMock(return_value=mock_backend),
+                ),
             ):
                 result = await vector_search.ainvoke(
                     {
@@ -636,25 +631,28 @@ class TestManageRetriever:
     async def test_purge_drops_table(self):
         from backend.tools.rag import manage_retriever
 
-        mock_db = MagicMock()
-        mock_db.drop_table = AsyncMock()
-        with patch("backend.tools.rag.lancedb") as mock_lancedb:
-            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+        mock_backend = AsyncMock()
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=mock_backend),
+        ):
             result = await manage_retriever.ainvoke(
                 {"action": "purge", "collection": "web_cache"}
             )
         data = json.loads(result)
         assert data["status"] == "purged"
-        mock_db.drop_table.assert_awaited_once_with("web_cache")
+        mock_backend.purge.assert_awaited_once_with("web_cache")
 
     @pytest.mark.asyncio
     async def test_list_missing_collection(self):
         from backend.tools.rag import manage_retriever
 
-        mock_db = MagicMock()
-        mock_db.open_table = AsyncMock(side_effect=Exception("table not found"))
-        with patch("backend.tools.rag.lancedb") as mock_lancedb:
-            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+        mock_backend = AsyncMock()
+        mock_backend.list_rows = AsyncMock(return_value=[])
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=mock_backend),
+        ):
             result = await manage_retriever.ainvoke(
                 {"action": "list", "collection": "ghost"}
             )
@@ -662,40 +660,43 @@ class TestManageRetriever:
         assert data["status"] == "no_results"
 
     @staticmethod
-    def _mock_db_with_df(df) -> tuple[MagicMock, MagicMock]:
-        """Monta um mock LanceDB cujo open_table().to_pandas() devolve `df`."""
-        mock_table = MagicMock()
-        mock_table.to_pandas = AsyncMock(return_value=df)
-        mock_table.delete = AsyncMock()
-        mock_db = MagicMock()
-        mock_db.open_table = AsyncMock(return_value=mock_table)
-        return mock_db, mock_table
+    def _mock_backend_with_rows(rows_meta: list[dict]) -> AsyncMock:
+        """Monta um `VectorStoreBackend` fake cujo `list_rows()` devolve
+        `VectorRow`s com os metadados dados (ids sintéticos a1, b2, c3...)."""
+        from backend.storage.vectorstore.base import VectorRow
+
+        ids = [f"{chr(97 + i)}{i + 1}" for i in range(len(rows_meta))]
+        rows = [
+            VectorRow(id=doc_id, vector=[], text="", metadata=meta)
+            for doc_id, meta in zip(ids, rows_meta, strict=True)
+        ]
+        mock_backend = AsyncMock()
+        mock_backend.list_rows = AsyncMock(return_value=rows)
+        mock_backend.delete = AsyncMock(
+            side_effect=lambda _collection, matched_ids: len(matched_ids)
+        )
+        return mock_backend
 
     @pytest.mark.asyncio
     async def test_list_returns_documents_via_pandas(self):
-        """Parseia o DataFrame (metadata JSON) sem iterrows."""
-        import pandas as pd
-
+        """Erro/borda coberto no mesmo teste: metadata sem 'source' cai no
+        fallback vazio em vez de KeyError."""
         from backend.tools.rag import manage_retriever
 
-        df = pd.DataFrame(
-            {
-                "id": ["a1", "b2"],
-                "metadata": [
-                    json.dumps(
-                        {
-                            "source": "https://github.com/brunosrz/AbilitySystem",
-                            "title": "Ability System",
-                            "origin": "web_search",
-                        }
-                    ),
-                    json.dumps({"source": "docs/manual.md", "title": "Manual"}),
-                ],
-            }
+        mock_backend = self._mock_backend_with_rows(
+            [
+                {
+                    "source": "https://github.com/brunosrz/AbilitySystem",
+                    "title": "Ability System",
+                    "origin": "web_search",
+                },
+                {"source": "docs/manual.md", "title": "Manual"},
+            ]
         )
-        mock_db, _ = self._mock_db_with_df(df)
-        with patch("backend.tools.rag.lancedb") as mock_lancedb:
-            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=mock_backend),
+        ):
             result = await manage_retriever.ainvoke(
                 {"action": "list", "collection": "web_cache"}
             )
@@ -709,24 +710,20 @@ class TestManageRetriever:
 
     @pytest.mark.asyncio
     async def test_delete_matches_by_source_via_pandas(self):
-        """Delete usa máscara booleana vetorizada sobre o DataFrame."""
-        import pandas as pd
-
+        """Delete filtra por substring case-insensitive no source/url/title."""
         from backend.tools.rag import manage_retriever
 
-        df = pd.DataFrame(
-            {
-                "id": ["a1", "b2", "c3"],
-                "metadata": [
-                    json.dumps({"source": "godot-gameplay-systems/foo"}),
-                    json.dumps({"source": "github.com/brunosrz/AbilitySystem"}),
-                    json.dumps({"title": "godot-gameplay-systems wiki"}),
-                ],
-            }
+        mock_backend = self._mock_backend_with_rows(
+            [
+                {"source": "godot-gameplay-systems/foo"},
+                {"source": "github.com/brunosrz/AbilitySystem"},
+                {"title": "godot-gameplay-systems wiki"},
+            ]
         )
-        mock_db, mock_table = self._mock_db_with_df(df)
-        with patch("backend.tools.rag.lancedb") as mock_lancedb:
-            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=mock_backend),
+        ):
             result = await manage_retriever.ainvoke(
                 {
                     "action": "delete",
@@ -738,24 +735,18 @@ class TestManageRetriever:
         assert data["status"] == "deleted"
         assert data["deleted"] == 2
         assert set(data["ids"]) == {"a1", "c3"}
-        mock_table.delete.assert_awaited_once()
+        mock_backend.delete.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_delete_no_match_via_pandas(self):
-        """Delete sem match retorna no_match, sem chamar table.delete."""
-        import pandas as pd
-
+        """Delete sem match retorna no_match, sem chamar backend.delete."""
         from backend.tools.rag import manage_retriever
 
-        df = pd.DataFrame(
-            {
-                "id": ["a1"],
-                "metadata": [json.dumps({"source": "docs/manual.md"})],
-            }
-        )
-        mock_db, mock_table = self._mock_db_with_df(df)
-        with patch("backend.tools.rag.lancedb") as mock_lancedb:
-            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+        mock_backend = self._mock_backend_with_rows([{"source": "docs/manual.md"}])
+        with patch(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=mock_backend),
+        ):
             result = await manage_retriever.ainvoke(
                 {
                     "action": "delete",
@@ -765,7 +756,7 @@ class TestManageRetriever:
             )
         data = json.loads(result)
         assert data["status"] == "no_match"
-        mock_table.delete.assert_not_awaited()
+        mock_backend.delete.assert_not_awaited()
 
 
 # ---------------------------------------------------------------------------

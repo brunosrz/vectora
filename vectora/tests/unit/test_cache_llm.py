@@ -79,25 +79,18 @@ def test_redis_sem_modulos_cai_para_inmemory(monkeypatch: pytest.MonkeyPatch) ->
 def test_semantic_sem_embeddings_cai_para_exato(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from backend.llm.native_redis_cache import NativeRedisCache
+
     monkeypatch.setattr(settings, "cache_semantic", True)
     monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
-    # Sem embeddings Cohere → deve usar RedisCache exato (não RedisSemanticCache).
+    # Sem embeddings Cohere → deve usar NativeRedisCache exato (não semântico).
     from backend.storage import factory
 
     monkeypatch.setattr(factory, "_build_lc_embeddings", lambda: None)
 
-    captured: dict = {}
-
-    class _FakeRedisCache:
-        def __init__(self, redis_url: str, ttl=None):
-            captured["redis_url"] = redis_url
-
-    import langchain_redis
-
-    monkeypatch.setattr(langchain_redis, "RedisCache", _FakeRedisCache)
     out = cache_llm._build_redis_cache("redis://localhost:6379/0")
-    assert isinstance(out, _FakeRedisCache)
-    assert captured["redis_url"] == "redis://localhost:6379/0"
+    assert isinstance(out, NativeRedisCache)
+    assert out._redis_url == "redis://localhost:6379/0"
 
 
 # ---------------------------------------------------------------------------

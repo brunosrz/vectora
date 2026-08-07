@@ -15,18 +15,7 @@ import logging
 import time
 import traceback
 from datetime import datetime
-from pathlib import Path
 from typing import Any
-
-try:
-    import lancedb
-except ImportError:
-    lancedb = None  # type: ignore
-
-try:
-    import pyarrow as pa
-except ImportError:
-    pa = None  # type: ignore
 
 try:
     from langchain_cohere import CohereEmbeddings
@@ -182,9 +171,11 @@ class BackgroundEmbeddingWorker:
         self.running = False
         self.task: asyncio.Task[None] | None = None
         self.semaphore = asyncio.Semaphore(MAX_PARALLEL)
-        # Semaphore(1) para proteger escritas em LanceDB contra race conditions
+        # Semaphore(1) para serializar escritas no vector store — o backend
         # LanceDB não suporta múltiplas escritas simultâneas no mesmo diretório
-        self.lancedb_semaphore = asyncio.Semaphore(1)
+        # (Qdrant suportaria concorrência real, mas mantemos serializado pra
+        # não duplicar lógica de exclusão mútua por backend).
+        self._write_semaphore = asyncio.Semaphore(1)
         # Contadores em memória para o painel /rag.
         # Não acumulam indefinidamente: resetados a cada startup do worker.
         self.processed_count: int = 0
@@ -426,7 +417,7 @@ class BackgroundEmbeddingWorker:
                     embedding_vector = await self._generate_embedding(str(record.text))
 
                     # Escrever em LanceDB (idempotente via queue_id)
-                    await self._write_to_lancedb(record, embedding_vector)
+                    await self._write_to_vector_store(record, embedding_vector)
 
                     # Marcar como success
                     await queue.mark_success(queue_id)
@@ -596,64 +587,50 @@ class BackgroundEmbeddingWorker:
         vectors = await asyncio.to_thread(embeddings_model.embed_documents, [text])
         return vectors[0]
 
-    async def _write_to_lancedb(
+    async def _write_to_vector_store(
         self, record: EmbeddingQueueRecord, vector: list[float]
     ) -> None:
-        """Escreve documento em LanceDB (idempotente via queue_id).
+        """Escreve documento no vector store nativo — LanceDB (lite) ou
+        Qdrant (complete), conforme `storage_mode` — idempotente via
+        `queue_id` como id do ponto/linha.
 
         Args:
             record: Registro com metadata
             vector: Embedding vector
-
-        Raises:
-            ImportError: Se lancedb não estiver instalado
         """
-        if lancedb is None:
-            msg = "lancedb não está instalado"
-            raise ImportError(msg)
+        import json as _json
 
-        if self.config.lancedb_dir is None:
-            msg = "lancedb_dir not configured"
-            raise RuntimeError(msg)
-        db = await lancedb.connect_async(str(Path(self.config.lancedb_dir)))
+        from backend.storage.factory import (
+            _check_embedding_dimension,
+            get_vector_store_backend,
+        )
+        from backend.storage.vectorstore.base import VectorRow
 
-        # Schema para documento
-        schema = pa.schema(
-            [
-                pa.field("id", pa.string()),
-                pa.field("vector", pa.list_(pa.float32(), len(vector))),
-                pa.field("text", pa.string()),
-                pa.field("metadata", pa.string()),
-            ]
+        # Guard de dimensão: troca de embedding_provider sem reindex quebraria
+        # similarity search silenciosamente (vetores de dimensões diferentes
+        # na mesma coleção) — levanta antes de escrever, não depois.
+        await _check_embedding_dimension(
+            str(record.collection), len(vector), provider="cohere"
         )
 
-        doc = {
-            "id": record.queue_id,  # Chave primária = queue_id
-            "vector": vector,
-            "text": record.text,
-            "metadata": record.doc_metadata or "{}",
-        }
+        meta = _json.loads(str(record.doc_metadata or "{}"))
+        row = VectorRow(
+            id=str(record.queue_id),
+            vector=vector,
+            text=str(record.text),
+            metadata=meta if isinstance(meta, dict) else {},
+        )
 
-        # Abrir-ou-criar + add sob o mesmo semaphore(1): com várias tasks
-        # processando o mesmo collection, dois open_table podiam falhar juntos
-        # e ambos chamar create_table → "Table already exists". Serializar aqui
-        # elimina a corrida; se mesmo assim o create colidir, reabre.
-        async with self.lancedb_semaphore:
-            try:
-                table = await db.open_table(str(record.collection))
-            except Exception:
-                try:
-                    table = await db.create_table(str(record.collection), schema=schema)
-                    logger.info(
-                        "lancedb_table_created",
-                        extra={"collection": record.collection},
-                    )
-                except Exception:
-                    table = await db.open_table(str(record.collection))
-            await table.add([doc])
+        backend = await get_vector_store_backend()
+        # Serializa escritas na mesma coleção: LanceDBBackend faz
+        # open-or-create sob a mesma corrida que existia aqui antes — várias
+        # tasks processando o mesmo collection podiam colidir em
+        # "Table already exists" sem essa exclusão mútua.
+        async with self._write_semaphore:
+            await backend.upsert(str(record.collection), [row])
 
         logger.debug(
-            "lancedb_document_written",
+            "vector_store_document_written",
             extra={
                 "queue_id": record.queue_id,
                 "collection": record.collection,
@@ -661,16 +638,10 @@ class BackgroundEmbeddingWorker:
         )
 
         # B4: rastreia workspace_id dos docs indexados para o curator
-        try:
-            import json as _json
-
-            meta = _json.loads(str(record.doc_metadata or "{}"))
-            wid = meta.get("workspace_id")
-            if wid:
-                self._indexed_workspaces.add(wid)
-            self._last_indexed_at = time.monotonic()
-        except Exception:
-            pass
+        wid = meta.get("workspace_id") if isinstance(meta, dict) else None
+        if wid:
+            self._indexed_workspaces.add(wid)
+        self._last_indexed_at = time.monotonic()
 
     async def _maybe_run_curator(self) -> None:
         """Dispara o curator para workspaces com docs recém-indexados (B4).

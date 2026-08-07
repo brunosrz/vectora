@@ -1,7 +1,7 @@
 """Guard de dimensão de embedding (backend/storage/factory.py).
 
 Contrato:
-- Primeira checagem pra uma coleção: persiste a dimensão do embedding atual,
+- Primeira checagem pra uma coleção: persiste a dimensão passada,
   não levanta erro.
 - Checagem seguinte com a MESMA dimensão: não levanta erro.
 - Checagem seguinte com dimensão DIFERENTE: EmbeddingDimensionMismatchError,
@@ -11,20 +11,8 @@ Contrato:
 from __future__ import annotations
 
 import pytest
-from langchain_core.embeddings import Embeddings
 
 from backend.storage import factory
-
-
-class _FakeEmb(Embeddings):
-    def __init__(self, dim: int) -> None:
-        self._dim = dim
-
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return [[0.0] * self._dim for _ in texts]
-
-    def embed_query(self, text: str) -> list[float]:
-        return [0.0] * self._dim
 
 
 async def _cleanup(collection: str) -> None:
@@ -41,7 +29,9 @@ class TestCheckEmbeddingDimension:
         collection = "test-dim-guard-first-time"
         await _cleanup(collection)
         try:
-            await factory._check_embedding_dimension(collection, _FakeEmb(dim=1024))
+            await factory._check_embedding_dimension(
+                collection, 1024, provider="cohere"
+            )
         finally:
             await _cleanup(collection)
 
@@ -49,8 +39,8 @@ class TestCheckEmbeddingDimension:
         collection = "test-dim-guard-same"
         await _cleanup(collection)
         try:
-            await factory._check_embedding_dimension(collection, _FakeEmb(dim=768))
-            await factory._check_embedding_dimension(collection, _FakeEmb(dim=768))
+            await factory._check_embedding_dimension(collection, 768, provider="cohere")
+            await factory._check_embedding_dimension(collection, 768, provider="cohere")
         finally:
             await _cleanup(collection)
 
@@ -58,9 +48,13 @@ class TestCheckEmbeddingDimension:
         collection = "test-dim-guard-mismatch"
         await _cleanup(collection)
         try:
-            await factory._check_embedding_dimension(collection, _FakeEmb(dim=1024))
+            await factory._check_embedding_dimension(
+                collection, 1024, provider="cohere"
+            )
             with pytest.raises(factory.EmbeddingDimensionMismatchError) as exc_info:
-                await factory._check_embedding_dimension(collection, _FakeEmb(dim=768))
+                await factory._check_embedding_dimension(
+                    collection, 768, provider="cohere"
+                )
             msg = str(exc_info.value)
             assert "1024" in msg
             assert "768" in msg
@@ -74,9 +68,13 @@ class TestCheckEmbeddingDimension:
         await _cleanup(collection_a)
         await _cleanup(collection_b)
         try:
-            await factory._check_embedding_dimension(collection_a, _FakeEmb(dim=1024))
+            await factory._check_embedding_dimension(
+                collection_a, 1024, provider="cohere"
+            )
             # Coleção diferente, dimensão diferente — não deve ver o registro de A.
-            await factory._check_embedding_dimension(collection_b, _FakeEmb(dim=768))
+            await factory._check_embedding_dimension(
+                collection_b, 768, provider="cohere"
+            )
         finally:
             await _cleanup(collection_a)
             await _cleanup(collection_b)

@@ -11,6 +11,8 @@ from backend.embedding.background import (
     get_worker_pause_state,
 )
 from backend.embedding.queue import EmbeddingQueueRecord
+from backend.storage import factory as _storage_factory
+from backend.storage.factory import EmbeddingDimensionMismatchError
 
 
 @pytest.fixture(autouse=True)
@@ -161,3 +163,102 @@ async def test_get_queue_uses_effective_storage_mode_not_raw_config(
 
     assert sqlite_queue_called is True
     assert postgres_queue_called is False
+
+
+class _FakeVectorStoreBackend:
+    """Backend nativo mínimo — só registra as chamadas de upsert."""
+
+    def __init__(self) -> None:
+        self.upserted: list[tuple[str, list]] = []
+
+    async def upsert(self, collection: str, rows: list) -> None:
+        self.upserted.append((collection, rows))
+
+
+async def _cleanup_dim_meta(collection: str) -> None:
+    db = await _storage_factory._embedding_meta_db()
+    await _storage_factory._ensure_embedding_meta_table(db)
+    await db.execute(
+        "DELETE FROM embedding_index_meta WHERE collection = ?", (collection,)
+    )
+    await db.commit()
+
+
+class TestWriteToVectorStore:
+    """`_write_to_vector_store` escreve no backend nativo com guard de
+    dimensão prévio — a checagem que antes só rodava dentro do wrapper
+    LangChain (`get_langchain_vector_store`, removido) precisa continuar
+    protegendo o caminho de escrita real (nativo)."""
+
+    @pytest.mark.asyncio
+    async def test_write_upserts_after_dimension_check_passes(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        collection = "test-write-vs-happy"
+        await _cleanup_dim_meta(collection)
+        try:
+            fake_backend = _FakeVectorStoreBackend()
+            monkeypatch.setattr(
+                _storage_factory,
+                "get_vector_store_backend",
+                lambda: _fake_get(fake_backend),
+            )
+
+            worker = BackgroundEmbeddingWorker()
+            record = EmbeddingQueueRecord(
+                queue_id="q1",
+                text="conteúdo",
+                collection=collection,
+                doc_metadata='{"workspace_id": "w1"}',
+                attempt_count=0,
+            )
+
+            await worker._write_to_vector_store(record, [0.1, 0.2, 0.3])
+
+            assert len(fake_backend.upserted) == 1
+            written_collection, rows = fake_backend.upserted[0]
+            assert written_collection == collection
+            assert rows[0].id == "q1"
+            assert rows[0].vector == [0.1, 0.2, 0.3]
+        finally:
+            await _cleanup_dim_meta(collection)
+
+    @pytest.mark.asyncio
+    async def test_write_raises_on_dimension_mismatch_without_upserting(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Coleção já indexada com 1024 dims — vetor novo de 3 dims deve
+        levantar antes de qualquer escrita (nunca corromper a coleção)."""
+        collection = "test-write-vs-mismatch"
+        await _cleanup_dim_meta(collection)
+        try:
+            await _storage_factory._check_embedding_dimension(
+                collection, 1024, provider="cohere"
+            )
+
+            fake_backend = _FakeVectorStoreBackend()
+            monkeypatch.setattr(
+                _storage_factory,
+                "get_vector_store_backend",
+                lambda: _fake_get(fake_backend),
+            )
+
+            worker = BackgroundEmbeddingWorker()
+            record = EmbeddingQueueRecord(
+                queue_id="q2",
+                text="conteúdo",
+                collection=collection,
+                doc_metadata="{}",
+                attempt_count=0,
+            )
+
+            with pytest.raises(EmbeddingDimensionMismatchError):
+                await worker._write_to_vector_store(record, [0.1, 0.2, 0.3])
+
+            assert fake_backend.upserted == []
+        finally:
+            await _cleanup_dim_meta(collection)
+
+
+async def _fake_get(backend: _FakeVectorStoreBackend) -> _FakeVectorStoreBackend:
+    return backend

@@ -1,4 +1,4 @@
-"""Tests — storage/sqlite/pool.py (F1) e get_checkpointer / get_store (F3/F4/F5).
+"""Tests — storage/sqlite/pool.py (F1) e get_store (F3/F5).
 
 Modo "lite" usa SQLite em memória; modo "complete" é skippado se postgres_dsn não
 configurado, garantindo que CI verde sem infra externa.
@@ -71,52 +71,6 @@ class TestStoragePool:
                     assert row is not None
         finally:
             await pool.close()
-
-
-class TestGetCheckpointer:
-    """get_checkpointer retorna context manager de AsyncSqliteSaver no modo lite (F4)."""
-
-    @pytest.mark.asyncio
-    async def test_lite_returns_context_manager(self, tmp_path, monkeypatch):
-        import backend.settings as _settings_mod
-        from backend.storage.factory import get_checkpointer
-
-        monkeypatch.setattr(_settings_mod.settings, "storage_mode", "lite")
-        monkeypatch.setattr(_settings_mod.settings, "db_dsn", str(tmp_path / "cp.db"))
-
-        cp_ctx = get_checkpointer()
-        assert cp_ctx is not None  # context manager
-
-    @pytest.mark.asyncio
-    async def test_lite_context_manager_usable(self, tmp_path, monkeypatch):
-        """Context manager pode ser usado com async with."""
-        import backend.settings as _settings_mod
-        from backend.storage.factory import get_checkpointer
-
-        monkeypatch.setattr(_settings_mod.settings, "storage_mode", "lite")
-        monkeypatch.setattr(_settings_mod.settings, "db_dsn", str(tmp_path / "cp.db"))
-
-        try:
-            async with get_checkpointer() as cp:
-                assert cp is not None
-        except (RuntimeError, Exception):
-            pass  # aceitável se deps não instaladas
-
-    @pytest.mark.asyncio
-    async def test_complete_skips_without_dsn(self, monkeypatch):
-        """Modo complete sem postgres_dsn retorna context manager ou levanta erro."""
-        import backend.settings as _settings_mod
-        from backend.storage.factory import get_checkpointer
-
-        monkeypatch.setattr(_settings_mod.settings, "storage_mode", "complete")
-        monkeypatch.setattr(_settings_mod.settings, "postgres_dsn", None)
-
-        # Deve retornar algo (lite fallback) ou levantar RuntimeError — ambos aceitáveis
-        try:
-            cp_ctx = get_checkpointer()
-            assert cp_ctx is not None
-        except (RuntimeError, Exception):
-            pass  # comportamento aceitável sem DSN
 
 
 class TestGetStore:

@@ -48,44 +48,13 @@ async def patch_rag_settings(body: RagSettingsBody) -> dict[str, Any]:
     return runtime_settings.set_rag_settings(**body.model_dump())
 
 
-async def _connect_lancedb() -> Any:
-    """Conexão LanceDB async, ou None se indisponível/desconfigurado."""
-    try:
-        import lancedb
-
-        from backend.settings import settings
-
-        if settings.lancedb_dir is None:
-            return None
-        return await lancedb.connect_async(str(settings.lancedb_dir))
-    except Exception:
-        logger.warning("rag: falha ao conectar LanceDB", exc_info=True)
-        return None
-
-
 @router.get("/collections")
 async def list_collections() -> dict[str, Any]:
-    db = await _connect_lancedb()
-    if db is None:
-        return {"collections": []}
-    try:
-        names = (await db.list_tables()).tables
-    except Exception:
-        try:
-            names = await db.table_names()
-        except Exception:
-            logger.warning("rag: falha ao listar coleções", exc_info=True)
-            return {"collections": []}
+    from backend.storage.factory import get_vector_store_backend
 
-    collections: list[dict[str, Any]] = []
-    for name in names:
-        count: int | None = None
-        try:
-            table = await db.open_table(name)
-            count = await table.count_rows()
-        except Exception:
-            count = None
-        collections.append({"name": str(name), "count": count})
+    backend = await get_vector_store_backend()
+    names = await backend.list_collections()
+    collections = [{"name": name, "count": await backend.count(name)} for name in names]
     return {"collections": collections}
 
 
@@ -104,27 +73,17 @@ async def get_workspace_rag_summary(
     custo já pago por `manage_retriever(action="list")` em `tools/rag.py`.
     """
     from backend.api.handlers.workspaces import require_workspace_access
-    from backend.tools.rag import _parse_metadata
+    from backend.storage.factory import get_vector_store_backend
 
     require_workspace_access(workspace_id, request)
 
-    db = await _connect_lancedb()
-    if db is None:
-        return {"collections": []}
-    try:
-        names = (await db.list_tables()).tables
-    except Exception:
-        try:
-            names = await db.table_names()
-        except Exception:
-            logger.warning("rag: falha ao listar coleções", exc_info=True)
-            return {"collections": []}
+    backend = await get_vector_store_backend()
+    names = await backend.list_collections()
 
     summary: list[dict[str, Any]] = []
     for name in names:
         try:
-            table = await db.open_table(str(name))
-            df = await table.to_pandas()
+            rows = await backend.list_rows(name)
         except Exception:
             # Coleção corrompida/sem tabela não deve derrubar as demais.
             logger.warning(
@@ -133,12 +92,11 @@ async def get_workspace_rag_summary(
                 exc_info=True,
             )
             continue
-        if "metadata" not in df.columns:
-            continue
-        meta = df["metadata"].map(_parse_metadata)
-        count = sum(1 for m in meta if m.get("workspace_id") == workspace_id)
+        count = sum(
+            1 for row in rows if row.metadata.get("workspace_id") == workspace_id
+        )
         if count > 0:
-            summary.append({"name": str(name), "count": count})
+            summary.append({"name": name, "count": count})
     return {"collections": summary}
 
 
@@ -194,11 +152,11 @@ async def search_rag(request: Request, body: RagSearchBody) -> dict[str, Any]:
 
 @router.delete("/collections/{name}")
 async def delete_collection(name: str) -> dict[str, Any]:
-    db = await _connect_lancedb()
-    if db is None:
-        raise HTTPException(status_code=503, detail="LanceDB indisponível")
+    from backend.storage.factory import get_vector_store_backend
+
+    backend = await get_vector_store_backend()
     try:
-        await db.drop_table(name)
+        await backend.purge(name)
     except Exception as exc:
         logger.warning("rag: falha ao apagar coleção %r", name, exc_info=True)
         raise HTTPException(

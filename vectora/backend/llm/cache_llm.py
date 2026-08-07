@@ -105,9 +105,9 @@ def _build_redis_cache(url: str) -> Any:
 
         embeddings = _build_lc_embeddings()
         if embeddings is not None:
-            from langchain_redis import RedisSemanticCache
+            from backend.llm.native_redis_cache import NativeRedisSemanticCache
 
-            return RedisSemanticCache(
+            return NativeRedisSemanticCache(
                 embeddings=embeddings,
                 redis_url=url,
                 distance_threshold=settings.cache_distance_threshold,
@@ -115,12 +115,12 @@ def _build_redis_cache(url: str) -> Any:
             )
         logger.warning(
             "cache_llm: cache_semantic=True mas sem embeddings Cohere — "
-            "caindo para RedisCache exato"
+            "caindo para NativeRedisCache exato"
         )
 
-    from langchain_redis import RedisCache
+    from backend.llm.native_redis_cache import NativeRedisCache
 
-    return RedisCache(redis_url=url, ttl=ttl)
+    return NativeRedisCache(redis_url=url, ttl=ttl)
 
 
 def reset_llm_cache() -> None:
