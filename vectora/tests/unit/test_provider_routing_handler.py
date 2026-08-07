@@ -40,6 +40,8 @@ def app(tmp_path_factory):
 
     tmp = tmp_path_factory.mktemp("provider_routing")
     db_file = str(tmp / "test_provider_routing.db")
+    original_get_db = threads_mod._get_db
+    original_db_conn = threads_mod._db_conn
     threads_mod._db_conn = None
 
     async def _patched_get_db():
@@ -65,9 +67,13 @@ def app(tmp_path_factory):
     async def _close():
         if threads_mod._db_conn is not None:
             await threads_mod._db_conn.close()
-            threads_mod._db_conn = None
 
     asyncio.run(_close())
+    # Restaura _get_db original — sem isso, o fake acima (que nunca cria o
+    # schema `vectora_sessions`) fica ativo pro resto do processo de teste,
+    # quebrando qualquer teste posterior que dependa do `_get_db()` real.
+    threads_mod._get_db = original_get_db
+    threads_mod._db_conn = original_db_conn
 
 
 @pytest.fixture(scope="module")
