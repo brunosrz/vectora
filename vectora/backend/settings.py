@@ -438,12 +438,9 @@ class Settings(BaseSettings):
     reranker_type: Literal["cohere", "voyage", "openrouter", "none"] = "cohere"
     """Provider de rerank primário; o outro vira secundário no fallback.
 
-    Ollama e OpenRouter **não** entram: nenhum dos dois expõe API de rerank
-    (o Ollama não tem esse endpoint e o OpenRouter é proxy de chat), então
-    listá-los aqui declararia um suporte que não existe e a escolha falharia
-    só na hora de recuperar contexto. `Literal` em vez de `str` para que um
-    valor fora da lista seja rejeitado na validação, não silenciosamente
-    ignorado em `_build_reranker`.
+    Ollama **não** entra: não expõe endpoint de rerank algum. `Literal` em
+    vez de `str` para que um valor fora da lista seja rejeitado na
+    validação, não silenciosamente ignorado em `_build_reranker`.
     """
 
     reranker_model: str = "rerank-multilingual-v3.0"

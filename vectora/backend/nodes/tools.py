@@ -1,18 +1,16 @@
-"""ToolNodes especializados por categoria de ferramenta.
+"""Catálogo de tools do agente, agrupadas por categoria.
 
 Todos os agentes recebem ALL_TOOLS — a diferença entre eles é o treinamento
 (system prompt) e o contexto, não as ferramentas disponíveis.
 
 As listas parciais (SEARCH_TOOLS, FS_TOOLS, etc.) são mantidas como referência
-semântica mas ALL_TOOLS é a lista canônica usada pelos agentes e ToolNodes.
+semântica pra montar `SOUL_CATALOG` (backend/agents/souls.py) mas ALL_TOOLS é
+a lista canônica consumida pelo agente principal.
 """
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
-
-from langgraph.prebuilt import ToolNode
 
 from backend.tools.background import (
     approve_task_action,
@@ -190,8 +188,6 @@ from backend.tools.workspace import (
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
-
-logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)
@@ -599,25 +595,6 @@ CHAT_TOOLS: list[BaseTool] = [
     http_request,
 ]
 
-# ---------------------------------------------------------------------------
-# ToolNodes — todos usam ALL_TOOLS
-# ---------------------------------------------------------------------------
-
-search_tool_node = ToolNode(tools=ALL_TOOLS)
-coder_tool_node = ToolNode(tools=ALL_TOOLS)
-memory_tool_node = ToolNode(tools=MEMORY_TOOLS)
-all_tool_node = ToolNode(tools=ALL_TOOLS)
-
-logger.debug(
-    "ToolNodes inicializados (ALL_TOOLS para todos os agentes)",
-    extra={
-        "total": len(ALL_TOOLS),
-        "search_group": len(SEARCH_TOOLS),
-        "fs_group": len(FS_TOOLS),
-        "memory_group": len(MEMORY_TOOLS),
-    },
-)
-
 __all__ = [
     "ALL_TOOLS",
     "BROWSER_TOOLS",
@@ -629,8 +606,4 @@ __all__ = [
     "RAG_TOOLS",
     "SEARCH_TOOLS",
     "WORKSPACE_TOOLS",
-    "all_tool_node",
-    "coder_tool_node",
-    "memory_tool_node",
-    "search_tool_node",
 ]
