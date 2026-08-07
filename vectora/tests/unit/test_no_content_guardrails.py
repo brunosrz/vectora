@@ -53,15 +53,17 @@ class TestGeminiSafetySettings:
         )
 
     def test_provider_sem_suporte_nao_recebe_safety_settings(self, monkeypatch):
-        """Erro/borda: `safety_settings` é kwarg do SDK do Google. Mandar pro
-        ChatOpenAI (openai/openrouter) estoura na instanciação — o par de erro
-        prova que o kwarg é específico, não aplicado em massa."""
-        monkeypatch.setattr("langchain_openai.ChatOpenAI", _FakeChatModel)
+        """Erro/borda: `safety_settings` é kwarg do SDK do Google — outro
+        provider recebendo o kwarg estouraria na instanciação. O client
+        nativo do OpenRouter nem aceita esse parâmetro."""
+        from backend.llm.openrouter.chat import VectoraOpenRouterChat
+
         monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
 
-        _build_concrete_model("openrouter", "openrouter/auto", 0.7)
+        modelo = _build_concrete_model("openrouter", "openrouter/auto", 0.7)
 
-        assert "safety_settings" not in (_FakeChatModel.last_kwargs or {})
+        assert isinstance(modelo, VectoraOpenRouterChat)
+        assert not hasattr(modelo, "safety_settings")
 
 
 class TestPromptsSemRecusaDeConteudo:

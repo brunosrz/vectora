@@ -1,12 +1,12 @@
 """``backend/services/utils.py::_build_concrete_model`` — nenhum provider pode
 impor timeout de silêncio entre chunks. Modelos de raciocínio (reasoning)
 ficam minutos "pensando" sem emitir nenhum token — isso é comportamento
-normal, não falha de conexão. ``ChatOpenAI`` tem um `stream_chunk_timeout`
-de 120s ligado por padrão (langchain_openai) — precisa ser desligado
-explicitamente aqui.
+normal, não falha de conexão.
 
-O "openrouter" saiu do ``ChatOpenAI`` e usa o cliente nativo, que não impõe
-timeout entre chunks; o teste dele passou a travar a classe usada.
+"openai" e "openrouter" saíram do ``ChatOpenAI`` e usam clients nativos, que
+controlam o timeout HTTP diretamente — sem o `stream_chunk_timeout` de 120s
+que o `langchain_openai` aplicava por padrão. Os testes travam a classe usada
+em vez de inspecionar kwargs que não existem mais nesse caminho.
 """
 
 from __future__ import annotations
@@ -32,13 +32,20 @@ def _fake_chat_openai(monkeypatch):
     monkeypatch.setattr("langchain_openai.ChatOpenAI", _FakeChatOpenAI)
 
 
-def test_openai_desliga_stream_chunk_timeout(monkeypatch):
+def test_openai_usa_cliente_nativo_e_nao_chat_openai(monkeypatch):
+    """O caminho antigo (`ChatOpenAI`) tinha `stream_chunk_timeout=120s` por
+    padrão — o client nativo (Responses API) controla o timeout HTTP
+    diretamente, sem esse problema."""
+    from backend.llm.openai.chat import VectoraOpenAIChat
+
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
 
-    _build_concrete_model("openai", "gpt-4o", 0.7)
+    modelo = _build_concrete_model("openai", "gpt-5", 0.7)
 
-    assert _FakeChatOpenAI.last_kwargs is not None
-    assert _FakeChatOpenAI.last_kwargs["stream_chunk_timeout"] is None
+    assert isinstance(modelo, VectoraOpenAIChat)
+    # Erro/borda: se voltar a cair no ChatOpenAI, o fake teria capturado
+    # kwargs — nenhuma chamada é a prova de que o caminho mudou.
+    assert _FakeChatOpenAI.last_kwargs is None
 
 
 def test_openrouter_usa_cliente_nativo_e_nao_chat_openai(monkeypatch):

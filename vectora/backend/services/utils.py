@@ -1,12 +1,12 @@
 """Utility Functions and Multi-Provider LLM Loading.
 
 Provides LLM factory function supporting Google Gemini, OpenAI, Anthropic,
-Cohere and Ollama via seus SDKs oficiais LangChain:
+Cohere, Ollama e OpenRouter:
     google-genai  → langchain-google-genai  (ChatGoogleGenerativeAI)
-    openai        → langchain-openai        (ChatOpenAI)
+    openai        → cliente nativo           (VectoraOpenAIChat, Responses API)
     anthropic     → langchain-anthropic     (ChatAnthropic, prompt caching)
-    cohere        → langchain-cohere        (ChatCohere, CohereEmbeddings,
-                                             CohereRerank)
+    cohere        → langchain-cohere        (ChatCohere; embeddings/rerank já
+                                             nativos — ver backend/llm/cohere/)
     ollama        → cliente nativo           (VectoraOllamaChat, /api/chat)
     openrouter    → cliente nativo           (VectoraOpenRouterChat)
 
@@ -95,19 +95,21 @@ def _build_concrete_model(  # noqa: PLR0911
                 safety_settings=_gemini_safety_settings(),
             )
         case "openai":
-            from langchain_openai import ChatOpenAI
-            from pydantic import SecretStr
+            from backend.llm.openai.chat import VectoraOpenAIChat
+            from backend.llm.openai.client import OpenAIClient
 
-            return ChatOpenAI(
+            # Cliente nativo, não `ChatOpenAI`: controla o timeout HTTP
+            # diretamente (sem o timeout de 120s entre chunks que o SDK
+            # aplicava por padrão) e usa a Responses API (sucessora
+            # recomendada da Chat Completions desde 2026).
+            return VectoraOpenAIChat(
                 model=model_name,
-                api_key=SecretStr(get_env("OPENAI_API_KEY")),
+                client=OpenAIClient(
+                    api_key=get_env("OPENAI_API_KEY"),
+                    organization=os.getenv("OPENAI_ORGANIZATION") or None,
+                    project=os.getenv("OPENAI_PROJECT") or None,
+                ),
                 temperature=temperature,
-                timeout=None,
-                max_retries=0,
-                # langchain_openai aplica um timeout de 120s entre chunks de
-                # streaming por padrão — dispara em pausas normais de
-                # raciocínio (modelo "pensando" minutos sem emitir token).
-                stream_chunk_timeout=None,
             )
         case "anthropic":
             from langchain_anthropic import ChatAnthropic
