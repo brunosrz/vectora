@@ -44,6 +44,8 @@ def app_and_db(tmp_path_factory):
     import backend.rbac.auth as auth_mod
 
     # Reset estado global
+    original_get_db = auth_mod._get_db
+    original_get_secret = auth_mod._get_secret
     auth_mod._db_conn = None
     _TEST_SECRET = "api-test-secret-key-fixed-abcdef"
     # Patcha _get_secret como função para que o módulo todo use este secret
@@ -75,6 +77,12 @@ def app_and_db(tmp_path_factory):
 
     asyncio.run(_close())
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+    # Sem isso, _get_db/_get_secret ficam trocados pro resto do processo de
+    # teste inteiro — qualquer arquivo que rode depois deste herda o banco
+    # tmp e o secret fixo em vez do real (mesma classe de bug corrigida em
+    # test_provider_routing_handler.py).
+    auth_mod._get_db = original_get_db
+    auth_mod._get_secret = original_get_secret
 
 
 @pytest.fixture(scope="module")

@@ -203,6 +203,7 @@ def auth_client(tmp_path, monkeypatch):
     import backend.rbac.auth as auth_mod
 
     auth_mod._db_conn = None
+    original_get_secret = auth_mod._get_secret
     auth_mod._get_secret = lambda: "middleware-test-secret-abcdefghi"  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     db_file = str(tmp_path / "mw_test.db")
@@ -237,6 +238,7 @@ def auth_client(tmp_path, monkeypatch):
 
     asyncio.run(_close())
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+    auth_mod._get_secret = original_get_secret
 
 
 class TestAuthMiddlewareIntegration:
