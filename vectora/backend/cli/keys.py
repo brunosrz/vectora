@@ -135,23 +135,27 @@ def _save_provider_to_settings(provider_id: str, model: str) -> None:
 def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any:
     """Instancia o LLM correto para o teste de conexão."""
     if provider_id == "google-genai":
-        from langchain_google_genai import ChatGoogleGenerativeAI
+        from backend.llm.google.chat import VectoraGoogleChat
+        from backend.llm.google.client import GoogleGenAIClient
 
-        return ChatGoogleGenerativeAI(api_key=api_key, model=model, timeout=1200)
+        return VectoraGoogleChat(
+            model=model, client=GoogleGenAIClient(api_key=api_key or "")
+        )
 
     if provider_id == "openai":
-        from langchain_openai import ChatOpenAI
-        from pydantic import SecretStr
+        from backend.llm.openai.chat import VectoraOpenAIChat
+        from backend.llm.openai.client import OpenAIClient
 
-        return ChatOpenAI(api_key=SecretStr(api_key) if api_key else None, model=model)
+        return VectoraOpenAIChat(
+            model=model, client=OpenAIClient(api_key=api_key or "")
+        )
 
     if provider_id == "anthropic":
-        from langchain_anthropic import ChatAnthropic
-        from pydantic import SecretStr
+        from backend.llm.anthropic.chat import VectoraAnthropicChat
+        from backend.llm.anthropic.client import AnthropicClient
 
-        return ChatAnthropic(
-            api_key=SecretStr(api_key or ""),
-            model_name=model,
+        return VectoraAnthropicChat(
+            model=model, client=AnthropicClient(api_key=api_key or "")
         )
 
     if provider_id == "cohere":

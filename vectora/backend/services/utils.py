@@ -162,9 +162,8 @@ def _build_concrete_model(  # noqa: PLR0911
                 temperature=temperature,
             )
         case "nine_router":
-            from langchain_openai import ChatOpenAI
-            from pydantic import SecretStr
-
+            from backend.llm.openrouter.chat import VectoraOpenRouterChat
+            from backend.llm.openrouter.client import OpenRouterClient
             from backend.settings import settings
 
             base_url = settings.nine_router_base_url
@@ -176,15 +175,17 @@ def _build_concrete_model(  # noqa: PLR0911
                     "para usar o provider nine_router."
                 )
                 raise ValueError(msg)
-            # ChatOpenAI comum, não um client nativo: o 9Router já fala o
-            # protocolo OpenAI completo (chat/completions, streaming, tool
-            # calling) e não expõe nada além disso (sem usage.cost/provider
-            # routing/endpoints próprios como o OpenRouter) — integração
-            # leve por design, não uma dependência nativa absorvida.
-            return ChatOpenAI(
+            # Reusa o client/adapter do OpenRouter com base_url trocada: o
+            # 9Router fala exatamente o mesmo protocolo OpenAI-compatível
+            # (POST .../chat/completions, streaming SSE, tool calling) que
+            # VectoraOpenRouterChat já implementa nativamente — não é a
+            # Responses API que VectoraOpenAIChat consome. Campos exclusivos
+            # do OpenRouter (usage.cost, bloco provider, reasoning) ficam
+            # ausentes na resposta do 9Router e são tratados como opcionais
+            # em todo o adapter, sem quebrar.
+            return VectoraOpenRouterChat(
                 model=model_name,
-                base_url=base_url,
-                api_key=SecretStr(api_key),
+                client=OpenRouterClient(api_key=api_key, base_url=base_url),
                 temperature=temperature,
             )
         case _:

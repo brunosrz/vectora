@@ -869,16 +869,13 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
 
     async def _test_google() -> tuple[bool, str]:
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-
+            from backend.llm.google.chat import VectoraGoogleChat
+            from backend.llm.google.client import GoogleGenAIClient
             from backend.settings import settings as _s
 
-            llm = ChatGoogleGenerativeAI(
+            llm = VectoraGoogleChat(
                 model=_s.google_model,
-                google_api_key=api_key,  # type: ignore[arg-type]
-                max_output_tokens=1,
-                timeout=1200,
-                max_retries=0,
+                client=GoogleGenAIClient(api_key=api_key),
             )
             await llm.ainvoke("hi")
             return True, ""

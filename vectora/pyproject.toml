@@ -72,9 +72,13 @@ dependencies = [
     "redis[hiredis]>=7.4.1",
     "asyncpg>=0.31.0",
     "qdrant-client>=1.18.0",
-    "langchain-openai>=1.3.2",
-    "langchain-anthropic>=1.4.6",
-    "langchain-google-genai>=4.2.5",
+    # SDKs oficiais usados direto por backend/tools/media.py (geração de
+    # imagem/áudio) e backend/llm/transcription.py — sem passar por
+    # langchain, mas antes só chegavam ao venv como dependência transitiva
+    # de langchain-openai/langchain-google-genai. Pin explícito depois que
+    # a Sprint 13 removeu esses dois pacotes do projeto.
+    "openai>=2.52.0",
+    "google-genai>=2.16.0",
     "fakeredis>=2.36.2",
     "pyjwt>=2.13.0",
     "croniter>=6.2.2",
@@ -93,7 +97,6 @@ dependencies = [
     "tree-sitter-c>=0.23,<0.25",
     "tree-sitter-cpp>=0.23,<0.25",
     "tree-sitter-json>=0.23,<0.26",
-    "langchain-voyageai>=0.3.3",
     "playwright>=1.50.0",
     "nats-py>=2.9.0",
     # Vectora Connect — SDKs oficiais das plataformas de mensageria. Email usa
