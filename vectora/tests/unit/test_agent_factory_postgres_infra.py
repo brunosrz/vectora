@@ -1,11 +1,12 @@
 """_ensure_infra (backend/services/agent_factory.py) — checkpointer/store Postgres (D1).
 
-Antes desta mudança, TODO checkpointer/store era SQLite mesmo em
+Antes da Sprint 14, TODO checkpointer/store era SQLite mesmo em
 storage_mode="complete" com Postgres configurado — Qdrant/Redis já eram
 reais nesse modo, mas o estado do agente (thread messages, memória) ficava
 preso no SQLite de qualquer forma. Agora "complete" + postgres_dsn usa
-AsyncPostgresSaver/AsyncPostgresStore; qualquer falha ao abrir Postgres
-degrada pro SQLite (nunca impede a sessão de iniciar).
+VectoraPostgresSaver/VectoraPostgresStore (nativos, asyncpg — Sprint 14
+Workstream A); qualquer falha ao abrir Postgres degrada pro SQLite (nunca
+impede a sessão de iniciar).
 """
 
 from __future__ import annotations
@@ -30,15 +31,9 @@ def _reset_infra_singletons():
     agent_factory._store_ctx = None
 
 
-def _fake_pg_ctx(instance: object) -> MagicMock:
-    ctx = MagicMock()
-    ctx.__aenter__ = AsyncMock(return_value=instance)
-    ctx.__aexit__ = AsyncMock(return_value=None)
-    return ctx
-
-
 @pytest.mark.asyncio
 async def test_ensure_infra_uses_postgres_checkpointer_and_store_in_complete_mode():
+    fake_pool = MagicMock()
     fake_checkpointer = MagicMock()
     fake_checkpointer.setup = AsyncMock()
     fake_store = MagicMock()
@@ -52,14 +47,16 @@ async def test_ensure_infra_uses_postgres_checkpointer_and_store_in_complete_mod
             "backend.services.license.get_effective_storage_mode",
             return_value="complete",
         ),
+        patch("asyncpg.create_pool", new=AsyncMock(return_value=fake_pool)),
         patch(
-            "langgraph.checkpoint.postgres.aio.AsyncPostgresSaver.from_conn_string",
-            return_value=_fake_pg_ctx(fake_checkpointer),
+            "backend.persistence.native.postgres_checkpointer.VectoraPostgresSaver",
+            return_value=fake_checkpointer,
         ),
         patch(
-            "langgraph.store.postgres.aio.AsyncPostgresStore.from_conn_string",
-            return_value=_fake_pg_ctx(fake_store),
+            "backend.persistence.native.postgres_store.VectoraPostgresStore",
+            return_value=fake_store,
         ),
+        patch("backend.llm.backends._build_index", return_value=None),
     ):
         await agent_factory._ensure_infra()
 
@@ -85,8 +82,8 @@ async def test_ensure_infra_falls_back_to_sqlite_when_postgres_fails(tmp_path):
             return_value="complete",
         ),
         patch(
-            "langgraph.checkpoint.postgres.aio.AsyncPostgresSaver.from_conn_string",
-            side_effect=RuntimeError("connection refused"),
+            "asyncpg.create_pool",
+            new=AsyncMock(side_effect=RuntimeError("connection refused")),
         ),
         patch(
             "backend.llm.backends.build_store", new=AsyncMock(return_value=MagicMock())
@@ -95,11 +92,10 @@ async def test_ensure_infra_falls_back_to_sqlite_when_postgres_fails(tmp_path):
         await agent_factory._ensure_infra()
 
     assert agent_factory._checkpointer is not None
-    # AsyncSqliteSaver não tem "setup" chamado por nós (chamado internamente) —
-    # o importante é que NÃO seja o mock do Postgres e que não levante exceção.
-    assert not hasattr(agent_factory._checkpointer, "setup") or not isinstance(
-        agent_factory._checkpointer, MagicMock
-    )
+    # VectoraSqliteSaver não tem "setup" chamado por nós no teste (chamado
+    # internamente por _ensure_infra) — o importante é que NÃO seja o mock
+    # do Postgres e que não levante exceção.
+    assert not isinstance(agent_factory._checkpointer, MagicMock)
 
 
 @pytest.mark.asyncio

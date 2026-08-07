@@ -104,13 +104,14 @@ def build_backend(
 
 
 async def build_store(embedding_model: str | None = None) -> Any:
-    """Constrói o ``AsyncSqliteStore`` (F5) persistente com embeddings opcionais
-    (Cohere↔Voyage↔Ollama↔OpenRouter, via ``_build_lc_embeddings()``).
+    """Constrói o ``VectoraStore`` (nativo, aiosqlite) persistente com
+    embeddings opcionais (Cohere↔Voyage↔Ollama↔OpenRouter, via
+    ``_build_lc_embeddings()``).
 
-    Abre uma conexão ``aiosqlite`` dedicada (isolation_level=None + WAL) e cria
-    ``AsyncSqliteStore(conn, index=index)``. A conexão fica armazenada em
-    ``store.conn`` — enquanto o store estiver vivo, a conexão permanece aberta.
-    Chama ``await store.setup()`` para criar as tabelas LangGraph na primeira vez.
+    Abre um ``AsyncConnectionPool`` dedicado (mesmos PRAGMAs de hardening de
+    ``backend/storage/sqlite/pool.py`` — WAL, busy_timeout, etc.) e cria
+    ``VectoraStore(pool, index=index)``. Chama ``await store.setup()`` para
+    criar as tabelas na primeira vez.
 
     Usado como ``store=`` em ``create_deep_agent`` e disponível às tools via
     ``langgraph.config.get_store()`` dentro do grafo. O store persiste memórias
@@ -123,15 +124,15 @@ async def build_store(embedding_model: str | None = None) -> Any:
             compatibilidade; nenhum call-site real passa esse argumento hoje.
 
     Returns:
-        ``AsyncSqliteStore`` pronto para ser passado a ``create_deep_agent``.
+        ``VectoraStore`` pronto para ser passado a ``create_deep_agent``.
 
     Nota:
-        Usa uma conexão própria (não o pool F1) porque ``AsyncSqliteStore``
-        mantém o ``conn`` aberto pelo ciclo de vida do processo. O pool F1
+        Usa um pool próprio (não o pool F1 do checkpointer) porque o Store
+        mantém a conexão aberta pelo ciclo de vida do processo, e o F1
         é reservado para o checkpointer (acesso transacional curto).
     """
-    import aiosqlite
-    from langgraph.store.sqlite.aio import AsyncSqliteStore
+    from backend.persistence.native.store import VectoraStore
+    from backend.storage.sqlite.pool import AsyncConnectionPool
 
     index = _build_index(embedding_model)
 
@@ -148,21 +149,16 @@ async def build_store(embedding_model: str | None = None) -> Any:
         db_path = str(Path(tempfile.gettempdir()) / "vectora_store.db")
         logger.debug("backends: store db_path fallback para %s", db_path)
 
-    # Garante que o diretório existe
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
-    # Abre conexão persistente com WAL para suportar leituras concorrentes
-    # com o checkpointer no mesmo arquivo SQLite.
-    conn = await aiosqlite.connect(db_path, isolation_level=None)
-    await conn.execute("PRAGMA journal_mode=WAL;")
-    await conn.execute("PRAGMA synchronous=NORMAL;")
-    await conn.execute("PRAGMA foreign_keys=ON;")
+    pool = AsyncConnectionPool(db_path, min_size=1, max_size=4)
+    await pool.open()
 
-    store = AsyncSqliteStore(conn, index=index)
+    store = VectoraStore(pool, index=index)
     await store.setup()
 
     logger.debug(
-        "backends: AsyncSqliteStore criado path=%s index=%s",
+        "backends: VectoraStore criado path=%s index=%s",
         db_path,
         "com embeddings" if index else "none",
     )

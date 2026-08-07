@@ -31,8 +31,8 @@ from typing import Any
 os.environ.setdefault("GIT_PYTHON_REFRESH", "quiet")
 
 import git
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
+from backend.persistence.native.sqlite_checkpointer import VectoraSqliteSaver
 from backend.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -41,12 +41,13 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def Checkpointer(
     db_dsn: str | None = None,
-) -> AsyncGenerator[AsyncSqliteSaver]:
-    """Constrói checkpointer SQLite assíncrono via ``AsyncConnectionPool`` (F1).
+) -> AsyncGenerator[VectoraSqliteSaver]:
+    """Constrói checkpointer SQLite assíncrono nativo via ``AsyncConnectionPool`` (F1).
 
-    Usa a pool de F1 para abrir a conexão com todos os PRAGMAs de hardening
-    (WAL, busy_timeout=30s, synchronous=NORMAL, temp_store=MEMORY, mmap,
-    foreign_keys), em vez de `from_conn_string` que aplicava apenas 2 PRAGMAs.
+    Usa a pool de F1 (todos os PRAGMAs de hardening — WAL, busy_timeout=30s,
+    synchronous=NORMAL, temp_store=MEMORY, mmap, foreign_keys) e
+    ``VectoraSqliteSaver`` (implementa ``BaseCheckpointSaver`` nativamente,
+    sem a lib ``langgraph-checkpoint-sqlite``).
 
     A pool reutiliza conexões entre chamadas consecutivas ao Checkpointer,
     reduzindo o overhead de abertura em workloads de alta frequência.
@@ -54,18 +55,16 @@ async def Checkpointer(
     Args:
         db_dsn: Caminho para o arquivo SQLite. Se None, usa `settings.db_dsn`.
     """
-    from backend.storage.sqlite.pool import AsyncConnectionPool
-
     conn_string = db_dsn or settings.db_dsn
     if conn_string is None:
         msg = "db_dsn not configured"
         raise RuntimeError(msg)
 
-    async with _get_checkpoint_pool(conn_string).acquire() as conn:
-        checkpointer = AsyncSqliteSaver(conn)
-        await checkpointer.setup()
-        logger.debug("Checkpointer: pool connection adquirida para %s", conn_string)
-        yield checkpointer
+    pool = _get_checkpoint_pool(conn_string)
+    checkpointer = VectoraSqliteSaver(pool)
+    await checkpointer.setup()
+    logger.debug("Checkpointer: pool adquirido para %s", conn_string)
+    yield checkpointer
 
 
 # Pool singleton por db_dsn — reutilizado entre chamadas ao Checkpointer.

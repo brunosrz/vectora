@@ -4,8 +4,9 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import pytest
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
+from backend.persistence.native.sqlite_checkpointer import VectoraSqliteSaver
+from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.testing.mocks import MockLLM
 
 
@@ -31,13 +32,19 @@ async def temp_db() -> AsyncGenerator[str]:
 
 
 @pytest.fixture
-async def checkpointer(temp_db: str) -> AsyncGenerator[AsyncSqliteSaver]:
-    """Provide an AsyncSqliteSaver with temporary database.
+async def checkpointer(temp_db: str) -> AsyncGenerator[VectoraSqliteSaver]:
+    """Provide a VectoraSqliteSaver (nativo) with temporary database.
 
     The checkpointer is used for persisting graph state.
     """
-    async with AsyncSqliteSaver.from_conn_string(temp_db) as saver:
+    pool = AsyncConnectionPool(temp_db, min_size=1, max_size=2)
+    await pool.open()
+    try:
+        saver = VectoraSqliteSaver(pool)
+        await saver.setup()
         yield saver
+    finally:
+        await pool.close()
 
 
 @pytest.fixture

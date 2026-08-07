@@ -15,8 +15,10 @@ Arquitetura:
       middleware é passado a cada subagent spec, senão delegação não pausa
       pra aprovação (deepagents só herda o `interrupt_on` top-level de
       create_deep_agent, que o Vectora nunca usa, não o `middleware=` custom).
-    - Checkpointer: AsyncSqliteSaver, ou AsyncPostgresSaver em
-      STORAGE_MODE=complete.
+    - Checkpointer/Store: VectoraSqliteSaver/VectoraStore (nativos, aiosqlite),
+      ou VectoraPostgresSaver/VectoraPostgresStore (nativos, asyncpg) em
+      STORAGE_MODE=complete — implementam BaseCheckpointSaver/BaseStore do
+      LangGraph diretamente, sem as libs langgraph-checkpoint-sqlite/-postgres.
     - Singleton compartilhado entre todos os usuários; versionamento por user
       via _version_tracker detecta rebind necessário de tools/policy/skills.
 
@@ -484,16 +486,27 @@ async def _ensure_infra() -> None:
 
         if get_effective_storage_mode() == "complete" and _settings.postgres_dsn:
             try:
-                from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+                import asyncpg
+
+                from backend.persistence.native.postgres_checkpointer import (
+                    VectoraPostgresSaver,
+                )
 
                 dsn = _settings.postgres_dsn.replace(
                     "postgresql+asyncpg://", "postgresql://"
                 )
-                _checkpointer_ctx = AsyncPostgresSaver.from_conn_string(dsn)
-                _checkpointer = await _checkpointer_ctx.__aenter__()
+                # Pool dedicado (não o get_pg_pool() compartilhado de
+                # storage/factory.py) — mesmo princípio de isolamento que o
+                # AsyncPostgresSaver.from_conn_string anterior já tinha:
+                # o checkpointer possui seu próprio recurso, fechado no
+                # aclose() deste módulo, sem afetar outros consumidores do
+                # pool compartilhado.
+                pg_pool = await asyncpg.create_pool(dsn, min_size=1, max_size=5)
+                _checkpointer = VectoraPostgresSaver(pg_pool)
                 await _checkpointer.setup()
+                _checkpointer_ctx = pg_pool
                 logger.info(
-                    "agent_factory: checkpointer Postgres ativo (storage_mode=complete)"
+                    "agent_factory: checkpointer Postgres nativo ativo (storage_mode=complete)"
                 )
             except Exception:
                 logger.warning(
@@ -504,22 +517,21 @@ async def _ensure_infra() -> None:
                 _checkpointer = None
 
         if _checkpointer is None:
-            from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+            from backend.persistence.native.sqlite_checkpointer import (
+                VectoraSqliteSaver,
+            )
+            from backend.storage.sqlite.pool import AsyncConnectionPool
 
             db_path = str(_settings.vectora_home / "checkpoints.db")
             Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-            _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
-            _checkpointer = await _checkpointer_ctx.__aenter__()
-            # from_conn_string não aplica nenhum PRAGMA (nem WAL, nem
-            # busy_timeout) — sem isso, duas sessões/workspaces escrevendo ao
-            # mesmo tempo no mesmo checkpoints.db batem em "database is
-            # locked" na hora em vez de esperar. Mesmos PRAGMAs do pool
-            # hardened de backend/storage/sqlite/pool.py.
-            await _checkpointer.conn.executescript(
-                "PRAGMA journal_mode=WAL;"
-                "PRAGMA busy_timeout=30000;"
-                "PRAGMA synchronous=NORMAL;"
-            )
+            # AsyncConnectionPool já aplica os PRAGMAs de hardening (WAL,
+            # busy_timeout=30s, synchronous=NORMAL) em toda conexão nova —
+            # ver backend/storage/sqlite/pool.py.
+            sqlite_pool = AsyncConnectionPool(db_path, min_size=1, max_size=4)
+            await sqlite_pool.open()
+            _checkpointer = VectoraSqliteSaver(sqlite_pool)
+            await _checkpointer.setup()
+            _checkpointer_ctx = sqlite_pool
 
     if _store is None:
         from backend.services.license import get_effective_storage_mode
@@ -527,16 +539,22 @@ async def _ensure_infra() -> None:
 
         if get_effective_storage_mode() == "complete" and _settings.postgres_dsn:
             try:
-                from langgraph.store.postgres.aio import AsyncPostgresStore
+                import asyncpg
+
+                from backend.llm.backends import _build_index
+                from backend.persistence.native.postgres_store import (
+                    VectoraPostgresStore,
+                )
 
                 dsn = _settings.postgres_dsn.replace(
                     "postgresql+asyncpg://", "postgresql://"
                 )
-                _store_ctx = AsyncPostgresStore.from_conn_string(dsn)
-                _store = await _store_ctx.__aenter__()
+                pg_store_pool = await asyncpg.create_pool(dsn, min_size=1, max_size=5)
+                _store = VectoraPostgresStore(pg_store_pool, index=_build_index(None))
                 await _store.setup()
+                _store_ctx = pg_store_pool
                 logger.info(
-                    "agent_factory: store Postgres ativo (storage_mode=complete)"
+                    "agent_factory: store Postgres nativo ativo (storage_mode=complete)"
                 )
             except Exception:
                 logger.warning(
@@ -1118,13 +1136,17 @@ async def aclose() -> None:
         _graphs.clear()
         _version_tracker.clear()
         try:
-            await ctx.__aexit__(None, None, None)
+            # ctx é o pool que _ensure_infra abriu: AsyncConnectionPool
+            # (SQLite) ou asyncpg.Pool (Postgres) — ambos expõem
+            # `close()` async, nenhum é mais um context manager
+            # (`__aexit__`) desde a nativização do checkpointer.
+            await ctx.close()
             logger.info("agent_factory: checkpointer fechado")
         except Exception as exc:
             logger.warning("agent_factory: erro ao fechar checkpointer: %s", exc)
         if store_ctx is not None:
             try:
-                await store_ctx.__aexit__(None, None, None)
+                await store_ctx.close()
                 logger.info("agent_factory: store Postgres fechado")
             except Exception as exc:
                 logger.warning("agent_factory: erro ao fechar store Postgres: %s", exc)

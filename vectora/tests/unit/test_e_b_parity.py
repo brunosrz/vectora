@@ -277,20 +277,21 @@ class TestMemoryToolsNamespace:
 
 
 class TestBuildStore:
-    async def test_build_store_returns_async_sqlite_store(self):
-        """build_store() (async) retorna AsyncSqliteStore persistente."""
+    async def test_build_store_returns_vectora_store(self):
+        """build_store() (async) retorna VectoraStore (nativo, aiosqlite)
+        persistente — não mais AsyncSqliteStore (langgraph-checkpoint-sqlite),
+        migrado na Sprint 14."""
         import contextlib
 
-        from langgraph.store.sqlite.aio import AsyncSqliteStore
-
         from backend.llm.backends import build_store
+        from backend.persistence.native.store import VectoraStore
 
         with patch("backend.llm.backends._build_index", return_value=None):
             store = await build_store()
-        assert isinstance(store, AsyncSqliteStore)
-        # Fecha a conexão aiosqlite aberta pelo store para não vazar handle.
+        assert isinstance(store, VectoraStore)
+        # Fecha o pool aiosqlite aberto pelo store para não vazar handle.
         with contextlib.suppress(Exception):
-            await store.conn.close()
+            await store._pool.close()
 
     def test_build_store_no_index_when_no_key(self):
         """Sem nenhum provider de embedding configurado, build_store()
