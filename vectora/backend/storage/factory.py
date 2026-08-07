@@ -149,10 +149,10 @@ async def get_vector_store(
 
 
 def _build_cohere_embeddings() -> Any:
-    """``CohereEmbeddings`` se a key Cohere estiver configurada, senão None."""
+    """``VectoraCohereEmbeddings`` (nativo) se a key Cohere estiver configurada."""
     try:
-        from langchain_cohere import CohereEmbeddings
-
+        from backend.llm.cohere.client import CohereClient
+        from backend.llm.cohere.embeddings import VectoraCohereEmbeddings
         from backend.settings import settings as _s
 
         key = _s.get_cohere_api_key()
@@ -160,21 +160,16 @@ def _build_cohere_embeddings() -> Any:
         if not key or not model:
             return None
 
-        # NÃO usar SecretStr: a lib chama str() internamente → "**********",
-        # causando 401. Mesmo padrão de backend/embedding/background.py.
-        return CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=key,
-            model=model,
-        )
+        return VectoraCohereEmbeddings(model=model, client=CohereClient(key))
     except Exception:
         return None
 
 
 def _build_voyage_embeddings() -> Any:
-    """``VoyageAIEmbeddings`` se a key VoyageAI estiver configurada, senão None."""
+    """``VectoraVoyageEmbeddings`` (nativo) se a key VoyageAI estiver configurada."""
     try:
-        from langchain_voyageai import VoyageAIEmbeddings
-
+        from backend.llm.voyage.client import VoyageClient
+        from backend.llm.voyage.embeddings import VectoraVoyageEmbeddings
         from backend.settings import settings as _s
 
         key = _s.voyage_api_key
@@ -182,12 +177,7 @@ def _build_voyage_embeddings() -> Any:
         if not key or not model:
             return None
 
-        from pydantic import SecretStr
-
-        return VoyageAIEmbeddings(
-            api_key=SecretStr(key),
-            model=model,
-        )
+        return VectoraVoyageEmbeddings(model=model, client=VoyageClient(key))
     except Exception:
         return None
 

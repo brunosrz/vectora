@@ -104,7 +104,8 @@ def build_backend(
 
 
 async def build_store(embedding_model: str | None = None) -> Any:
-    """Constrói o ``AsyncSqliteStore`` (F5) persistente com embeddings Cohere opcionais.
+    """Constrói o ``AsyncSqliteStore`` (F5) persistente com embeddings opcionais
+    (Cohere↔Voyage↔Ollama↔OpenRouter, via ``_build_lc_embeddings()``).
 
     Abre uma conexão ``aiosqlite`` dedicada (isolation_level=None + WAL) e cria
     ``AsyncSqliteStore(conn, index=index)``. A conexão fica armazenada em
@@ -116,9 +117,10 @@ async def build_store(embedding_model: str | None = None) -> Any:
     do agente em SQLite (lite mode).
 
     Args:
-        embedding_model: Nome do modelo de embedding para busca semântica.
-            Se None, tenta ``settings.embedding_model``; se não configurado,
-            o store funciona sem indexação vetorial (busca por chave apenas).
+        embedding_model: não usado atualmente — ``_build_lc_embeddings()``
+            resolve o provider/modelo pelos settings globais e de runtime,
+            sem aceitar override por chamada. Mantido na assinatura por
+            compatibilidade; nenhum call-site real passa esse argumento hoje.
 
     Returns:
         ``AsyncSqliteStore`` pronto para ser passado a ``create_deep_agent``.
@@ -162,54 +164,37 @@ async def build_store(embedding_model: str | None = None) -> Any:
     logger.debug(
         "backends: AsyncSqliteStore criado path=%s index=%s",
         db_path,
-        "Cohere" if index else "none",
+        "com embeddings" if index else "none",
     )
     return store
 
 
 def _build_index(embedding_model: str | None) -> Any:
-    """Constrói IndexConfig com ``CohereEmbeddings`` (langchain-cohere) se disponível.
+    """Constrói IndexConfig do Store via ``_build_lc_embeddings()`` — honra o
+    fallback multi-provider (Cohere↔Voyage↔Ollama↔OpenRouter) em vez de ficar
+    hardcoded em Cohere. Retorna None se nenhum provider estiver configurado.
 
-    Usa ``CohereEmbeddings.aembed_documents()`` via langchain-cohere em vez de
-    ``cohere.AsyncClient`` direto, alinhando com o SDK oficial (F15).
-    Retorna None se a chave Cohere ou o modelo não estiverem configurados.
+    ``dims=1024`` continua fixo: o `IndexConfig` do LangGraph Store exige a
+    dimensão na construção (síncrona), antes de qualquer chamada de rede
+    pra sondar a dimensão real do provider resolvido — mesma limitação que
+    já existia. Guard de dimensão real (`_check_embedding_dimension`) só é
+    viável no caminho async de escrita/leitura do vector store de RAG
+    (`storage/factory.py`), não neste `IndexConfig` síncrono do Store.
     """
     try:
-        from langchain_cohere import CohereEmbeddings
+        from backend.storage.factory import _build_lc_embeddings
 
-        from backend.settings import settings as _settings
-
-        model = embedding_model or _settings.embedding_model
-        cohere_key = _settings.get_cohere_api_key()
-        if not cohere_key or not model:
+        _embeddings = _build_lc_embeddings()
+        if _embeddings is None:
             return None
-
-        # Captura por valor para evitar referência ao escopo externo
-        _model = model
-        _key = cohere_key
-
-        # Instância CohereEmbeddings com o SDK oficial langchain-cohere.
-        # NOTE: NÃO usar SecretStr — a lib chama str() internamente, resultando
-        # em "**********" como API key. Passar a string diretamente.
-        # NOTE: CohereEmbeddings stubs exigem client/async_client que são
-        # opcionais em runtime. Mesmo padrão de src/services/background.py.
-        _embeddings = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=_key,
-            model=_model,
-        )
 
         async def _embed(texts: list[str]) -> list[list[float]]:
             return await _embeddings.aembed_documents(texts)
 
         return {"dims": 1024, "embed": _embed, "fields": ["content"]}
-    except ImportError:
-        logger.debug(
-            "backends: langchain-cohere não instalado — InMemoryStore sem índice vetorial"
-        )
-        return None
     except Exception:
         logger.debug(
-            "backends: Cohere indisponível — InMemoryStore sem índice vetorial",
+            "backends: embedding indisponível — InMemoryStore sem índice vetorial",
             exc_info=True,
         )
         return None

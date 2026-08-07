@@ -262,3 +262,35 @@ class TestWriteToVectorStore:
 
 async def _fake_get(backend: _FakeVectorStoreBackend) -> _FakeVectorStoreBackend:
     return backend
+
+
+class TestGenerateEmbedding:
+    """`_generate_embedding` delega pra `_build_lc_embeddings()` — antes era
+    `CohereEmbeddings` hardcoded, sem o fallback multi-provider que a
+    indexação de verdade precisa ter (mesmo padrão de `_write_to_vector_store`)."""
+
+    @pytest.mark.asyncio
+    async def test_delega_para_build_lc_embeddings(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class _FakeEmb:
+            async def aembed_documents(self, texts: list[str]) -> list[list[float]]:
+                assert texts == ["conteúdo"]
+                return [[0.1, 0.2, 0.3]]
+
+        monkeypatch.setattr(_storage_factory, "_build_lc_embeddings", _FakeEmb)
+
+        worker = BackgroundEmbeddingWorker()
+        vetor = await worker._generate_embedding("conteúdo")
+
+        assert vetor == [0.1, 0.2, 0.3]
+
+    @pytest.mark.asyncio
+    async def test_sem_provider_configurado_levanta_value_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(_storage_factory, "_build_lc_embeddings", lambda: None)
+
+        worker = BackgroundEmbeddingWorker()
+        with pytest.raises(ValueError, match="Nenhum provider"):
+            await worker._generate_embedding("conteúdo")

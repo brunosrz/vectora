@@ -293,14 +293,35 @@ class TestBuildStore:
             await store.conn.close()
 
     def test_build_store_no_index_when_no_key(self):
-        """Sem API key Cohere, build_store() retorna store sem indexação."""
+        """Sem nenhum provider de embedding configurado, build_store()
+        retorna store sem indexação — `_build_index` delega a
+        `_build_lc_embeddings()` (fallback Cohere↔Voyage↔Ollama↔OpenRouter)."""
         from backend.llm.backends import _build_index
 
-        with patch("backend.settings.settings") as mock_s:
-            mock_s.embedding_model = "embed-multilingual-v3.0"
-            mock_s.get_cohere_api_key.return_value = None
+        with patch("backend.storage.factory._build_lc_embeddings", return_value=None):
             result = _build_index(None)
         assert result is None
+
+    async def test_build_store_index_uses_lc_embeddings_fallback(self):
+        """Com um provider resolvido por `_build_lc_embeddings()`, o
+        IndexConfig usa esse client (fallback multi-provider) em vez de
+        `CohereEmbeddings` hardcoded."""
+        from backend.llm.backends import _build_index
+
+        class _FakeEmb:
+            async def aembed_documents(self, texts: list[str]) -> list[list[float]]:
+                return [[0.1] * 1024 for _ in texts]
+
+        with patch(
+            "backend.storage.factory._build_lc_embeddings", return_value=_FakeEmb()
+        ):
+            result = _build_index(None)
+
+        assert result is not None
+        assert result["dims"] == 1024
+        assert result["fields"] == ["content"]
+        vetores = await result["embed"](["a"])
+        assert vetores == [[0.1] * 1024]
 
 
 # ---------------------------------------------------------------------------

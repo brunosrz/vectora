@@ -40,9 +40,10 @@ class TestVectorSearch:
             ms.embedding_model = "embed-english-v3.0"
             ms.reranker_type = "none"
             with (
-                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
-                patch("backend.tools.rag.SecretStr", lambda x: x),
-                patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory._build_lc_embeddings",
+                    mock_embeddings,
+                ),
                 patch(
                     "backend.storage.factory.get_vector_store_backend",
                     AsyncMock(return_value=mock_backend),
@@ -77,8 +78,10 @@ class TestVectorSearch:
             ms.get_cohere_api_key.return_value = "test-key"
             ms.embedding_model = "embed-english-v3.0"
             with (
-                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
-                patch("backend.tools.rag.SecretStr", lambda x: x),
+                patch(
+                    "backend.storage.factory._build_lc_embeddings",
+                    mock_embeddings,
+                ),
                 patch(
                     "backend.storage.factory.get_vector_store_backend",
                     AsyncMock(return_value=mock_backend),
@@ -96,10 +99,9 @@ class TestVectorSearch:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             with patch("backend.tools.rag.lancedb", None):
-                with patch("backend.tools.rag.CohereEmbeddings", None):
-                    result = await vector_search.ainvoke(
-                        {"query": "test", "collection": "articles", "limit": 5}
-                    )
+                result = await vector_search.ainvoke(
+                    {"query": "test", "collection": "articles", "limit": 5}
+                )
         assert "missing" in result.lower() or isinstance(result, str)
 
     @pytest.mark.asyncio
@@ -108,11 +110,13 @@ class TestVectorSearch:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.get_cohere_api_key.return_value = None
-            with patch("backend.tools.rag.lancedb", MagicMock()):
-                with patch("backend.tools.rag.CohereEmbeddings", MagicMock()):
-                    result = await vector_search.ainvoke(
-                        {"query": "test", "collection": "articles", "limit": 5}
-                    )
+            with (
+                patch("backend.tools.rag.lancedb", MagicMock()),
+                patch("backend.storage.factory._build_lc_embeddings", lambda: None),
+            ):
+                result = await vector_search.ainvoke(
+                    {"query": "test", "collection": "articles", "limit": 5}
+                )
         data = json.loads(result)
         assert data.get("status") in ("failed", "error")
 
@@ -179,9 +183,10 @@ class TestVectorSearchBucketFanout:
             ms.get_cohere_api_key.return_value = "test-key"
             ms.embedding_model = "embed-english-v3.0"
             with (
-                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
-                patch("backend.tools.rag.SecretStr", lambda x: x),
-                patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory._build_lc_embeddings",
+                    mock_embeddings,
+                ),
                 patch(
                     "backend.storage.factory.get_vector_store_backend",
                     AsyncMock(return_value=mock_backend),
@@ -220,9 +225,10 @@ class TestVectorSearchBucketFanout:
             ms.get_cohere_api_key.return_value = "test-key"
             ms.embedding_model = "embed-english-v3.0"
             with (
-                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
-                patch("backend.tools.rag.SecretStr", lambda x: x),
-                patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory._build_lc_embeddings",
+                    mock_embeddings,
+                ),
                 patch(
                     "backend.storage.factory.get_vector_store_backend",
                     AsyncMock(return_value=mock_backend),
@@ -266,9 +272,10 @@ class TestVectorSearchBucketFanout:
             ms.get_cohere_api_key.return_value = "test-key"
             ms.embedding_model = "embed-english-v3.0"
             with (
-                patch("backend.tools.rag.CohereEmbeddings", mock_embeddings),
-                patch("backend.tools.rag.SecretStr", lambda x: x),
-                patch("backend.tools.rag.CohereRerank", None),
+                patch(
+                    "backend.storage.factory._build_lc_embeddings",
+                    mock_embeddings,
+                ),
                 patch(
                     "backend.storage.factory.get_vector_store_backend",
                     AsyncMock(return_value=mock_backend),
@@ -788,20 +795,22 @@ class TestBuildReranker:
             ms.reranker_type = "qualquer-outro"
             assert _build_reranker() is None
 
-    def test_cohere_sdk_absent_returns_none(self):
+    def test_cohere_client_construction_failure_returns_none(self):
+        """Erro/borda: qualquer falha ao montar o client nativo (ex.: key
+        vazia detectada dentro do construtor) é capturada e vira None, nunca
+        propaga pro chamador de `_build_reranker`."""
         from backend.tools.rag import _build_reranker
 
-        with (
-            patch("backend.tools.rag.settings") as ms,
-            patch("backend.tools.rag.CohereRerank", None),
-        ):
+        with patch("backend.tools.rag.settings") as ms:
             ms.reranker_type = "cohere"
-            ms.get_cohere_api_key.return_value = "ck-1"
+            # get_cohere_api_key() devolve algo não-vazio (passa no guard de
+            # _build_cohere_reranker), mas CohereClient valida de novo e
+            # rejeita string vazia — simula um estado inconsistente real.
+            ms.get_cohere_api_key.return_value = " "
             assert _build_reranker() is None
 
     def test_voyage_with_key_returns_voyage_reranker(self):
-        from langchain_voyageai import VoyageAIRerank
-
+        from backend.llm.voyage.rerank import VectoraVoyageRerank
         from backend.tools.rag import _build_reranker
 
         with patch("backend.tools.rag.settings") as ms:
@@ -811,7 +820,7 @@ class TestBuildReranker:
             ms.reranker_top_k = 5
             ms.get_cohere_api_key.return_value = None  # sem secundário → voyage puro
             out = _build_reranker()
-        assert isinstance(out, VoyageAIRerank)
+        assert isinstance(out, VectoraVoyageRerank)
         assert out.model == "rerank-2"
         assert out.top_k == 5
 
@@ -833,8 +842,7 @@ class TestBuildReranker:
             assert _build_reranker() is None
 
     def test_reranker_provider_pref_forces_voyage(self):
-        from langchain_voyageai import VoyageAIRerank
-
+        from backend.llm.voyage.rerank import VectoraVoyageRerank
         from backend.tools import rag as rag_mod
         from backend.tools.rag import _build_reranker
 
@@ -855,7 +863,7 @@ class TestBuildReranker:
             ms.voyage_rerank_model = "rerank-2"
             ms.get_cohere_api_key.return_value = None
             out = _build_reranker()
-        assert isinstance(out, VoyageAIRerank)
+        assert isinstance(out, VectoraVoyageRerank)
 
     def test_both_configured_returns_fallback_reranker(self):
         from backend.llm.fallback_reranker import FallbackReranker

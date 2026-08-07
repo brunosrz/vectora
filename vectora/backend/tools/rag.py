@@ -13,7 +13,6 @@ from langchain.tools import tool
 from langchain_core.documents import Document as LCDoc
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
-from pydantic import SecretStr
 
 from backend.embedding.queue import get_embedding_queue
 from backend.services.text import text_service
@@ -21,12 +20,8 @@ from backend.settings import settings
 
 try:
     import lancedb
-    from langchain_cohere import CohereEmbeddings, CohereRerank
 except ImportError:
     lancedb = None  # type: ignore
-    CohereEmbeddings = None  # type: ignore
-    CohereRerank = None  # type: ignore
-    SecretStr = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -45,33 +40,41 @@ def _is_cohere_quota_error(err: str) -> bool:
 
 
 def _build_cohere_reranker() -> Any:
-    """``CohereRerank`` se a key Cohere e o SDK existem, senão None."""
-    if CohereRerank is None:
+    """``VectoraCohereRerank`` (nativo) se a key Cohere estiver configurada."""
+    try:
+        from backend.llm.cohere.client import CohereClient
+        from backend.llm.cohere.rerank import VectoraCohereRerank
+
+        key = settings.get_cohere_api_key()
+        if not key:
+            return None
+        return VectoraCohereRerank(
+            model=settings.reranker_model,
+            client=CohereClient(key),
+            top_n=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
+        )
+    except Exception:
+        logger.warning("rag: falha ao montar reranker Cohere", exc_info=True)
         return None
-    key = settings.get_cohere_api_key()
-    if not key:
-        return None
-    return CohereRerank(
-        cohere_api_key=SecretStr(key),
-        model=settings.reranker_model,
-        top_n=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
-    )
 
 
 def _build_voyage_reranker() -> Any:
-    """``VoyageAIRerank`` se a key Voyage e o SDK existem, senão None."""
+    """``VectoraVoyageRerank`` (nativo) se a key Voyage estiver configurada."""
     try:
-        from langchain_voyageai import VoyageAIRerank
+        from backend.llm.voyage.client import VoyageClient
+        from backend.llm.voyage.rerank import VectoraVoyageRerank
+
+        key = settings.voyage_api_key
+        if not key:
+            return None
+        return VectoraVoyageRerank(
+            model=settings.voyage_rerank_model,
+            client=VoyageClient(key),
+            top_k=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
+        )
     except Exception:
+        logger.warning("rag: falha ao montar reranker Voyage", exc_info=True)
         return None
-    key = settings.voyage_api_key
-    if not key:
-        return None
-    return VoyageAIRerank(
-        api_key=SecretStr(key),
-        model=settings.voyage_rerank_model,
-        top_k=int(_rag_runtime().get("reranker_top_k", settings.reranker_top_k)),
-    )
 
 
 def _build_openrouter_reranker() -> Any:
@@ -331,14 +334,16 @@ async def vector_search(
         JSON com documentos e scores de similaridade
     """
     try:
-        if lancedb is None or CohereEmbeddings is None:
-            return "LanceDB or Cohere dependencies missing."
+        if lancedb is None:
+            return "LanceDB dependency missing."
 
-        api_key = settings.get_cohere_api_key()
-        if not api_key:
-            logger.error("vector_search called but COHERE_API_KEY not configured")
+        from backend.storage.factory import _build_lc_embeddings
+
+        embeddings_model = _build_lc_embeddings()
+        if embeddings_model is None:
+            logger.error("vector_search called but no embedding provider configured")
             return json.dumps(
-                {"status": "failed", "error": "COHERE_API_KEY not configured"}
+                {"status": "failed", "error": "no embedding provider configured"}
             )
 
         workspace_id = (
@@ -354,17 +359,12 @@ async def vector_search(
 
         backend = await get_vector_store_backend()
 
-        # NOTE: do NOT wrap in SecretStr here.
-        # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
-        # not the actual value, causing a 401 from Cohere.
-        embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,
-            model=settings.embedding_model,
-        )
-
         # embed_query usa input_type="search_query" (Cohere v3 é assimétrico:
         # os documentos são indexados com embed_documents → "search_document").
-        # Não trocar por embed_documents aqui.
+        # Não trocar por embed_documents aqui. `_build_lc_embeddings()` já
+        # honra o fallback multi-provider (Cohere↔Voyage↔Ollama↔OpenRouter) —
+        # antes a busca era hardcoded pra Cohere sem fallback, diferente da
+        # indexação, que já tinha esse fallback (assimetria corrigida aqui).
         from backend.embedding.cache_embeddings import embed_query_cached
 
         query_vector = await embed_query_cached(

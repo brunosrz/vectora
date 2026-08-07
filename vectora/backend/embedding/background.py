@@ -3,8 +3,8 @@
 Loop assíncrono que:
 1. Busca documentos pendentes da fila de embedding a cada 5 segundos
 2. Processa até 10 documentos em paralelo (limitado por Semaphore(5))
-3. Gera embeddings via Cohere (embed-multilingual-v3.0)
-4. Escreve em LanceDB com idempotência (via queue_id como document ID)
+3. Gera embeddings via `_build_lc_embeddings()` (Cohere↔Voyage↔Ollama↔OpenRouter)
+4. Escreve no vector store nativo com idempotência (via queue_id como id do ponto)
 5. Retry com exponential backoff (1s → 2s → 4s) até 3 tentativas
 6. Move para DLQ após 3 falhas para auditoria manual
 """
@@ -16,11 +16,6 @@ import time
 import traceback
 from datetime import datetime
 from typing import Any
-
-try:
-    from langchain_cohere import CohereEmbeddings
-except ImportError:
-    CohereEmbeddings = None  # type: ignore
 
 from backend.embedding.queue import EmbeddingQueueRecord, get_embedding_queue
 from backend.settings import settings
@@ -133,35 +128,6 @@ POLL_INTERVAL_MAX = 30  # Intervalo máximo em idle (segundos)
 POLL_BACKOFF_FACTOR = 2  # Multiplicador a cada ciclo vazio
 
 
-class _CohereRateLimitInterceptor(logging.Handler):
-    """Intercepta warnings de rate limit do langchain_cohere.utils silenciosamente.
-
-    Instalado diretamente no logger `langchain_cohere.utils` com propagate=False,
-    impedindo que mensagens brutas de TooManyRequestsError / 429 cheguem ao root
-    logger (e ao terminal do usuário).
-
-    Em vez disso, atualiza o estado de rate limit no worker para exibição
-    formatada via /rag — sem bloquear o fluxo async nem corromper o prompt.
-    """
-
-    def __init__(self, worker: "BackgroundEmbeddingWorker") -> None:
-        super().__init__(level=logging.WARNING)
-        self.worker = worker
-
-    def emit(self, record: logging.LogRecord) -> None:
-        msg = record.getMessage()
-        if "429" in msg or "TooManyRequests" in msg or "rate" in msg.lower():
-            self.worker.rate_limit_active = True
-            self.worker.rate_limit_count += 1
-            self.worker.last_rate_limit_at = datetime.now()
-            # Ainda registra no arquivo JSON para auditabilidade
-            file_logger = logging.getLogger("backend.embedding.background")
-            file_logger.debug(
-                "cohere_rate_limit_intercepted: retry=%d",
-                self.worker.rate_limit_count,
-            )
-
-
 class BackgroundEmbeddingWorker:
     """Worker assíncrono para processamento de embeddings em larga escala."""
 
@@ -180,13 +146,12 @@ class BackgroundEmbeddingWorker:
         # Não acumulam indefinidamente: resetados a cada startup do worker.
         self.processed_count: int = 0
         self.failed_count: int = 0
-        # Cohere rate limit tracking — alimentado pelo _CohereRateLimitInterceptor.
+        # Rate limit tracking — alimentado por `_trip_rate_limit_breaker`.
         # rate_limit_active=True enquanto o último embedding retornou 429;
         # resetado para False após o primeiro embedding bem-sucedido.
         self.rate_limit_active: bool = False
         self.rate_limit_count: int = 0  # Total de 429s nesta sessão
         self.last_rate_limit_at: datetime | None = None
-        self._rate_limit_handler: _CohereRateLimitInterceptor | None = None
         # Circuit breaker: ao detectar rate limit/quota, o worker pausa e
         # arquiva a fila em vez de re-tentar cada chunk em loop (que floodava o
         # log e saturava o thread pool, travando o backend). pause_reason é
@@ -243,14 +208,6 @@ class BackgroundEmbeddingWorker:
 
         self.running = True
 
-        # Instala interceptor no logger langchain_cohere.utils:
-        # - propagate=False impede que warnings 429 cheguem ao root logger (terminal)
-        # - o handler atualiza self.rate_limit_* para exibição formatada via /rag
-        lc_logger = logging.getLogger("langchain_cohere.utils")
-        self._rate_limit_handler = _CohereRateLimitInterceptor(self)
-        lc_logger.addHandler(self._rate_limit_handler)
-        lc_logger.propagate = False
-
         # Executar reconciliação na startup (recuperar records travados)
         await self._reconcile_startup()
 
@@ -268,13 +225,6 @@ class BackgroundEmbeddingWorker:
 
         logger.info("Parando BackgroundEmbeddingWorker...")
         self.running = False
-
-        # Remove o interceptor e restaura propagação do logger
-        lc_logger = logging.getLogger("langchain_cohere.utils")
-        if self._rate_limit_handler:
-            lc_logger.removeHandler(self._rate_limit_handler)
-            self._rate_limit_handler = None
-        lc_logger.propagate = True
 
         if self.task:
             try:
@@ -532,48 +482,22 @@ class BackgroundEmbeddingWorker:
         )
 
     async def _generate_embedding(self, text: str) -> list[float]:
-        """Gera embedding via Cohere.
-
-        Args:
-            text: Texto para embeddar
+        """Gera embedding via `_build_lc_embeddings()` — honra o fallback
+        multi-provider (Cohere↔Voyage↔Ollama↔OpenRouter) e a preferência de
+        runtime (`rag_settings.embed_provider`), em vez de Cohere hardcoded.
 
         Returns:
             Lista de floats representando o embedding
 
         Raises:
-            ValueError: Se COHERE_API_KEY não estiver configurado
-            ImportError: Se langchain_cohere não estiver instalado
+            ValueError: Se nenhum provider de embedding estiver configurado
         """
-        api_key = self.config.get_cohere_api_key()
-        if not api_key:
-            msg = "COHERE_API_KEY não configurado"
+        from backend.storage.factory import _build_lc_embeddings
+
+        embeddings_model = _build_lc_embeddings()
+        if embeddings_model is None:
+            msg = "Nenhum provider de embedding configurado"
             raise ValueError(msg)
-
-        # Diagnóstico de autenticação — apenas em DEBUG para não poluir o terminal
-        logger.debug(
-            "cohere_auth: len=%d prefix=%s suffix=%s",
-            len(api_key),
-            api_key[:6],
-            api_key[-4:],
-        )
-
-        if CohereEmbeddings is None:
-            msg = "langchain_cohere não está instalado"
-            raise ImportError(msg)
-
-        # NOTE: do NOT wrap in SecretStr here.
-        # langchain-core's get_from_dict_or_env calls str(SecretStr) which returns
-        # "**********" instead of the actual value, causing a 401 from Cohere.
-        # Passing the plain string bypasses that branch entirely.
-        # max_retries=0: o langchain_cohere, por padrão, re-tenta o 429
-        # internamente com backoff longo — prendendo a thread do to_thread por
-        # minutos e saturando o pool (travava o backend inteiro). Com 0, o 429
-        # propaga na hora e o circuit breaker do worker assume.
-        embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,
-            model=self.config.embedding_model,
-            max_retries=0,
-        )
 
         # Indexação usa embed_documents → input_type="search_document".
         # O Cohere v3 é assimétrico: documentos indexados e queries de busca
@@ -581,10 +505,12 @@ class BackgroundEmbeddingWorker:
         # rag.py) usa embed_query → input_type="search_query". Indexar com
         # embed_query — como era feito antes — degrada o recall porque grava
         # o documento no espaço errado.
-        # embed_documents é bloqueante (HTTP síncrono ~1-2s por chunk);
-        # asyncio.to_thread() move para a thread pool do SO, liberando o event
-        # loop para o spinner da UI enquanto a API responde.
-        vectors = await asyncio.to_thread(embeddings_model.embed_documents, [text])
+        # Os clients nativos (Cohere/Voyage/Ollama/OpenRouter) são async por
+        # baixo (httpx.AsyncClient) — sem SDK LangChain aqui, não há mais o
+        # retry interno de 429 com backoff longo que travava a thread do
+        # to_thread; aembed_documents propaga o erro na hora e o circuit
+        # breaker do worker assume.
+        vectors = await embeddings_model.aembed_documents([text])
         return vectors[0]
 
     async def _write_to_vector_store(

@@ -30,29 +30,19 @@ async def _get_db() -> Any:
 
 
 async def _embed_texts(texts: list[str]) -> list[list[float]]:
-    """Embeda lista de textos em batches usando o mesmo modelo do RAG."""
-    from backend.settings import settings
+    """Embeda lista de textos em batches via `_build_lc_embeddings()` — mesmo
+    fallback multi-provider (Cohere↔Voyage↔Ollama↔OpenRouter) do resto do RAG,
+    em vez de Cohere hardcoded."""
+    from backend.storage.factory import _build_lc_embeddings
 
-    try:
-        from langchain_cohere import CohereEmbeddings  # type: ignore[import-not-found]
-    except ImportError:
+    embeddings_model = _build_lc_embeddings()
+    if embeddings_model is None:
         return []
-
-    api_key = settings.get_cohere_api_key()
-    if not api_key:
-        return []
-
-    embeddings_model = CohereEmbeddings(  # type: ignore[call-arg]
-        cohere_api_key=api_key,  # type: ignore[arg-type]
-        model=settings.embedding_model,
-    )
-
-    import asyncio
 
     all_vectors: list[list[float]] = []
     for i in range(0, len(texts), _EMBED_BATCH):
         batch = texts[i : i + _EMBED_BATCH]
-        vectors = await asyncio.to_thread(embeddings_model.embed_documents, batch)
+        vectors = await embeddings_model.aembed_documents(batch)
         all_vectors.extend(vectors)
     return all_vectors
 
