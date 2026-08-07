@@ -4,7 +4,7 @@ Provides LLM factory function supporting Google Gemini, OpenAI, Anthropic,
 Cohere, Ollama e OpenRouter:
     google-genai  → langchain-google-genai  (ChatGoogleGenerativeAI)
     openai        → cliente nativo           (VectoraOpenAIChat, Responses API)
-    anthropic     → langchain-anthropic     (ChatAnthropic, prompt caching)
+    anthropic     → cliente nativo           (VectoraAnthropicChat, Messages API)
     cohere        → langchain-cohere        (ChatCohere; embeddings/rerank já
                                              nativos — ver backend/llm/cohere/)
     ollama        → cliente nativo           (VectoraOllamaChat, /api/chat)
@@ -112,22 +112,23 @@ def _build_concrete_model(  # noqa: PLR0911
                 temperature=temperature,
             )
         case "anthropic":
-            from langchain_anthropic import ChatAnthropic
-            from pydantic import SecretStr
+            from backend.llm.anthropic.chat import VectoraAnthropicChat
+            from backend.llm.anthropic.client import AnthropicClient
 
+            # Cliente nativo, não `ChatAnthropic`: prompt caching é GA na
+            # Messages API via `cache_control: ephemeral` no bloco de system
+            # prompt — não depende mais do header `anthropic-beta` que a
+            # geração original do recurso exigia.
             prompt_cache = os.getenv("ANTHROPIC_PROMPT_CACHE", "true").lower() not in {
                 "false",
                 "0",
                 "no",
             }
-            betas = ["prompt-caching-2024-07-31"] if prompt_cache else []
-            return ChatAnthropic(
-                model_name=model_name,
-                api_key=SecretStr(get_env("ANTHROPIC_API_KEY")),
+            return VectoraAnthropicChat(
+                model=model_name,
+                client=AnthropicClient(api_key=get_env("ANTHROPIC_API_KEY")),
                 temperature=temperature,
-                betas=betas,
-                timeout=None,
-                max_retries=0,
+                cache_system_prompt=prompt_cache,
             )
         case "cohere":
             from langchain_cohere import ChatCohere
