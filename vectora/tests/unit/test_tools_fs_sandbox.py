@@ -1,4 +1,4 @@
-"""AI Jail — terminal/file_write/file_edit roteiam pelo worker jailado
+"""Sandbox — terminal/file_write/file_edit roteiam pelo worker jailado
 (`backend.sandbox.workspace_jail.jail_manager`) quando `vectora.toml`/
 `[sandbox]` está habilitado; sem isso, comportamento atual é preservado."""
 

@@ -1,4 +1,4 @@
-"""AI Jail — parser de `vectora.toml` [sandbox]. Fail-closed sempre que o
+"""Sandbox — parser de `vectora.toml` [sandbox]. Fail-closed sempre que o
 arquivo existe mas está malformado ou tem campo de tipo errado."""
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""AI Jail — backend.sandbox.rlimits: RLIMIT_NPROC/NOFILE/CORE aplicados
+"""Sandbox — backend.sandbox.rlimits: RLIMIT_NPROC/NOFILE/CORE aplicados
 ao worker antes do loop RPC, contendo fork bombs mesmo sem Landlock."""
 
 from __future__ import annotations

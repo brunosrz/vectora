@@ -102,7 +102,7 @@ class Settings(BaseSettings):
 
     # 9Router (proxy local do usuário, https://github.com/decolua/9router) —
     # integração leve, não absorvida como dependência nativa (diferente de
-    # graphify/AI Jail): 3 campos (endpoint + key + modelo), mesmo padrão do
+    # graphify/Sandbox): 3 campos (endpoint + key + modelo), mesmo padrão do
     # OpenRouter, resolvido via ChatOpenAI comum (9Router já fala o protocolo
     # OpenAI completo — sem capacidade extra a justificar um client nativo).
     nine_router_base_url: str | None = None

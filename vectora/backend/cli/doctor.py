@@ -1,5 +1,5 @@
 """``vectora doctor`` — encontra e limpa sidecars órfãos (nats-server) e
-diagnostica o AI Jail no Windows.
+diagnostica o Sandbox no Windows.
 
 Varre TODOS os processos ``nats-server`` do sistema por nome de imagem,
 não só os PIDs conhecidos pelo pid file de
@@ -86,7 +86,7 @@ async def _report_sandbox_status(console: Console) -> None:
     depende de WSL2, checado abaixo.
     """
     if sys.platform == "darwin":
-        console.print("\n[bold]Sandbox (AI Jail):[/bold]")
+        console.print("\n[bold]Sandbox:[/bold]")
         if shutil.which("sandbox-exec") is not None:
             console.print(
                 "[green]✔ sandbox-exec disponível[/green] — use "
@@ -106,7 +106,7 @@ async def _report_sandbox_status(console: Console) -> None:
     from backend.sandbox.policy import detect_wsl2
     from backend.sandbox.workspace_jail import _bwrap_available_in_distro
 
-    console.print("\n[bold]Sandbox (AI Jail):[/bold]")
+    console.print("\n[bold]Sandbox:[/bold]")
     distro = await detect_wsl2()
     if distro is None:
         console.print(

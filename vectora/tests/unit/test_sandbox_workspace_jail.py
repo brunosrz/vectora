@@ -1,4 +1,4 @@
-"""AI Jail — WorkspaceJailManager/JailedWorker: worker persistente por
+"""Sandbox — WorkspaceJailManager/JailedWorker: worker persistente por
 workspace (não um bwrap novo a cada tool call)."""
 
 from __future__ import annotations

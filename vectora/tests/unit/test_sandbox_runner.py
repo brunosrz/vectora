@@ -1,4 +1,4 @@
-"""AI Jail — runner.run_sandboxed: dispatcher que lê vectora.toml e decide
+"""Sandbox — runner.run_sandboxed: dispatcher que lê vectora.toml e decide
 se roda dentro do sandbox ou sem wrapper (comportamento atual preservado
 quando não há política configurada).
 """

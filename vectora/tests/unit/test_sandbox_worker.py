@@ -1,4 +1,4 @@
-"""AI Jail — backend.sandbox.worker: protocolo JSON-lines do loop que roda
+"""Sandbox — backend.sandbox.worker: protocolo JSON-lines do loop que roda
 DENTRO do jail (exec/read_file/write_file)."""
 
 from __future__ import annotations

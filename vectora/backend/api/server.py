@@ -256,7 +256,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
     # Popula o cache de detecção do WSL2 cedo — sem isso, parse_policy()
     # (síncrono, chamado no hot path de file_edit/file_write/terminal) só
-    # vê o cache _UNSET e nunca auto-habilita o AI Jail na primeira leitura
+    # vê o cache _UNSET e nunca auto-habilita o Sandbox na primeira leitura
     # real de um workspace sem vectora.toml.
     wsl2_warmup_task: asyncio.Task[None] | None = None
     try:

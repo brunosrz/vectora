@@ -54,7 +54,7 @@ const SHIPPED = [
   },
   {
     label:
-      "Sandbox / AI Jail — bwrap + seccomp + Landlock (Linux), WSL2 (Windows), Seatbelt (macOS), Singularity/Apptainer",
+      "Sandbox — bwrap + seccomp + Landlock (Linux), WSL2 (Windows), Seatbelt (macOS), Singularity/Apptainer",
   },
   {
     label:

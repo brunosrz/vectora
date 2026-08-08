@@ -1,4 +1,4 @@
-"""AI Jail — linux.run_local_sandboxed: erro/borda de bwrap ausente e de
+"""Sandbox — linux.run_local_sandboxed: erro/borda de bwrap ausente e de
 timeout, sem depender do binário real estar instalado."""
 
 from __future__ import annotations

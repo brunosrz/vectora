@@ -302,7 +302,7 @@ describe("StepApiKeys", () => {
   });
 });
 
-describe("StepWorkspace — bullet do AI Jail", () => {
+describe("StepWorkspace — bullet do Sandbox", () => {
   it("renderiza o bullet explicando o isolamento por workspace via [sandbox]", () => {
     render(<StepWorkspace />);
     expect(screen.getByText(/vectora\.toml/)).toBeInTheDocument();
@@ -327,6 +327,6 @@ describe("StepMemory — três camadas", () => {
 describe("StepCapabilities", () => {
   it("renderiza a introdução de capacidades do agente", () => {
     render(<StepCapabilities />);
-    expect(screen.getByText(/AI Jail/)).toBeInTheDocument();
+    expect(screen.getByText(/Sandbox/)).toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
 """Worker jailado persistente por workspace — ponto de integração único do
-AI Jail para as tools que tocam filesystem/shell (`terminal`, `file_write`,
+Sandbox para as tools que tocam filesystem/shell (`terminal`, `file_write`,
 `edit_file`, PTY interativo).
 
 Nasce sob demanda na 1ª ação sandboxável de uma workspace com `[sandbox]`

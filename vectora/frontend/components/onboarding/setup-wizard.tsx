@@ -701,7 +701,7 @@ export function StepWorkspace(_props: StepProps) {
         <li>{m.onboarding_workspace_bullet_1()}</li>
         <li>{m.onboarding_workspace_bullet_2()}</li>
         <li>{m.onboarding_workspace_bullet_3()}</li>
-        <li>{m.onboarding_workspace_bullet_ai_jail()}</li>
+        <li>{m.onboarding_workspace_bullet_sandbox()}</li>
       </ul>
     </div>
   );

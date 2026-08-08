@@ -56,7 +56,7 @@ const SANDBOX_DIAGNOSTIC_MESSAGE: Record<string, () => string> = {
 };
 
 /** Consulta `GET /workspaces/{id}/sandbox/status` — reflete se o worker
- * jailado (AI Jail) está ativo pra essa workspace, e por quê não quando
+ * jailado (Sandbox) está ativo pra essa workspace, e por quê não quando
  * desabilitado. `null` enquanto carrega (não mostra nenhum dos dois
  * avisos até saber de verdade). */
 function useSandboxStatus(workspaceId: string | undefined): {

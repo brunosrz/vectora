@@ -1,4 +1,4 @@
-"""AI Jail (0.3) — PtySession.create() com `policy`: o terminal interativo
+"""Sandbox — PtySession.create() com `policy`: o terminal interativo
 do usuário compartilha a MESMA política jailada (bwrap) que `terminal`/
 `file_write` da mesma workspace quando `[sandbox]` está habilitado.
 """

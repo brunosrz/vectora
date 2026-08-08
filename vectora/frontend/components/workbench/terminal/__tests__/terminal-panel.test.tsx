@@ -255,7 +255,7 @@ describe("TerminalPanel", () => {
     expect(mockClose).toHaveBeenCalledWith("t1", "a");
   });
 
-  describe("indicador de sandbox (AI Jail)", () => {
+  describe("indicador de sandbox", () => {
     it("workspace sem [sandbox]: mostra o aviso âmbar de sempre", async () => {
       sandboxStatusResponse = { enabled: false };
       render(<TerminalPanel threadId="t1" />);

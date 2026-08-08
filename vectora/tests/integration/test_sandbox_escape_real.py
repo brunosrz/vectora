@@ -1,4 +1,4 @@
-"""AI Jail — escape real contra um kernel Linux de verdade.
+"""Sandbox — escape real contra um kernel Linux de verdade.
 
 Todo o resto da suíte de sandbox é mockado (argv montado, SDK falso): isso
 prova que a *configuração* está certa, não que o kernel a respeita. Aqui o

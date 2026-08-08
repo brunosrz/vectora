@@ -34,6 +34,6 @@ This toggle only affects layout, not capability: the same tools and the same wor
 
 ## See also
 
-- [AI Jail](../ai-jail) — how a workspace's terminal/file access can be sandboxed
+- [Sandbox](../sandbox) — how a workspace's terminal/file access can be sandboxed
 - [Using the Workbench](../../guides/using-the-workbench) — the tabs available in a Dev-mode session
 - [Agent automation](../../guides/agent-automation) — Delegate, Schedule, Remember, Connect

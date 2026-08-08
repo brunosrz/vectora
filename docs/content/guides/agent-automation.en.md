@@ -36,5 +36,5 @@ Vectora Connect delivers chat through platforms other than the built-in UI — T
 
 - [Webhook Templates](../webhook-templates) — the three webhook-triggered automation models
 - [Sessions & Workspaces](../../concepts/sessions-and-workspaces) — what a workspace is and how trust works
-- [AI Jail](../../concepts/ai-jail) — sandboxing terminal/file access per workspace
+- [Sandbox](../../concepts/sandbox) — sandboxing terminal/file access per workspace
 - [Using the Workbench](../using-the-workbench) — the Tasks and Plan tabs in practice

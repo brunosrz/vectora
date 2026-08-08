@@ -1,4 +1,4 @@
-"""AI Jail — backend.sandbox.landlock: wrapper ctypes das 3 syscalls do
+"""Sandbox — backend.sandbox.landlock: wrapper ctypes das 3 syscalls do
 Landlock LSM (sem glibc wrapper — man7.org/landlock_create_ruleset(2)).
 Testes mockam ctypes/os (sem kernel Linux 5.13+ real disponível em CI/
 dev nesta máquina) — cobrem a lógica de orquestração e degradação."""

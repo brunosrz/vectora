@@ -66,4 +66,4 @@ Clicking the "open as window" icon on a file (Files tab) opens an independent **
 - [Using the chat](../using-the-chat)
 - [Git workflows](../git-workflows)
 - [Agent automation](../agent-automation) — Delegate, Schedule, Remember, Connect
-- [AI Jail](../../concepts/ai-jail) — sandboxing terminal/file access per workspace
+- [Sandbox](../../concepts/sandbox) — sandboxing terminal/file access per workspace

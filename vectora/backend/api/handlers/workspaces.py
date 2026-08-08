@@ -976,7 +976,7 @@ class SandboxStatusResponse(BaseModel):
 
 @view_router.get("/{workspace_id}/sandbox/status", response_model=SandboxStatusResponse)
 async def workspace_sandbox_status(workspace_id: str) -> SandboxStatusResponse:
-    """Reflete se o worker jailado (AI Jail) está habilitado pra essa
+    """Reflete se o worker jailado (Sandbox) está habilitado pra essa
     workspace — lê `vectora.toml`/`[sandbox]` na raiz do workspace, mesma
     fonte que `backend/tools/fs.py`/`PtySession` já consultam antes de
     rotear terminal/tools de arquivo pelo worker. Workspace inexistente

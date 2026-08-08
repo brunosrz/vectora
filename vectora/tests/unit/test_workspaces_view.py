@@ -757,7 +757,7 @@ class TestToggleAndDeleteRagBucket:
 
 class TestSandboxStatus:
     """GET /workspaces/{id}/sandbox/status — reflete se o worker jailado
-    (AI Jail) está habilitado, lendo vectora.toml/[sandbox], e populado com
+    (Sandbox) está habilitado, lendo vectora.toml/[sandbox], e populado com
     um `diagnostic` acionável quando desabilitado."""
 
     @pytest.mark.asyncio

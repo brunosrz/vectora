@@ -1,17 +1,17 @@
 ---
-title: AI Jail
+title: Sandbox
 weight: 5
 ---
 
-AI Jail is Vectora's sandbox for the agent's terminal and filesystem access. It follows the original [ai-jail](https://github.com/akitaonrails/ai-jail) idea — the agent's actions run *inside* the jail, not behind a single sandboxed function call — adapted to Vectora's architecture: a single long-running backend process serving many concurrent workspaces, rather than one process per invocation.
+Sandbox is Vectora's isolation layer for the agent's terminal and filesystem access. It follows the design of Fabio Akita's [ai-jail](https://github.com/akitaonrails/ai-jail) — the agent's actions run *inside* the jail, not behind a single sandboxed function call — adapted to Vectora's architecture: a single long-running backend process serving many concurrent workspaces, rather than one process per invocation.
 
 ## Threat model
 
-Without a sandbox, `terminal`, `file_write`, and `file_edit` operate directly in the backend process — the agent (or a prompt injection) can read `~/.ssh`, exfiltrate secrets, or run destructive commands with the same privileges as the backend itself. AI Jail exists to bound that blast radius to a workspace's declared `rw_paths`/`ro_paths`, without giving up file and terminal access entirely (that would defeat the point of an autonomous coding agent).
+Without a sandbox, `terminal`, `file_write`, and `file_edit` operate directly in the backend process — the agent (or a prompt injection) can read `~/.ssh`, exfiltrate secrets, or run destructive commands with the same privileges as the backend itself. Sandbox exists to bound that blast radius to a workspace's declared `rw_paths`/`ro_paths`, without giving up file and terminal access entirely (that would defeat the point of an autonomous coding agent).
 
 ## Opt-in, per workspace
 
-AI Jail is **off by default**. It activates only when a workspace's `vectora.toml` has a `[sandbox]` section:
+Sandbox is **off by default**. It activates only when a workspace's `vectora.toml` has a `[sandbox]` section:
 
 ```toml
 [sandbox]

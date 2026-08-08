@@ -1,4 +1,4 @@
-"""AI Jail — dry_run: monta o argv do `bwrap` sem precisar do binário real
+"""Sandbox — dry_run: monta o argv do `bwrap` sem precisar do binário real
 instalado (CI-friendly)."""
 
 from __future__ import annotations
