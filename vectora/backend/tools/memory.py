@@ -13,12 +13,20 @@ from __future__ import annotations
 import json
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
 
 logger = logging.getLogger(__name__)
+
+#: Categorias de fato (Sprint 16 WS3) — mesmo vocabulário usado por
+#: `backend/scheduling/memory_consolidation.py` (WS4) pra manter uma única
+#: taxonomia em todo o sistema de memória. Validado automaticamente pelo
+#: schema Pydantic que `@tool` gera a partir do type hint — valor fora do
+#: Literal nunca chega ao corpo da função (rejeitado na camada de parsing
+#: da tool, `ValidationError`, ver `tests/unit/test_memory.py`).
+FactCategory = Literal["gotcha", "decision", "preference", "rule"]
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +63,18 @@ def _memory_namespace(config: RunnableConfig | None) -> tuple[str, ...]:
     return ("user", user_id, "memories")
 
 
+async def list_fact_contents(user_id: str) -> list[str]:
+    """Conteúdo de todos os fatos salvos de um usuário — usado por
+    `backend/services/remember_trigger.py` pra deduplicar propostas do
+    Remember (`dedupe_fact_drafts`) antes de sugerir de novo um fato já
+    aprovado. Acessor direto (sem passar por `RunnableConfig`/`@tool`,
+    que o caller — fora do turno do agente — não tem)."""
+    store = _get_store()
+    ns = _memory_namespace({"configurable": {"user_id": user_id}})
+    items = await store.asearch(ns)
+    return [item.value.get("content", "") for item in items]
+
+
 def _get_store() -> Any:
     """Obtém o LangGraph store do contexto atual.
 
@@ -88,6 +108,7 @@ async def save_memory(
     config: RunnableConfig,
     metadata: dict[str, Any] | None = None,
     ttl_days: int | None = None,
+    category: FactCategory | None = None,
 ) -> str:
     """Salva uma memória persistente para uso em futuras conversas da mesma sessão.
 
@@ -101,6 +122,8 @@ async def save_memory(
         config: Injetado automaticamente pelo LangGraph com user_id/workspace_id
         metadata: Metadados adicionais
         ttl_days: Dias até expiração (informativo — store básico não garante TTL)
+        category: Categoria do fato (gotcha/decision/preference/rule) — opcional,
+            None quando não classificado
 
     Returns:
         JSON com status saved/failed
@@ -115,6 +138,7 @@ async def save_memory(
             "content": content,
             "metadata": metadata or {},
             "updated_at": now,
+            "category": category,
         }
         if ttl_days is not None:
             value["ttl_days"] = ttl_days
@@ -122,10 +146,11 @@ async def save_memory(
         await store.aput(ns, key, value)
 
         logger.info(
-            "memory_saved key=%s ns=%s ttl_days=%s",
+            "memory_saved key=%s ns=%s ttl_days=%s category=%s",
             key,
             ns,
             ttl_days,
+            category,
         )
         return json.dumps(
             {
@@ -180,6 +205,7 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
                     "content": val.get("content", ""),
                     "metadata": val.get("metadata", {}),
                     "updated_at": val.get("updated_at"),
+                    "category": val.get("category"),
                 }
             )
 
@@ -191,6 +217,7 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
                 "content": item.value.get("content", ""),
                 "metadata": item.value.get("metadata", {}),
                 "updated_at": item.value.get("updated_at"),
+                "category": item.value.get("category"),
             }
             for item in items
         ]

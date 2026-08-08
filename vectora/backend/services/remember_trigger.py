@@ -46,7 +46,12 @@ async def maybe_trigger_remember(thread_id: str, user_id: str) -> None:
             return
 
         from backend.services import agent_factory
-        from backend.services.learning import dedupe_skill_drafts, distill_transcript
+        from backend.services.learning import (
+            dedupe_fact_drafts,
+            dedupe_skill_drafts,
+            distill_transcript,
+        )
+        from backend.tools.memory import list_fact_contents
         from backend.workspace.skills import list_skills
 
         pairs = await agent_factory.aget_thread_messages(thread_id)
@@ -57,8 +62,10 @@ async def maybe_trigger_remember(thread_id: str, user_id: str) -> None:
         result = await distill_transcript(transcript)
         existing_names = {s.name for s in list_skills(user_id)}
         skills = dedupe_skill_drafts(result.skills, existing_names)
+        existing_facts = await list_fact_contents(user_id)
+        facts = dedupe_fact_drafts(result.facts, existing_facts)
 
-        if not skills and not result.facts:
+        if not skills and not facts:
             logger.debug(
                 "remember_trigger: nada reaproveitável thread=%s (turno %d)",
                 thread_id,
@@ -67,13 +74,13 @@ async def maybe_trigger_remember(thread_id: str, user_id: str) -> None:
             return
 
         await set_remember_pending(thread_id, True)
-        await _write_proposal_artifact(thread_id, skills, result.facts)
+        await _write_proposal_artifact(thread_id, skills, facts)
         logger.info(
             "remember_trigger: proposta automática gravada thread=%s "
             "skills=%d facts=%d",
             thread_id,
             len(skills),
-            len(result.facts),
+            len(facts),
         )
     except Exception:
         logger.warning(

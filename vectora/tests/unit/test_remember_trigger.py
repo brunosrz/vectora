@@ -78,6 +78,9 @@ async def test_multiple_of_n_without_pending_distills_and_writes_proposal(
         ),
     )
     monkeypatch.setattr("backend.workspace.skills.list_skills", lambda user_id: [])
+    monkeypatch.setattr(
+        "backend.tools.memory.list_fact_contents", AsyncMock(return_value=[])
+    )
     set_pending = AsyncMock()
     monkeypatch.setattr(
         "backend.api.handlers.threads.set_remember_pending", set_pending
@@ -121,6 +124,9 @@ async def test_nothing_reusable_does_not_mark_pending_nor_write_artifact(
         AsyncMock(return_value=DistillationResult()),
     )
     monkeypatch.setattr("backend.workspace.skills.list_skills", lambda user_id: [])
+    monkeypatch.setattr(
+        "backend.tools.memory.list_fact_contents", AsyncMock(return_value=[])
+    )
     set_pending = AsyncMock()
     monkeypatch.setattr(
         "backend.api.handlers.threads.set_remember_pending", set_pending
@@ -150,6 +156,56 @@ async def test_empty_transcript_returns_without_distilling(monkeypatch, _no_pend
     await maybe_trigger_remember("t1", "u1")
 
     distill.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_fato_ja_salvo_nao_e_proposto_de_novo(monkeypatch, _no_pending):
+    """Regressão (Sprint 16 WS3): um fato já aprovado/salvo em sessão
+    anterior não pode voltar a ser proposto pelo Remember — sem o dedup,
+    o mesmo fato reaparece a cada N turnos indefinidamente."""
+    monkeypatch.setattr(
+        "backend.api.handlers.threads.increment_remember_turn_count",
+        AsyncMock(return_value=REMEMBER_TRIGGER_EVERY_N_TURNS),
+    )
+    from backend.services import agent_factory
+
+    monkeypatch.setattr(
+        agent_factory,
+        "aget_thread_messages",
+        AsyncMock(return_value=[("human", "prefiro respostas em PT-BR", "", [])]),
+    )
+    monkeypatch.setattr(
+        "backend.services.learning.distill_transcript",
+        AsyncMock(
+            return_value=DistillationResult(
+                skills=[],
+                facts=["Usuário prefere respostas em PT-BR", "Fato genuinamente novo"],
+            )
+        ),
+    )
+    monkeypatch.setattr("backend.workspace.skills.list_skills", lambda user_id: [])
+    monkeypatch.setattr(
+        "backend.tools.memory.list_fact_contents",
+        AsyncMock(return_value=["usuário prefere respostas em pt-br"]),
+    )
+    set_pending = AsyncMock()
+    monkeypatch.setattr(
+        "backend.api.handlers.threads.set_remember_pending", set_pending
+    )
+    artifact_calls: list[dict] = []
+
+    class _FakeCreateArtifact:
+        def invoke(self, payload: dict) -> str:
+            artifact_calls.append(payload)
+            return "{}"
+
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _FakeCreateArtifact())
+
+    await maybe_trigger_remember("t1", "u1")
+
+    content = artifact_calls[0]["content"]
+    assert "Fato genuinamente novo" in content
+    assert "Usuário prefere respostas em PT-BR" not in content
 
 
 @pytest.mark.asyncio

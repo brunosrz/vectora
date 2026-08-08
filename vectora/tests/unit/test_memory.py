@@ -13,7 +13,12 @@ Verifica:
 
 from __future__ import annotations
 
+import json
 from typing import Any
+
+import pytest
+from langchain_core.runnables import RunnableConfig
+from langgraph.store.memory import InMemoryStore
 
 # ---------------------------------------------------------------------------
 # N1 — _user_id_from_config prioridade
@@ -161,3 +166,113 @@ class TestNamespaceIsolation:
         config_b: Any = {"configurable": {"user_id": "bob"}}
 
         assert _user_id_from_config(config_a) != _user_id_from_config(config_b)
+
+
+# ---------------------------------------------------------------------------
+# Sprint 16 WS3 — save_memory/get_memory com `category` (gotcha/decision/
+# preference/rule): campo opcional, persistido dentro do `value` já
+# existente no BaseStore — sem migração de schema.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def store(monkeypatch):
+    real_store = InMemoryStore()
+    monkeypatch.setattr("backend.tools.memory._get_store", lambda: real_store)
+    return real_store
+
+
+class TestSaveMemoryCategory:
+    async def test_category_e_persistida_e_volta_no_get(self, store):
+        from backend.tools.memory import get_memory, save_memory
+
+        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
+        await save_memory.ainvoke(
+            {"key": "pref_lang", "content": "PT-BR", "category": "preference"},
+            config=config,
+        )
+
+        out = json.loads(await get_memory.ainvoke({"key": "pref_lang"}, config=config))
+
+        assert out["category"] == "preference"
+
+    async def test_sem_category_fica_none_retrocompativel(self, store):
+        """Chamadas existentes sem `category` continuam funcionando —
+        parâmetro é opcional, não quebra nenhum caller atual."""
+        from backend.tools.memory import get_memory, save_memory
+
+        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
+        await save_memory.ainvoke(
+            {"key": "sem_categoria", "content": "conteúdo qualquer"}, config=config
+        )
+
+        out = json.loads(
+            await get_memory.ainvoke({"key": "sem_categoria"}, config=config)
+        )
+
+        assert out["category"] is None
+
+    async def test_category_invalida_e_rejeitada_sem_persistir(self, store):
+        """Erro/borda: categoria fora do conjunto válido não é aceita
+        silenciosamente. O `Literal["gotcha","decision","preference","rule"]`
+        vira schema Pydantic da tool (LangChain `@tool`) — a validação
+        acontece ANTES do corpo de `save_memory` rodar, então o erro chega
+        como `ValidationError` da própria camada de parsing da tool, não
+        como JSON `{"status":"failed"}` (esse é o caminho pra falha DENTRO
+        da execução, ex. store indisponível — ver teste de `store` abaixo)."""
+        from pydantic import ValidationError
+
+        from backend.tools.memory import save_memory
+
+        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
+        with pytest.raises(ValidationError, match="category"):
+            await save_memory.ainvoke(
+                {
+                    "key": "categoria_ruim",
+                    "content": "x",
+                    "category": "nao_existe",
+                },
+                config=config,
+            )
+
+        # Nada foi persistido — a chave nunca chega a existir no store.
+        item = await store.aget(("user", "u1", "memories"), "categoria_ruim")
+        assert item is None
+
+    async def test_listar_todas_inclui_category_de_cada_uma(self, store):
+        from backend.tools.memory import get_memory, save_memory
+
+        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
+        await save_memory.ainvoke(
+            {"key": "a", "content": "x", "category": "gotcha"}, config=config
+        )
+        await save_memory.ainvoke({"key": "b", "content": "y"}, config=config)
+
+        out = json.loads(await get_memory.ainvoke({}, config=config))
+
+        by_key = {m["key"]: m["category"] for m in out["memories"]}
+        assert by_key == {"a": "gotcha", "b": None}
+
+
+class TestListFactContents:
+    """`list_fact_contents` — acessor simples usado por `remember_trigger.py`
+    (fora do wrapper `@tool`, que exige `RunnableConfig`) pra buscar os
+    fatos já salvos de um usuário antes de propor duplicatas."""
+
+    async def test_retorna_conteudo_de_todos_os_fatos_do_usuario(self, store):
+        from backend.tools.memory import list_fact_contents, save_memory
+
+        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
+        await save_memory.ainvoke({"key": "a", "content": "Fato A"}, config=config)
+        await save_memory.ainvoke({"key": "b", "content": "Fato B"}, config=config)
+
+        result = await list_fact_contents("u1")
+
+        assert sorted(result) == ["Fato A", "Fato B"]
+
+    async def test_usuario_sem_nenhum_fato_retorna_lista_vazia(self, store):
+        from backend.tools.memory import list_fact_contents
+
+        result = await list_fact_contents("usuario-novo")
+
+        assert result == []

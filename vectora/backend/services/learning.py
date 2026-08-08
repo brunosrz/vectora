@@ -84,3 +84,21 @@ def dedupe_skill_drafts(
         for draft in drafts
         if draft.name.strip().lower() not in normalized_existing
     ]
+
+
+def dedupe_fact_drafts(facts: list[str], existing_contents: list[str]) -> list[str]:
+    """Remove fatos cujo conteúdo normalizado já foi salvo antes — mesma
+    paridade de dedup que `dedupe_skill_drafts` já dava às skills, evitando
+    que o Remember proponha de novo (em sessões futuras) um fato que o
+    usuário já aprovou. Normalização é só strip+lower nas pontas (não
+    colapsa espaços internos), igual ao dedup de skill."""
+    normalized_existing = {content.strip().lower() for content in existing_contents}
+    seen: set[str] = set()
+    kept: list[str] = []
+    for fact in facts:
+        key = fact.strip().lower()
+        if key in normalized_existing or key in seen:
+            continue
+        seen.add(key)
+        kept.append(fact)
+    return kept

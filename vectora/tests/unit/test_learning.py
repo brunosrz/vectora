@@ -10,6 +10,7 @@ import pytest
 from backend.services.learning import (
     DistillationResult,
     SkillDraft,
+    dedupe_fact_drafts,
     dedupe_skill_drafts,
     distill_transcript,
 )
@@ -278,3 +279,76 @@ async def test_distill_transcript_transcript_so_com_um_caractere_ainda_chama_llm
     await distill_transcript("x")
 
     load_llm_mock.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# dedupe_fact_drafts — Sprint 16 WS3: mesma paridade de dedup que skills já
+# tinham (dedupe_skill_drafts), agora também pra fatos propostos pelo
+# Remember, pra não propor de novo um fato já aprovado em sessão anterior.
+# ---------------------------------------------------------------------------
+
+
+def test_dedupe_fact_drafts_removes_facts_already_saved():
+    facts = ["Usuário prefere respostas em português brasileiro", "Fato novo"]
+
+    result = dedupe_fact_drafts(
+        facts, ["usuário prefere respostas em português brasileiro"]
+    )
+
+    assert result == ["Fato novo"]
+
+
+def test_dedupe_fact_drafts_no_existing_facts_keeps_all_drafts():
+    facts = ["Fato A", "Fato B"]
+
+    result = dedupe_fact_drafts(facts, [])
+
+    assert result == facts
+
+
+def test_dedupe_fact_drafts_empty_drafts_list_returns_empty():
+    result = dedupe_fact_drafts([], ["algo"])
+
+    assert result == []
+
+
+def test_dedupe_fact_drafts_matches_case_and_edge_whitespace_insensitively():
+    # Mesma normalização de dedupe_skill_drafts: strip+lower nas pontas —
+    # não colapsa espaços internos duplicados.
+    facts = ["  Prefere DARK mode  "]
+
+    result = dedupe_fact_drafts(facts, ["prefere dark mode"])
+
+    assert result == []
+
+
+def test_dedupe_fact_drafts_internal_double_spaces_not_collapsed():
+    facts = ["Prefere  dark mode"]
+
+    result = dedupe_fact_drafts(facts, ["prefere dark mode"])
+
+    assert result == ["Prefere  dark mode"]
+
+
+def test_dedupe_fact_drafts_duplicate_facts_within_input_both_removed():
+    facts = ["Fato X", "fato x"]
+
+    result = dedupe_fact_drafts(facts, ["fato x"])
+
+    assert result == []
+
+
+def test_dedupe_fact_drafts_preserves_order_of_kept_facts():
+    facts = ["Mantido 1", "Removido", "Mantido 2"]
+
+    result = dedupe_fact_drafts(facts, ["removido"])
+
+    assert result == ["Mantido 1", "Mantido 2"]
+
+
+def test_dedupe_fact_drafts_existing_facts_also_normalized_with_edge_whitespace():
+    facts = ["minha preferência"]
+
+    result = dedupe_fact_drafts(facts, ["  Minha Preferência  "])
+
+    assert result == []
