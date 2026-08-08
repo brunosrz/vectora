@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@react-email/render": "^2.1.0",
-    "hono": "^4.12.33",
+    "hono": "^4.12.34",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "stripe": "^22.4.0",
