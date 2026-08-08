@@ -99,11 +99,28 @@ _ROLE_POR_TIPO = {
 }
 
 
+def _to_openai_content(content: list[ContentBlock]) -> str | list[dict]:
+    """Bloco `text` vira string simples (caso comum); qualquer bloco
+    `image_url` presente força o formato de lista de partes da Responses API
+    (`input_text`/`input_image`) — nunca descarta o bloco de imagem só
+    porque `msg.text()` só concatena texto."""
+    if not any(b.kind == "image_url" for b in content):
+        return "".join(b.text or "" for b in content if b.kind == "text")
+    partes: list[dict] = []
+    for bloco in content:
+        if bloco.kind == "text" and bloco.text:
+            partes.append({"type": "input_text", "text": bloco.text})
+        elif bloco.kind == "image_url" and bloco.image_url:
+            partes.append({"type": "input_image", "image_url": bloco.image_url})
+    return partes
+
+
 def _to_openai_input(messages: list[VMessage]) -> list[dict]:
     """Traduz ``VMessage`` pro formato `input` (lista de items) da Responses
     API. Tool calls viram items `function_call` separados; results de tool
     viram `function_call_output` — não são mensagens de role `tool` como na
-    Chat Completions."""
+    Chat Completions. Blocos `image_url` no content passam por
+    ``_to_openai_content`` — nunca são descartados silenciosamente."""
     itens: list[dict] = []
     for msg in messages:
         if msg.role == MessageRole.TOOL:
@@ -136,7 +153,7 @@ def _to_openai_input(messages: list[VMessage]) -> list[dict]:
             )
             continue
 
-        itens.append({"role": role, "content": msg.text()})
+        itens.append({"role": role, "content": _to_openai_content(msg.content)})
     return itens
 
 

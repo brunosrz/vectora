@@ -35,6 +35,7 @@
   "sidebar_ctx_delete": "Apagar",
   "sidebar_rename_placeholder": "Nome da sessão",
   "error_banner_title": "Algo deu errado",
+  "route_error_title": "Não foi possível carregar esta página",
   "error_banner_retry": "Tentar novamente",
   "error_banner_retrying": "Tentando novamente…",
   "workspaces_error_hydrate": "Não foi possível carregar seus workspaces.",

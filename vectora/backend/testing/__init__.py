@@ -1,6 +1,7 @@
 """Test Fixtures and Utilities for Unit Testing.
 
-Provides mock LLM, test graph, fixtures for database, message factories, and assertions.
+Fixtures de banco (checkpointer/temp_db), factories de `VMessage` e
+assertions — tudo nativo, sem `langchain_core`.
 """
 
 from __future__ import annotations
@@ -14,29 +15,23 @@ from backend.testing.assertions import (
 )
 from backend.testing.fixtures import (
     checkpointer,
-    mock_llm,
     temp_db,
 )
 from backend.testing.message_factory import (
-    ai_message_text,
-    ai_message_with_tool_call,
-    human_message,
-    tool_message,
+    make_assistant_message,
+    make_tool_result,
+    make_user_message,
 )
-from backend.testing.mocks import MockLLM
 
 __all__ = [
-    "MockLLM",
-    "ai_message_text",
-    "ai_message_with_tool_call",
     "assert_last_message_is_ai",
     "assert_message_contains_text",
     "assert_tool_called",
     "assert_tool_called_with_args",
     "assert_tool_result_in_messages",
     "checkpointer",
-    "human_message",
-    "mock_llm",
+    "make_assistant_message",
+    "make_tool_result",
+    "make_user_message",
     "temp_db",
-    "tool_message",
 ]

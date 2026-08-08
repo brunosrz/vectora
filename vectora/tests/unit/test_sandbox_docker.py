@@ -181,6 +181,25 @@ def test_build_docker_command_sempre_aplica_flags_de_seguranca(monkeypatch):
     assert "--pids-limit" not in argv
 
 
+@pytest.mark.parametrize(
+    "policy",
+    [
+        SandboxPolicy(enabled=True),
+        SandboxPolicy(enabled=True, lockdown=True),
+        SandboxPolicy(enabled=True, docker_image="node:20-slim"),
+    ],
+)
+def test_build_docker_command_nunca_monta_o_socket_do_docker_do_host(policy):
+    """Invariante permanente: diferente do ai-jail (CVE de socket montado
+    automaticamente = root do host), o Vectora roda o comando do agente
+    DENTRO do container — nunca dá ao processo sandboxed acesso ao Docker
+    do host. Nenhuma combinação de policy pode reintroduzir isso."""
+    argv = build_docker_command(policy, "/ws", ["true"])
+
+    assert "/var/run/docker.sock" not in " ".join(argv)
+    assert not any(":/var/run/docker.sock" in arg for arg in argv)
+
+
 def test_build_docker_command_limites_de_recurso_por_perfil(monkeypatch):
     monkeypatch.setattr("backend.sandbox.docker._cgroup_limits_available", lambda: True)
 

@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 
 import { routeTree } from "./routeTree.gen";
+import { RouteErrorComponent } from "./route-error-component";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,4 +24,5 @@ export const router = createRouter({
   defaultPreload: "intent",
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
+  defaultErrorComponent: RouteErrorComponent,
 });

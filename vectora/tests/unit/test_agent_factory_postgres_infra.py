@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from backend.persistence.native.sqlite_checkpointer import VectoraSqliteSaver
 from backend.services import agent_factory
 
 
@@ -91,11 +92,11 @@ async def test_ensure_infra_falls_back_to_sqlite_when_postgres_fails(tmp_path):
     ):
         await agent_factory._ensure_infra()
 
-    assert agent_factory._checkpointer is not None
-    # VectoraSqliteSaver não tem "setup" chamado por nós no teste (chamado
-    # internamente por _ensure_infra) — o importante é que NÃO seja o mock
-    # do Postgres e que não levante exceção.
-    assert not isinstance(agent_factory._checkpointer, MagicMock)
+    # Assert positivo: precisa ser de fato o checkpointer SQLite de fallback
+    # (VectoraSqliteSaver), não só "qualquer coisa que não seja MagicMock" —
+    # esse assert fraco deixaria passar até um objeto de tipo errado, desde
+    # que não fosse um MagicMock.
+    assert isinstance(agent_factory._checkpointer, VectoraSqliteSaver)
 
 
 @pytest.mark.asyncio

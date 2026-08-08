@@ -925,6 +925,259 @@ describe("useStreamHandler.processStream", () => {
     expect(sub.isComplete).toBe(true);
     expect(sub.isStreaming).toBe(false);
   });
+
+  // Achados da auditoria (Sprint 15-C): estes 5 tipos de evento nunca eram
+  // exercitados pela suíte — justamente os mais ligados à orquestração que
+  // uma futura reescrita do motor de streaming (backend) pode fazer
+  // divergir sem que nenhum teste aqui perceba.
+
+  it("node com status='started' seta currentNodeLabel; 'finished' move pra nodeDurations", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "node",
+          node: "agent",
+          status: "started",
+          node_label: "Pensando",
+        },
+        {
+          type: "node",
+          node: "agent",
+          status: "finished",
+          node_label: "Pensando",
+          duration_ms: 1200,
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.currentNodeLabel).toBeUndefined();
+    expect(a?.nodeDurations).toEqual([
+      { node: "agent", label: "Pensando", duration_ms: 1200 },
+    ]);
+  });
+
+  it("node 'finished' com duration_ms<=0 não é registrado (edge)", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "node",
+          node: "agent",
+          status: "finished",
+          node_label: "Pensando",
+          duration_ms: 0,
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.nodeDurations ?? []).toHaveLength(0);
+  });
+
+  it("ui_metrics não altera mensagens nem lança erro (evento informativo)", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "ui_metrics",
+          last_node: "agent",
+          last_node_ms: 900,
+          rag_hits: 2,
+          rag_misses: 1,
+        },
+        { type: "token", content: "oi" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+
+    expect(out.assistantContent).toBe("oi");
+  });
+
+  it("rag_citations popula ragCitations na mensagem do assistente", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "rag_citations",
+          citations: [
+            { index: 1, source: "doc.md", chunk: "trecho relevante" },
+          ],
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("busca X", "a1");
+
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.ragCitations).toEqual([
+      { index: 1, source: "doc.md", chunk: "trecho relevante" },
+    ]);
+  });
+
+  it("tool_activity com elapsed_ms=null marca activeTool em andamento; com valor, enriquece o ToolCall", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        {
+          type: "tool_call",
+          tool_call_id: "c1",
+          tool_name: "file_read",
+          args_json: "{}",
+        },
+        {
+          type: "tool_activity",
+          tool_name: "file_read",
+          tool_call_id: "c1",
+          args_preview: "a.py",
+          elapsed_ms: null,
+        },
+        {
+          type: "tool_activity",
+          tool_name: "file_read",
+          tool_call_id: "c1",
+          args_preview: "a.py",
+          elapsed_ms: 340,
+        },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("lê o arquivo", "a1");
+
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.activeTool).toEqual({
+      name: "file_read",
+      argsPreview: "a.py",
+      elapsedMs: 340,
+    });
+    expect(a?.toolCalls?.[0]?.elapsedMs).toBe(340);
+  });
+
+  it("workbench_invalidate com tabs válidas marca pending no workbench-store", async () => {
+    useWorkspacesStore.setState({
+      active_id: "ws-1",
+      workspaces: [
+        {
+          id: "ws-1",
+          name: "ws",
+          cwd: "/tmp/ws",
+          trusted: true,
+          is_git_repo: false,
+          git_remote: null,
+          git_current_branch: null,
+          git_default_branch: null,
+        },
+      ],
+    });
+    useWorkbenchStore.setState({ pending: {} });
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "workbench_invalidate", tabs: ["files"] },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    await result.current.processStream("edita um arquivo", "a1");
+
+    expect(useWorkbenchStore.getState().pending["ws-1"]).toEqual({
+      files: true,
+      diff: true,
+    });
+  });
+
+  it("workbench_invalidate com `tabs` malformado (não-array) não lança e não marca pending (regressão: não pode virar 'queda de conexão')", async () => {
+    useWorkspacesStore.setState({
+      active_id: "ws-1",
+      workspaces: [
+        {
+          id: "ws-1",
+          name: "ws",
+          cwd: "/tmp/ws",
+          trusted: true,
+          is_git_repo: false,
+          git_remote: null,
+          git_current_branch: null,
+          git_default_branch: null,
+        },
+      ],
+    });
+    useWorkbenchStore.setState({ pending: {} });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    streamChatMock.mockReturnValue(
+      gen([
+        // `tabs` ausente do payload — evento malformado, não deve quebrar o loop.
+        { type: "workbench_invalidate" } as unknown as {
+          type: "workbench_invalidate";
+          tabs: string[];
+        },
+        { type: "token", content: "ainda funciona" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("edita um arquivo", "a1");
+
+    // O stream continua normalmente depois do evento malformado — não foi
+    // reclassificado como queda de conexão.
+    expect(out.assistantContent).toBe("ainda funciona");
+    expect(useWorkbenchStore.getState().pending["ws-1"]).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+
+  it("type de evento desconhecido é logado e ignorado, sem quebrar o stream (drift de contrato)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "evento_futuro_desconhecido" } as unknown as StreamEvent,
+        { type: "token", content: "continua" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+
+    expect(out.assistantContent).toBe("continua");
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("type desconhecido"),
+      "evento_futuro_desconhecido",
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it("token com `content` não-string é tratado como vazio e logado, nunca vira a string 'undefined' (drift de contrato)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "token", content: null } as unknown as {
+          type: "token";
+          content: string;
+        },
+        { type: "token", content: "ok" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+    const { result } = run();
+    const out = await result.current.processStream("oi", "a1");
+
+    expect(out.assistantContent).toBe("ok");
+    expect(out.assistantContent).not.toContain("undefined");
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
 });
 
 // ============================================================================

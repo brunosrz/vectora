@@ -11,6 +11,7 @@ import {
 } from "@/lib/queries/threads";
 import { queryClient } from "../router";
 import { listThreads } from "@/lib/api/vectora-client";
+import { THREAD_FETCH_LIMIT } from "@/lib/constants/features";
 import { EmptyStateHeader } from "@/components/chat/features/empty-state-header";
 import { NewChatDialog } from "@/components/sidebar/new-chat-dialog";
 import { Header } from "@/components/header/header";
@@ -26,9 +27,13 @@ const LEAVE_DURATION_MS = 280;
 
 export const Route = createFileRoute("/")({
   loader: async () => {
+    // Mesmo limit que useThreadsQuery (THREAD_FETCH_LIMIT) — usar um limit
+    // diferente aqui populava o cache sob a mesma threadsQueryKey com uma
+    // lista truncada, que o loader de /session/$threadId (ensureQueryData,
+    // sem refetchOnMount) podia servir stale dentro do staleTime de 30s.
     await queryClient.ensureQueryData({
       queryKey: threadsQueryKey,
-      queryFn: () => listThreads(1),
+      queryFn: () => listThreads(THREAD_FETCH_LIMIT),
       staleTime: 30_000,
     });
   },

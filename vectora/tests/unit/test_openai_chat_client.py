@@ -91,6 +91,35 @@ class TestConversaoDeMensagens:
         assert tipos[-1] == "function_call_output"
         assert capturado["input"][-1]["call_id"] == "call_1"
 
+    async def test_bloco_de_imagem_nao_e_descartado(self):
+        """Regressão: `_to_openai_input` usava `msg.text()`, que só
+        concatena blocos `text` — um anexo de imagem desaparecia do payload
+        sem erro nem log."""
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            import json as _json
+
+            capturado.update(_json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        mensagem = VMessage(
+            role=MessageRole.USER,
+            content=[
+                ContentBlock(kind="text", text="olha essa imagem"),
+                ContentBlock(kind="image_url", image_url="data:image/png;base64,abc"),
+            ],
+        )
+
+        await _client(handler).agenerate([mensagem])
+
+        partes = capturado["input"][0]["content"]
+        assert {"type": "input_text", "text": "olha essa imagem"} in partes
+        assert {
+            "type": "input_image",
+            "image_url": "data:image/png;base64,abc",
+        } in partes
+
     async def test_mensagem_de_role_desconhecido_falha(self):
         def handler(_req):
             return httpx.Response(200, json=_resposta_ok())

@@ -11,6 +11,8 @@ necessidade.
 
 from __future__ import annotations
 
+from pydantic import BaseModel
+
 from backend.tools.context import ToolContext
 from backend.tools.registry import (
     TOOL_REGISTRY,
@@ -61,6 +63,31 @@ async def _always_fails(x: int) -> str:
     raise RuntimeError("falha proposital")
 
 
+@vtool(extras=ToolExtras(category="test"))
+async def _sem_type_hint(valor) -> str:
+    """Tool com parâmetro sem type hint (Any implícito).
+
+    Args:
+        valor: um valor qualquer
+    """
+    return str(valor)
+
+
+class _Item(BaseModel):
+    nome: str
+    qtd: int
+
+
+@vtool(extras=ToolExtras(category="test"))
+async def _tipo_composto(itens: list[_Item]) -> str:
+    """Tool com parâmetro de tipo composto (BaseModel aninhado).
+
+    Args:
+        itens: lista de itens
+    """
+    return str(len(itens))
+
+
 class TestVtoolSchemaGeneration:
     def test_registra_tool_no_registry_global(self):
         spec = _get("_hash_text")
@@ -94,6 +121,31 @@ class TestVtoolSchemaGeneration:
         props = schema["function"]["parameters"]["properties"]
 
         assert props["text"]["description"] == "Texto a ser hasheado"
+
+    def test_parametro_sem_type_hint_vira_any_permissivo(self):
+        """Erro/borda: parâmetro sem type hint não pode quebrar a geração
+        de schema — vira campo sem `type` (JSON Schema sem `type` aceita
+        qualquer valor), não uma exceção na hora de registrar a tool."""
+        schema = _get("_sem_type_hint").openai_schema()
+        props = schema["function"]["parameters"]["properties"]
+
+        assert "valor" in props
+        assert "type" not in props["valor"]
+        assert props["valor"]["description"] == "um valor qualquer"
+        assert "valor" in schema["function"]["parameters"]["required"]
+
+    def test_parametro_de_tipo_composto_gera_defs_e_ref(self):
+        """Erro/borda: BaseModel aninhado como tipo de parâmetro precisa
+        preservar `$defs`/`$ref` no schema final — removê-los (como
+        `title`) quebraria a referência que `properties` faz pra lá."""
+        schema = _get("_tipo_composto").openai_schema()
+        params = schema["function"]["parameters"]
+
+        assert "$defs" in params
+        assert "Item" in params["$defs"] or "_Item" in params["$defs"]
+        item_key = next(iter(params["$defs"]))
+        assert params["$defs"][item_key]["properties"].keys() == {"nome", "qtd"}
+        assert params["properties"]["itens"]["items"]["$ref"] == f"#/$defs/{item_key}"
 
 
 class TestToolSpecAinvoke:

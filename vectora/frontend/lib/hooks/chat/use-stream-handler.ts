@@ -46,6 +46,38 @@ import {
   markStreamEnded,
 } from "@/lib/utils/stream-interruption";
 import { m as msg } from "@/lib/paraglide/messages";
+import type { RenderHint, ToolCategory } from "@/lib/types/render";
+
+/** Únicos valores que o backend pode mandar em `render_hint`/`category` de
+ * `tool_call` — um valor fora daqui vira fallback explícito (nunca cast
+ * silencioso de string livre pro union type). */
+const KNOWN_RENDER_HINTS = new Set<RenderHint>([
+  "diff",
+  "code_block",
+  "terminal_output",
+  "search_results",
+  "table",
+  "queue_progress",
+  "queue_badge",
+  "artifact",
+  "image_preview",
+  "browser_screenshot",
+  "thinking_step",
+  "json_tree",
+  "chart_inline",
+  "db_result",
+  "json",
+]);
+const KNOWN_TOOL_CATEGORIES = new Set<ToolCategory>([
+  "filesystem",
+  "web",
+  "rag",
+  "memory",
+  "workspace",
+  "mcp",
+  "artifacts",
+  "general",
+]);
 
 // ============================================================================
 // Streaming rendering
@@ -359,8 +391,18 @@ export function useStreamHandler({
           }
 
           if (event.type === "token") {
-            assistantContent += event.content;
-            const token = event.content;
+            // Guard defensivo: `content` ausente/não-string (drift de
+            // contrato) não pode virar a string literal "undefined"
+            // concatenada silenciosamente na resposta visível ao usuário.
+            const token =
+              typeof event.content === "string" ? event.content : "";
+            if (token === "" && event.content !== "") {
+              console.warn(
+                "[SSE] evento token com `content` inválido, ignorado:",
+                event.content,
+              );
+            }
+            assistantContent += token;
             const sep = needsSeparator ? "\n\n" : "";
             needsSeparator = false;
             setMessages((prev) =>
@@ -576,13 +618,20 @@ export function useStreamHandler({
           }
 
           if (event.type === "token") {
-            assistantContent += event.content;
+            const token =
+              typeof event.content === "string" ? event.content : "";
+            if (token === "" && event.content !== "") {
+              console.warn(
+                "[SSE] evento token com `content` inválido, ignorado:",
+                event.content,
+              );
+            }
+            assistantContent += token;
             setMessages((prev) =>
               updateMessageInList(prev, assistantMessageId, (m) => ({
                 ...m,
                 content:
-                  (typeof m.content === "string" ? m.content : "") +
-                  event.content,
+                  (typeof m.content === "string" ? m.content : "") + token,
               })),
             );
             await yieldToBrowser();
@@ -690,7 +739,15 @@ async function handleEvent(
 ): Promise<void> {
   switch (event.type) {
     case "token":
-      // tokens handled by caller (buffered via rAF)
+    case "thread":
+    case "done":
+    case "error":
+    case "model_switched":
+    case "message_break":
+      // Tratados pelo loop externo (processStream/processResume) antes ou
+      // depois de chamar handleEvent — no-op aqui de propósito, não são
+      // "desconhecidos" (cairiam no default e disparariam o warning de
+      // drift de contrato por engano).
       break;
 
     case "tool_call": {
@@ -706,8 +763,12 @@ async function handleEvent(
         name: event.tool_name,
         args,
         output: undefined,
-        renderHint: (event.render_hint as ToolCall["renderHint"]) ?? "json",
-        category: (event.category as ToolCall["category"]) ?? "general",
+        renderHint: KNOWN_RENDER_HINTS.has(event.render_hint as RenderHint)
+          ? (event.render_hint as RenderHint)
+          : "json",
+        category: KNOWN_TOOL_CATEGORIES.has(event.category as ToolCategory)
+          ? (event.category as ToolCategory)
+          : "general",
         destructive: event.destructive ?? false,
         icon: event.icon ?? "tool",
       };
@@ -925,7 +986,12 @@ async function handleEvent(
 
     case "workbench_invalidate": {
       const ws = useWorkspacesStore.getState().getActive();
-      if (ws) {
+      // `tabs` malformado (ausente/tipo errado) não pode virar TypeError
+      // aqui dentro — esse handler roda dentro do loop de streaming, e uma
+      // exceção não tratada seria capturada pelo catch de nível superior e
+      // mal-classificada como queda de conexão SSE (announceSSEDropped),
+      // escondendo um bug de contrato atrás de um badge de "Reconectando…".
+      if (ws && Array.isArray(event.tabs)) {
         const tabs = event.tabs as string[];
         if (tabs.includes("files"))
           useWorkbenchStore.getState().invalidateFiles(ws.id);
@@ -935,6 +1001,11 @@ async function handleEvent(
           useWorkbenchStore.getState().invalidatePlan(threadId);
         if (tabs.includes("tasks") || tabs.includes("files"))
           useWorkbenchStore.getState().markPending(ws.id);
+      } else if (ws) {
+        console.warn(
+          "[SSE] workbench_invalidate com `tabs` malformado, ignorado:",
+          event.tabs,
+        );
       }
       break;
     }
@@ -950,6 +1021,14 @@ async function handleEvent(
     }
 
     default:
+      // `type` desconhecido — nunca descartar silenciosamente. Paridade com
+      // o log já existente em erro de parse JSON (parseSSELine): um evento
+      // fora do vocabulário conhecido é sinal de drift de contrato entre
+      // backend e frontend, não ruído a ignorar.
+      console.warn(
+        "[SSE] evento com type desconhecido, ignorado:",
+        (event as { type?: unknown }).type,
+      );
       break;
   }
 }

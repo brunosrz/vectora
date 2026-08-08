@@ -47,6 +47,7 @@ import {
   type Thread as VectoraThread,
 } from "@/lib/api/vectora-client";
 import { queryClient } from "../../router";
+import { THREAD_FETCH_LIMIT } from "@/lib/constants/features";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
@@ -71,25 +72,36 @@ export const Route = createFileRoute("/session/$threadId")({
   // O histórico fica em cache no queryClient com chave ['thread-history', id]
   // e é consumido por chat-interface.tsx sem segunda viagem ao servidor.
   // Para "new", o histórico não existe ainda — só prefetch da lista de threads.
-  loader: ({ params }) =>
-    params.threadId === "new"
-      ? queryClient.ensureQueryData({
-          queryKey: threadsQueryKey,
-          queryFn: () => listThreads(50),
-          staleTime: 30_000,
-        })
-      : Promise.all([
-          queryClient.ensureQueryData({
-            queryKey: threadsQueryKey,
-            queryFn: () => listThreads(50),
-            staleTime: 30_000,
-          }),
-          queryClient.prefetchQuery({
-            queryKey: ["thread-history", params.threadId],
-            queryFn: () => getHistory(params.threadId),
-            staleTime: 30_000,
-          }),
-        ]),
+  //
+  // Mesmo limit que useThreadsQuery (THREAD_FETCH_LIMIT) sob a mesma
+  // threadsQueryKey — limit divergente aqui e no loader de "/" causava
+  // colisão de cache (um populava a chave com lista truncada, o outro lia
+  // stale dentro do staleTime). Só o prefetch de histórico é isolado do
+  // resto (catch próprio): sem a lista de threads a sidebar não navega, mas
+  // uma falha transitória no histórico não pode bloquear a navegação quando
+  // a lista de threads já carregou com sucesso — degrada pra "sem
+  // pré-carregar histórico", não pra "não abre a sessão".
+  loader: async ({ params }) => {
+    const threadsPromise = queryClient.ensureQueryData({
+      queryKey: threadsQueryKey,
+      queryFn: () => listThreads(THREAD_FETCH_LIMIT),
+      staleTime: 30_000,
+    });
+    if (params.threadId === "new") {
+      await threadsPromise;
+      return;
+    }
+    const historyPromise = queryClient
+      .prefetchQuery({
+        queryKey: ["thread-history", params.threadId],
+        queryFn: () => getHistory(params.threadId),
+        staleTime: 30_000,
+      })
+      .catch((err: unknown) => {
+        console.warn("[loader] prefetch de histórico falhou:", err);
+      });
+    await Promise.all([threadsPromise, historyPromise]);
+  },
   component: SessionPage,
 });
 

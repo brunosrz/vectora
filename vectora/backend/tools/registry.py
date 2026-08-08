@@ -60,8 +60,16 @@ class ToolSpec:
         mesmo formato que os 5 chat clients (``backend/llm/*/chat.py``)
         já consomem hoje via ``convert_to_openai_tool``."""
         params = self.args_model.model_json_schema()
-        # Pydantic gera um `$defs`/`title` que os providers não esperam no
-        # nível de `parameters` — mantém só `type`/`properties`/`required`.
+        # Só `title` no nível raiz é removido — providers não esperam esse
+        # campo em `parameters`. `$defs` (gerado por Pydantic quando um
+        # parâmetro usa um tipo composto/BaseModel aninhado) É mantido de
+        # propósito: os `$ref` dentro de `properties` apontam pra lá,
+        # removê-lo quebraria o schema. Nenhuma tool de produção usa tipo
+        # composto hoje (confirmado — só as tools de teste deste módulo
+        # exercitam esse caminho); se uma tool migrada vier a precisar,
+        # normalização de strict-mode por provider (ex.
+        # `backend/llm/openai/chat_client.py::_normalize_strict_schema`)
+        # precisa recursar em `$defs` também, não só em `properties`.
         params.pop("title", None)
         return {
             "type": "function",

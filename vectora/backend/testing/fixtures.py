@@ -7,13 +7,6 @@ import pytest
 
 from backend.persistence.native.sqlite_checkpointer import VectoraSqliteSaver
 from backend.storage.sqlite.pool import AsyncConnectionPool
-from backend.testing.mocks import MockLLM
-
-
-@pytest.fixture
-def mock_llm() -> MockLLM:
-    """Provide a mock LLM for deterministic testing."""
-    return MockLLM()
 
 
 @pytest.fixture

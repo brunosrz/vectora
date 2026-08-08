@@ -35,6 +35,7 @@
   "sidebar_ctx_delete": "Eliminar",
   "sidebar_rename_placeholder": "Nombre de la sesión",
   "error_banner_title": "Algo salió mal",
+  "route_error_title": "No se pudo cargar esta página",
   "error_banner_retry": "Reintentar",
   "error_banner_retrying": "Reintentando…",
   "workspaces_error_hydrate": "No se pudieron cargar tus carpetas de trabajo.",
