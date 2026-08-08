@@ -884,3 +884,111 @@ class TestSandboxInit:
             await workspace_sandbox_init(workspace_id="does-not-exist")
 
         assert exc_info.value.status_code == 404
+
+
+def _fake_request(user_id: str = "u1"):
+    from unittest.mock import MagicMock
+
+    req = MagicMock()
+    req.state.user = MagicMock()
+    req.state.user.id = user_id
+    return req
+
+
+class TestMemorySearchUnified:
+    """GET /workspaces/{id}/memory/search — busca combinada em fatos +
+    skills + buckets RAG, consumida pela busca da Memory Tab."""
+
+    @pytest.mark.asyncio
+    async def test_combina_os_tres_tipos(self, trusted_ws, monkeypatch):
+        from backend.api.handlers.workspaces import search_memory_unified
+        from backend.services.memory_index import MemoryIndexHit
+
+        wsid, _root = trusted_ws
+
+        async def _fake_search(query, *, user_id, workspace_id, types, limit):
+            return [
+                MemoryIndexHit(
+                    type="fact", id="f1", title="f1", snippet="conteúdo do fato"
+                ),
+                MemoryIndexHit(
+                    type="skill", id="s1", title="Skill", snippet="descrição"
+                ),
+                MemoryIndexHit(
+                    type="rag_bucket", id="b1", title="Bucket", snippet="docs"
+                ),
+            ]
+
+        monkeypatch.setattr(
+            "backend.services.memory_index.search_unified_memory", _fake_search
+        )
+
+        resp = await search_memory_unified(
+            workspace_id=wsid, request=_fake_request(), q="qualquer"
+        )
+
+        assert {h.type for h in resp.hits} == {"fact", "skill", "rag_bucket"}
+
+    @pytest.mark.asyncio
+    async def test_workspace_inexistente_retorna_404(self):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.workspaces import search_memory_unified
+
+        with pytest.raises(HTTPException) as exc_info:
+            await search_memory_unified(
+                workspace_id="does-not-exist", request=_fake_request(), q="x"
+            )
+
+        assert exc_info.value.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_types_invalido_e_normalizado_sem_quebrar(
+        self, trusted_ws, monkeypatch
+    ):
+        """`types=invalid` não deve derrubar a query — vira None (busca todos)."""
+        from backend.api.handlers.workspaces import search_memory_unified
+
+        wsid, _root = trusted_ws
+        captured: dict = {}
+
+        async def _fake_search(query, *, user_id, workspace_id, types, limit):
+            captured["types"] = types
+            return []
+
+        monkeypatch.setattr(
+            "backend.services.memory_index.search_unified_memory", _fake_search
+        )
+
+        resp = await search_memory_unified(
+            workspace_id=wsid,
+            request=_fake_request(),
+            q="x",
+            types="invalid,also-bad",
+        )
+
+        assert resp.hits == []
+        assert captured["types"] is None
+
+    @pytest.mark.asyncio
+    async def test_types_valido_e_repassado_como_frozenset(
+        self, trusted_ws, monkeypatch
+    ):
+        from backend.api.handlers.workspaces import search_memory_unified
+
+        wsid, _root = trusted_ws
+        captured: dict = {}
+
+        async def _fake_search(query, *, user_id, workspace_id, types, limit):
+            captured["types"] = types
+            return []
+
+        monkeypatch.setattr(
+            "backend.services.memory_index.search_unified_memory", _fake_search
+        )
+
+        await search_memory_unified(
+            workspace_id=wsid, request=_fake_request(), q="x", types="fact,invalid"
+        )
+
+        assert captured["types"] == frozenset({"fact"})

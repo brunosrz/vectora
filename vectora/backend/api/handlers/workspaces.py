@@ -3800,6 +3800,66 @@ async def delete_rag_bucket(workspace_id: str, bucket_id: str) -> dict:
     return {"ok": True}
 
 
+class MemoryIndexHitResponse(BaseModel):
+    type: str
+    id: str
+    title: str
+    snippet: str
+    score: float | None = None
+
+
+class MemorySearchResponse(BaseModel):
+    hits: list[MemoryIndexHitResponse]
+
+
+@view_router.get("/{workspace_id}/memory/search", response_model=MemorySearchResponse)
+async def search_memory_unified(
+    workspace_id: str,
+    request: Request,
+    q: str = "",
+    types: str | None = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> MemorySearchResponse:
+    """Busca combinada em fatos + skills + buckets RAG — a mesma consulta
+    que popula a busca da Memory Tab. `types` é uma lista separada por
+    vírgula (`fact,skill,rag_bucket`); valores desconhecidos são ignorados,
+    nunca derrubam a query."""
+    from backend.services.memory_index import (
+        ALL_MEMORY_HIT_TYPES,
+        MemoryHitType,
+        search_unified_memory,
+    )
+    from backend.workspace.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        raise HTTPException(status_code=404, detail="Workspace não encontrado")
+
+    wanted: frozenset[MemoryHitType] | None = None
+    if types:
+        parsed = {t.strip() for t in types.split(",") if t.strip()}
+        narrowed: frozenset[MemoryHitType] = frozenset(
+            t for t in ALL_MEMORY_HIT_TYPES if t in parsed
+        )
+        wanted = narrowed or None
+
+    hits = await search_unified_memory(
+        q,
+        user_id=_user_id(request),
+        workspace_id=workspace_id,
+        types=wanted,
+        limit=limit,
+    )
+    return MemorySearchResponse(
+        hits=[
+            MemoryIndexHitResponse(
+                type=h.type, id=h.id, title=h.title, snippet=h.snippet, score=h.score
+            )
+            for h in hits
+        ]
+    )
+
+
 @view_router.post("/{workspace_id}/rag/ingest", response_model=RagIngestResponse)
 async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResponse:
     """Indexa uma pasta no RAG diretamente (walk + chunk + enqueue por job).

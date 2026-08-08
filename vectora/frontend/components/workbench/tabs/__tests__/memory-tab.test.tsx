@@ -253,6 +253,9 @@ describe("MemoryTab", () => {
           }),
         );
       }
+      if (String(url).includes("/memory/search")) {
+        return new Response(JSON.stringify({ hits: [] }));
+      }
       if (String(url).includes("/rag/buckets")) {
         return new Response(JSON.stringify([]));
       }
@@ -285,6 +288,9 @@ describe("MemoryTab", () => {
         if (String(url) === "/rag/search") {
           return new Response(JSON.stringify({ results: [] }));
         }
+        if (String(url).includes("/memory/search")) {
+          return new Response(JSON.stringify({ hits: [] }));
+        }
         if (String(url).includes("/rag/buckets")) {
           return new Response(JSON.stringify([]));
         }
@@ -302,8 +308,8 @@ describe("MemoryTab", () => {
     await waitFor(
       () =>
         expect(
-          screen.getByText("workbench_memory_search_no_results"),
-        ).toBeInTheDocument(),
+          screen.getAllByText("workbench_memory_search_no_results").length,
+        ).toBeGreaterThan(0),
       { timeout: 2000 },
     );
   });
@@ -436,6 +442,110 @@ describe("MemoryTab", () => {
         calls.some((c) => (c[1] as RequestInit)?.method === "DELETE"),
       ).toBe(false);
       confirmSpy.mockRestore();
+    });
+  });
+});
+
+describe("MemoryTab — busca unificada (fatos + skills + buckets)", () => {
+  function unifiedFetchMock(hits: unknown[]) {
+    return vi.fn(async (url: string) => {
+      if (String(url).includes("/rag/workspace-summary")) {
+        return new Response(JSON.stringify({ collections: [] }));
+      }
+      if (String(url).includes("/memory/search")) {
+        return new Response(JSON.stringify({ hits }));
+      }
+      if (String(url).includes("/rag/buckets")) {
+        return new Response(JSON.stringify([]));
+      }
+      if (String(url) === "/rag/search") {
+        return new Response(JSON.stringify({ results: [] }));
+      }
+      throw new Error(`unmocked fetch: ${url}`);
+    });
+  }
+
+  it("digitar na busca chama /memory/search e mostra fato+skill+bucket combinados", async () => {
+    vi.stubGlobal(
+      "fetch",
+      unifiedFetchMock([
+        { type: "fact", id: "f1", title: "f1", snippet: "conteúdo do fato" },
+        { type: "skill", id: "s1", title: "Skill X", snippet: "descrição" },
+        { type: "rag_bucket", id: "b1", title: "Bucket Y", snippet: "docs" },
+      ]),
+    );
+
+    render(<MemoryTab threadId="t1" />);
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_memory_search_placeholder"),
+      { target: { value: "godot" } },
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Skill X")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Bucket Y")).toBeInTheDocument();
+    expect(screen.getByText("conteúdo do fato")).toBeInTheDocument();
+  });
+
+  it("erro/borda: falha de rede na busca unificada não derruba a aba (degrada pra vazio)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (String(url).includes("/rag/workspace-summary")) {
+          return new Response(JSON.stringify({ collections: [] }));
+        }
+        if (String(url).includes("/memory/search")) {
+          throw new Error("network down");
+        }
+        if (String(url).includes("/rag/buckets")) {
+          return new Response(JSON.stringify([]));
+        }
+        if (String(url) === "/rag/search") {
+          return new Response(JSON.stringify({ results: [] }));
+        }
+        throw new Error(`unmocked fetch: ${url}`);
+      }),
+    );
+
+    render(<MemoryTab threadId="t1" />);
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_memory_search_placeholder"),
+      { target: { value: "godot" } },
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByText("workbench_memory_search_no_results").length,
+      ).toBeGreaterThan(0),
+    );
+  });
+
+  it("clicar num chip de tipo filtra a busca por esse tipo (fact,skill,rag_bucket)", async () => {
+    const fetchMock = unifiedFetchMock([
+      { type: "fact", id: "f1", title: "f1", snippet: "conteúdo" },
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<MemoryTab threadId="t1" />);
+
+    fireEvent.change(
+      screen.getByPlaceholderText("workbench_memory_search_placeholder"),
+      { target: { value: "godot" } },
+    );
+    await waitFor(() =>
+      expect(screen.getByText("conteúdo")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByLabelText("workbench_memory_search_filter_fact"),
+    );
+
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls;
+      expect(calls.some((c) => String(c[0]).includes("types=fact"))).toBe(true);
     });
   });
 });

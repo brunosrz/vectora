@@ -310,6 +310,71 @@ interface RagSearchResult {
   metadata?: { source?: string };
 }
 
+type UnifiedHitType = "fact" | "skill" | "rag_bucket";
+
+interface UnifiedMemoryHit {
+  type: UnifiedHitType;
+  id: string;
+  title: string;
+  snippet: string;
+  score?: number;
+}
+
+const UNIFIED_TYPE_ICON: Record<UnifiedHitType, typeof Brain> = {
+  fact: Brain,
+  skill: Sparkles,
+  rag_bucket: Database,
+};
+
+/** Busca combinada em fatos + skills + buckets RAG (metadados, não chunks) —
+ * GET /workspaces/{id}/memory/search. Complementa `useRagSearch` (que busca
+ * conteúdo de chunk indexado), unificando os três tipos de memória do
+ * produto numa única caixa de busca. */
+function useUnifiedMemorySearch(
+  workspaceId: string | undefined,
+  query: string,
+  types: UnifiedHitType[],
+) {
+  const [results, setResults] = useState<UnifiedMemoryHit[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const typesKey = types.join(",");
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed || !workspaceId) {
+      setResults(null);
+      return;
+    }
+    let alive = true;
+    setLoading(true);
+    const handle = setTimeout(() => {
+      void (async () => {
+        try {
+          const params = new URLSearchParams({ q: trimmed });
+          if (typesKey) params.set("types", typesKey);
+          const res = await fetch(
+            `/workspaces/${encodeURIComponent(workspaceId)}/memory/search?${params.toString()}`,
+          );
+          if (!res.ok || !alive) return;
+          const data = (await res.json()) as { hits?: UnifiedMemoryHit[] };
+          if (alive) setResults(Array.isArray(data.hits) ? data.hits : []);
+        } catch {
+          if (alive) setResults([]);
+        } finally {
+          if (alive) setLoading(false);
+        }
+      })();
+    }, 300);
+    return () => {
+      alive = false;
+      clearTimeout(handle);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, workspaceId, typesKey]);
+
+  return { results, loading };
+}
+
 /** Busca direta do usuário na base RAG — POST /rag/search, mesma
  * `vector_search` que o agente usa. Não substitui `ragCitations` (o que o
  * agente já recuperou nesta resposta): é uma consulta explícita, disparada
@@ -446,6 +511,14 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
   const workspaceSummary = useWorkspaceRagSummary(activeWorkspaceId);
   const search = useRagSearch(activeWorkspaceId);
   const ragSettings = useRagSettings();
+  const [unifiedTypeFilter, setUnifiedTypeFilter] = useState<UnifiedHitType[]>(
+    [],
+  );
+  const unified = useUnifiedMemorySearch(
+    activeWorkspaceId,
+    search.query,
+    unifiedTypeFilter,
+  );
 
   // Jobs de indexação RAG do workspace ativo (atividade ao vivo).
   const ragJobs = useMemo(
@@ -506,6 +579,86 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
     0,
   );
 
+  const unifiedSection = search.query.trim() && (
+    <section className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Search className="h-3 w-3" />
+          {m.workbench_memory_unified_results()}
+          {unified.results && ` (${unified.results.length})`}
+        </h3>
+        <div className="flex gap-1">
+          {(
+            [
+              ["fact", m.workbench_memory_search_filter_fact()],
+              ["skill", m.workbench_memory_search_filter_skill()],
+              ["rag_bucket", m.workbench_memory_search_filter_rag_bucket()],
+            ] as [UnifiedHitType, string][]
+          ).map(([type, label]) => {
+            const Icon = UNIFIED_TYPE_ICON[type];
+            const active = unifiedTypeFilter.includes(type);
+            return (
+              <button
+                key={type}
+                type="button"
+                aria-pressed={active}
+                aria-label={label}
+                title={label}
+                onClick={() =>
+                  setUnifiedTypeFilter((prev) =>
+                    prev.includes(type)
+                      ? prev.filter((t) => t !== type)
+                      : [...prev, type],
+                  )
+                }
+                className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] ${
+                  active
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border/60 text-muted-foreground"
+                }`}
+              >
+                <Icon className="h-3 w-3" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {unified.loading && (
+        <div className="flex items-center gap-2 px-2.5 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+          {m.workbench_memory_searching()}
+        </div>
+      )}
+      {!unified.loading && unified.results?.length === 0 && (
+        <p className="px-2.5 py-2 text-xs text-muted-foreground">
+          {m.workbench_memory_search_no_results()}
+        </p>
+      )}
+      {!unified.loading &&
+        unified.results?.map((hit) => {
+          const Icon = UNIFIED_TYPE_ICON[hit.type];
+          return (
+            <div
+              key={`${hit.type}-${hit.id}`}
+              className="rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+            >
+              <div className="flex items-center gap-2">
+                <Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+                  {hit.title}
+                </span>
+              </div>
+              {hit.snippet && (
+                <p className="mt-1 truncate text-[10px] text-muted-foreground">
+                  {hit.snippet}
+                </p>
+              )}
+            </div>
+          );
+        })}
+    </section>
+  );
+
   const searchSection = search.query.trim() && (
     <section className="space-y-1.5">
       <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -554,8 +707,9 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
         <div className="flex-1 space-y-4 overflow-auto px-3 py-3">
           <BucketsPanel />
           <JourneyPanel />
+          {unifiedSection}
           {searchSection}
-          {!searchSection && (
+          {!searchSection && !unifiedSection && (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
               <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
               <div className="max-w-[240px]">
@@ -590,6 +744,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
       <div className="flex-1 space-y-4 overflow-auto px-3 pb-3 pt-3">
         <BucketsPanel />
         <JourneyPanel />
+        {unifiedSection}
         {searchSection}
         {hasActivity && (
           <section className="space-y-1.5">
