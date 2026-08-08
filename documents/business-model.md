@@ -85,8 +85,8 @@ multiusuário, automação disparada de fora do produto, ou mensageria
 externa.
 
 **Sempre Free (permanente):** RAG, Library (Skills/MCP/Memory), Navegador
-(Browser + devtools), filesystem/git/terminal, Context Graph, Sandbox/AI
-Jail, Kanban, tarefas recorrentes (`trigger_type="interval"`),
+(Browser + devtools), filesystem/git/terminal, Context Graph, Sandbox,
+Kanban, tarefas recorrentes (`trigger_type="interval"`),
 subagentes/delegação, Remember, todas as chaves BYOK, Desktop app (a
 interface de agente local), CLI (só configuração/shell via SSH em VPS —
 nunca TUI de chat), integrações GitHub/GitLab/Google via OAuth.

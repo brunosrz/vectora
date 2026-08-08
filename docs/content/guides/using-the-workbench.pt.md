@@ -33,9 +33,11 @@ Lista os artifacts gerados pelo agente na sessão (planos, specs, guias em markd
 
 Gerencia servidores de desenvolvimento do seu projeto (lê configurações tipo `launch.json`). Botões play/stop/refresh, um iframe carregando `localhost:<porta>`, e um form pra adicionar um servidor manualmente se não houver config detectada.
 
-### Memory (RAG)
+### Memory
 
 Timeline ao vivo de buscas RAG e web em andamento, com os trechos recuperados (pílulas expansíveis, separadas em "base de conhecimento" vs. "resultados web"). Um painel de configurações de RAG deixa ajustar reranker, top_k e provider de embedding.
+
+Essa aba também tem o painel **"O que aprendi sobre você"** — uma visão só-leitura dos fatos e skills duráveis que o [Remember](../agent-automation) já salvou por conta própria, sem você precisar lembrar em qual thread o agente aprendeu algo pela primeira vez. Buckets que você importa de outros usuários também vivem aqui, dentro da **Memory Library**.
 
 ### Tasks
 
