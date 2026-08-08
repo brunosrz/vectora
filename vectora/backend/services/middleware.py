@@ -80,6 +80,12 @@ _REQUIRE_APPROVAL: frozenset[str] = frozenset(
         # si mesma. `kanban_list` é só leitura e fica fora.
         "kanban_create",
         "kanban_update_status",
+        # Aplica uma seção proposta por memory_consolidation.py
+        # (decisions/gotchas/preferences) — mesma gravidade de
+        # save_learned_fact: escreve memória de longo prazo lida em todo
+        # turno futuro, sem aprovação vira gravação silenciosa de conteúdo
+        # sintetizado por LLM.
+        "apply_memory_consolidation",
     }
 )
 

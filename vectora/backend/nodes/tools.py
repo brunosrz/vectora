@@ -131,6 +131,7 @@ from backend.tools.homeassistant import (
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.kanban import kanban_create, kanban_list, kanban_update_status
 from backend.tools.learning import (
+    apply_memory_consolidation,
     install_learned_skill,
     learn_from_session,
     save_learned_fact,
@@ -265,6 +266,7 @@ MEMORY_TOOLS: list[BaseTool] = [
     learn_from_session,
     install_learned_skill,
     save_learned_fact,
+    apply_memory_consolidation,
 ]
 
 #: Ferramentas da Library: auto-instalar MCP/Skills/Memory Library, invocar
@@ -435,6 +437,7 @@ for _t in [
     learn_from_session,
     install_learned_skill,
     save_learned_fact,
+    apply_memory_consolidation,
     call_mcp_tool,
     list_mcp_catalog,
     list_skills_catalog,

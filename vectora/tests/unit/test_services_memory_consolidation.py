@@ -1,21 +1,26 @@
 """Background Memory Consolidation.
 
-Job periódico que sintetiza as últimas 10 threads via LLM e atualiza
-~/.vectora/AGENTS.md para que o agente tenha contexto persistente.
+Job periódico que sintetiza as últimas 10 threads via LLM e atualiza as
+seções de memória de longo prazo (decisions/gotchas/preferences) em
+``~/.vectora/memory/`` — versionadas (histórico) e gated por aprovação
+(``memory_consolidation_require_approval``).
 """
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from backend.scheduling.memory_consolidation import (
+    CONSOLIDATION_CATEGORIES,
     _build_consolidation_prompt,
     _parse_llm_output,
+    apply_consolidation_sections,
     consolidate_memory,
+    section_path,
+    split_by_category,
 )
 
 # ---------------------------------------------------------------------------
@@ -76,53 +81,126 @@ def test_parse_llm_output_empty_returns_empty():
 
 
 # ---------------------------------------------------------------------------
+# split_by_category
+# ---------------------------------------------------------------------------
+
+
+class TestSplitByCategory:
+    def test_parses_all_three_sections(self):
+        text = (
+            "## decisions\nUsar SQLite.\n\n"
+            "## gotchas\nJWT expira em 15min.\n\n"
+            "## preferences\nRespostas curtas."
+        )
+        sections = split_by_category(text)
+        assert sections == {
+            "decisions": "Usar SQLite.",
+            "gotchas": "JWT expira em 15min.",
+            "preferences": "Respostas curtas.",
+        }
+
+    def test_missing_section_is_simply_absent(self):
+        """LLM que só produz decisions não inventa gotchas/preferences vazias."""
+        text = "## decisions\nUsar Postgres."
+        sections = split_by_category(text)
+        assert sections == {"decisions": "Usar Postgres."}
+        assert "gotchas" not in sections
+        assert "preferences" not in sections
+
+    def test_header_without_content_is_dropped(self):
+        """Cabeçalho seguido de nada (ou só espaço) não vira seção vazia."""
+        text = "## decisions\n\n## gotchas\nConteúdo real."
+        sections = split_by_category(text)
+        assert "decisions" not in sections
+        assert sections["gotchas"] == "Conteúdo real."
+
+    def test_text_without_any_known_header_returns_empty_dict(self):
+        """Saída do LLM que não segue o formato esperado não quebra — dict vazio."""
+        assert split_by_category("Só um parágrafo solto, sem cabeçalho.") == {}
+
+
+# ---------------------------------------------------------------------------
+# apply_consolidation_sections
+# ---------------------------------------------------------------------------
+
+
+class TestApplyConsolidationSections:
+    def test_writes_section_and_archives_previous_version(self, tmp_path: Path):
+        """Rodada com conteúdo novo grava a seção certa e preserva a versão
+        anterior no histórico (regressão do bug original: sobrescrita sem
+        rastro)."""
+        path = section_path("decisions", tmp_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Versão antiga.", encoding="utf-8")
+
+        changed = apply_consolidation_sections({"decisions": "Versão nova."}, tmp_path)
+
+        assert changed == ["decisions"]
+        assert path.read_text(encoding="utf-8").strip() == "Versão nova."
+        history_files = list((tmp_path / ".history").glob("*-decisions.md"))
+        assert len(history_files) == 1
+        assert history_files[0].read_text(encoding="utf-8") == "Versão antiga."
+
+    def test_unchanged_content_does_not_touch_history(self, tmp_path: Path):
+        """Segunda rodada sem mudança real de conteúdo não gera entrada de
+        histórico redundante."""
+        path = section_path("gotchas", tmp_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Mesmo conteúdo.", encoding="utf-8")
+
+        changed = apply_consolidation_sections({"gotchas": "Mesmo conteúdo."}, tmp_path)
+
+        assert changed == []
+        history_dir = tmp_path / ".history"
+        assert not history_dir.exists() or not list(history_dir.glob("*"))
+
+    def test_unknown_category_is_ignored(self, tmp_path: Path):
+        """Categoria fora de CONSOLIDATION_CATEGORIES nunca vira arquivo —
+        proteção contra o LLM inventar um cabeçalho não previsto."""
+        changed = apply_consolidation_sections(
+            {"random_category": "conteúdo"}, tmp_path
+        )
+        assert changed == []
+        assert not any(tmp_path.iterdir())
+
+    def test_recovering_history_across_two_different_rounds(self, tmp_path: Path):
+        """Regressão explícita: rodar consolidação duas vezes com conteúdos
+        diferentes deixa a primeira versão recuperável do histórico (o bug
+        original — sobrescrita sem rastro — teria feito isso falhar)."""
+        apply_consolidation_sections({"preferences": "Primeira versão."}, tmp_path)
+        apply_consolidation_sections({"preferences": "Segunda versão."}, tmp_path)
+
+        path = section_path("preferences", tmp_path)
+        assert path.read_text(encoding="utf-8").strip() == "Segunda versão."
+        history_files = list((tmp_path / ".history").glob("*-preferences.md"))
+        assert len(history_files) == 1
+        assert (
+            history_files[0].read_text(encoding="utf-8").strip() == "Primeira versão."
+        )
+
+    def test_all_categories_covered(self):
+        assert set(CONSOLIDATION_CATEGORIES) == {
+            "decisions",
+            "gotchas",
+            "preferences",
+        }
+
+
+# ---------------------------------------------------------------------------
 # consolidate_memory
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_consolidate_memory_writes_agents_md(tmp_path: Path):
-    """consolidate_memory deve escrever/atualizar AGENTS.md com o resumo."""
-    agents_md = tmp_path / "AGENTS.md"
-
-    fake_threads = [
-        [("human", "fix auth"), ("assistant", "fixed JWT")],
-    ]
-
-    fake_llm_response = MagicMock()
-    fake_llm_response.content = "O projeto usa JWT para autenticação."
-
-    with (
-        patch(
-            "backend.scheduling.memory_consolidation._agents_md_path",
-            return_value=agents_md,
-        ),
-        patch(
-            "backend.scheduling.memory_consolidation._fetch_recent_threads",
-            new=AsyncMock(return_value=fake_threads),
-        ),
-        patch(
-            "backend.scheduling.memory_consolidation._invoke_llm",
-            new=AsyncMock(return_value=fake_llm_response),
-        ),
-    ):
-        await consolidate_memory(user_id="user-1")
-
-    assert agents_md.exists()
-    content = agents_md.read_text(encoding="utf-8")
-    assert "JWT" in content or "autenticação" in content
+def _fake_llm_response(content: str) -> MagicMock:
+    response = MagicMock()
+    response.content = content
+    return response
 
 
 @pytest.mark.asyncio
-async def test_consolidate_memory_no_threads_skips_write(tmp_path: Path):
-    """Sem threads recentes, não deve chamar o LLM nem escrever."""
-    agents_md = tmp_path / "AGENTS.md"
-
+async def test_consolidate_memory_no_threads_skips_llm():
+    """Sem threads recentes, não deve chamar o LLM."""
     with (
-        patch(
-            "backend.scheduling.memory_consolidation._agents_md_path",
-            return_value=agents_md,
-        ),
         patch(
             "backend.scheduling.memory_consolidation._fetch_recent_threads",
             new=AsyncMock(return_value=[]),
@@ -135,22 +213,17 @@ async def test_consolidate_memory_no_threads_skips_write(tmp_path: Path):
         await consolidate_memory(user_id="user-1")
 
     mock_llm.assert_not_called()
-    assert not agents_md.exists()
 
 
 @pytest.mark.asyncio
-async def test_consolidate_memory_llm_failure_does_not_raise(tmp_path: Path):
+async def test_consolidate_memory_llm_failure_does_not_raise():
     """Falha do LLM não deve propagar — é best-effort."""
-    agents_md = tmp_path / "AGENTS.md"
-
     with (
         patch(
-            "backend.scheduling.memory_consolidation._agents_md_path",
-            return_value=agents_md,
-        ),
-        patch(
             "backend.scheduling.memory_consolidation._fetch_recent_threads",
-            new=AsyncMock(return_value=[[("human", "hi"), ("assistant", "hello")]]),
+            new=AsyncMock(
+                return_value=[("t1", [("human", "hi"), ("assistant", "hello")])]
+            ),
         ),
         patch(
             "backend.scheduling.memory_consolidation._invoke_llm",
@@ -158,3 +231,98 @@ async def test_consolidate_memory_llm_failure_does_not_raise(tmp_path: Path):
         ),
     ):
         await consolidate_memory(user_id="user-1")  # must not raise
+
+
+@pytest.mark.asyncio
+async def test_consolidate_memory_output_without_known_headers_is_ignored():
+    """LLM que não segue o formato de seções esperado não escreve nada nem
+    propõe artifact — apenas loga e retorna."""
+    with (
+        patch(
+            "backend.scheduling.memory_consolidation._fetch_recent_threads",
+            new=AsyncMock(
+                return_value=[("t1", [("human", "hi"), ("assistant", "hello")])]
+            ),
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._invoke_llm",
+            new=AsyncMock(return_value=_fake_llm_response("texto solto sem cabeçalho")),
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._propose_consolidation",
+            new=AsyncMock(),
+        ) as mock_propose,
+        patch(
+            "backend.scheduling.memory_consolidation.apply_consolidation_sections"
+        ) as mock_apply,
+    ):
+        await consolidate_memory(user_id="user-1")
+
+    mock_propose.assert_not_called()
+    mock_apply.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_consolidate_memory_proposes_when_approval_required():
+    """`require_approval=True` (default) propõe via artifact em vez de
+    escrever direto — dá o mesmo tratamento HITL de `save_learned_fact`."""
+    with (
+        patch("backend.settings.settings.memory_consolidation_require_approval", True),
+        patch(
+            "backend.scheduling.memory_consolidation._fetch_recent_threads",
+            new=AsyncMock(return_value=[("thread-42", [("human", "fix auth")])]),
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._invoke_llm",
+            new=AsyncMock(return_value=_fake_llm_response("## decisions\nUsar JWT.")),
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._propose_consolidation",
+            new=AsyncMock(),
+        ) as mock_propose,
+        patch(
+            "backend.scheduling.memory_consolidation.apply_consolidation_sections"
+        ) as mock_apply,
+    ):
+        await consolidate_memory(user_id="user-1")
+
+    mock_propose.assert_called_once_with("thread-42", {"decisions": "Usar JWT."})
+    mock_apply.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_consolidate_memory_writes_directly_when_approval_not_required(
+    tmp_path: Path,
+):
+    """`require_approval=False` grava direto (comportamento anterior, sem
+    a etapa de proposta)."""
+    with (
+        patch(
+            "backend.settings.settings.memory_consolidation_require_approval",
+            False,
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._fetch_recent_threads",
+            new=AsyncMock(return_value=[("thread-1", [("human", "fix auth")])]),
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._invoke_llm",
+            new=AsyncMock(
+                return_value=_fake_llm_response("## gotchas\nJWT expira rápido.")
+            ),
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation.memory_dir",
+            return_value=tmp_path,
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._propose_consolidation",
+            new=AsyncMock(),
+        ) as mock_propose,
+    ):
+        await consolidate_memory(user_id="user-1")
+
+    mock_propose.assert_not_called()
+    path = section_path("gotchas", tmp_path)
+    assert path.exists()
+    assert "JWT expira rápido." in path.read_text(encoding="utf-8")

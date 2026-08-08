@@ -9,6 +9,7 @@ import pytest
 
 from backend.services.learning import DistillationResult, SkillDraft
 from backend.tools.learning import (
+    apply_memory_consolidation,
     install_learned_skill,
     learn_from_session,
     save_learned_fact,
@@ -250,3 +251,73 @@ async def test_save_learned_fact_error_returns_status_error_not_raised(monkeypat
 
     assert result["status"] == "error"
     assert "store indisponível" in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# apply_memory_consolidation
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_apply_memory_consolidation_writes_section(monkeypatch, tmp_path):
+    from backend.scheduling import memory_consolidation
+
+    monkeypatch.setattr(memory_consolidation, "memory_dir", lambda: tmp_path)
+    monkeypatch.setattr("backend.tools.fs.create_artifact", lambda payload: "{}")
+    monkeypatch.setattr(
+        "backend.tools.learning._mirror_to_plan_tab", lambda *a, **k: None
+    )
+
+    result = json.loads(
+        await apply_memory_consolidation.ainvoke(
+            {"category": "decisions", "content": "Usar SQLite."},
+            {"configurable": {"user_id": "u1"}},
+        )
+    )
+
+    assert result == {"status": "applied", "category": "decisions"}
+    path = tmp_path / "decisions.md"
+    assert path.exists()
+    assert "Usar SQLite." in path.read_text(encoding="utf-8")
+
+
+@pytest.mark.asyncio
+async def test_apply_memory_consolidation_invalid_category_returns_error_not_raised(
+    monkeypatch, tmp_path
+):
+    from backend.scheduling import memory_consolidation
+
+    monkeypatch.setattr(memory_consolidation, "memory_dir", lambda: tmp_path)
+
+    result = json.loads(
+        await apply_memory_consolidation.ainvoke(
+            {"category": "not-a-real-category", "content": "x"},
+            {"configurable": {"user_id": "u1"}},
+        )
+    )
+
+    assert result["status"] == "error"
+    assert "not-a-real-category" in result["error"]
+    assert not any(tmp_path.iterdir())
+
+
+@pytest.mark.asyncio
+async def test_apply_memory_consolidation_unchanged_content_returns_unchanged(
+    monkeypatch, tmp_path
+):
+    from backend.scheduling import memory_consolidation
+
+    (tmp_path / "gotchas.md").write_text("JWT expira rápido.", encoding="utf-8")
+    monkeypatch.setattr(memory_consolidation, "memory_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        "backend.tools.learning._mirror_to_plan_tab", lambda *a, **k: None
+    )
+
+    result = json.loads(
+        await apply_memory_consolidation.ainvoke(
+            {"category": "gotchas", "content": "JWT expira rápido."},
+            {"configurable": {"user_id": "u1"}},
+        )
+    )
+
+    assert result == {"status": "unchanged", "category": "gotchas"}

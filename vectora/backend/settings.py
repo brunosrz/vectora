@@ -509,6 +509,13 @@ class Settings(BaseSettings):
     memory_semantic_enabled: bool = True
     """Armazena embeddings das memórias para busca semântica via search_memory."""
 
+    memory_consolidation_require_approval: bool = True
+    """Mesma semântica do `[auto_improve] require_approval` do ai-memory:
+    quando True, `memory_consolidation.py` propõe a atualização das seções
+    (decisions/gotchas/preferences) via artifact HITL em vez de escrever
+    direto em disco — o usuário aprova pela mesma tool que já grava fatos
+    aprendidos (`apply_memory_consolidation`)."""
+
     # ── Parallel Agent Execution ──────────────────────────────────────────────
     rag_parallel_agents_enabled: bool = True
     """Permite ao orchestrator disparar múltiplos agentes em paralelo via asyncio.gather."""

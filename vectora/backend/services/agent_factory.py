@@ -449,18 +449,30 @@ _global_tools_version: int | None = None
 
 
 def _agents_md_paths() -> list[str] | None:
-    """Retorna os paths de AGENTS.md que o MemoryMiddleware deve carregar.
+    """Retorna os paths de memória de longo prazo que o MemoryMiddleware
+    deve carregar.
 
-    Carrega (em ordem) o AGENTS.md global do Vectora e o AGENTS.md do
-    workspace ativo, se existir. O harness lê e injeta o conteúdo no
-    system prompt antes de cada turno.
+    Carrega o AGENTS.md global do Vectora (legado, se ainda existir de uma
+    instalação anterior) e as seções de memória por categoria escritas por
+    `backend/scheduling/memory_consolidation.py`
+    (`~/.vectora/memory/{decisions,gotchas,preferences}.md`). O harness lê
+    e injeta o conteúdo no system prompt antes de cada turno.
 
     Retorna None se nenhum arquivo existir (desativa MemoryMiddleware).
     """
+    from backend.scheduling.memory_consolidation import (
+        CONSOLIDATION_CATEGORIES,
+        section_path,
+    )
+
     paths: list[str] = []
     global_agents_md = Path.home() / ".vectora" / "AGENTS.md"
     if global_agents_md.is_file():
         paths.append(str(global_agents_md))
+    for category in CONSOLIDATION_CATEGORIES:
+        path = section_path(category)
+        if path.is_file():
+            paths.append(str(path))
     return paths or None
 
 

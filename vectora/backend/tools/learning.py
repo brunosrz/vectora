@@ -206,3 +206,56 @@ async def save_learned_fact(
         return json.dumps({"status": "saved", "key": key})
     except Exception as exc:
         return json.dumps({"status": "error", "error": str(exc)})
+
+
+@tool(
+    extras={
+        "invalidates": ["memory"],
+        "destructive": True,
+        "category": "memory",
+        "icon": "sparkles",
+    }
+)
+async def apply_memory_consolidation(
+    category: str,
+    content: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Grava uma seção de memória de longo prazo proposta por
+    ``memory_consolidation.py`` (aba Plan, artifact
+    ``memory_consolidation_proposal``) — pausa para aprovação antes de
+    executar (mesmo tratamento HITL de ``save_learned_fact``).
+
+    A versão anterior da seção é arquivada automaticamente antes de
+    sobrescrever (``~/.vectora/memory/.history/``) — nunca é perdida.
+
+    Args:
+        category: Categoria da seção — "decisions", "gotchas" ou "preferences".
+        content: Conteúdo markdown completo da seção, exatamente como
+            proposto no artifact.
+    """
+    try:
+        from backend.scheduling.memory_consolidation import (
+            CONSOLIDATION_CATEGORIES,
+            apply_consolidation_sections,
+        )
+
+        if category not in CONSOLIDATION_CATEGORIES:
+            return json.dumps(
+                {
+                    "status": "error",
+                    "error": f"categoria inválida: {category!r} "
+                    f"(esperado: {', '.join(CONSOLIDATION_CATEGORIES)})",
+                }
+            )
+
+        changed = apply_consolidation_sections({category: content})
+        logger.info("learning: consolidação aplicada categoria=%s", category)
+        _mirror_to_plan_tab(
+            "memory_consolidated", f"Memória: {category}", "", content, config
+        )
+        return json.dumps(
+            {"status": "applied" if changed else "unchanged", "category": category}
+        )
+    except Exception as exc:
+        return json.dumps({"status": "error", "error": str(exc)})
