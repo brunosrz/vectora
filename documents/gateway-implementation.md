@@ -1,6 +1,13 @@
 # Plano de Implementação — Vectora Gateway (Produção)
 
-> Revisado 2026-06-28. Versão corrigida após identificar inconsistências na primeira versão.
+> Revisado 2026-08-08. Reescrito por inteiro — a versão anterior (revisão
+> 2026-06-28) descrevia uma arquitetura pré-migração (Supabase, Worker
+> `vectora-gateway` isolado, domínio `vectora.chat` cobrindo tudo). Desde
+> então o produto migrou pra um Worker único (`vectora-services`) com D1 no
+> lugar do Supabase — ver `documents/history.md` e
+> `documents/business-model.md` ("Billing, auth e licenciamento —
+> arquitetura atual") pro resumo executivo dessa mudança. Este documento
+> reflete o código real em `services/` na data da revisão.
 
 ---
 
@@ -8,25 +15,35 @@
 
 ```
 Bruno (desenvolvedor)
-  └── cria UMA vez: OAuth Apps no GitHub/Google/Slack, Worker no Cloudflare
+  └── cria UMA vez: OAuth Apps no GitHub/Google/Slack/GitLab, o Worker no Cloudflare
 
 Usuário final do Vectora (instala o .exe)
   └── não configura nada de gateway/OAuth — tudo acontece automaticamente
-  └── só conecta sua conta GitHub/Slack dentro do app Vectora
+  └── só conecta sua conta GitHub/Slack/etc. dentro do app Vectora
 
-Gateway (Cloudflare Worker em gateway.vectora.chat)
-  └── recebe conexões WebSocket de backends Vectora
-  └── atribui token estável: HMAC-SHA256(fingerprint) → abc123
-  └── {abc123}.vectora.chat aponta para aquele backend
-  └── recebe callbacks OAuth e webhooks, encaminha via WebSocket ao backend certo
+vectora-services (Worker Cloudflare único — services/src/index.ts)
+  └── dispatch por hostname: gateway.vectora.chat + {token}.vectora.chat → gateway;
+      qualquer outro host → o app da company (auth/billing/license/gdpr/...)
+  └── gateway: recebe conexões WebSocket de backends Vectora
+  └── atribui token estável: HMAC-SHA256(fingerprint) → 6 chars (base36)
+  └── {token}.vectora.chat é o subdomínio DESSA instalação — qualquer
+      request nele (callback OAuth, webhook) é serializado e encaminhado
+      pelo WebSocket ativo pro backend local (proxy HTTP genérico, não
+      rotas hardcoded por provider)
 ```
+
+**Um único Worker, dois domínios servidos por ele** (`services/src/index.ts`):
+
+- `gateway.vectora.chat` + `*.vectora.chat` (zona `vectora.chat`, única `[[routes]]` do `wrangler.toml`) → o gateway (device/session relay pro desktop).
+- `services.vectora.company` → o mesmo Worker, branch "qualquer outro host": auth/billing/license/gdpr/api-keys/issues/rag-library/registry/telemetry + updates. **Este segundo domínio não tem `[[routes]]` própria no `wrangler.toml`** — a exposição em `services.vectora.company` é configurada como Custom Domain fora deste repo (validar com quem administra o Cloudflare antes de assumir o mecanismo exato).
+- O **site** `vectora.company` (marketing/dashboard, TanStack Start) é outro sistema por completo — hospedado no **Vercel** (`company/vercel.json`), não neste Worker.
 
 **Dois tipos de OAuth — não confundir:**
 
-| Tipo                     | Propósito                                   | Provider                 | Callback                                        |
-| ------------------------ | ------------------------------------------- | ------------------------ | ----------------------------------------------- |
-| **Login na company**     | Entrar em vectora.company                   | Supabase → GitHub/Google | `supabase.co/auth/v1/callback`                  |
-| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Gateway → Backend        | `gateway.vectora.chat/auth/{provider}/callback` |
+| Tipo                     | Propósito                                   | Provider                        | Callback                                                |
+| ------------------------ | ------------------------------------------- | ------------------------------- | ------------------------------------------------------- |
+| **Login na company**     | Entrar em vectora.company                   | `services` (D1, sessão própria) | tratado no próprio `services.vectora.company`           |
+| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Provider → gateway → Backend    | `https://{token}.vectora.chat/auth/{provider}/callback` |
 
 A Seção 3 deste plano é sobre o **segundo tipo** — OAuth para que o agente faça chamadas API em nome do usuário.
 
@@ -34,81 +51,68 @@ A Seção 3 deste plano é sobre o **segundo tipo** — OAuth para que o agente 
 
 ## SEÇÃO 1 — Cloudflare
 
-### 1.1 Domínio `vectora.chat` no Cloudflare
+### 1.1 Worker `vectora-services`
 
-✅ **Já concluído** — `vectora.chat` está no Cloudflare com NS `beth.ns.cloudflare.com` / `greg.ns.cloudflare.com`.
+`services/wrangler.toml`: `name = "vectora-services"`, `main = "src/index.ts"`, `compatibility_date = "2025-06-01"`, `nodejs_compat` habilitado.
 
----
+### 1.2 Rota
 
-### 1.2 Registros DNS — `vectora.chat`
-
-| Tipo  | Nome      | Conteúdo                                   | Proxy      | TTL  |
-| ----- | --------- | ------------------------------------------ | ---------- | ---- |
-| CNAME | `gateway` | `vectora-gateway.bruno-soarxz.workers.dev` | ✅ Proxied | Auto |
-| CNAME | `*`       | `vectora-gateway.bruno-soarxz.workers.dev` | ✅ Proxied | Auto |
-
-O wildcard `*` captura todos os subdomínios `{token}.vectora.chat` e os proxia para o Worker. Cloudflare emite certificado wildcard automaticamente.
-
----
-
-### 1.3 Custom Domains no Worker
-
-Cloudflare Dashboard → Workers & Pages → `vectora-gateway` → Settings → Domains:
-
-```
-Adicionar: gateway.vectora.chat
-Adicionar: *.vectora.chat
-```
-
-Ou via `wrangler.toml`:
+Uma única entrada em `[[routes]]`:
 
 ```toml
-routes = [
-  { pattern = "gateway.vectora.chat/*", custom_domain = true },
-  { pattern = "*.vectora.chat/*",     custom_domain = true }
-]
+[[routes]]
+pattern = "*.vectora.chat/*"
+zone_name = "vectora.chat"
 ```
 
-Depois: `pnpm wrangler deploy`
+O wildcard cobre `gateway.vectora.chat` (host fixo do gateway) e qualquer `{token}.vectora.chat` (subdomínio por instalação) — não são duas entradas separadas, é uma única regra que o Worker desambigua internamente (`services/src/gateway/index.ts`, comparando `host` contra `GATEWAY_HOST`).
 
----
+> Registrar `gateway.vectora.chat` como Custom Domain **em paralelo** a essa rota conflita na API da Cloudflare (comentário explícito no `wrangler.toml`) — não faça as duas coisas.
+
+### 1.3 Bindings do Worker (`services/wrangler.toml`)
+
+| Binding                    | Tipo           | Nome real                                   | Uso                                                               |
+| -------------------------- | -------------- | ------------------------------------------- | ----------------------------------------------------------------- |
+| `DB`                       | D1             | `vectora-db`                                | Substitui o Postgres do Supabase — sem RLS, autorização em código |
+| `R2`                       | R2 bucket      | `vectora-r2`                                | Releases (updates) + exports GDPR                                 |
+| `GATEWAY_SESSION`          | Durable Object | classe `GatewaySession`                     | Uma instância por token/instalação, relay WebSocket↔HTTP          |
+| `GATEWAY_METRICS`          | KV             | id `f38a1de6…`                              | Estado do OAuth device-flow do gateway (`oauth:{state}` → token)  |
+| `KV`                       | KV             | id `0bed7e9f…`                              | Config de canais/rollout/quarentena de updates                    |
+| `EMAIL_QUEUE`              | Queue          | `vectora-email` (+ DLQ)                     | Envio de email assíncrono (Resend)                                |
+| `JOBS_QUEUE`               | Queue          | `vectora-jobs` (+ DLQ, `max_concurrency=1`) | Jobs em background (ex.: hard-delete GDPR agendado)               |
+| `LICENSE_VALIDATE_LIMITER` | Rate limit     | 30 req/min                                  | `POST /license/validate` (endpoint público)                       |
+
+Cron: `0 3 * * *` (diário) dispara o hard-delete de contas GDPR expiradas há 30+ dias.
 
 ### 1.4 Secrets no Worker
 
-Executar em `gateway/`:
+Executar em `services/` (nomes **sem mudança** em relação à versão anterior deste doc):
 
 ```powershell
-# 1. HMAC para gerar tokens estáveis por usuário (só o gateway usa)
+# 1. HMAC para gerar tokens estáveis por instalação (só o gateway usa)
 #    Gerar: python -c "import secrets; print(secrets.token_hex(32))"
 pnpm wrangler secret put GATEWAY_HMAC_SECRET
 
-# 2. Segredo compartilhado company ↔ gateway ↔ backend para OAuth device flow de licença
-#    Gerar: python -c "import secrets; print(secrets.token_hex(32))"
-#    MESMO valor em: company Vercel (GATEWAY_OAUTH_SECRET) e backend .env (VECTORA_OAUTH_SECRET)
+# 2. Segredo compartilhado company ↔ gateway ↔ backend, device flow de licença
 pnpm wrangler secret put VECTORA_OAUTH_SECRET
+
+# 3. Prova que o cliente é um build genuíno do Vectora (fixo por produto,
+#    embutido no binário Nuitka — não é por usuário)
+pnpm wrangler secret put VECTORA_APP_SECRET
+
+# 4. Billing (Stripe internacional + Asaas Brasil)
+pnpm wrangler secret put STRIPE_SECRET_KEY
+pnpm wrangler secret put STRIPE_WEBHOOK_SECRET
+pnpm wrangler secret put STRIPE_PRICE_PRO_USD
+pnpm wrangler secret put ASAAS_API_KEY
+pnpm wrangler secret put ASAAS_API_URL
+
+# 5. Email, cadastro
+pnpm wrangler secret put RESEND_API_KEY
+pnpm wrangler secret put TURNSTILE_SECRET_KEY
 ```
 
-> ⚠️ Não existe `VECTORA_JWT_SECRET` no gateway. O gateway não valida JWTs de backends
-> individuais — cada instalação tem sua própria chave. Autenticação de registro
-> é feita via `VECTORA_APP_SECRET` (veja Seção 2.2).
-
----
-
-### 1.5 KV Namespace
-
-- **ID:** `ae857e96bdf94823a10629562fb28184`
-- **Binding:** `GATEWAY_METRICS`
-- **Status:** ✅ Configurado no `wrangler.toml`
-- **Uso:** `oauth:{state}` → token temporário (TTL 5min) para device flow de licença
-
----
-
-### 1.6 Durable Objects
-
-- **Classe:** `GatewaySession`
-- **Binding:** `GATEWAY_SESSION`
-- **Migration:** `v1` com `new_sqlite_classes` (free plan)
-- **Status:** ✅ Configurado e deployed
+> Não existe `VECTORA_JWT_SECRET` nem nunca existiu como secret de produção real — sessão da company usa **token opaco** (D1, hash SHA-256), não JWT (ver Seção 5).
 
 ---
 
@@ -116,53 +120,45 @@ pnpm wrangler secret put VECTORA_OAUTH_SECRET
 
 ### 2.1 Variáveis de Ambiente do Gateway no Backend
 
-Em `~/.vectora/.env` da instalação:
+Em `~/.vectora/.env` da instalação (defaults em `backend/settings.py`/`backend/defaults.env`):
 
 ```env
 GATEWAY_URL=wss://gateway.vectora.chat
 GATEWAY_ENABLED=true
 
-# Compartilhado com gateway para OAuth device flow de licença
+# Compartilhado com o Worker para OAuth device flow de licença
 VECTORA_OAUTH_SECRET=<mesmo valor do wrangler secret VECTORA_OAUTH_SECRET>
+
+# Embutido no build, não precisa ser configurado manualmente em instalação normal
+VECTORA_APP_SECRET=<mesmo valor do wrangler secret VECTORA_APP_SECRET>
 ```
 
----
+Outras URLs configuráveis (default já aponta pra produção; útil pra apontar a um `services` local via `wrangler dev` ou self-hosted): `VECTORA_LICENSE_URL`, `VECTORA_LICENSE_CONNECT_URL`, `VECTORA_LICENSE_PORTAL_URL`, `VECTORA_COMPANY_URL`, `VECTORA_GATEWAY_URL` (ver `.env.example`).
 
 ### 2.2 Como o Backend Registra com o Gateway
 
-O gateway recebe qualquer backend Vectora legítimo. A autenticação de registro funciona assim:
-
 ```
-Backend                              Gateway
+Backend                              Gateway (Worker)
   │                                    │
   │  POST /register                    │
   │  Authorization: Bearer <APP_SECRET>│
   │  { fingerprint }                   │
   │ ─────────────────────────────────► │
   │                                    │  timingSafeEqual contra
-  │                                    │  env.VECTORA_APP_SECRET (fixo,
-  │                                    │  shipado com o app — igual pra
-  │                                    │  toda instalação)
-  │                                    │  gera token = HMAC-SHA256(fingerprint)
-  │  { token }                         │
+  │                                    │  env.VECTORA_APP_SECRET
+  │                                    │  token = HMAC-SHA256(fingerprint)[:4B] → base36, 6 chars
+  │  { token, subdomain, websocket_url }│
   │ ◄───────────────────────────────── │
   │                                    │
-  │  WebSocket: wss://gateway.../ws/token│
+  │  WebSocket: wss://gateway.vectora.chat/ws/{token} │
   │ ─────────────────────────────────► │
 ```
 
-`VECTORA_APP_SECRET` é um secret fixo definido por você (Bruno) que vai
-embutido no executável do Vectora. Prova que o cliente é software Vectora legítimo
-— não é por usuário, é por produto.
+O token é salvo em `~/.vectora/gateway_token` (`backend/services/gateway/token.py`, permissões de arquivo restritas). O `GatewayClient` mantém o WebSocket vivo com backoff exponencial; se cair, o Worker enfileira requests recebidos por até 10 minutos (`QUEUE_TTL_MS`) e reenvia tudo de uma vez na reconexão.
 
-```powershell
-# Adicionar ao gateway:
-pnpm wrangler secret put VECTORA_APP_SECRET
-# Usar o mesmo valor em: vectora/backend/defaults.env → VECTORA_APP_SECRET
-```
+O subdomínio `{token}.vectora.chat` aparece em `GET /gateway/status` no backend para exibir ao usuário no dashboard do app.
 
-O subdomínio `{token}.vectora.chat` aparece em `GET /gateway/status` no backend
-para exibir ao usuário no dashboard do app.
+**Importante — mecanismo de proxy, não rotas hardcoded**: o Worker não conhece `/auth/github/callback` nem `/webhook/slack` como rotas próprias. Qualquer request em `{token}.vectora.chat/*` (qualquer path, qualquer método) é serializado (`{type:"request", id, method, path, headers, body}`) e mandado pelo WebSocket ativo; o `GatewayClient` no backend Python recebe e refaz a chamada real em `http://localhost:8000{path}`, onde as rotas de fato existem (`backend/api/handlers/oauth.py`, `backend/api/handlers/webhooks.py`). A resposta volta pelo mesmo canal, correlacionada por `id`.
 
 ---
 
@@ -171,16 +167,21 @@ para exibir ao usuário no dashboard do app.
 > **Quem cria:** Bruno (você), uma única vez, como desenvolvedor.
 > **Quem usa:** Todos os usuários do Vectora ao conectar suas contas no app.
 >
-> O callback registrado no provider é `gateway.vectora.chat/auth/{provider}/
-callback` (aponte pra esse domínio fixo no cadastro do app). Na prática,
-> cada instalação resolve seu próprio `redirect_uri` como
-> `https://{token}.vectora.chat/auth/{provider}/callback` — `{token}` é o
-> identificador que o `GatewayClient` recebeu ao se registrar
-> (`POST /register`, ver Seção 2) e persistiu em `~/.vectora/gateway_token`
-> (`backend/api/handlers/oauth.py::_gateway_callback_url`). O DNS wildcard
-> `*.vectora.chat` cobre qualquer `{token}`, então o cadastro no provider
-> continua sendo feito uma única vez — não é preciso recadastrar por
-> instalação.
+> O callback registrado no cadastro do app no provider é
+> `gateway.vectora.chat/auth/{provider}/callback` (aponte pra esse domínio
+> fixo no cadastro — é o host "base" da zona `vectora.chat`). Na prática,
+> cada instalação resolve seu próprio `redirect_uri` **real** como
+> `https://{token}.vectora.chat/auth/{provider}/callback`
+> (`backend/api/handlers/oauth.py::_gateway_callback_url`, lê
+> `~/.vectora/gateway_token`) — o DNS wildcard `*.vectora.chat` cobre
+> qualquer `{token}`, e a maioria dos providers aceita subdomínios do host
+> cadastrado como redirect_uri válido (confirmado pra GitHub:
+> `docs.github.com/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps`).
+> Então o cadastro no provider continua sendo feito **uma única vez** — não
+> é preciso recadastrar por instalação. Ordem de resolução real do
+> `redirect_uri` por provider: env var explícita (`GITHUB_OAUTH_REDIRECT_URI`
+> etc.) → `_gateway_callback_url(provider)` → fallback
+> `http://localhost:8080/auth/{provider}/callback` (dev sem gateway conectado).
 
 ---
 
@@ -228,14 +229,9 @@ do ambiente, com fallback pro domínio do gateway.
    GITHUB_OAUTH_CLIENT_SECRET=<Client Secret>
    ```
    O `GITHUB_OAUTH_REDIRECT_URI` não precisa ser setado — sem ele, o
-   backend resolve o callback sozinho: usa `https://{token}.vectora.chat/
-auth/github/callback` (token da instalação, se o gateway já registrou
-   um — GitHub aceita subdomínios do host cadastrado como redirect_uri
-   válido, ver `docs.github.com/apps/oauth-apps/building-oauth-apps/
-authorizing-oauth-apps`) ou `http://localhost:8080/auth/github/
-callback` como último fallback (dev sem gateway conectado). Só defina
-   a env var pra forçar um callback custom (self-hosted atrás de domínio
-   próprio, por exemplo).
+   backend resolve o callback sozinho (ver o quadro no topo da Seção 3).
+   Só defina a env var pra forçar um callback custom (self-hosted atrás
+   de domínio próprio, por exemplo).
 7. **Instalar o app** na sua conta/org (botão "Install App" na página do
    app) — sem instalação, o usuário autoriza mas o token não tem acesso a
    nenhum repositório.
@@ -287,6 +283,11 @@ GOOGLE_OAUTH_CLIENT_SECRET=<Client Secret>
 GOOGLE_OAUTH_REDIRECT_URI=https://gateway.vectora.chat/auth/google/callback
 ```
 
+> Nota de gap conhecido (ver `documents/gateway-implementation.md` §10):
+> `gmail.py`/`gdrive.py` hoje não têm um fluxo `/auth/google/...`
+> implementado no backend — só a env var lida diretamente pelas tools. Os
+> passos acima cadastram o app; falta a rota Python correspondente.
+
 ---
 
 ### 3.3 Slack OAuth App
@@ -320,6 +321,11 @@ SLACK_SIGNING_SECRET=<Signing Secret>
 SLACK_REDIRECT_URI=https://gateway.vectora.chat/auth/slack/callback
 ```
 
+> Na prática, o Connect do Slack (`backend/services/connect/`) roda em
+> **Socket Mode** (WebSocket direto com a API do Slack, sem depender do
+> callback público acima) — o fluxo OAuth desta seção cobre a tool
+> `slack.py` (mensagens avulsas via bot token), não o Connect.
+
 ---
 
 ### 3.4 GitLab OAuth
@@ -346,9 +352,14 @@ GITLAB_BASE_URL=https://gitlab.com
 
 ## SEÇÃO 4 — Webhooks
 
-> Webhooks chegam em `https://gateway.vectora.chat/webhook/{provider}`.
-> O gateway usa o header `X-Gateway-Token` ou o payload para identificar
-> o backend destino e encaminha via WebSocket.
+> Webhooks de terceiros são configurados para apontar pra
+> `https://{token}.vectora.chat/webhook/{provider}` (subdomínio da
+> instalação — mesmo mecanismo de proxy da Seção 2.2). O Worker não
+> interpreta o payload; só encaminha bytes pro backend local via
+> WebSocket, onde `backend/api/handlers/webhooks.py::POST /webhook/{provider}`
+> verifica a assinatura própria de cada provider (`X-Hub-Signature-256`
+> pro GitHub, `X-Gitlab-Token`, `X-Slack-Signature`, `X-Linear-Signature`,
+> `svix-signature` pro Resend) antes de processar.
 >
 > **Quem configura:** Você (Bruno) como desenvolvedor, uma única vez nos painéis dos providers.
 > Usuários finais não mexem nisso.
@@ -399,8 +410,9 @@ GITLAB_WEBHOOK_SECRET=<token>
 Request URL: https://gateway.vectora.chat/webhook/slack
 ```
 
-> Slack faz challenge de verificação na hora do cadastro — gateway precisa
-> responder com `{"challenge": "..."}`. Implementar no handler do gateway.
+> Slack faz challenge de verificação na hora do cadastro — o backend
+> precisa responder com `{"challenge": "..."}` (já implementado em
+> `webhooks.py`; o Worker só encaminha o request, não intercepta).
 
 ---
 
@@ -434,48 +446,81 @@ RESEND_WEBHOOK_SECRET=<signing secret Svix>
 
 ---
 
-## SEÇÃO 5 — Supabase (vectora.company)
+## SEÇÃO 5 — `services` (auth/billing/license/GDPR — antiga "Supabase")
 
-> O Supabase da `vectora.company` hospeda auth de usuários e edge functions de licença.
-> O gateway interage com `vectora.company` apenas no OAuth device flow de licença.
+> A company (`services.vectora.company`) **não usa Supabase** — todo o
+> billing/auth/licenciamento roda no mesmo Worker `vectora-services`,
+> persistido em D1 (`vectora-db`, binding `DB`). Sem RLS de banco:
+> autorização é código, verificada em cada handler a partir da sessão
+> resolvida pelo token Bearer.
 
-### 5.1 Edge Functions Necessárias
+### 5.1 Auth (`services/src/auth/`)
 
-| Função             | Chamada por                  | Propósito                |
-| ------------------ | ---------------------------- | ------------------------ |
-| `validate-license` | Backend (a cada 6h)          | Valida token de licença  |
-| `agent-login`      | Backend (`/license/connect`) | Login → token de licença |
-| `create-portal`    | Backend (`/license/portal`)  | Portal de pagamento      |
+- **Sessão**: token opaco de 32 bytes (não JWT — a company é a única
+  consumidora, comunicação server-to-server, sem motivo pra carregar
+  claims), hash SHA-256 armazenado em D1, TTL 30 dias.
+- **Signup**: exige Turnstile (`turnstileToken`), senha mínima 8
+  caracteres, hash via PBKDF2-SHA256/WebCrypto nativo (100.000 iterações
+  — teto real do runtime `workerd`, não bcrypt/argon2, que não rodam
+  nele). Cria user + `VECTORA_TOKEN` (licença, 32 bytes hex) +
+  subscription `free` automaticamente. Verificação de email obrigatória
+  via fila `EMAIL_QUEUE`/Resend.
+- **Login**: email/senha ou magic link.
 
-**Auth:** Bearer token (token de licença do usuário).
+### 5.2 Billing (`services/src/billing/`)
 
-### 5.2 Tabelas Supabase
+Dois provedores conforme o país do usuário (`country: "BR"|"INTL"` na
+subscription, decidido no signup): **Stripe** para clientes
+internacionais, **Asaas** para o Brasil (evita fricções do Stripe com
+cartão/boleto BR). `POST /billing/checkout` decide o provider por
+`sub.currency === "BRL"`. Webhooks de ambos (`POST /billing/webhooks?provider=stripe|asaas`)
+mantêm `subscriptions.status`/`tier` sincronizados; cancelamento sempre
+rebaixa pra `free` (o gate `require_pro()` no backend Python
+verifica **tier**, não status). Também cobre cupons e presentes.
 
-| Tabela           | Propósito                    |
-| ---------------- | ---------------------------- |
-| `tokens`         | Token de licença por user_id |
-| `license_checks` | Auditoria de validações      |
+### 5.3 License (`services/src/license/`)
+
+| Endpoint                                                                 | Auth                              | Propósito                                                                    |
+| ------------------------------------------------------------------------ | --------------------------------- | ---------------------------------------------------------------------------- |
+| `POST /license/validate`                                                 | Público, rate-limited (30/min IP) | Valida `VECTORA_TOKEN` — `{valid, tier, status, days_remaining, expires_at}` |
+| `POST /license/agent-login`                                              | Email + senha                     | Devolve o `VECTORA_TOKEN` recuperável (não rotaciona a cada login)           |
+| `POST /license/portal`                                                   | Sessão                            | Portal de pagamento (Stripe/Asaas)                                           |
+| `POST /license/rotate`                                                   | Sessão                            | Rotaciona o token manualmente                                                |
+| `GET /license/token-status`, `/license/token/reveal`, `/license/history` | Sessão                            | Consulta/histórico                                                           |
+
+### 5.4 GDPR (`services/src/gdpr/`)
+
+`POST /gdpr/export` junta `users`+`subscriptions`+`license_checks`+`api_keys`,
+grava em R2 (`exports/{userId}-{ts}.json`), serve via `GET /gdpr/export/*`
+com checagem de dono. `POST /gdpr/delete` faz soft-delete + revoga sessão
+
+- email; o cron diário (03:00 UTC) enfileira hard-delete (fila
+  `vectora-jobs`) pra contas expiradas há 30+ dias — cancela Stripe/Asaas e
+  `DELETE FROM users` (cascade cuida do resto).
 
 ---
 
-## SEÇÃO 6 — Vercel (company)
+## SEÇÃO 6 — Hospedagem (Vercel + Cloudflare)
 
-### 6.1 Variáveis de Ambiente no Projeto `vectora-company`
+`vectora.company` (o **site**, marketing/dashboard, TanStack Start) e
+`services.vectora.company`/`gateway.vectora.chat` (a **API**, Worker
+`vectora-services`) são sistemas de hospedagem completamente diferentes,
+apesar de compartilharem domínio raiz.
 
-| Var                             | Valor                                         | Ambiente   |
-| ------------------------------- | --------------------------------------------- | ---------- |
-| `GATEWAY_URL`                   | `https://gateway.vectora.chat`                | Production |
-| `GATEWAY_OAUTH_SECRET`          | `<mesmo que wrangler VECTORA_OAUTH_SECRET>`   | Production |
-| `VITE_GA4_MEASUREMENT_ID`       | `G-K0JK9B2YH2`                                | Production |
-| `VITE_GOOGLE_SITE_VERIFICATION` | `i9Af68Fzq4E9N6QEmMHxz8Bp5xpTZXzPyNqG5IeoZbo` | Production |
-| `RESEND_API_KEY`                | `<chave do Resend>`                           | Production |
-| `SUPABASE_SERVICE_ROLE_KEY`     | `<service role key>`                          | Production |
-| `VITE_SUPABASE_URL`             | `https://lqclwumwslecrcfibrvn.supabase.co`    | Production |
-| `VITE_SUPABASE_KEY`             | `<publishable key>`                           | Production |
-| `TURNSTILE_SECRET_KEY`          | `<secret key>`                                | Production |
-| `VITE_TURNSTILE_SITE_KEY`       | `<site key>`                                  | Production |
+### 6.1 Variáveis de Ambiente no Projeto Vercel `vectora-company` (o site)
 
-### 6.2 Docs — Projeto `vectora-docs`
+| Var                             | Valor                                         | Ambiente                                                                                                  |
+| ------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `VITE_GA4_MEASUREMENT_ID`       | `G-K0JK9B2YH2`                                | Production                                                                                                |
+| `VITE_GOOGLE_SITE_VERIFICATION` | `i9Af68Fzq4E9N6QEmMHxz8Bp5xpTZXzPyNqG5IeoZbo` | Production                                                                                                |
+| `TURNSTILE_SECRET_KEY`          | `<secret key>`                                | Production                                                                                                |
+| `VITE_TURNSTILE_SITE_KEY`       | `<site key>`                                  | Production                                                                                                |
+| `VITE_SERVICES_URL`/equivalente | `https://services.vectora.company`            | Production — aponta o site pra API real, checar nome exato da env var em `company/` na hora de configurar |
+
+> As vars `SUPABASE_SERVICE_ROLE_KEY`/`VITE_SUPABASE_URL`/`VITE_SUPABASE_KEY`
+> da versão anterior deste doc **não existem mais** — não há Supabase.
+
+### 6.2 Docs — Projeto `vectora-docs` (Vercel)
 
 - Install command: `npx --yes pnpm@11 install` (via `docs/vercel.json`)
 - Build command: `pnpm build`
@@ -511,8 +556,15 @@ curl https://abc123.vectora.chat/
 
 ```powershell
 # No app Vectora: Configurações → Integrações → GitHub → Conectar
-# Redireciona para GitHub, autentica, volta ao app
+# Redireciona para o GitHub via {token}.vectora.chat, autentica, volta ao app
 # Agente consegue clonar repos, criar PRs, etc.
+```
+
+### 7.5 Services (auth/billing/license/gdpr)
+
+```powershell
+curl https://services.vectora.company/license/validate -X POST -d '{"token":"..."}'
+# Esperado: {"valid": true/false, "tier": "free"|"pro", ...}
 ```
 
 ---
@@ -520,42 +572,52 @@ curl https://abc123.vectora.chat/
 ## SEÇÃO 8 — Ordem de Execução
 
 ```
-[ ] 1. Cloudflare: adicionar registros DNS (gateway + wildcard *)
-[ ] 2. Cloudflare: adicionar custom domains ao Worker
-[ ] 3. Gateway: wrangler secret put GATEWAY_HMAC_SECRET
-[ ] 4. Gateway: wrangler secret put VECTORA_OAUTH_SECRET
-[ ] 5. Gateway: wrangler secret put VECTORA_APP_SECRET
-[ ] 6. Gateway: implementar handler /register (verificar VECTORA_APP_SECRET)
-[ ] 7. Gateway: wrangler deploy com custom domains
-[ ] 8. Backend: adicionar VECTORA_APP_SECRET ao defaults.env
-[ ] 9. Backend: implementar conexão ao gateway no startup
-[ ] 10. Testar: GET /gateway/status no backend → ver subdomínio
-[ ] 11. GitHub App: criar em github.com/settings/apps/new (não OAuth App)
-[ ] 12. Google OAuth: criar no console.cloud.google.com
-[ ] 13. Slack App: criar em api.slack.com/apps
-[ ] 14. GitLab App: criar em gitlab.com/-/profile/applications
-[ ] 15. Vercel: adicionar env vars na company
-[ ] 16. Testar fluxo OAuth GitHub end-to-end (via app Vectora)
-[ ] 17. Testar license device flow
+[ ] 1. Cloudflare: zona vectora.chat com a rota wildcard *.vectora.chat/* → vectora-services
+[ ] 2. Worker: wrangler secret put GATEWAY_HMAC_SECRET
+[ ] 3. Worker: wrangler secret put VECTORA_OAUTH_SECRET
+[ ] 4. Worker: wrangler secret put VECTORA_APP_SECRET
+[ ] 5. Worker: wrangler secret put STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / STRIPE_PRICE_PRO_USD
+[ ] 6. Worker: wrangler secret put ASAAS_API_KEY / ASAAS_API_URL
+[ ] 7. Worker: wrangler secret put RESEND_API_KEY / TURNSTILE_SECRET_KEY
+[ ] 8. Worker: aplicar migrations D1 (services/migrations/)
+[ ] 9. Worker: wrangler deploy
+[ ] 10. Cloudflare: configurar Custom Domain services.vectora.company → vectora-services (fora do wrangler.toml, validar mecanismo com quem administra o DNS)
+[ ] 11. Backend: adicionar VECTORA_APP_SECRET/VECTORA_OAUTH_SECRET ao defaults.env
+[ ] 12. Testar: GET /gateway/status no backend → ver subdomínio
+[ ] 13. GitHub App: criar em github.com/settings/apps/new (não OAuth App)
+[ ] 14. Google OAuth: criar no console.cloud.google.com
+[ ] 15. Slack App: criar em api.slack.com/apps
+[ ] 16. GitLab App: criar em gitlab.com/-/profile/applications
+[ ] 17. Vercel: adicionar env vars no projeto do site (company)
+[ ] 18. Testar fluxo OAuth GitHub end-to-end (via app Vectora)
+[ ] 19. Testar license device flow
+[ ] 20. Testar signup/login/billing (Stripe sandbox + Asaas sandbox)
 ```
 
 ---
 
 ## SEÇÃO 9 — Secrets Consolidados
 
-### Gateway (Cloudflare wrangler secrets)
+### Worker `vectora-services` (Cloudflare wrangler secrets)
 
 ```
-GATEWAY_HMAC_SECRET     → interno ao gateway, gera tokens estáveis por usuário
-VECTORA_OAUTH_SECRET  → compartilhado com company e backend (device flow)
-VECTORA_APP_SECRET    → prova que cliente é Vectora legítimo (fixo por produto)
+GATEWAY_HMAC_SECRET     → interno ao gateway, gera tokens estáveis por instalação
+VECTORA_OAUTH_SECRET    → compartilhado com company e backend (device flow)
+VECTORA_APP_SECRET      → prova que cliente é Vectora legítimo (fixo por produto)
+STRIPE_SECRET_KEY       → billing internacional
+STRIPE_WEBHOOK_SECRET   → valida webhooks do Stripe
+STRIPE_PRICE_PRO_USD    → price id do plano Pro
+ASAAS_API_KEY           → billing Brasil
+ASAAS_API_URL           → endpoint da API Asaas (sandbox vs produção)
+RESEND_API_KEY          → envio de email (verificação, notificações)
+TURNSTILE_SECRET_KEY    → anti-bot no signup
 ```
 
 ### Backend (`~/.vectora/.env`)
 
 ```env
-VECTORA_APP_SECRET=<mesmo do gateway>
-VECTORA_OAUTH_SECRET=<mesmo do gateway>
+VECTORA_APP_SECRET=<mesmo do Worker>
+VECTORA_OAUTH_SECRET=<mesmo do Worker>
 GATEWAY_URL=wss://gateway.vectora.chat
 GATEWAY_ENABLED=true
 
@@ -581,11 +643,11 @@ LINEAR_WEBHOOK_SECRET=
 RESEND_WEBHOOK_SECRET=
 ```
 
-### Company (Vercel env vars)
+### Vercel (projeto do site `vectora.company`)
 
 ```
-GATEWAY_URL=https://gateway.vectora.chat
-GATEWAY_OAUTH_SECRET=<mesmo do gateway>
+TURNSTILE_SECRET_KEY=<mesmo do Worker, se o form de signup roda no site>
+VITE_TURNSTILE_SITE_KEY=<site key>
 ```
 
 ---
@@ -605,7 +667,7 @@ Cada tool de integração externa (`backend/tools/slack.py`, `gdrive.py`,
 `gmail.py`, `jira.py`, `linear.py`, `notion.py`, `gh.py`) lê sua **própria**
 env var (`SLACK_BOT_TOKEN`, `GITHUB_PERSONAL_ACCESS_TOKEN`, etc. — ver
 `slack.py::_token()`), e cada uma exige que **Bruno** (não o usuário final)
-registre um OAuth App separado no provider correspondente (Seção 5). Isso é
+registre um OAuth App separado no provider correspondente (Seção 3). Isso é
 fricção dupla:
 
 1. **Pro operador do Vectora** (Bruno): N providers = N OAuth Apps pra
@@ -647,15 +709,15 @@ já teria uma seção "via Vectora" ao lado de "BYOK")
         │
         ▼
 gateway.vectora.chat/auth/{provider}/start
-   (usa client_id/secret OPERADOS PELA VECTORA — Seção 5, já registrados
+   (usa client_id/secret OPERADOS PELA VECTORA — Seção 3, já registrados
     uma vez por Bruno, reaproveitados por todos os usuários finais)
         │
         ▼
-OAuth callback → gateway.vectora.chat/auth/{provider}/callback
+OAuth callback → {token}.vectora.chat/auth/{provider}/callback
         │
         ▼
 GatewaySession (Durable Object) encaminha o token via WebSocket pro
-backend do usuário (mesmo canal que já existe pra webhooks — Seção 3)
+backend do usuário (mesmo canal que já existe pra webhooks — Seção 4)
         │
         ▼
 Backend grava o token na MESMA env var que a tool já lê hoje
@@ -675,17 +737,9 @@ popular a env var), sem exigir refactor de nenhuma tool existente.
 Providers que já têm tool própria e leem env var isolada — candidatos
 naturais por já terem o "outro lado" pronto: Slack (`SLACK_BOT_TOKEN`),
 GitHub (`GITHUB_PERSONAL_ACCESS_TOKEN`, já cobre `gh.py`), Google
-(`gmail.py`/`gdrive.py`, hoje sem OAuth implementado — ver nota abaixo),
-Linear, Jira, Notion. Não inclui MCP marketplace (Sprint 2 já resolveu isso
-via `POST /auth/envs` no fluxo de instalação, sem precisar do Tool Gateway).
-
-**Nota de gap identificado durante a investigação**: `gmail.py`/`gdrive.py`
-hoje não têm um fluxo `/auth/google/...` implementado no backend (só a
-env var lida diretamente) — isso não é bloqueante para o Tool Gateway (o
-design não depende de OAuth já existir por provider), mas é um pré-requisito
-de implementação a resolver na sprint que fizer isso de verdade: cada
-provider sem OAuth próprio ganha um `backend/api/handlers/oauth_{provider}.py`
-seguindo o padrão que a Seção 3 já define para GitHub/Slack/GitLab.
+(`gmail.py`/`gdrive.py`, hoje sem OAuth implementado — ver nota na Seção
+3.2), Linear, Jira, Notion. Não inclui MCP marketplace (já resolvido via
+`POST /auth/envs` no fluxo de instalação, sem precisar do Tool Gateway).
 
 ### Testes (quando implementado — fora de escopo desta seção)
 
