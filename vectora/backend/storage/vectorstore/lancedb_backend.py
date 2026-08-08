@@ -12,6 +12,7 @@ from typing import Any, cast
 
 import lancedb
 import pyarrow as pa
+from lancedb.index import FTS
 
 from backend.storage.vectorstore.base import VectorHit, VectorRow
 
@@ -62,6 +63,52 @@ class LanceDBBackend:
             VectorHit(
                 id=str(row["id"]),
                 score=float(row.get("_distance", 0.0)),
+                content=row["text"],
+                metadata=_parse_metadata(row.get("metadata", "{}")),
+                collection=collection,
+            )
+            for _, row in results.iterrows()
+        ]
+
+    async def search_text(
+        self, collection: str, query: str, limit: int
+    ) -> list[VectorHit]:
+        db = await self._db()
+        try:
+            async with asyncio.timeout(10):
+                table = await db.open_table(collection)
+        except Exception:
+            logger.debug(
+                "LanceDBBackend.search_text: coleção %s indisponível", collection
+            )
+            return []
+        # Índice FTS nativo (tantivy) — criado sob demanda na primeira busca
+        # textual da coleção; `replace=False` faz chamadas seguintes serem
+        # no-op quando o índice já existe (nunca reconstrói à toa).
+        try:
+            async with asyncio.timeout(10):
+                await table.create_index("text", config=FTS(), replace=False)
+        except Exception:
+            logger.debug(
+                "LanceDBBackend.search_text: create_index no-op/falhou para %s",
+                collection,
+            )
+        try:
+            async with asyncio.timeout(10):
+                results = await (
+                    table.search(query, query_type="fts").limit(limit).to_pandas()
+                )
+        except Exception:
+            logger.debug(
+                "LanceDBBackend.search_text: FTS indisponível na coleção %s",
+                collection,
+                exc_info=True,
+            )
+            return []
+        return [
+            VectorHit(
+                id=str(row["id"]),
+                score=float(row.get("_score", 0.0)),
                 content=row["text"],
                 metadata=_parse_metadata(row.get("metadata", "{}")),
                 collection=collection,

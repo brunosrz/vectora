@@ -98,6 +98,93 @@ class QdrantBackend:
             )
         return hits
 
+    async def search_text(
+        self, collection: str, query: str, limit: int
+    ) -> list[VectorHit]:
+        client = self._get_client()
+        try:
+            async with asyncio.timeout(_TIMEOUT_S):
+                if not await client.collection_exists(collection):
+                    return []
+        except Exception:
+            logger.debug(
+                "QdrantBackend.search_text: coleção %s indisponível", collection
+            )
+            return []
+
+        # Índice de payload full-text nativo — criado sob demanda; já
+        # existente é no-op (Qdrant não recria índice igual). Necessário
+        # pra `MatchText` tokenizar em vez de comparar substring cru.
+        try:
+            async with asyncio.timeout(_TIMEOUT_S):
+                await client.create_payload_index(
+                    collection_name=collection,
+                    field_name="text",
+                    field_schema=models.PayloadSchemaType.TEXT,
+                )
+        except Exception:
+            logger.debug(
+                "QdrantBackend.search_text: create_payload_index no-op/falhou para %s",
+                collection,
+            )
+
+        try:
+            async with asyncio.timeout(_TIMEOUT_S):
+                points, _next_offset = await client.scroll(
+                    collection_name=collection,
+                    scroll_filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="text", match=models.MatchText(text=query)
+                            )
+                        ]
+                    ),
+                    limit=max(limit * 4, limit),
+                    with_payload=True,
+                )
+        except TimeoutError:
+            logger.warning(
+                "QdrantBackend.search_text: timeout na coleção %s", collection
+            )
+            return []
+        except Exception:
+            logger.debug(
+                "QdrantBackend.search_text: busca textual indisponível na coleção %s",
+                collection,
+                exc_info=True,
+            )
+            return []
+
+        # MatchText só filtra (booleano) — Qdrant não devolve relevância
+        # pra full-text. Rankeamos client-side por contagem de termos da
+        # query presentes no texto, só pra dar uma ORDEM determinística
+        # (a fusão RRF em tools/rag.py usa só a ordem, não o valor).
+        query_terms = [t for t in query.lower().split() if t]
+
+        def _term_overlap(text: str) -> int:
+            lowered = text.lower()
+            return sum(lowered.count(term) for term in query_terms)
+
+        scored = [
+            (point, _term_overlap(str((point.payload or {}).get("text", ""))))
+            for point in points
+        ]
+        scored.sort(key=lambda pair: pair[1], reverse=True)
+
+        hits: list[VectorHit] = []
+        for point, overlap in scored[:limit]:
+            payload = point.payload or {}
+            hits.append(
+                VectorHit(
+                    id=str(point.id),
+                    score=float(overlap),
+                    content=str(payload.get("text", "")),
+                    metadata=payload.get("metadata") or {},
+                    collection=collection,
+                )
+            )
+        return hits
+
     async def upsert(self, collection: str, rows: list[VectorRow]) -> None:
         if not rows:
             return

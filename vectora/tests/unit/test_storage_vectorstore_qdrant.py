@@ -71,6 +71,73 @@ class TestQdrantBackendSearch:
         mock_client.query_points.assert_not_called()
 
 
+class TestQdrantBackendSearchText:
+    @pytest.mark.asyncio
+    async def test_search_text_rankeia_por_overlap_de_termos(
+        self, backend, mock_client
+    ):
+        mock_client.collection_exists.return_value = True
+        mock_client.scroll.return_value = (
+            [
+                Record(
+                    id="p-fraco",
+                    payload={"text": "menciona auth uma vez", "metadata": {}},
+                ),
+                Record(
+                    id="p-forte",
+                    payload={
+                        "text": "auth auth auth — tudo sobre auth aqui",
+                        "metadata": {},
+                    },
+                ),
+            ],
+            None,
+        )
+
+        hits = await backend.search_text("articles", "auth", limit=5)
+
+        assert [h.id for h in hits] == ["p-forte", "p-fraco"]
+        assert hits[0].score > hits[1].score
+
+    @pytest.mark.asyncio
+    async def test_search_text_colecao_inexistente_retorna_vazio_sem_propagar(
+        self, backend, mock_client
+    ):
+        mock_client.collection_exists.return_value = False
+
+        hits = await backend.search_text("nao-existe", "auth", limit=5)
+
+        assert hits == []
+        mock_client.scroll.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_search_text_erro_no_scroll_retorna_vazio_sem_propagar(
+        self, backend, mock_client
+    ):
+        mock_client.collection_exists.return_value = True
+        mock_client.scroll.side_effect = RuntimeError("qdrant indisponível")
+
+        hits = await backend.search_text("articles", "auth", limit=5)
+
+        assert hits == []
+
+    @pytest.mark.asyncio
+    async def test_search_text_create_index_falhando_nao_impede_busca(
+        self, backend, mock_client
+    ):
+        mock_client.collection_exists.return_value = True
+        mock_client.create_payload_index.side_effect = RuntimeError("índice já existe")
+        mock_client.scroll.return_value = (
+            [Record(id="p1", payload={"text": "auth", "metadata": {}})],
+            None,
+        )
+
+        hits = await backend.search_text("articles", "auth", limit=5)
+
+        assert len(hits) == 1
+        assert hits[0].id == "p1"
+
+
 class TestQdrantBackendUpsert:
     @pytest.mark.asyncio
     async def test_upsert_cria_colecao_e_envia_pontos(self, backend, mock_client):

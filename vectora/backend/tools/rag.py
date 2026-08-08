@@ -302,6 +302,63 @@ async def _search_one_collection(
     ]
 
 
+async def _search_one_collection_text(
+    backend: Any, collection: str, query: str, limit: int
+) -> list[dict[str, Any]]:
+    """Busca lexical (BM25-like) numa única coleção — mesmo shape de
+    `_search_one_collection`, pra `_reciprocal_rank_fusion` tratar as duas
+    listas de forma uniforme."""
+    hits = await backend.search_text(collection, query, limit)
+    return [
+        {
+            "id": hit.id,
+            "score": hit.score,
+            "content": hit.content,
+            "metadata": hit.metadata,
+            "collection": hit.collection,
+        }
+        for hit in hits
+    ]
+
+
+_RRF_K = 60
+
+
+def _reciprocal_rank_fusion(
+    vector_results: list[dict[str, Any]],
+    text_results: list[dict[str, Any]],
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Reciprocal Rank Fusion — funde busca vetorial (distância, menor
+    melhor) com busca textual (relevância, maior melhor) sem precisar
+    normalizar as duas escalas incompatíveis: só a ORDEM de cada lista de
+    entrada importa. `k=60` é a constante padrão da literatura de RRF
+    (Cormack et al.), amortecendo o peso de posições extremas.
+
+    Ambas as listas já devem vir ordenadas da melhor pra pior posição
+    (rank 1 = melhor)."""
+    scores: dict[str, float] = {}
+    docs: dict[str, dict[str, Any]] = {}
+
+    for rank, r in enumerate(vector_results, start=1):
+        key = f"{r['collection']}::{r['id']}"
+        scores[key] = scores.get(key, 0.0) + 1.0 / (_RRF_K + rank)
+        docs.setdefault(key, r)
+
+    for rank, r in enumerate(text_results, start=1):
+        key = f"{r['collection']}::{r['id']}"
+        scores[key] = scores.get(key, 0.0) + 1.0 / (_RRF_K + rank)
+        docs.setdefault(key, r)
+
+    ordered = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
+    fused: list[dict[str, Any]] = []
+    for key, score in ordered[:limit]:
+        doc = dict(docs[key])
+        doc["score"] = score
+        fused.append(doc)
+    return fused
+
+
 @tool(
     extras={
         "render_hint": "search_results",
@@ -375,9 +432,25 @@ async def vector_search(
             await _search_one_collection(backend, coll, query_vector, limit)
             for coll in collections
         ]
-        results = sorted(
+        vector_results = sorted(
             (r for batch in fanned_out for r in batch), key=lambda r: r["score"]
-        )[:limit]
+        )
+
+        if settings.rag_hybrid_enabled:
+            text_fanned_out = [
+                await _search_one_collection_text(
+                    backend, coll, query, settings.rag_hybrid_fetch_limit
+                )
+                for coll in collections
+            ]
+            text_results = sorted(
+                (r for batch in text_fanned_out for r in batch),
+                key=lambda r: r["score"],
+                reverse=True,
+            )
+            results = _reciprocal_rank_fusion(vector_results, text_results, limit)
+        else:
+            results = vector_results[:limit]
 
         if not results:
             return json.dumps(

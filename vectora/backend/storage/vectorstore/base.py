@@ -46,6 +46,22 @@ class VectorStoreBackend(Protocol):
         """Top-k por similaridade. Coleção ausente devolve lista vazia."""
         ...
 
+    async def search_text(
+        self, collection: str, query: str, limit: int
+    ) -> list[VectorHit]:
+        """Busca lexical (BM25-like) — usada pela fusão híbrida em
+        `tools/rag.py::vector_search` (`settings.rag_hybrid_enabled`) para
+        cobrir recall que embeddings tendem a diluir (identificador de
+        código, mensagem de erro exata). Coleção ausente ou sem índice de
+        texto disponível devolve lista vazia, nunca lança.
+
+        `score` aqui é relevância textual (maior é melhor) — convenção
+        OPOSTA à de `search()` (distância, menor é melhor). A fusão em
+        `tools/rag.py` usa só a ORDEM de cada lista (Reciprocal Rank
+        Fusion), nunca os valores absolutos — a diferença de escala entre
+        os dois métodos não precisa ser normalizada."""
+        ...
+
     async def upsert(self, collection: str, rows: list[VectorRow]) -> None:
         """Insere/atualiza documentos. Cria a coleção se não existir."""
         ...

@@ -121,6 +121,165 @@ class TestVectorSearch:
         assert data.get("status") in ("failed", "error")
 
 
+class TestReciprocalRankFusion:
+    """`_reciprocal_rank_fusion` funde ranking vetorial (distância) com
+    ranking textual (relevância) usando só a ORDEM de cada lista — não os
+    valores absolutos, que têm escalas incompatíveis entre os dois métodos."""
+
+    def test_documento_presente_nos_dois_rankings_sobe_de_posicao(self):
+        from backend.tools.rag import _reciprocal_rank_fusion
+
+        vector_results = [
+            {"id": "a", "collection": "c", "score": 0.1, "content": "", "metadata": {}},
+            {"id": "b", "collection": "c", "score": 0.2, "content": "", "metadata": {}},
+        ]
+        text_results = [
+            {"id": "b", "collection": "c", "score": 5.0, "content": "", "metadata": {}},
+        ]
+
+        fused = _reciprocal_rank_fusion(vector_results, text_results, limit=5)
+
+        # "b" está em 2º no vetorial mas em 1º no textual — soma dos dois
+        # ranks recíprocos supera "a" (só presente no vetorial, em 1º).
+        assert fused[0]["id"] == "b"
+
+    def test_documento_presente_so_em_uma_lista_ainda_aparece(self):
+        from backend.tools.rag import _reciprocal_rank_fusion
+
+        vector_results = [
+            {"id": "a", "collection": "c", "score": 0.1, "content": "", "metadata": {}},
+        ]
+        text_results: list[dict] = []
+
+        fused = _reciprocal_rank_fusion(vector_results, text_results, limit=5)
+
+        assert [r["id"] for r in fused] == ["a"]
+
+    def test_ambas_listas_vazias_retorna_lista_vazia(self):
+        from backend.tools.rag import _reciprocal_rank_fusion
+
+        assert _reciprocal_rank_fusion([], [], limit=5) == []
+
+    def test_respeita_o_limit(self):
+        from backend.tools.rag import _reciprocal_rank_fusion
+
+        vector_results = [
+            {
+                "id": str(i),
+                "collection": "c",
+                "score": float(i),
+                "content": "",
+                "metadata": {},
+            }
+            for i in range(10)
+        ]
+
+        fused = _reciprocal_rank_fusion(vector_results, [], limit=3)
+
+        assert len(fused) == 3
+
+
+class TestVectorSearchHybrid:
+    """`vector_search` funde busca vetorial com busca textual quando
+    `settings.rag_hybrid_enabled` (default True) — usa `search_text` do
+    backend além de `search`."""
+
+    @pytest.mark.asyncio
+    async def test_hybrid_enabled_chama_search_text_e_funde_resultados(self):
+        from backend.storage.vectorstore.base import VectorHit
+        from backend.tools.rag import vector_search
+
+        mock_backend = AsyncMock()
+        mock_backend.search = AsyncMock(
+            return_value=[
+                VectorHit(
+                    id="vec-only",
+                    score=0.1,
+                    content="c1",
+                    metadata={},
+                    collection="articles",
+                )
+            ]
+        )
+        mock_backend.search_text = AsyncMock(
+            return_value=[
+                VectorHit(
+                    id="text-only",
+                    score=9.0,
+                    content="c2",
+                    metadata={},
+                    collection="articles",
+                )
+            ]
+        )
+        mock_embeddings = MagicMock()
+        mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+
+        with patch("backend.tools.rag.settings") as ms:
+            ms.get_cohere_api_key.return_value = "test-key"
+            ms.embedding_model = "embed-english-v3.0"
+            ms.reranker_type = "none"
+            ms.rag_hybrid_enabled = True
+            ms.rag_hybrid_fetch_limit = 20
+            with (
+                patch("backend.storage.factory._build_lc_embeddings", mock_embeddings),
+                patch(
+                    "backend.storage.factory.get_vector_store_backend",
+                    AsyncMock(return_value=mock_backend),
+                ),
+            ):
+                result = await vector_search.ainvoke(
+                    {"query": "test query", "collection": "articles", "limit": 5}
+                )
+
+        mock_backend.search_text.assert_awaited_once()
+        data = json.loads(result)
+        ids = {r["content"] for r in data["results"]}
+        assert "c1" in ids
+        assert "c2" in ids
+
+    @pytest.mark.asyncio
+    async def test_hybrid_disabled_nao_chama_search_text(self):
+        from backend.storage.vectorstore.base import VectorHit
+        from backend.tools.rag import vector_search
+
+        mock_backend = AsyncMock()
+        mock_backend.search = AsyncMock(
+            return_value=[
+                VectorHit(
+                    id="vec-only",
+                    score=0.1,
+                    content="c1",
+                    metadata={},
+                    collection="articles",
+                )
+            ]
+        )
+        mock_backend.search_text = AsyncMock(return_value=[])
+        mock_embeddings = MagicMock()
+        mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+
+        with patch("backend.tools.rag.settings") as ms:
+            ms.get_cohere_api_key.return_value = "test-key"
+            ms.embedding_model = "embed-english-v3.0"
+            ms.reranker_type = "none"
+            ms.rag_hybrid_enabled = False
+            with (
+                patch("backend.storage.factory._build_lc_embeddings", mock_embeddings),
+                patch(
+                    "backend.storage.factory.get_vector_store_backend",
+                    AsyncMock(return_value=mock_backend),
+                ),
+            ):
+                result = await vector_search.ainvoke(
+                    {"query": "test query", "collection": "articles", "limit": 5}
+                )
+
+        mock_backend.search_text.assert_not_called()
+        data = json.loads(result)
+        assert len(data["results"]) == 1
+
+
 class TestVectorSearchBucketFanout:
     """Sem `collection` explícito, a busca varre só os buckets ativos do
     workspace (backend/services/rag_buckets.py) — não a tabela `articles`
