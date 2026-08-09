@@ -283,13 +283,17 @@ async def build_workspace_graph(
 
         # ── Passo 5: cluster (comunidades Leiden/Louvain) ─────────────────────
         _progress(5, "Agrupando comunidades...", _files_total)
-        from .cluster import cluster, score_all
+        from .cluster import cluster, label_communities_by_hub, score_all
 
         communities: dict[int, list[str]] = {}
         cohesion: dict[int, float] = {}
+        community_labels: dict[int, str] = {}
         try:
             communities = await asyncio.to_thread(cluster, graph)
             cohesion = await asyncio.to_thread(score_all, graph, communities)
+            community_labels = await asyncio.to_thread(
+                label_communities_by_hub, graph, communities
+            )
         except Exception:
             logger.exception(
                 "context_graph: falha no clustering",
@@ -300,7 +304,6 @@ async def build_workspace_graph(
         _progress(6, "Analisando padrões...", _files_total)
         from .analyze import god_nodes, suggest_questions, surprising_connections
 
-        community_labels: dict[int, str] = {}
         god_node_list: list[dict] = []
         surprise_list: list[dict] = []
         questions: list[dict] = []

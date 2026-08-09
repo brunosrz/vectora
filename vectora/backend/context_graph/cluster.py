@@ -89,6 +89,53 @@ _COHESION_SPLIT_MIN_SIZE = (
 )
 
 
+def label_communities_by_hub(
+    G: nx.Graph, communities: dict[int, list[str]]
+) -> dict[int, str]:
+    """Deterministic, LLM-free community labels: name each community after its
+    highest-degree member — the structural hub — so a report reads ``auth`` /
+    ``log_action`` instead of ``Community 70``. Degree is measured on the full graph
+    ``G``; ties break by node id for run-to-run stability. A community whose members
+    are all absent from ``G`` falls back to ``Community {cid}``.
+
+    Used as the default (no-backend) labeler; an LLM naming pass, when configured,
+    overrides these with richer names.
+    """
+    labels: dict[int, str] = {}
+    for cid, members in communities.items():
+        present = [n for n in members if n in G]
+        if not present:
+            labels[cid] = f"Community {cid}"
+            continue
+        # highest degree wins; ties broken by node id (ascending) for determinism
+        hub = min(present, key=lambda n: (-G.degree(n), str(n)))
+        name = str(G.nodes[hub].get("label") or hub).strip()
+        name = name.removesuffix("()")
+        labels[cid] = name or f"Community {cid}"
+    return labels
+
+
+def community_member_sigs(communities: dict[int, list[str]]) -> dict[int, str]:
+    """Per-community membership fingerprints: ``{cid: sha256(sorted member ids)}``.
+
+    Lets a later rebuild tell which communities actually changed members since a
+    previous run. A cid whose members no longer hash the same is a different
+    community — reusing an old (e.g. LLM-assigned) label there would be a stale
+    label after re-scoping. Deterministic; independent of cid index, node order,
+    and machine.
+    """
+    import hashlib
+
+    sigs: dict[int, str] = {}
+    for cid, members in communities.items():
+        h = hashlib.sha256()
+        for nid in sorted(str(n) for n in members):
+            h.update(nid.encode("utf-8", "replace"))
+            h.update(b"\x00")
+        sigs[cid] = h.hexdigest()[:16]
+    return sigs
+
+
 def cluster(
     G: nx.Graph,
     resolution: float = 1.0,
