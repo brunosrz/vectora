@@ -881,10 +881,25 @@ async def aget_thread_messages(
     try:
         # aget_state_history vem do mais recente pro mais antigo (LangGraph);
         # inverte pra processar em ordem cronológica e comparar snapshots
-        # consecutivos.
-        history = [snap async for snap in graph.aget_state_history(config)]
+        # consecutivos. Itera TODOS os checkpoints do grafo (um por
+        # super-step — cada tool call, cada delegação de subagente, cada
+        # write_todos), não só as mensagens finais — numa conversa longa
+        # isso pode ser milhares de checkpoints; timeout explícito evita
+        # travar indefinidamente numa cadeia muito grande.
+        async with asyncio.timeout(30):
+            history = [snap async for snap in graph.aget_state_history(config)]
+    except TimeoutError:
+        logger.warning(
+            "aget_thread_messages: timeout lendo histórico thread=%s "
+            "(conversa muito longa? checkpointer lento?)",
+            thread_id,
+        )
+        return []
     except Exception:
-        logger.debug(
+        # Antes era logger.debug — silencioso demais para um erro que
+        # esvazia o histórico inteiro do usuário sem nenhuma pista visível
+        # nos logs padrão (INFO/WARNING).
+        logger.warning(
             "aget_thread_messages: falha ao ler histórico thread=%s",
             thread_id,
             exc_info=True,

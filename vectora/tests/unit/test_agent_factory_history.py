@@ -144,6 +144,75 @@ async def test_aget_thread_messages_no_checkpointer(
     assert await aget_thread_messages("qualquer-thread") == []
 
 
+@pytest.mark.asyncio
+async def test_aget_thread_messages_timeout_loga_warning_e_devolve_vazio(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Regressão ao vivo: conversa muito longa (milhares de checkpoints —
+    um por tool call/delegação/write_todos) travava sem limite de tempo.
+    Timeout precisa aparecer no log (WARNING), não desaparecer em silêncio."""
+    import asyncio
+
+    async def _hangs_forever(_config):
+        await asyncio.sleep(999)
+        yield _Snapshot([], None)  # pragma: no cover - nunca alcançado
+
+    compiled = MagicMock()
+    compiled.aget_state_history = MagicMock(side_effect=_hangs_forever)
+
+    sentinel_checkpointer = object()
+    monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)
+
+    async def _noop_ensure() -> None:
+        pass
+
+    monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
+    monkeypatch.setattr(
+        agent_factory, "get_user_agent", AsyncMock(return_value=compiled)
+    )
+    _real_timeout = asyncio.timeout
+    monkeypatch.setattr(agent_factory.asyncio, "timeout", lambda _s: _real_timeout(0))
+
+    with caplog.at_level("WARNING"):
+        result = await aget_thread_messages("t-longa")
+
+    assert result == []
+    assert any("timeout" in rec.message.lower() for rec in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_aget_thread_messages_falha_no_meio_loga_warning_nao_debug(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Antes: `logger.debug` engolia qualquer falha de leitura sem deixar
+    rastro nos logs padrão (INFO/WARNING) — o histórico sumia sem pista
+    nenhuma de por quê. Agora precisa aparecer em WARNING."""
+
+    async def _raises(_config):
+        raise RuntimeError("checkpoint corrompido no meio da cadeia")
+        yield  # pragma: no cover - torna a função um gerador
+
+    compiled = MagicMock()
+    compiled.aget_state_history = MagicMock(side_effect=_raises)
+
+    sentinel_checkpointer = object()
+    monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)
+
+    async def _noop_ensure() -> None:
+        pass
+
+    monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
+    monkeypatch.setattr(
+        agent_factory, "get_user_agent", AsyncMock(return_value=compiled)
+    )
+
+    with caplog.at_level("WARNING"):
+        result = await aget_thread_messages("t-corrompida")
+
+    assert result == []
+    assert any("falha ao ler histórico" in rec.message for rec in caplog.records)
+
+
 # ---------------------------------------------------------------------------
 # reset_default_graph + profiles guard
 # ---------------------------------------------------------------------------
