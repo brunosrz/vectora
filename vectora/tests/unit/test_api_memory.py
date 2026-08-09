@@ -21,11 +21,16 @@ from langgraph.store.memory import InMemoryStore
 
 
 @pytest.fixture
-def client(monkeypatch):
-    """TestClient com um BaseStore real (InMemoryStore) compartilhado."""
-    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+def store():
+    """BaseStore real (InMemoryStore) compartilhado entre o TestClient e as
+    memory tools do agente — instância única por teste (mesmo fixture node)."""
+    return InMemoryStore()
 
-    store = InMemoryStore()
+
+@pytest.fixture
+def client(monkeypatch, store):
+    """TestClient com o `store` acima injetado no lugar do store real."""
+    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
 
     async def _fake_get_store():
         return store
@@ -36,7 +41,6 @@ def client(monkeypatch):
 
     app = create_app(serve_static=False)
     tc = TestClient(app)
-    tc.store = store  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
     yield tc
 
     os.environ.pop("VECTORA_AUTH_REQUIRED", None)
@@ -145,13 +149,13 @@ class TestMemorySharedStoreWithAgent:
 
     @pytest.mark.asyncio
     async def test_memory_saved_via_agent_tool_appears_in_api(
-        self, client, monkeypatch
+        self, client, store, monkeypatch
     ):
         from langchain_core.runnables import RunnableConfig
 
         from backend.tools.memory import save_memory
 
-        monkeypatch.setattr("backend.tools.memory._get_store", lambda: client.store)
+        monkeypatch.setattr("backend.tools.memory._get_store", lambda: store)
 
         config: RunnableConfig = {"configurable": {"user_id": "local"}}
         await save_memory.ainvoke(
@@ -162,14 +166,16 @@ class TestMemorySharedStoreWithAgent:
         assert resp.status_code == 200
         assert resp.json()["content"] == "salvo pelo agente"
 
-    def test_memory_created_via_api_is_visible_to_agent_tool(self, client, monkeypatch):
+    def test_memory_created_via_api_is_visible_to_agent_tool(
+        self, client, store, monkeypatch
+    ):
         import asyncio
 
         from langchain_core.runnables import RunnableConfig
 
         from backend.tools.memory import get_memory
 
-        monkeypatch.setattr("backend.tools.memory._get_store", lambda: client.store)
+        monkeypatch.setattr("backend.tools.memory._get_store", lambda: store)
 
         client.post("/memory", json={"key": "from_api", "content": "salvo pelo painel"})
 
