@@ -534,6 +534,44 @@ async def test_run_task_invokes_agent_registers_session_and_records_run(
     assert after.last_run_at is not None
 
 
+async def test_run_task_subagent_type_propaga_user_id_pro_tool_policy(db, monkeypatch):
+    """Regressão do gap real (WS8): a execução de uma task com
+    `trigger_config={"subagent_type": ...}` (agendada por
+    `schedule_subagent_task`) precisa passar `user_id` pra
+    `build_subagent_graph`, senão o filtro de tools desabilitadas
+    (kill-switch/ABAC) nunca se aplica a essa SOUL — diferente da
+    delegação síncrona, que já filtrava corretamente."""
+    from backend.scheduling import subagent_runner as subagent_runner_module
+
+    agent = _FakeAgent(result={"messages": [{"content": "feito"}]})
+    build_calls: list[dict[str, Any]] = []
+
+    async def _fake_build_subagent_graph(
+        subagent_type: str, model_id: str = "", user_id: str | None = None
+    ) -> Any:
+        build_calls.append({"subagent_type": subagent_type, "user_id": user_id})
+        return agent
+
+    monkeypatch.setattr(
+        subagent_runner_module, "build_subagent_graph", _fake_build_subagent_graph
+    )
+
+    task = await bg.create_task(
+        session_id="sess-sub",
+        user_id="uuid-owner",
+        kind="routine",
+        name="Subagente coder",
+        instruction="corrigir bug",
+        trigger_type="once",
+        trigger_config={"subagent_type": "coder"},
+        next_run_at="2026-01-01T00:00:00+00:00",
+    )
+
+    await bg.run_task(task, "manual")
+
+    assert build_calls == [{"subagent_type": "coder", "user_id": "uuid-owner"}]
+
+
 async def test_run_task_error_path_records_error_and_skips_session(db, monkeypatch):
     agent = _FakeAgent(exc=RuntimeError("LLM caiu"))
     _patch_agent(monkeypatch, agent)

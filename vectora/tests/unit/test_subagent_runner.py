@@ -84,3 +84,71 @@ async def test_build_subagent_graph_monta_grafo_sem_subagents_param():
 async def test_build_subagent_graph_tipo_invalido_propaga_erro():
     with pytest.raises(ValueError, match="subagent_type inválido"):
         await build_subagent_graph("orchestrator")
+
+
+@pytest.mark.asyncio
+async def test_build_subagent_graph_filtra_tools_desabilitadas_do_usuario():
+    """Regressão do gap real (WS8): `build_subagent_graph` — usado pela
+    execução agendada de `schedule_subagent_task` — não passava por
+    `tool_policy.effective_disabled`, diferente da delegação síncrona
+    (`agent_factory._subagent_specs`), que já filtrava. Uma SOUL agendada
+    rodava sempre com o catálogo de tools completo, ignorando qualquer
+    tool desabilitada pelo usuário/admin."""
+    from backend.agents.souls import SOUL_CATALOG
+
+    coder_tool_names = {t.name for t in SOUL_CATALOG["coder"].tools}
+    disabled_tool = next(iter(coder_tool_names))
+
+    fake_graph = MagicMock()
+
+    with (
+        patch(
+            "backend.services.agent_factory.get_checkpointer",
+            new=AsyncMock(return_value=MagicMock()),
+        ),
+        patch(
+            "backend.services.agent_factory.get_store",
+            new=AsyncMock(return_value=MagicMock()),
+        ),
+        patch("backend.services.middleware.build_middleware_stack", return_value=[]),
+        patch(
+            "backend.rbac.tool_policy.effective_disabled",
+            return_value={disabled_tool},
+        ),
+        patch("deepagents.create_deep_agent", return_value=fake_graph) as mock_create,
+    ):
+        await build_subagent_graph("coder", user_id="u1")
+
+    _, kwargs = mock_create.call_args
+    tool_names = {t.name for t in kwargs["tools"]}
+    assert disabled_tool not in tool_names
+    assert tool_names == coder_tool_names - {disabled_tool}
+
+
+@pytest.mark.asyncio
+async def test_build_subagent_graph_sem_user_id_nao_filtra_alem_do_global():
+    # Erro/borda: sem user_id (compatibilidade com chamadores antigos),
+    # o comportamento é idêntico a antes desta feature — nenhuma tool
+    # perdida além do kill-switch global (aqui vazio).
+    from backend.agents.souls import SOUL_CATALOG
+
+    coder_tool_names = {t.name for t in SOUL_CATALOG["coder"].tools}
+    fake_graph = MagicMock()
+
+    with (
+        patch(
+            "backend.services.agent_factory.get_checkpointer",
+            new=AsyncMock(return_value=MagicMock()),
+        ),
+        patch(
+            "backend.services.agent_factory.get_store",
+            new=AsyncMock(return_value=MagicMock()),
+        ),
+        patch("backend.services.middleware.build_middleware_stack", return_value=[]),
+        patch("backend.rbac.tool_policy.effective_disabled", return_value=set()),
+        patch("deepagents.create_deep_agent", return_value=fake_graph) as mock_create,
+    ):
+        await build_subagent_graph("coder")
+
+    _, kwargs = mock_create.call_args
+    assert {t.name for t in kwargs["tools"]} == coder_tool_names

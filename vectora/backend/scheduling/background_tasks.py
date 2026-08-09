@@ -867,7 +867,7 @@ async def run_task(
                     task.workspace_id, task.id
                 )
 
-            agent = await build_subagent_graph(subagent_type)
+            agent = await build_subagent_graph(subagent_type, user_id=task.user_id)
         else:
             agent = await agent_factory.get_user_agent(
                 user_id=task.user_id,
