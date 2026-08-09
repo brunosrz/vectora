@@ -197,7 +197,7 @@ jobs:
       - name: Integration tests
         run: uv run pytest tests/integration/ -v --timeout=120 -p no:randomly --tb=short
       - name: E2E tests
-        run: uv run pytest tests/e2e/ -v -m "not live" --timeout=180 --tb=short
+        run: uv run pytest tests/e2e/ -v --timeout=180 --tb=short
 
   # ── 5. Release Native Binaries (Nuitka onefile + Electron installers) ───
   # Matriz cara: macOS (multiplicador 10x de minutos) e Windows (2x). Por
