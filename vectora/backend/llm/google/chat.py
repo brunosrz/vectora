@@ -54,15 +54,36 @@ def _safety_settings_permissivos() -> list[dict]:
     ]
 
 
+def _strip_gemini_unsupported_keys(schema: Any) -> Any:
+    """Remove chaves de JSON Schema que a API do Gemini rejeita com 400
+    ("Cannot find field") — o schema de function-calling do Gemini é um
+    subconjunto de OpenAPI 3.0, sem `additionalProperties`. O
+    `model_json_schema()` do Pydantic v2 (usado por `convert_to_openai_tool`)
+    sempre inclui `additionalProperties: false` em todo objeto, inclusive
+    dentro de cada branch de `anyOf` gerado por campo `Optional[...]` — por
+    isso a limpeza precisa recursar em `properties`/`items`/`anyOf`/`oneOf`/
+    `allOf`, não só no nível raiz do schema."""
+    if isinstance(schema, dict):
+        return {
+            k: _strip_gemini_unsupported_keys(v)
+            for k, v in schema.items()
+            if k != "additionalProperties"
+        }
+    if isinstance(schema, list):
+        return [_strip_gemini_unsupported_keys(item) for item in schema]
+    return schema
+
+
 def _to_google_tool(tool: Any) -> dict:
     """Converte pro formato `functionDeclarations` do Gemini — sem wrapper
     `type:"function"`, schema direto em `parameters`."""
     convertida = convert_to_openai_tool(tool)
     funcao = convertida.get("function", convertida)
+    parametros = funcao.get("parameters") or {"type": "object", "properties": {}}
     return {
         "name": funcao.get("name", ""),
         "description": funcao.get("description", ""),
-        "parameters": funcao.get("parameters") or {"type": "object", "properties": {}},
+        "parameters": _strip_gemini_unsupported_keys(parametros),
     }
 
 

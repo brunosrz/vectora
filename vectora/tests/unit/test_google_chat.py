@@ -160,6 +160,49 @@ class TestToolCalling:
         assert "type" not in decl  # sem wrapper type:"function"
 
     @pytest.mark.asyncio
+    async def test_tool_schema_com_additional_properties_e_limpo_recursivamente(self):
+        """Regressão ao vivo: `parameters` gerado por `model_json_schema()`
+        do Pydantic v2 sempre inclui `additionalProperties: false` em todo
+        objeto, inclusive dentro de `anyOf` de campos `Optional[...]` — o
+        Gemini rejeita esse campo com 400 ("Cannot find field
+        'additionalProperties'"), derrubando o stream inteiro mesmo quando
+        só uma entre dezenas de tools tem o campo problemático."""
+
+        ferramenta = {
+            "type": "function",
+            "function": {
+                "name": "buscar",
+                "description": "busca algo",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "limit": {
+                            "anyOf": [{"type": "integer"}, {"type": "null"}],
+                            "additionalProperties": False,
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+            },
+        }
+
+        capturado: dict = {}
+
+        def handler_captura(req: httpx.Request) -> httpx.Response:
+            import json as _json
+
+            capturado.update(_json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        modelo = _modelo(handler_captura).bind_tools([ferramenta])  # type: ignore[attr-defined]
+        await modelo._agenerate([HumanMessage("busque algo")])
+
+        parametros = capturado["tools"][0]["functionDeclarations"][0]["parameters"]
+        assert "additionalProperties" not in parametros
+        assert "additionalProperties" not in parametros["properties"]["limit"]
+
+    @pytest.mark.asyncio
     async def test_tool_call_nao_streaming_volta_montada(self):
         def handler(_req):
             return httpx.Response(
