@@ -25,7 +25,7 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -244,6 +244,16 @@ def require_workspace_access(workspace_id: str, request: Request) -> Any:
             status_code=403, detail="Você não tem acesso a este workspace."
         )
     return ws
+
+
+async def _enforce_workspace_ownership(workspace_id: str, request: Request) -> None:
+    """Dependency do ``workspace_scoped_router`` — barra 403 antes de
+    qualquer handler rodar, reusando ``require_workspace_access`` (zero
+    lógica nova). Workspace inexistente não levanta aqui (mesmo contrato de
+    ``require_workspace_access``) — cada handler mantém seu próprio
+    comportamento de "não encontrado" (404 explícito, lista vazia, etc.),
+    sem essa dependency duplicar ou mudar mensagens de erro já testadas."""
+    require_workspace_access(workspace_id, request)
 
 
 def _to_info(ws: Any) -> WorkspaceInfo:
@@ -782,6 +792,17 @@ async def create_worktree(body: CreateWorktreeRequest) -> StatusResponse:
 
 view_router = APIRouter(prefix="/workspaces", tags=["workspaces-view"])
 
+#: Todo endpoint sob `/workspaces/{workspace_id}/...` migra pra cá — a
+#: dependency barra 403 (dono errado) antes do handler rodar, pra nenhuma
+#: rota nova esquecer o check de ownership (Sprint 17 WS2). Workspace
+#: inexistente não é interceptado aqui — cada handler mantém seu próprio
+#: "não encontrado" (ver `_enforce_workspace_ownership`).
+workspace_scoped_router = APIRouter(
+    prefix="/workspaces/{workspace_id}",
+    tags=["workspaces-view"],
+    dependencies=[Depends(_enforce_workspace_ownership)],
+)
+
 
 @view_router.get("", response_model=ListWorkspacesResponse)
 async def list_workspaces_rest(request: Request) -> ListWorkspacesResponse:
@@ -974,7 +995,7 @@ class SandboxStatusResponse(BaseModel):
     diagnostic: str | None = None
 
 
-@view_router.get("/{workspace_id}/sandbox/status", response_model=SandboxStatusResponse)
+@workspace_scoped_router.get("/sandbox/status", response_model=SandboxStatusResponse)
 async def workspace_sandbox_status(workspace_id: str) -> SandboxStatusResponse:
     """Reflete se o worker jailado (Sandbox) está habilitado pra essa
     workspace — lê `vectora.toml`/`[sandbox]` na raiz do workspace, mesma
@@ -1009,7 +1030,7 @@ class SandboxInitResponse(BaseModel):
     ok: bool
 
 
-@view_router.post("/{workspace_id}/sandbox/init", response_model=SandboxInitResponse)
+@workspace_scoped_router.post("/sandbox/init", response_model=SandboxInitResponse)
 async def workspace_sandbox_init(workspace_id: str) -> SandboxInitResponse:
     """Cria `vectora.toml` na raiz do workspace com `[sandbox] enabled = true`
     (config mínima, sem os comentários explicativos do template de
@@ -1038,7 +1059,7 @@ async def workspace_sandbox_init(workspace_id: str) -> SandboxInitResponse:
     return SandboxInitResponse(ok=True)
 
 
-@view_router.get("/{workspace_id}/tree", response_model=TreeResponse)
+@workspace_scoped_router.get("/tree", response_model=TreeResponse)
 async def workspace_tree(
     workspace_id: str,
     path: Annotated[str, Query()] = "",
@@ -1092,7 +1113,7 @@ async def workspace_tree(
     return TreeResponse(path=path, entries=entries)
 
 
-@view_router.get("/{workspace_id}/file", response_model=FileResponse)
+@workspace_scoped_router.get("/file", response_model=FileResponse)
 async def workspace_file(
     workspace_id: str,
     path: Annotated[str, Query()],
@@ -1134,7 +1155,7 @@ async def workspace_file(
     )
 
 
-@view_router.get("/{workspace_id}/fs/raw")
+@workspace_scoped_router.get("/fs/raw")
 async def workspace_file_raw(
     workspace_id: str,
     path: Annotated[str, Query()],
@@ -1215,7 +1236,7 @@ def _parse_porcelain_v1(raw: str) -> list[tuple[str, str, str]]:
     return out
 
 
-@view_router.get("/{workspace_id}/git/diff", response_model=DiffSummary)
+@workspace_scoped_router.get("/git/diff", response_model=DiffSummary)
 async def workspace_git_diff(workspace_id: str, response: Response) -> DiffSummary:
     """Resumo do diff (uncommitted) do workspace.
 
@@ -1315,7 +1336,7 @@ async def workspace_git_diff(workspace_id: str, response: Response) -> DiffSumma
     )
 
 
-@view_router.get("/{workspace_id}/git/diff/file", response_model=DiffFileResponse)
+@workspace_scoped_router.get("/git/diff/file", response_model=DiffFileResponse)
 async def workspace_git_diff_file(
     workspace_id: str,
     path: Annotated[str, Query()],
@@ -1418,7 +1439,7 @@ def _open_workspace_repo(workspace_id: str) -> Any | None:
         return None
 
 
-@view_router.get("/{workspace_id}/git/log/file", response_model=FileLogResponse)
+@workspace_scoped_router.get("/git/log/file", response_model=FileLogResponse)
 async def git_log_file(
     workspace_id: str,
     path: Annotated[str, Query()],
@@ -1466,7 +1487,7 @@ async def git_log_file(
     return FileLogResponse(path=path, entries=entries)
 
 
-@view_router.get("/{workspace_id}/git/show", response_model=ShowFileAtRevResponse)
+@workspace_scoped_router.get("/git/show", response_model=ShowFileAtRevResponse)
 async def git_show_file(
     workspace_id: str,
     sha: Annotated[str, Query(min_length=4, max_length=40)],
@@ -1531,7 +1552,7 @@ class CommitDiffResponse(BaseModel):
     truncated: bool = False
 
 
-@view_router.get("/{workspace_id}/git/log", response_model=GitLogResponse)
+@workspace_scoped_router.get("/git/log", response_model=GitLogResponse)
 async def git_log(
     workspace_id: str,
     n: Annotated[int, Query(ge=1, le=200)] = 50,
@@ -1608,7 +1629,7 @@ async def git_log(
     )
 
 
-@view_router.get("/{workspace_id}/git/commit/diff", response_model=CommitDiffResponse)
+@workspace_scoped_router.get("/git/commit/diff", response_model=CommitDiffResponse)
 async def git_commit_diff(
     workspace_id: str,
     sha: Annotated[str, Query(min_length=4, max_length=40)],
@@ -1669,7 +1690,7 @@ class GitCherryPickRequest(BaseModel):
     no_commit: bool = False
 
 
-@view_router.post("/{workspace_id}/git/stage", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/stage", response_model=StatusResponse)
 async def git_stage(workspace_id: str, body: GitPathRequest) -> StatusResponse:
     """Stageia um arquivo (`git add <path>`)."""
     from backend.tools.git import _git_stage_impl
@@ -1681,7 +1702,7 @@ async def git_stage(workspace_id: str, body: GitPathRequest) -> StatusResponse:
     return StatusResponse(status=result["status"], message=result.get("message", ""))
 
 
-@view_router.post("/{workspace_id}/git/unstage", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/unstage", response_model=StatusResponse)
 async def git_unstage(workspace_id: str, body: GitPathRequest) -> StatusResponse:
     """Remove um arquivo do stage (`git reset HEAD <path>`)."""
     from backend.tools.git import _git_unstage_impl
@@ -1693,7 +1714,7 @@ async def git_unstage(workspace_id: str, body: GitPathRequest) -> StatusResponse
     return StatusResponse(status=result["status"], message=result.get("message", ""))
 
 
-@view_router.post("/{workspace_id}/git/discard", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/discard", response_model=StatusResponse)
 async def git_discard(workspace_id: str, body: GitPathRequest) -> StatusResponse:
     """Descarta mudanças não staged (`git restore -- <path>`)."""
     from backend.tools.git import _git_restore_impl
@@ -1705,7 +1726,7 @@ async def git_discard(workspace_id: str, body: GitPathRequest) -> StatusResponse
     return StatusResponse(status=result["status"], message=result.get("message", ""))
 
 
-@view_router.post("/{workspace_id}/git/commit", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/commit", response_model=StatusResponse)
 async def git_commit_inline(
     workspace_id: str, body: GitCommitRequest
 ) -> StatusResponse:
@@ -1735,7 +1756,7 @@ async def git_commit_inline(
     return StatusResponse(status=result["status"], message=result.get("message", ""))
 
 
-@view_router.post("/{workspace_id}/git/squash", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/squash", response_model=StatusResponse)
 async def git_squash_inline(
     workspace_id: str, body: GitSquashRequest
 ) -> StatusResponse:
@@ -1749,7 +1770,7 @@ async def git_squash_inline(
     return StatusResponse(status=result["status"], message=result.get("message", ""))
 
 
-@view_router.post("/{workspace_id}/git/reorder", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/reorder", response_model=StatusResponse)
 async def git_reorder_inline(
     workspace_id: str, body: GitReorderRequest
 ) -> StatusResponse:
@@ -1763,7 +1784,7 @@ async def git_reorder_inline(
     return StatusResponse(status=result["status"], message=result.get("message", ""))
 
 
-@view_router.post("/{workspace_id}/git/cherry-pick", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/cherry-pick", response_model=StatusResponse)
 async def git_cherry_pick_inline(
     workspace_id: str, body: GitCherryPickRequest
 ) -> StatusResponse:
@@ -1782,7 +1803,7 @@ async def git_cherry_pick_inline(
 # ---------------------------------------------------------------------------
 
 
-@view_router.get("/{workspace_id}/worktrees", response_model=ListWorktreesResponse)
+@workspace_scoped_router.get("/worktrees", response_model=ListWorktreesResponse)
 async def list_workspace_worktrees(workspace_id: str) -> ListWorktreesResponse:
     """Lista as worktrees do workspace (via view_router)."""
     from backend.tools.git import _git_worktree_impl, _open_repo
@@ -1804,7 +1825,7 @@ async def list_workspace_worktrees(workspace_id: str) -> ListWorktreesResponse:
     )
 
 
-@view_router.post("/{workspace_id}/worktrees", response_model=StatusResponse)
+@workspace_scoped_router.post("/worktrees", response_model=StatusResponse)
 async def create_workspace_worktree(
     workspace_id: str, body: CreateWorktreeRequest
 ) -> StatusResponse:
@@ -1847,7 +1868,7 @@ class CompareRefsResponse(BaseModel):
     truncated: bool = False
 
 
-@view_router.get("/{workspace_id}/git/compare", response_model=CompareRefsResponse)
+@workspace_scoped_router.get("/git/compare", response_model=CompareRefsResponse)
 async def git_compare_refs(
     workspace_id: str,
     base: Annotated[str, Query(min_length=1)],
@@ -1917,8 +1938,8 @@ class CompareFileDiffResponse(BaseModel):
     hunks: list[DiffHunk] = []
 
 
-@view_router.get(
-    "/{workspace_id}/git/compare/file", response_model=CompareFileDiffResponse
+@workspace_scoped_router.get(
+    "/git/compare/file", response_model=CompareFileDiffResponse
 )
 async def git_compare_file(
     workspace_id: str,
@@ -1947,7 +1968,7 @@ class RevertCommitRequest(BaseModel):
     no_commit: bool = True  # True = aplica as mudanças sem commitar
 
 
-@view_router.post("/{workspace_id}/git/revert", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/revert", response_model=StatusResponse)
 async def git_revert_commit(
     workspace_id: str, body: RevertCommitRequest
 ) -> StatusResponse:
@@ -1981,7 +2002,7 @@ class GitStatusResponse(BaseModel):
     behind: int = 0
 
 
-@view_router.get("/{workspace_id}/git/status", response_model=GitStatusResponse)
+@workspace_scoped_router.get("/git/status", response_model=GitStatusResponse)
 async def git_status(workspace_id: str) -> GitStatusResponse:
     """Estado real do repo: branch, ahead/behind do tracking remoto, clean."""
     from backend.tools.git import _git_status_impl
@@ -2012,7 +2033,7 @@ class GitBranchesResponse(BaseModel):
     remotes: list[str] = []
 
 
-@view_router.get("/{workspace_id}/git/branches", response_model=GitBranchesResponse)
+@workspace_scoped_router.get("/git/branches", response_model=GitBranchesResponse)
 async def git_branches(workspace_id: str) -> GitBranchesResponse:
     """Lista branches locais e remotas + a branch atual."""
     from backend.tools.git import _git_branch_impl
@@ -2041,7 +2062,7 @@ class GitCheckoutRequest(BaseModel):
     create: bool = False
 
 
-@view_router.post("/{workspace_id}/git/checkout", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/checkout", response_model=StatusResponse)
 async def git_checkout(workspace_id: str, body: GitCheckoutRequest) -> StatusResponse:
     """Troca de branch/commit; com ``create=true`` cria a branch antes."""
     from backend.tools.git import _git_branch_impl, _git_checkout_impl
@@ -2064,7 +2085,7 @@ class GitSyncRequest(BaseModel):
     branch: str | None = None
 
 
-@view_router.post("/{workspace_id}/git/fetch", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/fetch", response_model=StatusResponse)
 async def git_fetch(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
     """``git fetch <remote>`` — atualiza refs remotos sem alterar o worktree."""
     repo = _open_workspace_repo(workspace_id)
@@ -2077,7 +2098,7 @@ async def git_fetch(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
         return StatusResponse(status="error", message=str(exc))
 
 
-@view_router.post("/{workspace_id}/git/pull", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/pull", response_model=StatusResponse)
 async def git_pull(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
     """``git pull`` do remote/branch (pode gerar conflitos — ver /git/conflicts)."""
     from backend.tools.git import _git_pull_impl
@@ -2091,7 +2112,7 @@ async def git_pull(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
     )
 
 
-@view_router.post("/{workspace_id}/git/push", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/push", response_model=StatusResponse)
 async def git_push(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
     """``git push`` da branch atual (ou ``branch``) para o remote."""
     from backend.tools.git import _git_push_impl
@@ -2115,7 +2136,7 @@ class GitMergeResponse(BaseModel):
     conflicts: list[str] = []
 
 
-@view_router.post("/{workspace_id}/git/merge", response_model=GitMergeResponse)
+@workspace_scoped_router.post("/git/merge", response_model=GitMergeResponse)
 async def git_merge(workspace_id: str, body: GitMergeRequest) -> GitMergeResponse:
     """Faz merge de ``branch`` na branch atual.
 
@@ -2166,7 +2187,7 @@ class PullRequestListResponse(BaseModel):
     message: str = ""
 
 
-@view_router.get("/{workspace_id}/pr", response_model=PullRequestListResponse)
+@workspace_scoped_router.get("/pr", response_model=PullRequestListResponse)
 async def pr_list(
     workspace_id: str,
     state: Annotated[str, Query()] = "open",
@@ -2215,7 +2236,7 @@ class PullRequestCreateRequest(BaseModel):
     draft: bool = False
 
 
-@view_router.post("/{workspace_id}/pr", response_model=StatusResponse)
+@workspace_scoped_router.post("/pr", response_model=StatusResponse)
 async def pr_create(
     workspace_id: str, body: PullRequestCreateRequest
 ) -> StatusResponse:
@@ -2258,7 +2279,7 @@ class VscodeOptionsResponse(BaseModel):
     options: list[VscodeOption]
 
 
-@view_router.get("/{workspace_id}/vscode-options", response_model=VscodeOptionsResponse)
+@workspace_scoped_router.get("/vscode-options", response_model=VscodeOptionsResponse)
 async def vscode_options(workspace_id: str) -> VscodeOptionsResponse:
     """Retorna estratégias disponíveis para abrir o workspace no VS Code."""
     from urllib.parse import quote
@@ -2319,8 +2340,8 @@ class GitignoreUpdateRequest(BaseModel):
     lines: list[str]  # conteúdo completo do .gitignore
 
 
-@view_router.get(
-    "/{workspace_id}/fs/gitignore-preview",
+@workspace_scoped_router.get(
+    "/fs/gitignore-preview",
     response_model=GitignorePreviewResponse,
 )
 async def gitignore_preview(
@@ -2367,7 +2388,7 @@ async def gitignore_preview(
     )
 
 
-@view_router.get("/{workspace_id}/fs/gitignore")
+@workspace_scoped_router.get("/fs/gitignore")
 async def get_gitignore(workspace_id: str) -> dict:
     """Lê o conteúdo do .gitignore raiz do workspace."""
     from backend.workspace.workspace import workspace_registry
@@ -2386,7 +2407,7 @@ async def get_gitignore(workspace_id: str) -> dict:
     }
 
 
-@view_router.put("/{workspace_id}/fs/gitignore", response_model=StatusResponse)
+@workspace_scoped_router.put("/fs/gitignore", response_model=StatusResponse)
 async def update_gitignore(
     workspace_id: str, body: GitignoreUpdateRequest
 ) -> StatusResponse:
@@ -2428,7 +2449,7 @@ class ResolveConflictRequest(BaseModel):
     content: str | None = None  # usado quando resolution=="content"
 
 
-@view_router.get("/{workspace_id}/git/conflicts", response_model=ConflictListResponse)
+@workspace_scoped_router.get("/git/conflicts", response_model=ConflictListResponse)
 async def list_conflicts(workspace_id: str) -> ConflictListResponse:
     """Lista arquivos com marcadores de conflito (diff-filter=U)."""
     from backend.workspace.workspace import workspace_registry
@@ -2454,7 +2475,7 @@ async def list_conflicts(workspace_id: str) -> ConflictListResponse:
     return ConflictListResponse(files=conflict_files)
 
 
-@view_router.post("/{workspace_id}/git/resolve-conflict", response_model=StatusResponse)
+@workspace_scoped_router.post("/git/resolve-conflict", response_model=StatusResponse)
 async def resolve_conflict(  # noqa: PLR0911
     workspace_id: str, body: ResolveConflictRequest
 ) -> StatusResponse:
@@ -2518,7 +2539,7 @@ class StashResponse(BaseModel):
     message: str = ""
 
 
-@view_router.post("/{workspace_id}/git/stash", response_model=StashResponse)
+@workspace_scoped_router.post("/git/stash", response_model=StashResponse)
 async def git_stash(workspace_id: str, body: StashRequest) -> StashResponse:
     """Gerencia stash: push / pop / drop / list."""
     from backend.tools.git import _git_stash_impl
@@ -2573,7 +2594,7 @@ class MoveFsNodeRequest(BaseModel):
     to_path: str
 
 
-@view_router.post("/{workspace_id}/fs/file", response_model=StatusResponse)
+@workspace_scoped_router.post("/fs/file", response_model=StatusResponse)
 async def create_fs_file(
     workspace_id: str, body: CreateFsNodeRequest
 ) -> StatusResponse:
@@ -2608,7 +2629,7 @@ class FileWriteResponse(BaseModel):
     sha256: str | None = None
 
 
-@view_router.put("/{workspace_id}/fs/file", response_model=FileWriteResponse)
+@workspace_scoped_router.put("/fs/file", response_model=FileWriteResponse)
 async def update_fs_file(
     workspace_id: str,
     path: Annotated[str, Query()],
@@ -2664,7 +2685,7 @@ async def update_fs_file(
     return FileWriteResponse(status="ok", sha256=hashlib.sha256(new_bytes).hexdigest())
 
 
-@view_router.post("/{workspace_id}/fs/dir", response_model=StatusResponse)
+@workspace_scoped_router.post("/fs/dir", response_model=StatusResponse)
 async def create_fs_dir(workspace_id: str, body: CreateFsNodeRequest) -> StatusResponse:
     """Cria um diretório dentro do workspace."""
     resolved = _resolve_inside(workspace_id, body.path)
@@ -2679,7 +2700,7 @@ async def create_fs_dir(workspace_id: str, body: CreateFsNodeRequest) -> StatusR
         return StatusResponse(status="error", message=str(exc))
 
 
-@view_router.delete("/{workspace_id}/fs", response_model=StatusResponse)
+@workspace_scoped_router.delete("/fs", response_model=StatusResponse)
 async def delete_fs_node(
     workspace_id: str,
     path: Annotated[str, Query()],
@@ -2710,7 +2731,7 @@ async def delete_fs_node(
         return StatusResponse(status="error", message=str(exc))
 
 
-@view_router.post("/{workspace_id}/fs/move", response_model=StatusResponse)
+@workspace_scoped_router.post("/fs/move", response_model=StatusResponse)
 async def move_fs_node(workspace_id: str, body: MoveFsNodeRequest) -> StatusResponse:
     """Renomeia ou move um arquivo/pasta dentro do workspace.
 
@@ -2841,7 +2862,7 @@ def _python_text_search(
     return hits, False
 
 
-@view_router.get("/{workspace_id}/fs/search", response_model=SearchResponse)
+@workspace_scoped_router.get("/fs/search", response_model=SearchResponse)
 async def search_workspace_files(
     workspace_id: str,
     q: Annotated[str, Query(min_length=1, max_length=200)],
@@ -2949,7 +2970,7 @@ class StackHintResponse(BaseModel):
     stack: str  # e.g. "nodejs", "python", "go", "rust", "unknown"
 
 
-@view_router.get("/{workspace_id}/stack-hint", response_model=StackHintResponse)
+@workspace_scoped_router.get("/stack-hint", response_model=StackHintResponse)
 async def stack_hint(workspace_id: str) -> StackHintResponse:
     """Detects the primary technology stack of the workspace by inspecting
     well-known marker files in the root directory.
@@ -2980,7 +3001,7 @@ _WATCHER_DEBOUNCE_S = 0.3  # 300ms
 _WATCHER_CAP = 100  # máx paths por evento
 
 
-@view_router.get("/{workspace_id}/events")
+@workspace_scoped_router.get("/events")
 async def workspace_events(workspace_id: str, request: Request) -> StreamingResponse:
     """Emite eventos SSE ``fs_changed`` quando arquivos do workspace mudam.
 
@@ -3206,7 +3227,7 @@ class DetectResponse(BaseModel):
     configurations: list[DetectedServer]
 
 
-@view_router.get("/{workspace_id}/browser/launch", response_model=LaunchJsonModel)
+@workspace_scoped_router.get("/browser/launch", response_model=LaunchJsonModel)
 async def get_launch_json(workspace_id: str) -> LaunchJsonModel:
     """Lê .vectora/launch.json do workspace."""
     p = _launch_json_path(workspace_id)
@@ -3221,7 +3242,7 @@ async def get_launch_json(workspace_id: str) -> LaunchJsonModel:
         return LaunchJsonModel()
 
 
-@view_router.post("/{workspace_id}/browser/launch", response_model=StatusResponse)
+@workspace_scoped_router.post("/browser/launch", response_model=StatusResponse)
 async def save_launch_json(workspace_id: str, body: LaunchJsonModel) -> StatusResponse:
     """Grava .vectora/launch.json no workspace."""
     p = _launch_json_path(workspace_id)
@@ -3240,7 +3261,7 @@ async def save_launch_json(workspace_id: str, body: LaunchJsonModel) -> StatusRe
         return StatusResponse(status="error", message=str(exc))
 
 
-@view_router.get("/{workspace_id}/browser/status", response_model=BrowserStatusResponse)
+@workspace_scoped_router.get("/browser/status", response_model=BrowserStatusResponse)
 async def browser_status(workspace_id: str) -> BrowserStatusResponse:
     """Retorna o status dos dev servers do workspace."""
     launch = await get_launch_json(workspace_id)
@@ -3264,7 +3285,7 @@ async def browser_status(workspace_id: str) -> BrowserStatusResponse:
     return BrowserStatusResponse(servers=servers)
 
 
-@view_router.get("/{workspace_id}/browser/logs", response_model=BrowserLogsResponse)
+@workspace_scoped_router.get("/browser/logs", response_model=BrowserLogsResponse)
 async def browser_logs(workspace_id: str, name: str) -> BrowserLogsResponse:
     """Últimas linhas de stdout/stderr do dev server `name` — disponível mesmo
     com o processo parado/morto (buffer não é limpo em browser_stop nem
@@ -3274,7 +3295,7 @@ async def browser_logs(workspace_id: str, name: str) -> BrowserLogsResponse:
     return BrowserLogsResponse(lines=list(buf) if buf else [])
 
 
-@view_router.post("/{workspace_id}/browser/start", response_model=StatusResponse)
+@workspace_scoped_router.post("/browser/start", response_model=StatusResponse)
 async def browser_start(workspace_id: str, body: BrowserStartRequest) -> StatusResponse:
     """Inicia o dev server com o nome indicado."""
     from backend.workspace.workspace import workspace_registry
@@ -3339,7 +3360,7 @@ async def browser_start(workspace_id: str, body: BrowserStartRequest) -> StatusR
     return StatusResponse(status=status, message=message)
 
 
-@view_router.post("/{workspace_id}/browser/stop", response_model=StatusResponse)
+@workspace_scoped_router.post("/browser/stop", response_model=StatusResponse)
 async def browser_stop(workspace_id: str, body: BrowserStopRequest) -> StatusResponse:
     """Para o dev server com o nome indicado."""
     launch = await get_launch_json(workspace_id)
@@ -3368,7 +3389,7 @@ async def browser_stop(workspace_id: str, body: BrowserStopRequest) -> StatusRes
         return StatusResponse(status="error", message=str(exc))
 
 
-@view_router.get("/{workspace_id}/browser/detect", response_model=DetectResponse)
+@workspace_scoped_router.get("/browser/detect", response_model=DetectResponse)
 async def browser_detect(workspace_id: str) -> DetectResponse:
     """Detecta dev servers comuns no workspace e sugere configurações para launch.json."""
     from backend.workspace.workspace import workspace_registry
@@ -3499,8 +3520,8 @@ class DevtoolsEvaluateResponse(BaseModel):
     error: str | None = None
 
 
-@view_router.get(
-    "/{workspace_id}/browser/devtools/tabs", response_model=DevtoolsTabsResponse
+@workspace_scoped_router.get(
+    "/browser/devtools/tabs", response_model=DevtoolsTabsResponse
 )
 async def devtools_tabs(workspace_id: str) -> DevtoolsTabsResponse:
     """Abas da sessão de browser do agente — vazio se nenhuma sessão existe
@@ -3511,8 +3532,8 @@ async def devtools_tabs(workspace_id: str) -> DevtoolsTabsResponse:
     return DevtoolsTabsResponse(tabs=[DevtoolsTab(**t) for t in tabs])
 
 
-@view_router.get(
-    "/{workspace_id}/browser/devtools/console",
+@workspace_scoped_router.get(
+    "/browser/devtools/console",
     response_model=DevtoolsConsoleResponse,
 )
 async def devtools_console(
@@ -3530,8 +3551,8 @@ async def devtools_console(
     )
 
 
-@view_router.delete(
-    "/{workspace_id}/browser/devtools/console", response_model=StatusResponse
+@workspace_scoped_router.delete(
+    "/browser/devtools/console", response_model=StatusResponse
 )
 async def devtools_clear_console(
     workspace_id: str, tab_id: str | None = None
@@ -3546,8 +3567,8 @@ async def devtools_clear_console(
     return StatusResponse(status="ok")
 
 
-@view_router.get(
-    "/{workspace_id}/browser/devtools/network",
+@workspace_scoped_router.get(
+    "/browser/devtools/network",
     response_model=DevtoolsNetworkResponse,
 )
 async def devtools_network(
@@ -3570,8 +3591,8 @@ async def devtools_network(
     )
 
 
-@view_router.post(
-    "/{workspace_id}/browser/devtools/evaluate",
+@workspace_scoped_router.post(
+    "/browser/devtools/evaluate",
     response_model=DevtoolsEvaluateResponse,
 )
 async def devtools_evaluate(
@@ -3737,7 +3758,7 @@ class RagBucketResponse(BaseModel):
     active: bool
 
 
-@view_router.get("/{workspace_id}/rag/buckets", response_model=list[RagBucketResponse])
+@workspace_scoped_router.get("/rag/buckets", response_model=list[RagBucketResponse])
 async def list_rag_buckets(workspace_id: str) -> list[RagBucketResponse]:
     """Buckets do workspace — usado pelo seletor de publicação da Memory
     Library e pelo painel de buckets do Memory tab. `active` reflete se o
@@ -3765,8 +3786,8 @@ class RagBucketToggleRequest(BaseModel):
     active: bool
 
 
-@view_router.patch(
-    "/{workspace_id}/rag/buckets/{bucket_id}", response_model=RagBucketToggleRequest
+@workspace_scoped_router.patch(
+    "/rag/buckets/{bucket_id}", response_model=RagBucketToggleRequest
 )
 async def toggle_rag_bucket(
     workspace_id: str, bucket_id: str, body: RagBucketToggleRequest
@@ -3785,7 +3806,7 @@ async def toggle_rag_bucket(
     return body
 
 
-@view_router.delete("/{workspace_id}/rag/buckets/{bucket_id}")
+@workspace_scoped_router.delete("/rag/buckets/{bucket_id}")
 async def delete_rag_bucket(workspace_id: str, bucket_id: str) -> dict:
     """Remove o bucket do catálogo e de qualquer lista de ativos —
     reaproveita `rag_buckets.delete_bucket` (idempotente). Não apaga a
@@ -3812,7 +3833,7 @@ class MemorySearchResponse(BaseModel):
     hits: list[MemoryIndexHitResponse]
 
 
-@view_router.get("/{workspace_id}/memory/search", response_model=MemorySearchResponse)
+@workspace_scoped_router.get("/memory/search", response_model=MemorySearchResponse)
 async def search_memory_unified(
     workspace_id: str,
     request: Request,
@@ -3859,7 +3880,7 @@ async def search_memory_unified(
     )
 
 
-@view_router.post("/{workspace_id}/rag/ingest", response_model=RagIngestResponse)
+@workspace_scoped_router.post("/rag/ingest", response_model=RagIngestResponse)
 async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResponse:
     """Indexa uma pasta no RAG diretamente (walk + chunk + enqueue por job).
 
@@ -3941,7 +3962,7 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
     )
 
 
-@view_router.get("/{workspace_id}/rag/jobs/{job_id}", response_model=RagJobStatus)
+@workspace_scoped_router.get("/rag/jobs/{job_id}", response_model=RagJobStatus)
 async def rag_job_status(workspace_id: str, job_id: str) -> RagJobStatus:
     """Progresso de um job de indexação (chunks processados / total)."""
     from backend.embedding.queue import get_embedding_queue
@@ -3962,7 +3983,7 @@ async def rag_job_status(workspace_id: str, job_id: str) -> RagJobStatus:
     return _rag_job_status(job_id, stats)
 
 
-@view_router.get("/{workspace_id}/rag/jobs", response_model=list[RagJobStatus])
+@workspace_scoped_router.get("/rag/jobs", response_model=list[RagJobStatus])
 async def rag_jobs(workspace_id: str) -> list[RagJobStatus]:
     """Lista os jobs de indexação deste workspace com seu progresso atual."""
     from backend.embedding.queue import get_embedding_queue
@@ -3993,7 +4014,7 @@ class ActiveContextRequest(BaseModel):
     open_file: str | None = None
 
 
-@view_router.post("/{workspace_id}/context/active", response_model=StatusResponse)
+@workspace_scoped_router.post("/context/active", response_model=StatusResponse)
 async def set_active_context(
     workspace_id: str,
     body: ActiveContextRequest,

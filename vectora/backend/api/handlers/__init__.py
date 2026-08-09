@@ -22,6 +22,9 @@ from backend.api.handlers.threads import router as threads_router
 from backend.api.handlers.tools import router as tools_router
 from backend.api.handlers.workspaces import router as workspaces_router
 from backend.api.handlers.workspaces import view_router as workspaces_view_router
+from backend.api.handlers.workspaces import (
+    workspace_scoped_router as workspaces_scoped_view_router,
+)
 
 __all__ = [
     "admin_router",
@@ -38,5 +41,6 @@ __all__ = [
     "threads_router",
     "tools_router",
     "workspaces_router",
+    "workspaces_scoped_view_router",
     "workspaces_view_router",
 ]

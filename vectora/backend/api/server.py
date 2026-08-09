@@ -62,6 +62,9 @@ from backend.api.handlers.usage import router as usage_router
 from backend.api.handlers.webhooks import router as webhooks_router
 from backend.api.handlers.workspaces import router as workspace_router
 from backend.api.handlers.workspaces import view_router as workspace_view_router
+from backend.api.handlers.workspaces import (
+    workspace_scoped_router as workspace_scoped_view_router,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -542,6 +545,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(usage_router)
     app.include_router(workspace_router)
     app.include_router(workspace_view_router)
+    app.include_router(workspace_scoped_view_router)
     app.include_router(artifacts_router)
     app.include_router(plugins_router)
     app.include_router(skills_router)
