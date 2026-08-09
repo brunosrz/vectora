@@ -137,7 +137,7 @@ async def _test_redis(url: str) -> None:
     try:
         # redis-py tipa ping() como Awaitable[bool] | bool (cliente sync/async
         # no mesmo stub); no cliente async é sempre awaitable.
-        await client.ping()  # ty: ignore[invalid-await]
+        await client.ping()
     finally:
         await client.aclose()
 

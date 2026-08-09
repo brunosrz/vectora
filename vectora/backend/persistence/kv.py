@@ -124,7 +124,10 @@ class RedisKV:
         self._reader: asyncio.Task | None = None
 
     async def get(self, key: str) -> str | None:
-        return await self._redis.get(key)
+        value = await self._redis.get(key)
+        if value is None:
+            return None
+        return value if isinstance(value, str) else value.decode()
 
     async def set(self, key: str, value: str, *, ttl_s: float | None = None) -> None:
         await self._redis.set(key, value, ex=int(ttl_s) if ttl_s else None)

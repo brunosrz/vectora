@@ -1046,7 +1046,7 @@ async def test_storage_connection(request: Request) -> dict:
                     return {"ok": False, "error": "URL não fornecida"}
                 client = aredis.from_url(url)
                 try:
-                    await client.ping()  # ty: ignore[invalid-await]
+                    await client.ping()
                 finally:
                     await client.aclose()
 

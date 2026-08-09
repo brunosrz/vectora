@@ -199,7 +199,7 @@ async def redis_client(_storage_stack_ok: bool, redis_url: str):
     client = aredis.from_url(redis_url)
     for attempt in range(15):
         try:
-            await client.ping()  # ty: ignore[invalid-await]  # redis stub retorna Awaitable[bool]|bool
+            await client.ping()  # redis stub retorna Awaitable[bool]|bool
             break
         except Exception:
             if attempt == 14:

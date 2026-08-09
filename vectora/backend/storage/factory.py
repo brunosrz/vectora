@@ -518,7 +518,7 @@ async def storage_health() -> dict[str, Any]:
 
             client = aredis.from_url(_s.redis_url)
             try:
-                await client.ping()  # ty: ignore[invalid-await]
+                await client.ping()
                 result["redis"] = {"ok": True, "error": None}
             finally:
                 await client.aclose()

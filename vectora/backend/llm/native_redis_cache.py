@@ -115,7 +115,10 @@ class NativeRedisCache(BaseCache):
         except Exception:
             logger.debug("native_redis_cache: alookup falhou", exc_info=True)
             return None
-        return loads(raw.decode(), allowed_objects="all") if raw else None
+        if not raw:
+            return None
+        raw_text = raw if isinstance(raw, str) else raw.decode()
+        return loads(raw_text, allowed_objects="all")
 
     async def aupdate(
         self, prompt: str, llm_string: str, return_val: RETURN_VAL_TYPE
@@ -266,7 +269,7 @@ class NativeRedisSemanticCache(BaseCache):
             client = self._get_async_client()
             digest = hashlib.sha256(f"{prompt}\x1f{llm_string}".encode()).hexdigest()
             key = f"{_SEM_PREFIX}{digest}"
-            await client.hset(  # ty: ignore[invalid-await]
+            await client.hset(
                 key,
                 mapping={
                     "llm_tag": _llm_tag(llm_string),
