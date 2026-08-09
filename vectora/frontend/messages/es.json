@@ -238,6 +238,8 @@
   "provider_routing_nine_router_error_status": "Error al cargar el estado de la configuración",
   "provider_routing_nine_router_error_config_save": "Error al guardar la configuración",
   "provider_routing_nine_router_error_config_remove": "Error al eliminar la configuración",
+  "provider_routing_nine_router_search_placeholder": "Filtrar modelos detectados…",
+  "provider_routing_nine_router_search_empty": "Ningún modelo detectado coincide con la búsqueda.",
   "memory_empty_title": "Sin memorias guardadas",
   "memory_count_one": "{n} memoria",
   "memory_count_many": "{n} memorias",

@@ -548,6 +548,115 @@ describe("ProviderRoutingTab — 9Router", () => {
     });
   });
 
+  it("com mais de 5 modelos detectados, filtra a lista pela busca", async () => {
+    const models = [
+      "cc/claude-opus-4-7",
+      "cc/claude-sonnet-5",
+      "openai/gpt-5",
+      "openai/gpt-5-mini",
+      "google/gemini-3-pro",
+      "google/gemini-3-flash",
+    ].map((id) => ({ id, name: id }));
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+      nineRouterDiscover: { reachable: true, models },
+    });
+    render(<ProviderRoutingTab />);
+    const nineRouterHeading = await screen.findByText(/^9router/i);
+    const nineRouterSection = nineRouterHeading.closest("div.space-y-4")!;
+    fireEvent.click(
+      within(nineRouterSection as HTMLElement).getByRole("button", {
+        name: /detectar/i,
+      }),
+    );
+    await waitFor(() => screen.getByText("cc/claude-opus-4-7"));
+
+    const searchInput = within(
+      nineRouterSection as HTMLElement,
+    ).getByPlaceholderText(/filtrar modelos/i);
+    fireEvent.change(searchInput, { target: { value: "gemini" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("google/gemini-3-pro")).toBeTruthy();
+      expect(screen.getByText("google/gemini-3-flash")).toBeTruthy();
+      expect(screen.queryByText("cc/claude-opus-4-7")).toBeNull();
+      expect(screen.queryByText("openai/gpt-5")).toBeNull();
+    });
+  });
+
+  it("busca sem nenhum resultado mostra mensagem, não lista vazia silenciosa", async () => {
+    const models = [
+      "cc/claude-opus-4-7",
+      "cc/claude-sonnet-5",
+      "openai/gpt-5",
+      "openai/gpt-5-mini",
+      "google/gemini-3-pro",
+      "google/gemini-3-flash",
+    ].map((id) => ({ id, name: id }));
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+      nineRouterDiscover: { reachable: true, models },
+    });
+    render(<ProviderRoutingTab />);
+    const nineRouterHeading = await screen.findByText(/^9router/i);
+    const nineRouterSection = nineRouterHeading.closest("div.space-y-4")!;
+    fireEvent.click(
+      within(nineRouterSection as HTMLElement).getByRole("button", {
+        name: /detectar/i,
+      }),
+    );
+    await waitFor(() => screen.getByText("cc/claude-opus-4-7"));
+
+    const searchInput = within(
+      nineRouterSection as HTMLElement,
+    ).getByPlaceholderText(/filtrar modelos/i);
+    fireEvent.change(searchInput, { target: { value: "modelo-inexistente" } });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/nenhum modelo detectado bate com a busca/i),
+      ).toBeTruthy();
+      expect(screen.queryByText("cc/claude-opus-4-7")).toBeNull();
+    });
+  });
+
+  it("com poucos modelos (5 ou menos), não mostra a busca", async () => {
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+      nineRouterDiscover: {
+        reachable: true,
+        models: [{ id: "cc/claude-opus-4-7", name: "Claude Opus 4.7" }],
+      },
+    });
+    render(<ProviderRoutingTab />);
+    const nineRouterHeading = await screen.findByText(/^9router/i);
+    const nineRouterSection = nineRouterHeading.closest("div.space-y-4")!;
+    fireEvent.click(
+      within(nineRouterSection as HTMLElement).getByRole("button", {
+        name: /detectar/i,
+      }),
+    );
+    await waitFor(() => screen.getByText("cc/claude-opus-4-7"));
+
+    expect(
+      within(nineRouterSection as HTMLElement).queryByPlaceholderText(
+        /filtrar modelos/i,
+      ),
+    ).toBeNull();
+  });
+
   it("proxy inacessível na descoberta exibe aviso, sem crashar", async () => {
     mockFetch({
       nineRouterStatus: {

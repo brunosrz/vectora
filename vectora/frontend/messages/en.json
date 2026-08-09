@@ -238,6 +238,8 @@
   "provider_routing_nine_router_error_status": "Error loading configuration status",
   "provider_routing_nine_router_error_config_save": "Error saving configuration",
   "provider_routing_nine_router_error_config_remove": "Error removing configuration",
+  "provider_routing_nine_router_search_placeholder": "Filter detected models…",
+  "provider_routing_nine_router_search_empty": "No detected model matches the search.",
   "memory_empty_title": "No memories saved",
   "memory_count_one": "{n} memory",
   "memory_count_many": "{n} memories",

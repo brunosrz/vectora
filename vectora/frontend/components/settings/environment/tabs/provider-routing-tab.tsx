@@ -635,6 +635,7 @@ function NineRouterSection() {
   const [discovered, setDiscovered] = useState<NineRouterModelInfo[] | null>(
     null,
   );
+  const [modelQuery, setModelQuery] = useState("");
   const [reachable, setReachable] = useState<boolean | null>(null);
   const [discovering, setDiscovering] = useState(false);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
@@ -709,6 +710,7 @@ function NineRouterSection() {
   const handleDiscover = async () => {
     setDiscovering(true);
     setError(null);
+    setModelQuery("");
     try {
       const data = await discoverNineRouterModels();
       setReachable(data.reachable);
@@ -749,6 +751,10 @@ function NineRouterSection() {
   };
 
   const registeredTags = new Set(registered.map((model) => model.tag));
+  const filteredDiscovered =
+    discovered?.filter((model) =>
+      model.id.toLowerCase().includes(modelQuery.trim().toLowerCase()),
+    ) ?? null;
 
   return (
     <div className="space-y-4 pt-4 border-t">
@@ -855,38 +861,59 @@ function NineRouterSection() {
           )}
 
           {discovered && discovered.length > 0 && (
-            <div className="space-y-1.5">
-              {discovered.map((model) => {
-                const already = registeredTags.has(model.id);
-                return (
-                  <div
-                    key={model.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2"
-                  >
-                    <span className="text-sm font-mono truncate">
-                      {model.id}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs shrink-0"
-                      onClick={() => void handleRegister(model.id)}
-                      disabled={already || registeringId === model.id}
-                    >
-                      {registeringId === model.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : already ? (
-                        m.provider_routing_already_registered()
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5 mr-1" />
-                          {m.provider_routing_register()}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                );
-              })}
+            <div className="space-y-2">
+              {discovered.length > 5 && (
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    value={modelQuery}
+                    onChange={(e) => setModelQuery(e.target.value)}
+                    placeholder={m.provider_routing_nine_router_search_placeholder()}
+                    className="h-8 text-xs pl-8"
+                    autoComplete="off"
+                  />
+                </div>
+              )}
+
+              {filteredDiscovered && filteredDiscovered.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  {m.provider_routing_nine_router_search_empty()}
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {(filteredDiscovered ?? discovered).map((model) => {
+                    const already = registeredTags.has(model.id);
+                    return (
+                      <div
+                        key={model.id}
+                        className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2"
+                      >
+                        <span className="text-sm font-mono truncate">
+                          {model.id}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs shrink-0"
+                          onClick={() => void handleRegister(model.id)}
+                          disabled={already || registeringId === model.id}
+                        >
+                          {registeringId === model.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : already ? (
+                            m.provider_routing_already_registered()
+                          ) : (
+                            <>
+                              <Plus className="w-3.5 h-3.5 mr-1" />
+                              {m.provider_routing_register()}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
