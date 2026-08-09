@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -101,3 +102,63 @@ class TestLanceDBBackendSearchText:
         hits = await backend.search_text("articles", "query", limit=5)
 
         assert hits == []
+
+
+class TestLanceDBBackendListRows:
+    """Regressão ao vivo: `list_rows` derrubava o resumo RAG do workspace
+    toda vez que uma linha tinha vetor de verdade — `row.get("vector")`
+    devolve `numpy.ndarray`, e `array or []` explode com "truth value of
+    an array with more than one element is ambiguous"."""
+
+    @pytest.mark.asyncio
+    async def test_linha_com_vetor_multi_elemento_nao_lanca(self, backend, mock_db):
+        table = AsyncMock()
+        df = pd.DataFrame(
+            [
+                {
+                    "id": "doc-1",
+                    "vector": np.array([0.1, 0.2, 0.3]),
+                    "text": "conteúdo",
+                    "metadata": "{}",
+                }
+            ]
+        )
+        table.to_pandas = AsyncMock(return_value=df)
+        mock_db.open_table = AsyncMock(return_value=table)
+
+        rows = await backend.list_rows("articles")
+
+        assert len(rows) == 1
+        assert rows[0].vector == pytest.approx([0.1, 0.2, 0.3])
+
+    @pytest.mark.asyncio
+    async def test_linha_sem_vetor_vira_lista_vazia(self, backend, mock_db):
+        """Coluna `vector` ausente na linha vem como escalar `NaN` (float)
+        do pandas, não `None` — `list(NaN)` também lançaria sem o guard."""
+        table = AsyncMock()
+        df = pd.DataFrame(
+            [
+                {
+                    "id": "doc-2",
+                    "vector": float("nan"),
+                    "text": "sem vetor",
+                    "metadata": "{}",
+                }
+            ]
+        )
+        table.to_pandas = AsyncMock(return_value=df)
+        mock_db.open_table = AsyncMock(return_value=table)
+
+        rows = await backend.list_rows("articles")
+
+        assert rows[0].vector == []
+
+    @pytest.mark.asyncio
+    async def test_colecao_inexistente_retorna_vazio_sem_propagar(
+        self, backend, mock_db
+    ):
+        mock_db.open_table = AsyncMock(side_effect=RuntimeError("tabela não existe"))
+
+        rows = await backend.list_rows("nao-existe")
+
+        assert rows == []

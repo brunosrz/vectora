@@ -29,6 +29,20 @@ def _parse_metadata(raw: object) -> dict[str, Any]:
         return {}
 
 
+def _row_vector(raw: Any) -> list[float]:
+    """Extrai o vetor de uma linha do `DataFrame` (`row.get("vector")`).
+
+    `pandas`/`pyarrow` devolvem a coluna de embedding como `numpy.ndarray`
+    — `array or []` explode com "truth value of an array with more than
+    one element is ambiguous" porque `or` avalia truthiness do operando,
+    e `ndarray.__bool__` só aceita 0 ou 1 elemento. Linha sem vetor (coluna
+    ausente) vem como escalar `NaN` (`float`), não `None`.
+    """
+    if raw is None or isinstance(raw, float):
+        return []
+    return list(raw)
+
+
 class LanceDBBackend:
     """`storage_mode="lite"` — arquivo local, sem servidor."""
 
@@ -174,7 +188,7 @@ class LanceDBBackend:
         return [
             VectorRow(
                 id=str(row["id"]),
-                vector=list(row.get("vector") or []),
+                vector=_row_vector(row.get("vector")),
                 text=str(row.get("text", "")),
                 metadata=_parse_metadata(row.get("metadata", "{}")),
             )
