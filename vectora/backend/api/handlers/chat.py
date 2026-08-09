@@ -56,6 +56,13 @@ router = APIRouter()
 #: "bypass"/"auto") agora é um grafo cacheado à parte, não mais um "ask" fixo.
 _thread_permission_mode: dict[str, str] = {}
 
+#: (model, chat_mode, workspace_id) do último turno de cada thread —
+#: resume_chat precisa resolver o MESMO grafo que stream_chat usou (mesmo
+#: FallbackChatModel.primary_model_id embutido na compilação); sem isso,
+#: get_user_agent(resume_user_id) cai no grafo "__default__" e o resume roda
+#: com o provider padrão em vez do modelo que o usuário selecionou.
+_thread_graph_selector: dict[str, dict[str, Any]] = {}
+
 # ---------------------------------------------------------------------------
 # F1 — Helpers de attachments multimodais
 # ---------------------------------------------------------------------------
@@ -681,9 +688,15 @@ async def stream_chat(
         # do turno só para o resume reidratar o mesmo contexto (ver resume_chat).
         permission_mode = configurable.get("permission_mode", "ask")
         _thread_permission_mode[thread_id] = permission_mode
+        selected_model = configurable.get("model", "")
+        _thread_graph_selector[thread_id] = {
+            "model": selected_model,
+            "chat_mode": chat_mode,
+            "workspace_id": workspace_id or None,
+        }
         graph = await agent_factory.get_user_agent(
             user_id,
-            model=configurable.get("model", ""),
+            model=selected_model,
             chat_mode=chat_mode,
             workspace_id=workspace_id or None,
         )
@@ -803,8 +816,14 @@ async def resume_chat(
 
     resume_user_id = _user_id_from_request(http_request)
     permission_mode = _thread_permission_mode.get(request.thread_id, "ask")
+    selector = _thread_graph_selector.get(request.thread_id, {})
     try:
-        graph = await agent_factory.get_user_agent(resume_user_id)
+        graph = await agent_factory.get_user_agent(
+            resume_user_id,
+            model=selector.get("model", ""),
+            chat_mode=bool(selector.get("chat_mode", False)),
+            workspace_id=selector.get("workspace_id"),
+        )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
