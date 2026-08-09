@@ -7,6 +7,8 @@ tarefas manuais em nome da sessão ativa.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
 import json
 import logging
 from typing import Annotated, Any
@@ -20,6 +22,46 @@ from backend.scheduling.nl_schedule import parse_natural_schedule, parse_one_sho
 from backend.scheduling.subagent_runner import SUBAGENT_TYPES
 
 logger = logging.getLogger(__name__)
+
+
+def _capability_token(task_id: str) -> str:
+    """HMAC(secret, task_id) — capability token de uma tarefa delegada via
+    `schedule_subagent_task`. Recomputável a partir só do `task_id` (não
+    precisa ser persistido): a mesma chave de assinatura de sessão já usada
+    por `backend/rbac/auth.py` (auto-gerada por instalação, sempre
+    disponível mesmo sem VECTORA_TOKEN/Pro configurado — nunca introduz
+    segredo novo)."""
+    from backend.rbac.auth import _get_secret
+
+    return hmac.new(
+        _get_secret().encode(), task_id.encode(), hashlib.sha256
+    ).hexdigest()
+
+
+def _requires_capability_token(task: Any) -> bool:
+    """Só tasks criadas por `schedule_subagent_task` (têm `subagent_type`
+    no trigger_config) exigem token — tasks de `create_background_task`
+    continuam acessíveis como sempre, sem quebrar o fluxo existente."""
+    return bool((task.trigger_config or {}).get("subagent_type"))
+
+
+def _valid_capability_token(task_id: str, token: str | None) -> bool:
+    if not token:
+        return False
+    return hmac.compare_digest(_capability_token(task_id), token)
+
+
+async def _find_task_by_correlation_id(
+    session_id: str, correlation_id: str
+) -> Any | None:
+    """Task já existente na mesma sessão com o mesmo `correlation_id` —
+    usado por `schedule_subagent_task` pra deduplicar retry/race sem criar
+    uma segunda delegação da mesma intenção."""
+    tasks = await background_tasks.list_tasks(session_id)
+    for t in tasks:
+        if (t.trigger_config or {}).get("correlation_id") == correlation_id:
+            return t
+    return None
 
 
 @tool(
@@ -169,6 +211,7 @@ async def schedule_subagent_task(
     subagent_type: str,
     description: str,
     when: str,
+    correlation_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Agenda uma SOUL ESPECÍFICA do catálogo — não o agente principal
@@ -182,13 +225,22 @@ async def schedule_subagent_task(
     da delegação síncrona via `task()`) — nunca disputa arquivos com o
     workspace principal do usuário.
 
+    Devolve um `capability_token` junto do `task_id` — exigido por
+    `get_task_status`/`get_task_result` pra consultar essa task
+    especificamente (evita que um `task_id` vazado, ex. em log, seja
+    consultável por outra sessão só por adivinhação).
+
     Args:
         subagent_type: nome de uma SOUL do catálogo (ver `SUBAGENT_TYPES`).
         description: O que a SOUL deve fazer (vira a instrução).
         when: Horário em linguagem natural (ex.: "em 30 minutos", "daqui 1 hora").
+        correlation_id: identificador opcional da intenção de delegação —
+            uma segunda chamada com o mesmo valor (mesma sessão) devolve a
+            task já criada em vez de duplicar (protege contra retry/race).
 
     Returns:
-        JSON com `status`, e em caso de sucesso `task_id` + `run_at`.
+        JSON com `status`, e em caso de sucesso `task_id` + `run_at` +
+        `capability_token`.
     """
     if subagent_type not in SUBAGENT_TYPES:
         return json.dumps(
@@ -221,6 +273,24 @@ async def schedule_subagent_task(
                 {"status": "error", "error": "session_id ausente no config"}
             )
 
+        if correlation_id:
+            existing = await _find_task_by_correlation_id(session_id, correlation_id)
+            if existing is not None:
+                return json.dumps(
+                    {
+                        "status": "created",
+                        "task_id": existing.id,
+                        "subagent_type": subagent_type,
+                        "run_at": existing.next_run_at,
+                        "capability_token": _capability_token(existing.id),
+                        "deduped": True,
+                    }
+                )
+
+        trigger_config: dict[str, Any] = {"subagent_type": subagent_type}
+        if correlation_id:
+            trigger_config["correlation_id"] = correlation_id
+
         task = await background_tasks.create_task(
             session_id=session_id,
             user_id=user_id,
@@ -228,7 +298,7 @@ async def schedule_subagent_task(
             name=f"Subagente {subagent_type}: {description[:60]}",
             instruction=description,
             trigger_type="once",
-            trigger_config={"subagent_type": subagent_type},
+            trigger_config=trigger_config,
             workspace_id=workspace_id,
             next_run_at=run_at,
         )
@@ -238,6 +308,7 @@ async def schedule_subagent_task(
                 "task_id": task.id,
                 "subagent_type": subagent_type,
                 "run_at": task.next_run_at,
+                "capability_token": _capability_token(task.id),
             }
         )
     except ValueError as e:
@@ -303,12 +374,16 @@ async def list_background_tasks(
 @tool(extras={"destructive": False, "category": "workspace", "icon": "info"})
 async def get_task_status(
     task_id: str,
+    capability_token: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Status de uma tarefa específica + suas execuções recentes.
 
     Args:
         task_id: id da tarefa (de ``list_background_tasks`` ou ``create_background_task``).
+        capability_token: obrigatório só para tasks criadas por
+            ``schedule_subagent_task`` (devolvido na criação) — tasks de
+            ``create_background_task`` não exigem token.
 
     Returns:
         JSON com os campos da task e a lista de runs recentes (status/summary).
@@ -317,6 +392,12 @@ async def get_task_status(
         task = await background_tasks.get_task(task_id)
         if task is None:
             return json.dumps({"status": "error", "error": "task não encontrada"})
+        if _requires_capability_token(task) and not _valid_capability_token(
+            task_id, capability_token
+        ):
+            return json.dumps(
+                {"status": "error", "error": "capability_token ausente ou inválido"}
+            )
         runs = await background_tasks.list_runs(task.session_id)
         task_runs = [
             {
@@ -477,12 +558,15 @@ async def run_background_task_now(task_id: str) -> str:
 @tool(extras={"destructive": False, "category": "workspace", "icon": "file-text"})
 async def get_task_result(
     run_id: str,
+    capability_token: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Resultado (resumo) de uma execução específica de tarefa.
 
     Args:
         run_id: id da run (de ``list_background_tasks``/``get_task_status``).
+        capability_token: obrigatório só se a task dona da run foi criada
+            por ``schedule_subagent_task`` (devolvido na criação).
 
     Returns:
         JSON com status, summary e a thread da run (para abrir o histórico
@@ -492,6 +576,15 @@ async def get_task_result(
         run = await background_tasks._get_run(run_id)
         if run is None:
             return json.dumps({"status": "error", "error": "run não encontrada"})
+        owner_task = await background_tasks.get_task(run["task_id"])
+        if owner_task is not None and _requires_capability_token(owner_task):
+            if not _valid_capability_token(owner_task.id, capability_token):
+                return json.dumps(
+                    {
+                        "status": "error",
+                        "error": "capability_token ausente ou inválido",
+                    }
+                )
         return json.dumps(
             {
                 "status": "ok",

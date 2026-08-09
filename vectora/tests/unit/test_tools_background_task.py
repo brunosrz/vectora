@@ -14,8 +14,11 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from backend.tools.background import (
+    _capability_token,
     create_background_task,
     delete_background_task,
+    get_task_result,
+    get_task_status,
     run_background_task_now,
     schedule_subagent_task,
     schedule_task,
@@ -338,6 +341,244 @@ async def test_schedule_subagent_task_missing_session_returns_error() -> None:
     )
 
     assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_schedule_subagent_task_devolve_capability_token_valido() -> None:
+    with patch(
+        "backend.tools.background.background_tasks.create_task",
+        new=AsyncMock(return_value=_fake_subagent_task(task_id="task-sub-tok")),
+    ):
+        result = json.loads(
+            await schedule_subagent_task.ainvoke(
+                {
+                    "subagent_type": "coder",
+                    "description": "corrigir bug",
+                    "when": "em 30 minutos",
+                },
+                config=_cfg(),
+            )
+        )
+
+    assert result["capability_token"] == _capability_token("task-sub-tok")
+
+
+@pytest.mark.asyncio
+async def test_schedule_subagent_task_correlation_id_dedupa_sem_criar_duplicata() -> (
+    None
+):
+    existing = _fake_subagent_task(task_id="task-existing")
+    existing.trigger_config = {
+        "subagent_type": "coder",
+        "correlation_id": "corr-1",
+    }
+    with (
+        patch(
+            "backend.tools.background.background_tasks.list_tasks",
+            new=AsyncMock(return_value=[existing]),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.create_task",
+            new=AsyncMock(),
+        ) as mock_create,
+    ):
+        result = json.loads(
+            await schedule_subagent_task.ainvoke(
+                {
+                    "subagent_type": "coder",
+                    "description": "corrigir bug de novo (retry)",
+                    "when": "em 30 minutos",
+                    "correlation_id": "corr-1",
+                },
+                config=_cfg(),
+            )
+        )
+
+    assert result["task_id"] == "task-existing"
+    assert result.get("deduped") is True
+    mock_create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_schedule_subagent_task_correlation_id_ausente_nao_tenta_dedupar() -> (
+    None
+):
+    with (
+        patch(
+            "backend.tools.background.background_tasks.list_tasks",
+            new=AsyncMock(),
+        ) as mock_list,
+        patch(
+            "backend.tools.background.background_tasks.create_task",
+            new=AsyncMock(return_value=_fake_subagent_task()),
+        ),
+    ):
+        await schedule_subagent_task.ainvoke(
+            {
+                "subagent_type": "coder",
+                "description": "sem correlation_id",
+                "when": "em 30 minutos",
+            },
+            config=_cfg(),
+        )
+
+    mock_list.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------------
+# get_task_status / get_task_result — capability token
+# ---------------------------------------------------------------------------
+
+
+def _fake_task_status(task_id: str, trigger_config: dict) -> Any:
+    class _FakeTask:
+        def __init__(self) -> None:
+            self.id = task_id
+            self.session_id = "t1"
+            self.name = "n"
+            self.kind = "routine"
+            self.enabled = True
+            self.last_run_at = None
+            self.trigger_config = trigger_config
+
+    return _FakeTask()
+
+
+@pytest.mark.asyncio
+async def test_get_task_status_sem_subagent_type_nao_exige_token() -> None:
+    task = _fake_task_status("task-plain", {})
+    with (
+        patch(
+            "backend.tools.background.background_tasks.get_task",
+            new=AsyncMock(return_value=task),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.list_runs",
+            new=AsyncMock(return_value=[]),
+        ),
+    ):
+        result = json.loads(await get_task_status.ainvoke({"task_id": "task-plain"}))
+
+    assert result["status"] == "ok"
+
+
+@pytest.mark.asyncio
+async def test_get_task_status_com_subagent_type_exige_token_valido() -> None:
+    task = _fake_task_status("task-sub", {"subagent_type": "coder"})
+    with (
+        patch(
+            "backend.tools.background.background_tasks.get_task",
+            new=AsyncMock(return_value=task),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.list_runs",
+            new=AsyncMock(return_value=[]),
+        ),
+    ):
+        sem_token = json.loads(await get_task_status.ainvoke({"task_id": "task-sub"}))
+        token_errado = json.loads(
+            await get_task_status.ainvoke(
+                {"task_id": "task-sub", "capability_token": "errado"}
+            )
+        )
+        token_certo = json.loads(
+            await get_task_status.ainvoke(
+                {
+                    "task_id": "task-sub",
+                    "capability_token": _capability_token("task-sub"),
+                }
+            )
+        )
+
+    assert sem_token["status"] == "error"
+    assert token_errado["status"] == "error"
+    assert token_certo["status"] == "ok"
+
+
+@pytest.mark.asyncio
+async def test_get_task_status_token_de_outra_task_e_rejeitado() -> None:
+    # Erro/borda: token válido pra uma task não pode autorizar OUTRA task —
+    # não é um segredo global reusável.
+    task = _fake_task_status("task-sub-b", {"subagent_type": "coder"})
+    with (
+        patch(
+            "backend.tools.background.background_tasks.get_task",
+            new=AsyncMock(return_value=task),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.list_runs",
+            new=AsyncMock(return_value=[]),
+        ),
+    ):
+        result = json.loads(
+            await get_task_status.ainvoke(
+                {
+                    "task_id": "task-sub-b",
+                    "capability_token": _capability_token("task-sub-a"),
+                }
+            )
+        )
+
+    assert result["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_get_task_result_sem_subagent_type_nao_exige_token() -> None:
+    run = {
+        "id": "run-1",
+        "task_id": "task-plain",
+        "status": "success",
+        "summary": "ok",
+        "run_thread_id": "rt-1",
+    }
+    task = _fake_task_status("task-plain", {})
+    with (
+        patch(
+            "backend.tools.background.background_tasks._get_run",
+            new=AsyncMock(return_value=run),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.get_task",
+            new=AsyncMock(return_value=task),
+        ),
+    ):
+        result = json.loads(await get_task_result.ainvoke({"run_id": "run-1"}))
+
+    assert result["status"] == "ok"
+
+
+@pytest.mark.asyncio
+async def test_get_task_result_com_subagent_type_exige_token_valido() -> None:
+    run = {
+        "id": "run-2",
+        "task_id": "task-sub",
+        "status": "success",
+        "summary": "ok",
+        "run_thread_id": "rt-2",
+    }
+    task = _fake_task_status("task-sub", {"subagent_type": "coder"})
+    with (
+        patch(
+            "backend.tools.background.background_tasks._get_run",
+            new=AsyncMock(return_value=run),
+        ),
+        patch(
+            "backend.tools.background.background_tasks.get_task",
+            new=AsyncMock(return_value=task),
+        ),
+    ):
+        sem_token = json.loads(await get_task_result.ainvoke({"run_id": "run-2"}))
+        token_certo = json.loads(
+            await get_task_result.ainvoke(
+                {
+                    "run_id": "run-2",
+                    "capability_token": _capability_token("task-sub"),
+                }
+            )
+        )
+
+    assert sem_token["status"] == "error"
+    assert token_certo["status"] == "ok"
 
 
 # ---------------------------------------------------------------------------
