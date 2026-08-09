@@ -3829,9 +3829,8 @@ async def search_memory_unified(
         MemoryHitType,
         search_unified_memory,
     )
-    from backend.workspace.workspace import workspace_registry
 
-    ws = workspace_registry.get(workspace_id)
+    ws = require_workspace_access(workspace_id, request)
     if ws is None:
         raise HTTPException(status_code=404, detail="Workspace não encontrado")
 

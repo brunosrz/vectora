@@ -992,3 +992,37 @@ class TestMemorySearchUnified:
         )
 
         assert captured["types"] == frozenset({"fact"})
+
+    @pytest.mark.asyncio
+    async def test_workspace_de_outro_dono_retorna_403(self, monkeypatch):
+        """Regressão: o endpoint precisa checar ownership via
+        `require_workspace_access` (mesmo padrão de `rag.py`/`context_graph.py`)
+        — sem isso, qualquer usuário autenticado que soubesse o `workspace_id`
+        de outro conseguia buscar seus fatos/skills/buckets."""
+        from fastapi import HTTPException
+
+        from backend.api.handlers.workspaces import search_memory_unified
+        from backend.vtypes import Workspace
+        from backend.workspace import workspace as ws_mod
+
+        owned_by_other = Workspace(
+            id="alheio",
+            name="alheio",
+            cwd="/tmp/alheio",
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+            owner_id="dono-verdadeiro",
+        )
+        monkeypatch.setattr(
+            ws_mod.workspace_registry,
+            "get",
+            lambda wid: owned_by_other if wid == "alheio" else None,
+        )
+
+        request = _fake_request(user_id="intruso")
+        request.state.user.role = "member"
+
+        with pytest.raises(HTTPException) as exc_info:
+            await search_memory_unified(workspace_id="alheio", request=request, q="x")
+
+        assert exc_info.value.status_code == 403
