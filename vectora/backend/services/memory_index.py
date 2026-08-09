@@ -41,7 +41,7 @@ async def _search_facts(query: str, user_id: str, limit: int) -> list[MemoryInde
         store = await get_store()
         ns = ("user", user_id, "memories")
         items = await store.asearch(ns, query=query, limit=limit)
-        return [
+        hits = [
             MemoryIndexHit(
                 type="fact",
                 id=item.key,
@@ -51,6 +51,16 @@ async def _search_facts(query: str, user_id: str, limit: int) -> list[MemoryInde
             )
             for item in items
         ]
+        # Sem embedding configurado, `asearch` ignora `query` e devolve tudo
+        # (mesmo sinal de `has_scores` que `search_memory` tool usa em
+        # backend/tools/memory.py) — sem esse fallback, a busca de fato
+        # ficaria inconsistente com skill/bucket, que sempre fazem substring
+        # match.
+        has_scores = any(h.score is not None for h in hits)
+        q = query.strip().lower()
+        if not has_scores and q:
+            hits = [h for h in hits if q in h.title.lower() or q in h.snippet.lower()]
+        return hits[:limit]
     except Exception:
         logger.exception("memory_index: busca de fatos falhou (user_id=%s)", user_id)
         return []

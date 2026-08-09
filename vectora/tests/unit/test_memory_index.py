@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock
 import pytest
 from langgraph.store.memory import InMemoryStore
 
-from backend.services.memory_index import search_unified_memory
+from backend.services.memory_index import _search_facts, search_unified_memory
 from backend.vtypes.skill import Skill
 
 
@@ -211,3 +211,73 @@ class TestSearchUnifiedMemoryTypesFilter:
 
         assert all(h.type == "fact" for h in hits)
         assert skills_called is False
+
+
+class TestSearchFactsSubstringFallback:
+    """Sem embedding configurado, `asearch` ignora `query` — `_search_facts`
+    precisa filtrar por substring pra não ficar inconsistente com
+    `_search_skills`/`_search_rag_buckets` (que sempre filtram)."""
+
+    async def test_sem_score_aplica_filtro_substring(self, store, monkeypatch):
+        monkeypatch.setattr(
+            "backend.services.agent_factory.get_store", AsyncMock(return_value=store)
+        )
+        await store.aput(
+            ("user", "user-1", "memories"),
+            "f1",
+            {"content": "gosta de python", "metadata": {}},
+        )
+        await store.aput(
+            ("user", "user-1", "memories"),
+            "f2",
+            {"content": "trabalha com rust", "metadata": {}},
+        )
+
+        hits = await _search_facts("python", "user-1", limit=10)
+
+        assert [h.id for h in hits] == ["f1"]
+
+    async def test_com_score_nao_reaplica_filtro(self, monkeypatch):
+        """Quando o store já devolveu ranking semântico (score presente),
+        confiar nele — não filtrar de novo por substring, que poderia
+        remover um resultado semanticamente relevante sem o termo literal."""
+
+        class _ScoredItem:
+            def __init__(self, key: str, value: dict, score: float) -> None:
+                self.key = key
+                self.value = value
+                self.score = score
+
+        class _FakeScoredStore:
+            async def asearch(self, ns, *, query, limit):
+                return [
+                    _ScoredItem("f1", {"content": "prefere respostas objetivas"}, 0.9)
+                ]
+
+        monkeypatch.setattr(
+            "backend.services.agent_factory.get_store",
+            AsyncMock(return_value=_FakeScoredStore()),
+        )
+
+        hits = await _search_facts("conciso", "user-1", limit=10)
+
+        assert [h.id for h in hits] == ["f1"]
+
+    async def test_query_vazia_nao_filtra(self, store, monkeypatch):
+        monkeypatch.setattr(
+            "backend.services.agent_factory.get_store", AsyncMock(return_value=store)
+        )
+        await store.aput(
+            ("user", "user-1", "memories"),
+            "f1",
+            {"content": "fato um", "metadata": {}},
+        )
+        await store.aput(
+            ("user", "user-1", "memories"),
+            "f2",
+            {"content": "fato dois", "metadata": {}},
+        )
+
+        hits = await _search_facts("", "user-1", limit=10)
+
+        assert {h.id for h in hits} == {"f1", "f2"}
