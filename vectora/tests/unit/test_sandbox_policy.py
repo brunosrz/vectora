@@ -85,6 +85,37 @@ def test_wrong_field_type_fails_closed(tmp_path):
     assert result == LOCKED_DOWN_POLICY
 
 
+def test_allow_tcp_ports_parses_int_list(tmp_path):
+    toml_path = tmp_path / "vectora.toml"
+    toml_path.write_text("[sandbox]\nallow_tcp_ports = [443, 8080]\n", encoding="utf-8")
+
+    result = parse_policy(toml_path)
+
+    assert result.allow_tcp_ports == (443, 8080)
+
+
+def test_allow_tcp_ports_omitted_defaults_to_empty(tmp_path):
+    toml_path = tmp_path / "vectora.toml"
+    toml_path.write_text("[sandbox]\n", encoding="utf-8")
+
+    result = parse_policy(toml_path)
+
+    assert result.allow_tcp_ports == ()
+
+
+def test_allow_tcp_ports_non_numeric_value_fails_closed(tmp_path):
+    # Erro/borda: valor não-numérico na lista cai no mesmo fail-closed já
+    # existente da política, em vez de propagar ValueError ou ignorar.
+    toml_path = tmp_path / "vectora.toml"
+    toml_path.write_text(
+        '[sandbox]\nallow_tcp_ports = ["nao-e-porta"]\n', encoding="utf-8"
+    )
+
+    result = parse_policy(toml_path)
+
+    assert result == LOCKED_DOWN_POLICY
+
+
 def test_defaults_applied_when_fields_omitted(tmp_path):
     toml_path = tmp_path / "vectora.toml"
     toml_path.write_text("[sandbox]\n", encoding="utf-8")

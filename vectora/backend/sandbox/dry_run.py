@@ -118,6 +118,11 @@ def build_bwrap_command(
     argv += ["--setenv", "VECTORA_SANDBOX_WORKSPACE_DIR", workspace_dir]
     argv += ["--setenv", "VECTORA_SANDBOX_RW_PATHS", json.dumps(list(policy.rw_paths))]
     argv += ["--setenv", "VECTORA_SANDBOX_RO_PATHS", json.dumps(list(policy.ro_paths))]
+    argv += [
+        "--setenv",
+        "VECTORA_SANDBOX_ALLOW_TCP_PORTS",
+        json.dumps(list(policy.allow_tcp_ports)),
+    ]
     argv += ["--chdir", workspace_dir]
     argv += ["--", *command]
     return argv

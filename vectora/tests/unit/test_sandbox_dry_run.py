@@ -135,6 +135,25 @@ def test_lockdown_adds_unshare_net():
     assert "--unshare-net" not in unlocked
 
 
+def test_allow_tcp_ports_propagado_como_env_var_json():
+    argv = build_bwrap_command(
+        SandboxPolicy(enabled=True, allow_tcp_ports=(443, 8080)), "/ws", ["true"]
+    )
+
+    idx = argv.index("VECTORA_SANDBOX_ALLOW_TCP_PORTS")
+    assert argv[idx + 1] == "[443, 8080]"
+
+
+def test_allow_tcp_ports_vazio_ainda_seta_a_env_var(tmp_path):
+    # Erro/borda: sem allow_tcp_ports configurado, a env var ainda existe
+    # (lista vazia) — o worker sempre sabe ler `VECTORA_SANDBOX_ALLOW_TCP_PORTS`,
+    # nunca precisa tratar a ausência da chave como um caso à parte.
+    argv = build_bwrap_command(SandboxPolicy(enabled=True), "/ws", ["true"])
+
+    idx = argv.index("VECTORA_SANDBOX_ALLOW_TCP_PORTS")
+    assert argv[idx + 1] == "[]"
+
+
 def test_no_mounts_when_policy_has_none_configured():
     # Erro/borda: rw_paths/ro_paths/mask todos vazios não deve quebrar a
     # montagem — só o essencial (workspace + sistema + home dedicado do

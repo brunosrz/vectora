@@ -71,7 +71,10 @@ async def main() -> None:
             *json.loads(os.environ.get("VECTORA_SANDBOX_RW_PATHS", "[]")),
         ]
         ro_paths = json.loads(os.environ.get("VECTORA_SANDBOX_RO_PATHS", "[]"))
-        apply_landlock(rw_paths, ro_paths)
+        allow_tcp_ports = tuple(
+            json.loads(os.environ.get("VECTORA_SANDBOX_ALLOW_TCP_PORTS", "[]"))
+        )
+        apply_landlock(rw_paths, ro_paths, allow_tcp_ports)
 
     loop = asyncio.get_event_loop()
     reader = asyncio.StreamReader()

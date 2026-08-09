@@ -65,6 +65,16 @@ ACCESS_FS_V1_ALL = (
 )
 ACCESS_FS_READ_ONLY = _ACCESS_FS_EXECUTE | _ACCESS_FS_READ_FILE | _ACCESS_FS_READ_DIR
 
+# ABI V4 (kernel 6.5+) — direitos de rede, campo separado de
+# handled_access_fs. `uapi/linux/landlock.h`:
+#   LANDLOCK_ACCESS_NET_BIND_TCP    = 1 << 0
+#   LANDLOCK_ACCESS_NET_CONNECT_TCP = 1 << 1
+_ACCESS_NET_BIND_TCP = 1 << 0
+_ACCESS_NET_CONNECT_TCP = 1 << 1
+ACCESS_NET_V4_ALL = _ACCESS_NET_BIND_TCP | _ACCESS_NET_CONNECT_TCP
+
+_LANDLOCK_RULE_NET_PORT = 2
+
 
 class _RulesetAttr(ctypes.Structure):
     _pack_ = 1
@@ -79,6 +89,14 @@ class _PathBeneathAttr(ctypes.Structure):
     _fields_ = [
         ("allowed_access", ctypes.c_uint64),
         ("parent_fd", ctypes.c_int32),
+    ]
+
+
+class _NetPortAttr(ctypes.Structure):
+    _pack_ = 1
+    _fields_ = [
+        ("allowed_access", ctypes.c_uint64),
+        ("port", ctypes.c_uint64),
     ]
 
 
@@ -122,7 +140,72 @@ def _add_path_rule(
         os.close(parent_fd)
 
 
-def apply_landlock(rw_paths: list[str], ro_paths: list[str]) -> bool:
+def _apply_net_ruleset(
+    libc: ctypes.CDLL,
+    numbers: tuple[int, int, int],
+    allow_tcp_ports: tuple[int, ...],
+) -> bool:
+    """Ruleset Landlock SEPARADO, só de rede (ABI V4, kernel 6.5+) —
+    empilha sobre o ruleset de filesystem já restrito (Landlock aplica
+    rulesets cumulativamente, cada `landlock_restrict_self` adiciona ao
+    conjunto de restrições do processo, nunca substitui). Nega todo TCP
+    por padrão; libera só as portas em `allow_tcp_ports`.
+
+    Kernel sem suporte a V4 (`landlock_create_ruleset` falha pro campo de
+    rede) devolve `False` — fail-closed sinalizado ao chamador via
+    `apply_landlock`, nunca fail-open silencioso: se o kernel não consegue
+    aplicar a restrição, o chamador sabe que o allowlist não está em
+    vigor, em vez de assumir erroneamente que está."""
+    create_nr, add_rule_nr, restrict_self_nr = numbers
+    attr = _RulesetAttr(handled_access_fs=0, handled_access_net=ACCESS_NET_V4_ALL)
+    ruleset_fd = libc.syscall(create_nr, ctypes.byref(attr), ctypes.sizeof(attr), 0)
+    if ruleset_fd < 0:
+        logger.warning(
+            "sandbox: Landlock ABI V4 (rede) indisponível neste kernel "
+            "(errno=%s) — allow_tcp_ports=%s não pode ser aplicado via "
+            "Landlock (fail-closed sinalizado ao chamador)",
+            ctypes.get_errno(),
+            allow_tcp_ports,
+        )
+        return False
+
+    try:
+        rules_ok = True
+        for port in allow_tcp_ports:
+            rule = _NetPortAttr(allowed_access=_ACCESS_NET_CONNECT_TCP, port=int(port))
+            rc = libc.syscall(
+                add_rule_nr,
+                ruleset_fd,
+                _LANDLOCK_RULE_NET_PORT,
+                ctypes.byref(rule),
+                0,
+            )
+            if rc != 0:
+                logger.warning(
+                    "sandbox: landlock_add_rule (net_port=%d) falhou (errno=%s)",
+                    port,
+                    ctypes.get_errno(),
+                )
+                rules_ok = False
+
+        libc.prctl(_PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)
+        rc = libc.syscall(restrict_self_nr, ruleset_fd, 0)
+        if rc != 0:
+            logger.warning(
+                "sandbox: landlock_restrict_self (rede) falhou (errno=%s)",
+                ctypes.get_errno(),
+            )
+            return False
+        return rules_ok
+    finally:
+        os.close(ruleset_fd)
+
+
+def apply_landlock(
+    rw_paths: list[str],
+    ro_paths: list[str],
+    allow_tcp_ports: tuple[int, ...] = (),
+) -> bool:
     """Restringe o processo atual (e todo filho `exec`ado depois) a
     `rw_paths` (leitura+escrita+criação) e `ro_paths` (só leitura/
     travessia) via Landlock V1 — chamado uma única vez, no worker
@@ -130,7 +213,16 @@ def apply_landlock(rw_paths: list[str], ro_paths: list[str]) -> bool:
     sucesso; `False` em qualquer degradação (kernel <5.13, arquitetura
     não suportada, syscall indisponível/negada) — nunca levanta, o
     worker sempre segue rodando (namespaces do bwrap continuam valendo
-    de qualquer forma)."""
+    de qualquer forma).
+
+    `allow_tcp_ports`, quando não-vazio, aplica um segundo ruleset
+    (`_apply_net_ruleset`, ABI V4/kernel 6.5+) negando todo TCP exceto as
+    portas listadas. Sem portas configuradas (default `()`), nenhuma
+    tentativa de V4 é feita — comportamento idêntico ao de antes desta
+    feature. Com portas configuradas mas kernel sem suporte a V4, o
+    retorno é `False` mesmo que o ruleset de filesystem tenha sido
+    aplicado com sucesso — fail-closed: o chamador nunca deve tratar como
+    "restrição de rede em vigor" quando ela não está."""
     numbers = _syscall_numbers()
     if numbers is None:
         logger.info(
@@ -178,6 +270,12 @@ def apply_landlock(rw_paths: list[str], ro_paths: list[str]) -> bool:
                 ctypes.get_errno(),
             )
             return False
-        return rules_ok
+        fs_ok = rules_ok
     finally:
         os.close(ruleset_fd)
+
+    if not allow_tcp_ports:
+        return fs_ok
+
+    net_ok = _apply_net_ruleset(libc, numbers, allow_tcp_ports)
+    return fs_ok and net_ok

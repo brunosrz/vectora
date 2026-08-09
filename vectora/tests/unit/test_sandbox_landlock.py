@@ -154,3 +154,100 @@ def test_access_fs_v1_all_inclui_todos_os_13_direitos():
     for b in bits:
         combined |= b
     assert combined == landlock.ACCESS_FS_V1_ALL
+
+
+# ---------------------------------------------------------------------------
+# allow_tcp_ports — Landlock ABI V4 (egress de rede)
+# ---------------------------------------------------------------------------
+
+
+def _fake_libc_fs_and_net(
+    fs_create_rc=3, net_create_rc=4, add_rule_rc=0, restrict_rc=0
+):
+    """Como `_fake_libc`, mas distingue a 1ª chamada de `create_ruleset`
+    (FS) da 2ª (rede) — `apply_landlock` com `allow_tcp_ports` faz dois
+    rulesets Landlock separados, mesmos números de syscall pros dois."""
+    create_nr, add_rule_nr, restrict_nr = landlock._SYSCALL_NUMBERS["x86_64"]
+    state = {"create_calls": 0}
+
+    def _syscall(nr, *args):
+        if nr == create_nr:
+            state["create_calls"] += 1
+            return fs_create_rc if state["create_calls"] == 1 else net_create_rc
+        if nr == add_rule_nr:
+            return add_rule_rc
+        if nr == restrict_nr:
+            return restrict_rc
+        raise AssertionError(f"syscall inesperada: {nr}")
+
+    libc = MagicMock()
+    libc.syscall.side_effect = _syscall
+    libc.prctl = MagicMock()
+    return libc
+
+
+def test_allow_tcp_ports_happy_aplica_ruleset_de_rede_separado(monkeypatch, tmp_path):
+    monkeypatch.setattr(landlock.platform, "machine", lambda: "x86_64")
+    libc = _fake_libc_fs_and_net()
+    monkeypatch.setattr(landlock.ctypes, "CDLL", lambda *_a, **_k: libc)
+    monkeypatch.setattr(landlock.ctypes, "get_errno", lambda: 0)
+    monkeypatch.setattr(landlock.os, "open", lambda *_a, **_k: 7)
+    monkeypatch.setattr(landlock.os, "close", MagicMock())
+
+    result = landlock.apply_landlock(
+        rw_paths=[str(tmp_path)], ro_paths=[], allow_tcp_ports=(443, 8080)
+    )
+
+    assert result is True
+    create_nr, add_rule_nr, _restrict_nr = landlock._SYSCALL_NUMBERS["x86_64"]
+    create_calls = [c for c in libc.syscall.call_args_list if c.args[0] == create_nr]
+    assert len(create_calls) == 2  # FS + rede, rulesets separados
+
+    net_port_rule_calls = [
+        c
+        for c in libc.syscall.call_args_list
+        if c.args[0] == add_rule_nr and c.args[2] == landlock._LANDLOCK_RULE_NET_PORT
+    ]
+    assert len(net_port_rule_calls) == 2  # uma por porta
+
+
+def test_allow_tcp_ports_kernel_sem_v4_e_fail_closed(monkeypatch, tmp_path):
+    """Kernel sem suporte a ABI V4 (2ª create_ruleset falha) com portas
+    pedidas: fail-closed — `apply_landlock` retorna False mesmo com o
+    ruleset de filesystem aplicado com sucesso, nunca reporta sucesso
+    quando o allowlist de rede não está de fato em vigor."""
+    monkeypatch.setattr(landlock.platform, "machine", lambda: "x86_64")
+    libc = _fake_libc_fs_and_net(net_create_rc=-1)
+    monkeypatch.setattr(landlock.ctypes, "CDLL", lambda *_a, **_k: libc)
+    monkeypatch.setattr(landlock.ctypes, "get_errno", lambda: 38)
+    monkeypatch.setattr(landlock.os, "open", lambda *_a, **_k: 7)
+    monkeypatch.setattr(landlock.os, "close", MagicMock())
+
+    result = landlock.apply_landlock(
+        rw_paths=[str(tmp_path)], ro_paths=[], allow_tcp_ports=(443,)
+    )
+
+    assert result is False
+
+
+def test_allow_tcp_ports_vazio_nao_tenta_ruleset_de_rede(monkeypatch, tmp_path):
+    """`allow_tcp_ports=()` (default) mantém o comportamento anterior a
+    esta feature — nenhuma tentativa de ABI V4, um único ruleset criado."""
+    monkeypatch.setattr(landlock.platform, "machine", lambda: "x86_64")
+    libc = _fake_libc()
+    monkeypatch.setattr(landlock.ctypes, "CDLL", lambda *_a, **_k: libc)
+    monkeypatch.setattr(landlock.ctypes, "get_errno", lambda: 0)
+    monkeypatch.setattr(landlock.os, "open", lambda *_a, **_k: 7)
+    monkeypatch.setattr(landlock.os, "close", MagicMock())
+
+    result = landlock.apply_landlock(rw_paths=[str(tmp_path)], ro_paths=[])
+
+    assert result is True
+    create_nr = landlock._SYSCALL_NUMBERS["x86_64"][0]
+    create_calls = [c for c in libc.syscall.call_args_list if c.args[0] == create_nr]
+    assert len(create_calls) == 1
+
+
+def test_access_net_v4_all_inclui_bind_e_connect_tcp():
+    assert landlock.ACCESS_NET_V4_ALL & landlock._ACCESS_NET_BIND_TCP != 0
+    assert landlock.ACCESS_NET_V4_ALL & landlock._ACCESS_NET_CONNECT_TCP != 0

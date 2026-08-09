@@ -129,3 +129,40 @@ async def test_main_sem_env_lockdown_usa_perfil_normal(monkeypatch):
     await worker.main()
 
     applied.assert_called_once_with(lockdown=False)
+
+
+@pytest.mark.asyncio
+async def test_main_repassa_allow_tcp_ports_pro_apply_landlock(monkeypatch, tmp_path):
+    monkeypatch.setenv("VECTORA_SANDBOX_WORKSPACE_DIR", str(tmp_path))
+    monkeypatch.setenv("VECTORA_SANDBOX_RW_PATHS", "[]")
+    monkeypatch.setenv("VECTORA_SANDBOX_RO_PATHS", "[]")
+    monkeypatch.setenv("VECTORA_SANDBOX_ALLOW_TCP_PORTS", "[443, 8080]")
+    monkeypatch.setattr(worker, "apply_rlimits", MagicMock())
+    landlock_call = MagicMock()
+    monkeypatch.setattr(worker, "apply_landlock", landlock_call)
+    _stub_event_loop(monkeypatch)
+
+    await worker.main()
+
+    args, _kwargs = landlock_call.call_args
+    assert args[2] == (443, 8080)
+
+
+@pytest.mark.asyncio
+async def test_main_sem_allow_tcp_ports_repassa_tupla_vazia(monkeypatch, tmp_path):
+    # Erro/borda: ausência da env var (worker antigo/config sem a feature)
+    # não pode quebrar — degrada pra tupla vazia, mesmo comportamento de
+    # antes desta feature existir.
+    monkeypatch.setenv("VECTORA_SANDBOX_WORKSPACE_DIR", str(tmp_path))
+    monkeypatch.delenv("VECTORA_SANDBOX_RW_PATHS", raising=False)
+    monkeypatch.delenv("VECTORA_SANDBOX_RO_PATHS", raising=False)
+    monkeypatch.delenv("VECTORA_SANDBOX_ALLOW_TCP_PORTS", raising=False)
+    monkeypatch.setattr(worker, "apply_rlimits", MagicMock())
+    landlock_call = MagicMock()
+    monkeypatch.setattr(worker, "apply_landlock", landlock_call)
+    _stub_event_loop(monkeypatch)
+
+    await worker.main()
+
+    args, _kwargs = landlock_call.call_args
+    assert args[2] == ()

@@ -32,6 +32,7 @@ class SandboxPolicy:
     mask: tuple[str, ...] = field(default_factory=lambda: _DEFAULT_MASK)
     no_gpu: bool = True
     lockdown: bool = False
+    allow_tcp_ports: tuple[int, ...] = ()
     docker_image: str | None = None
     remote_host: str | None = None
     ssh_key_id: str | None = None
@@ -89,6 +90,7 @@ def parse_policy(vectora_toml_path: Path) -> SandboxPolicy:
             mask=tuple(str(p) for p in section.get("mask", _DEFAULT_MASK)),
             no_gpu=bool(section.get("no_gpu", True)),
             lockdown=bool(section.get("lockdown", False)),
+            allow_tcp_ports=tuple(int(p) for p in section.get("allow_tcp_ports", [])),
             docker_image=(
                 str(section["docker_image"]) if "docker_image" in section else None
             ),
