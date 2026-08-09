@@ -39,6 +39,8 @@ Una línea de tiempo en vivo de búsquedas RAG y web en progreso, con extractos 
 
 Esta pestaña también tiene el panel **"Lo que aprendí sobre ti"** — una vista de solo lectura de los hechos y skills duraderos que [Remember](../agent-automation) ya guardó por su cuenta, sin que tengas que recordar en qué hilo el agente aprendió algo por primera vez. Los buckets que importas de otros usuarios también viven aquí, dentro de la **Memory Library**.
 
+Una búsqueda en la parte superior de la pestaña consulta hechos, skills y buckets RAG a la vez — chips de filtro por tipo restringen el resultado a solo uno de los tres cuando ya sabes qué buscas.
+
 ### Tareas
 
 Rutinas en segundo plano para la sesión: tareas programadas (cron) o disparadas por webhook (GitHub/GitLab/Slack). Cada tarea tiene un interruptor de habilitado, un botón "ejecutar ahora" y un log de ejecuciones pasadas con un enlace para abrir el hilo resultante.

@@ -39,6 +39,8 @@ Timeline ao vivo de buscas RAG e web em andamento, com os trechos recuperados (p
 
 Essa aba também tem o painel **"O que aprendi sobre você"** — uma visão só-leitura dos fatos e skills duráveis que o [Remember](../agent-automation) já salvou por conta própria, sem você precisar lembrar em qual thread o agente aprendeu algo pela primeira vez. Buckets que você importa de outros usuários também vivem aqui, dentro da **Memory Library**.
 
+Uma busca no topo da aba consulta fatos, skills e buckets RAG ao mesmo tempo — chips de filtro por tipo restringem o resultado a só um dos três quando você já sabe o que procura.
+
 ### Tasks
 
 Rotinas em segundo plano da sessão: tarefas agendadas (cron) ou disparadas por webhook (GitHub/GitLab/Slack). Cada tarefa tem toggle de habilitado, botão de rodar manualmente agora, e um log de execuções anteriores com link pra abrir a thread-resultado.

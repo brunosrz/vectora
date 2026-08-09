@@ -39,6 +39,8 @@ A live timeline of RAG and web searches in progress, with retrieved excerpts (ex
 
 This tab also holds the **"What I've learned about you"** panel — a read-only view of the durable facts and skills [Remember](../agent-automation) has saved on your behalf, so you don't have to remember which thread first taught the agent something. Buckets you pull in from other users live here too, under **Memory Library**.
 
+A search box at the top of the tab queries facts, skills, and RAG buckets at once — type-filter chips narrow results to just one of the three when you know what you're after.
+
 ### Tasks
 
 Background routines for the session: scheduled tasks (cron) or webhook-triggered (GitHub/GitLab/Slack). Each task has an enabled toggle, a "run now" button, and a log of past executions with a link to open the resulting thread.
