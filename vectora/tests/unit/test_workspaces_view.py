@@ -754,6 +754,64 @@ class TestToggleAndDeleteRagBucket:
 
         assert resp == {"ok": True}
 
+    @pytest.mark.asyncio
+    async def test_delete_purga_a_tabela_vetorial_orfa(
+        self, trusted_ws, _isolated_runtime_settings, monkeypatch
+    ):
+        """Regressão: apagar o bucket só removia o registro do catálogo — a
+        tabela LanceDB (`bucket_{id}`) ficava órfã com todos os itens,
+        continuando a aparecer em GET /rag/workspace-summary (aba Memória →
+        Coleções) mesmo com "Buckets indexados" já mostrando vazio."""
+        from unittest.mock import AsyncMock
+
+        from backend.api.handlers.workspaces import delete_rag_bucket
+        from backend.services import rag_buckets
+
+        wsid, _root = trusted_ws
+        bucket = rag_buckets.create_bucket(
+            _isolated_runtime_settings, workspace_id=wsid, name="Docs"
+        )
+
+        fake_backend = AsyncMock()
+        monkeypatch.setattr(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(return_value=fake_backend),
+        )
+
+        await delete_rag_bucket(workspace_id=wsid, bucket_id=bucket.id)
+
+        fake_backend.purge.assert_awaited_once_with(f"bucket_{bucket.id}")
+
+    @pytest.mark.asyncio
+    async def test_delete_falha_no_purge_nao_impede_remocao_do_catalogo(
+        self, trusted_ws, _isolated_runtime_settings, monkeypatch
+    ):
+        """Erro/borda: storage indisponível (ou tabela nunca criada — bucket
+        criado mas nunca ingerido) durante o purge não pode deixar o bucket
+        preso no catálogo — a remoção do registro precisa ser garantida."""
+        from unittest.mock import AsyncMock
+
+        from backend.api.handlers.workspaces import (
+            delete_rag_bucket,
+            list_rag_buckets,
+        )
+        from backend.services import rag_buckets
+
+        wsid, _root = trusted_ws
+        bucket = rag_buckets.create_bucket(
+            _isolated_runtime_settings, workspace_id=wsid, name="Docs"
+        )
+
+        monkeypatch.setattr(
+            "backend.storage.factory.get_vector_store_backend",
+            AsyncMock(side_effect=RuntimeError("storage indisponível")),
+        )
+
+        resp = await delete_rag_bucket(workspace_id=wsid, bucket_id=bucket.id)
+
+        assert resp == {"ok": True}
+        assert await list_rag_buckets(workspace_id=wsid) == []
+
 
 class TestSandboxStatus:
     """GET /workspaces/{id}/sandbox/status — reflete se o worker jailado

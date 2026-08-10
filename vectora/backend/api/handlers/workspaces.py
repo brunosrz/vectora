@@ -3808,16 +3808,24 @@ async def toggle_rag_bucket(
 
 @workspace_scoped_router.delete("/rag/buckets/{bucket_id}")
 async def delete_rag_bucket(workspace_id: str, bucket_id: str) -> dict:
-    """Remove o bucket do catálogo e de qualquer lista de ativos —
-    reaproveita `rag_buckets.delete_bucket` (idempotente). Não apaga a
-    tabela LanceDB (`bucket_{bucket_id}`) — só o registro no catálogo,
-    mesmo padrão de "soft" já usado por outras remoções de metadata do
-    produto (a tabela vetorial fica órfã, mas nunca é lida sem o registro
-    no catálogo apontando pra ela)."""
+    """Remove o bucket do catálogo, de qualquer lista de ativos, E a tabela
+    vetorial (`bucket_{bucket_id}`) — sem o purge, `/rag/workspace-summary`
+    (aba Memória → Coleções) continuava listando a tabela órfã com todos os
+    itens, mesmo com "Buckets indexados" já mostrando vazio. Erro de purge
+    não impede a remoção do catálogo — a tabela pode já não existir
+    (bucket criado mas nunca ingerido) ou o storage estar indisponível."""
     from backend.services import rag_buckets
+    from backend.storage.factory import get_vector_store_backend
     from backend.workspace.runtime_settings import runtime_settings
 
     rag_buckets.delete_bucket(runtime_settings, bucket_id)
+    try:
+        backend = await get_vector_store_backend()
+        await backend.purge(f"bucket_{bucket_id}")
+    except Exception:
+        logger.warning(
+            "rag_buckets: falha ao purgar tabela do bucket %s", bucket_id, exc_info=True
+        )
     return {"ok": True}
 
 
