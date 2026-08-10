@@ -199,6 +199,39 @@ describe("WorkspaceTrustDialog — mode=ingest, filtro de formato e bucket", () 
     expect(body.bucket_name).toBe("Godot Docs");
   });
 
+  it("mostra o botão de configurações do RAG e abre o painel sem fechar o modal", async () => {
+    FETCH.mockImplementation((url: string) => {
+      if (url.startsWith("/workspaces/browse")) return jsonRes(listing);
+      if (url === "/rag/settings") {
+        return jsonRes({
+          reranker_enabled: true,
+          reranker_top_k: 5,
+          rerank_provider: "auto",
+          embed_provider: "auto",
+          embed_model: "",
+          ingest_file_types: [],
+        });
+      }
+      if (url === "/rag/collections") {
+        return jsonRes({ collections: [] });
+      }
+      return jsonRes({}, 404);
+    });
+
+    render(<WorkspaceTrustDialog open onOpenChange={() => {}} mode="ingest" />);
+    await waitFor(() => screen.getByText("projeto-a"));
+
+    const settingsBtn = screen.getByTestId("rag-settings-btn");
+    fireEvent.click(settingsBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("rag-settings-panel")).toBeTruthy();
+    });
+    // O modal de indexação continua aberto — o painel só se sobrepõe ao
+    // conteúdo interno, não substitui o dialog.
+    expect(screen.getByText("Index this folder")).toBeTruthy();
+  });
+
   it("sem extensões customizadas, envia o atalho selecionado (regressão)", async () => {
     FETCH.mockImplementation((url: string, init?: RequestInit) => {
       if (url.startsWith("/workspaces/browse")) return jsonRes(listing);

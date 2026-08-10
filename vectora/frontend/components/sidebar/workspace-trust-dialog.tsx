@@ -55,6 +55,11 @@ import {
 } from "@/lib/stores/workspaces-store";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
+import {
+  RagSettingsButton,
+  RagSettingsSlidePanel,
+  useRagSettings,
+} from "@/components/workbench/rag-settings-panel";
 import { m } from "@/lib/paraglide/messages";
 
 type Tab = "local" | "ssh" | "codespace";
@@ -111,6 +116,7 @@ export function WorkspaceTrustDialog({
   const [excludeExts, setExcludeExts] = useState("");
   const [bucketName, setBucketName] = useState("");
   const [ingestJobId, setIngestJobId] = useState<string | null>(null);
+  const ragSettings = useRagSettings();
   const ingestJob = useRagJobsStore((s) =>
     ingestJobId ? s.jobs[ingestJobId] : null,
   );
@@ -346,17 +352,41 @@ export function WorkspaceTrustDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {mode === "ingest"
-              ? m.workspace_ingest_title()
-              : m.workspace_trust_title()}
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-2">
+            <DialogTitle>
+              {mode === "ingest"
+                ? m.workspace_ingest_title()
+                : m.workspace_trust_title()}
+            </DialogTitle>
+            {/* Configurações do RAG (reranker/embedding/tipos de arquivo)
+                acessíveis direto daqui — antes só existiam na aba Memória,
+                obrigando fechar o modal de indexação pra ajustar algo que
+                afeta a própria indexação em andamento. */}
+            {mode === "ingest" && (
+              <RagSettingsButton
+                open={ragSettings.open}
+                onToggle={ragSettings.toggle}
+              />
+            )}
+          </div>
           <DialogDescription>
             {mode === "ingest"
               ? m.workspace_ingest_desc()
               : m.workspace_trust_desc()}
           </DialogDescription>
         </DialogHeader>
+
+        {mode === "ingest" && (
+          <RagSettingsSlidePanel
+            open={ragSettings.open}
+            close={ragSettings.close}
+            settings={ragSettings.settings}
+            collections={ragSettings.collections}
+            patch={ragSettings.patch}
+            loadCollections={ragSettings.loadCollections}
+            deleteCollection={ragSettings.deleteCollection}
+          />
+        )}
 
         {mode === "ingest" && ingestJobId ? (
           <div className="space-y-3 py-2">
