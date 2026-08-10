@@ -161,7 +161,6 @@ async def curate_workspace_knowledge(workspace_id: str) -> str:
 async def _sample_recent_docs(workspace_id: str, max_docs: int = 20) -> list[dict]:
     """Amostra documentos indexados do workspace via LanceDB."""
     try:
-        import asyncio
         import json
 
         collections = await _list_collections()
@@ -181,7 +180,7 @@ async def _sample_recent_docs(workspace_id: str, max_docs: int = 20) -> list[dic
                     continue
                 db = await lancedb.connect_async(str(settings.lancedb_dir))
                 table = await db.open_table(coll_name)
-                df = await asyncio.to_thread(lambda t=table: t.to_pandas().head(5))  # ty: ignore[unresolved-attribute]
+                df = (await table.to_pandas()).head(5)
                 for _, row in df.iterrows():
                     try:
                         meta = json.loads(row.get("metadata", "{}") or "{}")
