@@ -526,7 +526,14 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
                     await pipe_task
 
         asyncio.run(_run_win())
-        return
+        # Mesmo `return` cedo do ramo Windows+desktop precisa do os._exit(0)
+        # abaixo — sem ele, threads não-daemon (langsmith/httpx/SQLite do
+        # tracer) mantêm o interpreter vivo mesmo após o shutdown gracioso
+        # do uvicorn (Ctrl+C nunca fechava o processo; só o kill via tray
+        # do Electron encerrava, por caminho totalmente diferente).
+        logger.info("Vectora: encerrando processo")
+        os._exit(0)
+        return  # pragma: no cover - os._exit não retorna fora de teste
 
     if force_web:
         # vectora web: nem a bandeja sobe — só o servidor ASGI puro, igual ao

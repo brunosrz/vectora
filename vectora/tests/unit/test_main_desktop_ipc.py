@@ -266,12 +266,53 @@ def test_desktop_windows_no_tcp_host() -> None:
             return_value=MagicMock(serve=AsyncMock(return_value=None)),
         ),
         patch("asyncio.run"),
+        patch("os._exit"),
     ):
         from backend.main import _run_start
 
         _run_start(args)
 
     assert "uds" not in captured_config_kwargs
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Named pipe só no Windows")
+def test_desktop_windows_shutdown_calls_os_exit() -> None:
+    """Regressão ao vivo: o ramo Windows+desktop dava `return` logo após
+    `asyncio.run(_run_win())` completar, pulando o `os._exit(0)` que mata
+    threads não-daemon (langsmith/httpx/SQLite do tracer) — Ctrl+C acionava
+    o shutdown gracioso do uvicorn/NATS normalmente, mas o processo Python
+    continuava vivo até o usuário fechar o Electron manualmente pela
+    bandeja. `os._exit` precisa ser chamado mesmo nesse ramo."""
+    import argparse
+
+    args = argparse.Namespace(
+        headless=False,
+        host="0.0.0.0",  # noqa: S104
+        port=8080,
+        ssl_certfile=None,
+        ssl_keyfile=None,
+    )
+
+    with (
+        patch.dict(os.environ, {"VECTORA_DESKTOP": "1"}, clear=False),
+        patch("backend.api.server.create_app", return_value=MagicMock()),
+        patch("backend.main._start_vite_dev", return_value=None, create=True),
+        patch("backend.services.ipc_pipe_win.serve_pipe", AsyncMock()),
+        patch("uvicorn.Config", return_value=MagicMock()),
+        patch(
+            "uvicorn.Server",
+            return_value=MagicMock(serve=AsyncMock(return_value=None)),
+        ),
+        # asyncio.run completa normalmente (shutdown gracioso via Ctrl+C) —
+        # nenhuma exceção propaga, é exatamente o caso que escapava do exit.
+        patch("asyncio.run"),
+        patch("os._exit") as mock_exit,
+    ):
+        from backend.main import _run_start
+
+        _run_start(args)
+
+    mock_exit.assert_called_once_with(0)
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +360,7 @@ def test_autoeleicao_sinaliza_env_vars_pro_sidecar_quando_deve_spawnar() -> None
             "uvicorn.Server", return_value=MagicMock(serve=AsyncMock(return_value=None))
         ),
         patch("asyncio.run"),
+        patch("os._exit"),
     ):
         from backend.main import _run_start
 
