@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState, type CSSProperties } from "react";
+import Image from "next/image";
 import { useRouter } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw, Minus, Square, Copy, X } from "lucide-react";
 import { m } from "@/lib/paraglide/messages";
@@ -82,6 +83,22 @@ export function TitleBar() {
         >
           <RotateCw className="h-3.5 w-3.5" />
         </button>
+
+        {/* Ícone+título movidos pra cá do Header (que fica visualmente mais
+            enxuto no desktop) — mesma escala dos botões de navegação ao
+            lado (h-3.5/h-6), não o tamanho maior usado no Header web. */}
+        <div className="flex items-center gap-1.5 pl-1.5 ml-1 border-l border-white/10">
+          <Image
+            src="/vectora.svg"
+            alt=""
+            width={14}
+            height={14}
+            className="h-3.5 w-3.5 shrink-0"
+          />
+          <span className="text-xs font-medium tracking-tight text-sidebar-foreground/90">
+            Vectora
+          </span>
+        </div>
       </div>
 
       <div className="flex-1" />

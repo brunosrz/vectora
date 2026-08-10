@@ -7,6 +7,7 @@ import { ContextualHelp } from "./contextual-help";
 import { SettingsMenu } from "./settings-menu";
 import { IdeModeSwitch } from "./ide-mode-switcher";
 import { m } from "@/lib/paraglide/messages";
+import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 interface HeaderProps {
   showToolCalls?: boolean;
   onToggleToolCalls?: () => void;
@@ -20,6 +21,12 @@ export function Header({
   onOpenSidebar,
   showModeSwitch = false,
 }: HeaderProps) {
+  // No desktop, ícone+título já aparecem na TitleBar (canto superior
+  // esquerdo, ao lado de voltar/recarregar) — repeti-los aqui só ocupa
+  // altura à toa. Na web (sem TitleBar), continuam aqui como identidade
+  // da página.
+  const desktop = useIsDesktop();
+
   return (
     <header className="border-b border-border/60 bg-background h-16 flex items-center">
       {/* max-w-4xl mx-auto: mesma largura/centralização de message-list.tsx —
@@ -38,20 +45,24 @@ export function Header({
               <Menu className="w-5 h-5" />
             </button>
           )}
-          <Image
-            src="/vectora.svg"
-            alt="Vectora"
-            width={28}
-            height={28}
-            priority
-            className="h-7 w-7"
-          />
-          <span
-            className="text-xl font-semibold tracking-tight text-foreground"
-            style={{ fontFamily: "var(--font-aeonik-mono)" }}
-          >
-            Vectora
-          </span>
+          {!desktop && (
+            <>
+              <Image
+                src="/vectora.svg"
+                alt="Vectora"
+                width={28}
+                height={28}
+                priority
+                className="h-7 w-7"
+              />
+              <span
+                className="text-xl font-semibold tracking-tight text-foreground"
+                style={{ fontFamily: "var(--font-aeonik-mono)" }}
+              >
+                Vectora
+              </span>
+            </>
+          )}
         </div>
 
         <IdeModeSwitch show={showModeSwitch} />

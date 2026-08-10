@@ -35,6 +35,13 @@ vi.mock("@/lib/paraglide/messages", () => ({
   ),
 }));
 
+vi.mock("next/image", () => ({
+  default: (props: Record<string, unknown>) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={props.alt as string} />;
+  },
+}));
+
 function installVectoraBridge(
   overrides: Partial<NonNullable<Window["vectora"]>["windowControls"]> = {},
 ) {
@@ -123,6 +130,14 @@ describe("TitleBar", () => {
     expect(
       screen.queryByLabelText("titlebar_maximize"),
     ).not.toBeInTheDocument();
+  });
+
+  it("mostra o ícone e o nome Vectora ao lado dos botões de voltar/recarregar", async () => {
+    installVectoraBridge();
+    render(<TitleBar />);
+
+    await screen.findByLabelText("titlebar_back");
+    expect(screen.getByText("Vectora")).toBeInTheDocument();
   });
 
   it("reage a onStateChange (duplo-clique na titlebar nativa) sem precisar de novo isMaximized()", async () => {
