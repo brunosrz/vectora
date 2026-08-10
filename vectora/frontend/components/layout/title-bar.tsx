@@ -91,9 +91,9 @@ export function TitleBar() {
           <Image
             src="/vectora.svg"
             alt=""
-            width={14}
-            height={14}
-            className="h-3.5 w-3.5 shrink-0"
+            width={18}
+            height={18}
+            className="h-[18px] w-[18px] shrink-0"
           />
           <span className="text-xs font-medium tracking-tight text-sidebar-foreground/90">
             Vectora
