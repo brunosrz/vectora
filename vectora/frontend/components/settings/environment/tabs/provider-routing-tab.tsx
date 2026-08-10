@@ -671,6 +671,27 @@ function NineRouterSection() {
     void loadRegistered();
   }, [loadStatus, loadRegistered]);
 
+  // Detecção automática assim que o proxy está configurado — igual ao
+  // OpenRouter, que busca no catálogo sem exigir clique em botão. Só roda
+  // uma vez por configuração (discovered !== null trava o re-disparo); o
+  // botão "Detectar modelos" continua disponível pra atualizar manualmente.
+  useEffect(() => {
+    if (!status?.configured || discovered !== null) return;
+    setDiscovering(true);
+    setError(null);
+    discoverNineRouterModels()
+      .then((data) => {
+        setReachable(data.reachable);
+        setDiscovered(data.models);
+      })
+      .catch(() => {
+        setReachable(false);
+        setDiscovered([]);
+        setError(m.provider_routing_error_discover());
+      })
+      .finally(() => setDiscovering(false));
+  }, [status?.configured, discovered]);
+
   const handleSaveConfig = async () => {
     if (!baseUrlInput.trim() || !keyInput.trim()) return;
     setSavingConfig(true);

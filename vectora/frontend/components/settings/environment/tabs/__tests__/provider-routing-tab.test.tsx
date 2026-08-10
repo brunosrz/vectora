@@ -548,6 +548,46 @@ describe("ProviderRoutingTab — 9Router", () => {
     });
   });
 
+  it("já configurado, detecta modelos automaticamente sem clicar no botão", async () => {
+    // Regressão de UX: diferente do OpenRouter (busca ao digitar, sem botão),
+    // o 9Router só listava modelos depois de clicar "Detectar modelos" — a
+    // seção fica configurada e a lista deve aparecer sozinha, sem interação.
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+      nineRouterDiscover: {
+        reachable: true,
+        models: [{ id: "cc/claude-opus-4-7", name: "Claude Opus 4.7" }],
+      },
+    });
+    render(<ProviderRoutingTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText("cc/claude-opus-4-7")).toBeTruthy();
+    });
+  });
+
+  it("proxy inacessível é detectado automaticamente, sem exigir clique", async () => {
+    mockFetch({
+      nineRouterStatus: {
+        configured: true,
+        base_url: "http://localhost:20128/v1",
+        masked: "9r-•••cdef",
+      },
+      nineRouterDiscover: { reachable: false, models: [] },
+    });
+    render(<ProviderRoutingTab />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/n[ãa]o consegui alcan[çc]ar o 9router/i),
+      ).toBeTruthy();
+    });
+  });
+
   it("com mais de 5 modelos detectados, filtra a lista pela busca", async () => {
     const models = [
       "cc/claude-opus-4-7",
