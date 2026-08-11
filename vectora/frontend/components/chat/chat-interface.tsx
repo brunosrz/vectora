@@ -11,6 +11,7 @@ import {
 } from "@/lib/utils/chat";
 import { truncate } from "@/lib/utils/string";
 import { useStreamHandler, useFeedback, useChatState } from "@/lib/hooks/chat";
+import { useSendGuard } from "@/lib/hooks/chat/use-send-guard";
 import { useUserId } from "@/lib/hooks/auth";
 import { useFileUpload, useVoiceInput } from "@/lib/hooks/files";
 import { MessageList } from "./message-list";
@@ -363,6 +364,12 @@ export function ChatInterface({
         .warning(msg.chat_model_switched({ from: fromModel, to: toModel }));
     },
   });
+
+  // Guard atômico contra dupla submissão síncrona de envio (Enter rápido
+  // 2x, Enter + clique): o isLoading do reducer só reflete no próximo
+  // render, então sem o guard duas chamadas no mesmo tick duplicariam a
+  // mensagem do usuário.
+  const sendGuard = useSendGuard();
 
   // HITL: retoma execução pausada após decisão do usuário
   const handleHitlDecision = useCallback(
@@ -728,6 +735,9 @@ export function ChatInterface({
       } finally {
         uiDispatch({ type: "FINISH_SEND" });
         useStreamingStore.getState().setStreaming(threadId, false);
+        // Libera a reserva do guard para permitir o próximo envio — sempre,
+        // inclusive em erro/abort.
+        sendGuard.release();
       }
     },
     [
@@ -739,6 +749,7 @@ export function ChatInterface({
       customTitle,
       uiDispatch,
       setMessages,
+      sendGuard,
     ],
   );
 
@@ -942,6 +953,15 @@ export function ChatInterface({
       return;
     }
 
+    // Reserva atômica síncrona: o isLoading do reducer só reflete no
+    // próximo render, então duas submissões no mesmo tick (Enter 2x, Enter
+    // + clique) ambas teriam passado no check acima e duplicariam a
+    // mensagem. O guard barra a 2ª chamada no mesmo tick; a fila legítima
+    // (isLoading já true de um envio em andamento) jamais chega aqui.
+    if (!sendGuard.tryAcquire()) {
+      return;
+    }
+
     // Show message in chat and process immediately
     const previousMessages = messages;
     setMessages((prev) => [...prev, userMessage]);
@@ -981,6 +1001,7 @@ export function ChatInterface({
     setMessages,
     inputLocked,
     contextFull,
+    sendGuard,
   ]);
 
   const handleStop = useCallback(async () => {
