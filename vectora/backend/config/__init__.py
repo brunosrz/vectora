@@ -1,12 +1,24 @@
 """Schema declarativo de configuração — fonte única de verdade para CLI e
 REST (ver ``registry.py`` para o racional completo). Importar este pacote
-popula o registry global a partir de ``fields.py``.
+popula os registries globais a partir de ``fields.py`` (escalar) e
+``collection_fields.py`` (coleção).
 """
 
 from __future__ import annotations
 
 from backend.config import (
+    collection_fields as _collection_fields,
+)
+from backend.config import (
     fields as _fields,
+)
+from backend.config.collections import (
+    CollectionSettingField,
+    DuplicateCollectionFieldError,
+    all_collections,
+    collection_field,
+    collections_for_category,
+    get_collection_field,
 )
 from backend.config.registry import (
     DuplicateSettingFieldError,
@@ -19,11 +31,17 @@ from backend.config.registry import (
 )
 
 __all__ = [
+    "CollectionSettingField",
+    "DuplicateCollectionFieldError",
     "DuplicateSettingFieldError",
     "SettingField",
     "all_categories",
+    "all_collections",
     "all_fields",
+    "collection_field",
+    "collections_for_category",
     "fields_for_category",
+    "get_collection_field",
     "get_field",
     "setting_field",
 ]

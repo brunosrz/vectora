@@ -74,3 +74,35 @@ class ConfigTomlAdapter:
         attr = self.toml_key or key
         object.__setattr__(settings, attr, value)
         write_config_section(self.section, {attr: value})
+
+
+class RegisteredModelsTableAdapter:
+    """Envolve as tabelas SQLite ad hoc de modelos registrados por gateway do
+    `provider_routing` (``ollama_registered_models`` / ``openrouter_registered_models``
+    / ``nine_router_registered_models``). Reusa o resolver de DB e as funções
+    internas do handler — não duplica a lógica de tabela.
+    """
+
+    def __init__(self, table: str) -> None:
+        self.table = table
+
+    async def list_items(self) -> list[dict[str, str]]:
+        from backend.api.handlers.provider_routing import _list_registered
+
+        rows = await _list_registered(self.table)
+        return [{"id": r.id, "tag": r.tag, "created_at": r.created_at} for r in rows]
+
+    async def add(self, item: dict[str, str]) -> dict[str, str]:
+        from backend.api.handlers.provider_routing import _register
+
+        registered = await _register(self.table, item["tag"])
+        return {
+            "id": registered.id,
+            "tag": registered.tag,
+            "created_at": registered.created_at,
+        }
+
+    async def remove(self, item_id: str) -> None:
+        from backend.api.handlers.provider_routing import _unregister
+
+        await _unregister(self.table, item_id)
