@@ -36,9 +36,19 @@ class RagSettingsBody(BaseModel):
 
 @router.get("/settings")
 async def get_rag_settings() -> dict[str, Any]:
+    from backend.settings import settings
     from backend.workspace.runtime_settings import runtime_settings
 
-    return runtime_settings.rag_settings
+    out = dict(runtime_settings.rag_settings)
+    # Mesmos checks que backend/tools/rag.py::_build_cohere_reranker/
+    # _build_voyage_reranker fazem antes de instanciar o client — sem isso o
+    # dropdown deixava escolher um provider sem key configurada, e o
+    # reranking parava de rodar em silêncio (nenhum log/erro visível).
+    out["rerank_provider_available"] = {
+        "cohere": bool(settings.get_cohere_api_key()),
+        "voyage": bool(settings.voyage_api_key),
+    }
+    return out
 
 
 @router.patch("/settings")

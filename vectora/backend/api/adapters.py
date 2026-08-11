@@ -94,6 +94,32 @@ def classify_stream_error(exc: BaseException) -> tuple[str, str]:
             "MODEL_INCOMPATIBLE",
             "Este modelo não conseguiu processar o histórico desta conversa.",
         )
+    # HTTP 402 = conta sem crédito/membership no provedor (ex.
+    # OpenRouterCreditError). Não é falha transitória nem quota do modelo —
+    # é estado de conta; tenta fallback esconderia o problema. Estado de
+    # conta roda ANTES do match genérico de rate limit, porque a mensagem
+    # do 402 pode conter "rate" e colidir com RATE_LIMIT.
+    from backend.llm.openrouter.client import OpenRouterCreditError
+
+    if isinstance(exc, OpenRouterCreditError) or (
+        cause is not None and isinstance(cause, OpenRouterCreditError)
+    ):
+        return (
+            "ACCOUNT_CREDIT",
+            "O provedor reportou falta de crédito ou assinatura ativa para este modelo.",
+        )
+    if any(
+        (
+            "402" in text,
+            "credit" in text and "error" in text,
+            "membership benefits" in text,
+            "invalid_request_error" in text and "membership" in text,
+        )
+    ):
+        return (
+            "ACCOUNT_CREDIT",
+            "O provedor reportou falta de crédito ou assinatura ativa para este modelo.",
+        )
     keyword_matches: tuple[tuple[str, str, tuple[str, ...]], ...] = (
         (
             "RATE_LIMIT",

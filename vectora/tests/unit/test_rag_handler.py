@@ -89,6 +89,45 @@ class TestRagSettingsEndpoints:
         assert out["reranker_top_k"] == 5
 
     @pytest.mark.asyncio
+    async def test_get_exposes_rerank_provider_availability(self, tmp_path):
+        """Regressão ao vivo: escolher cohere/voyage sem a key configurada
+        fazia o reranking parar de rodar em silêncio (_build_reranker
+        devolve None). O painel precisa saber ANTES de deixar escolher."""
+        from backend.api.handlers import rag as handler
+        from backend.settings import settings
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "settings.json")
+        with (
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+            patch.object(settings, "get_cohere_api_key", lambda: "co-key"),
+            patch.object(settings, "voyage_api_key", None),
+        ):
+            out = await handler.get_rag_settings()
+
+        assert out["rerank_provider_available"] == {"cohere": True, "voyage": False}
+
+    @pytest.mark.asyncio
+    async def test_get_reports_both_unavailable_when_no_keys_configured(
+        self, tmp_path
+    ):
+        """Edge — nem Cohere nem Voyage configurados: os dois False, sem
+        levantar erro (o painel deve mostrar os 2 desabilitados)."""
+        from backend.api.handlers import rag as handler
+        from backend.settings import settings
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "settings.json")
+        with (
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+            patch.object(settings, "get_cohere_api_key", lambda: None),
+            patch.object(settings, "voyage_api_key", None),
+        ):
+            out = await handler.get_rag_settings()
+
+        assert out["rerank_provider_available"] == {"cohere": False, "voyage": False}
+
+    @pytest.mark.asyncio
     async def test_patch_updates_and_returns(self, tmp_path):
         from backend.api.handlers import rag as handler
         from backend.api.handlers.rag import RagSettingsBody

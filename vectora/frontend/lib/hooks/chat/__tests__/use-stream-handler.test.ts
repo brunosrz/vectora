@@ -139,6 +139,31 @@ describe("useStreamHandler.processStream", () => {
     expect(assistant?.content).not.toMatch(/Erro no stream:/i);
   });
 
+  it("evento de erro ACCOUNT_CREDIT (402/sem crédito) vira aviso localizado", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        {
+          type: "error",
+          message:
+            "OpenRouterCreditError: [kimi/kimi-k2.5] [402]: unable to verify " +
+            "membership benefits",
+          code: "ACCOUNT_CREDIT",
+        },
+      ]),
+    );
+
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    const assistant = messages.find((m) => m.id === "a1");
+    expect(assistant?.isError).toBe(true);
+    // Mensagem localizada de crédito/assinatura — nunca o 402 cru do provider.
+    expect(assistant?.content).toContain(streamErrorMessage("ACCOUNT_CREDIT"));
+    expect(assistant?.content).not.toContain("membership benefits");
+    expect(assistant?.content).not.toContain("402");
+  });
+
   it("erro após conteúdo parcial real preserva o texto já gerado (não sobrescreve)", async () => {
     // Cobre erro no meio de um turno (ex.: orquestrador já respondeu algo,
     // delegou pro subagente coder, que estourou quota): o evento `error`

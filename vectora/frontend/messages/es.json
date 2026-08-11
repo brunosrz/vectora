@@ -1075,6 +1075,7 @@
   "chat_error_model_no_vision": "Este modelo no procesa imágenes — cambia de modelo o elimina el archivo adjunto.",
   "chat_error_model_incompatible": "Este modelo no pudo procesar el historial de esta conversación. Cambia de modelo o inicia una nueva conversación.",
   "chat_error_model_not_allowed": "Este modelo no está en la lista de modelos permitidos de este workspace.",
+  "chat_error_account_credit": "El proveedor informó falta de crédito o una suscripción inactiva para este modelo. Revisa tu cuenta e inténtalo de nuevo.",
   "chat_error_generic": "Ocurrió un error al generar la respuesta. Inténtalo de nuevo.",
   "chat_feedback_good": "Buena respuesta",
   "chat_feedback_bad": "Mala respuesta",

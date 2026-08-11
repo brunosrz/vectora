@@ -153,6 +153,8 @@ export function streamErrorMessage(code?: string): string {
       return msg.chat_error_model_incompatible();
     case "MODEL_NOT_ALLOWED":
       return msg.chat_error_model_not_allowed();
+    case "ACCOUNT_CREDIT":
+      return msg.chat_error_account_credit();
     default:
       return msg.chat_error_generic();
   }
