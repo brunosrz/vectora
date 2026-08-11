@@ -184,6 +184,19 @@ class TestShouldInstallTerminalSignals:
         env = {"VECTORA_DESKTOP": "1", "VECTORA_SPAWN_ELECTRON": "1"}
         assert _should_install_terminal_signals(env) is True
 
+    def test_backend_primario_dev_instala_mesmo_sem_tty(self, monkeypatch):
+        # Regressão ao vivo: o gate antigo caía em `sys.stdin.isatty()` mesmo
+        # nesse caso — se `uv run`/o shell pai entregasse stdin como não-tty,
+        # o handler nunca era instalado e Ctrl+C não fechava nada, só o
+        # "Sair" da bandeja do Electron (que passa por outro caminho,
+        # `_watch_for_unexpected_exit` → SIGTERM). Backend-primário precisa
+        # sempre instalar, com ou sem tty — não há dono externo alternativo.
+        from backend.main import _should_install_terminal_signals
+
+        monkeypatch.setattr("sys.stdin.isatty", lambda: False)
+        env = {"VECTORA_DESKTOP": "1", "VECTORA_SPAWN_ELECTRON": "1"}
+        assert _should_install_terminal_signals(env) is True
+
     def test_producao_com_electron_dono_nao_instala(self, monkeypatch):
         # Erro/borda: VECTORA_DESKTOP setado SEM VECTORA_SPAWN_ELECTRON é o
         # caso de produção (Electron spawnou o backend) — o Electron já

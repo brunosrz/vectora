@@ -83,25 +83,53 @@ def client(app):
 
 @pytest.fixture
 def clean_openrouter_key():
-    """Garante que OPENROUTER_API_KEY não vaza de um teste para o outro —
-    os testes de /provider-routing/openrouter/key escrevem em os.environ de verdade."""
-    yield
-    os.environ.pop("OPENROUTER_API_KEY", None)
+    """Isola OPENROUTER_API_KEY nos dois sentidos — os testes de
+    /provider-routing/openrouter/key escrevem em os.environ de verdade.
+
+    Só limpar DEPOIS (teardown) não bastava: numa máquina com o provider
+    já configurado de verdade (uso real do app, não só teste), o teste
+    "não configurado por padrão" herdava esse estado antes mesmo de rodar
+    — passava isolado (nada configurado ainda) mas falhava na suíte cheia
+    assim que outro processo/sessão já tivesse configurado a chave real.
+    Snapshot + reset ANTES do yield fecha esse buraco; restaura o valor
+    original depois, sem vazar pro resto da suíte nem sujar o ambiente
+    real do usuário."""
     from backend.settings import settings
 
+    orig_env = os.environ.pop("OPENROUTER_API_KEY", None)
+    orig_setting = settings.openrouter_api_key
     object.__setattr__(settings, "openrouter_api_key", None)
+    yield
+    if orig_env is not None:
+        os.environ["OPENROUTER_API_KEY"] = orig_env
+    else:
+        os.environ.pop("OPENROUTER_API_KEY", None)
+    object.__setattr__(settings, "openrouter_api_key", orig_setting)
 
 
 @pytest.fixture
 def clean_nine_router_config():
-    """Idem, para NINE_ROUTER_BASE_URL/NINE_ROUTER_API_KEY."""
-    yield
-    os.environ.pop("NINE_ROUTER_BASE_URL", None)
-    os.environ.pop("NINE_ROUTER_API_KEY", None)
+    """Idem (ver `clean_openrouter_key`), para NINE_ROUTER_BASE_URL/
+    NINE_ROUTER_API_KEY — reset ANTES e DEPOIS do teste, não só depois."""
     from backend.settings import settings
 
+    orig_env_url = os.environ.pop("NINE_ROUTER_BASE_URL", None)
+    orig_env_key = os.environ.pop("NINE_ROUTER_API_KEY", None)
+    orig_setting_url = settings.nine_router_base_url
+    orig_setting_key = settings.nine_router_api_key
     object.__setattr__(settings, "nine_router_base_url", None)
     object.__setattr__(settings, "nine_router_api_key", None)
+    yield
+    if orig_env_url is not None:
+        os.environ["NINE_ROUTER_BASE_URL"] = orig_env_url
+    else:
+        os.environ.pop("NINE_ROUTER_BASE_URL", None)
+    if orig_env_key is not None:
+        os.environ["NINE_ROUTER_API_KEY"] = orig_env_key
+    else:
+        os.environ.pop("NINE_ROUTER_API_KEY", None)
+    object.__setattr__(settings, "nine_router_base_url", orig_setting_url)
+    object.__setattr__(settings, "nine_router_api_key", orig_setting_key)
 
 
 class TestOllamaDiscovery:

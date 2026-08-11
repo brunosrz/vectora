@@ -44,6 +44,11 @@ interface HorizontalSplitProps {
   minRight?: number;
   /** Largura máxima do painel direito em px. */
   maxRight?: number;
+  /** Largura mínima do painel esquerdo (flex-1) em px — sem isso (`min-w-0`
+   *  puro), arrastar o workbench bem largo numa janela estreita podia
+   *  encolher o Header (esquerda) até sumir ícones inteiros (ajuda,
+   *  configurações, mode-switch) em vez de só truncar texto. */
+  minLeft?: number;
   className?: string;
   /** Quando true, `right` vira uma faixa estreita de largura fixa (sem resize). */
   rightCollapsed?: boolean;
@@ -65,6 +70,7 @@ export function HorizontalSplit({
   rightCollapsed = false,
   collapsedWidth = 48,
   side = "right",
+  minLeft = 360,
 }: HorizontalSplitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
@@ -139,7 +145,9 @@ export function HorizontalSplit({
   // overflow-visible: dropdowns do appbar (Header) não podem ser recortados
   // por este container — o conteúdo rolável já tem overflow-hidden interno.
   const flexPanel = (
-    <div className="flex-1 min-w-0 overflow-visible">{left}</div>
+    <div className="flex-1 overflow-visible" style={{ minWidth: minLeft }}>
+      {left}
+    </div>
   );
 
   // Painel animado: spring suave ao abrir/fechar, sem lag durante drag.

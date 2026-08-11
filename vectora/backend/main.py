@@ -100,6 +100,13 @@ def _should_install_terminal_signals(env: dict[str, str]) -> bool:
     owns_itself = bool(env.get("VECTORA_SPAWN_ELECTRON"))
     if desktop and not owns_itself:
         return False
+    if owns_itself:
+        # Backend-primário em dev: sempre instala, mesmo sem tty — é o único
+        # dono do processo, e sys.stdin.isatty() pode vir False dependendo
+        # de como `uv run`/o shell pai herdou os handles de stdin, gate que
+        # antes calava o Ctrl+C sem nenhum sinal disso pro usuário (o único
+        # jeito de fechar virava o Sair da bandeja do Electron).
+        return True
     return sys.stdin.isatty()
 
 

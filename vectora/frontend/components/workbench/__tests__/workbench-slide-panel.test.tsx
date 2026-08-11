@@ -57,4 +57,17 @@ describe("WorkbenchSlidePanel", () => {
     // In-flow abaixo do gatilho → não usa posicionamento absoluto.
     expect(screen.getByTestId("p").className).not.toContain("absolute");
   });
+
+  it("o corpo é redimensionável verticalmente, sem altura fixa dominando a tela", () => {
+    render(
+      <WorkbenchSlidePanel open onClose={() => {}} title="X" testId="p">
+        <p>conteúdo do corpo</p>
+      </WorkbenchSlidePanel>,
+    );
+    const body = screen.getByText("conteúdo do corpo").parentElement;
+    expect(body?.className).toContain("resize-y");
+    // Regressão: altura fixa de 55vh dominava a tela em painéis longos
+    // (config do RAG) sem o usuário poder encolher.
+    expect(body?.className).not.toContain("55vh");
+  });
 });

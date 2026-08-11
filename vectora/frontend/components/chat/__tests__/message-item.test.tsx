@@ -172,24 +172,24 @@ describe("MessageItem", () => {
     expect(container.querySelector(".bg-user-bubble")).toBeNull();
   });
 
-  it("avatar (imagem) está presente para mensagem do assistente", () => {
+  it("nenhum avatar de assistente é renderizado (visual limpo, ícone removido)", () => {
     const { container } = render(
       <MessageItem
         {...baseProps(msg({ role: "assistant", content: "resposta" }))}
       />,
     );
-    const img = container.querySelector("img");
-    expect(img).toBeTruthy();
-    expect(img?.getAttribute("alt")).toMatch(/assistant/i);
+    const assistantImg = Array.from(container.querySelectorAll("img")).find(
+      (i) => /assistant/i.test(i.getAttribute("alt") ?? ""),
+    );
+    expect(assistantImg).toBeUndefined();
   });
 
-  it("avatar está AUSENTE para mensagem do usuário", () => {
+  it("também ausente para mensagem do usuário (edge, mesma checagem)", () => {
     const { container } = render(
       <MessageItem
         {...baseProps(msg({ role: "user", content: "pergunta" }))}
       />,
     );
-    // O único img seria o avatar — não deve haver nenhum img com alt de assistente
     const assistantImg = Array.from(container.querySelectorAll("img")).find(
       (i) => /assistant/i.test(i.getAttribute("alt") ?? ""),
     );

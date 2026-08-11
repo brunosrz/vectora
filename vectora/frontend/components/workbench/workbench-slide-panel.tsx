@@ -75,7 +75,16 @@ export function WorkbenchSlidePanel({
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
-      <div className="max-h-[55vh] overflow-y-auto p-3">{children}</div>
+      {/* resize-y: altura inicial moderada (não os 55vh fixos de antes, que
+          dominavam a tela em painéis longos como o de config do RAG) — o
+          usuário arrasta a borda inferior pra abrir mais espaço quando
+          precisar, min/max evitam colapsar a zero ou estourar a viewport. */}
+      <div
+        className="resize-y overflow-y-auto p-3"
+        style={{ height: "16rem", minHeight: "6rem", maxHeight: "80vh" }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

@@ -596,6 +596,43 @@ function SessionPage() {
     [threads, threadId, isLoading, isSidebarCollapsed, isNewSession],
   );
 
+  // Painel da sidebar (largura arrastável + handle de resize) — extraído do
+  // layout "Assistente" pra ser reusado também no Kanban, que antes escondia
+  // a sidebar por completo (sem jeito de trocar de sessão com o board aberto).
+  const sidebarPanel = useMemo(
+    () => (
+      <motion.div
+        ref={sidebarWrapRef}
+        className={`hidden md:flex shrink-0 relative ${sidebarOnRight ? "order-last" : ""}`}
+        animate={{
+          width: isSidebarCollapsed
+            ? SIDEBAR_COLLAPSED_WIDTH
+            : hydrated
+              ? sidebarWidth
+              : 224,
+        }}
+        transition={
+          draggingSidebar.current ? { duration: 0 } : PANEL_TRANSITION
+        }
+      >
+        {sidebar}
+        {!isSidebarCollapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            onPointerDown={onSidebarResizeDown}
+            onPointerMove={onSidebarResizeMove}
+            onPointerUp={onSidebarResizeUp}
+            onPointerCancel={onSidebarResizeUp}
+            className={`absolute top-0 ${sidebarOnRight ? "left-0" : "right-0"} z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors`}
+          />
+        )}
+      </motion.div>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sidebar, isSidebarCollapsed, hydrated, sidebarWidth, sidebarOnRight],
+  );
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
@@ -610,16 +647,32 @@ function SessionPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -18 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="flex flex-col flex-1 min-h-0 overflow-hidden"
+            className="flex flex-1 min-h-0 overflow-hidden"
           >
-            <Header
-              showToolCalls={showToolCalls}
-              onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-              onShowShortcuts={() => setShowShortcutsDialog(true)}
-              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-              showModeSwitch={!chatMode}
-            />
-            <KanbanBoard threadId={threadId} />
+            {sidebarPanel}
+            {/* min-w-[360px]: mesmo piso do Header nos outros 2 modos — sem
+                isso os ícones (ajuda/config/mode-switch) somem em vez de só
+                truncar texto quando a janela encolhe. */}
+            <div className="flex flex-col flex-1 min-w-[360px] min-h-0 overflow-hidden">
+              <Header
+                showToolCalls={showToolCalls}
+                onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+                onShowShortcuts={() => setShowShortcutsDialog(true)}
+                onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+                showModeSwitch={!chatMode}
+              />
+              <KanbanBoard threadId={threadId} />
+            </div>
+            {/* Sidebar mobile como Sheet overlay — mesmo padrão do layout
+                Assistente, já que o painel acima só aparece em md+. */}
+            <Sheet
+              open={isMobileSidebarOpen}
+              onOpenChange={setIsMobileSidebarOpen}
+            >
+              <SheetContent side="left" className="p-0 w-72 border-r">
+                {sidebar}
+              </SheetContent>
+            </Sheet>
           </motion.div>
         ) : uiMode === "ide" && !chatMode ? (
           // ── Layout IDE: sidebars ao topo, Header só acima do DockedEditor ──
@@ -667,7 +720,11 @@ function SessionPage() {
                 ) : null
               }
               editor={
-                <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+                // min-w-[360px] (não min-w-0 puro): abaixo disso o Header
+                // perdia ícones inteiros (ajuda/config/mode-switch) em vez
+                // de só truncar texto, ao encolher a janela ou puxar o
+                // painel do workbench bem largo.
+                <div className="flex flex-col flex-1 min-w-[360px] h-full overflow-hidden">
                   <Header
                     showToolCalls={showToolCalls}
                     onToggleToolCalls={() => setShowToolCalls((v) => !v)}
@@ -764,33 +821,7 @@ function SessionPage() {
                 animado via motion (não CSS transition) pra reusar o mesmo
                 PANEL_TRANSITION do resto do app; duration 0 durante o drag do
                 resize-handle, senão o arrasto ficaria com lag atrás do ponteiro. */}
-            <motion.div
-              ref={sidebarWrapRef}
-              className={`hidden md:flex shrink-0 relative ${sidebarOnRight ? "order-last" : ""}`}
-              animate={{
-                width: isSidebarCollapsed
-                  ? SIDEBAR_COLLAPSED_WIDTH
-                  : hydrated
-                    ? sidebarWidth
-                    : 224,
-              }}
-              transition={
-                draggingSidebar.current ? { duration: 0 } : PANEL_TRANSITION
-              }
-            >
-              {sidebar}
-              {!isSidebarCollapsed && (
-                <div
-                  role="separator"
-                  aria-orientation="vertical"
-                  onPointerDown={onSidebarResizeDown}
-                  onPointerMove={onSidebarResizeMove}
-                  onPointerUp={onSidebarResizeUp}
-                  onPointerCancel={onSidebarResizeUp}
-                  className={`absolute top-0 ${sidebarOnRight ? "left-0" : "right-0"} z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors`}
-                />
-              )}
-            </motion.div>
+            {sidebarPanel}
 
             {/* Sidebar mobile como Sheet overlay */}
             <Sheet

@@ -352,23 +352,24 @@ export function WorkspaceTrustDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between gap-2">
-            <DialogTitle>
-              {mode === "ingest"
-                ? m.workspace_ingest_title()
-                : m.workspace_trust_title()}
-            </DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {mode === "ingest"
+              ? m.workspace_ingest_title()
+              : m.workspace_trust_title()}
             {/* Configurações do RAG (reranker/embedding/tipos de arquivo)
                 acessíveis direto daqui — antes só existiam na aba Memória,
                 obrigando fechar o modal de indexação pra ajustar algo que
-                afeta a própria indexação em andamento. */}
+                afeta a própria indexação em andamento. Inline logo após o
+                título (não empurrado pra direita) — o X de fechar do Dialog
+                é `absolute top-4 right-4`, e um botão nesse mesmo canto
+                quase se sobrepõe a ele. */}
             {mode === "ingest" && (
               <RagSettingsButton
                 open={ragSettings.open}
                 onToggle={ragSettings.toggle}
               />
             )}
-          </div>
+          </DialogTitle>
           <DialogDescription>
             {mode === "ingest"
               ? m.workspace_ingest_desc()
@@ -495,30 +496,35 @@ export function WorkspaceTrustDialog({
             {tab === "local" && (
               <>
                 {mode === "ingest" && (
-                  <div className="space-y-2">
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">
-                        {m.workspace_ingest_include_label()}
-                      </label>
-                      <Input
-                        className="h-8 text-xs"
-                        value={includeExts}
-                        onChange={(e) => setIncludeExts(e.target.value)}
-                        placeholder={m.workspace_ingest_include_placeholder()}
-                      />
+                  <div className="space-y-1.5">
+                    {/* Incluir/excluir lado a lado — eram 2 blocos empilhados
+                        (label + input cada) ocupando o dobro da altura à
+                        toa, sendo campos conceitualmente paralelos. */}
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="space-y-0.5">
+                        <label className="text-xs text-muted-foreground">
+                          {m.workspace_ingest_include_label()}
+                        </label>
+                        <Input
+                          className="h-8 text-xs"
+                          value={includeExts}
+                          onChange={(e) => setIncludeExts(e.target.value)}
+                          placeholder={m.workspace_ingest_include_placeholder()}
+                        />
+                      </div>
+                      <div className="space-y-0.5">
+                        <label className="text-xs text-muted-foreground">
+                          {m.workspace_ingest_exclude_label()}
+                        </label>
+                        <Input
+                          className="h-8 text-xs"
+                          value={excludeExts}
+                          onChange={(e) => setExcludeExts(e.target.value)}
+                          placeholder={m.workspace_ingest_exclude_placeholder()}
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">
-                        {m.workspace_ingest_exclude_label()}
-                      </label>
-                      <Input
-                        className="h-8 text-xs"
-                        value={excludeExts}
-                        onChange={(e) => setExcludeExts(e.target.value)}
-                        placeholder={m.workspace_ingest_exclude_placeholder()}
-                      />
-                    </div>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <label className="text-xs text-muted-foreground">
                         {m.workspace_ingest_bucket_name_label()}
                       </label>
@@ -644,8 +650,12 @@ export function WorkspaceTrustDialog({
                   </div>
                 )}
 
-                {/* Directory browser */}
-                <ScrollArea className="h-64 rounded-md border border-border">
+                {/* Directory browser — altura fixa deliberada (não
+                    redimensionável pelo usuário): só reduzida de h-64 pra
+                    h-40, que antes forçava scroll pra alcançar o botão
+                    "Indexar esta pasta" logo abaixo, mesmo com poucas
+                    entradas na listagem. */}
+                <ScrollArea className="h-40 rounded-md border border-border">
                   <div className="p-1">
                     {listing?.parent && (
                       <button

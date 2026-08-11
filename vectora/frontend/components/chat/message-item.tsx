@@ -41,7 +41,6 @@ import type { Message } from "@/lib/types";
 import { stripMarkdownEnvelope } from "@/lib/utils/string";
 import { estimateCost, formatCost } from "@/lib/config/model-prices";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
-import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useToastStore } from "@/lib/stores/toast-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
@@ -574,15 +573,6 @@ export const MessageItem = memo(
               transform: rotate(-30deg) scale(1);
             }
           }
-          @keyframes spin360 {
-            0%,
-            90% {
-              transform: rotate(0deg);
-            }
-            100% {
-              transform: rotate(360deg);
-            }
-          }
           @keyframes fadeIn {
             from {
               opacity: 0;
@@ -592,9 +582,6 @@ export const MessageItem = memo(
               opacity: 1;
               transform: translateY(0);
             }
-          }
-          .dance-wrapper {
-            animation: spin360 6s linear infinite;
           }
           .dancing {
             animation: dance 0.8s ease-in-out infinite;
@@ -626,25 +613,6 @@ export const MessageItem = memo(
         <div
           className={`flex items-start group/message ${compact ? "gap-2" : "gap-3 sm:gap-4"} ${message.role === "user" ? "justify-end" : ""}`}
         >
-          {message.role === "assistant" && !compact && (
-            <div
-              // mt-0.5: a bolha começa com py-2 (8px) de padding no topo;
-              // o ícone de 32px centralizado sozinho fica ligeiramente
-              // acima da primeira linha de texto — esse nudge alinha o
-              // topo visual do ícone com o topo do texto.
-              className={`w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5 ${message.isThinking ? "dance-wrapper" : ""}`}
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center">
-                <Image
-                  src="/assets/images/Assistant Icon.svg"
-                  alt="Vectora Assistant"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                />
-              </div>
-            </div>
-          )}
           <div
             className={`min-w-0 space-y-2 ${message.role === "user" ? (compact ? "max-w-[90%]" : "max-w-[85%]") : "flex-1"}`}
           >
