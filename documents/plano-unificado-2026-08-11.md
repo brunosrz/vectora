@@ -5,6 +5,18 @@
 > dos bugs reportados ao vivo. Planejamento em markdown (diretriz §9) — código
 > é implementado somente após aprovação deste escopo.
 
+## Status de execução
+
+- **0.1 Erro 402** — `classify_stream_error` reconhece 402/`OpenRouterCreditError`
+  → código `ACCOUNT_CREDIT` + mensagem i18n (pt/en/es). Commit `4719c08b`.
+- **0.2 Duplicação de envio** — guard atômico síncrono `useSendGuard` no
+  `handleSend`/`processMessage`. Commit `fde9db7e`.
+- **0.3 "Mentiu que criou arquivos"** — causa raiz é o Bug 1 (402 quebrava o
+  stream no meio da implementação, preservando resposta parcial que prometia
+  arquivos, sem erro visível nem retry). Com o 0.1, o erro vira `ErrorEvent`
+  com retry; a parte de orquestração (criar só o plano) é comportamento de LLM,
+  não bug determinístico — não recebe heurística de código. Resolvido via 0.1/0.2.
+
 ---
 
 ## Parte 1 — Diagnóstico dos bugs reportados (2026-08-11)
