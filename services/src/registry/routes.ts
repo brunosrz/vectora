@@ -30,6 +30,7 @@ import { Hono } from "hono";
 import type { Env } from "../gateway/types";
 import { requireAdmin } from "../auth/roles";
 import { requireUserId } from "../auth/routes";
+import { compareVersions, latestPerPackage } from "../lib/versioning";
 
 export const registry = new Hono<{ Bindings: Env }>();
 
@@ -68,6 +69,17 @@ registry.get("/mcp", async (c) => {
   return c.json({ entries: results ?? [] });
 });
 
+const SKILLS_COLUMNS =
+  "id, name, description, source, package_name, version, tags, category, vectora_verified, publisher_id, verified, downloads_count, updated_at";
+
+interface SkillRow {
+  id: string;
+  name: string;
+  package_name: string | null;
+  version: string;
+  [key: string]: unknown;
+}
+
 registry.get("/skills", async (c) => {
   const q = c.req.query("q");
   const category = c.req.query("category");
@@ -93,10 +105,26 @@ registry.get("/skills", async (c) => {
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
   const stmt = c.env.DB.prepare(
-    `SELECT id, name, description, source, tags, category, vectora_verified, publisher_id, verified, downloads_count, updated_at FROM skills_catalog ${whereSql} ORDER BY downloads_count DESC`,
+    `SELECT ${SKILLS_COLUMNS} FROM skills_catalog ${whereSql} ORDER BY downloads_count DESC`,
   );
-  const { results } = await (params.length ? stmt.bind(...params) : stmt).all();
-  return c.json({ entries: results ?? [] });
+  const { results } = await (
+    params.length ? stmt.bind(...params) : stmt
+  ).all<SkillRow>();
+  return c.json({ entries: latestPerPackage(results ?? []) });
+});
+
+/** Lista todas as versões publicadas de um `package_name` de skill. */
+registry.get("/skills/:name/versions", async (c) => {
+  const packageName = c.req.param("name");
+  const { results } = await c.env.DB.prepare(
+    `SELECT ${SKILLS_COLUMNS} FROM skills_catalog WHERE package_name = ?`,
+  )
+    .bind(packageName)
+    .all<SkillRow>();
+  const sorted = [...(results ?? [])].sort((a, b) =>
+    compareVersions(b.version, a.version),
+  );
+  return c.json({ entries: sorted });
 });
 
 registry.get("/extensions", (c) => c.json({ entries: [] }));
@@ -127,6 +155,14 @@ registry.post("/skills", async (c) => {
   const tags = Array.isArray(body.tags)
     ? body.tags.filter((t: unknown): t is string => typeof t === "string")
     : [];
+  const version =
+    typeof body.version === "string" && body.version.trim()
+      ? body.version.trim()
+      : "0.0.1";
+  const packageName =
+    typeof body.package_name === "string" && body.package_name.trim()
+      ? body.package_name.trim()
+      : name;
 
   if (!name) return c.json({ error: "invalid_name" }, 400);
   if (!description) return c.json({ error: "invalid_description" }, 400);
@@ -135,13 +171,30 @@ registry.post("/skills", async (c) => {
   const id = crypto.randomUUID();
   await c.env.DB.prepare(
     `INSERT INTO skills_catalog
-       (id, name, description, source, tags, category, catalog_source, publisher_id, verified)
-     VALUES (?, ?, ?, ?, ?, ?, 'community', ?, 0)`,
+       (id, name, description, source, package_name, version, tags, category, catalog_source, publisher_id, verified)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'community', ?, 0)`,
   )
-    .bind(id, name, description, source, JSON.stringify(tags), category, userId)
+    .bind(
+      id,
+      name,
+      description,
+      source,
+      packageName,
+      version,
+      JSON.stringify(tags),
+      category,
+      userId,
+    )
     .run();
 
-  return c.json({ ok: true, id, status: "published", verified: false });
+  return c.json({
+    ok: true,
+    id,
+    status: "published",
+    verified: false,
+    version,
+    package_name: packageName,
+  });
 });
 
 /** Curadoria: seta `verified=1` — só quem tem `role='admin'`. */

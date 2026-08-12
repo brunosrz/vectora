@@ -213,6 +213,30 @@ própria se o produto pedir").
 `pnpm --dir services run test` + smoke: publicar via `publish_skill_tool`
 duas versões da mesma skill de teste, confirmar agrupamento na Library Tab.
 
+### Execução real (2026-08-12)
+
+- **Schema, endpoints e publish (itens 1-3) — entregues.** `services/src/lib/
+versioning.ts` novo (`compareVersions`/`latestPerPackage`, compartilhado
+  entre `rag-library` e `registry`, evitando duplicar a lógica de
+  agrupamento nos dois catálogos). `GET /rag-library/` e `GET /registry/
+skills` colapsam por `package_name`; `GET /rag-library/:name/versions` e
+  `GET /registry/skills/:name/versions` novos. `POST /rag-library/publish` e
+  `POST /registry/skills` aceitam `version`/`package_name` opcionais
+  (default `0.0.1`/nome normalizado). 267 testes verdes (`pnpm --dir
+services run test`), `tsc --noEmit` limpo.
+- **Achado durante a implementação**: parte do schema (colunas `package_name`/
+  `version` nas duas tabelas) e um teste de `rag-library` já estavam
+  parcialmente escritos e sem commit no working tree, de uma sessão anterior
+  — reaproveitados como ponto de partida em vez de refeitos do zero.
+- **Item 4 (frontend — seletor de versões) cortado deliberadamente nesta
+  passada.** `library-memory-section.tsx`/`library-skills-section.tsx`
+  continuam mostrando só o que a API já retornava antes (a versão mais
+  recente, agora correta graças ao agrupamento do backend) — não ganharam
+  UI para navegar versões anteriores. Backend/API já suportam isso
+  (`GET /:name/versions`), então não é dívida de dado, só de UI; registrado
+  aqui para não ficar perdido (CLAUDE.md §9), candidato a entrar junto de
+  qualquer sprint futura que já esteja mexendo nesses dois componentes.
+
 ---
 
 ## Sprint 21 — Kanban: paridade de UI restante (dívida da Sprint 7)

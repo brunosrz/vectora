@@ -189,6 +189,8 @@ CREATE TABLE IF NOT EXISTS rag_packages (
   name             TEXT NOT NULL,
   source_lib       TEXT NOT NULL,
   source_version   TEXT NOT NULL,
+  package_name     TEXT,
+  version          TEXT NOT NULL DEFAULT '0.0.1',
   size_bytes       INTEGER NOT NULL,
   checksum         TEXT NOT NULL,
   storage_url      TEXT NOT NULL,
@@ -247,6 +249,8 @@ CREATE TABLE IF NOT EXISTS skills_catalog (
   name             TEXT NOT NULL,
   description      TEXT NOT NULL,
   source           TEXT NOT NULL, -- git URL, mesmo formato aceito por POST /skills
+  package_name     TEXT,
+  version          TEXT NOT NULL DEFAULT '0.0.1',
   tags             TEXT NOT NULL DEFAULT '[]', -- JSON array serializado
   category         TEXT,
   catalog_source   TEXT NOT NULL DEFAULT 'curated',

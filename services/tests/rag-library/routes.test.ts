@@ -312,3 +312,60 @@ describe("processRagReindex", () => {
     });
   });
 });
+
+describe("Versionamento — GET / e GET /:name/versions", () => {
+  async function insertPackage(
+    overrides: Partial<{
+      id: string;
+      name: string;
+      package_name: string | null;
+      version: string;
+      source_version: string;
+    }> = {},
+  ) {
+    const id = overrides.id ?? crypto.randomUUID();
+    await env.DB.prepare(
+      `INSERT INTO rag_packages
+        (id, name, source_lib, source_version, package_name, version,
+         size_bytes, checksum, storage_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        id,
+        overrides.name ?? "fastapi-docs",
+        "fastapi",
+        overrides.source_version ?? "0.115.0",
+        overrides.package_name ?? null,
+        overrides.version ?? "0.0.1",
+        2048,
+        "def456",
+        "https://storage.example.com/fastapi.tar.gz",
+      )
+      .run();
+    return id;
+  }
+
+  it("listagem retorna a versão mais recente de cada package_name (sem duplicar)", async () => {
+    // Mesmo bucket, duas versões (v0.1.0 e v0.2.0) — a listagem deve
+    // colapsar para 1 item, o mais recente.
+    await insertPackage({
+      name: "bucket-x",
+      package_name: "bucket",
+      version: "0.1.0",
+    });
+    await insertPackage({
+      name: "bucket-x",
+      package_name: "bucket",
+      version: "0.2.0",
+    });
+
+    const list = await ragLibrary.request("/", {}, env);
+    expect(list.status).toBe(200);
+    const body = await list.json<Array<{ version: string }>>();
+    const buckets = body.filter(
+      (p) => (p as { package_name?: string }).package_name === "bucket",
+    );
+    expect(buckets.length).toBe(1);
+    expect(buckets[0]?.version).toBe("0.2.0");
+  });
+});

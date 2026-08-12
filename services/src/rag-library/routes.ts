@@ -17,6 +17,7 @@ import type { Env } from "../gateway/types";
 import { enqueueJob } from "../lib/queue";
 import { requireAdmin } from "../auth/roles";
 import { requireUserId } from "../auth/routes";
+import { compareVersions, latestPerPackage } from "../lib/versioning";
 
 export const ragLibrary = new Hono<{ Bindings: Env }>();
 
@@ -35,6 +36,8 @@ interface RagPackageRow {
   description: string | null;
   source_lib: string;
   source_version: string;
+  package_name: string | null;
+  version: string;
   size_bytes: number;
   checksum: string;
   storage_url: string;
@@ -46,21 +49,43 @@ interface RagPackageRow {
   updated_at: string;
 }
 
+const RAG_PACKAGE_COLUMNS =
+  "id, name, description, source_lib, source_version, package_name, version, size_bytes, checksum, embed_model, publisher_id, verified, downloads_count, license, updated_at";
+
 ragLibrary.get("/", async (c) => {
   const q = c.req.query("q");
-  const base =
-    "SELECT id, name, description, source_lib, source_version, size_bytes, checksum, embed_model, publisher_id, verified, downloads_count, license, updated_at FROM rag_packages";
+  const base = `SELECT ${RAG_PACKAGE_COLUMNS} FROM rag_packages`;
   if (!q) {
-    const { results } = await c.env.DB.prepare(`${base} ORDER BY name`).all();
-    return c.json(results);
+    const { results } = await c.env.DB.prepare(
+      `${base} ORDER BY name`,
+    ).all<RagPackageRow>();
+    return c.json(
+      latestPerPackage(results).sort((a, b) => a.name.localeCompare(b.name)),
+    );
   }
   const like = `%${q}%`;
   const { results } = await c.env.DB.prepare(
     `${base} WHERE name LIKE ? COLLATE NOCASE OR description LIKE ? COLLATE NOCASE ORDER BY name`,
   )
     .bind(like, like)
-    .all();
-  return c.json(results);
+    .all<RagPackageRow>();
+  return c.json(
+    latestPerPackage(results).sort((a, b) => a.name.localeCompare(b.name)),
+  );
+});
+
+/** Lista todas as versões publicadas de um `package_name`, mais recente primeiro. */
+ragLibrary.get("/:name/versions", async (c) => {
+  const packageName = c.req.param("name");
+  const { results } = await c.env.DB.prepare(
+    `SELECT ${RAG_PACKAGE_COLUMNS} FROM rag_packages WHERE package_name = ?`,
+  )
+    .bind(packageName)
+    .all<RagPackageRow>();
+  const sorted = [...results].sort((a, b) =>
+    compareVersions(b.version, a.version),
+  );
+  return c.json(sorted);
 });
 
 /** Serve o binário de um bucket publicado — mesmo padrão de `issues/routes.ts`. */
@@ -99,11 +124,16 @@ ragLibrary.get("/:id/download", async (c) => {
 
 /**
  * Publica um bucket de Memory Library — multipart (name, description,
- * embed_model, license, file). `embed_model` é obrigatório aqui (só pras
- * publicações novas — linhas first-party legadas continuam com o campo
- * NULL, sem quebrar). Grava no R2 (mesmo padrão de `issues/routes.ts`) e
- * insere a linha em `rag_packages` com `verified=0` (curadoria manual
- * posterior via `PATCH /admin/:id/verify`).
+ * embed_model, license, file, version opcional). `embed_model` é
+ * obrigatório aqui (só pras publicações novas — linhas first-party
+ * legadas continuam com o campo NULL, sem quebrar). Grava no R2 (mesmo
+ * padrão de `issues/routes.ts`) e insere a linha em `rag_packages` com
+ * `verified=0` (curadoria manual posterior via `PATCH /admin/:id/verify`).
+ *
+ * `package_name` (chave de agrupamento entre versões) default pro próprio
+ * `name` normalizado — sem isso, cada publish vira um pacote isolado
+ * mesmo quando é uma atualização do mesmo bucket (ver `GET /`/`GET /:name/
+ * versions`, que agrupam por essa chave).
  */
 ragLibrary.post("/publish", async (c) => {
   const userId = await requireUserId(c);
@@ -121,6 +151,14 @@ ragLibrary.post("/publish", async (c) => {
   const embedModel =
     typeof body.embed_model === "string" ? body.embed_model.trim() : "";
   const license = typeof body.license === "string" ? body.license.trim() : "";
+  const version =
+    typeof body.version === "string" && body.version.trim()
+      ? body.version.trim()
+      : "0.0.1";
+  const packageName =
+    typeof body.package_name === "string" && body.package_name.trim()
+      ? body.package_name.trim()
+      : name;
   const file = body.file instanceof File ? body.file : null;
 
   if (!name) return c.json({ error: "invalid_name" }, 400);
@@ -140,13 +178,15 @@ ragLibrary.post("/publish", async (c) => {
 
   await c.env.DB.prepare(
     `INSERT INTO rag_packages
-       (id, name, source_lib, source_version, size_bytes, checksum, storage_url,
-        embed_model, publisher_id, verified, license, description)
-     VALUES (?, ?, '', '', ?, ?, ?, ?, ?, 0, ?, ?)`,
+       (id, name, source_lib, source_version, package_name, version, size_bytes,
+        checksum, storage_url, embed_model, publisher_id, verified, license, description)
+     VALUES (?, ?, '', '', ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
   )
     .bind(
       id,
       name,
+      packageName,
+      version,
       file.size,
       checksum,
       storageUrl,
@@ -157,7 +197,14 @@ ragLibrary.post("/publish", async (c) => {
     )
     .run();
 
-  return c.json({ ok: true, id, status: "published", verified: false });
+  return c.json({
+    ok: true,
+    id,
+    status: "published",
+    verified: false,
+    version,
+    package_name: packageName,
+  });
 });
 
 /** Curadoria: seta `verified=1` — só quem tem `role='admin'`. */

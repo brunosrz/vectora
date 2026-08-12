@@ -36,13 +36,15 @@ async function makeSkill(
     category: string | null;
     catalogSource: string;
     downloadsCount: number;
+    packageName: string | null;
+    version: string;
   }> = {},
 ) {
   const id = overrides.id ?? crypto.randomUUID();
   await env.DB.prepare(
     `INSERT INTO skills_catalog
-       (id, name, description, source, category, catalog_source, downloads_count)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       (id, name, description, source, category, catalog_source, downloads_count, package_name, version)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -52,6 +54,8 @@ async function makeSkill(
       overrides.category ?? null,
       overrides.catalogSource ?? "curated",
       overrides.downloadsCount ?? 0,
+      overrides.packageName ?? null,
+      overrides.version ?? "0.0.1",
     )
     .run();
   return id;
@@ -104,6 +108,71 @@ describe("GET /registry/skills", () => {
     const body = await res.json<{ entries: Array<{ name: string }> }>();
 
     expect(body.entries.map((e) => e.name)).toEqual(["A"]);
+  });
+
+  it("colapsa múltiplas versões do mesmo package_name na versão mais recente", async () => {
+    await makeSkill({
+      name: "Godot Helper v1",
+      packageName: "godot-helper-collapse",
+      version: "0.1.0",
+    });
+    await makeSkill({
+      name: "Godot Helper v2",
+      packageName: "godot-helper-collapse",
+      version: "0.2.0",
+    });
+
+    const res = await registry.request("/skills", {}, env);
+    const body = await res.json<{
+      entries: Array<{ name: string; version: string; package_name: string }>;
+    }>();
+    const matching = body.entries.filter(
+      (e) => e.package_name === "godot-helper-collapse",
+    );
+
+    expect(matching.length).toBe(1);
+    expect(matching[0]?.version).toBe("0.2.0");
+    expect(matching[0]?.name).toBe("Godot Helper v2");
+  });
+
+  it("skill sem package_name (legado) aparece sem colapsar", async () => {
+    await makeSkill({ name: "Sem versionamento", packageName: null });
+
+    const res = await registry.request("/skills", {}, env);
+    const body = await res.json<{ entries: Array<{ name: string }> }>();
+
+    expect(body.entries.map((e) => e.name)).toContain("Sem versionamento");
+  });
+});
+
+describe("GET /registry/skills/:name/versions", () => {
+  it("lista todas as versões de um package_name, mais recente primeiro", async () => {
+    await makeSkill({ packageName: "godot-helper-versions", version: "0.1.0" });
+    await makeSkill({
+      packageName: "godot-helper-versions",
+      version: "0.10.0",
+    });
+    await makeSkill({ packageName: "godot-helper-versions", version: "0.2.0" });
+
+    const res = await registry.request(
+      "/skills/godot-helper-versions/versions",
+      {},
+      env,
+    );
+    const body = await res.json<{ entries: Array<{ version: string }> }>();
+
+    expect(body.entries.map((e) => e.version)).toEqual([
+      "0.10.0",
+      "0.2.0",
+      "0.1.0",
+    ]);
+  });
+
+  it("package_name sem nenhuma versão publicada devolve lista vazia, não erro", async () => {
+    const res = await registry.request("/skills/nao-existe/versions", {}, env);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ entries: [] });
   });
 });
 
@@ -160,6 +229,52 @@ describe("POST /registry/skills", () => {
     expect(row?.catalog_source).toBe("community");
     expect(row?.category).toBe("productivity");
     expect(JSON.parse(row?.tags ?? "[]")).toEqual(["cli", "automation"]);
+  });
+
+  it("sem version/package_name explícitos, usa default 0.0.1 e package_name=name", async () => {
+    const { token } = await createUser("user");
+
+    const res = await registry.request(
+      "/skills",
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Skill Sem Versao",
+          description: "d",
+          source: "https://github.com/bruno/skill-sem-versao",
+        }),
+      }),
+      env,
+    );
+
+    const body = await res.json<{ version: string; package_name: string }>();
+    expect(body.version).toBe("0.0.1");
+    expect(body.package_name).toBe("Skill Sem Versao");
+  });
+
+  it("com version/package_name explícitos, publica a versão nova do mesmo pacote", async () => {
+    const { token } = await createUser("user");
+
+    const res = await registry.request(
+      "/skills",
+      authed(token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Godot Helper v3",
+          description: "d",
+          source: "https://github.com/bruno/godot-helper",
+          package_name: "godot-helper",
+          version: "0.3.0",
+        }),
+      }),
+      env,
+    );
+
+    const body = await res.json<{ version: string; package_name: string }>();
+    expect(body.version).toBe("0.3.0");
+    expect(body.package_name).toBe("godot-helper");
   });
 
   it("rejeita source que não é URL git válida (400)", async () => {
