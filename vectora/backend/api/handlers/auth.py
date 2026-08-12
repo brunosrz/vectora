@@ -582,7 +582,6 @@ async def get_envs(request: Request) -> dict:
 
 @router.post("/envs")
 async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
-    from backend.rbac import auth as auth_svc
     from backend.rbac.subscription import require_pro
     from backend.services.env_keys import CONNECT_ENV_KEYS, RUNTIME_ENV_KEYS
 
@@ -593,7 +592,11 @@ async def set_env(body: EnvOverrideRequest, request: Request) -> dict:
     # sempre pode apagar a própria credencial, mesmo sem Pro.
     if body.key.upper() in CONNECT_ENV_KEYS:
         require_pro()
-    await auth_svc.set_env_override(user.id, body.key, body.value)
+    # Override por usuário via adapter declarativo — encapsula o acesso à
+    # tabela (incluindo o fallback do usuário virtual "local").
+    from backend.config.adapters import UserRowAdapter
+
+    await UserRowAdapter(body.key).set(user.id, body.value)
 
     # Keys de LLM/search (GOOGLE_API_KEY etc.) precisam valer na PRÓXIMA
     # chamada ao provider, não só no próximo boot — env_overrides_json é
@@ -628,13 +631,14 @@ async def _sync_connect_adapters() -> None:
 
 @router.delete("/envs/{key}")
 async def delete_env(key: str, request: Request) -> dict:
-    from backend.rbac import auth as auth_svc
     from backend.services.env_keys import CONNECT_ENV_KEYS, RUNTIME_ENV_KEYS
 
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
-    await auth_svc.delete_env_override(user.id, key)
+    from backend.config.adapters import UserRowAdapter
+
+    await UserRowAdapter(key).delete(user.id)
 
     # Credencial removida -> derruba o adapter correspondente. Sem isto o bot
     # continuaria no ar respondendo mensagens com uma credencial que o usuário
