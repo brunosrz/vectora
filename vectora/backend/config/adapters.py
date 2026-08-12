@@ -17,9 +17,13 @@ class EnvAdapter:
         self.env_var = env_var
 
     def get(self, key: str) -> object:
-        from backend.settings import settings
+        import os
 
-        return getattr(settings, self.env_var.lower(), None)
+        # Fonte canônica em runtime: os.environ (que apply_llm_env_key seta
+        # no momento da escrita). settings espelha no boot, mas uma key
+        # gravada/limpa em runtime só reflete aqui de forma confiável; o
+        # GET /admin/api-keys mocka exatamente os.environ.
+        return os.environ.get(self.env_var, "") or None
 
     def set(self, key: str, value: object) -> None:
         from backend.services.env_keys import apply_llm_env_key, default_env_file

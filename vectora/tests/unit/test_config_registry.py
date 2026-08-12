@@ -180,11 +180,14 @@ class TestEnvAdapter:
         assert _restore_settings.google_api_key == "AIza-nova"
 
     def test_get_le_do_settings_singleton(self, monkeypatch, _restore_settings):
-        from backend.settings import settings
+        """`EnvAdapter.get` lê a fonte canônica em runtime: `os.environ`
+        (que `apply_llm_env_key` seta na escrita). `settings` espelha no
+        boot, mas uma key gravada/limpa em runtime só reflete aqui."""
+        from unittest.mock import patch
 
-        object.__setattr__(settings, "google_api_key", "chave-atual")
-        adapter = EnvAdapter("GOOGLE_API_KEY")
-        assert adapter.get("google_api_key") == "chave-atual"
+        with patch.dict("os.environ", {"GOOGLE_API_KEY": "chave-atual"}, clear=False):
+            adapter = EnvAdapter("GOOGLE_API_KEY")
+            assert adapter.get("google_api_key") == "chave-atual"
 
 
 class TestRuntimeSettingsAdapter:

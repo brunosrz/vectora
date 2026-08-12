@@ -791,6 +791,17 @@ _API_KEY_FIELDS: dict[str, str] = {
     "tavily": "TAVILY_API_KEY",
 }
 
+# provider → chave do schema declarativo (backend.config.registry) que
+# encapsula o acesso à env var via EnvAdapter. Os 3 providers expostos aqui
+# têm field registrado em category="integrations"; leitura/escrita passam
+# pelo registry, não por os.environ/apply_llm_env_key direto — mesma fonte
+# usada por CLI e pelos demais handlers.
+_API_KEY_REGISTRY_KEYS: dict[str, str] = {
+    "google": "google_api_key",
+    "cohere": "cohere_api_key",
+    "tavily": "tavily_api_key",
+}
+
 
 def _mask_key(value: str) -> str:
     """Mostra prefixo + sufixo para conferência sem expor o segredo."""
@@ -814,11 +825,24 @@ class TestApiKeyBody(BaseModel):
 
 @router.get("/api-keys")
 async def get_api_keys(request: Request) -> dict:
-    """Retorna status e valores mascarados das API keys de LLM/search."""
+    """Retorna status e valores mascarados das API keys de LLM/search.
+
+    A leitura delega aos fields do schema declarativo (`EnvAdapter`) — a
+    mesma fonte usada por CLI — em vez de ler `os.environ` diretamente.
+    A enumeração de providers continua fixa (`_API_KEY_FIELDS`), só o
+    mecanismo de acesso muda.
+    """
     require_admin(_get_user(request))
+    from backend.config.registry import get_field
+
     result: dict[str, dict[str, str | bool]] = {}
-    for provider, env_var in _API_KEY_FIELDS.items():
-        raw = os.environ.get(env_var, "").strip()
+    for provider in _API_KEY_FIELDS:
+        registry_key = _API_KEY_REGISTRY_KEYS.get(provider)
+        raw = ""
+        if registry_key:
+            field = get_field(registry_key)
+            if field is not None:
+                raw = str(field.get() or "").strip()
         result[provider] = {
             "configured": bool(raw),
             "masked": _mask_key(raw),
@@ -830,7 +854,8 @@ async def get_api_keys(request: Request) -> dict:
 async def patch_api_keys(request: Request, body: PatchApiKeysBody) -> dict:
     """Salva API keys em ~/.vectora/.env e atualiza os.environ em runtime."""
     require_admin(_get_user(request))
-    from backend.services.env_keys import apply_llm_env_key
+    from backend.config.registry import get_field
+    from backend.services.env_keys import default_env_file
 
     env = _env_file()
     updated: list[str] = []
@@ -840,9 +865,27 @@ async def patch_api_keys(request: Request, body: PatchApiKeysBody) -> dict:
         "TAVILY_API_KEY": body.tavily_api_key,
     }
     for env_var, value in mapping.items():
-        if value is not None:
+        if value is None:
+            continue
+        # Escrita pelo field do registry (same EnvAdapter), não direto — a
+        # mesma fonte usada por CLI. A key de lookup do registry é
+        # minúscula, igual à env var sem o sufixo _API_KEY (ex.: GOOGLE_API_
+        # KEY → google_api_key).
+        registry_key = _API_KEY_REGISTRY_KEYS.get(
+            next(
+                (p for p, e in _API_KEY_FIELDS.items() if e == env_var),
+                "",
+            )
+        )
+        if registry_key:
+            field = get_field(registry_key)
+            if field is not None:
+                field.set(value)
+        else:
+            from backend.services.env_keys import apply_llm_env_key
+
             apply_llm_env_key(env, env_var, value)
-            updated.append(env_var)
+        updated.append(env_var)
     logger.info(
         "admin: api-keys atualizadas por user_id=%s: %s", _get_user(request).id, updated
     )

@@ -245,6 +245,56 @@ class TestApiKeysEndpoints:
         assert "GOOGLE_API_KEY" in result["updated"]
         assert mock_upsert.called
 
+    @pytest.mark.asyncio
+    async def test_get_api_keys_le_dos_fields_do_registry(self, monkeypatch):
+        """A leitura passa pelos fields do registry (EnvAdapter), não por
+        os.environ direto — mesma fonte usada por CLI/outros handlers."""
+        from unittest.mock import MagicMock
+
+        from backend.config import registry
+
+        captured: list[str] = []
+
+        class _FakeAdapter:
+            def __init__(self, env_var: str) -> None:
+                self.env_var = env_var
+
+            def get(self, key: str) -> object:
+                captured.append(self.env_var)
+                return "AIzaSyFAKE123"
+
+        src = {
+            "google_api_key": {
+                "category": "integrations",
+                "adapter": _FakeAdapter("GOOGLE_API_KEY"),
+            },
+            "cohere_api_key": {
+                "category": "integrations",
+                "adapter": _FakeAdapter("COHERE_API_KEY"),
+            },
+        }
+        monkeypatch.setattr(registry, "_REGISTRY", {
+            k: registry.SettingField(
+                key=k,
+                category=v["category"],
+                cli_flag=f"--{k}",
+                description="d",
+                adapter=v["adapter"],
+            )
+            for k, v in src.items()
+        })
+
+        request = MagicMock()
+        request.state.user = MagicMock(role="root")
+
+        from backend.api.handlers.admin import get_api_keys
+
+        result = await get_api_keys(request)
+
+        assert set(captured) == {"GOOGLE_API_KEY", "COHERE_API_KEY"}
+        assert result["google"]["configured"] is True
+        assert "AIzaSy" in result["google"]["masked"]
+
 
 class TestCreateInviteRequiresPro:
     """Convidar membro adicional é feature de time — exige plano Pro.
