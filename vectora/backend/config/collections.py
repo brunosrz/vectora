@@ -95,3 +95,69 @@ def collections_for_category(category: str) -> list[CollectionSettingField]:
 
 def all_collections() -> Iterable[CollectionSettingField]:
     return _COLLECTION_REGISTRY.values()
+
+
+# ---------------------------------------------------------------------------
+# Recurso per-usuário (escopo por dono)
+# ---------------------------------------------------------------------------
+
+
+class UserScopedCollectionAdapter(Protocol):
+    """Recurso cujo item é escopado por ``user_id`` — cada operação recebe o
+    dono (perfil de conta, memórias). Difere de `CollectionSettingAdapter`
+    (coleção global) apenas no escopo: nenhuma operação existe sem o dono."""
+
+    async def list_items(self, user_id: str) -> list[dict[str, typing.Any]]: ...
+
+    async def add(
+        self, item: dict[str, typing.Any]
+    ) -> dict[str, typing.Any] | None: ...
+
+    async def remove(self, user_id: str, item_id: str) -> None: ...
+
+
+@dataclasses.dataclass(frozen=True)
+class UserScopedCollectionField:
+    """Um recurso per-usuário declarado — metadados + adapter por dono."""
+
+    key: str
+    category: str
+    description: str
+    adapter: UserScopedCollectionAdapter
+
+    async def list_items(self, user_id: str) -> list[dict[str, typing.Any]]:
+        return await self.adapter.list_items(user_id)
+
+    async def add(self, item: dict[str, typing.Any]) -> dict[str, typing.Any] | None:
+        return await self.adapter.add(item)
+
+    async def remove(self, user_id: str, item_id: str) -> None:
+        await self.adapter.remove(user_id, item_id)
+
+
+_USER_SCOPED_REGISTRY: dict[str, UserScopedCollectionField] = {}
+
+
+def user_scoped_field(
+    key: str,
+    *,
+    category: str,
+    description: str,
+    adapter: UserScopedCollectionAdapter,
+) -> UserScopedCollectionField:
+    """Registra um recurso per-usuário no schema declarativo."""
+    if key in _USER_SCOPED_REGISTRY:
+        msg = f"user_scoped_field duplicado: {key!r}"
+        raise ValueError(msg)
+    field = UserScopedCollectionField(
+        key=key,
+        category=category,
+        description=description,
+        adapter=adapter,
+    )
+    _USER_SCOPED_REGISTRY[key] = field
+    return field
+
+
+def get_user_scoped_field(key: str) -> UserScopedCollectionField | None:
+    return _USER_SCOPED_REGISTRY.get(key)

@@ -141,3 +141,119 @@ class UserRowAdapter:
         from backend.rbac import auth as auth_svc
 
         await auth_svc.delete_env_override(user_id, self.env_key)
+
+
+class UserProfileAdapter:
+    """Recurso per-usuário `account` — o perfil de um usuário como item,
+    escopado por ``user_id``. `list` devolve o perfil do dono (0 ou 1 itens);
+    `add` atualiza o nome; `remove` é no-op (perfil não é deletável pelo
+    schema). Delega para ``rbac.auth``.
+    """
+
+    async def list_items(self, user_id: str) -> list[dict[str, object]]:
+        from backend.rbac import auth as auth_svc
+
+        user = await auth_svc.get_user_by_id(user_id)
+        if user is None:
+            return []
+        return [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "name": user.name,
+                "role": user.role,
+            }
+        ]
+
+    async def add(self, item: dict[str, object]) -> dict[str, object] | None:
+        from backend.rbac import auth as auth_svc
+
+        user_id = str(item["user_id"])
+        name = str(item.get("name") or "")
+        await auth_svc.update_profile(user_id, name=name)
+        return await self._read_one(user_id)
+
+    async def _read_one(self, user_id: str) -> dict[str, object] | None:
+        items = await self.list_items(user_id)
+        return items[0] if items else None
+
+    async def remove(self, user_id: str, item_id: str) -> None:
+        # O perfil do usuário não é removível pelo schema declarativo (a
+        # gestão de usuário tem endpoint próprio). No-op de contrato.
+        return None
+
+
+class MemoryAdapter:
+    """Recurso per-usuário `memory` — fatos de memória por usuário.
+
+    Uma memória é um item escopado por ``user_id`` (namespace
+    ``("user", user_id, "memories")`` do store do agente). O store é
+    injetado por contextvar num turno de agente; chamado fora de um grafo
+    ativo (ex. CLI), `list` degrada para lista vazia com log em vez de
+    quebrar — a listagem completa requer o contexto do agente.
+    """
+
+    async def list_items(self, user_id: str) -> list[dict[str, object]]:
+        try:
+            import backend.tools.memory as mem
+
+            store = mem._get_store()
+        except Exception as exc:  # RuntimeError: fora de um grafo ativo
+            import logging
+
+            logging.getLogger(__name__).info(
+                "MemoryAdapter.list sem store de agente ativo (user_id=%s): %s",
+                user_id,
+                exc,
+            )
+            return []
+        ns = ("user", user_id, "memories")
+        items = await store.asearch(ns, query="", limit=100)
+        return [
+            {
+                "key": item.key,
+                "content": item.value.get("content", ""),
+                "updated_at": item.value.get("updated_at"),
+            }
+            for item in items
+        ]
+
+    async def add(self, item: dict[str, object]) -> dict[str, object] | None:
+        import backend.tools.memory as mem
+
+        user_id = str(item["user_id"])
+        key = str(item["key"])
+        content = str(item["content"])
+        try:
+            store = mem._get_store()
+        except Exception as exc:  # RuntimeError: fora de um grafo ativo
+            import logging
+
+            logging.getLogger(__name__).info(
+                "MemoryAdapter.add sem store de agente ativo (user_id=%s): %s",
+                user_id,
+                exc,
+            )
+            return None
+        import datetime
+
+        from backend.tools.memory import _memory_namespace
+
+        ns = _memory_namespace({"configurable": {"user_id": user_id}})
+        value = {
+            "key": key,
+            "content": content,
+            "metadata": {},
+            "updated_at": datetime.datetime.now(datetime.UTC).isoformat(),
+            "category": None,
+        }
+        await store.aput(ns, key, value)
+        return {"key": key, "content": content}
+
+    async def remove(self, user_id: str, item_id: str) -> None:
+        import backend.tools.memory as mem
+
+        store = mem._get_store()
+        ns = ("user", user_id, "memories")
+        await store.adelete(ns, item_id)
